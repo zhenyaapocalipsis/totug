@@ -7,54 +7,63 @@ extends PanelContainer
 ## сожрать — сервер отдаёт одинаково: prompt + choice_type + legal_options.
 ##
 ## Варианты подписываются по-разному в зависимости от choice_type: id карты
-## превращается в её название, id слота остаётся как есть, bool — в Да/Нет,
-## индекс варианта — в "Вариант N". Пустая строка и -1 в legal_options
+## превращается в её название, id слота — в название локации, bool — в Yes/No,
+## индекс варианта — в "Option N". Пустая строка и -1 в legal_options
 ## означают "отказаться" (эффекты вида "up to N" кладут туда пропуск).
+##
+## Этап 3: если цель выбирается на доске, диалог — узкая плашка у верхнего
+## края экрана, а не окно посередине: окно закрывало ту самую доску, по
+## которой нужно кликнуть. Для выбора кнопками окно по центру, высотой по
+## числу вариантов, без пустого места.
 
 signal option_chosen(answer: Variant)
 
+const BOARD_CHOICES := ["target_slot", "target_site", "target_return"]
+const OPTION_HEIGHT := 34
+const MAX_LIST_HEIGHT := 380
+const WIDTH := 460.0
+
 ## Статический снимок доски (StateView.board_snapshot) — нужен, чтобы
-## подписывать цели по-человечески: "Caer Sidi · слот 2" вместо "c_n1:C4_0_1".
+## подписывать цели по-человечески: "Caer Sidi · space 2" вместо "c_n1:C4_0_1".
 var board: Dictionary = {}
 
 var _prompt: Label
 var _who: Label
 var _options_box: VBoxContainer
 var _scroll: ScrollContainer
+var _style: StyleBoxFlat
+## Плашка сейчас у верхнего края (выбор цели на доске) — доске нужно отступить.
+var at_top := false
 
 
 func _init() -> void:
 	visible = false
-	# Диалог висит поверх экрана по центру.
-	set_anchors_preset(Control.PRESET_CENTER)
-	custom_minimum_size = Vector2(460, 0)
-	grow_horizontal = Control.GROW_DIRECTION_BOTH
-	grow_vertical = Control.GROW_DIRECTION_BOTH
+	custom_minimum_size = Vector2(WIDTH, 0)
 
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.16, 0.15, 0.20)
-	style.border_color = Color(0.85, 0.65, 0.25)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	style.set_content_margin_all(14)
-	add_theme_stylebox_override("panel", style)
+	_style = StyleBoxFlat.new()
+	_style.bg_color = Color(0.16, 0.15, 0.20, 0.97)
+	_style.border_color = Color(0.85, 0.65, 0.25)
+	_style.set_border_width_all(2)
+	_style.set_corner_radius_all(8)
+	_style.set_content_margin_all(12)
+	_style.shadow_color = Color(0, 0, 0, 0.5)
+	_style.shadow_size = 8
+	add_theme_stylebox_override("panel", _style)
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 8)
+	col.add_theme_constant_override("separation", 6)
 	add_child(col)
 
 	_who = Label.new()
 	_who.add_theme_font_size_override("font_size", 12)
-	_who.modulate = Color(0.8, 0.75, 0.6)
 	col.add_child(_who)
 
 	_prompt = Label.new()
-	_prompt.add_theme_font_size_override("font_size", 16)
+	_prompt.add_theme_font_size_override("font_size", 17)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_prompt)
 
 	_scroll = ScrollContainer.new()
-	_scroll.custom_minimum_size = Vector2(0, 240)
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(_scroll)
 
@@ -71,59 +80,78 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		return
 
 	var decider := String(pd.get("player_id", ""))
+	var choice_type := String(pd.get("choice_type", ""))
+	var on_board: bool = BOARD_CHOICES.has(choice_type)
+	var options: Array = pd.get("legal_options", [])
 	visible = true
-	_who.text = "Решает: %s" % decider
-	_prompt.text = String(pd.get("prompt", "Выберите вариант"))
+	_who.text = "%s decides" % EventLogPanel.player_name(decider)
+	_who.modulate = EventLogPanel.player_color(decider)
+	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
+	_prompt.text = String(pd.get("prompt", "Choose an option"))
 
 	for child in _options_box.get_children():
+		_options_box.remove_child(child)
 		child.queue_free()
 
 	if decider != viewer_id:
 		# Не наш вопрос: сам факт показываем (чтобы было видно, чего ждём),
 		# но вариантов у нас нет — сервер их и не прислал.
-		var waiting := Label.new()
-		waiting.text = "Ждём ответа игрока %s." % decider
-		_options_box.add_child(waiting)
-		return
-
-	var options: Array = pd.get("legal_options", [])
-	var choice_type := String(pd.get("choice_type", ""))
-	if options.is_empty():
-		var none := Label.new()
-		none.text = "Вариантов нет."
-		_options_box.add_child(none)
-		return
-
-	# Цели на доске (войско/локация) выбираются кликом по самой доске — она
-	# подсвечивает их жёлтым (см. board_panel.gd::_draw_decision_targets), а
-	# не списком кнопок здесь. Кнопка остаётся только для "отказаться", если
-	# решение необязательное ("up to N" кладёт "" в legal_options).
-	if choice_type == "target_slot" or choice_type == "target_site" or choice_type == "target_return":
-		var hint := Label.new()
-		hint.text = "Кликните по подсвеченной цели на доске."
-		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_options_box.add_child(hint)
+		_add_note("Waiting for %s." % EventLogPanel.player_name(decider))
+	elif options.is_empty():
+		_add_note("No options.")
+	elif on_board:
+		# Цели на доске выбираются кликом по самой доске — она подсвечивает
+		# их золотым (board_panel.gd::_draw_decision_targets). Кнопка остаётся
+		# только для "отказаться", если решение необязательное.
+		_add_note("Click a gold-highlighted target on the board.")
 		if options.has(""):
-			var skip := Button.new()
-			skip.text = "Отказаться"
-			skip.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			skip.pressed.connect(func(): option_chosen.emit(""))
-			_options_box.add_child(skip)
-		return
+			_add_button("Skip", "")
+	else:
+		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
+		# берём их — только карта знает, что означает её вариант №2.
+		var labels: Array = pd.get("option_labels", [])
+		for i in range(options.size()):
+			var text := String(labels[i]) if i < labels.size() and String(labels[i]) != "" \
+				else _board_label(options[i], choice_type)
+			_add_button(text, options[i])
 
-	# Если сервер прислал подписи вариантов (карты вида "Choose one:"), берём
-	# их — только карта знает, что означает её вариант №2.
-	var labels: Array = pd.get("option_labels", [])
-	for i in range(options.size()):
-		var value: Variant = options[i]
-		var button := Button.new()
-		if i < labels.size() and String(labels[i]) != "":
-			button.text = String(labels[i])
-		else:
-			button.text = _board_label(value, choice_type)
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.pressed.connect(func(): option_chosen.emit(value))
-		_options_box.add_child(button)
+	var rows: int = maxi(_options_box.get_child_count(), 1)
+	_scroll.custom_minimum_size = Vector2(0, mini(rows * OPTION_HEIGHT, MAX_LIST_HEIGHT))
+	_place(on_board or decider != viewer_id)
+
+
+## Плашка у верхнего края (не закрывает доску) или окно по центру.
+func _place(top: bool) -> void:
+	at_top = top
+	if at_top:
+		set_anchors_preset(Control.PRESET_CENTER_TOP)
+		grow_vertical = Control.GROW_DIRECTION_END
+	else:
+		set_anchors_preset(Control.PRESET_CENTER)
+		grow_vertical = Control.GROW_DIRECTION_BOTH
+	grow_horizontal = Control.GROW_DIRECTION_BOTH
+	offset_left = -WIDTH * 0.5
+	offset_right = WIDTH * 0.5
+	offset_top = 10.0 if at_top else 0.0
+	offset_bottom = offset_top
+	reset_size()
+
+
+func _add_note(text: String) -> void:
+	var label := Label.new()
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.modulate = Color(0.8, 0.8, 0.85)
+	_options_box.add_child(label)
+
+
+func _add_button(text: String, value: Variant) -> void:
+	var button := Button.new()
+	button.text = text
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(0, OPTION_HEIGHT - 4)
+	button.pressed.connect(func(): option_chosen.emit(value))
+	_options_box.add_child(button)
 
 
 ## Подпись цели на доске: id слота вида "c_n1:C4_0_1" человеку ничего не
@@ -138,11 +166,11 @@ func _board_label(value: Variant, choice_type: String) -> String:
 
 	# Составные цели ReturnTroopOrSpy: "troop|<slot_id>" и "spy|<site_id>|<owner>".
 	if raw.begins_with("troop|"):
-		return "Войско: " + _board_label(raw.substr(6), "target_slot")
+		return "Troop: " + _board_label(raw.substr(6), "target_slot")
 	if raw.begins_with("spy|"):
 		var rest: PackedStringArray = raw.substr(4).rsplit("|", true, 1)
 		if rest.size() == 2:
-			return "Шпион игрока %s: %s" % [rest[1], _board_label(rest[0], "target_site")]
+			return "%s spy: %s" % [EventLogPanel.player_name(rest[1]), _board_label(rest[0], "target_site")]
 
 	if choice_type == "target_site" and sites.has(raw):
 		return "%s (%d VP)" % [(sites[raw] as Dictionary)["name"], int((sites[raw] as Dictionary)["vp"])]
@@ -150,10 +178,10 @@ func _board_label(value: Variant, choice_type: String) -> String:
 	if choice_type == "target_slot" and slots.has(raw):
 		var site_id := String((slots[raw] as Dictionary)["site_id"])
 		if site_id == "" or not sites.has(site_id):
-			return "Туннель (%s)" % raw.get_slice(":", 1)
+			return "Tunnel (%s)" % raw.get_slice(":", 1)
 		var members: Array = (sites[site_id] as Dictionary)["slots"]
 		var index: int = members.find(raw)
-		return "%s · место %d" % [(sites[site_id] as Dictionary)["name"], index + 1]
+		return "%s · space %d" % [(sites[site_id] as Dictionary)["name"], index + 1]
 
 	return label_for(value, choice_type)
 
@@ -165,25 +193,25 @@ func _board_label(value: Variant, choice_type: String) -> String:
 static func label_for(value: Variant, choice_type: String) -> String:
 	# Пропуск: "" для целей-строк, -1 для индексов маркета.
 	if typeof(value) == TYPE_STRING and String(value) == "":
-		return "Отказаться"
+		return "Skip"
 	if typeof(value) == TYPE_INT and int(value) == -1:
-		return "Отказаться"
+		return "Skip"
 
 	match choice_type:
 		"confirm":
-			return "Да" if bool(value) else "Нет"
+			return "Yes" if bool(value) else "No"
 		"choose_option":
-			return "Вариант %d" % (int(value) + 1)
+			return "Option %d" % (int(value) + 1)
 		"target_card":
 			return _card_label(String(value))
 		"target_market_index":
-			return "Маркет, слот %d" % (int(value) + 1)
+			return "Market slot %d" % (int(value) + 1)
 		"target_player":
-			return "Игрок %s" % value
+			return EventLogPanel.player_name(String(value))
 		"target_site":
-			return "Локация %s" % value
+			return "Site %s" % value
 		"target_slot":
-			return "Слот %s" % value
+			return "Space %s" % value
 		_:
 			return str(value)
 
@@ -195,7 +223,7 @@ static func _card_label(raw: String) -> String:
 	var suffix := ""
 	if raw.begins_with("inner:"):
 		card_id = raw.substr(6)
-		suffix = " (из Внутреннего круга)"
+		suffix = " (from Inner Circle)"
 	var data: Dictionary = CardLibrary.card_data(card_id)
 	if data.is_empty():
 		return raw

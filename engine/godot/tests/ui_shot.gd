@@ -65,6 +65,10 @@ func _run_scenario() -> void:
 			for arg2 in OS.get_cmdline_user_args():
 				if arg2.begins_with("--card="):
 					card = arg2.get_slice("=", 1)
+			# сперва оба игрока выбирают стартовые локации (первый вариант)
+			while _screen.server.resolver.is_waiting():
+				var pd3: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd3.player_id, pd3.legal_options[0]))
 			var pid3: String = _screen.server.state.current_player()
 			_screen.server.state.players[pid3].deck.hand.append(card)
 			_screen.refresh(StateView.for_player_with_pending(

@@ -45,7 +45,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	var hand: Array = p.get("hand", [])
 	var playable: Array = (view.get("legal", {}) as Dictionary).get("play_card", [])
-	_title.text = "Рука игрока %s — %d карт" % [viewer_id, hand.size()]
+	_title.text = "%s's hand — %d card%s%s" % [EventLogPanel.player_name(viewer_id), hand.size(),
+		"" if hand.size() == 1 else "s", "  (click a bright card to play it)" if not playable.is_empty() else ""]
 
 	for cid: String in hand:
 		var card := CardView.new(cid, 146, 160, 6)

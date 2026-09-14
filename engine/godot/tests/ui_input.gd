@@ -41,6 +41,13 @@ func _initialize() -> void:
 	print("\n=== клики по интерфейсу ===\n")
 	_screen = GameScreen.new(7)
 	root.add_child(_screen)
+	# Партия начинается с выбора стартовых локаций; пока он не сделан, карты и
+	# кнопки заблокированы. Выбираем первые варианты — клики проверяем дальше.
+	var guard := 0
+	while _screen.server.resolver.is_waiting() and guard < 10:
+		guard += 1
+		var pd: PendingDecision = _screen.server.resolver.pending
+		_screen.send(Intent.make_decision(pd.player_id, pd.legal_options[0]))
 
 
 func _process(_delta: float) -> bool:
@@ -117,7 +124,7 @@ func _step_click_market_card() -> void:
 
 func _step_click_end_turn() -> void:
 	_turn_owner = _screen.server.state.current_player()
-	var button := _find_button(_screen, "Завершить ход")
+	var button := _find_button(_screen, "End turn")
 	check(button != null and not button.disabled, "кнопка завершения хода доступна")
 	if button != null:
 		_click(button)

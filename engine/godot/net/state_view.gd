@@ -227,6 +227,10 @@ static func _pending_decision_view(state: GameState, viewer_id: String) -> Dicti
 static func for_player_with_pending(state: GameState, viewer_id: String, pending: PendingDecision) -> Dictionary:
 	var view: Dictionary = for_player(state, viewer_id)
 	view["pending_decision"] = _decision_dict(pending, viewer_id)
+	# Пока ждём ответа на вопрос карты, сервер отклонит любое другое действие,
+	# поэтому и интерфейс не должен предлагать ни карты, ни кнопки.
+	if pending != null:
+		view["legal"] = {}
 	return view
 
 

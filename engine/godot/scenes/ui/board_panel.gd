@@ -53,6 +53,8 @@ var _dragging := false
 var _drag_moved := false
 var _drag_from := Vector2.ZERO
 var _font: Font
+var _user_moved := false         # игрок сам менял масштаб/сдвиг
+var top_inset := 0.0
 
 
 func _init() -> void:
@@ -103,7 +105,7 @@ func _fit_zoom() -> float:
 	var span: Vector2 = max_p - min_p
 	if span.x <= 0.0 or span.y <= 0.0:
 		return 0.2
-	return minf(size.x / span.x, size.y / span.y)
+	return minf(size.x / span.x, maxf(size.y - top_inset, 100.0) / span.y)
 
 
 func _board_centre() -> Vector2:
@@ -122,12 +124,28 @@ func _ensure_view() -> void:
 		_pan = _board_centre()
 
 
+## Центр видимой части: сверху её может занимать плашка решения (top_inset).
+func _view_centre() -> Vector2:
+	return Vector2(size.x * 0.5, (size.y + top_inset) * 0.5)
+
+
+## Сколько пикселей сверху закрыто плашкой решения. Пока обзор не трогали
+## руками, доска заново вписывается в оставшееся место.
+func set_top_inset(value: float) -> void:
+	if is_equal_approx(value, top_inset):
+		return
+	top_inset = value
+	if not _user_moved:
+		_zoom = 0.0
+	queue_redraw()
+
+
 func _to_screen(world: Vector2) -> Vector2:
-	return (world - _pan) * _zoom + size * 0.5
+	return (world - _pan) * _zoom + _view_centre()
 
 
 func _to_world(screen: Vector2) -> Vector2:
-	return (screen - size * 0.5) / _zoom + _pan
+	return (screen - _view_centre()) / _zoom + _pan
 
 
 # --- отрисовка ----------------------------------------------------------------
@@ -180,6 +198,7 @@ func _draw() -> void:
 			draw_arc(pos, radius + 3.0, 0, TAU, 24, KILL_COLOR, maxf(2.0, radius * 0.18))
 
 	_draw_spies()
+	_draw_spy_targets()
 	_draw_decision_targets()
 	_draw_hint()
 
@@ -274,11 +293,54 @@ func _draw_decision_targets() -> void:
 		draw_arc(pos, radius * 2.4, 0, TAU, 32, DECISION_COLOR, maxf(2.0, radius * 0.22))
 
 
+## Вражеские шпионы, которых можно вернуть за 3 Power, — оранжевым кольцом
+## вокруг локации (раньше их ничем не выделяли, и действие было не найти).
+func _draw_spy_targets() -> void:
+	var targets: Array = (_view.get("legal", {}) as Dictionary).get("return_spy", [])
+	var radius: float = maxf(SLOT_RADIUS_WORLD * _zoom, 3.0)
+	for t in targets:
+		var centre: Variant = _site_centre(String((t as Dictionary)["site_id"]))
+		if centre != null:
+			draw_arc(_to_screen(centre), radius * 2.4, 0, TAU, 32, KILL_COLOR, maxf(2.0, radius * 0.22))
+
+
+## Центр локации в мировых координатах (среднее её слотов) или null.
+func _site_centre(site_id: String) -> Variant:
+	var sites: Dictionary = _board.get("sites", {})
+	var slots: Dictionary = _board.get("slots", {})
+	if not sites.has(site_id):
+		return null
+	var centre := Vector2.ZERO
+	var counted := 0
+	for slot_id in ((sites[site_id] as Dictionary)["slots"] as Array):
+		if slots.has(slot_id):
+			centre += Vector2(float(slots[slot_id]["x"]), float(slots[slot_id]["y"]))
+			counted += 1
+	return centre / counted if counted > 0 else null
+
+
 func _draw_hint() -> void:
-	var text := "колесо — масштаб, перетаскивание — сдвиг"
+	var text := "wheel: zoom · drag: pan · double-click: fit board"
 	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 	draw_string(_font, Vector2(size.x - width - 8, size.y - 8), text,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.6, 0.6, 0.66, 0.7))
+
+	# Легенда колец — только те цвета, что сейчас есть на доске.
+	var legal: Dictionary = _view.get("legal", {})
+	var entries: Array = []
+	var pending_type := String((_view.get("pending_decision", {}) as Dictionary).get("choice_type", ""))
+	if DecisionDialog.BOARD_CHOICES.has(pending_type):
+		entries.append([DECISION_COLOR, "card target"])
+	if not (legal.get("deploy_slots", []) as Array).is_empty():
+		entries.append([DEPLOY_COLOR, "Deploy (1 Power)"])
+	if not (legal.get("assassinate_slots", []) as Array).is_empty() \
+			or not (legal.get("return_spy", []) as Array).is_empty():
+		entries.append([KILL_COLOR, "Assassinate / return spy (3 Power)"])
+	var at := Vector2(12, size.y - 12)
+	for entry in entries:
+		draw_arc(at + Vector2(6, -5), 6.0, 0, TAU, 16, entry[0], 2.5)
+		draw_string(_font, at + Vector2(18, 0), String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.9, 0.9, 0.92))
+		at.x += 30 + _font.get_string_size(String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
 
 
 ## Навести обзор на точку доски с заданным масштабом. Нужно интерфейсу
@@ -307,6 +369,7 @@ func _gui_input(event: InputEvent) -> void:
 				if mb.pressed:
 					if mb.double_click:
 						_zoom = 0.0  # вернуть обзор всей доски
+						_user_moved = false
 						queue_redraw()
 						accept_event()
 						return
@@ -323,12 +386,14 @@ func _gui_input(event: InputEvent) -> void:
 		if mm.position.distance_to(_drag_from) > 4.0:
 			_drag_moved = true
 		_pan -= mm.relative / _zoom
+		_user_moved = true
 		queue_redraw()
 		accept_event()
 
 
 func _zoom_at(screen_point: Vector2, factor: float) -> void:
 	_ensure_view()
+	_user_moved = true
 	var before := _to_world(screen_point)
 	_zoom = clampf(_zoom * factor, ZOOM_MIN, ZOOM_MAX)
 	# точка под курсором должна остаться на месте

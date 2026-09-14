@@ -98,7 +98,7 @@ func set_card(cid: String) -> void:
 	if data.is_empty():
 		_name_label.text = "?" + cid
 		_cost_label.text = ""
-		_meta_label.text = "нет данных о карте"
+		_meta_label.text = "no card data"
 		_text_label.text = ""
 		_vp_label.text = ""
 		return
@@ -126,15 +126,20 @@ func set_card(cid: String) -> void:
 	var ic_vp = data.get("inner_circle_vp")
 	var parts: Array[String] = []
 	if deck_vp != null:
-		parts.append("колода %d" % int(deck_vp))
+		parts.append("deck %d" % int(deck_vp))
 	if ic_vp != null:
-		parts.append("круг %d" % int(ic_vp))
+		parts.append("inner circle %d" % int(ic_vp))
 	_vp_label.text = "VP: " + ", ".join(parts) if not parts.is_empty() else ""
 
 
+## Доступная карта — яркая, с толстой рамкой и курсором-рукой; недоступная —
+## приглушённая. Раньше разница была только в яркости и её не замечали.
 func set_clickable(value: bool) -> void:
 	clickable = value
-	modulate = Color(1, 1, 1) if value else Color(0.62, 0.62, 0.66)
+	modulate = Color(1, 1, 1) if value else Color(0.55, 0.55, 0.6)
+	_style.set_border_width_all(4 if value else 2)
+	_style.bg_color = Color(0.19, 0.18, 0.24) if value else Color(0.14, 0.13, 0.18)
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if value else Control.CURSOR_ARROW
 
 
 func _gui_input(event: InputEvent) -> void:

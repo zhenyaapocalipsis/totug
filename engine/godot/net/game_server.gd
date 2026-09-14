@@ -114,14 +114,18 @@ func _apply(intent: Intent) -> int:
 
 	match intent.type:
 		Intent.Type.PLAY_CARD:
+			# Событие пишем до розыгрыша, чтобы в журнале оно шло перед эффектами карты.
+			if state.players[intent.player_id].deck.hand.has(intent.card_id):
+				resolver.log_event("play_card", {"player_id": intent.player_id, "card_id": intent.card_id})
 			if not TurnEngine.play_card(state, intent.player_id, intent.card_id, resolver):
 				return Error.INVALID_ACTION
 			return Error.OK
 
 		Intent.Type.ACTION_ASSASSINATE:
+			var victim := String(state.troops.get(intent.slot_id, ""))
 			if not Actions.assassinate(state, intent.player_id, intent.slot_id):
 				return Error.INVALID_ACTION
-			resolver.log_event("assassinate", {"player_id": intent.player_id, "slot_id": intent.slot_id})
+			resolver.log_event("assassinate", {"player_id": intent.player_id, "slot_id": intent.slot_id, "victim": victim})
 			return Error.OK
 
 		Intent.Type.ACTION_DEPLOY:
@@ -134,9 +138,11 @@ func _apply(intent: Intent) -> int:
 			var cost: int = CardLibrary.card_cost(Actions.ghost_market_card(state, intent.player_id)) if intent.market_index == Market.DEVOURED_TOP_INDEX else state.market.card_cost(intent.market_index)
 			if cost < 0:
 				return Error.INVALID_ACTION
+			var bought: String = Actions.ghost_market_card(state, intent.player_id) \
+				if intent.market_index == Market.DEVOURED_TOP_INDEX else String(state.market.display[intent.market_index])
 			if not Actions.recruit(state, intent.player_id, intent.market_index, cost):
 				return Error.INVALID_ACTION
-			resolver.log_event("recruit", {"player_id": intent.player_id, "market_index": intent.market_index})
+			resolver.log_event("recruit", {"player_id": intent.player_id, "market_index": intent.market_index, "card_id": bought})
 			return Error.OK
 
 		Intent.Type.ACTION_RECRUIT_SUPPLY:

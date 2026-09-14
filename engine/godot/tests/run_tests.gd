@@ -70,6 +70,7 @@ func _initialize() -> void:
 	test_vp_income_is_explained()
 	test_control_markers()
 	test_presence_slots_explain_refusal()
+	test_no_actions_while_decision_pending()
 	test_cross_hex_site_to_site_presence()
 	test_edge_ports_follow_art()
 
@@ -1798,15 +1799,15 @@ func test_choose_option_answer_protocol() -> void:
 		"противнику подписи вариантов не видны")
 
 	# подпись кнопки берётся из option_labels, а не из номера
-	check_eq(DecisionDialog.label_for(0, "choose_option"), "Вариант 1",
+	check_eq(DecisionDialog.label_for(0, "choose_option"), "Option 1",
 		"без подписи вариант подписывается номером, считая с единицы")
 	check_eq(DecisionDialog.label_for("48342", "target_card"), "Noble",
 		"карта в диалоге подписывается названием, а не числовым id")
-	check_eq(DecisionDialog.label_for("", "target_card"), "Отказаться",
+	check_eq(DecisionDialog.label_for("", "target_card"), "Skip",
 		"пустая строка в вариантах — это отказ")
-	check_eq(DecisionDialog.label_for(-1, "target_market_index"), "Отказаться",
+	check_eq(DecisionDialog.label_for(-1, "target_market_index"), "Skip",
 		"-1 среди индексов маркета — тоже отказ")
-	check_eq(DecisionDialog.label_for(true, "confirm"), "Да", "подтверждение читается словом")
+	check_eq(DecisionDialog.label_for(true, "confirm"), "Yes", "подтверждение читается словом")
 
 
 func test_return_troop_on_real_board_ids() -> void:
@@ -1876,7 +1877,7 @@ func test_return_troop_on_real_board_ids() -> void:
 	var dialog := DecisionDialog.new()
 	dialog.board = StateView.board_snapshot(state)
 	var label: String = dialog._board_label("troop|" + victim_slot, "target_slot")
-	check(label.begins_with("Войско: "), "составная цель подписана по-человечески: %s" % label)
+	check(label.begins_with("Troop: "), "составная цель подписана по-человечески: %s" % label)
 	check(not label.contains("|"), "в подписи не осталось служебного разделителя")
 	dialog.free()
 
@@ -1984,7 +1985,7 @@ func test_vp_income_is_explained() -> void:
 			"сумма причин совпадает с начисленным (маркеры %d + бонус %d)"
 				% [int(income_event["markers"]), int(income_event["cluster_bonus"])])
 		var line := EventLogPanel.describe(income_event)
-		check(line.contains("маркеры контроля") or line.contains("бонус гекса A2"),
+		check(line.contains("control markers") or line.contains("A2 hex bonus"),
 			"строка журнала объясняет причину: %s" % line)
 
 
@@ -2219,3 +2220,20 @@ func test_audit_card_fixes() -> void:
 	r.resume(state, Supplies.INSANE_OUTCAST)
 	check(not red.deck.inner_circle.has(Supplies.INSANE_OUTCAST), "Insane Outcast не повышается")
 	check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), outcasts + 1, "а возвращается в общую стопку")
+
+func test_no_actions_while_decision_pending() -> void:
+	section("Этап 3: пока карта ждёт ответа, интерфейсу не предлагаются действия")
+	var state := GameSetup.new_game(["red", "blue"], 7, [], false, true, true)
+	var server := GameServer.new(state)
+	var pending: PendingDecision = server.resolver.pending
+	check(pending != null, "партия начинается с вопроса о стартовой локации")
+	if pending == null:
+		return
+	var view := StateView.for_player_with_pending(server.state, pending.player_id, pending)
+	check((view["legal"] as Dictionary).is_empty(), "во время вопроса legal пуст: ни карт, ни End turn")
+	check(not (view["pending_decision"] as Dictionary).is_empty(), "а сам вопрос в срезе есть")
+	var result: Dictionary = server.apply_intent(Intent.end_turn(pending.player_id))
+	check_eq(int(result["error"]), GameServer.Error.AWAITING_DECISION, "сервер и правда отклоняет End turn")
+
+	var line := EventLogPanel.describe({"type": "recruit", "player_id": "red", "card_id": "48342"})
+	check_eq(line, "Red recruits Noble", "журнал называет купленную карту")

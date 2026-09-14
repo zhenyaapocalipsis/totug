@@ -49,7 +49,7 @@ func _init() -> void:
 	col.add_child(_grid)
 
 	var supply_title := Label.new()
-	supply_title.text = "Общие стопки"
+	supply_title.text = "Supply stacks"
 	supply_title.add_theme_font_size_override("font_size", 12)
 	supply_title.modulate = Color(0.7, 0.7, 0.75)
 	col.add_child(supply_title)
@@ -69,7 +69,7 @@ func update_from_view(view: Dictionary) -> void:
 	var display: Array = market["display"]
 	var legal: Dictionary = view.get("legal", {})
 	var affordable: Array = legal.get("recruit_market", [])
-	_title.text = "Маркет — в колоде осталось %d карт" % int(market["deck_size"])
+	_title.text = "Market — %d cards left in the deck" % int(market["deck_size"])
 
 	for i in range(display.size()):
 		var cid: String = display[i]
@@ -101,7 +101,7 @@ func update_from_view(view: Dictionary) -> void:
 		card.pressed.connect(func(cid: String): supply_card_clicked.emit(cid))
 		box.add_child(card)
 		var left_label := Label.new()
-		left_label.text = "осталось %d" % left
+		left_label.text = "%d left" % left
 		left_label.add_theme_font_size_override("font_size", 11)
 		left_label.modulate = Color(0.7, 0.7, 0.75) if left > 0 else Color(0.6, 0.35, 0.35)
 		box.add_child(left_label)
@@ -115,7 +115,7 @@ func update_from_view(view: Dictionary) -> void:
 		io_card.set_clickable(false)  # его не покупают, только раздают эффектами карт
 		io.add_child(io_card)
 		var io_label := Label.new()
-		io_label.text = "осталось %d (не покупается)" % int(supplies[Supplies.INSANE_OUTCAST])
+		io_label.text = "%d left (not for sale)" % int(supplies[Supplies.INSANE_OUTCAST])
 		io_label.add_theme_font_size_override("font_size", 11)
 		io_label.modulate = Color(0.7, 0.7, 0.75)
 		io.add_child(io_label)
@@ -132,7 +132,7 @@ func _empty_slot() -> Control:
 	style.set_corner_radius_all(6)
 	panel.add_theme_stylebox_override("panel", style)
 	var label := Label.new()
-	label.text = "колода\nмаркета\nпуста"
+	label.text = "market\ndeck\nempty"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.modulate = Color(0.5, 0.5, 0.55)
