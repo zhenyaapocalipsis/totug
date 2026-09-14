@@ -1186,6 +1186,21 @@ func test_deploy_and_assassinate_effects() -> void:
 	check_eq(state.troops.get(target, ""), "", "слот жертвы опустел")
 	check(victim_owner != "red", "жертва не могла быть собственным войском")
 
+	# MoveTroop: брать можно только вражеское войско в своём Присутствии,
+	# ставить — в любой пустой слот (Присутствие там не нужно)
+	var ms := _build_two_player_state()
+	ms.troops = {"a1": "red", "a2": "", "r1": "blue", "r2": "", "b1": "blue"}
+	var mr := EffectResolver.new()
+	mr.apply(MoveTroop.new(1), "red", ms)
+	check(mr.is_waiting(), "MoveTroop запрашивает войско")
+	check_eq(mr.pending.legal_options, ["r1"], "MoveTroop: только враг в Присутствии (не b1)")
+	mr.resume(ms, "r1")
+	check(mr.pending.legal_options.has("r2"), "MoveTroop: цель без Присутствия разрешена")
+	mr.resume(ms, "r2")
+	check_eq(ms.troops.get("r2", ""), "blue", "войско переехало")
+	ms.troops = {"a1": "red", "a2": "", "r1": "", "r2": "", "b1": "blue"}
+	check(not MoveTroop.new(1).is_available(ms, "red"), "MoveTroop недоступен без врагов в Присутствии")
+
 
 func test_devour_and_promote_effects() -> void:
 	section("DevourCard / PromoteCard (примитивы)")

@@ -2,8 +2,8 @@ class_name MoveTroop
 extends CardEffect
 
 ## "Move an enemy troop" / "Move up to N enemy troops" — двухшаговый выбор на
-## каждую единицу: сначала вражеское войско (любое на доске, без Presence —
-## это не действие владельца войска), затем любой пустой слот на доске.
+## каждую единицу: сначала вражеское войско в Присутствии игрока (подтвердил
+## владелец игры), затем любой пустой слот на доске — Присутствие там не нужно.
 ## Единственный примитив, который переиспользует один и тот же экземпляр как
 ## pd.target_effect несколько решений подряд (сам себе "reset" _answered), а
 ## не создаёт новый объект на каждый шаг — задокументированное исключение из
@@ -49,11 +49,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 func _continue(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	if remaining <= 0:
 		return
-	var legal: Array = []
-	for slot_id: String in state.graph.slots.keys():
-		var owner: String = state.troops.get(slot_id, "")
-		if owner != "" and owner != player_id:
-			legal.append(slot_id)
+	var legal := _legal_sources(state, player_id)
 	if legal.is_empty():
 		return
 	var pd := PendingDecision.new()
@@ -65,6 +61,21 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		pd.legal_options.append("")
 	pd.target_effect = self
 	resolver.request_decision(pd)
+
+
+func is_available(state: GameState, player_id: String) -> bool:
+	return not _legal_sources(state, player_id).is_empty()
+
+
+func _legal_sources(state: GameState, player_id: String) -> Array:
+	var legal: Array = []
+	for slot_id: String in state.graph.slots.keys():
+		var owner: String = state.troops.get(slot_id, "")
+		if owner == "" or owner == player_id:
+			continue
+		if state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
+			legal.append(slot_id)
+	return legal
 
 
 func _request_dest(state: GameState, player_id: String, resolver: EffectResolver) -> void:
