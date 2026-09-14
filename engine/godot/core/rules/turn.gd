@@ -30,7 +30,7 @@ const HAND_SIZE := 5
 ## успеть потратить до конца этого же хода, иначе они сгорят как обычные
 ## неизрасходованные Power/Influence (рулбук стр. 7). Также сбрасывает
 ## played_aspects_this_turn нового хода.
-static func start_turn(state: GameState, player_id: String) -> void:
+static func start_turn(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
 	state.played_aspects_this_turn.clear()
 	state.ghost_market_player = ""
 	var p: PlayerState = state.players[player_id]
@@ -41,6 +41,13 @@ static func start_turn(state: GameState, player_id: String) -> void:
 	# локацию с маркером. Тоже в начале хода — иначе сгорит, не успев пригодиться.
 	var markers: ControlMarkers.Reward = ControlMarkers.evaluate(state, player_id)
 	p.influence += markers.influence
+	if resolver != null and (bonus.power + bonus.influence + markers.influence) > 0:
+		resolver.log_event("turn_income", {
+			"player_id": player_id,
+			"a2_power": bonus.power,
+			"a2_influence": bonus.influence,
+			"marker_influence": markers.influence,
+		})
 
 
 ## Розыгрыш карты (этап 5). Переносит карту из руки в played_pile, регистрирует

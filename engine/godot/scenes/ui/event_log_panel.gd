@@ -116,6 +116,13 @@ static func describe(e: Dictionary) -> String:
 			return "%s: рекрут без оплаты — %s" % [who, card_name(String(e.get("card_id", "")))]
 		"return_spy":
 			return "%s: шпион игрока %s возвращён с %s" % [who, e.get("spy_owner", "?"), e.get("site_id", "?")]
+		"turn_income":
+			var parts: Array[String] = []
+			if int(e.get("a2_power", 0)) + int(e.get("a2_influence", 0)) > 0:
+				parts.append("бонус гекса A2: +%d Power, +%d Influence" % [int(e.get("a2_power", 0)), int(e.get("a2_influence", 0))])
+			if int(e.get("marker_influence", 0)) > 0:
+				parts.append("маркеры: +%d Influence" % int(e.get("marker_influence", 0)))
+			return "%s: начало хода — %s" % [who, "; ".join(parts)]
 		"turn_ended":
 			return "%s: ход завершён%s" % [who, "  — ПАРТИЯ ОКОНЧЕНА" if bool(e.get("game_over", false)) else ""]
 		"promote":

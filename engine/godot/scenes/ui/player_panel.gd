@@ -104,6 +104,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			var ctrl: Array = income.get("marker_sites", [])
 			lines.append("В начале хода: +%d Influence за маркеры (%s)." % [
 				int(income["marker_influence"]), ", ".join(PackedStringArray(ctrl))])
+		if int(income.get("cluster_power", 0)) + int(income.get("cluster_influence", 0)) > 0:
+			lines.append("В начале хода: +%d Power, +%d Influence за бонус гекса A2." % [
+				int(income.get("cluster_power", 0)), int(income.get("cluster_influence", 0))])
 		var controlled: Array = income.get("controlled", [])
 		lines.append("Локаций под контролем: %d, в конце игры они дадут %d VP." % [
 			controlled.size(), int(income.get("final_sites", 0))])

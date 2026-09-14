@@ -53,6 +53,7 @@ func _initialize() -> void:
 	test_game_server_play_card_with_decision()
 	test_game_server_end_turn_advances()
 	test_game_server_end_of_game()
+	test_game_server_grants_a2_bonus()
 
 
 	# этап 7: настоящая партия и общие стопки
@@ -1410,6 +1411,38 @@ func test_game_server_end_turn_advances() -> void:
 	res = server.apply_intent(Intent.end_turn("green"))
 	check_eq(res["error"], GameServer.Error.OK, "green завершил ход")
 	check_eq(state.current_player(), "red", "ход вернулся к red по кругу")
+
+
+## Настоящая партия идёт через GameServer: бонус A2 должен начисляться и там,
+## а не только при прямом вызове TurnEngine.start_turn в тестах.
+func test_game_server_grants_a2_bonus() -> void:
+	section("GameServer: бонус гекса A2 в настоящей партии")
+	for tier in [["troops", 0, 1, 0], ["control", 1, 1, 1], ["total", 2, 2, 4]]:
+		var state := GameState.new(_build_a2_graph(), 5)
+		state.add_player("red", [])
+		state.add_player("blue", [])
+		for prefix in ["fogtown", "gallenghast", "darkflame"]:
+			match tier[0]:
+				"troops":
+					state.troops[prefix + "_0"] = "red"
+					state.troops[prefix + "_1"] = "blue"
+				"control":
+					state.troops[prefix + "_0"] = "red"
+					state.troops[prefix + "_1"] = "red"
+					state.troops[prefix + "_2"] = "blue"
+				"total":
+					for i in range(3):
+						state.troops["%s_%d" % [prefix, i]] = "red"
+		var server := GameServer.new(state)
+		var red: PlayerState = state.players["red"]
+		check_eq([red.power, red.influence], [tier[1], tier[2]],
+			"%s: первый ход red сразу получает Power/Influence" % tier[0])
+		var vp_before := red.vp_tokens
+		server._apply(Intent.end_turn("red"))  # без StateView: у мини-состояния нет маркета
+		check_eq(red.vp_tokens - vp_before, tier[3], "%s: VP в конце хода" % tier[0])
+		server._apply(Intent.end_turn("blue"))
+		check_eq([red.power, red.influence], [tier[1], tier[2]],
+			"%s: на следующем ходу бонус начислен снова (не накопился)" % tier[0])
 
 
 func test_game_server_end_of_game() -> void:

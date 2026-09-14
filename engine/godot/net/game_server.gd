@@ -36,6 +36,20 @@ func _init(game_state: GameState) -> void:
 	state = game_state
 	resolver = EffectResolver.new()
 	_start_setup_if_needed()
+	_start_first_turn_if_ready()
+
+
+## Начало хода (TurnEngine.start_turn: бонус A2, Influence за маркеры, сброс
+## Focus) раньше вызывалось только в тестах — в настоящей партии эти ресурсы
+## не начислялись вовсе. Первый ход стартует, когда расставлены стартовые войска.
+var _first_turn_started := false
+
+
+func _start_first_turn_if_ready() -> void:
+	if _first_turn_started or resolver.is_waiting() or state.game_over:
+		return
+	_first_turn_started = true
+	TurnEngine.start_turn(state, state.current_player(), resolver)
 
 
 ## Если GameSetup.new_game был вызван с interactive_start=true, стартовые
@@ -89,6 +103,7 @@ func _apply(intent: Intent) -> int:
 		resolver.resume(state, intent.answer)
 		if not resolver.is_waiting() and _end_turn_pending_for != "":
 			_finish_pending_end_turn()
+		_start_first_turn_if_ready()
 		return Error.OK
 
 	if intent.type == Intent.Type.MAKE_DECISION:
@@ -160,3 +175,5 @@ func _finish_pending_end_turn() -> void:
 func _advance_turn_and_log(finished_player_id: String) -> void:
 	var ended: bool = GameEnd.advance_turn(state)
 	resolver.log_event("turn_ended", {"player_id": finished_player_id, "game_over": ended})
+	if not ended:
+		TurnEngine.start_turn(state, state.current_player(), resolver)

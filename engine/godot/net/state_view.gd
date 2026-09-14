@@ -55,7 +55,8 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	# B1-B6) и региональный бонус гекса A2.
 	if state.players.has(viewer_id):
 		var marker_reward: ControlMarkers.Reward = ControlMarkers.evaluate(state, viewer_id)
-		var bonus_vp: int = ClusterBonus.evaluate(state, viewer_id).vp
+		var bonus: ClusterBonus.Reward = ClusterBonus.evaluate(state, viewer_id)
+		var bonus_vp: int = bonus.vp
 		var final_sites_vp: int = state.control.map_score(viewer_id, state.troops, state.spies)
 		var names: Array[String] = []
 		for site_id: String in state.graph.sites.keys():
@@ -72,6 +73,8 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 			"marker_sites": marker_sites,
 			"marker_total_control_sites": total_sites,
 			"cluster_bonus": bonus_vp,
+			"cluster_power": bonus.power,
+			"cluster_influence": bonus.influence,
 			"total": marker_reward.vp + bonus_vp,
 			"final_sites": final_sites_vp,
 			"controlled": names,
