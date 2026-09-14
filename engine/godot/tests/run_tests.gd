@@ -71,6 +71,9 @@ func _initialize() -> void:
 	test_presence_slots_explain_refusal()
 	test_cross_hex_site_to_site_presence()
 
+	# этап 2 доработки: исправления по аудиту карт
+	test_audit_card_fixes()
+
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
 
@@ -1993,3 +1996,139 @@ func test_presence_slots_explain_refusal() -> void:
 	check_eq((legal2["deploy_slots"] as Array).size(), 0, "без Power разворачивать некуда")
 	check(not (legal2["presence_slots"] as Array).is_empty(),
 		"но Присутствие никуда не делось — интерфейс отличит 'нет Power' от 'нет Присутствия'")
+
+
+# --- этап 2 доработки: исправления по аудиту (Claude outputs/audit.md) ------
+
+## Отвечает первым "настоящим" вариантом на все решения, пока не встретится
+## решение нужного типа (или решений не останется). Возвращает его или null.
+func _resolve_until(state: GameState, resolver: EffectResolver, choice_type: String) -> PendingDecision:
+	var guard := 0
+	while resolver.is_waiting() and guard < 40:
+		guard += 1
+		var pd: PendingDecision = resolver.pending
+		if pd.choice_type == choice_type:
+			return pd
+		var answer = pd.legal_options[0]
+		for opt in pd.legal_options:
+			if not ((typeof(opt) == TYPE_STRING and opt == "") or (typeof(opt) == TYPE_INT and opt == -1)):
+				answer = opt
+				break
+		TurnEngine.resume_card(state, answer, resolver)
+	return null
+
+
+func _play(state: GameState, pid: String, card_id: String) -> EffectResolver:
+	state.players[pid].deck.hand.append(card_id)
+	var resolver := EffectResolver.new()
+	TurnEngine.play_card(state, pid, card_id, resolver)
+	return resolver
+
+
+func test_audit_card_fixes() -> void:
+	section("аудит: VP карт по сканам")
+	check_eq(int(CardLibrary.card_data("48501")["inner_circle_vp"]), 10, "Demogorgon: 10 VP во Внутреннем круге")
+	check_eq(int(CardLibrary.card_data("48734")["inner_circle_vp"]), 4, "Necromancer: 4 VP во Внутреннем круге")
+	check_eq(int(CardLibrary.card_data("48324")["inner_circle_vp"]), 5, "Information Broker: 5 VP во Внутреннем круге")
+
+	section("аудит: плата со стрелкой необязательна")
+	var state := _build_rich_state()
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var r := _play(state, "red", "48729")  # Skeletal Horde
+	var pd := _resolve_until(state, r, "confirm")
+	check(pd != null, "Skeletal Horde спрашивает, съесть ли себя")
+	TurnEngine.resume_card(state, false, r)
+	check(red.deck.played_pile.has("48729"), "отказ: карта осталась сыгранной")
+
+	state = _build_rich_state()
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var devoured_before := state.devoured_pile.size()
+	r = _play(state, "red", "48524")  # Mind Flayer
+	check(r.is_waiting() and r.pending.legal_options.has(""), "Mind Flayer: можно не съедать карту")
+	TurnEngine.resume_card(state, "", r)
+	check(not r.is_waiting(), "отказ: вариантов Mind Flayer не предлагается")
+	check_eq(state.devoured_pile.size(), devoured_before, "ничего не съедено")
+
+	section("аудит: сброс — считаем карты в руке, выбирает сбрасывающий")
+	state = _build_rich_state()
+	var blue: PlayerState = state.players["blue"]
+	var green: PlayerState = state.players["green"]
+	blue.deck.hand = ["48342", "48342", "48342"] as Array[String]
+	check(not ForceDiscard.new("victim", 3, "blue").is_available(state, "red"), "3 карты в руке — не сбрасывает")
+	blue.deck.hand.append("48712")
+	r = EffectResolver.new()
+	r.apply(ForceDiscard.new("victim", 3, "blue"), "red", state)
+	check(r.is_waiting() and r.pending.player_id == "blue", "4 карты — решение адресовано самому blue")
+	var blue_hand_before := blue.deck.hand.size()
+	r.resume(state, "48712")
+	check_eq(blue.deck.hand.size(), blue_hand_before - 1 + 2, "Grimlock: после сброса blue взял 2 карты")
+
+	green.deck.hand = ["48342", "48342", "48342", "48739"] as Array[String]
+	r = EffectResolver.new()
+	r.apply(ForceDiscard.new("victim", 3, "green"), "red", state)
+	r.resume(state, "48739")
+	check(r.is_waiting() and r.pending.player_id == "red", "Umber Hulk: виновник сброса (red) сам сбрасывает карту")
+
+	blue.deck.hand = ["48342", "48342", "48342", "48704"] as Array[String]
+	r = EffectResolver.new()
+	r.apply(ForceDiscard.new("victim", 3, "blue"), "red", state)
+	r.resume(state, "48704")
+	check(r.is_waiting() and r.pending.choice_type == "confirm", "Ambassador: предлагает повысить вместо сброса")
+	r.resume(state, true)
+	check(blue.deck.inner_circle.has("48704") and not blue.deck.discard_pile.has("48704"), "Ambassador ушёл во Внутренний круг")
+
+	check(CardLibrary.get_effect("48708") is ChooseEffect, "Nothic: сброс только внутри варианта с возвратом шпиона")
+
+	section("аудит: трофейный зал помнит цвета")
+	state = _build_rich_state()
+	red = state.players["red"]
+	blue = state.players["blue"]
+	for pid: String in state.turn_order:
+		state.players[pid].trophy_hall_count = 0
+		state.players[pid].white_trophy_count = 0
+	red.add_trophy("blue")
+	check_eq(red.player_trophy_count(), 1, "войско игрока считается как player troop")
+	check(not TakeFromTrophyHall.new(1, false, true).is_available(state, "red"), "Mummy Lord: без белых войск в залах вариант недоступен")
+	red.add_trophy("white")
+	check_eq(red.player_trophy_count(), 1, "белое войско не считается player troop")
+	var blue_barracks := blue.troops_in_barracks
+	r = EffectResolver.new()
+	r.apply(TakeFromTrophyHall.new(1, false, false), "red", state)
+	var labels: Array[String] = r.pending.option_labels
+	var blue_index := -1
+	for i in range(labels.size()):
+		if labels[i].begins_with("Blue"):
+			blue_index = i
+	check(blue_index != -1, "в вариантах есть синее войско из зала red")
+	r.resume(state, blue_index)
+	check(r.is_waiting() and r.pending.choice_type == "target_slot", "дальше выбираем, куда выставить")
+	var slot: String = r.pending.legal_options[0]
+	r.resume(state, slot)
+	check_eq(state.troops[slot], "blue", "войско выставлено своим (синим) цветом")
+	check_eq(blue.troops_in_barracks, blue_barracks, "бараки blue не изменились")
+	check_eq(red.trophy_hall_count, 1, "в зале red осталось одно (белое) войско")
+
+	section("аудит: Ghost и Insane Outcast")
+	state = _build_rich_state()
+	red = state.players["red"]
+	state.devoured_pile = ["48316"] as Array[String]  # Deathblade, стоимость 6
+	r = EffectResolver.new()
+	r.apply(CardLibrary._GhostDevouredPileEffect.new(), "red", state)
+	check_eq(Actions.ghost_market_card(state, "red"), "48316", "Ghost: верхняя сожранная карта доступна как карта маркета")
+	check_eq(Actions.ghost_market_card(state, "blue"), "", "у другого игрока эффекта нет")
+	red.influence = 6
+	check(Actions.recruit(state, "red", Market.DEVOURED_TOP_INDEX, 6), "её можно купить")
+	check(red.deck.discard_pile.has("48316") and state.devoured_pile.is_empty(), "карта ушла в сброс покупателя")
+
+	state = _build_rich_state()
+	red = state.players["red"]
+	state.supplies = Supplies.standard(true)
+	var outcasts := state.supplies.remaining(Supplies.INSANE_OUTCAST)
+	red.deck.discard_pile = [Supplies.INSANE_OUTCAST] as Array[String]
+	r = EffectResolver.new()
+	r.apply(PromoteCard.new("discard"), "red", state)
+	r.resume(state, Supplies.INSANE_OUTCAST)
+	check(not red.deck.inner_circle.has(Supplies.INSANE_OUTCAST), "Insane Outcast не повышается")
+	check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), outcasts + 1, "а возвращается в общую стопку")

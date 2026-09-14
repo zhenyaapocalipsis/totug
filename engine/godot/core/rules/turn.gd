@@ -32,6 +32,7 @@ const HAND_SIZE := 5
 ## played_aspects_this_turn нового хода.
 static func start_turn(state: GameState, player_id: String) -> void:
 	state.played_aspects_this_turn.clear()
+	state.ghost_market_player = ""
 	var p: PlayerState = state.players[player_id]
 	var bonus: ClusterBonus.Reward = ClusterBonus.evaluate(state, player_id)
 	p.power += bonus.power

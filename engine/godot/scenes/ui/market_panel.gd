@@ -82,6 +82,15 @@ func update_from_view(view: Dictionary) -> void:
 		card.pressed.connect(func(_cid: String): market_card_clicked.emit(index))
 		_grid.add_child(card)
 
+	# Ghost: верхняя сожранная карта до конца хода считается картой маркета.
+	var ghost_card: String = view.get("ghost_market_card", "")
+	if ghost_card != "":
+		var ghost := CardView.new(ghost_card, 140, 150, 5)
+		ghost.set_clickable(affordable.has(Market.DEVOURED_TOP_INDEX))
+		ghost.tooltip_text = "Top devoured card (Ghost)"
+		ghost.pressed.connect(func(_cid: String): market_card_clicked.emit(Market.DEVOURED_TOP_INDEX))
+		_grid.add_child(ghost)
+
 	var supplies: Dictionary = view.get("supplies", {})
 	var affordable_supply: Array = legal.get("recruit_supply", [])
 	for card_id: String in Supplies.PURCHASABLE:

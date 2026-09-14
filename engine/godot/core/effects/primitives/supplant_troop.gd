@@ -53,9 +53,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		if slot_id != null and slot_id != "":
 			var p: PlayerState = state.players[player_id]
 			var victim: String = state.troops.get(slot_id, "")
-			p.trophy_hall_count += 1
-			if victim == "white":
-				p.white_trophy_count += 1
+			p.add_trophy(victim)
 			if p.troops_in_barracks > 0:
 				state.troops[slot_id] = player_id
 				p.troops_in_barracks -= 1

@@ -114,8 +114,7 @@ class _MindwitnessFollowUp extends CardEffect:
 			if evt.get("type") == "assassinate" and evt.get("player_id") == player_id:
 				var victim: String = evt.get("victim", "")
 				if victim != "" and victim != "white" and victim != player_id and state.players.has(victim):
-					if state.players[victim].deck.cards_outside_inner_circle().size() > 3:
-						ForceDiscard.new("each_opponent", 0)._discard_one(state, victim, resolver)
+					resolver.push(ForceDiscard.new("victim", 3, victim), player_id)
 				break
 
 
@@ -124,12 +123,15 @@ class _ChuulDiscardEffect extends CardEffect:
 	func _init(s: String) -> void:
 		site_id = s
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var fd := ForceDiscard.new("each_opponent", 3)
+		# Каждый такой соперник сбрасывает ОДИН раз, сколько бы его войск тут ни стояло.
+		var victims: Array[String] = []
 		for slot_id: String in state.graph.slots_of_site(site_id):
 			var owner: String = state.troops.get(slot_id, "")
 			if owner != "" and owner != player_id and owner != "white":
-				if state.players[owner].deck.cards_outside_inner_circle().size() > 3:
-					fd._discard_one(state, owner, resolver)
+				if not victims.has(owner):
+					victims.append(owner)
+		for pid: String in victims:
+			resolver.push(ForceDiscard.new("victim", 3, pid), player_id)
 
 
 class _CarrionCrawlerDevour extends CardEffect:
@@ -167,38 +169,12 @@ class _CarrionCrawlerDevour extends CardEffect:
 
 
 class _GhostDevouredPileEffect extends CardEffect:
-	## УПРОЩЕНИЕ (см. progress.md): буквально карта даёт "до конца хода
-	## считать верхнюю карту сожранной колоды частью маркета" — то есть
-	## отложенную возможность рекрутировать её позже базовым действием. Здесь
-	## вместо этого сразу предлагается (You may) recruit ту же карту, оплатив
-	## Influence как обычно — тот же экономический эффект без отдельного
-	## временного слота маркета.
+	## "For the rest of your turn treat the top card of the devoured deck as if
+	## it was in the market" — до конца хода верхнюю карту devoured_pile можно
+	## купить обычным recruit (Market.DEVOURED_TOP_INDEX, см. Actions.recruit).
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		if state.devoured_pile.is_empty():
-			return
-		var top: String = state.devoured_pile[state.devoured_pile.size() - 1]
-		var cost: int = CardLibrary.card_cost(top)
-		if cost < 0:
-			return
-		resolver.push(OptionalEffect.new(_GhostRecruit.new(top, cost), "You may recruit %s" % top), player_id)
-
-class _GhostRecruit extends CardEffect:
-	var top_card: String
-	var cost: int
-	func _init(cid: String, c: int) -> void:
-		top_card = cid
-		cost = c
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var p: PlayerState = state.players[player_id]
-		if p.influence < cost:
-			return
-		var idx := state.devoured_pile.find(top_card)
-		if idx == -1:
-			return
-		state.devoured_pile.remove_at(idx)
-		p.influence -= cost
-		p.deck.discard_pile.append(top_card)
-		resolver.log_event("ghost_recruit", {"player_id": player_id, "card_id": top_card})
+		state.ghost_market_player = player_id
+		resolver.log_event("ghost_market", {"player_id": player_id})
 
 
 class _DrawPerSpy extends CardEffect:
@@ -228,7 +204,7 @@ class _LichEffect extends CardEffect:
 		var owner: String = CardLibrary._enemy_troop_owner_at_site(state, player_id, site_id)
 		if owner == "":
 			return
-		resolver.push(TakeFromTrophyHall.new(2, true, false, owner), player_id)
+		resolver.push(TakeFromTrophyHall.new(2, true, false, owner, false), player_id)
 
 
 ## ---- главная таблица ----
@@ -240,7 +216,7 @@ static func get_effect(card_id: String) -> CardEffect:
 		"48344":  # Soldier
 			return GainPower.new(1)
 		"48341":  # Insane Outcast
-			return SequenceEffect.new([DiscardCardEffect.new(1), RemoveSelfFromPlay.new(card_id)])
+			return RemoveSelfFromPlay.new(card_id)
 		"48343":  # Priestess of Lolth
 			return GainInfluence.new(2)
 		"48340":  # House Guard
@@ -321,7 +297,7 @@ static func get_effect(card_id: String) -> CardEffect:
 		"48415":  # Dragonclaw
 			return SequenceEffect.new([
 				AssassinateTroop.new(1),
-				ConditionalEffect.new(func(state, pid): return state.players[pid].trophy_hall_count >= 5, GainPower.new(2)),
+				ConditionalEffect.new(func(state, pid): return state.players[pid].player_trophy_count() >= 5, GainPower.new(2)),
 			])
 		"48407":  # Cleric of Laogzed
 			return SequenceEffect.new([MoveTroop.new(1), AtEndOfTurn.new(PromoteCard.new("played_other", card_id))])
@@ -340,7 +316,7 @@ static func get_effect(card_id: String) -> CardEffect:
 				PlaceSpy.new(1, false, func(site): return SupplantTroop.new(1, false, true, false, Callable(), site)),
 				ReturnOwnSpy.new(null, func(site): return SequenceEffect.new([
 					SupplantTroop.new(1, false, true, false, Callable(), site),
-					GainVpPerN.new("vp", "sites_controlled", 1, 1),
+					GainVpPerN.new("vp", "control_markers", 1, 1),
 				])),
 			], ["Place a spy, then supplant a troop at that site", "Return one of your spies -> supplant a troop at that spy's site, then gain VP per site controlled"])
 		"48400":  # Black Dragon
@@ -403,9 +379,9 @@ static func get_effect(card_id: String) -> CardEffect:
 		"48500":  # Balor
 			return DevourCard.new("hand", "", SequenceEffect.new([SupplantTroop.new(1, true, true), DeployTroop.new(1)]))
 		"48501":  # Demogorgon
-			return DevourCard.new("hand", "", SequenceEffect.new([SupplantTroop.new(2, true, true), GiveInsaneOutcast.new("each_opponent", 2)]))
+			return DevourCard.new("hand", "", SequenceEffect.new([SupplantTroop.new(2, true, false), GiveInsaneOutcast.new("each_opponent", 2)]))
 		"48535":  # Orcus
-			return DevourCard.new("hand", "", SequenceEffect.new([AssassinateTroop.new(2), OptionalEffect.new(TakeFromTrophyHall.new(2, true, false))]))
+			return DevourCard.new("hand", "", SequenceEffect.new([AssassinateTroop.new(2), TakeFromTrophyHall.new(2, true, false)]))
 		"48636":  # Water Elemental
 			return SequenceEffect.new([DeployTroop.new(2), FocusEffect.new("CONQUEST", DrawCards.new(1))])
 		"48610":  # Black Earth Cultist
@@ -461,7 +437,7 @@ static func get_effect(card_id: String) -> CardEffect:
 			])
 		"48629":  # Imix
 			return SequenceEffect.new([GainPower.new(4), FocusEffect.new("MALICE", GainPower.new(2))])
-		"48712":  # Grimlock -- реактивная часть ("if discarded by opponent") не реализована, см. progress.md
+		"48712":  # Grimlock -- реакция на сброс: ForceDiscard.VictimDiscard
 			return DeployTroop.new(1)
 		"48714":  # Cranium Rats
 			return SequenceEffect.new([DeployTroop.new(2), ForceDiscard.new("choose_opponent", 3)])
@@ -478,15 +454,15 @@ static func get_effect(card_id: String) -> CardEffect:
 		"48716":  # Mindwitness
 			return _MindwitnessEffect.new()
 		"48708":  # Nothic
-			return SequenceEffect.new([
-				ChooseEffect.new([PlaceSpy.new(1), ReturnOwnSpy.new(DrawCards.new(1))], ["Place a spy", "Return one of your spies -> Draw a card"]),
-				ForceDiscard.new("each_opponent", 3),
-			])
+			return ChooseEffect.new([
+				PlaceSpy.new(1),
+				ReturnOwnSpy.new(SequenceEffect.new([DrawCards.new(1), ForceDiscard.new("each_opponent", 3)])),
+			], ["Place a spy", "Return one of your spies -> Draw a card; each opponent with more than 3 cards discards a card"])
 		"48706":  # Chuul
 			return PlaceSpy.new(1, false, func(site): return _ChuulDiscardEffect.new(site))
-		"48704":  # Ambassador -- реактивная часть не реализована, см. progress.md
+		"48704":  # Ambassador -- реакция на сброс: ForceDiscard.VictimDiscard
 			return AtEndOfTurn.new(PromoteCard.new("played_other", card_id))
-		"48739":  # Umber Hulk -- реактивная часть не реализована, см. progress.md
+		"48739":  # Umber Hulk -- реакция на сброс: ForceDiscard.VictimDiscard
 			return DeployTroop.new(3)
 		"48718":  # Spectator
 			return SequenceEffect.new([GainPower.new(2), GainInfluence.new(1)])
@@ -520,25 +496,25 @@ static func get_effect(card_id: String) -> CardEffect:
 		"48727":  # Cultist of Myrkul
 			return ChooseEffect.new([
 				GainInfluence.new(2),
-				DevourCard.new("this", "48727", AtEndOfTurn.new(PromoteCard.new("played_other", card_id, Callable(), 2, true))),
+				DevourCard.new("this", "48727", AtEndOfTurn.new(PromoteCard.new("played_other", card_id, Callable(), 2, true)), false),
 			], ["+2 Influence", "Devour this card -> at end of turn, promote up to 2 other cards played this turn"])
 		"48720":  # Vampire Spawn
 			return SequenceEffect.new([GainInfluence.new(1), ReturnTroopOrSpy.new(1)])
 		"48735":  # Minotaur Skeleton
 			return ChooseEffect.new([
 				DeployTroop.new(3),
-				DevourCard.new("this", "48735", AssassinateTroop.new(3, true, true, true)),
+				DevourCard.new("this", "48735", AssassinateTroop.new(3, true, true, true), false),
 			], ["Deploy three troops", "Devour this card -> assassinate up to three white troops at a single site"])
 		"48736":  # Flesh Golem
 			return SequenceEffect.new([GainPower.new(2), DevourCard.new("this", "48736", AssassinateTroop.new(1))])
 		"48726":  # Ravenous Zombies
 			return SequenceEffect.new([GainInfluence.new(1), AssassinateTroop.new(1, true)])
 		"48724":  # Wight
-			return ChooseEffect.new([GainInfluence.new(2), DevourCard.new("hand", "", SupplantTroop.new(1))],
+			return ChooseEffect.new([GainInfluence.new(2), DevourCard.new("hand", "", SupplantTroop.new(1), false)],
 				["+2 Influence", "Devour a card in your hand -> Supplant a troop"])
 		"48723":  # Ghost -- см. _GhostDevouredPileEffect: упрощение относительно RAW
 			return ChooseEffect.new([PlaceSpy.new(1), ReturnOwnSpy.new(_GhostDevouredPileEffect.new())],
-				["Place a spy", "Return one of your spies -> (упрощено) recruit the top of the devoured pile"])
+				["Place a spy", "Return one of your spies -> treat the top devoured card as if it was in the market this turn"])
 		"48738":  # Revenant
 			return SequenceEffect.new([
 				AssassinateTroop.new(2),
@@ -556,7 +532,7 @@ static func get_effect(card_id: String) -> CardEffect:
 			return ChooseEffect.new([PlaceSpy.new(1), ReturnOwnSpy.new(RecruitFree.new("", 3, 2, true))],
 				["Place a spy", "Return one of your spies -> Recruit up to 2 cards that cost 3 or less"])
 		"48721":  # Death Knight
-			return SequenceEffect.new([SupplantTroop.new(1), GainVpPerN.new("vp", "trophy_hall", 5, 1)])
+			return SequenceEffect.new([SupplantTroop.new(1), GainVpPerN.new("vp", "player_trophy", 5, 1)])
 		"48725":  # Mummy Lord
 			var step := func(): return ChooseEffect.new([
 				AssassinateTroop.new(1, true),

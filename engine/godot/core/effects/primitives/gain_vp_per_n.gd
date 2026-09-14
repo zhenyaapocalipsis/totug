@@ -57,6 +57,14 @@ func _count_source(state: GameState, player_id: String) -> int:
 				if state.control.has_total_control(player_id, site_id, state.troops, state.spies):
 					n += 1
 			return n
+		"control_markers":
+			var n := 0
+			for site_id: String in ControlMarkers.marked_sites(state):
+				if state.control.controller_of(site_id, state.troops) == player_id:
+					n += 1
+			return n
+		"player_trophy":
+			return p.player_trophy_count()
 		"white_trophy":
 			return p.white_trophy_count
 		"trophy_hall":

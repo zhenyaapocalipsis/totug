@@ -27,8 +27,9 @@ static func assassinate(state: GameState, player_id: String, slot_id: String) ->
 	if not legal.has(slot_id):
 		return false
 	p.power -= COST_ASSASSINATE
+	var victim: String = state.troops.get(slot_id, "")
 	state.troops[slot_id] = ""
-	p.trophy_hall_count += 1
+	p.add_trophy(victim)
 	return true
 
 
@@ -65,6 +66,14 @@ static func recruit(state: GameState, player_id: String, market_index: int, card
 	var p: PlayerState = state.players[player_id]
 	if p.influence < card_cost:
 		return false
+	if market_index == Market.DEVOURED_TOP_INDEX:
+		var ghost_card := ghost_market_card(state, player_id)
+		if ghost_card == "":
+			return false
+		state.devoured_pile.pop_back()
+		p.influence -= card_cost
+		p.deck.discard_pile.append(ghost_card)
+		return true
 	if market_index < 0 or market_index >= state.market.display.size():
 		return false
 	if state.market.display[market_index] == "":
@@ -77,6 +86,18 @@ static func recruit(state: GameState, player_id: String, market_index: int, card
 	if state.market.is_deck_empty():
 		GameEnd.trigger(state, "market_empty")
 	return true
+
+
+## Ghost: "for the rest of your turn treat the top card of the devoured deck as
+## if it was in the market". Возвращает эту карту, если эффект действует для
+## player_id и её можно купить (у стартовых карт нет стоимости), иначе "".
+static func ghost_market_card(state: GameState, player_id: String) -> String:
+	if state.ghost_market_player == "" or state.ghost_market_player != player_id:
+		return ""
+	if state.devoured_pile.is_empty():
+		return ""
+	var top: String = state.devoured_pile[state.devoured_pile.size() - 1]
+	return top if CardLibrary.card_cost(top) >= 0 else ""
 
 
 ## Recruit из общей стопки — House Guard или Priestess of Lolth (рулбук стр. 13:

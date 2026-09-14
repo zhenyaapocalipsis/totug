@@ -11,6 +11,8 @@ extends RefCounted
 ## карт появится на этапе 4.
 
 const DISPLAY_SIZE := 6
+## Индекс-псевдослот для Ghost: верхняя карта сожранной стопки (не слот дисплея).
+const DEVOURED_TOP_INDEX := 99
 
 var deck: Array[String] = []
 var display: Array[String] = []  # ровно DISPLAY_SIZE слотов; "" — слот пуст (колода маркета исчерпана)

@@ -196,7 +196,7 @@
     "aspect": "GUILE",
     "type": "DROW",
     "deck_vp": 2,
-    "inner_circle_vp": 9,
+    "inner_circle_vp": 5,
     "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Draw 3 cards."
   },
   {
@@ -236,7 +236,7 @@
     "aspect": "MALICE",
     "type": "DROW",
     "deck_vp": 3,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 6,
     "ability_text": "Assassinate 2 troops."
   },
   {
@@ -417,7 +417,7 @@
     "type": "DRAGON",
     "deck_vp": 3,
     "inner_circle_vp": 7,
-    "ability_text": "Choose one:\n• Place a spy, then supplant a troop at that\n• Return one of your spies ► Supplant a troop\nat that spy’s site, then gain 1 VP for each\nsite control marker you have."
+    "ability_text": "Choose one:\n• Place a spy, then supplant a troop at that spy's site.\n• Return one of your spies ► Supplant a troop\nat that spy’s site, then gain 1 VP for each\nsite control marker you have."
   },
   {
     "card_id": 48400,
@@ -566,7 +566,7 @@
     "aspect": "GUILE",
     "type": "FIEND",
     "deck_vp": 2,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 5,
     "ability_text": "Devour a card in your hand ► Place a spy,\nthen assassinate a troop at that spy’s site."
   },
   {
@@ -636,7 +636,7 @@
     "aspect": "CONQUEST",
     "type": "FIEND",
     "deck_vp": 5,
-    "inner_circle_vp": 1,
+    "inner_circle_vp": 10,
     "ability_text": "Devour a card in your hand ► Supplant 2\nwhite troops. Each opponent recruits 2 Insane\nOutcasts."
   },
   {
@@ -646,7 +646,7 @@
     "aspect": "MALICE",
     "type": "FIEND",
     "deck_vp": 5,
-    "inner_circle_vp": 1,
+    "inner_circle_vp": 10,
     "ability_text": "Devour a card in your hand ► Assassinate\n2 troops. Then you may take up to 2 troops\nfrom any trophy halls and deploy them\nanywhere on the board."
   },
   {
@@ -796,7 +796,7 @@
     "aspect": "CONQUEST",
     "type": "HUMAN",
     "deck_vp": 2,
-    "inner_circle_vp": 9,
+    "inner_circle_vp": 5,
     "ability_text": "Deploy 3 troops.\nRecruit a Conquest card that costs 4 or less\nwithout paying its cost."
   },
   {
@@ -806,7 +806,7 @@
     "aspect": "GUILE",
     "type": "ELF",
     "deck_vp": 2,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 5,
     "ability_text": "+1 Power\nPlace a spy.\nRecruit a Guile card that costs 4 or less\nwithout paying its cost."
   },
   {
@@ -936,7 +936,7 @@
     "aspect": "CONQUEST",
     "type": "MONSTROSITY",
     "deck_vp": 2,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 4,
     "ability_text": "Deploy 3 troops.\nIf an opponent causes you to discard this,\nthey must discard a card."
   },
   {
@@ -986,7 +986,7 @@
     "aspect": "CONQUEST",
     "type": "QUAGGOTH",
     "deck_vp": 2,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 4,
     "ability_text": "Assassinate one white troop for each site you\ncontrol."
   },
   {
@@ -1156,7 +1156,7 @@
     "aspect": "MALICE",
     "type": "UNDEAD",
     "deck_vp": 1,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 4,
     "ability_text": "Assassinate two troops. Then, if you have 8\nor more troops in your trophy hall, promote\nthis card."
   },
   {
@@ -1166,7 +1166,7 @@
     "aspect": "CONQUEST",
     "type": "UNDEAD",
     "deck_vp": 2,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 4,
     "ability_text": "Supplant a white troop anywhere on the\nboard."
   },
   {
@@ -1176,7 +1176,7 @@
     "aspect": "GUILE",
     "type": "UNDEAD",
     "deck_vp": 2,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 4,
     "ability_text": "Place a spy. If another player’s spy is at that\nsite, gain 3 Influence."
   },
   {
@@ -1186,7 +1186,7 @@
     "aspect": "AMBITION",
     "type": "HUMAN",
     "deck_vp": 1,
-    "inner_circle_vp": 7,
+    "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +3 Influence\n• Promote this card, or a card from your hand\nor discard pile."
   },
   {

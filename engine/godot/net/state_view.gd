@@ -31,6 +31,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"spies": _duplicate_spies(state.spies),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
+		"ghost_market_card": Actions.ghost_market_card(state, state.current_player()),
 		"vp_bank": {
 			"ones": state.vp_bank.ones,
 			"fives": state.vp_bank.fives,
@@ -113,6 +114,9 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 		var cost: int = state.market.card_cost(i)
 		if cost >= 0 and cost <= p.influence:
 			market_indices.append(i)
+	var ghost_card := Actions.ghost_market_card(state, viewer_id)
+	if ghost_card != "" and CardLibrary.card_cost(ghost_card) <= p.influence:
+		market_indices.append(Market.DEVOURED_TOP_INDEX)
 
 	var supply_cards: Array[String] = []
 	for card_id: String in state.supplies.purchasable_available():

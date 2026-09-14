@@ -60,6 +60,21 @@ func take(card_id: String) -> bool:
 	return true
 
 
+## Вернуть одну карту в стопку (Insane Outcast: "return it to the supply").
+func give_back(card_id: String) -> void:
+	counts[card_id] = remaining(card_id) + 1
+
+
+## Insane Outcast вместо пожирания/повышения возвращается в запас (текст карты).
+## true — карта ушла в запас, вызывающему коду класть её никуда не нужно.
+static func redirect_outcast(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> bool:
+	if card_id != INSANE_OUTCAST:
+		return false
+	state.supplies.give_back(card_id)
+	resolver.log_event("removed_to_supply", {"player_id": player_id, "card_id": card_id})
+	return true
+
+
 ## Что сейчас можно купить за Influence (для UI и валидации намерений).
 func purchasable_available() -> Array[String]:
 	var result: Array[String] = []

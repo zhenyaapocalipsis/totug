@@ -24,6 +24,10 @@ var spies_in_barracks: int = STARTING_SPIES
 var deck: Deck
 var trophy_hall_count: int = 0
 var white_trophy_count: int = 0
+## Цвета войск в трофейном зале: "white" или id игрока -> количество. Нужны
+## картам, которые берут войска из зала и выставляют их СВОИМ цветом
+## (Mummy Lord, Orcus, Lich — решение владельца игры 2026-09-15).
+var trophies: Dictionary = {}
 var vp_tokens: int = 0
 var pending_promotions: Array[String] = []
 
@@ -48,6 +52,32 @@ static func make_starting_deck(noble_id: String, soldier_id: String) -> Array[St
 	for i in range(3):
 		cards.append(soldier_id)
 	return cards
+
+
+## Убитое войско цвета color попадает в трофейный зал.
+func add_trophy(color: String) -> void:
+	trophies[color] = int(trophies.get(color, 0)) + 1
+	trophy_hall_count += 1
+	if color == "white":
+		white_trophy_count += 1
+
+
+## Забрать одно войско цвета color из зала. false — такого нет.
+func take_trophy(color: String) -> bool:
+	if int(trophies.get(color, 0)) <= 0:
+		return false
+	trophies[color] = int(trophies[color]) - 1
+	if trophies[color] == 0:
+		trophies.erase(color)
+	trophy_hall_count = maxi(0, trophy_hall_count - 1)
+	if color == "white":
+		white_trophy_count = maxi(0, white_trophy_count - 1)
+	return true
+
+
+## "Player troops in your trophy hall" — без белых.
+func player_trophy_count() -> int:
+	return trophy_hall_count - white_trophy_count
 
 
 func reset_resources_for_new_turn() -> void:
