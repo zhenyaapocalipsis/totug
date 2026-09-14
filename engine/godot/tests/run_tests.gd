@@ -1187,6 +1187,23 @@ func test_deploy_and_assassinate_effects() -> void:
 	check_eq(state.troops.get(target, ""), "", "слот жертвы опустел")
 	check(victim_owner != "red", "жертва не могла быть собственным войском")
 
+	# PlaceSpy: два своих шпиона в одну локацию нельзя
+	var ss := _build_two_player_state()
+	ss.players["red"].spies_in_barracks = 5
+	ss.spies = {"site_a": ["red"], "site_b": ["blue"]}
+	var sr := EffectResolver.new()
+	sr.apply(PlaceSpy.new(2), "red", ss)
+	check_eq(sr.pending.legal_options, ["site_b"], "PlaceSpy: только локации без своего шпиона")
+	sr.resume(ss, "site_b")
+	check(not sr.is_waiting(), "PlaceSpy(2): после первого шпиона свободных локаций не осталось")
+	check_eq(ss.spies["site_b"], ["blue", "red"], "шпион поставлен рядом с чужим")
+	check(not PlaceSpy.new(1).is_available(ss, "red"), "PlaceSpy недоступен, если везде уже свой шпион")
+	var sr2 := EffectResolver.new()
+	var bogus := PlaceSpy.new(1)
+	bogus.set_answer("site_a")
+	sr2.apply(bogus, "red", ss)
+	check_eq(ss.spies["site_a"], ["red"], "повторный шпион в ту же локацию отклоняется и в обход списка")
+
 	# MoveTroop: брать можно только вражеское войско в своём Присутствии,
 	# ставить — в любой пустой слот (Присутствие там не нужно)
 	var ms := _build_two_player_state()
