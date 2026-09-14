@@ -1,0 +1,13 @@
+{
+  "_comment": "Маркеры контроля. Числа подтверждены владельцем игры 2026-09-14 по физической игре и имеют приоритет над данными мода (data/board/markers.json): там у Xith Idrana стояло 2 VP, на самом деле 1. Контроль локации с маркером даёт +1 Influence в ход; тотальный контроль даёт те же +1 Influence и сверх того VP из поля total_control_vp (не +2 Influence — Influence не складывается, тотальный контроль лучше только за счёт VP).",
+  "markers": [
+    {"hex": "A1", "site_name": "The Great Web", "control_influence": 1, "total_control_vp": 3},
+    {"hex": "A3", "site_name": "Great Web", "control_influence": 1, "total_control_vp": 3},
+    {"hex": "B1", "site_name": "Council Chamber", "control_influence": 1, "total_control_vp": 1},
+    {"hex": "B2", "site_name": "Lolth Shrine", "control_influence": 1, "total_control_vp": 2},
+    {"hex": "B3", "site_name": "Xith Idrana", "control_influence": 1, "total_control_vp": 1},
+    {"hex": "B4", "site_name": "Faerholme", "control_influence": 1, "total_control_vp": 1},
+    {"hex": "B5", "site_name": "Darklight Realm", "control_influence": 1, "total_control_vp": 1},
+    {"hex": "B6", "site_name": "Shedaklah", "control_influence": 1, "total_control_vp": 1}
+  ]
+}

@@ -1,0 +1,292 @@
+{
+  "A1": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.12,
+      900.93
+    ],
+    "slots": 12,
+    "snapped": 12,
+    "entries": []
+  },
+  "A2": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.9,
+      899.68
+    ],
+    "slots": 9,
+    "snapped": 9,
+    "entries": []
+  },
+  "A3": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.42,
+      899.85
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": []
+  },
+  "A4": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      896.93,
+      898.55
+    ],
+    "slots": 7,
+    "snapped": 7,
+    "entries": []
+  },
+  "A5": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      896.79,
+      898.26
+    ],
+    "slots": 7,
+    "snapped": 7,
+    "entries": []
+  },
+  "A6": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      896.93,
+      898.12
+    ],
+    "slots": 7,
+    "snapped": 7,
+    "entries": []
+  },
+  "A7": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.34,
+      899.6
+    ],
+    "slots": 1,
+    "snapped": 1,
+    "entries": []
+  },
+  "A8": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.13,
+      898.46
+    ],
+    "slots": 7,
+    "snapped": 6,
+    "entries": [
+      {
+        "slot": "A8_route3",
+        "status": "нет печатного круга"
+      }
+    ]
+  },
+  "A9": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.23,
+      899.16
+    ],
+    "slots": 9,
+    "snapped": 9,
+    "entries": []
+  },
+  "B1": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      896.79,
+      900.15
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": [
+      {
+        "slot": "B1_route0",
+        "status": "исправлено",
+        "было": [
+          -0.47,
+          4.4
+        ],
+        "стало": [
+          -0.0179,
+          4.4639
+        ],
+        "сдвиг_единиц": 0.4566,
+        "сдвиг_px": 58.5
+      }
+    ]
+  },
+  "B2": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.48,
+      901.64
+    ],
+    "slots": 9,
+    "snapped": 9,
+    "entries": []
+  },
+  "B3": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.96,
+      903.0
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": []
+  },
+  "B4": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      898.09,
+      902.88
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": []
+  },
+  "B5": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.96,
+      902.88
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": []
+  },
+  "B6": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      898.21,
+      902.75
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": []
+  },
+  "C1": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.34,
+      899.39
+    ],
+    "slots": 12,
+    "snapped": 12,
+    "entries": []
+  },
+  "C2": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      896.23,
+      899.55
+    ],
+    "slots": 13,
+    "snapped": 13,
+    "entries": []
+  },
+  "C3": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.42,
+      899.6
+    ],
+    "slots": 12,
+    "snapped": 12,
+    "entries": []
+  },
+  "C4": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      896.29,
+      899.74
+    ],
+    "slots": 12,
+    "snapped": 12,
+    "entries": []
+  },
+  "C5": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.74,
+      899.91
+    ],
+    "slots": 11,
+    "snapped": 11,
+    "entries": []
+  },
+  "C6": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.35,
+      899.19
+    ],
+    "slots": 9,
+    "snapped": 9,
+    "entries": []
+  },
+  "C7": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.28,
+      899.32
+    ],
+    "slots": 17,
+    "snapped": 17,
+    "entries": []
+  },
+  "C8": {
+    "scale_px_per_unit": 127.99,
+    "centre_px": [
+      896.73,
+      898.3
+    ],
+    "slots": 10,
+    "snapped": 10,
+    "entries": []
+  },
+  "X1": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.53,
+      898.57
+    ],
+    "slots": 14,
+    "snapped": 14,
+    "entries": []
+  },
+  "X2": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.39,
+      900.08
+    ],
+    "slots": 8,
+    "snapped": 8,
+    "entries": []
+  },
+  "X3": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.34,
+      899.6
+    ],
+    "slots": 1,
+    "snapped": 1,
+    "entries": []
+  },
+  "X4": {
+    "scale_px_per_unit": 128.061,
+    "centre_px": [
+      897.15,
+      898.15
+    ],
+    "slots": 5,
+    "snapped": 5,
+    "entries": []
+  }
+}

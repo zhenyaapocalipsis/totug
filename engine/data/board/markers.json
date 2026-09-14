@@ -1,0 +1,130 @@
+{
+  "B1": {
+    "site_name": "Council Chamber",
+    "marker_pos": [],
+    "total_control_variants": [
+      {
+        "vp": 1
+      },
+      {
+        "vp": 0
+      },
+      {
+        "vp": 0
+      }
+    ]
+  },
+  "B2": {
+    "site_name": "Lolth Shrine",
+    "marker_pos": [],
+    "total_control_variants": [
+      {
+        "vp": 0
+      },
+      {
+        "vp": 2
+      },
+      {
+        "vp": 1
+      }
+    ]
+  },
+  "B3": {
+    "site_name": "Xith Idrana",
+    "marker_pos": [],
+    "total_control_variants": [
+      {
+        "vp": 0
+      },
+      {
+        "vp": 2
+      },
+      {
+        "vp": 0
+      }
+    ]
+  },
+  "B4": {
+    "site_name": "Faerholme",
+    "marker_pos": [],
+    "total_control_variants": [
+      {
+        "vp": 0
+      },
+      {
+        "vp": 1
+      },
+      {
+        "vp": 0
+      }
+    ]
+  },
+  "B5": {
+    "site_name": "Darklight Realm",
+    "marker_pos": [],
+    "total_control_variants": [
+      {
+        "vp": 1
+      },
+      {
+        "vp": 0
+      },
+      {
+        "vp": 0
+      }
+    ]
+  },
+  "B6": {
+    "site_name": "Shedaklah",
+    "marker_pos": [],
+    "total_control_variants": [
+      {
+        "vp": 0
+      },
+      {
+        "vp": 1
+      },
+      {
+        "vp": 0
+      }
+    ]
+  },
+  "A1": {
+    "site_name": "The Great Web",
+    "marker_pos": [
+      0.0,
+      2.2,
+      12.25
+    ],
+    "total_control_variants": [
+      {
+        "vp": 3
+      },
+      {
+        "vp": 0
+      },
+      {
+        "vp": 0
+      }
+    ]
+  },
+  "A3": {
+    "site_name": "Great Web",
+    "marker_pos": [
+      0.0,
+      2.2,
+      11.7
+    ],
+    "total_control_variants": [
+      {
+        "vp": 3
+      },
+      {
+        "vp": 0
+      },
+      {
+        "vp": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+; Tyrants of the Underdark — Godot 4
+; Ядро правил (core/) не имеет зависимостей от Node/сцен и запускается headless.
+
+config_version=5
+
+[application]
+
+config/name="Tyrants of the Underdark"
+config/features=PackedStringArray("4.7", "GDScript")
+run/main_scene="res://scenes/launcher.tscn"
+
+[debug]
+
+gdscript/warnings/untyped_declaration=1
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=800
+# Стартовый размер ОКНА меньше расчётного размера картинки (1280x800):
+# так окно влезает даже в ноутбучный экран 1366x768 вместе с заголовком,
+# а картинка целиком ужимается под него (stretch keep). Окно можно
+# растянуть или развернуть — интерфейс масштабируется следом.
+window/size/window_width_override=1200
+window/size/window_height_override=700
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"

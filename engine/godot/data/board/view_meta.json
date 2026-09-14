@@ -1,0 +1,439 @@
+{
+  "hexes": {
+    "A1": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.924,
+        254.066
+      ],
+      "art_scale": 36.0656
+    },
+    "A2": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.705,
+        253.688
+      ],
+      "art_scale": 36.0656
+    },
+    "A3": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.003,
+        253.736
+      ],
+      "art_scale": 36.0656
+    },
+    "A4": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.876,
+        253.324
+      ],
+      "art_scale": 36.0656
+    },
+    "A5": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.837,
+        253.243
+      ],
+      "art_scale": 36.0656
+    },
+    "A6": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.876,
+        253.203
+      ],
+      "art_scale": 36.0656
+    },
+    "A7": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.983,
+        253.651
+      ],
+      "art_scale": 36.0656
+    },
+    "A8": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.933,
+        253.299
+      ],
+      "art_scale": 36.0656
+    },
+    "A9": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.958,
+        253.516
+      ],
+      "art_scale": 36.0656
+    },
+    "B1": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.834,
+        253.843
+      ],
+      "art_scale": 36.0656
+    },
+    "B2": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.023,
+        254.266
+      ],
+      "art_scale": 36.0656
+    },
+    "B3": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.158,
+        254.627
+      ],
+      "art_scale": 36.0656
+    },
+    "B4": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.195,
+        254.593
+      ],
+      "art_scale": 36.0656
+    },
+    "B5": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.158,
+        254.593
+      ],
+      "art_scale": 36.0656
+    },
+    "B6": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.229,
+        254.556
+      ],
+      "art_scale": 36.0656
+    },
+    "C1": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.983,
+        253.584
+      ],
+      "art_scale": 36.0656
+    },
+    "C2": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.69,
+        253.643
+      ],
+      "art_scale": 36.0656
+    },
+    "C3": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.009,
+        253.651
+      ],
+      "art_scale": 36.0656
+    },
+    "C4": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.707,
+        253.705
+      ],
+      "art_scale": 36.0656
+    },
+    "C5": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.082,
+        253.742
+      ],
+      "art_scale": 36.0656
+    },
+    "C6": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.983,
+        253.527
+      ],
+      "art_scale": 36.0656
+    },
+    "C7": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.969,
+        253.561
+      ],
+      "art_scale": 36.0656
+    },
+    "C8": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.307,
+      "art_centre": [
+        252.965,
+        253.413
+      ],
+      "art_scale": 36.0657
+    },
+    "X1": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.034,
+        253.327
+      ],
+      "art_scale": 36.0656
+    },
+    "X2": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        253.009,
+        253.804
+      ],
+      "art_scale": 36.0656
+    },
+    "X3": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        256.0
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.983,
+        253.651
+      ],
+      "art_scale": 36.0656
+    },
+    "X4": {
+      "texture_size": [
+        512,
+        512
+      ],
+      "hex_centre": [
+        256.0,
+        255.93
+      ],
+      "hex_radius": 254.026,
+      "art_centre": [
+        252.935,
+        253.189
+      ],
+      "art_scale": 36.0656
+    }
+  },
+  "hex_radius": 254.026,
+  "neighbour_step": 439.986,
+  "world_radius": 8.5
+}

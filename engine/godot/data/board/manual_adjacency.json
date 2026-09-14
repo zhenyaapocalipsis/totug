@@ -1,0 +1,146 @@
+{
+  "_note": "Смежность, размеченная ВРУЧНУЮ по печатному арту всех 27 тайлов. Автоматическая трассировка не сходится: у части тайлов карточка и туннели — одна белая область (C1: 79048 px), у части разделены чёрной обводкой (C7). Единого правила в рисунке нет. Подробности и список провалившихся подходов — в claude/art-verification.md.",
+
+  "_format": {
+    "ring_sites": "маршрутное кольцо -> локации, с которыми оно смежно по туннелю",
+    "ring_rings": "кольца, смежные между собой напрямую",
+    "site_sites": "локации, соединённые туннелем БЕЗ колец между ними. Владелец игры подтвердил: такие локации соседние.",
+    "edge_only": "кольца, чей туннель ведёт только к рёбрам гекса, ни к одной локации на этом тайле"
+  },
+
+  "_rule_confirmed": "Локации, соединённые туннелем напрямую (без троп-слотов между ними), считаются соседними. Подтверждено владельцем игры.",
+
+  "A1": {"_read": "тайл-хаб, одна локация", "ring_sites": {
+    "A1_route0": ["The Great Web"], "A1_route1": ["The Great Web"],
+    "A1_route2": ["The Great Web"], "A1_route3": ["The Great Web"],
+    "A1_route4": ["The Great Web"], "A1_route5": ["The Great Web"]}},
+
+  "A2": {
+    "_read": "ТРИ локации, колец нет. Оба кольца из данных Lua оказались фантомными — они стоят внутри блока с правилами региона, поверх букв. Удалены через ROUTE_SLOT_OVERRIDES.",
+    "ring_sites": {},
+    "site_sites": [["Fogtown", "Gallenghast"], ["Fogtown", "Darkflame"],
+                   ["Gallenghast", "Darkflame"]]},
+
+  "A3": {
+    "_read": "тайл-хаб: центральный контур 'THE GREAT WEB', к нему примыкают карточка Great Web и шесть спиц Web. Колец нет. Спицы соединены с Great Web, но не между собой — путь между спицами идёт через зону Great Web.",
+    "ring_sites": {},
+    "site_sites": [["Web (N)", "Great Web"], ["Web (NE)", "Great Web"],
+                   ["Web (NW)", "Great Web"], ["Web (SW)", "Great Web"],
+                   ["Web (SE)", "Great Web"], ["Web (S)", "Great Web"]]},
+
+  "A4": {"_read": "шаблон коннектора, общий с A5/A6/A8 (совпадение проверено численно до 0.01 ед.). Локаций нет, семь колец в сетке.",
+    "ring_sites": {},
+    "ring_rings": [["A4_route0","A4_route2"],["A4_route0","A4_route4"],
+                   ["A4_route1","A4_route2"],["A4_route1","A4_route3"],
+                   ["A4_route1","A4_route5"],["A4_route2","A4_route3"],
+                   ["A4_route3","A4_route4"],["A4_route3","A4_route5"],
+                   ["A4_route3","A4_route6"],["A4_route4","A4_route6"],
+                   ["A4_route5","A4_route6"]]},
+
+  "A5": {"_read": "тот же шаблон, что A4", "_same_as": "A4"},
+  "A6": {"_read": "тот же шаблон, что A4", "_same_as": "A4"},
+  "A8": {"_read": "тот же шаблон, что A4", "_same_as": "A4"},
+
+  "A7": {"_read": "одно кольцо в центре, шесть туннелей прямо к рёбрам. Локаций нет.",
+    "ring_sites": {}, "edge_only": ["A7_route0"]},
+
+  "A9": {"_read": "одна локация, колец нет", "ring_sites": {}},
+
+  "B1": {"_read": "тайл-хаб, одна локация", "ring_sites": {
+    "B1_route0": ["Council Chamber"], "B1_route1": ["Council Chamber"],
+    "B1_route2": ["Council Chamber"], "B1_route3": ["Council Chamber"],
+    "B1_route4": ["Council Chamber"]}},
+
+  "B2": {
+    "_read": "тайл-хаб: контур 'LOLTH SHRINE', карточка Lolth Shrine снизу контура, Vrith примыкает к контуру сверху. Четыре кольца ведут с рёбер к контуру.",
+    "ring_sites": {
+      "B2_route0": ["Lolth Shrine"], "B2_route1": ["Lolth Shrine"],
+      "B2_route2": ["Lolth Shrine"], "B2_route3": ["Lolth Shrine"]},
+    "site_sites": [["Vrith", "Lolth Shrine"]]},
+
+  "B3": {"_read": "тайл-хаб, одна локация", "ring_sites": {
+    "B3_route0": ["Xith Idrana"], "B3_route1": ["Xith Idrana"],
+    "B3_route2": ["Xith Idrana"], "B3_route3": ["Xith Idrana"],
+    "B3_route4": ["Xith Idrana"]}},
+
+  "B4": {"_read": "тайл-хаб, одна локация", "ring_sites": {
+    "B4_route0": ["Faerholme"], "B4_route1": ["Faerholme"],
+    "B4_route2": ["Faerholme"], "B4_route3": ["Faerholme"],
+    "B4_route4": ["Faerholme"]}},
+
+  "B5": {"_read": "тайл-хаб, одна локация", "ring_sites": {
+    "B5_route0": ["Darklight Realm"], "B5_route1": ["Darklight Realm"],
+    "B5_route2": ["Darklight Realm"], "B5_route3": ["Darklight Realm"],
+    "B5_route4": ["Darklight Realm"]}},
+
+  "B6": {"_read": "тайл-хаб, одна локация", "ring_sites": {
+    "B6_route0": ["Shedaklah"], "B6_route1": ["Shedaklah"],
+    "B6_route2": ["Shedaklah"], "B6_route3": ["Shedaklah"],
+    "B6_route4": ["Shedaklah"]}},
+
+  "C1": {"_read": "три локации, четыре кольца",
+    "ring_sites": {
+      "C1_route0": ["The Twilight", "Spiral Desert"],
+      "C1_route1": ["Spiral Desert", "Magma Gate"],
+      "C1_route2": ["Spiral Desert"],
+      "C1_route3": ["The Twilight", "Magma Gate"]}},
+
+  "C2": {"_read": "две локации, три кольца",
+    "ring_sites": {
+      "C2_route0": ["Araumycos"],
+      "C2_route1": ["Araumycos", "Menzoberranzan"],
+      "C2_route2": ["Menzoberranzan"]}},
+
+  "C3": {"_read": "три локации, два кольца. Вертикальный туннель связывает три локации напрямую, колец на нём нет.",
+    "ring_sites": {"C3_route0": ["Xal Veldrin"], "C3_route1": ["Xal Veldrin"]},
+    "site_sites": [["Red Forest", "Xal Veldrin"], ["Xal Veldrin", "Iron Wastes"]]},
+
+  "C4": {"_read": "четыре локации, четыре кольца; r0 проверено увеличением",
+    "ring_sites": {
+      "C4_route0": ["Red Gate", "Caer Sidi"],
+      "C4_route1": ["Kulggen", "Caer Sidi"],
+      "C4_route2": ["Caer Sidi"],
+      "C4_route3": ["Caer Sidi"]},
+    "site_sites": [["Kulggen", "Iblith"]]},
+
+  "C5": {"_read": "две локации, два кольца. Вертикальный туннель север-юг проходит через Erelhei-Cinlu. Ath-Qua связана только с рёбрами NE и SE.",
+    "ring_sites": {"C5_route0": ["Erelhei-Cinlu"], "C5_route1": ["Erelhei-Cinlu"]}},
+
+  "C6": {"_read": "две локации, пять колец; r4 — узел в центре",
+    "ring_sites": {
+      "C6_route0": [], "C6_route1": ["Black Gate"], "C6_route2": [],
+      "C6_route3": ["Black Gate"], "C6_route4": ["Black Gate", "Zi'Xzolca"]},
+    "ring_rings": [["C6_route4","C6_route2"],["C6_route4","C6_route0"]],
+    "edge_only": ["C6_route0", "C6_route2"]},
+
+  "C7": {"_read": "две локации, пять колец; r0 ведёт к обеим",
+    "ring_sites": {
+      "C7_route0": ["Spiderhome", "Thanatos Gate"],
+      "C7_route1": ["Thanatos Gate"], "C7_route2": ["Thanatos Gate"],
+      "C7_route3": ["Spiderhome"], "C7_route4": ["Spiderhome"]}},
+
+  "C8": {"_read": "три локации, четыре кольца; r1 — узел, связывает все три",
+    "ring_sites": {
+      "C8_route0": ["Venathir"],
+      "C8_route1": ["Enzithir", "Xelathir", "Venathir"],
+      "C8_route2": ["Enzithir"],
+      "C8_route3": ["Xelathir"]}},
+
+  "X1": {"_read": "три локации, три кольца. ВНИМАНИЕ: The Barrens не касается ни один туннель — см. _open_question_isolated_sites",
+    "ring_sites": {
+      "X1_route0": ["Heaving Hills"],
+      "X1_route1": ["Rotting Plain"],
+      "X1_route2": ["Rotting Plain", "Heaving Hills"]}},
+
+  "X2": {"_read": "одна локация, четыре кольца. ВНИМАНИЕ: Indifference не касается ни один туннель, они огибают карточку — см. _open_question_isolated_sites",
+    "ring_sites": {"X2_route0": [], "X2_route1": [], "X2_route2": [], "X2_route3": []},
+    "edge_only": ["X2_route0","X2_route1","X2_route2","X2_route3"]},
+
+  "X3": {"_read": "одно кольцо, локаций нет", "ring_sites": {}, "edge_only": ["X3_route0"]},
+
+  "X4": {"_read": "одна локация. Fountain of Screams соединена вертикальным туннелем с южным ребром напрямую, без колец. Оба кольца пересекают тайл мимо локации.",
+    "ring_sites": {"X4_route0": [], "X4_route1": []},
+    "edge_only": ["X4_route0", "X4_route1"]},
+
+  "_open_question_isolated_sites": "На X1 (The Barrens) и X2 (Indifference) карточка локации не касается ни одного туннеля — они проходят рядом, огибая её. По рисунку такая локация недостижима вообще, чего в игре быть не может. Нужно уточнить у владельца игры, как эти локации соединяются."
+}

@@ -1,0 +1,559 @@
+{
+  "A1": {
+    "slot_slot": [
+      [
+        "A1_route0",
+        "A1_route1"
+      ],
+      [
+        "A1_route0",
+        "A1_route2"
+      ],
+      [
+        "A1_route0",
+        "A1_route3"
+      ],
+      [
+        "A1_route0",
+        "A1_route4"
+      ],
+      [
+        "A1_route1",
+        "A1_route2"
+      ],
+      [
+        "A1_route1",
+        "A1_route3"
+      ],
+      [
+        "A1_route1",
+        "A1_route4"
+      ],
+      [
+        "A1_route2",
+        "A1_route3"
+      ],
+      [
+        "A1_route2",
+        "A1_route4"
+      ],
+      [
+        "A1_route3",
+        "A1_route4"
+      ]
+    ],
+    "slot_site": []
+  },
+  "A2": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "A3": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "A4": {
+    "slot_slot": [
+      [
+        "A4_route1",
+        "A4_route2"
+      ],
+      [
+        "A4_route1",
+        "A4_route3"
+      ],
+      [
+        "A4_route1",
+        "A4_route5"
+      ],
+      [
+        "A4_route3",
+        "A4_route5"
+      ],
+      [
+        "A4_route5",
+        "A4_route6"
+      ]
+    ],
+    "slot_site": []
+  },
+  "A5": {
+    "slot_slot": [
+      [
+        "A5_route1",
+        "A5_route2"
+      ],
+      [
+        "A5_route1",
+        "A5_route3"
+      ],
+      [
+        "A5_route3",
+        "A5_route5"
+      ],
+      [
+        "A5_route5",
+        "A5_route6"
+      ]
+    ],
+    "slot_site": []
+  },
+  "A6": {
+    "slot_slot": [
+      [
+        "A6_route1",
+        "A6_route2"
+      ],
+      [
+        "A6_route3",
+        "A6_route5"
+      ],
+      [
+        "A6_route5",
+        "A6_route6"
+      ]
+    ],
+    "slot_site": []
+  },
+  "A7": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "A8": {
+    "slot_slot": [
+      [
+        "A8_route1",
+        "A8_route2"
+      ],
+      [
+        "A8_route1",
+        "A8_route5"
+      ],
+      [
+        "A8_route5",
+        "A8_route6"
+      ]
+    ],
+    "slot_site": []
+  },
+  "A9": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "B1": {
+    "slot_slot": [
+      [
+        "B1_route0",
+        "B1_route1"
+      ],
+      [
+        "B1_route0",
+        "B1_route2"
+      ],
+      [
+        "B1_route0",
+        "B1_route3"
+      ],
+      [
+        "B1_route0",
+        "B1_route4"
+      ],
+      [
+        "B1_route1",
+        "B1_route2"
+      ],
+      [
+        "B1_route1",
+        "B1_route3"
+      ],
+      [
+        "B1_route1",
+        "B1_route4"
+      ],
+      [
+        "B1_route2",
+        "B1_route3"
+      ],
+      [
+        "B1_route2",
+        "B1_route4"
+      ],
+      [
+        "B1_route3",
+        "B1_route4"
+      ]
+    ],
+    "slot_site": []
+  },
+  "B2": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "B2_route0",
+        "B2_site0"
+      ],
+      [
+        "B2_route1",
+        "B2_site0"
+      ],
+      [
+        "B2_route2",
+        "B2_site0"
+      ],
+      [
+        "B2_route3",
+        "B2_site0"
+      ]
+    ]
+  },
+  "B3": {
+    "slot_slot": [
+      [
+        "B3_route0",
+        "B3_route1"
+      ],
+      [
+        "B3_route0",
+        "B3_route2"
+      ],
+      [
+        "B3_route0",
+        "B3_route3"
+      ],
+      [
+        "B3_route0",
+        "B3_route4"
+      ],
+      [
+        "B3_route1",
+        "B3_route2"
+      ],
+      [
+        "B3_route1",
+        "B3_route3"
+      ],
+      [
+        "B3_route1",
+        "B3_route4"
+      ],
+      [
+        "B3_route2",
+        "B3_route3"
+      ],
+      [
+        "B3_route2",
+        "B3_route4"
+      ],
+      [
+        "B3_route3",
+        "B3_route4"
+      ]
+    ],
+    "slot_site": []
+  },
+  "B4": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "B4_route0",
+        "B4_site0"
+      ],
+      [
+        "B4_route1",
+        "B4_site0"
+      ],
+      [
+        "B4_route2",
+        "B4_site0"
+      ],
+      [
+        "B4_route3",
+        "B4_site0"
+      ],
+      [
+        "B4_route4",
+        "B4_site0"
+      ]
+    ]
+  },
+  "B5": {
+    "slot_slot": [
+      [
+        "B5_route0",
+        "B5_route1"
+      ],
+      [
+        "B5_route0",
+        "B5_route2"
+      ],
+      [
+        "B5_route0",
+        "B5_route3"
+      ],
+      [
+        "B5_route0",
+        "B5_route4"
+      ],
+      [
+        "B5_route1",
+        "B5_route2"
+      ],
+      [
+        "B5_route1",
+        "B5_route3"
+      ],
+      [
+        "B5_route1",
+        "B5_route4"
+      ],
+      [
+        "B5_route2",
+        "B5_route3"
+      ],
+      [
+        "B5_route2",
+        "B5_route4"
+      ],
+      [
+        "B5_route3",
+        "B5_route4"
+      ]
+    ],
+    "slot_site": []
+  },
+  "B6": {
+    "slot_slot": [
+      [
+        "B6_route0",
+        "B6_route1"
+      ],
+      [
+        "B6_route0",
+        "B6_route2"
+      ],
+      [
+        "B6_route0",
+        "B6_route3"
+      ],
+      [
+        "B6_route0",
+        "B6_route4"
+      ],
+      [
+        "B6_route1",
+        "B6_route2"
+      ],
+      [
+        "B6_route1",
+        "B6_route3"
+      ],
+      [
+        "B6_route1",
+        "B6_route4"
+      ],
+      [
+        "B6_route2",
+        "B6_route3"
+      ],
+      [
+        "B6_route2",
+        "B6_route4"
+      ],
+      [
+        "B6_route3",
+        "B6_route4"
+      ]
+    ],
+    "slot_site": []
+  },
+  "C1": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "C1_route0",
+        "C1_site0"
+      ],
+      [
+        "C1_route0",
+        "C1_site1"
+      ],
+      [
+        "C1_route1",
+        "C1_site1"
+      ],
+      [
+        "C1_route1",
+        "C1_site2"
+      ],
+      [
+        "C1_route2",
+        "C1_site1"
+      ],
+      [
+        "C1_route3",
+        "C1_site0"
+      ],
+      [
+        "C1_route3",
+        "C1_site2"
+      ]
+    ]
+  },
+  "C2": {
+    "slot_slot": [
+      [
+        "C2_route1",
+        "C2_route2"
+      ]
+    ],
+    "slot_site": [
+      [
+        "C2_route0",
+        "C2_site0"
+      ],
+      [
+        "C2_route1",
+        "C2_site0"
+      ]
+    ]
+  },
+  "C3": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "C3_route0",
+        "C3_site0"
+      ],
+      [
+        "C3_route0",
+        "C3_site1"
+      ],
+      [
+        "C3_route0",
+        "C3_site2"
+      ],
+      [
+        "C3_route1",
+        "C3_site0"
+      ],
+      [
+        "C3_route1",
+        "C3_site1"
+      ],
+      [
+        "C3_route1",
+        "C3_site2"
+      ]
+    ]
+  },
+  "C4": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "C4_route0",
+        "C4_site3"
+      ],
+      [
+        "C4_route1",
+        "C4_site3"
+      ],
+      [
+        "C4_route2",
+        "C4_site3"
+      ],
+      [
+        "C4_route3",
+        "C4_site3"
+      ]
+    ]
+  },
+  "C5": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "C5_route0",
+        "C5_site0"
+      ],
+      [
+        "C5_route1",
+        "C5_site0"
+      ]
+    ]
+  },
+  "C6": {
+    "slot_slot": [
+      [
+        "C6_route0",
+        "C6_route4"
+      ],
+      [
+        "C6_route2",
+        "C6_route4"
+      ]
+    ],
+    "slot_site": [
+      [
+        "C6_route4",
+        "C6_site1"
+      ]
+    ]
+  },
+  "C7": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "C7_route0",
+        "C7_site0"
+      ],
+      [
+        "C7_route0",
+        "C7_site1"
+      ],
+      [
+        "C7_route1",
+        "C7_site1"
+      ],
+      [
+        "C7_route2",
+        "C7_site1"
+      ],
+      [
+        "C7_route3",
+        "C7_site0"
+      ],
+      [
+        "C7_route4",
+        "C7_site0"
+      ]
+    ]
+  },
+  "C8": {
+    "slot_slot": [],
+    "slot_site": [
+      [
+        "C8_route1",
+        "C8_site1"
+      ],
+      [
+        "C8_route3",
+        "C8_site1"
+      ]
+    ]
+  },
+  "X1": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "X2": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "X3": {
+    "slot_slot": [],
+    "slot_site": []
+  },
+  "X4": {
+    "slot_slot": [],
+    "slot_site": []
+  }
+}

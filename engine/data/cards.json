@@ -1,0 +1,1252 @@
+[
+  {
+    "card_id": 48342,
+    "name": "Noble",
+    "cost": null,
+    "aspect": "OBEDIENCE",
+    "type": "DROW",
+    "deck_vp": 0,
+    "inner_circle_vp": 1,
+    "ability_text": "+1 Influence"
+  },
+  {
+    "card_id": 48344,
+    "name": "Soldier",
+    "cost": null,
+    "aspect": "OBEDIENCE",
+    "type": "DROW",
+    "deck_vp": 0,
+    "inner_circle_vp": 1,
+    "ability_text": "+1 Power"
+  },
+  {
+    "card_id": 48341,
+    "name": "Insane Outcast",
+    "cost": null,
+    "aspect": null,
+    "type": "DROW",
+    "deck_vp": -1,
+    "inner_circle_vp": 0,
+    "ability_text": "Discard a card from your hand ► Return\nInsane Outcast to the supply.\nIf Insane Outcast would be devoured or\npromoted, return it to the supply instead."
+  },
+  {
+    "card_id": 48343,
+    "name": "Priestess of Lolth",
+    "cost": 2,
+    "aspect": "OBEDIENCE",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+2 Influence"
+  },
+  {
+    "card_id": 48340,
+    "name": "House Guard",
+    "cost": 3,
+    "aspect": "OBEDIENCE",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Power"
+  },
+  {
+    "card_id": 48336,
+    "name": "Spy Master",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Place a spy."
+  },
+  {
+    "card_id": 48306,
+    "name": "Advocate",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• +2 Influence\n• At end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48334,
+    "name": "Spellspinner",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Supplant a troop\nat that spy’s site."
+  },
+  {
+    "card_id": 48331,
+    "name": "Mercenary Squad",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Deploy 3 troops."
+  },
+  {
+    "card_id": 48325,
+    "name": "Inquisitor",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +2 Influence\n• Assassinate a troop."
+  },
+  {
+    "card_id": 48322,
+    "name": "Infiltrator",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Place a spy. If another player’s troop is at that\nsite, gain 1 Power."
+  },
+  {
+    "card_id": 48320,
+    "name": "Drow Negotiator",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "If there are 4 or more cards in your inner\ncircle, gain 3 Influence.\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48310,
+    "name": "Blackguard",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +2 Power\n• Assassinate a troop."
+  },
+  {
+    "card_id": 48302,
+    "name": "Advance Scout",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "DROW",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Supplant a white troop."
+  },
+  {
+    "card_id": 48338,
+    "name": "Underdark Ranger",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Assassinate 2 white troops."
+  },
+  {
+    "card_id": 48314,
+    "name": "Chosen of Lolth",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Return another player's troop or spy.\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48312,
+    "name": "Bounty Hunter",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+3 Power"
+  },
+  {
+    "card_id": 48328,
+    "name": "Masters of Sorcere",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Place 2 spies.\n• Return one of your spies ► +4 Power"
+  },
+  {
+    "card_id": 48327,
+    "name": "Master of Melee-Magthere",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Deploy 4 troops.\n• Supplant a white troop anywhere on the\nboard."
+  },
+  {
+    "card_id": 48324,
+    "name": "Information Broker",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "DROW",
+    "deck_vp": 2,
+    "inner_circle_vp": 9,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Draw 3 cards."
+  },
+  {
+    "card_id": 48318,
+    "name": "Doppelganger",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "DOPPELGANGER",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Supplant a troop."
+  },
+  {
+    "card_id": 48339,
+    "name": "Weaponmaster",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "DROW",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose three times:\n• Deploy a troop.\n• Assassinate a white troop."
+  },
+  {
+    "card_id": 48315,
+    "name": "Council Member",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "DROW",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Move up to 2 enemy troops.\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48316,
+    "name": "Deathblade",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "DROW",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Assassinate 2 troops."
+  },
+  {
+    "card_id": 48329,
+    "name": "Matron Mother",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "DROW",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Put your deck into your discard pile. Then\npromote a card from your discard pile."
+  },
+  {
+    "card_id": 48424,
+    "name": "Kobold",
+    "cost": 1,
+    "aspect": "CONQUEST",
+    "type": "KOBOLD",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• Deploy a troop.\n• Assassinate a white troop."
+  },
+  {
+    "card_id": 48436,
+    "name": "White Wyrmling",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "DRAGON",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Deploy 2 troops.\nYou may devour a card in the market."
+  },
+  {
+    "card_id": 48439,
+    "name": "Wyrmspeaker",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "DWARF",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+1 Influence\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48432,
+    "name": "Watcher of Thay",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "HUMAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +3 Influence"
+  },
+  {
+    "card_id": 48413,
+    "name": "Dragon Cultist",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +2 Power\n• +2 Influence"
+  },
+  {
+    "card_id": 48409,
+    "name": "Cult Fanatic",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "HALF DRAGON",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "+2 Influence\nYou may devour a card in the market."
+  },
+  {
+    "card_id": 48402,
+    "name": "Black Wyrmling",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "DRAGON",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "+1 Influence\nAssassinate a white troop."
+  },
+  {
+    "card_id": 48421,
+    "name": "Green Wyrmling",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "DRAGON",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Place a spy. If another player’s troop is at that\nsite, gain 2 Influence."
+  },
+  {
+    "card_id": 48418,
+    "name": "Enchanter of Thay",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +4 Power"
+  },
+  {
+    "card_id": 48415,
+    "name": "Dragonclaw",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Assassinate a troop. Then, if you have 5 or\nmore player troops in your trophy hall, gain\n2 Power."
+  },
+  {
+    "card_id": 48407,
+    "name": "Cleric of Laogzed",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "TROGLODYTE",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Move an enemy troop.\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48428,
+    "name": "Red Wyrmling",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "DRAGON",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "+2 Power +2 Influence"
+  },
+  {
+    "card_id": 48405,
+    "name": "Blue Wyrmling",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "DRAGON",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+3 Influence\nReturn another player’s troop or spy."
+  },
+  {
+    "card_id": 48425,
+    "name": "Rath Modar",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "HUMAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Draw 2 cards.\nPlace a spy."
+  },
+  {
+    "card_id": 48429,
+    "name": "Severin Silrajin",
+    "cost": 7,
+    "aspect": "MALICE",
+    "type": "HUMAN",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "+5 Power"
+  },
+  {
+    "card_id": 48433,
+    "name": "White Dragon",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "DRAGON",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Deploy 3 troops.\nGain 1 VP for every 2 sites you control."
+  },
+  {
+    "card_id": 48419,
+    "name": "Green Dragon",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "DRAGON",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Place a spy, then supplant a troop at that\n• Return one of your spies ► Supplant a troop\nat that spy’s site, then gain 1 VP for each\nsite control marker you have."
+  },
+  {
+    "card_id": 48400,
+    "name": "Black Dragon",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "DRAGON",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Supplant a white troop anywhere on the board.\nGain 1 VP for every 3 white troops in your\ntrophy hall."
+  },
+  {
+    "card_id": 48403,
+    "name": "Blue Dragon",
+    "cost": 8,
+    "aspect": "AMBITION",
+    "type": "DRAGON",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "At end of turn, promote up to 2 other cards\nplayed this turn, then gain 1 VP for every 3\ncards in your inner circle."
+  },
+  {
+    "card_id": 48426,
+    "name": "Red Dragon",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "DRAGON",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Supplant a troop.\nReturn an enemy spy.\nGain 1 VP for each site under your total control."
+  },
+  {
+    "card_id": 48512,
+    "name": "Gibbering Mouther",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "ABERRATION",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Deploy 2 troops, then choose an opponent\nwith a troop adjacent to at least 1 of them. He\nor she recruits an Insane Outcast."
+  },
+  {
+    "card_id": 48534,
+    "name": "Night Hag",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "FIEND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Draw 2 cards."
+  },
+  {
+    "card_id": 48527,
+    "name": "Myconid Adult",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "MYCONID",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Influence\nChoose an opponent. He or she recruits an\nInsane Outcast."
+  },
+  {
+    "card_id": 48524,
+    "name": "Mind Flayer",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "ILLITHID",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Devour a card in your hand ► Choose one:\n• +3 Influence\n• Assassinate a troop."
+  },
+  {
+    "card_id": 48516,
+    "name": "Hezrou",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "FIEND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Move an enemy troop.\nPromote the top card of your deck."
+  },
+  {
+    "card_id": 48503,
+    "name": "Derro",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "DERRO",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Supplant a white troop anywhere on the board.\nYou recruit an Insane Outcast."
+  },
+  {
+    "card_id": 48529,
+    "name": "Myconid Sovereign",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "MYCONID",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose an opponent. He or she recruits an\nInsane Outcast.\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48519,
+    "name": "Jackalwere",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "SHAPECHANGER",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +2 Power +2 Influence"
+  },
+  {
+    "card_id": 48509,
+    "name": "Ghoul",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "UNDEAD",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+2 Power\nEach opponent recruits an Insane Outcast."
+  },
+  {
+    "card_id": 48506,
+    "name": "Ettin",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "GIANT",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• Deploy 3 troops.\n• Assassinate 2 white troops."
+  },
+  {
+    "card_id": 48538,
+    "name": "Vrock",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "FIEND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +5 Power"
+  },
+  {
+    "card_id": 48537,
+    "name": "Succubus",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "FIEND",
+    "deck_vp": 2,
+    "inner_circle_vp": 7,
+    "ability_text": "Devour a card in your hand ► Place a spy,\nthen assassinate a troop at that spy’s site."
+  },
+  {
+    "card_id": 48531,
+    "name": "Nalfeshnee",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "FIEND",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "+3 Influence\nPromote the top card of your deck."
+  },
+  {
+    "card_id": 48513,
+    "name": "Glabrezu",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "FIEND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Devour a card in your hand ►\nAssassinate 2 troops."
+  },
+  {
+    "card_id": 48539,
+    "name": "Zuggtmoy",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "FIEND",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Devour a card in your inner circle ►\n+3 Influence and at end of turn, promote up to\n2 other cards played this turn."
+  },
+  {
+    "card_id": 48521,
+    "name": "Marilith",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FIEND",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Devour a card in your hand ►\n+5 Power"
+  },
+  {
+    "card_id": 48514,
+    "name": "Graz'zt",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "FIEND",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Place 2 spies.\n• Return any number of your spies ► Supplant\na troop at each of the returned spies’ sites."
+  },
+  {
+    "card_id": 48500,
+    "name": "Balor",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "FIEND",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Devour a card in your hand ► Supplant a\nwhite troop anywhere on the board. Then\ndeploy a troop."
+  },
+  {
+    "card_id": 48501,
+    "name": "Demogorgon",
+    "cost": 8,
+    "aspect": "CONQUEST",
+    "type": "FIEND",
+    "deck_vp": 5,
+    "inner_circle_vp": 1,
+    "ability_text": "Devour a card in your hand ► Supplant 2\nwhite troops. Each opponent recruits 2 Insane\nOutcasts."
+  },
+  {
+    "card_id": 48535,
+    "name": "Orcus",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "FIEND",
+    "deck_vp": 5,
+    "inner_circle_vp": 1,
+    "ability_text": "Devour a card in your hand ► Assassinate\n2 troops. Then you may take up to 2 troops\nfrom any trophy halls and deploy them\nanywhere on the board."
+  },
+  {
+    "card_id": 48636,
+    "name": "Water Elemental",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "ELEMENTAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Deploy 2 troops.\nConquest Focus ► Draw a card."
+  },
+  {
+    "card_id": 48610,
+    "name": "Black Earth Cultist",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "At end of turn, promote another card played\nthis turn.\nAmbition Focus ► +2 Influence"
+  },
+  {
+    "card_id": 48628,
+    "name": "Howling Hatred Cultist",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +3 Influence\nGuile Focus ► +1 Power"
+  },
+  {
+    "card_id": 48623,
+    "name": "Fire Elemental",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "ELEMENTAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +2 Power\n• +2 Influence\nMalice Focus ► Draw a card."
+  },
+  {
+    "card_id": 48615,
+    "name": "Earth Elemental",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "ELEMENTAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+1 Influence\nReturn another player’s troop or spy.\nAmbition Focus ► Draw a card."
+  },
+  {
+    "card_id": 48613,
+    "name": "Crushing Wave Cultist",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Assassinate a white troop.\nConquest Focus ► Deploy 2 troops."
+  },
+  {
+    "card_id": 48604,
+    "name": "Air Elemental",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "ELEMENTAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Deploy 3 troops.\nGuile Focus ► Draw a card."
+  },
+  {
+    "card_id": 48638,
+    "name": "Water Elemental Myrmidon",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "ELEMENTAL",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Assassinate a white troop.\nAt end of turn, promote an Obedience card\nplayed this turn."
+  },
+  {
+    "card_id": 48625,
+    "name": "Fire Elemental Myrmidon",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "ELEMENTAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Power\nAt end of turn, promote an Obedience card\nplayed this turn."
+  },
+  {
+    "card_id": 48620,
+    "name": "Eternal Flame Cultist",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "HUMAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Assassinate a troop.\nMalice Focus ► +2 Power"
+  },
+  {
+    "card_id": 48617,
+    "name": "Earth Elemental Myrmidon",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "ELEMENTAL",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+2 Influence\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48606,
+    "name": "Air Elemental Myrmidon",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "ELEMENTAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Place a spy.\nAt end of turn, promote an Obedience card\nplayed this turn."
+  },
+  {
+    "card_id": 48633,
+    "name": "Vanifer",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "TIEFLING",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Assassinate a troop.\nRecruit a Malice card that costs 4 or less\nwithout paying its cost."
+  },
+  {
+    "card_id": 48630,
+    "name": "Marlos Urnrayle",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "MEDUSA",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "+1 Influence\nAt end of turn, promote another card played\nthis turn.\nRecruit an Ambition card that costs 4 or less\nwithout paying its cost."
+  },
+  {
+    "card_id": 48626,
+    "name": "Gar Shatterkeel",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "HUMAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 9,
+    "ability_text": "Deploy 3 troops.\nRecruit a Conquest card that costs 4 or less\nwithout paying its cost."
+  },
+  {
+    "card_id": 48600,
+    "name": "Aerisi Kalinoth",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "ELF",
+    "deck_vp": 2,
+    "inner_circle_vp": 7,
+    "ability_text": "+1 Power\nPlace a spy.\nRecruit a Guile card that costs 4 or less\nwithout paying its cost."
+  },
+  {
+    "card_id": 48632,
+    "name": "Olhydra",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "ELEMENTAL PRINCE",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Supplant a white troop anywhere on the board.\nConquest Focus ► Deploy 2 troops."
+  },
+  {
+    "card_id": 48639,
+    "name": "Yan-C-Bin",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "ELEMENTAL PRINCE",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Place a spy, then assassinate a troop at that\nspy’s site.\nGuile Focus ► Place a spy."
+  },
+  {
+    "card_id": 48631,
+    "name": "Ogrémoch",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "ELEMENTAL PRINCE",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "+2 Influence\nAt end of turn, promote another card played\nthis turn.\nAmbition Focus ► At end of turn, promote\nanother card played this turn."
+  },
+  {
+    "card_id": 48629,
+    "name": "Imix",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "ELEMENTAL PRINCE",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+4 Power\nMalice Focus ► +2 Power"
+  },
+  {
+    "card_id": 48712,
+    "name": "Grimlock",
+    "cost": 1,
+    "aspect": "CONQUEST",
+    "type": "GRIMLOCK",
+    "deck_vp": 0,
+    "inner_circle_vp": 1,
+    "ability_text": "Deploy a troop.\nIf an opponent causes you to discard this,\ndraw 2 cards."
+  },
+  {
+    "card_id": 48714,
+    "name": "Cranium Rats",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "BEAST",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Deploy 2 troops.\nChoose one opponent with more than 3 cards\nto discard a card."
+  },
+  {
+    "card_id": 48709,
+    "name": "Cloaker",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "ABERRATION",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Assassinate a\ntroop at that spy’s site."
+  },
+  {
+    "card_id": 48717,
+    "name": "Gauth",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "ABERRATION",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +2 Influence\n• Draw a card. Choose one opponent with\nmore than 3 cards to discard a card."
+  },
+  {
+    "card_id": 48716,
+    "name": "Mindwitness",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "ABERRATION",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Assassinate a troop. If that troop belonged\nto another player and they have more than 3\ncards, they must discard a card."
+  },
+  {
+    "card_id": 48708,
+    "name": "Nothic",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "ABERRATION",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Draw a card.\nEach opponent with more than 3 cards\nmust discard a card."
+  },
+  {
+    "card_id": 48706,
+    "name": "Chuul",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "ABERRATION",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Place a spy. Each opponent who has a troop\nat that spy’s site and more than 3 cards, must\ndiscard a card."
+  },
+  {
+    "card_id": 48704,
+    "name": "Ambassador",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "ILLITHID",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "At end of turn, promote another card played\nthis turn.\nIf an opponent causes you to discard this, you\nmay promote it instead."
+  },
+  {
+    "card_id": 48739,
+    "name": "Umber Hulk",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "MONSTROSITY",
+    "deck_vp": 2,
+    "inner_circle_vp": 7,
+    "ability_text": "Deploy 3 troops.\nIf an opponent causes you to discard this,\nthey must discard a card."
+  },
+  {
+    "card_id": 48718,
+    "name": "Spectator",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "ABERRATION",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Power +1 Influence"
+  },
+  {
+    "card_id": 48707,
+    "name": "Brainwashed Slave",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "ABERRATION",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +2 Power +2 Influence"
+  },
+  {
+    "card_id": 48703,
+    "name": "Intellect Devourer",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "ABERRATION",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +3 Influence\n• Return up to two troops or spies."
+  },
+  {
+    "card_id": 48715,
+    "name": "Beholder",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "ABERRATION",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop.\nGain 1 Power for every 3 troops in your trophy hall."
+  },
+  {
+    "card_id": 48711,
+    "name": "Quaggoth",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "QUAGGOTH",
+    "deck_vp": 2,
+    "inner_circle_vp": 7,
+    "ability_text": "Assassinate one white troop for each site you\ncontrol."
+  },
+  {
+    "card_id": 48702,
+    "name": "Puppeteer",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "ILLITHID",
+    "deck_vp": 2,
+    "inner_circle_vp": 6,
+    "ability_text": "+2 Influence\nAt end of turn, promote another card played\nthis turn."
+  },
+  {
+    "card_id": 48701,
+    "name": "Ulitharid",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "ILLITHID",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Play a card in the market that costs 4 or less\nas if it was in your hand, then devour that\ncard."
+  },
+  {
+    "card_id": 48705,
+    "name": "Aboleth",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "ABERRATION",
+    "deck_vp": 4,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one\n• Place 2 spies.\n• Draw a card for each spy you have on the\nboard."
+  },
+  {
+    "card_id": 48710,
+    "name": "Neogi",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "ABERRATION",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Deploy 4 troops.\nAt end of turn, each opponent must discard\na card."
+  },
+  {
+    "card_id": 48700,
+    "name": "Elder Brain",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "ABERRATION",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Promote the top card of your deck.\nPlay a card from your inner-circle as if it were\nin your hand, then return it to your inner-\ncircle."
+  },
+  {
+    "card_id": 48713,
+    "name": "Death Tyrant",
+    "cost": 7,
+    "aspect": "MALICE",
+    "type": "ABERRATION",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate up to 3 troops at a single site. For\neach troop removed gain 1 Influence."
+  },
+  {
+    "card_id": 48737,
+    "name": "Carrion Crawler",
+    "cost": 2,
+    "aspect": "MALICE",
+    "type": "MONSTROSITY",
+    "deck_vp": 0,
+    "inner_circle_vp": 2,
+    "ability_text": "+3 Influence\nDevour a card in the market. Instead of\nreplacing it with the top card from the market\ndeck, replace it with this card."
+  },
+  {
+    "card_id": 48730,
+    "name": "Wraith",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "UNDEAD",
+    "deck_vp": 0,
+    "inner_circle_vp": 1,
+    "ability_text": "Place a spy.\nDevour this card ► Assassinate a troop at that\nspy’s site."
+  },
+  {
+    "card_id": 48729,
+    "name": "Skeletal Horde",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Deploy 2 troops.\nDevour this card ► Deploy 3 troops"
+  },
+  {
+    "card_id": 48727,
+    "name": "Cultist of Myrkul",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• +2 Influence\n• Devour this card ► at end of turn, promote\nup to 2 other cards played this turn."
+  },
+  {
+    "card_id": 48720,
+    "name": "Vampire Spawn",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+1 Influence\nReturn another player’s troop or spy."
+  },
+  {
+    "card_id": 48735,
+    "name": "Minotaur Skeleton",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Deploy three troops.\n• Devour this card ► Assassinate up to three\nwhite troops at a single site."
+  },
+  {
+    "card_id": 48736,
+    "name": "Flesh Golem",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "CONSTRUCT",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Power\nDevour this card ► Assassinate a troop."
+  },
+  {
+    "card_id": 48726,
+    "name": "Ravenous Zombies",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+1 Influence\nAssassinate a white troop."
+  },
+  {
+    "card_id": 48724,
+    "name": "Wight",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +2 Influence\n• Devour a card in your hand ► Supplant a\ntroop."
+  },
+  {
+    "card_id": 48723,
+    "name": "Ghost",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► For the rest of\nyour turn treat the top card of the devoured\ndeck as if it was in the market."
+  },
+  {
+    "card_id": 48738,
+    "name": "Revenant",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "UNDEAD",
+    "deck_vp": 1,
+    "inner_circle_vp": 7,
+    "ability_text": "Assassinate two troops. Then, if you have 8\nor more troops in your trophy hall, promote\nthis card."
+  },
+  {
+    "card_id": 48731,
+    "name": "Ogre Zombie",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "UNDEAD",
+    "deck_vp": 2,
+    "inner_circle_vp": 7,
+    "ability_text": "Supplant a white troop anywhere on the\nboard."
+  },
+  {
+    "card_id": 48719,
+    "name": "Banshee",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "UNDEAD",
+    "deck_vp": 2,
+    "inner_circle_vp": 7,
+    "ability_text": "Place a spy. If another player’s spy is at that\nsite, gain 3 Influence."
+  },
+  {
+    "card_id": 48734,
+    "name": "Necromancer",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "HUMAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• +3 Influence\n• Promote this card, or a card from your hand\nor discard pile."
+  },
+  {
+    "card_id": 48722,
+    "name": "Conjurer",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "HUMAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Recruit up to\n2 cards that each costs 3 or less without\npaying its cost."
+  },
+  {
+    "card_id": 48721,
+    "name": "Death Knight",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "UNDEAD",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Supplant a troop.\nGain 1 VP for every 5 player troops in your\ntrophy hall."
+  },
+  {
+    "card_id": 48725,
+    "name": "Mummy Lord",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "UNDEAD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose 2 times:\n• Assassinate a white troop.\n• Take a white troop from any trophy hall and\ndeploy it anywhere on the board."
+  },
+  {
+    "card_id": 48733,
+    "name": "High Priest of Myrkul",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "HUMAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Return another player’s troop or spy.\nAt end of turn, you may promote any number\nof Undead cards played this turn."
+  },
+  {
+    "card_id": 48732,
+    "name": "Lich",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "UNDEAD",
+    "deck_vp": 4,
+    "inner_circle_vp": 7,
+    "ability_text": "Place a spy. If another player’s troop is at that\nsite, take up to 2 troops from their trophy hall\nand deploy them."
+  },
+  {
+    "card_id": 48728,
+    "name": "Vampire",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "UNDEAD",
+    "deck_vp": 4,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Supplant a troop.\n• Promote a card from your discard pile, then\ngain 1 VP for every 3 cards in your inner\ncircle."
+  }
+]

@@ -1,0 +1,15 @@
+# Godot cache (regenerated on import)
+.godot/
+*.import.tmp
+
+# Built executables (rebuilt via build-*.bat)
+*.exe
+*.pck
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS junk
+Thumbs.db
+desktop.ini
