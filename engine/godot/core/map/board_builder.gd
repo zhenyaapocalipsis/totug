@@ -214,6 +214,39 @@ func _port_for_raw_edge(locals: Dictionary, raw_dir: String) -> String:
 	return best
 
 
+## Порт ребра с учётом ручной разметки: manual_adjacency.json -> "edge_ports"
+## {ребро: имя локации или id кольца}. Нужна там, где ближайший к середине
+## ребра узел не совпадает с артом (C4 SW: туннель идёт в Red Gate, а ближе
+## к ребру стоит кольцо C4_route0 — из-за этого войско за ребром давало
+## Присутствие на кольце между Red Gate и Caer Sidi).
+func _port(hex_id: String, locals: Dictionary, raw_dir: String, prefix: String) -> String:
+	var override = (_manual_for(hex_id).get("edge_ports", {}) as Dictionary).get(raw_dir, "")
+	if override != "":
+		var ring_id: String = prefix + str(override)
+		if locals.has(ring_id):
+			return ring_id
+		for site: Dictionary in _site_data.get(hex_id, []):
+			if site["name"] == override:
+				# ближайший к ребру слот этой локации
+				var site_locals := {}
+				for slot: Dictionary in site["troop_slots"]:
+					site_locals[prefix + slot["id"]] = locals[prefix + slot["id"]]
+				return _port_for_raw_edge(site_locals, raw_dir)
+		push_warning("edge_ports %s %s: нет узла '%s'" % [hex_id, raw_dir, override])
+	return _port_for_raw_edge(locals, raw_dir)
+
+
+## Диагностика (tests/diagnose_ports.gd): id узла без префикса раскладки.
+func port_name(hex_id: String, raw_dir: String) -> String:
+	var locals := {}
+	for site: Dictionary in _site_data.get(hex_id, []):
+		for slot: Dictionary in site["troop_slots"]:
+			locals[":" + slot["id"]] = Vector2(slot["x"], slot["z"])
+	for slot: Dictionary in _route_data.get(hex_id, []):
+		locals[":" + slot["id"]] = Vector2(slot["x"], slot["z"])
+	return _port(hex_id, locals, raw_dir, ":").trim_prefix(":")
+
+
 func _sew_neighbours(
 	graph: MapGraph,
 	layout: Dictionary,
@@ -237,8 +270,8 @@ func _sew_neighbours(
 		if not hex_has_connection_facing(hex_by_slot[b], back_dir, rot_b):
 			continue
 
-		var port_a := _port_for_raw_edge(local_positions[a], raw_edge_facing_world(world_dir, rot_a))
-		var port_b := _port_for_raw_edge(local_positions[b], raw_edge_facing_world(back_dir, rot_b))
+		var port_a := _port(hex_by_slot[a], local_positions[a], raw_edge_facing_world(world_dir, rot_a), a + ":")
+		var port_b := _port(hex_by_slot[b], local_positions[b], raw_edge_facing_world(back_dir, rot_b), b + ":")
 		if port_a != "" and port_b != "":
 			graph.connect_slots(port_a, port_b)
 			# Site-to-site tunnel across the hex edge (no ring between): the

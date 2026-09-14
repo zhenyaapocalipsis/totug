@@ -70,6 +70,7 @@ func _initialize() -> void:
 	test_control_markers()
 	test_presence_slots_explain_refusal()
 	test_cross_hex_site_to_site_presence()
+	test_edge_ports_follow_art()
 
 	# этап 2 доработки: исправления по аудиту карт
 	test_audit_card_fixes()
@@ -493,6 +494,27 @@ func test_direct_site_links() -> void:
 		"слот соединённой локации достижим")
 	check_eq(graph.connected_component_count(), 1,
 		"связь локаций объединяет компоненты")
+
+
+## Туннель с ребра гекса ведёт туда, куда нарисован, а не в ближайший к ребру
+## узел. Найдено в партии: войско за SW-ребром C4 давало Присутствие на кольце
+## между Red Gate и Caer Sidi, хотя туннель идёт прямо в Red Gate.
+func test_edge_ports_follow_art() -> void:
+	section("порты рёбер по арту (edge_ports)")
+	var builder := BoardData.make_builder()
+	check_eq(builder.port_name("C4", "SW"), "C4_0_0", "C4 SW ведёт в Red Gate")
+	check_eq(builder.port_name("C4", "NW"), "C4_0_0", "C4 NW ведёт в Red Gate")
+	check_eq(builder.port_name("X4", "S").begins_with("X4_route"), false, "X4 S ведёт в Fountain of Screams")
+
+	var graph := builder.build(2, TWO_PLAYER_HEXES, _optimized_rotations(1))
+	var ring := ""
+	for slot_id: String in graph.slots.keys():
+		if slot_id.ends_with(":C4_route0"):
+			ring = slot_id
+	check(ring != "", "кольцо C4_route0 есть на доске")
+	for neighbour in graph.adjacent_slots(ring):
+		check(graph.site_of_slot(neighbour) != "",
+			"у C4_route0 соседи только слоты локаций (не кольцо соседнего гекса): " + neighbour)
 
 
 # --- этап 2: базовый цикл хода ----------------------------------------------
