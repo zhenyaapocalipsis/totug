@@ -21,7 +21,7 @@ extends SceneTree
 const GAMES := 60
 const MAX_TURNS := 2000
 const MAX_ACTIONS_PER_TURN := 25
-const STARTING_SITE_NAMES := ["Caer Sidi", "Xal Veldrin", "Ath-Qua", "Zi'Xzolca"]
+const STARTING_SITE_NAMES := GameSetup.STARTING_SITE_NAMES
 
 var _bad := 0
 
