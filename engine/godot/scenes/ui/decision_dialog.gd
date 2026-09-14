@@ -34,6 +34,21 @@ var _scroll: ScrollContainer
 var _style: StyleBoxFlat
 ## Плашка сейчас у верхнего края (выбор цели на доске) — доске нужно отступить.
 var at_top := false
+var _market_display: Array = []
+var _ghost_card := ""
+
+
+## Подпись карты маркета по индексу: название и цена. Публичная — для тестов.
+static func market_label(index: int, display: Array, ghost_card: String = "") -> String:
+	var card_id := ""
+	if index == Market.DEVOURED_TOP_INDEX:
+		card_id = ghost_card
+	elif index < display.size():
+		card_id = String(display[index])
+	if card_id == "":
+		return label_for(index, "target_market_index")
+	var cost: int = CardLibrary.card_cost(card_id)
+	return "%s (%d)" % [_card_label(card_id), cost] if cost >= 0 else _card_label(card_id)
 
 
 func _init() -> void:
@@ -79,6 +94,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		visible = false
 		return
 
+	_market_display = (view.get("market", {}) as Dictionary).get("display", [])
+	_ghost_card = String(view.get("ghost_market_card", ""))
 	var decider := String(pd.get("player_id", ""))
 	var choice_type := String(pd.get("choice_type", ""))
 	var on_board: bool = BOARD_CHOICES.has(choice_type)
@@ -158,6 +175,10 @@ func _add_button(text: String, value: Variant) -> void:
 ## говорит, поэтому переводим его в название локации и номер места в ней.
 ## Если снимка доски нет (тесты подписей), откатываемся на общий label_for.
 func _board_label(value: Variant, choice_type: String) -> String:
+	# Слот маркета: "Kobold (1)" вместо "Market slot 2" — игрок не должен
+	# сверять номера с рядом карт справа.
+	if choice_type == "target_market_index" and typeof(value) == TYPE_INT and int(value) >= 0:
+		return market_label(int(value), _market_display, _ghost_card)
 	if board.is_empty() or typeof(value) != TYPE_STRING:
 		return label_for(value, choice_type)
 	var raw := String(value)

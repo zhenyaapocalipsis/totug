@@ -2237,3 +2237,5 @@ func test_no_actions_while_decision_pending() -> void:
 
 	var line := EventLogPanel.describe({"type": "recruit", "player_id": "red", "card_id": "48342"})
 	check_eq(line, "Red recruits Noble", "журнал называет купленную карту")
+	check_eq(DecisionDialog.market_label(1, ["", "48342"]), "Noble", "выбор из маркета подписан названием карты")
+	check_eq(DecisionDialog.market_label(0, [""]), "Market slot 1", "пустой слот маркета — номером")
