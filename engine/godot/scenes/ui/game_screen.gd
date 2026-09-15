@@ -17,20 +17,54 @@ extends Control
 
 const PLAYER_IDS: Array[String] = ["red", "blue"]
 
+# Сетка экрана (в пикселях расчётного размера 1280x800). Колонки:
+#   A — плашка хода / чат, B — сыгранные карты / рука, C — инфо игрока,
+#   D — инфо противников / маркет / End turn.
+# Сверху полоса сыгранных карт противника (B+C), в центре доска (A+B+C).
+const MARGIN := 8.0
+const GAP := 8.0
+const COL_A := 240.0
+const COL_C := 140.0
+const COL_D := 270.0
+const TOP_H := 84.0
+const BOTTOM_H := 190.0
+const PLAY_H := 124.0
+
 var server: GameServer
 var viewer_id: String = "red"
 var board_data: Dictionary = {}
 
 var _player_panel: PlayerPanel
+var _enemy_info: EnemyInfoPanel
 var _hand_panel: HandPanel
 var _market_panel: MarketPanel
+var _chat_panel: ChatPanel
 var _log_panel: EventLogPanel
 var _board_panel: BoardPanel
 var _board_area: Control
 var _decision_dialog: DecisionDialog
+var _turn_panel: PanelContainer
+var _turn_style: StyleBoxFlat
 var _header: Label
-var _header_style: StyleBoxFlat
-var _scoreboard: RichTextLabel
+var _status: Label
+var _enemy_zone: PanelContainer
+var _enemy_title: Label
+var _enemy_strip: CardStrip
+var _play_zone: PanelContainer
+var _play_strip: CardStrip
+var _end_turn_area: Control
+var _end_turn_button: Button
+var _end_turn_style: StyleBoxFlat
+var _deploy_vp_button: Button
+var _hint_panel: PanelContainer
+var _hint: Label
+var _preview: CardPreview
+
+## Что каждый игрок сыграл в свой последний (или текущий) ход — копится по
+## событиям play_card. Нужно полосе противника: в локальной партии экран
+## переключается на ходящего, и чужие карты видны только после его хода.
+var _played_by: Dictionary = {}     # player_id -> Array[String]
+var _turn_closed: Dictionary = {}   # player_id -> bool: следующий play_card начинает новый ход
 
 
 func _init(game_seed: int = 0, half_decks: Array[String] = []) -> void:
@@ -44,67 +78,76 @@ func _init(game_seed: int = 0, half_decks: Array[String] = []) -> void:
 	_log_panel.add_note("Game started. Each player drew 5 cards and now chooses a starting site.")
 
 
+## Общий вид зон экрана.
+static func zone_style(margin: float = 8.0) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.105, 0.1, 0.135)
+	style.border_color = Color(0.22, 0.21, 0.28)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(margin)
+	return style
+
+
+## Мелкий заголовок зоны капсом.
+static func section_label(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(0.6, 0.58, 0.68))
+	return label
+
+
 func _build_layout() -> void:
 	var bg := ColorRect.new()
-	bg.color = Color(0.07, 0.07, 0.09)
+	bg.color = Color(0.055, 0.052, 0.07)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 8)
-	root.offset_left = 10
-	root.offset_top = 10
-	root.offset_right = -10
-	root.offset_bottom = -10
-	add_child(root)
-
-	# Плашка хода: чей ход — крупно и в цвете игрока, справа счёт всех игроков.
-	_header_style = StyleBoxFlat.new()
-	_header_style.bg_color = Color(0.12, 0.12, 0.16)
-	_header_style.set_corner_radius_all(6)
-	_header_style.content_margin_left = 12
-	_header_style.content_margin_right = 12
-	_header_style.content_margin_top = 4
-	_header_style.content_margin_bottom = 4
-	var header_panel := PanelContainer.new()
-	header_panel.add_theme_stylebox_override("panel", _header_style)
-	root.add_child(header_panel)
-	var header_row := HBoxContainer.new()
-	header_panel.add_child(header_row)
-
+	# 3a. Плашка хода: чей ход — крупно и в цвете игрока, ниже — чего ждём.
+	_turn_style = zone_style(10)
+	_turn_style.border_width_left = 5
+	_turn_panel = PanelContainer.new()
+	_turn_panel.add_theme_stylebox_override("panel", _turn_style)
+	add_child(_turn_panel)
+	var turn_col := VBoxContainer.new()
+	turn_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	_turn_panel.add_child(turn_col)
 	_header = Label.new()
 	_header.add_theme_font_size_override("font_size", 20)
-	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header_row.add_child(_header)
+	turn_col.add_child(_header)
+	_status = Label.new()
+	_status.add_theme_font_size_override("font_size", 12)
+	_status.add_theme_color_override("font_color", Color(0.72, 0.7, 0.8))
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.max_lines_visible = 2
+	turn_col.add_child(_status)
 
-	_scoreboard = RichTextLabel.new()
-	_scoreboard.bbcode_enabled = true
-	_scoreboard.fit_content = true
-	_scoreboard.scroll_active = false
-	_scoreboard.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_scoreboard.custom_minimum_size = Vector2(520, 0)
-	_scoreboard.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_scoreboard.add_theme_font_size_override("normal_font_size", 14)
-	_scoreboard.add_theme_font_size_override("bold_font_size", 14)
-	header_row.add_child(_scoreboard)
+	# 3. Сыгранные карты противника.
+	_enemy_zone = PanelContainer.new()
+	_enemy_zone.add_theme_stylebox_override("panel", zone_style(6))
+	add_child(_enemy_zone)
+	var enemy_row := HBoxContainer.new()
+	enemy_row.add_theme_constant_override("separation", 10)
+	_enemy_zone.add_child(enemy_row)
+	_enemy_title = section_label("")
+	_enemy_title.custom_minimum_size = Vector2(78, 0)
+	_enemy_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_enemy_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	enemy_row.add_child(_enemy_title)
+	_enemy_strip = CardStrip.new()
+	_enemy_strip.card_aspect = 1.45
+	_enemy_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	enemy_row.add_child(_enemy_strip)
 
-	# Доска — главное на экране, поэтому она занимает всю ширину слева и всю
-	# свободную высоту, а панель игрока переехала под неё отдельной строкой.
-	# В прошлой раскладке доска была зажата в узкий угол и её нельзя было
-	# рассмотреть.
-	var middle := HBoxContainer.new()
-	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	middle.add_theme_constant_override("separation", 8)
-	root.add_child(middle)
+	# 8. Инфо противников.
+	_enemy_info = EnemyInfoPanel.new()
+	add_child(_enemy_info)
 
-	# Доска лежит в простом Control, чтобы поверх неё (а не поверх маркета)
-	# можно было повесить диалог решения.
+	# 4. Доска лежит в простом Control, чтобы поверх неё (а не поверх маркета)
+	# можно было повесить диалог решения и подсказку.
 	_board_area = Control.new()
-	_board_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_board_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_board_area.custom_minimum_size = Vector2(520, 300)
-	middle.add_child(_board_area)
+	add_child(_board_area)
 
 	_board_panel = BoardPanel.new()
 	_board_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -112,45 +155,184 @@ func _build_layout() -> void:
 	_board_panel.site_clicked.connect(_on_site_clicked)
 	_board_area.add_child(_board_panel)
 
-	# Правая колонка фиксированной ширины: карточки маркета читаемы только при
-	# своей ширине, растягивать их незачем.
-	var right := VBoxContainer.new()
-	right.custom_minimum_size = Vector2(452, 0)
-	right.size_flags_horizontal = Control.SIZE_FILL
-	right.add_theme_constant_override("separation", 8)
-	middle.add_child(right)
-
-	_market_panel = MarketPanel.new()
-	_market_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_market_panel.market_card_clicked.connect(_on_market_clicked)
-	_market_panel.supply_card_clicked.connect(_on_supply_clicked)
-	right.add_child(_market_panel)
-
-	# Журнал не растягиваем: свободную высоту должен забирать маркет.
-	# Журнал делит высоту с маркетом (маркет прокручивается), иначе в нём
-	# помещалось три строки и читать его было невозможно.
-	_market_panel.size_flags_stretch_ratio = 1.6
-	_log_panel = EventLogPanel.new()
-	_log_panel.board = board_data
-	_log_panel.custom_minimum_size = Vector2(0, 150)
-	_log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.add_child(_log_panel)
-
-	_player_panel = PlayerPanel.new()
-	_player_panel.action_requested.connect(_on_action_requested)
-	root.add_child(_player_panel)
-
-	_hand_panel = HandPanel.new()
-	# Без этой строки карты в руке молча не работали: сигнал от карты
-	# отправлялся, но его никто не слушал. Ни один тест этого не видел, потому
-	# что все они дёргали сервер напрямую, минуя щелчки мышью.
-	_hand_panel.card_clicked.connect(_on_hand_card_clicked)
-	root.add_child(_hand_panel)
+	# Подсказка «что можно сделать» — полупрозрачная плашка у верха доски.
+	_hint_panel = PanelContainer.new()
+	var hint_style := StyleBoxFlat.new()
+	hint_style.bg_color = Color(0.05, 0.05, 0.07, 0.82)
+	hint_style.set_corner_radius_all(6)
+	hint_style.content_margin_left = 10
+	hint_style.content_margin_right = 10
+	hint_style.content_margin_top = 4
+	hint_style.content_margin_bottom = 4
+	_hint_panel.add_theme_stylebox_override("panel", hint_style)
+	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint_panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_hint_panel.offset_left = 10
+	_hint_panel.offset_right = -10
+	_hint_panel.offset_top = 8
+	_board_area.add_child(_hint_panel)
+	_hint = Label.new()
+	_hint.add_theme_font_size_override("font_size", 13)
+	_hint.add_theme_color_override("font_color", Color(0.95, 0.88, 0.62))
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint_panel.add_child(_hint)
 
 	_decision_dialog = DecisionDialog.new()
 	_decision_dialog.board = board_data  # чтобы подписывать цели названиями локаций
 	_decision_dialog.option_chosen.connect(_on_decision_answer)
 	_board_area.add_child(_decision_dialog)
+
+	# 6. Маркет.
+	_market_panel = MarketPanel.new()
+	_market_panel.market_card_clicked.connect(_on_market_clicked)
+	_market_panel.supply_card_clicked.connect(_on_supply_clicked)
+	add_child(_market_panel)
+
+	# 5. Чат и журнал.
+	_chat_panel = ChatPanel.new()
+	_chat_panel.message_sent.connect(func(text: String): _chat_panel.add_message(viewer_id, text))
+	add_child(_chat_panel)
+	_log_panel = _chat_panel.log_panel
+	_log_panel.board = board_data
+
+	# 2. Сыгранные в этот ход карты зрителя.
+	_play_zone = PanelContainer.new()
+	_play_zone.add_theme_stylebox_override("panel", zone_style(6))
+	add_child(_play_zone)
+	var play_col := VBoxContainer.new()
+	play_col.add_theme_constant_override("separation", 2)
+	_play_zone.add_child(play_col)
+	play_col.add_child(section_label("PLAYED THIS TURN"))
+	_play_strip = CardStrip.new()
+	_play_strip.card_aspect = 0.9
+	_play_strip.empty_text = "Play cards from your hand — hover the bottom edge"
+	_play_strip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	play_col.add_child(_play_strip)
+
+	# 7. Инфо игрока.
+	_player_panel = PlayerPanel.new()
+	add_child(_player_panel)
+
+	# 9. End turn — круглая кнопка; над ней, когда можно, Deploy for 1 VP.
+	_end_turn_area = Control.new()
+	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_end_turn_area)
+	_end_turn_button = _round_button()
+	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
+	_end_turn_area.add_child(_end_turn_button)
+	_deploy_vp_button = Button.new()
+	_deploy_vp_button.text = "Deploy for 1 VP"
+	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
+	_deploy_vp_button.add_theme_font_size_override("font_size", 12)
+	_deploy_vp_button.pressed.connect(func(): _on_action_requested("deploy_for_vp"))
+	_end_turn_area.add_child(_deploy_vp_button)
+
+	# 1. Рука — поверх остальных зон: поднятая, она накрывает зону сыгранных карт.
+	_hand_panel = HandPanel.new()
+	# Без этой строки карты в руке молча не работали: сигнал от карты
+	# отправлялся, но его никто не слушал. Ни один тест этого не видел, потому
+	# что все они дёргали сервер напрямую, минуя щелчки мышью.
+	_hand_panel.card_clicked.connect(_on_hand_card_clicked)
+	add_child(_hand_panel)
+
+	# Увеличенная копия карты под курсором — над всем экраном.
+	_preview = CardPreview.new()
+	_preview.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_preview)
+
+	_layout()
+
+
+func _round_button() -> Button:
+	var button := Button.new()
+	button.text = "End turn"
+	button.add_theme_font_size_override("font_size", 19)
+	_end_turn_style = StyleBoxFlat.new()
+	_end_turn_style.set_corner_radius_all(80)
+	_end_turn_style.set_border_width_all(3)
+	_end_turn_style.shadow_size = 8
+	var states := {
+		"normal": _end_turn_style,
+		"hover": _end_turn_style.duplicate(),
+		"pressed": _end_turn_style.duplicate(),
+		"disabled": _end_turn_style.duplicate(),
+		"focus": StyleBoxEmpty.new(),
+	}
+	for key: String in states:
+		button.add_theme_stylebox_override(key, states[key])
+	button.add_theme_color_override("font_color", Color(1, 0.95, 0.85))
+	button.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	button.add_theme_color_override("font_disabled_color", Color(0.5, 0.48, 0.55))
+	return button
+
+
+## Цвет круглой кнопки — в цвет ходящего игрока, недоступная — серая.
+func _style_end_turn(colour: Color) -> void:
+	var normal: StyleBoxFlat = _end_turn_style
+	normal.bg_color = colour.darkened(0.45)
+	normal.border_color = Color(0.92, 0.75, 0.35)
+	normal.shadow_color = Color(colour, 0.35)
+	var hover: StyleBoxFlat = _end_turn_button.get_theme_stylebox("hover")
+	hover.bg_color = colour.darkened(0.25)
+	hover.border_color = Color(1.0, 0.86, 0.5)
+	hover.shadow_color = Color(colour, 0.6)
+	var pressed: StyleBoxFlat = _end_turn_button.get_theme_stylebox("pressed")
+	pressed.bg_color = colour.darkened(0.6)
+	pressed.border_color = Color(0.8, 0.62, 0.3)
+	var disabled: StyleBoxFlat = _end_turn_button.get_theme_stylebox("disabled")
+	disabled.bg_color = Color(0.14, 0.135, 0.17)
+	disabled.border_color = Color(0.28, 0.27, 0.33)
+	disabled.shadow_color = Color(0, 0, 0, 0.3)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and _board_area != null:
+		_layout()
+
+
+## Раскладка зон по сетке. Считается от размера экрана, а не контейнерами:
+## так края зон гарантированно совпадают по линейке.
+func _layout() -> void:
+	var w := size.x
+	var h := size.y
+	if w < 10.0 or h < 10.0:
+		return
+	var a_x := MARGIN
+	var d_x := w - MARGIN - COL_D
+	var c_x := d_x - GAP - COL_C
+	var b_x := a_x + COL_A + GAP
+	var b_w := c_x - GAP - b_x
+	var top_y := MARGIN
+	var mid_y := top_y + TOP_H + GAP
+	var bottom_y := h - MARGIN - BOTTOM_H
+	var mid_h := bottom_y - GAP - mid_y
+
+	_place(_turn_panel, a_x, top_y, COL_A, TOP_H)
+	_place(_enemy_zone, b_x, top_y, d_x - GAP - b_x, TOP_H)
+	_place(_enemy_info, d_x, top_y, COL_D, TOP_H)
+	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
+	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
+	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
+	_place(_play_zone, b_x, bottom_y, b_w, PLAY_H)
+	_place(_player_panel, c_x, bottom_y, COL_C, BOTTOM_H)
+	_place(_end_turn_area, d_x, bottom_y, COL_D, BOTTOM_H)
+	# Рука занимает колонку B от верха нижнего ряда до края экрана.
+	_place(_hand_panel, b_x, h - HandPanel.CARD_SIZE.y - 40.0, b_w, HandPanel.CARD_SIZE.y + 40.0)
+
+	var d := 150.0
+	var deploy_h := 28.0 if _deploy_vp_button.visible else 0.0
+	var block := d + (deploy_h + 8.0 if deploy_h > 0.0 else 0.0)
+	var y0 := (BOTTOM_H - block) * 0.5
+	_deploy_vp_button.position = Vector2((COL_D - 160.0) * 0.5, y0)
+	_deploy_vp_button.size = Vector2(160, deploy_h)
+	_end_turn_button.position = Vector2((COL_D - d) * 0.5, y0 + block - d)
+	_end_turn_button.size = Vector2(d, d)
+
+
+static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
+	control.position = Vector2(x, y).round()
+	control.size = Vector2(width, height).round()
 
 
 # --- отправка намерений ------------------------------------------------------
@@ -164,6 +346,7 @@ func send(intent: Intent) -> void:
 	if err != GameServer.Error.OK:
 		_log_panel.add_note("Not allowed: %s" % _error_name(err))
 	_log_panel.add_events(result["events"])
+	_track_played(result["events"])
 
 	# Ход мог перейти к другому игроку — в локальном режиме зритель следует
 	# за ходом, кроме случая, когда решение ждут от кого-то конкретного.
@@ -190,13 +373,32 @@ static func _error_name(err: int) -> String:
 		_: return "error %d" % err
 
 
+## Копит сыгранные карты по игрокам. Новый ход игрока начинается с первого
+## play_card после его turn_ended — до тех пор видны карты прошлого хода.
+func _track_played(events: Array) -> void:
+	for e in events:
+		var evt: Dictionary = e
+		var pid := String(evt.get("player_id", ""))
+		match String(evt.get("type", "")):
+			"play_card":
+				if bool(_turn_closed.get(pid, true)) or not _played_by.has(pid):
+					_played_by[pid] = []
+					_turn_closed[pid] = false
+				(_played_by[pid] as Array).append(String(evt.get("card_id", "")))
+			"turn_ended":
+				_turn_closed[pid] = true
+
+
 func refresh(view: Dictionary) -> void:
 	_refresh_header(view)
 	_player_panel.update_from_view(view, viewer_id)
+	_enemy_info.update_from_view(view, viewer_id)
 	_hand_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
 	_decision_dialog.update_from_view(view, viewer_id)
+	_refresh_played(view)
+	_refresh_actions(view)
 	# Плашка выбора цели закрывает верх доски — доска вписывается ниже неё.
 	var covered: bool = _decision_dialog.visible and _decision_dialog.at_top
 	_board_panel.set_top_inset(_decision_dialog.get_combined_minimum_size().y + 16.0 if covered else 0.0)
@@ -206,34 +408,77 @@ func _refresh_header(view: Dictionary) -> void:
 	var current := String(view["current_player"])
 	var pending: Dictionary = view.get("pending_decision", {})
 	if bool(view["game_over"]):
-		_header.text = "Game over"
-		_header.modulate = Color(0.95, 0.9, 0.8)
-		_header_style.border_width_bottom = 0
-	else:
-		var text := "%s's turn" % EventLogPanel.player_name(current).to_upper()
-		var decider := String(pending.get("player_id", ""))
-		if decider != "" and decider != current:
-			text += "  ·  waiting for %s to decide" % EventLogPanel.player_name(decider)
-		if bool(view["game_end_triggered"]):
-			text += "  ·  LAST ROUND"
-		_header.text = text
-		_header.modulate = EventLogPanel.player_color(current)
-		_header_style.border_color = BoardPanel.PLAYER_COLORS.get(current, Color.GRAY)
-		_header_style.border_width_bottom = 3
+		_header.text = "GAME OVER"
+		_header.add_theme_color_override("font_color", Color(0.95, 0.9, 0.8))
+		_turn_style.border_color = Color(0.92, 0.75, 0.35)
+		_status.text = "Final scores are in the log."
+		return
+	_header.text = "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
+	_header.add_theme_color_override("font_color", EventLogPanel.player_color(current))
+	_turn_style.border_color = BoardPanel.PLAYER_COLORS.get(current, Color.GRAY)
+	var notes: Array[String] = []
+	var decider := String(pending.get("player_id", ""))
+	if decider != "":
+		notes.append("%s is deciding" % EventLogPanel.player_name(decider))
+	if bool(view["game_end_triggered"]):
+		notes.append("LAST ROUND")
+	if notes.is_empty():
+		notes.append("You are playing %s" % EventLogPanel.player_name(viewer_id))
+	_status.text = " · ".join(PackedStringArray(notes))
 
-	# Счёт: VP открыты для всех, у текущего игрока ещё Power/Influence хода.
-	var parts: Array[String] = []
-	for pid in (view.get("turn_order", PLAYER_IDS) as Array):
-		var p: Dictionary = (view["players"] as Dictionary).get(pid, {})
-		if p.is_empty():
-			continue
-		var entry := "[b][color=%s]%s[/color][/b] %d VP" % [
-			EventLogPanel.player_color(String(pid)).to_html(false),
-			EventLogPanel.player_name(String(pid)), int(p["vp_tokens"])]
-		if String(pid) == current:
-			entry += " · %d Power · %d Influence" % [int(p["power"]), int(p["influence"])]
-		parts.append(entry)
-	_scoreboard.text = "[right]%s[/right]" % "      ".join(PackedStringArray(parts))
+
+## Полоса противника: если сейчас ходит не зритель — его карты этого хода,
+## иначе карты игрока, ходившего перед зрителем, за его последний ход.
+func _refresh_played(view: Dictionary) -> void:
+	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
+	_play_strip.set_cards(me.get("played_pile", []))
+
+	var order: Array = view.get("turn_order", PLAYER_IDS)
+	var current := String(view["current_player"])
+	var enemy := current
+	if enemy == viewer_id:
+		var idx := order.find(viewer_id)
+		enemy = String(order[(idx - 1 + order.size()) % order.size()]) if idx >= 0 and order.size() > 1 else ""
+	if enemy == "" or enemy == viewer_id:
+		_enemy_title.text = "NO OPPONENT"
+		_enemy_strip.set_cards([])
+		return
+	var enemy_name := EventLogPanel.player_name(enemy).to_upper()
+	var cards: Array = _played_by.get(enemy, [])
+	if enemy == current:
+		_enemy_title.text = "%s PLAYS" % enemy_name
+		# ход только начался — прошлые карты уже не его текущий ход
+		if bool(_turn_closed.get(enemy, true)):
+			cards = []
+	else:
+		_enemy_title.text = "%s LAST TURN" % enemy_name
+	_enemy_title.add_theme_color_override("font_color", EventLogPanel.player_color(enemy))
+	_enemy_strip.empty_text = "No cards played yet"
+	_enemy_strip.set_cards(cards)
+
+
+func _refresh_actions(view: Dictionary) -> void:
+	var legal: Dictionary = view.get("legal", {})
+	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
+	_end_turn_button.disabled = not bool(legal.get("end_turn", false))
+	_style_end_turn(BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6)))
+	var show_deploy := bool(legal.get("deploy_for_vp", false))
+	if _deploy_vp_button.visible != show_deploy:
+		_deploy_vp_button.visible = show_deploy
+		_layout()
+
+	var pending: Dictionary = view.get("pending_decision", {})
+	var text := ""
+	if bool(view.get("game_over", false)):
+		text = "The game is over."
+	elif not pending.is_empty():
+		text = ""  # вопрос карты уже показан плашкой решения
+	elif String(view["current_player"]) != viewer_id:
+		text = "%s's turn." % EventLogPanel.player_name(String(view["current_player"]))
+	else:
+		text = PlayerPanel.describe_options(legal, p)
+	_hint.text = text
+	_hint_panel.visible = text != ""
 
 
 # --- обработчики кликов ------------------------------------------------------

@@ -57,12 +57,13 @@ func _process(_delta: float) -> bool:
 	_next_step_at = _frame + SETTLE
 	_step += 1
 	match _step:
-		1: _step_click_hand_card()
-		2: _step_check_hand_card()
-		3: _step_prepare_market()
-		4: _step_click_market_card()
-		5: _step_click_end_turn()
-		6: _step_check_end_turn()
+		1: _step_hover_hand()
+		2: _step_click_hand_card()
+		3: _step_check_hand_card()
+		4: _step_prepare_market()
+		5: _step_click_market_card()
+		6: _step_click_end_turn()
+		7: _step_check_end_turn()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -72,17 +73,33 @@ func _process(_delta: float) -> bool:
 
 # --- шаги --------------------------------------------------------------------
 
-func _step_click_hand_card() -> void:
-	var player := _current_player()
-	var card: CardView = null
-	for c: CardView in _all_cards():
-		if c.clickable and player.deck.hand.has(c.card_id):
-			card = c
-			break
+## Рука в покое выглядывает из-за нижнего края — как живой игрок, сначала
+## наводим мышь на её видимую часть и ждём, пока она выедет.
+func _step_hover_hand() -> void:
+	var card := _playable_hand_card()
 	check(card != null, "в руке есть карта, помеченная как кликабельная")
 	if card == null:
 		return
-	check(_fully_visible(card), "карта руки видна целиком, по ней можно попасть мышью")
+	var rect := card.get_global_rect()
+	_move_mouse(Vector2(rect.get_center().x, _screen.size.y - 20.0))
+	_next_step_at = _frame + 30  # анимация подъёма руки
+
+
+func _playable_hand_card() -> CardView:
+	var player := _current_player()
+	for c: CardView in _all_cards():
+		if c.clickable and player.deck.hand.has(c.card_id) and c.get_parent() is HandPanel:
+			return c
+	return null
+
+
+func _step_click_hand_card() -> void:
+	var player := _current_player()
+	var card := _playable_hand_card()
+	if card == null:
+		return
+	check(_on_screen(card), "рука поднялась: карта видна целиком, по ней можно попасть мышью (%s в %s)"
+		% [card.get_global_rect(), _screen.get_global_rect()])
 	_hand_before = player.deck.hand.size()
 	_resources_before = player.power + player.influence
 	_click(card)
@@ -149,6 +166,19 @@ func check(condition: bool, description: String) -> void:
 	else:
 		_failed += 1
 		print("  ПРОВАЛ %s" % description)
+
+
+func _move_mouse(point_in_screen: Vector2) -> void:
+	var ev := InputEventMouseMotion.new()
+	var point: Vector2 = root.get_screen_transform() * point_in_screen
+	ev.position = point
+	ev.global_position = point
+	Input.parse_input_event(ev)
+	Input.flush_buffered_events()
+
+
+func _on_screen(control: Control) -> bool:
+	return _fully_visible(control) and _screen.get_global_rect().encloses(control.get_global_rect())
 
 
 func _click(control: Control) -> void:

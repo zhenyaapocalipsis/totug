@@ -18,31 +18,20 @@ var _text: RichTextLabel
 var _lines: Array[String] = []
 
 
+## Журнал живёт вкладкой в зоне чата (chat_panel.gd), поэтому своей рамки и
+## заголовка у него нет.
 func _init() -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.09, 0.12)
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(8)
-	add_theme_stylebox_override("panel", style)
-
-	var col := VBoxContainer.new()
-	add_child(col)
-
-	var title := Label.new()
-	title.text = "Game log"
-	title.add_theme_font_size_override("font_size", 13)
-	title.modulate = Color(0.8, 0.8, 0.85)
-	col.add_child(title)
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
 	_text = RichTextLabel.new()
 	_text.bbcode_enabled = true
 	_text.scroll_following = true
 	_text.selection_enabled = true
 	_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_text.custom_minimum_size = Vector2(0, 120)
-	_text.add_theme_font_size_override("normal_font_size", 13)
-	_text.add_theme_font_size_override("bold_font_size", 13)
-	col.add_child(_text)
+	_text.add_theme_font_size_override("normal_font_size", 12)
+	_text.add_theme_font_size_override("bold_font_size", 12)
+	_text.add_theme_font_size_override("italics_font_size", 12)
+	add_child(_text)
 
 
 func add_events(events: Array) -> void:

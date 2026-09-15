@@ -1,138 +1,82 @@
 class_name PlayerPanel
 extends PanelContainer
 
-## Планшет игрока: ресурсы текущего хода, бараки, трофи-холл, VP и кнопки
-## действий, которые не привязаны к клику по доске или карте.
+## Зона информации игрока-зрителя: ресурсы хода, VP, бараки, трофеи, колода.
+## Узкая колонка — ряд «подпись … число». Откуда придут VP и Influence —
+## во всплывающей подсказке зоны.
 ##
-## Панель ничего не решает сама: какие кнопки доступны, ей сообщает срез
-## состояния (view["legal"]), который посчитал сервер.
-##
-## Этап 3: Power / Influence / VP — крупными цветными числами, подсказка
-## "что можно сделать" перечисляет действия и их цену, рамка панели в цвете
-## игрока.
-
-signal action_requested(kind: String)
+## Панель ничего не решает сама: всё берёт из среза состояния (view).
 
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
 const VP_COLOR := Color(0.98, 0.82, 0.35)
 
 var _title: Label
-var _resources: RichTextLabel
-var _forces: Label
-var _end_turn_button: Button
-var _deploy_vp_button: Button
-var _hint: Label
-var _income: Label
+var _values: Dictionary = {}  # key -> Label
 var _style: StyleBoxFlat
 
 
 func _init() -> void:
-	_style = StyleBoxFlat.new()
-	_style.bg_color = Color(0.12, 0.12, 0.16)
-	_style.set_corner_radius_all(6)
-	_style.set_content_margin_all(8)
-	_style.border_width_left = 5
+	_style = GameScreen.zone_style()
+	_style.border_width_top = 3
 	add_theme_stylebox_override("panel", _style)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	add_child(row)
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 3)
-	row.add_child(col)
-
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 18)
-	col.add_child(top)
+	col.add_theme_constant_override("separation", 1)
+	add_child(col)
 
 	_title = Label.new()
-	_title.add_theme_font_size_override("font_size", 18)
-	top.add_child(_title)
+	_title.add_theme_font_size_override("font_size", 15)
+	_title.clip_text = true
+	col.add_child(_title)
 
-	_resources = RichTextLabel.new()
-	_resources.bbcode_enabled = true
-	_resources.fit_content = true
-	_resources.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_resources.scroll_active = false
-	_resources.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_resources.add_theme_font_size_override("normal_font_size", 18)
-	_resources.add_theme_font_size_override("bold_font_size", 20)
-	top.add_child(_resources)
+	_add_row(col, "power", "Power", 15, POWER_COLOR)
+	_add_row(col, "influence", "Influence", 15, INFLUENCE_COLOR)
+	_add_row(col, "vp", "VP", 15, VP_COLOR)
+	var sep := HSeparator.new()
+	sep.add_theme_constant_override("separation", 5)
+	col.add_child(sep)
+	_add_row(col, "troops", "Troops", 11)
+	_add_row(col, "spies", "Spies", 11)
+	_add_row(col, "trophies", "Trophies", 11)
+	_add_row(col, "deck", "Deck / discard", 11)
+	_add_row(col, "inner", "Inner Circle", 11)
 
-	_forces = Label.new()
-	_forces.add_theme_font_size_override("font_size", 12)
-	_forces.modulate = Color(0.8, 0.8, 0.85)
-	col.add_child(_forces)
 
-	_income = Label.new()
-	_income.add_theme_font_size_override("font_size", 12)
-	_income.modulate = Color(0.62, 0.82, 0.66)
-	_income.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(_income)
-
-	_hint = Label.new()
-	_hint.add_theme_font_size_override("font_size", 13)
-	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_hint.modulate = Color(0.95, 0.88, 0.62)
-	col.add_child(_hint)
-
-	var buttons := VBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 6)
-	row.add_child(buttons)
-
-	_end_turn_button = Button.new()
-	_end_turn_button.text = "End turn"
-	_end_turn_button.custom_minimum_size = Vector2(170, 44)
-	_end_turn_button.add_theme_font_size_override("font_size", 17)
-	_end_turn_button.pressed.connect(func(): action_requested.emit("end_turn"))
-	buttons.add_child(_end_turn_button)
-
-	_deploy_vp_button = Button.new()
-	_deploy_vp_button.text = "Deploy for 1 VP"
-	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
-	_deploy_vp_button.custom_minimum_size = Vector2(170, 30)
-	_deploy_vp_button.pressed.connect(func(): action_requested.emit("deploy_for_vp"))
-	buttons.add_child(_deploy_vp_button)
+func _add_row(parent: Control, key: String, caption: String, font_size: int,
+		colour: Color = Color(0.88, 0.88, 0.92)) -> void:
+	var row := HBoxContainer.new()
+	parent.add_child(row)
+	var name_label := Label.new()
+	name_label.text = caption
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 11 if font_size <= 11 else 12)
+	name_label.add_theme_color_override("font_color", Color(0.62, 0.6, 0.7))
+	row.add_child(name_label)
+	var value := Label.new()
+	value.add_theme_font_size_override("font_size", font_size)
+	value.add_theme_color_override("font_color", colour)
+	row.add_child(value)
+	_values[key] = value
 
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
-	var is_my_turn: bool = String(view["current_player"]) == viewer_id
-	var legal: Dictionary = view.get("legal", {})
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6))
+	_style.border_color = BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6))
+	_title.text = EventLogPanel.player_name(viewer_id).to_upper()
+	_title.add_theme_color_override("font_color", EventLogPanel.player_color(viewer_id))
 
-	_style.border_color = colour
-	_title.text = EventLogPanel.player_name(viewer_id)
-	_title.modulate = EventLogPanel.player_color(viewer_id)
-	_resources.text = "Power [b][color=%s]%d[/color][/b]     Influence [b][color=%s]%d[/color][/b]     VP [b][color=%s]%d[/color][/b]" % [
-		POWER_COLOR.to_html(false), int(p["power"]),
-		INFLUENCE_COLOR.to_html(false), int(p["influence"]),
-		VP_COLOR.to_html(false), int(p["vp_tokens"])]
-	_forces.text = "Troops in barracks %d · Spies %d · Trophy hall %d · Hand %d · Deck %d · Discard %d · Inner Circle %d" % [
-		int(p["troops_in_barracks"]), int(p["spies_in_barracks"]), int(p["trophy_hall_count"]),
-		int(p["hand_size"]), int(p["deck_size"]), int(p["discard_size"]),
-		(p.get("inner_circle", []) as Array).size()]
+	(_values["power"] as Label).text = str(int(p["power"]))
+	(_values["influence"] as Label).text = str(int(p["influence"]))
+	(_values["vp"] as Label).text = str(int(p["vp_tokens"]))
+	(_values["troops"] as Label).text = str(int(p["troops_in_barracks"]))
+	(_values["spies"] as Label).text = str(int(p["spies_in_barracks"]))
+	(_values["trophies"] as Label).text = str(int(p["trophy_hall_count"]))
+	(_values["deck"] as Label).text = "%d / %d" % [int(p["deck_size"]), int(p["discard_size"])]
+	(_values["inner"] as Label).text = str((p.get("inner_circle", []) as Array).size())
 
-	_income.text = _describe_income(view.get("vp_income", {}))
-
-	_deploy_vp_button.visible = bool(legal.get("deploy_for_vp", false))
-	_end_turn_button.disabled = not bool(legal.get("end_turn", false))
-
-	var pending: Dictionary = view.get("pending_decision", {})
-	if bool(view.get("game_over", false)):
-		_hint.text = "The game is over."
-	elif not pending.is_empty():
-		var decider := String(pending.get("player_id", ""))
-		_hint.text = "Answer the card's question first." if decider == viewer_id \
-			else "Waiting for %s to decide." % EventLogPanel.player_name(decider)
-	elif not is_my_turn:
-		_hint.text = "%s's turn." % EventLogPanel.player_name(String(view["current_player"]))
-	else:
-		_hint.text = describe_options(legal, p)
+	tooltip_text = _describe_income(view.get("vp_income", {}))
 
 
 ## Откуда возьмутся VP — иначе счёт растёт "сам собой".
@@ -164,7 +108,7 @@ static func _describe_income(income: Dictionary) -> String:
 		lines.append("End of turn: " + ", ".join(PackedStringArray(per_turn)) + ".")
 	if not start.is_empty():
 		lines.append("Start of turn: " + ", ".join(PackedStringArray(start)) + ".")
-	return "   ".join(PackedStringArray(lines))
+	return "\n".join(PackedStringArray(lines))
 
 
 ## Что можно сделать прямо сейчас и сколько это стоит. Публичная — для тестов.

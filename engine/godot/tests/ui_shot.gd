@@ -36,6 +36,21 @@ func _initialize() -> void:
 	_run_scenario()
 
 
+## Курсор — в пустой угол, иначе снимок зависит от того, где стоит системная
+## мышь: рука выезжает, карта под ней увеличивается. --hover=x,y — навести.
+## Подаётся на каждом кадре: системный курсор при появлении окна шлёт своё.
+func _fake_hover() -> void:
+	var hover := Vector2(4, 4)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--hover="):
+			var xy := arg.get_slice("=", 1).split(",")
+			hover = Vector2(float(xy[0]), float(xy[1]))
+	var ev := InputEventMouseMotion.new()
+	ev.position = root.get_screen_transform() * hover
+	ev.global_position = ev.position
+	Input.parse_input_event(ev)
+
+
 ## Сценарии прогоняются НАМЕРЕНИЯМИ, а не подделкой состояния: сцена ходит
 ## ровно теми же путями, что и живой игрок мышкой.
 func _run_scenario() -> void:
@@ -148,7 +163,8 @@ func _find_board(node: Node) -> BoardPanel:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
-	if _frame < SETTLE_FRAMES:
+	_fake_hover()
+	if _frame < SETTLE_FRAMES + 12:
 		return false
 	var image: Image = root.get_texture().get_image()
 	var err := image.save_png(_out)
