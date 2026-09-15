@@ -173,6 +173,9 @@ func _apply(intent: Intent) -> int:
 ## decision был разрешён через resume() внутри MAKE_DECISION.
 func _finish_pending_end_turn() -> void:
 	var pid: String = _end_turn_pending_for
+	# Остальные отложенные эффекты (например, второй promote) — по очереди.
+	if TurnEngine.run_deferred_end_of_turn(state, pid, resolver):
+		return
 	_end_turn_pending_for = ""
 	TurnEngine.finish_end_of_turn(state, pid, resolver)
 	_advance_turn_and_log(pid)

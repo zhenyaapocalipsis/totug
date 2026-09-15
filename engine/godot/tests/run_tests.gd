@@ -52,6 +52,7 @@ func _initialize() -> void:
 	test_game_server_turn_order_and_actions()
 	test_game_server_play_card_with_decision()
 	test_game_server_end_turn_advances()
+	test_game_server_two_end_of_turn_promotes()
 	test_game_server_end_of_game()
 	test_game_server_grants_a2_bonus()
 
@@ -1429,6 +1430,32 @@ func test_game_server_end_turn_advances() -> void:
 	res = server.apply_intent(Intent.end_turn("green"))
 	check_eq(res["error"], GameServer.Error.OK, "green завершил ход")
 	check_eq(state.current_player(), "red", "ход вернулся к red по кругу")
+
+
+func test_game_server_two_end_of_turn_promotes() -> void:
+	section("GameServer: два отложенных promote в конце хода (Cultist + Myrmidon)")
+	var state := _build_rich_state(505)
+	var server := GameServer.new(state)
+	var red: PlayerState = state.players["red"]
+	red.deck.hand.append("48610")  # Black Earth Cultist
+	red.deck.hand.append("48617")  # Earth Elemental Myrmidon
+	server.apply_intent(Intent.play_card("red", "48610"))
+	server.apply_intent(Intent.play_card("red", "48617"))
+	check(not server.resolver.is_waiting(), "обе карты разыграны без решений")
+
+	server.apply_intent(Intent.end_turn("red"))
+	var promote_prompts := 0
+	var steps := 0
+	while server.resolver.is_waiting() and steps < 10:
+		steps += 1
+		var pd: PendingDecision = server.resolver.pending
+		if pd.prompt == "Promote a card":
+			promote_prompts += 1
+		server.apply_intent(Intent.make_decision("red", pd.legal_options[0]))
+	check_eq(promote_prompts, 2, "игроку предложены оба promote")
+	check(red.deck.inner_circle.has("48610") and red.deck.inner_circle.has("48617"),
+		"обе карты продвинуты во Внутренний круг")
+	check_eq(state.current_player(), "blue", "ход перешёл к blue после всех promote")
 
 
 ## Настоящая партия идёт через GameServer: бонус A2 должен начисляться и там,

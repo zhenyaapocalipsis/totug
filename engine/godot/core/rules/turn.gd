@@ -81,20 +81,25 @@ static func resume_card(state: GameState, answer, resolver: EffectResolver) -> v
 ## (вызывающий код этапа 6/7 обязан передавать общий resolver партии).
 static func end_turn(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
 	var r: EffectResolver = resolver if resolver != null else EffectResolver.new()
-	var p: PlayerState = state.players[player_id]
-
-	# 0. отложенные "at end of turn" эффекты сыгранных в этот ход карт.
-	var deferred: Array[CardEffect] = p.pending_end_of_turn.duplicate()
-	p.pending_end_of_turn.clear()
-	for effect in deferred:
-		r.apply(effect, player_id, state)
-		# Если один из отложенных эффектов запросил решение, дальнейшие шаги
-		# конца хода приостанавливаются вместе с ним — вызывающий код должен
-		# вызвать resume_card(), а затем finish_end_of_turn() сам.
-		if r.is_waiting():
-			return
-
+	if run_deferred_end_of_turn(state, player_id, r):
+		return
 	finish_end_of_turn(state, player_id, r)
+
+
+## 0. отложенные "at end of turn" эффекты сыгранных в этот ход карт.
+## Берём по одному из очереди: если эффект запросил решение, остальные
+## остаются в p.pending_end_of_turn (раньше очередь очищалась целиком, и
+## второй promote — Black Earth Cultist + Earth Elemental Myrmidon — терялся).
+## Возвращает true, если ждём решения: вызывающий код после resume_card()
+## зовёт эту функцию снова, а когда она вернёт false — finish_end_of_turn().
+static func run_deferred_end_of_turn(state: GameState, player_id: String, resolver: EffectResolver) -> bool:
+	var p: PlayerState = state.players[player_id]
+	while not p.pending_end_of_turn.is_empty():
+		var effect: CardEffect = p.pending_end_of_turn.pop_front()
+		resolver.apply(effect, player_id, state)
+		if resolver.is_waiting():
+			return true
+	return false
 
 
 ## Хвост end_turn (шаги 1-4 + сгорание ресурсов), вынесенный отдельно, чтобы
