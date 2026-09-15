@@ -27,10 +27,20 @@ const COST_COLOR := Color(1.0, 0.86, 0.45)
 ## Ширина, под которую подобраны базовые размеры шрифтов.
 const BASE_WIDTH := 150.0
 
+## Пиксельные лицевые стороны карт (tools/pixel_cards.gd), 1x = PIXEL_SIZE.
+## Карта во весь рост читается при целом масштабе: в руке 1x, в увеличенной
+## копии 2x. Слоты шире карты (маркет, полосы) показывают верх карты — имя,
+## цену, аспект и арт; целиком её читают через увеличенную копию.
+const PIXEL_DIR := "res://assets/cards_pixel/"
+const PIXEL_SIZE := Vector2(176, 254)
+const PIXEL_HIGHLIGHT := Color("f2d23c")
+const PIXEL_TOP_H := 136.0  # шапка + арт
+
 var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
 var hover_preview: bool = true
+var _pixel: Texture2D = null
 
 var _name_label: Label
 var _cost_label: Label
@@ -49,6 +59,14 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 	card_id = cid
 	custom_minimum_size = Vector2(card_width, card_height)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+
+	_pixel = pixel_texture(cid)
+	if _pixel != null:
+		add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		return
+
 	var k := clampf(card_width / BASE_WIDTH, 0.62, 1.3)
 
 	_style = StyleBoxFlat.new()
@@ -135,11 +153,53 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 	# целиком, иначе mouse_exited срабатывает при переходе на надпись.
 	_ignore_mouse(col)
 
-	mouse_entered.connect(_on_mouse_entered)
-	mouse_exited.connect(_on_mouse_exited)
-
 	if card_id != "":
 		set_card(card_id)
+
+
+static func pixel_texture(cid: String) -> Texture2D:
+	var path := PIXEL_DIR + cid + ".png"
+	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
+
+
+## Часть пиксельной карты, которая влезает в слот: слот уже карты — карта
+## целиком по центру; слот шире — верх карты, но не ниже арта (пустое
+## текстовое поле в мелком слоте ни к чему), вписанный по центру.
+func _pixel_rects() -> Array[Rect2]:
+	var slot_aspect := size.x / maxf(size.y, 1.0)
+	var card_aspect := PIXEL_SIZE.x / PIXEL_SIZE.y
+	var region := Rect2(Vector2.ZERO, PIXEL_SIZE)
+	if slot_aspect > card_aspect:
+		region.size.y = minf(PIXEL_SIZE.x / slot_aspect, PIXEL_TOP_H)
+	var k := minf(size.x / region.size.x, size.y / region.size.y)
+	var dest_size := region.size * k
+	return [Rect2((size - dest_size) * 0.5, dest_size), region]
+
+
+func _draw() -> void:
+	if _pixel == null:
+		return
+	var rects := _pixel_rects()
+	var dest: Rect2 = rects[0]
+	# Не меньше 1 экранного пикселя на пиксель карты — чёткие пиксели (nearest);
+	# меньше — nearest выкидывает целые строки шрифта, поэтому сглаживание.
+	var on_screen := dest.size.x / PIXEL_SIZE.x * get_screen_transform().get_scale().x
+	var filter := TEXTURE_FILTER_NEAREST if on_screen >= 0.99 else TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	if texture_filter != filter:
+		texture_filter = filter
+	draw_texture_rect_region(_pixel, dest, rects[1])
+	if clickable:
+		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 2.0)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		queue_redraw()
+	elif what == NOTIFICATION_ENTER_TREE and _pixel != null:
+		# масштаб окна меняется — фильтр пересчитывается в _draw()
+		if not get_viewport().size_changed.is_connected(queue_redraw):
+			get_viewport().size_changed.connect(queue_redraw)
+		queue_redraw()
 
 
 static func _ignore_mouse(node: Node) -> void:
@@ -151,6 +211,10 @@ static func _ignore_mouse(node: Node) -> void:
 
 func set_card(cid: String) -> void:
 	card_id = cid
+	if _pixel != null:
+		_pixel = pixel_texture(cid)
+		queue_redraw()
+		return
 	var data: Dictionary = CardLibrary.card_data(cid)
 	if data.is_empty():
 		_name_label.text = "?" + cid
@@ -202,6 +266,9 @@ func set_clickable(value: bool, dim: bool = true) -> void:
 
 
 func _apply_colors() -> void:
+	if _pixel != null:
+		queue_redraw()
+		return
 	_style.border_color = _aspect_color.lightened(0.15) if clickable else _aspect_color
 	_style.set_border_width_all(3 if clickable else 2)
 	_style.shadow_color = Color(_aspect_color.lightened(0.3), 0.55) if clickable else Color(0, 0, 0, 0.45)

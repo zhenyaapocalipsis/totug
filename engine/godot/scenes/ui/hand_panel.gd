@@ -10,7 +10,7 @@ extends Control
 
 signal card_clicked(card_id: String)
 
-const CARD_SIZE := Vector2(140, 196)
+const CARD_SIZE := CardView.PIXEL_SIZE  # пиксельная карта в масштабе 1x
 const PEEK := 58.0          # сколько карты видно, пока рука опущена
 const BOTTOM_MARGIN := 8.0  # отступ от края, когда рука поднята
 const GAP := 6.0

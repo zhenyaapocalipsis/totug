@@ -14,6 +14,7 @@ const GROW := 1.15
 const MIN_SIZE := Vector2(176, 246)
 const MARGIN := 6.0
 const ANIM_TIME := 0.09
+const PIXEL_SCALE := 2.0
 
 static var active: CardPreview = null
 
@@ -49,6 +50,9 @@ func _show(card: CardView) -> void:
 	_hide()
 	_source = card
 	var s: Vector2 = (card.size * GROW).max(MIN_SIZE).round()
+	if CardView.pixel_texture(card.card_id) != null:
+		s = CardView.PIXEL_SIZE * PIXEL_SCALE  # целый масштаб — пиксели ровные
+		s = s.min(get_viewport_rect().size - Vector2.ONE * MARGIN * 2)
 	_card = CardView.new(card.card_id, int(s.x), int(s.y))
 	_card.hover_preview = false
 	_card.set_clickable(card.clickable, false)
