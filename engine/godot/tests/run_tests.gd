@@ -78,6 +78,9 @@ func _initialize() -> void:
 	# этап 2 доработки: исправления по аудиту карт
 	test_audit_card_fixes()
 
+	# схема доски (pixel art, без гексов)
+	test_board_schematic()
+
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
 
@@ -2266,3 +2269,116 @@ func test_no_actions_while_decision_pending() -> void:
 	check_eq(line, "Red recruits Noble", "журнал называет купленную карту")
 	check_eq(DecisionDialog.market_label(1, ["", "48342"]), "Noble", "выбор из маркета подписан названием карты")
 	check_eq(DecisionDialog.market_label(0, [""]), "Market slot 1", "пустой слот маркета — номером")
+
+
+## Схема доски: правила владельца (2026-09-16) проверяются геометрически на
+## нескольких настоящих раскладках. Трассы — только 0/45/90 градусов, изгиб —
+## ровно 45 (угол 135), через ребро гекса — посередине и прямо, у каждой связи
+## графа есть трасса, рамки локаций не налезают друг на друга.
+func test_board_schematic() -> void:
+	section("Схема доски: трассы по правилам разводки")
+	for run: Array in [[2, 1], [2, 7], [2, 42], [4, 3], [4, 11]]:
+		var ids: Array[String] = []
+		ids.assign(["red", "blue", "green", "purple"].slice(0, int(run[0])))
+		var state := GameSetup.new_game(ids, int(run[1]))
+		var started := Time.get_ticks_msec()
+		var s := BoardSchematic.build(state)
+		var took := Time.get_ticks_msec() - started
+		var tag := "%dp seed %d" % [run[0], run[1]]
+		check(took < 1500, "%s: схема собирается быстро (%d мс)" % [tag, took])
+		check_eq(int(s["fallback_routes"]), 0, "%s: все трассы взяты из таблицы тайлов" % tag)
+
+		var slots: Dictionary = s["slots"]
+		var missing := 0
+		for slot_id: String in state.graph.slots.keys():
+			if not slots.has(slot_id):
+				missing += 1
+		check_eq(missing, 0, "%s: у каждого места под войско есть точка на схеме" % tag)
+		check_eq((s["sites"] as Dictionary).size(), state.graph.site_count(), "%s: все локации на схеме" % tag)
+
+		# 0/45/90 и только углы 135
+		var bad_angle := 0
+		var bad_turn := 0
+		var dir_at_port := {}   # port -> направления трасс, выходящих из него
+		var ends: Dictionary = {}
+		for t in (s["traces"] as Array).size():
+			var flat: Array = s["traces"][t]
+			var pair: Array = s["trace_ends"][t]
+			ends[str(pair[0]) + "|" + str(pair[1])] = true
+			ends[str(pair[1]) + "|" + str(pair[0])] = true
+			var prev := -1
+			for i in range(0, flat.size() - 2, 2):
+				var d := Vector2(flat[i + 2] - flat[i], flat[i + 3] - flat[i + 1])
+				if not (is_zero_approx(d.x) or is_zero_approx(d.y) or is_equal_approx(absf(d.x), absf(d.y))):
+					bad_angle += 1
+					continue
+				var dir := BoardSchematic.DIRS.find(Vector2(signf(d.x), signf(d.y)))
+				if prev >= 0:
+					var steps := absi(dir - prev)
+					if mini(steps, 8 - steps) != 1:
+						bad_turn += 1
+				prev = dir
+			if String(pair[0]).begins_with("port:"):
+				var list: Array = dir_at_port.get(pair[0], [])
+				list.append(Vector2(flat[2] - flat[0], flat[3] - flat[1]).normalized())
+				dir_at_port[pair[0]] = list
+		check_eq(bad_angle, 0, "%s: отрезки трасс только под 0/45/90 градусов" % tag)
+		check_eq(bad_turn, 0, "%s: каждый изгиб трассы — ровно 45 (угол 135)" % tag)
+
+		# через ребро: точка — середина между центрами гексов, трасса идёт прямо
+		# и вдоль линии центров (перпендикулярно ребру сжатого гекса)
+		var centres: Dictionary = s["hex_centres"]
+		var bad_port := 0
+		for port: String in (s["ports"] as Dictionary).keys():
+			var at := Vector2(s["ports"][port][0], s["ports"][port][1])
+			var dirs: Array = dir_at_port.get(port, [])
+			var hex: String = port.get_slice(":", 1)
+			var outward := at - Vector2(centres[hex][0], centres[hex][1])
+			var mirrored := Vector2(centres[hex][0], centres[hex][1]) + outward * 2.0
+			var neighbour_found := false
+			for other: String in centres.keys():
+				if Vector2(centres[other][0], centres[other][1]).is_equal_approx(mirrored):
+					neighbour_found = true
+			if dirs.size() != 2 or not neighbour_found \
+					or not (dirs[0] as Vector2).is_equal_approx(-(dirs[1] as Vector2)) \
+					or absf((dirs[0] as Vector2).cross(outward.normalized())) > 0.001:
+				bad_port += 1
+		check_eq(bad_port, 0, "%s: трассы пересекают ребро гекса посередине и прямо" % tag)
+
+		# у каждой связи графа есть трасса (напрямую или через середину ребра)
+		var node_of := func(slot_id: String) -> String:
+			var site := state.graph.site_of_slot(slot_id)
+			return site if site != "" else slot_id
+		var unlinked := 0
+		for slot_id: String in state.graph.slots.keys():
+			for other: String in state.graph.adjacent_slots(slot_id):
+				var a: String = node_of.call(slot_id)
+				var b: String = node_of.call(other)
+				if a == b or ends.has(a + "|" + b):
+					continue
+				var via_port := false
+				for port: String in (s["ports"] as Dictionary).keys():
+					if ends.has(a + "|" + port) and ends.has(b + "|" + port):
+						via_port = true
+				if not via_port:
+					unlinked += 1
+		check_eq(unlinked, 0, "%s: у каждой связи графа есть трасса" % tag)
+
+		var rects: Array = []
+		for site_id: String in (s["sites"] as Dictionary).keys():
+			var r: Array = s["sites"][site_id]["rect"]
+			rects.append(Rect2(r[0], r[1], r[2], r[3]))
+		for ring_id: String in (s["rings"] as Dictionary).keys():
+			var p: Array = s["rings"][ring_id]
+			rects.append(Rect2(p[0] - BoardSchematic.RING_R, p[1] - BoardSchematic.RING_R,
+				BoardSchematic.RING_R * 2, BoardSchematic.RING_R * 2))
+		var overlaps := 0
+		for i in rects.size():
+			for j in range(i + 1, rects.size()):
+				if (rects[i] as Rect2).intersects(rects[j]):
+					overlaps += 1
+		check_eq(overlaps, 0, "%s: рамки локаций и кольца не налезают друг на друга" % tag)
+
+	var board := StateView.board_snapshot(GameSetup.new_game(["red", "blue"], 5))
+	var image := SchematicPainter.paint(board["schematic"])
+	check(image.get_width() > 200 and image.get_height() > 100, "схема рисуется в картинку")
