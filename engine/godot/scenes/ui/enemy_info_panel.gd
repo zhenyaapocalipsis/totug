@@ -1,8 +1,13 @@
 class_name EnemyInfoPanel
 extends PanelContainer
 
-## Зона информации о противниках: по строке на каждого игрока, кроме зрителя.
+## Зона информации о противниках: блок на каждого игрока, кроме зрителя.
 ## Только открытые сведения — VP, ресурсы хода, войска, размер руки и колоды.
+##
+## Противников бывает 1-3 (хотсит на 2-4 человека), а высота зоны ограничена.
+## Поэтому при двух и более противниках блок сжимается с трёх строк до двух:
+## ресурсы хода переезжают в строку с именем. Ничего не теряется, но три
+## блока помещаются на экран.
 
 var _text: RichTextLabel
 
@@ -21,6 +26,8 @@ func _init() -> void:
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var current := String(view["current_player"])
+	var compact: bool = (view.get("turn_order", []) as Array).size() > 2
+	_text.add_theme_font_size_override("bold_font_size", 12 if compact else 14)
 	var blocks: Array[String] = []
 	for pid in (view.get("turn_order", []) as Array):
 		if String(pid) == viewer_id:
@@ -35,12 +42,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			PlayerPanel.VP_COLOR.to_html(false), int(p["vp_tokens"])]
 		if String(pid) == current:
 			head += "   [color=#e8d9a0]◆ turn[/color]"
-		var line1 := "[color=%s]Power[/color] [color=%s]%d[/color]   [color=%s]Influence[/color] [color=%s]%d[/color]   [color=%s]Hand[/color] %d" % [
+		var res := "[color=%s]Power[/color] [color=%s]%d[/color]   [color=%s]Influence[/color] [color=%s]%d[/color]   [color=%s]Hand[/color] %d" % [
 			dim, PlayerPanel.POWER_COLOR.to_html(false), int(p["power"]),
 			dim, PlayerPanel.INFLUENCE_COLOR.to_html(false), int(p["influence"]),
 			dim, int(p["hand_size"])]
-		var line2 := "[color=%s]Troops %d · Spies %d · Trophies %d · Deck %d/%d · IC %d[/color]" % [
+		var stats := "[color=%s]Troops %d · Spies %d · Trophies %d · Deck %d/%d · IC %d[/color]" % [
 			dim, int(p["troops_in_barracks"]), int(p["spies_in_barracks"]), int(p["trophy_hall_count"]),
 			int(p["deck_size"]), int(p["discard_size"]), (p.get("inner_circle", []) as Array).size()]
-		blocks.append("%s\n%s\n%s" % [head, line1, line2])
+		if compact:
+			blocks.append("%s   %s\n%s" % [head, res, stats])
+		else:
+			blocks.append("%s\n%s\n%s" % [head, res, stats])
 	_text.text = "\n".join(PackedStringArray(blocks)) if not blocks.is_empty() else "[color=#77748a]No opponents[/color]"

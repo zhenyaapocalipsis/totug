@@ -23,15 +23,18 @@ var _frame := 0
 
 func _initialize() -> void:
 	var game_seed := 7
+	var players := 2
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			game_seed = int(arg.get_slice("=", 1))
+		elif arg.begins_with("--players="):
+			players = int(arg.get_slice("=", 1))
 		elif arg.begins_with("--out="):
 			_out = "res://" + arg.get_slice("=", 1)
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
 
-	_screen = GameScreen.new(game_seed)
+	_screen = GameScreen.new(game_seed, [], GameScreen.player_ids_for(players))
 	root.add_child(_screen)
 	_run_scenario()
 

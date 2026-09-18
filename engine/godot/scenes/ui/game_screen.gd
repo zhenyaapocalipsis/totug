@@ -1,8 +1,8 @@
 class_name GameScreen
 extends Control
 
-## Главный экран партии (этап 7). Локальный режим: оба игрока за одним
-## экраном, зритель переключается вместе с ходом.
+## Главный экран партии (этап 7). Хотсит: 2-4 человека за одним экраном,
+## зритель переключается вместе с ходом.
 ##
 ## Единственный способ что-то изменить — послать Intent в GameServer и
 ## перерисоваться из того, что он вернул. Экран не читает и не правит
@@ -15,7 +15,11 @@ extends Control
 ## и проверяется в контейнере без редактора. .tscn остаётся тонкой обёрткой —
 ## один узел со скриптом.
 
-const PLAYER_IDS: Array[String] = ["red", "blue"]
+## Все цвета, за какие можно сесть, в порядке рассадки: партия на N человек
+## берёт первые N. Цвета — те же, что у фишек на доске (BoardPanel.PLAYER_COLORS).
+const ALL_PLAYER_IDS: Array[String] = ["red", "blue", "green", "purple"]
+const MIN_PLAYERS := 2
+const MAX_PLAYERS := 4
 
 # Сетка экрана (в пикселях расчётного размера 1280x800). Колонки:
 #   A — плашка хода / чат, B — сыгранные карты / рука, C — инфо игрока,
@@ -26,11 +30,14 @@ const GAP := 8.0
 const COL_A := 240.0
 const COL_C := 140.0
 const COL_D := 270.0
-const TOP_H := 84.0
+const TOP_H := 84.0          # минимум: при 3-4 игроках верхний ряд выше, см. _top_h
 const BOTTOM_H := 190.0
 const PLAY_H := 124.0
 
 var server: GameServer
+## Кто сидит за экраном, в порядке рассадки. Очередь хода — отдельно: её
+## перемешивает GameSetup, чтобы первый ходящий выбирался случайно.
+var player_ids: Array[String] = ALL_PLAYER_IDS.slice(0, MIN_PLAYERS)
 var viewer_id: String = "red"
 var board_data: Dictionary = {}
 
@@ -67,9 +74,22 @@ var _played_by: Dictionary = {}     # player_id -> Array[String]
 var _turn_closed: Dictionary = {}   # player_id -> bool: следующий play_card начинает новый ход
 
 
-func _init(game_seed: int = 0, half_decks: Array[String] = []) -> void:
+## Высота верхнего ряда: зона противников растёт вместе с их числом.
+var _top_h: float = TOP_H
+
+
+## Какие цвета раздать на партию из count человек.
+static func player_ids_for(count: int) -> Array[String]:
+	var ids: Array[String] = ALL_PLAYER_IDS.slice(0, clampi(count, MIN_PLAYERS, MAX_PLAYERS))
+	return ids
+
+
+func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = []) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	var state := GameSetup.new_game(PLAYER_IDS, game_seed, half_decks, false, true, true)
+	if ids.size() >= MIN_PLAYERS:
+		player_ids = ids.duplicate()
+	_top_h = maxf(TOP_H, 34.0 * float(player_ids.size() - 1) + 24.0)
+	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true)
 	server = GameServer.new(state)
 	board_data = StateView.board_snapshot(state)
 	viewer_id = server.resolver.pending.player_id if server.resolver.is_waiting() else state.current_player()
@@ -304,13 +324,17 @@ func _layout() -> void:
 	var b_x := a_x + COL_A + GAP
 	var b_w := c_x - GAP - b_x
 	var top_y := MARGIN
-	var mid_y := top_y + TOP_H + GAP
+	var mid_y := top_y + _top_h + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
 	var mid_h := bottom_y - GAP - mid_y
 
-	_place(_turn_panel, a_x, top_y, COL_A, TOP_H)
-	_place(_enemy_zone, b_x, top_y, d_x - GAP - b_x, TOP_H)
-	_place(_enemy_info, d_x, top_y, COL_D, TOP_H)
+	# Инфо противников при 3-4 игроках шире колонки D: три блока в 270 px
+	# не читаются. Отъедает ширину у полосы чужих карт, которая её переживёт.
+	var info_w: float = COL_D + (160.0 if player_ids.size() > 2 else 0.0)
+	var info_x: float = w - MARGIN - info_w
+	_place(_turn_panel, a_x, top_y, COL_A, _top_h)
+	_place(_enemy_zone, b_x, top_y, info_x - GAP - b_x, _top_h)
+	_place(_enemy_info, info_x, top_y, info_w, _top_h)
 	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
 	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
 	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
@@ -433,7 +457,7 @@ func _refresh_played(view: Dictionary) -> void:
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	_play_strip.set_cards(me.get("played_pile", []))
 
-	var order: Array = view.get("turn_order", PLAYER_IDS)
+	var order: Array = view.get("turn_order", player_ids)
 	var current := String(view["current_player"])
 	var enemy := current
 	if enemy == viewer_id:

@@ -11,6 +11,10 @@ extends SceneTree
 ##
 ##   godot47 --headless --path . --script res://tests/ui_playthrough.gd -- --games=5
 ##
+## Число игроков по умолчанию чередуется 2 - 3 - 4: хотсит бывает не только
+## вдвоём, а раскладки доски и очередь хода у 3 и 4 игроков свои. Можно
+## зафиксировать: --players=4.
+##
 ## Гоняется headless: узлы и сигналы работают без экрана, не рисуется только
 ## картинка, а она здесь не нужна.
 
@@ -23,13 +27,16 @@ var _rng := RandomNumberGenerator.new()
 
 func _initialize() -> void:
 	var games := 5
+	var players := 0
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--games="):
 			games = int(arg.get_slice("=", 1))
+		elif arg.begins_with("--players="):
+			players = int(arg.get_slice("=", 1))
 
 	print("\n=== автопрогон партий через интерфейс ===\n")
 	for i in range(games):
-		_play_one(1000 + i * 37)
+		_play_one(1000 + i * 37, players if players >= GameScreen.MIN_PLAYERS else 2 + i % 3)
 
 	print("")
 	if _failures.is_empty():
@@ -42,9 +49,9 @@ func _initialize() -> void:
 		quit(1)
 
 
-func _play_one(game_seed: int) -> void:
+func _play_one(game_seed: int, player_count: int = 2) -> void:
 	_rng.seed = game_seed
-	var screen := GameScreen.new(game_seed)
+	var screen := GameScreen.new(game_seed, [], GameScreen.player_ids_for(player_count))
 	root.add_child(screen)
 
 	var turns := 0
@@ -104,11 +111,12 @@ func _play_one(game_seed: int) -> void:
 
 	var status := "партия окончена (%s)" % screen.server.state.game_end_reason if screen.server.state.game_over \
 		else "упёрлись в предел %d ходов" % MAX_TURNS
-	print("  сид %5d: ходов %3d, действий %3d, решений %3d, отказов %d — %s"
-		% [game_seed, turns, actions, decisions, rejected, status])
+	print("  сид %5d (%d игрока): ходов %3d, действий %3d, решений %3d, отказов %d — %s"
+		% [game_seed, screen.player_ids.size(), turns, actions, decisions, rejected, status])
 
 	if not screen.server.state.game_over:
-		_failures.append("сид %d: партия не закончилась за %d ходов" % [game_seed, MAX_TURNS])
+		_failures.append("сид %d (%d игрока): партия не закончилась за %d ходов"
+			% [game_seed, screen.player_ids.size(), MAX_TURNS])
 	_check_invariants(game_seed, screen.server.state)
 	screen.queue_free()
 

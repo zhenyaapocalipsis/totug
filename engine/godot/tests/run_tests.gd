@@ -60,6 +60,7 @@ func _initialize() -> void:
 	# этап 7: настоящая партия и общие стопки
 	test_half_deck_data()
 	test_game_setup_real_game()
+	test_hotseat_three_and_four_players()
 	test_recruit_from_supply()
 	test_insane_outcast_supply()
 	test_state_view_legal_and_supplies()
@@ -1599,6 +1600,48 @@ func test_game_setup_real_game() -> void:
 	var again := GameSetup.new_game(pids, 4242, ["drow", "demons"])
 	check_eq(again.market.display, state.market.display, "тот же сид даёт тот же дисплей маркета")
 	check_eq(again.players["red"].deck.hand, state.players["red"].deck.hand, "и ту же стартовую руку")
+
+
+## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный
+## сетап должны работать не только вдвоём. Раньше экран всегда собирал партию
+## на red/blue, и эти ветки pick_hexes не проверялись ни одним тестом.
+func test_hotseat_three_and_four_players() -> void:
+	section("Хотсит: партии на 3 и 4 игроков")
+	check_eq(GameScreen.player_ids_for(3), ["red", "blue", "green"] as Array[String],
+		"на троих раздаются первые три цвета")
+	check_eq(GameScreen.player_ids_for(4).size(), 4, "на четверых — четыре цвета")
+	check_eq(GameScreen.player_ids_for(9).size(), GameScreen.MAX_PLAYERS,
+		"больше четырёх игроков не бывает — число обрезается")
+
+	for count in [3, 4]:
+		var ids := GameScreen.player_ids_for(count)
+		var state := GameSetup.new_game(ids, 777 + count, ["drow", "dragons"], false, true, false)
+		check_eq(state.turn_order.size(), count, "%d игроков: все в очереди хода" % count)
+		check_eq(int(state.layout["player_count"]), count, "%d игроков: раскладка доски на столько же" % count)
+		check(state.graph.site_count() >= 20, "%d игроков: доска собрана, локаций %d" % [count, state.graph.site_count()])
+
+		# стартовых сайтов (чёрные таблички) должно хватить на всех
+		var starting := GameSetup.find_starting_sites(state.graph)
+		check(starting.size() >= count, "%d игроков: стартовых сайтов %d — хватает всем" % [count, starting.size()])
+
+		# интерактивный сетап: каждый сам выбирает стартовый сайт, по очереди
+		var server := GameServer.new(state)
+		var answered := 0
+		while server.resolver.is_waiting() and answered < count + 2:
+			var pd: PendingDecision = server.resolver.pending
+			var res: Dictionary = server.apply_intent(Intent.make_decision(pd.player_id, pd.legal_options[0]))
+			check_eq(int(res["error"]), GameServer.Error.OK, "%d игроков: выбор стартового сайта принят" % count)
+			answered += 1
+		check_eq(answered, count, "%d игроков: стартовый сайт выбрал каждый" % count)
+
+		var on_board := {}
+		for slot_id: String in state.troops.keys():
+			var owner: String = state.troops[slot_id]
+			if owner != GameState.WHITE:
+				on_board[owner] = int(on_board.get(owner, 0)) + 1
+		for pid: String in ids:
+			check_eq(int(on_board.get(pid, 0)), 1, "%d игроков: у %s одно стартовое войско" % [count, pid])
+			check_eq(state.players[pid].deck.hand.size(), 5, "%d игроков: у %s 5 карт в руке" % [count, pid])
 
 
 func test_half_deck_data() -> void:
