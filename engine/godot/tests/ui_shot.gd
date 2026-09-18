@@ -67,7 +67,11 @@ func _run_scenario() -> void:
 			if not hand.is_empty():
 				_screen.send(Intent.play_card(pid, String(hand[0])))
 		"play_all":
-			# Разыграть всю руку — так проявляются карты с вопросами.
+			# Разыграть всю руку — так проявляются карты с вопросами. Сначала
+			# закрываем выбор стартовых локаций, иначе рука ещё заблокирована.
+			while _screen.server.resolver.is_waiting():
+				var pd2: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd2.player_id, pd2.legal_options[0]))
 			var pid2: String = _screen.server.state.current_player()
 			for cid in (_screen.server.state.players[pid2].deck.hand as Array).duplicate():
 				if _screen.server.resolver.is_waiting():

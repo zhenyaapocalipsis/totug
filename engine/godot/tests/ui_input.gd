@@ -58,12 +58,21 @@ func _process(_delta: float) -> bool:
 	_step += 1
 	match _step:
 		1: _step_hover_hand()
-		2: _step_click_hand_card()
-		3: _step_check_hand_card()
-		4: _step_prepare_market()
-		5: _step_click_market_card()
-		6: _step_click_end_turn()
-		7: _step_check_end_turn()
+		2: _step_check_hover()
+		3: _step_alt_down()
+		4: _step_check_alt_preview()
+		5: _step_alt_up()
+		6: _step_check_alt_gone()
+		7: _step_click_hand_card()
+		8: _step_check_hand_card()
+		9: _step_open_pile()
+		10: _step_check_pile()
+		11: _step_prepare_market()
+		12: _step_click_market_card()
+		13: _step_click_end_turn()
+		14: _step_check_end_turn()
+		15: _step_timer_expire()
+		16: _step_check_timer()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -73,16 +82,81 @@ func _process(_delta: float) -> bool:
 
 # --- шаги --------------------------------------------------------------------
 
-## Рука в покое выглядывает из-за нижнего края — как живой игрок, сначала
-## наводим мышь на её видимую часть и ждём, пока она выедет.
+## Рука целиком лежит на экране: наводим мышь прямо на карту, она должна
+## слегка выдвинуться вверх, но НЕ увеличиться — увеличение только по Alt.
 func _step_hover_hand() -> void:
 	var card := _playable_hand_card()
 	check(card != null, "в руке есть карта, помеченная как кликабельная")
 	if card == null:
 		return
-	var rect := card.get_global_rect()
-	_move_mouse(Vector2(rect.get_center().x, _screen.size.y - 20.0))
-	_next_step_at = _frame + 30  # анимация подъёма руки
+	check(_on_screen(card), "карта руки целиком на экране и не выходит за нижний край (%s в %s)"
+		% [card.get_global_rect(), _screen.get_global_rect()])
+	_move_mouse(card.get_global_rect().get_center())
+	_next_step_at = _frame + 12  # анимация выдвижения карты
+
+
+func _step_check_hover() -> void:
+	var hand := _hand_panel()
+	check(hand != null and hand.hovered_index() >= 0, "карта под курсором выдвинулась из ряда")
+	check(not CardPreview.active.has_preview(),
+		"без Alt увеличенной копии нет — она больше не закрывает экран сама собой")
+
+
+func _step_alt_down() -> void:
+	_key(KEY_ALT, true)
+
+
+func _step_check_alt_preview() -> void:
+	check(CardPreview.active.has_preview(), "с зажатым Alt карта под курсором увеличилась")
+
+
+func _step_alt_up() -> void:
+	_key(KEY_ALT, false)
+
+
+func _step_check_alt_gone() -> void:
+	check(not CardPreview.active.has_preview(), "Alt отпущен — увеличенная копия пропала")
+
+
+## Стопки сброса и Внутреннего круга открывают список карт.
+func _step_open_pile() -> void:
+	var zone: PileZone = _find_pile(_screen)
+	check(zone != null, "на экране есть зона стопки")
+	if zone != null:
+		_click(zone)
+
+
+func _step_check_pile() -> void:
+	check(_screen._pile_dialog.visible, "щелчок по стопке открыл список её карт")
+	_screen._pile_dialog.close_pile()
+	check(not _screen._pile_dialog.visible, "список закрывается")
+
+
+func _hand_panel() -> HandPanel:
+	for child in _screen.get_children():
+		if child is HandPanel:
+			return child
+	return null
+
+
+func _find_pile(node: Node) -> PileZone:
+	if node is PileZone:
+		return node
+	for child in node.get_children():
+		var found := _find_pile(child)
+		if found != null:
+			return found
+	return null
+
+
+func _key(keycode: int, is_pressed: bool) -> void:
+	var ev := InputEventKey.new()
+	ev.keycode = keycode
+	ev.physical_keycode = keycode
+	ev.pressed = is_pressed
+	ev.alt_pressed = is_pressed
+	Input.parse_input_event(ev)
+	Input.flush_buffered_events()
 
 
 func _playable_hand_card() -> CardView:
@@ -98,8 +172,6 @@ func _step_click_hand_card() -> void:
 	var card := _playable_hand_card()
 	if card == null:
 		return
-	check(_on_screen(card), "рука поднялась: карта видна целиком, по ней можно попасть мышью (%s в %s)"
-		% [card.get_global_rect(), _screen.get_global_rect()])
 	_hand_before = player.deck.hand.size()
 	_resources_before = player.power + player.influence
 	_click(card)
@@ -150,6 +222,18 @@ func _step_click_end_turn() -> void:
 func _step_check_end_turn() -> void:
 	check(_screen.server.state.current_player() != _turn_owner,
 		"после щелчка по кнопке ход перешёл к другому игроку (%s -> %s)"
+			% [_turn_owner, _screen.server.state.current_player()])
+
+
+## Таймер хода: обнуляем его и ждём, что ход завершится сам.
+func _step_timer_expire() -> void:
+	_turn_owner = _screen.server.state.current_player()
+	_screen._time_left = 0.0
+
+
+func _step_check_timer() -> void:
+	check(_screen.server.state.current_player() != _turn_owner,
+		"время вышло — ход завершился сам (%s -> %s)"
 			% [_turn_owner, _screen.server.state.current_player()])
 
 

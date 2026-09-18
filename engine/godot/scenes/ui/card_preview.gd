@@ -1,9 +1,13 @@
 class_name CardPreview
 extends Control
 
-## Увеличенная копия карты под курсором — общая для руки, маркета и полос
-## сыгранных карт. Копия рисуется поверх всего экрана и мышь не ловит, так что
-## щелчок проходит к настоящей карте под ней.
+## Увеличенная копия карты под курсором — общая для руки, маркета, полосы
+## сыгранных карт и стопок. Копия рисуется поверх всего экрана и мышь не ловит,
+## так что щелчок проходит к настоящей карте под ней.
+##
+## Показывается ТОЛЬКО пока зажат Alt (решение владельца): при обычном
+## наведении карта не увеличивается и ничего не закрывает. Alt можно зажать до
+## наведения и отпустить после — копия появляется и исчезает следом.
 ##
 ## Почему копия, а не scale самой карты: карты в маркете и на полосах мелкие,
 ## и растянутый масштабом текст получается мыльным. Копия собирается в нужном
@@ -20,6 +24,9 @@ static var active: CardPreview = null
 
 var _source: CardView
 var _card: CardView
+## Карта под курсором и состояние Alt — копия живёт, только когда есть оба.
+var _hovered: CardView
+var _alt := false
 
 
 func _init() -> void:
@@ -36,14 +43,55 @@ func _exit_tree() -> void:
 		active = null
 
 
-static func show_for(card: CardView) -> void:
+## Курсор вошёл в карту.
+static func set_hovered(card: CardView) -> void:
 	if active != null:
-		active._show(card)
+		active._hovered = card
+		active._sync()
 
 
-static func hide_for(card: CardView) -> void:
-	if active != null and active._source == card:
-		active._hide()
+## Курсор ушёл с карты (снимаем, только если это та самая карта).
+static func clear_hovered(card: CardView) -> void:
+	if active != null and active._hovered == card:
+		active._hovered = null
+		active._sync()
+
+
+## Для проверок и для подсказки: зажат ли сейчас Alt.
+func alt_held() -> bool:
+	return _alt
+
+
+## Для проверок: показана ли сейчас увеличенная копия.
+func has_preview() -> bool:
+	return _card != null
+
+
+## Alt приходит двумя путями: событием самой клавиши и флагом alt_pressed на
+## любом другом событии (например, движении мыши с уже зажатым Alt).
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.keycode == KEY_ALT or key.physical_keycode == KEY_ALT:
+			_set_alt(key.pressed)
+			return
+	if event is InputEventWithModifiers:
+		_set_alt((event as InputEventWithModifiers).alt_pressed)
+
+
+func _set_alt(value: bool) -> void:
+	if _alt == value:
+		return
+	_alt = value
+	_sync()
+
+
+func _sync() -> void:
+	if _alt and _hovered != null and is_instance_valid(_hovered):
+		if _source != _hovered:
+			_show(_hovered)
+	elif _card != null:
+		_hide()
 
 
 func _show(card: CardView) -> void:
@@ -92,4 +140,4 @@ func _process(_delta: float) -> void:
 	if not is_instance_valid(_source) or not _source.is_visible_in_tree():
 		_hide()
 		return
-	_place()  # рука выезжает — копия едет следом
+	_place()  # карта в руке приподнимается — копия едет следом

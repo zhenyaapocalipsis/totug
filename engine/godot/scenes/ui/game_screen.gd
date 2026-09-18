@@ -22,17 +22,19 @@ const MIN_PLAYERS := 2
 const MAX_PLAYERS := 4
 
 # Сетка экрана (в пикселях расчётного размера 1280x800). Колонки:
-#   A — плашка хода / чат, B — сыгранные карты / рука, C — инфо игрока,
-#   D — инфо противников / маркет / End turn.
-# Сверху полоса сыгранных карт противника (B+C), в центре доска (A+B+C).
+#   A — плашка хода / чат, B — рука, C — инфо игрока,
+#   D — маркет, а в нижнем ряду — стопки (Inner Circle / Discard) и End turn.
+# Сверху общая полоса сыгранных карт ходящего (B+C) и инфо противников (D).
 const MARGIN := 8.0
 const GAP := 8.0
 const COL_A := 240.0
 const COL_C := 140.0
 const COL_D := 270.0
-const TOP_H := 84.0          # минимум: при 3-4 игроках верхний ряд выше, см. _top_h
-const BOTTOM_H := 190.0
-const PLAY_H := 124.0
+const PILES_W := 104.0       # колонка стопок в нижнем ряду, внутри колонки D
+const TOP_H := 150.0
+const BOTTOM_H := 212.0
+## Таймер хода: две минуты, по нулю ход завершается сам.
+const TURN_SECONDS := 120.0
 
 var server: GameServer
 ## Кто сидит за экраном, в порядке рассадки. Очередь хода — отдельно: её
@@ -54,28 +56,27 @@ var _turn_panel: PanelContainer
 var _turn_style: StyleBoxFlat
 var _header: Label
 var _status: Label
-var _enemy_zone: PanelContainer
-var _enemy_title: Label
-var _enemy_strip: CardStrip
-var _play_zone: PanelContainer
-var _play_strip: CardStrip
+var _played_zone: PanelContainer
+var _played_title: Label
+var _played_strip: CardStrip
+var _piles_column: VBoxContainer
+var _pile_inner: PileZone
+var _pile_discard: PileZone
+var _pile_dialog: PileDialog
 var _end_turn_area: Control
 var _end_turn_button: Button
 var _end_turn_style: StyleBoxFlat
+var _timer_label: Label
 var _deploy_vp_button: Button
 var _hint_panel: PanelContainer
 var _hint: Label
 var _preview: CardPreview
 
-## Что каждый игрок сыграл в свой последний (или текущий) ход — копится по
-## событиям play_card. Нужно полосе противника: в локальной партии экран
-## переключается на ходящего, и чужие карты видны только после его хода.
-var _played_by: Dictionary = {}     # player_id -> Array[String]
-var _turn_closed: Dictionary = {}   # player_id -> bool: следующий play_card начинает новый ход
-
-
-## Высота верхнего ряда: зона противников растёт вместе с их числом.
-var _top_h: float = TOP_H
+## Таймер хода: сколько секунд осталось и чей ход сейчас отсчитываем — смена
+## ходящего перезапускает отсчёт.
+var _time_left := TURN_SECONDS
+var _timed_player := ""
+var _auto_ending := false
 
 
 ## Какие цвета раздать на партию из count человек.
@@ -88,7 +89,6 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
-	_top_h = maxf(TOP_H, 34.0 * float(player_ids.size() - 1) + 24.0)
 	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true)
 	server = GameServer.new(state)
 	board_data = StateView.board_snapshot(state)
@@ -143,22 +143,22 @@ func _build_layout() -> void:
 	_status.max_lines_visible = 2
 	turn_col.add_child(_status)
 
-	# 3. Сыгранные карты противника.
-	_enemy_zone = PanelContainer.new()
-	_enemy_zone.add_theme_stylebox_override("panel", zone_style(6))
-	add_child(_enemy_zone)
-	var enemy_row := HBoxContainer.new()
-	enemy_row.add_theme_constant_override("separation", 10)
-	_enemy_zone.add_child(enemy_row)
-	_enemy_title = section_label("")
-	_enemy_title.custom_minimum_size = Vector2(78, 0)
-	_enemy_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_enemy_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	enemy_row.add_child(_enemy_title)
-	_enemy_strip = CardStrip.new()
-	_enemy_strip.card_aspect = 1.45
-	_enemy_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	enemy_row.add_child(_enemy_strip)
+	# 3. Общая полоса сыгранных карт: что сыграл тот, чей сейчас ход.
+	_played_zone = PanelContainer.new()
+	_played_zone.add_theme_stylebox_override("panel", zone_style(6))
+	add_child(_played_zone)
+	var played_row := HBoxContainer.new()
+	played_row.add_theme_constant_override("separation", 10)
+	_played_zone.add_child(played_row)
+	_played_title = section_label("")
+	_played_title.custom_minimum_size = Vector2(84, 0)
+	_played_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_played_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	played_row.add_child(_played_title)
+	_played_strip = CardStrip.new()
+	_played_strip.card_aspect = 1.0
+	_played_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	played_row.add_child(_played_strip)
 
 	# 8. Инфо противников.
 	_enemy_info = EnemyInfoPanel.new()
@@ -216,31 +216,37 @@ func _build_layout() -> void:
 	_log_panel = _chat_panel.log_panel
 	_log_panel.board = board_data
 
-	# 2. Сыгранные в этот ход карты зрителя.
-	_play_zone = PanelContainer.new()
-	_play_zone.add_theme_stylebox_override("panel", zone_style(6))
-	add_child(_play_zone)
-	var play_col := VBoxContainer.new()
-	play_col.add_theme_constant_override("separation", 2)
-	_play_zone.add_child(play_col)
-	play_col.add_child(section_label("PLAYED THIS TURN"))
-	_play_strip = CardStrip.new()
-	_play_strip.card_aspect = 0.9
-	_play_strip.empty_text = "Play cards from your hand — hover the bottom edge"
-	_play_strip.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	play_col.add_child(_play_strip)
+	# 2. Стопки зрителя: Внутренний круг и сброс. Стоят между инфо игрока и
+	# кнопкой End turn, по щелчку показывают весь список карт.
+	_piles_column = VBoxContainer.new()
+	_piles_column.add_theme_constant_override("separation", int(GAP))
+	add_child(_piles_column)
+	_pile_inner = PileZone.new("INNER CIRCLE")
+	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pile_inner.clicked.connect(func(): _open_pile("inner"))
+	_piles_column.add_child(_pile_inner)
+	_pile_discard = PileZone.new("DISCARD")
+	_pile_discard.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pile_discard.clicked.connect(func(): _open_pile("discard"))
+	_piles_column.add_child(_pile_discard)
 
 	# 7. Инфо игрока.
 	_player_panel = PlayerPanel.new()
 	add_child(_player_panel)
 
-	# 9. End turn — круглая кнопка; над ней, когда можно, Deploy for 1 VP.
+	# 9. End turn — квадратная кнопка; под ней таймер хода, над ней, когда
+	# можно, Deploy for 1 VP.
 	_end_turn_area = Control.new()
 	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_end_turn_area)
-	_end_turn_button = _round_button()
+	_end_turn_button = _square_button()
 	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
 	_end_turn_area.add_child(_end_turn_button)
+	_timer_label = Label.new()
+	_timer_label.add_theme_font_size_override("font_size", 18)
+	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_timer_label.tooltip_text = "Turn timer: when it runs out the turn ends by itself"
+	_end_turn_area.add_child(_timer_label)
 	_deploy_vp_button = Button.new()
 	_deploy_vp_button.text = "Deploy for 1 VP"
 	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
@@ -256,7 +262,11 @@ func _build_layout() -> void:
 	_hand_panel.card_clicked.connect(_on_hand_card_clicked)
 	add_child(_hand_panel)
 
-	# Увеличенная копия карты под курсором — над всем экраном.
+	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
+	_pile_dialog = PileDialog.new()
+	add_child(_pile_dialog)
+
+	# Увеличенная копия карты под курсором (с зажатым Alt) — над всем экраном.
 	_preview = CardPreview.new()
 	_preview.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_preview)
@@ -264,12 +274,12 @@ func _build_layout() -> void:
 	_layout()
 
 
-func _round_button() -> Button:
+func _square_button() -> Button:
 	var button := Button.new()
 	button.text = "End turn"
 	button.add_theme_font_size_override("font_size", 19)
 	_end_turn_style = StyleBoxFlat.new()
-	_end_turn_style.set_corner_radius_all(80)
+	_end_turn_style.set_corner_radius_all(6)
 	_end_turn_style.set_border_width_all(3)
 	_end_turn_style.shadow_size = 8
 	var states := {
@@ -287,7 +297,7 @@ func _round_button() -> Button:
 	return button
 
 
-## Цвет круглой кнопки — в цвет ходящего игрока, недоступная — серая.
+## Цвет квадратной кнопки — в цвет ходящего игрока, недоступная — серая.
 func _style_end_turn(colour: Color) -> void:
 	var normal: StyleBoxFlat = _end_turn_style
 	normal.bg_color = colour.darkened(0.45)
@@ -311,6 +321,14 @@ func _notification(what: int) -> void:
 		_layout()
 
 
+## Первый кадр: минимальные размеры панелей к этому моменту уже посчитаны, и
+## _place кладёт зоны ровно в отведённые прямоугольники. Без этого панель
+## игрока оставалась раздутой до своего раннего минимума и уезжала за экран.
+func _ready() -> void:
+	_layout()
+	call_deferred("_layout")
+
+
 ## Раскладка зон по сетке. Считается от размера экрана, а не контейнерами:
 ## так края зон гарантированно совпадают по линейке.
 func _layout() -> void:
@@ -324,34 +342,43 @@ func _layout() -> void:
 	var b_x := a_x + COL_A + GAP
 	var b_w := c_x - GAP - b_x
 	var top_y := MARGIN
-	var mid_y := top_y + _top_h + GAP
+	var mid_y := top_y + TOP_H + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
 	var mid_h := bottom_y - GAP - mid_y
 
-	# Инфо противников при 3-4 игроках шире колонки D: три блока в 270 px
-	# не читаются. Отъедает ширину у полосы чужих карт, которая её переживёт.
-	var info_w: float = COL_D + (160.0 if player_ids.size() > 2 else 0.0)
+	# Инфо противников — вертикальный прямоугольник на каждого, поэтому зона
+	# шире при 3-4 игроках. Ширину отъедает у полосы сыгранных карт.
+	var info_w: float = maxf(COL_D, 124.0 * float(player_ids.size() - 1) + 24.0)
 	var info_x: float = w - MARGIN - info_w
-	_place(_turn_panel, a_x, top_y, COL_A, _top_h)
-	_place(_enemy_zone, b_x, top_y, info_x - GAP - b_x, _top_h)
-	_place(_enemy_info, info_x, top_y, info_w, _top_h)
+	_place(_turn_panel, a_x, top_y, COL_A, TOP_H)
+	_place(_played_zone, b_x, top_y, info_x - GAP - b_x, TOP_H)
+	_place(_enemy_info, info_x, top_y, info_w, TOP_H)
 	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
 	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
 	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
-	_place(_play_zone, b_x, bottom_y, b_w, PLAY_H)
 	_place(_player_panel, c_x, bottom_y, COL_C, BOTTOM_H)
-	_place(_end_turn_area, d_x, bottom_y, COL_D, BOTTOM_H)
-	# Рука занимает колонку B от верха нижнего ряда до края экрана.
-	_place(_hand_panel, b_x, h - HandPanel.CARD_SIZE.y - 40.0, b_w, HandPanel.CARD_SIZE.y + 40.0)
+	# Нижний ряд колонки D: слева стопки, справа квадратная кнопка с таймером.
+	var end_w := COL_D - PILES_W - GAP
+	_place(_piles_column, d_x, bottom_y, PILES_W, BOTTOM_H)
+	_place(_end_turn_area, d_x + PILES_W + GAP, bottom_y, end_w, BOTTOM_H)
+	# Рука занимает колонку B и целиком лежит на экране; запас сверху нужен
+	# карте под курсором — она выдвигается выше края нижнего ряда.
+	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 4.0
+	_place(_hand_panel, b_x, hand_top, b_w, h - MARGIN - hand_top)
 
-	var d := 150.0
-	var deploy_h := 28.0 if _deploy_vp_button.visible else 0.0
-	var block := d + (deploy_h + 8.0 if deploy_h > 0.0 else 0.0)
+	var d := 132.0
+	var timer_h := 24.0
+	var deploy_h := 26.0 if _deploy_vp_button.visible else 0.0
+	var deploy_block: float = deploy_h + 6.0 if deploy_h > 0.0 else 0.0
+	var block := deploy_block + d + 4.0 + timer_h
 	var y0 := (BOTTOM_H - block) * 0.5
-	_deploy_vp_button.position = Vector2((COL_D - 160.0) * 0.5, y0)
-	_deploy_vp_button.size = Vector2(160, deploy_h)
-	_end_turn_button.position = Vector2((COL_D - d) * 0.5, y0 + block - d)
+	_deploy_vp_button.position = Vector2((end_w - 150.0) * 0.5, y0)
+	_deploy_vp_button.size = Vector2(150, deploy_h)
+	var button_y := y0 + deploy_block
+	_end_turn_button.position = Vector2((end_w - d) * 0.5, button_y)
 	_end_turn_button.size = Vector2(d, d)
+	_timer_label.position = Vector2(0, button_y + d + 4.0)
+	_timer_label.size = Vector2(end_w, timer_h)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -370,7 +397,6 @@ func send(intent: Intent) -> void:
 	if err != GameServer.Error.OK:
 		_log_panel.add_note("Not allowed: %s" % _error_name(err))
 	_log_panel.add_events(result["events"])
-	_track_played(result["events"])
 
 	# Ход мог перейти к другому игроку — в локальном режиме зритель следует
 	# за ходом, кроме случая, когда решение ждут от кого-то конкретного.
@@ -397,20 +423,33 @@ static func _error_name(err: int) -> String:
 		_: return "error %d" % err
 
 
-## Копит сыгранные карты по игрокам. Новый ход игрока начинается с первого
-## play_card после его turn_ended — до тех пор видны карты прошлого хода.
-func _track_played(events: Array) -> void:
-	for e in events:
-		var evt: Dictionary = e
-		var pid := String(evt.get("player_id", ""))
-		match String(evt.get("type", "")):
-			"play_card":
-				if bool(_turn_closed.get(pid, true)) or not _played_by.has(pid):
-					_played_by[pid] = []
-					_turn_closed[pid] = false
-				(_played_by[pid] as Array).append(String(evt.get("card_id", "")))
-			"turn_ended":
-				_turn_closed[pid] = true
+## Таймер хода. Отсчёт начинается заново на каждой смене ходящего; когда время
+## вышло, интерфейс сам жмёт End turn — тем же намерением, что и щелчок мышью.
+## Пока на экране висит вопрос карты, завершить ход нельзя, поэтому таймер ждёт
+## ответа и завершает ход сразу после него.
+func _process(delta: float) -> void:
+	if _timer_label == null:
+		return
+	if server.state.game_over:
+		_timer_label.text = "--:--"
+		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
+		return
+	var current := server.state.current_player()
+	if current != _timed_player:
+		_timed_player = current
+		_time_left = TURN_SECONDS
+	_time_left = maxf(0.0, _time_left - delta)
+	var left := int(ceilf(_time_left))
+	_timer_label.text = "%d:%02d" % [left / 60, left % 60]
+	_timer_label.add_theme_color_override("font_color",
+		Color(0.95, 0.38, 0.32) if _time_left <= 20.0 else Color(0.78, 0.76, 0.86))
+
+	if _time_left <= 0.0 and not _auto_ending and current == viewer_id \
+			and not _end_turn_button.disabled:
+		_auto_ending = true
+		_log_panel.add_note("Time is up — the turn ends automatically.")
+		send(Intent.end_turn(current))
+		_auto_ending = false
 
 
 func refresh(view: Dictionary) -> void:
@@ -422,6 +461,7 @@ func refresh(view: Dictionary) -> void:
 	_board_panel.update_from_view(view, viewer_id, board_data)
 	_decision_dialog.update_from_view(view, viewer_id)
 	_refresh_played(view)
+	_refresh_piles(view)
 	_refresh_actions(view)
 	# Плашка выбора цели закрывает верх доски — доска вписывается ниже неё.
 	var covered: bool = _decision_dialog.visible and _decision_dialog.at_top
@@ -451,34 +491,34 @@ func _refresh_header(view: Dictionary) -> void:
 	_status.text = " · ".join(PackedStringArray(notes))
 
 
-## Полоса противника: если сейчас ходит не зритель — его карты этого хода,
-## иначе карты игрока, ходившего перед зрителем, за его последний ход.
+## Общая полоса сыгранных карт: что сыграл в этот ход тот, чей сейчас ход.
+## Своя стопка сыгранных карт внизу больше не нужна — она была здесь же.
 func _refresh_played(view: Dictionary) -> void:
-	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
-	_play_strip.set_cards(me.get("played_pile", []))
-
-	var order: Array = view.get("turn_order", player_ids)
 	var current := String(view["current_player"])
-	var enemy := current
-	if enemy == viewer_id:
-		var idx := order.find(viewer_id)
-		enemy = String(order[(idx - 1 + order.size()) % order.size()]) if idx >= 0 and order.size() > 1 else ""
-	if enemy == "" or enemy == viewer_id:
-		_enemy_title.text = "NO OPPONENT"
-		_enemy_strip.set_cards([])
-		return
-	var enemy_name := EventLogPanel.player_name(enemy).to_upper()
-	var cards: Array = _played_by.get(enemy, [])
-	if enemy == current:
-		_enemy_title.text = "%s PLAYS" % enemy_name
-		# ход только начался — прошлые карты уже не его текущий ход
-		if bool(_turn_closed.get(enemy, true)):
-			cards = []
+	var p: Dictionary = (view["players"] as Dictionary).get(current, {})
+	_played_title.text = "%s PLAYS" % EventLogPanel.player_name(current).to_upper()
+	_played_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
+	_played_strip.empty_text = "No cards played this turn yet"
+	_played_strip.set_cards(p.get("played_pile", []))
+
+
+## Стопки зрителя. Сброс виден только своему игроку (StateView его прячет),
+## Внутренний круг открыт всем — здесь показываем всё равно только свой.
+func _refresh_piles(view: Dictionary) -> void:
+	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
+	_pile_inner.set_cards(me.get("inner_circle", []))
+	_pile_discard.set_cards(me.get("discard_pile", []))
+
+
+## Щелчок по стопке — весь её список поверх экрана.
+func _open_pile(which: String) -> void:
+	var view := StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
+	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
+	var who := EventLogPanel.player_name(viewer_id)
+	if which == "inner":
+		_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []))
 	else:
-		_enemy_title.text = "%s LAST TURN" % enemy_name
-	_enemy_title.add_theme_color_override("font_color", EventLogPanel.player_color(enemy))
-	_enemy_strip.empty_text = "No cards played yet"
-	_enemy_strip.set_cards(cards)
+		_pile_dialog.open_pile("%s — Discard pile" % who, me.get("discard_pile", []))
 
 
 func _refresh_actions(view: Dictionary) -> void:

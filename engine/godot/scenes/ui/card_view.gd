@@ -7,7 +7,7 @@ extends PanelContainer
 ##
 ## Размер карты задаёт вызывающий, шрифты масштабируются под ширину: в руке
 ## карта крупная, в маркете и на полосах сыгранных карт — маленькая. Мелкую
-## карту читают через увеличенную копию под курсором (CardPreview).
+## карту читают через увеличенную копию под курсором с зажатым Alt (CardPreview).
 ##
 ## Кликабельность включается отдельно (set_clickable): в руке кликать можно
 ## только в свой ход, в маркете — только если хватает Influence. Некликабельная
@@ -169,7 +169,9 @@ func _pixel_rects() -> Array[Rect2]:
 	var slot_aspect := size.x / maxf(size.y, 1.0)
 	var card_aspect := PIXEL_SIZE.x / PIXEL_SIZE.y
 	var region := Rect2(Vector2.ZERO, PIXEL_SIZE)
-	if slot_aspect > card_aspect:
+	# Допуск в пару процентов: слот, который шире карты лишь на округление
+	# размера, должен показывать карту целиком, а не её верх.
+	if slot_aspect > card_aspect * 1.03:
 		region.size.y = minf(PIXEL_SIZE.x / slot_aspect, PIXEL_TOP_H)
 	var k := minf(size.x / region.size.x, size.y / region.size.y)
 	var dest_size := region.size * k
@@ -278,11 +280,11 @@ func _apply_colors() -> void:
 
 func _on_mouse_entered() -> void:
 	if hover_preview:
-		CardPreview.show_for(self)
+		CardPreview.set_hovered(self)
 
 
 func _on_mouse_exited() -> void:
-	CardPreview.hide_for(self)
+	CardPreview.clear_hovered(self)
 
 
 func _gui_input(event: InputEvent) -> void:

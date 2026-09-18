@@ -386,7 +386,7 @@ func _draw_spy_targets() -> void:
 
 
 func _draw_hint() -> void:
-	var text := "wheel: zoom · drag: pan · double-click: fit board · H: %s" % (
+	var text := "wheel: zoom · drag: pan · double-click: fit board · H: %s · Alt: zoom a card" % (
 		"hex tiles" if _schematic_on() else "schematic")
 	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 	draw_string(_font, Vector2(size.x - width - 8, size.y - 8), text,
