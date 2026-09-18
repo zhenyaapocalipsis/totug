@@ -28,9 +28,6 @@ func _init() -> void:
 	_text.scroll_following = true
 	_text.selection_enabled = true
 	_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_text.add_theme_font_size_override("normal_font_size", 12)
-	_text.add_theme_font_size_override("bold_font_size", 12)
-	_text.add_theme_font_size_override("italics_font_size", 12)
 	add_child(_text)
 
 

@@ -6,8 +6,8 @@ extends Control
 ## или клавишей Escape. Карты внутри не кликаются — их читают увеличением
 ## по зажатому Alt.
 
-const CARD_SIZE := Vector2(106, 153)
-const PANEL_MAX := Vector2(880, 520)
+const CARD_SIZE := Vector2(64, 88)   # мелкое лицо карты, пиксель в пиксель
+const PANEL_MAX := Vector2(600, 330)
 
 var _center: CenterContainer
 var _title: Label
@@ -34,26 +34,21 @@ func _init() -> void:
 	add_child(_center)
 
 	_body = PanelContainer.new()
-	var style := GameScreen.zone_style(12)
-	style.bg_color = Color(0.09, 0.087, 0.115)
-	style.border_color = Color(0.42, 0.4, 0.5)
-	style.set_border_width_all(2)
-	_body.add_theme_stylebox_override("panel", style)
+	_body.add_theme_stylebox_override("panel",
+		PixelTheme.box(PixelTheme.PANEL, PixelTheme.BORDER_HI, 1, 3, 2))
 	_center.add_child(_body)
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 8)
+	col.add_theme_constant_override("separation", 2)
 	_body.add_child(col)
 
 	var head := HBoxContainer.new()
 	col.add_child(head)
 	_title = Label.new()
-	_title.add_theme_font_size_override("font_size", 16)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
 	var close := Button.new()
 	close.text = "Close"
-	close.add_theme_font_size_override("font_size", 12)
 	close.pressed.connect(close_pile)
 	head.add_child(close)
 
@@ -62,8 +57,8 @@ func _init() -> void:
 	col.add_child(_scroll)
 
 	_grid = GridContainer.new()
-	_grid.add_theme_constant_override("h_separation", 8)
-	_grid.add_theme_constant_override("v_separation", 8)
+	_grid.add_theme_constant_override("h_separation", 2)
+	_grid.add_theme_constant_override("v_separation", 2)
 	_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_grid)
 
@@ -75,14 +70,14 @@ func open_pile(title: String, ids: Array) -> void:
 		child.queue_free()
 
 	var area: Vector2 = get_viewport_rect().size
-	var panel: Vector2 = PANEL_MAX.min(area - Vector2(80, 120))
-	var columns: int = maxi(1, int((panel.x - 24.0) / (CARD_SIZE.x + 8.0)))
+	var panel: Vector2 = PANEL_MAX.min(area - Vector2(16, 24))
+	var columns: int = maxi(1, int((panel.x - 8.0) / (CARD_SIZE.x + 2.0)))
 	_grid.columns = columns
 	var rows: int = ceili(float(maxi(ids.size(), 1)) / float(columns))
-	var grid_h: float = float(rows) * (CARD_SIZE.y + 8.0)
+	var grid_h: float = float(rows) * (CARD_SIZE.y + 2.0)
 	_scroll.custom_minimum_size = Vector2(
-		float(columns) * (CARD_SIZE.x + 8.0),
-		minf(grid_h, panel.y - 60.0))
+		float(columns) * (CARD_SIZE.x + 2.0),
+		minf(grid_h, panel.y - 20.0))
 
 	for cid in ids:
 		var card := CardView.new(String(cid), int(CARD_SIZE.x), int(CARD_SIZE.y))
@@ -91,8 +86,7 @@ func open_pile(title: String, ids: Array) -> void:
 	if ids.is_empty():
 		var empty := Label.new()
 		empty.text = "This pile is empty."
-		empty.add_theme_font_size_override("font_size", 13)
-		empty.add_theme_color_override("font_color", Color(0.6, 0.58, 0.68))
+		empty.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		_grid.add_child(empty)
 	visible = true
 

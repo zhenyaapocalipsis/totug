@@ -9,7 +9,7 @@ signal clicked
 
 ## Сколько карт рисуем «слоями», чтобы стопка выглядела стопкой.
 const LAYERS := 3
-const LAYER_OFFSET := 3.0
+const LAYER_OFFSET := 2.0
 
 var _caption: Label
 var _count: Label
@@ -20,7 +20,7 @@ var _built_for := Vector2.ZERO
 
 
 func _init(caption: String = "") -> void:
-	add_theme_stylebox_override("panel", GameScreen.zone_style(5))
+	add_theme_stylebox_override("panel", GameScreen.zone_style(1))
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	tooltip_text = "Click to see every card in this pile"
@@ -32,15 +32,14 @@ func _init(caption: String = "") -> void:
 
 	var head := HBoxContainer.new()
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	head.add_theme_constant_override("separation", 4)
+	head.add_theme_constant_override("separation", 2)
 	col.add_child(head)
 	_caption = GameScreen.section_label(caption)
 	_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_caption.clip_text = true
 	head.add_child(_caption)
 	_count = Label.new()
-	_count.add_theme_font_size_override("font_size", 12)
-	_count.add_theme_color_override("font_color", Color(0.95, 0.9, 0.75))
+	_count.add_theme_color_override("font_color", PixelTheme.GOLD)
 	head.add_child(_count)
 
 	_slot = Control.new()
@@ -52,8 +51,7 @@ func _init(caption: String = "") -> void:
 
 	_empty = Label.new()
 	_empty.text = "empty"
-	_empty.add_theme_font_size_override("font_size", 11)
-	_empty.add_theme_color_override("font_color", Color(0.45, 0.44, 0.52))
+	_empty.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
 	_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_empty.set_anchors_preset(Control.PRESET_FULL_RECT)

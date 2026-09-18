@@ -45,6 +45,8 @@ var _overlay: Node2D
 
 
 func _ready() -> void:
+	# Служебный экран, но шрифт в нём тот же пиксельный, что и в игре.
+	($UI as Control).theme = PixelTheme.theme()
 	_overlay = SlotOverlay.new()
 	_overlay.z_index = 100
 	add_child(_overlay)

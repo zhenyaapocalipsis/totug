@@ -17,17 +17,16 @@ var _input: LineEdit
 
 
 func _init() -> void:
-	add_theme_stylebox_override("panel", GameScreen.zone_style(4))
+	add_theme_stylebox_override("panel", GameScreen.zone_style(1))
 
 	_tabs = TabContainer.new()
-	_tabs.add_theme_font_size_override("font_size", 12)
 	var empty := StyleBoxEmpty.new()
 	_tabs.add_theme_stylebox_override("panel", empty)
 	add_child(_tabs)
 
 	var chat := VBoxContainer.new()
 	chat.name = "Chat"
-	chat.add_theme_constant_override("separation", 4)
+	chat.add_theme_constant_override("separation", 2)
 	_tabs.add_child(chat)
 
 	_history = RichTextLabel.new()
@@ -35,15 +34,11 @@ func _init() -> void:
 	_history.scroll_following = true
 	_history.selection_enabled = true
 	_history.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_history.add_theme_font_size_override("normal_font_size", 12)
-	_history.add_theme_font_size_override("bold_font_size", 12)
-	_history.add_theme_font_size_override("italics_font_size", 12)
-	_history.text = "[color=#77748a][i]Messages are local until online play arrives.[/i][/color]"
+	_history.text = "[color=#77748a][i]Local until online play arrives.[/i][/color]"
 	chat.add_child(_history)
 
 	_input = LineEdit.new()
-	_input.placeholder_text = "Type a message, Enter to send"
-	_input.add_theme_font_size_override("font_size", 12)
+	_input.placeholder_text = "Message, Enter to send"
 	_input.text_submitted.connect(_on_submitted)
 	chat.add_child(_input)
 

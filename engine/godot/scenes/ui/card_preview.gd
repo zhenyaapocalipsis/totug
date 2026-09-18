@@ -15,10 +15,12 @@ extends Control
 ## карты делает вид, что увеличилась сама карта.
 
 const GROW := 1.15
-const MIN_SIZE := Vector2(176, 246)
-const MARGIN := 6.0
+const MIN_SIZE := Vector2(176, 254)
+const MARGIN := 4.0
 const ANIM_TIME := 0.09
-const PIXEL_SCALE := 2.0
+## Экран — 640x360, и полная карта 176x254 помещается на нём ровно один раз.
+## Целый масштаб обязателен: при дробном пиксели карты разъезжаются.
+const PIXEL_SCALE := 1.0
 
 static var active: CardPreview = null
 

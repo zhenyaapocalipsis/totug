@@ -15,13 +15,19 @@ gdscript/warnings/untyped_declaration=1
 
 [display]
 
-window/size/viewport_width=1280
-window/size/viewport_height=800
-# Стартовый размер ОКНА меньше расчётного размера картинки (1280x800):
-# так окно влезает даже в ноутбучный экран 1366x768 вместе с заголовком,
-# а картинка целиком ужимается под него (stretch keep). Окно можно
-# растянуть или развернуть — интерфейс масштабируется следом.
-window/size/window_width_override=1200
-window/size/window_height_override=700
+; Игра рисуется в расчётном размере 640x360 — это настоящий пиксель-арт:
+; каждый нарисованный пиксель виден на экране как квадрат. Окно по
+; умолчанию ровно вдвое больше (1280x720), а stretch integer растягивает
+; картинку только целым числом раз — пиксели не мылятся и не рвутся.
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
+window/stretch/scale_mode="integer"
+
+[rendering]
+
+; Ближайший сосед: иначе пиксельные лица карт и шрифт замыливаются.
+textures/canvas_textures/default_texture_filter=0

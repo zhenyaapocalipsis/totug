@@ -13,11 +13,10 @@ signal card_clicked(card_id: String)
 
 ## Карта в руке чуть меньше пиксельного оригинала: так ряд из шести карт
 ## помещается в колонку, не наезжая друг на друга до нечитаемости.
-const CARD_SCALE := 0.8
-const CARD_SIZE := Vector2(140, 203)   # = CardView.PIXEL_SIZE * CARD_SCALE
-const HOVER_LIFT := 16.0    # на сколько выдвигается карта под курсором
-const BOTTOM_MARGIN := 6.0  # отступ ряда от нижнего края зоны
-const GAP := 6.0
+const CARD_SIZE := Vector2(64, 88)   # = CardView.MINI_SIZE, пиксель в пиксель
+const HOVER_LIFT := 6.0     # на сколько выдвигается карта под курсором
+const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края зоны
+const GAP := 2.0
 const LIFT_TIME := 0.10
 
 var _cards: Array[CardView] = []
@@ -36,13 +35,8 @@ func _init() -> void:
 	# Подложка под картами — чтобы зона руки читалась как зона.
 	_tray = Panel.new()
 	_tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.085, 0.115)
-	style.border_color = Color(0.24, 0.22, 0.3)
-	style.set_border_width_all(1)
-	style.corner_radius_top_left = 10
-	style.corner_radius_top_right = 10
-	_tray.add_theme_stylebox_override("panel", style)
+	_tray.add_theme_stylebox_override("panel",
+		PixelTheme.box(PixelTheme.PANEL, PixelTheme.BORDER, 1, 0, 0))
 	add_child(_tray)
 
 
@@ -104,8 +98,8 @@ func _layout() -> void:
 		# Выдвинутая карта не должна прятаться под соседней справа.
 		_cards[i].z_index = 1 if lift > 0.01 else 0
 
-	_tray.position = Vector2(0, base_y - 10)
-	_tray.size = Vector2(size.x, size.y - base_y + 10)
+	_tray.position = Vector2(0, base_y - 2)
+	_tray.size = Vector2(size.x, size.y - base_y + 2)
 
 
 func _process(delta: float) -> void:

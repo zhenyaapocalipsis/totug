@@ -8,9 +8,6 @@ extends Control
 ## Прямоугольники стоят в ряд и делят ширину зоны поровну, поэтому партия на
 ## 2 и на 4 человек выглядит одинаково — меняется только число блоков.
 
-const ROW_FONT := 11
-const SMALL_FONT := 10
-
 var _row: HBoxContainer
 var _blocks: Dictionary = {}   # player_id -> Dictionary с узлами блока
 
@@ -19,7 +16,7 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_row = HBoxContainer.new()
 	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_row.add_theme_constant_override("separation", 6)
+	_row.add_theme_constant_override("separation", 2)
 	_row.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_row)
 
@@ -29,12 +26,12 @@ func _init() -> void:
 func _make_block(pid: String) -> Dictionary:
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, Color(0.6, 0.6, 0.6))
 	var panel := PanelContainer.new()
-	var style := GameScreen.zone_style(4)
-	style.border_width_top = 3
+	var style := GameScreen.zone_style(1)
+	style.border_width_top = 2
 	style.border_color = colour
 	panel.add_theme_stylebox_override("panel", style)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	_row.add_child(panel)
 
 	var col := VBoxContainer.new()
@@ -42,55 +39,33 @@ func _make_block(pid: String) -> Dictionary:
 	col.add_theme_constant_override("separation", 0)
 	panel.add_child(col)
 
+	# Плашка узкая (74 px) и низкая: в неё влезают две строки — имя с VP и
+	# ресурсы. Всё остальное — во всплывающей подсказке.
 	var head := HBoxContainer.new()
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	head.add_theme_constant_override("separation", 2)
 	col.add_child(head)
+	var turn_mark := Label.new()
+	turn_mark.text = ">"
+	turn_mark.add_theme_color_override("font_color", PixelTheme.GOLD)
+	head.add_child(turn_mark)
 	var name_label := Label.new()
 	name_label.text = EventLogPanel.player_name(pid).to_upper()
-	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.add_theme_color_override("font_color", EventLogPanel.player_color(pid))
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.clip_text = true
 	head.add_child(name_label)
-	var turn_mark := Label.new()
-	turn_mark.text = "◆"
-	turn_mark.add_theme_font_size_override("font_size", 12)
-	turn_mark.add_theme_color_override("font_color", Color(0.91, 0.85, 0.63))
-	head.add_child(turn_mark)
-
 	var vp := Label.new()
-	vp.add_theme_font_size_override("font_size", 15)
 	vp.add_theme_color_override("font_color", PlayerPanel.VP_COLOR)
-	col.add_child(vp)
+	head.add_child(vp)
 
-	var rows := {
-		"power": _add_row(col, "Power", ROW_FONT, PlayerPanel.POWER_COLOR),
-		"influence": _add_row(col, "Influence", ROW_FONT, PlayerPanel.INFLUENCE_COLOR),
-		"hand": _add_row(col, "Hand", ROW_FONT),
-		"troops": _add_row(col, "Troops / spies", SMALL_FONT),
-		"deck": _add_row(col, "Deck / discard", SMALL_FONT),
-		"trophies": _add_row(col, "Trophies / circle", SMALL_FONT),
-	}
-	return {"panel": panel, "style": style, "turn": turn_mark, "vp": vp, "rows": rows}
+	var stats := Label.new()
+	stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stats.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	stats.clip_text = true
+	col.add_child(stats)
 
-
-static func _add_row(parent: Control, caption: String, font_size: int,
-		colour: Color = Color(0.88, 0.88, 0.92)) -> Label:
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(row)
-	var name_label := Label.new()
-	name_label.text = caption
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", SMALL_FONT)
-	name_label.add_theme_color_override("font_color", Color(0.62, 0.6, 0.7))
-	name_label.clip_text = true
-	row.add_child(name_label)
-	var value := Label.new()
-	value.add_theme_font_size_override("font_size", font_size)
-	value.add_theme_color_override("font_color", colour)
-	row.add_child(value)
-	return value
+	return {"panel": panel, "style": style, "turn": turn_mark, "vp": vp, "stats": stats}
 
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
@@ -109,14 +84,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		if p.is_empty():
 			continue
 		(block["turn"] as Label).visible = pid == current
-		(block["style"] as StyleBoxFlat).bg_color = Color(0.105, 0.1, 0.135) if pid != current \
-			else Color(0.16, 0.15, 0.2)
-		(block["vp"] as Label).text = "%d VP" % int(p["vp_tokens"])
-		var rows: Dictionary = block["rows"]
-		(rows["power"] as Label).text = str(int(p["power"]))
-		(rows["influence"] as Label).text = str(int(p["influence"]))
-		(rows["hand"] as Label).text = str(int(p["hand_size"]))
-		(rows["troops"] as Label).text = "%d / %d" % [int(p["troops_in_barracks"]), int(p["spies_in_barracks"])]
-		(rows["deck"] as Label).text = "%d / %d" % [int(p["deck_size"]), int(p["discard_size"])]
-		(rows["trophies"] as Label).text = "%d / %d" % [int(p["trophy_hall_count"]),
-			(p.get("inner_circle", []) as Array).size()]
+		(block["style"] as StyleBoxFlat).bg_color = PixelTheme.PANEL if pid != current \
+			else PixelTheme.PANEL_HI
+		(block["vp"] as Label).text = "%dvp" % int(p["vp_tokens"])
+		(block["stats"] as Label).text = "P%d I%d H%d" % [
+			int(p["power"]), int(p["influence"]), int(p["hand_size"])]
+		(block["panel"] as PanelContainer).tooltip_text = \
+			"%s\nPower %d · Influence %d · Hand %d\nTroops/spies %d/%d\nDeck/discard %d/%d\nTrophies/circle %d/%d" % [
+				EventLogPanel.player_name(pid), int(p["power"]), int(p["influence"]),
+				int(p["hand_size"]), int(p["troops_in_barracks"]), int(p["spies_in_barracks"]),
+				int(p["deck_size"]), int(p["discard_size"]), int(p["trophy_hall_count"]),
+				(p.get("inner_circle", []) as Array).size()]

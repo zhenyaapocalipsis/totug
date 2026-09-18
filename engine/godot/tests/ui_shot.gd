@@ -19,6 +19,8 @@ var _screen: GameScreen
 var _out := "res://ui_shot.png"
 var _scenario := ""
 var _frame := 0
+## Во сколько раз увеличить снимок при сохранении (--px=N), картинка та же.
+var _zoom := 1
 
 
 func _initialize() -> void:
@@ -31,9 +33,16 @@ func _initialize() -> void:
 			players = int(arg.get_slice("=", 1))
 		elif arg.begins_with("--out="):
 			_out = "res://" + arg.get_slice("=", 1)
+		elif arg.begins_with("--px="):
+			_zoom = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
 
+	# Окно ровно в расчётный размер: тогда сцена рисуется пиксель в пиксель
+	# и снимок не приходится пересчитывать.
+	DisplayServer.window_set_size(Vector2i(
+		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
+		ProjectSettings.get_setting("display/window/size/viewport_height", 360)))
 	_screen = GameScreen.new(game_seed, [], GameScreen.player_ids_for(players))
 	root.add_child(_screen)
 	_run_scenario()
@@ -174,7 +183,18 @@ func _process(_delta: float) -> bool:
 	if _frame < SETTLE_FRAMES + 12:
 		return false
 	var image: Image = root.get_texture().get_image()
-	var err := image.save_png(_out)
-	print("снимок: %s (код %d), сцена %dx%d, сценарий '%s'"
-		% [_out, err, image.get_width(), image.get_height(), _scenario])
+	# Игра рисуется в 640x360; снимок берём ровно в этом размере (пиксель в
+	# пиксель), а для просмотра увеличиваем целым числом раз без сглаживания.
+	var design := Vector2i(
+		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
+		ProjectSettings.get_setting("display/window/size/viewport_height", 360))
+	if image.get_size() != design:
+		image = image.get_region(Rect2i(Vector2i.ZERO, image.get_size()))
+		image.resize(design.x, design.y, Image.INTERPOLATE_NEAREST)
+	var shown := image.duplicate() as Image
+	if _zoom > 1:
+		shown.resize(design.x * _zoom, design.y * _zoom, Image.INTERPOLATE_NEAREST)
+	var err := shown.save_png(_out)
+	print("снимок: %s (код %d), сцена %dx%d x%d, сценарий '%s'"
+		% [_out, err, image.get_width(), image.get_height(), _zoom, _scenario])
 	return true

@@ -17,11 +17,16 @@ var _supply_row: HBoxContainer
 var _deck_label: Label
 
 
+## Слот карты маркета: ровно ширина мелкого лица карты и такая высота, чтобы
+## в него попали имя и арт без дробного масштаба (иначе пиксели размажутся).
+const SLOT := Vector2i(64, 40)
+
+
 func _init() -> void:
-	add_theme_stylebox_override("panel", GameScreen.zone_style())
+	add_theme_stylebox_override("panel", GameScreen.zone_style(2))
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 1)
 	add_child(col)
 
 	var title_row := HBoxContainer.new()
@@ -34,15 +39,14 @@ func _init() -> void:
 
 	_grid = GridContainer.new()
 	_grid.columns = 2
-	_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_grid.add_theme_constant_override("h_separation", 6)
-	_grid.add_theme_constant_override("v_separation", 6)
+	_grid.add_theme_constant_override("h_separation", 2)
+	_grid.add_theme_constant_override("v_separation", 2)
 	col.add_child(_grid)
 
 	col.add_child(GameScreen.section_label("SUPPLY"))
 
 	_supply_row = HBoxContainer.new()
-	_supply_row.add_theme_constant_override("separation", 6)
+	_supply_row.add_theme_constant_override("separation", 2)
 	col.add_child(_supply_row)
 
 
@@ -101,45 +105,42 @@ func update_from_view(view: Dictionary) -> void:
 
 
 static func _market_card(cid: String) -> CardView:
-	var card := CardView.new(cid, 118, 72)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	return card
+	return CardView.new(cid, SLOT.x, SLOT.y)
 
 
-static func _supply_box(cid: String, count_text: String, has_cards: bool) -> VBoxContainer:
-	var box := VBoxContainer.new()
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 1)
-	var card := CardView.new(cid, 74, 62, -1)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+## Карта общей стопки: остаток написан прямо поверх карты — отдельной строки
+## под неё в колонке нет.
+static func _supply_box(cid: String, count_text: String, has_cards: bool) -> Control:
+	var box := Control.new()
+	box.custom_minimum_size = SLOT
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var card := CardView.new(cid, SLOT.x, SLOT.y)
+	card.set_anchors_preset(Control.PRESET_FULL_RECT)
 	box.add_child(card)
 	var left_label := Label.new()
 	left_label.text = count_text
-	left_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	left_label.add_theme_font_size_override("font_size", 11)
+	left_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	left_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	left_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	left_label.offset_top = -11
+	left_label.offset_right = -2
 	left_label.add_theme_color_override("font_color",
-		Color(0.7, 0.7, 0.75) if has_cards else Color(0.75, 0.4, 0.4))
+		PixelTheme.TEXT if has_cards else PixelTheme.DANGER)
+	left_label.add_theme_color_override("font_outline_color", PixelTheme.BG)
+	left_label.add_theme_constant_override("outline_size", 2)
 	box.add_child(left_label)
 	return box
 
 
 func _empty_slot() -> Control:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(118, 72)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.08, 0.10)
-	style.border_color = Color(0.2, 0.2, 0.24)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(7)
-	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size = SLOT
+	panel.add_theme_stylebox_override("panel",
+		PixelTheme.box(PixelTheme.PANEL_LO, PixelTheme.BORDER, 1, 1, 1))
 	var label := Label.new()
-	label.text = "deck empty"
+	label.text = "empty"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
-	label.modulate = Color(0.5, 0.5, 0.55)
+	label.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
 	panel.add_child(label)
 	return panel

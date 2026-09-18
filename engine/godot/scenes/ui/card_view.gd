@@ -33,14 +33,24 @@ const BASE_WIDTH := 150.0
 ## цену, аспект и арт; целиком её читают через увеличенную копию.
 const PIXEL_DIR := "res://assets/cards_pixel/"
 const PIXEL_SIZE := Vector2(176, 254)
+## Мелкое лицо той же карты: имя, арт, цена и VP без текста способности.
+## Экран рисуется в 640x360, и в руке с маркетом помещается только оно;
+## полную карту показывает увеличенная копия под курсором (CardPreview).
+const MINI_DIR := "res://assets/cards_mini/"
+const MINI_SIZE := Vector2(64, 88)
+## Слот уже этого — берём мелкое лицо: крупное в нём было бы нечитаемой кашей.
+const MINI_MAX_WIDTH := 110.0
 const PIXEL_HIGHLIGHT := Color("f2d23c")
 const PIXEL_TOP_H := 136.0  # шапка + арт
+const MINI_TOP_H := 55.0    # шапка + арт у мелкого лица
 
 var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
 var hover_preview: bool = true
 var _pixel: Texture2D = null
+## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
+var _mini := false
 
 var _name_label: Label
 var _cost_label: Label
@@ -62,7 +72,8 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
-	_pixel = pixel_texture(cid)
+	_mini = card_width <= MINI_MAX_WIDTH
+	_pixel = mini_texture(cid) if _mini else pixel_texture(cid)
 	if _pixel != null:
 		add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		return
@@ -162,17 +173,28 @@ static func pixel_texture(cid: String) -> Texture2D:
 	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
 
 
+static func mini_texture(cid: String) -> Texture2D:
+	var path := MINI_DIR + cid + ".png"
+	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
+
+
+## Размер лица карты в его собственных пикселях — мелкого или полного.
+func face_size() -> Vector2:
+	return MINI_SIZE if _mini else PIXEL_SIZE
+
+
 ## Часть пиксельной карты, которая влезает в слот: слот уже карты — карта
 ## целиком по центру; слот шире — верх карты, но не ниже арта (пустое
 ## текстовое поле в мелком слоте ни к чему), вписанный по центру.
 func _pixel_rects() -> Array[Rect2]:
+	var face := face_size()
 	var slot_aspect := size.x / maxf(size.y, 1.0)
-	var card_aspect := PIXEL_SIZE.x / PIXEL_SIZE.y
-	var region := Rect2(Vector2.ZERO, PIXEL_SIZE)
+	var card_aspect := face.x / face.y
+	var region := Rect2(Vector2.ZERO, face)
 	# Допуск в пару процентов: слот, который шире карты лишь на округление
 	# размера, должен показывать карту целиком, а не её верх.
 	if slot_aspect > card_aspect * 1.03:
-		region.size.y = minf(PIXEL_SIZE.x / slot_aspect, PIXEL_TOP_H)
+		region.size.y = minf(face.x / slot_aspect, MINI_TOP_H if _mini else PIXEL_TOP_H)
 	var k := minf(size.x / region.size.x, size.y / region.size.y)
 	var dest_size := region.size * k
 	return [Rect2((size - dest_size) * 0.5, dest_size), region]
@@ -185,13 +207,13 @@ func _draw() -> void:
 	var dest: Rect2 = rects[0]
 	# Не меньше 1 экранного пикселя на пиксель карты — чёткие пиксели (nearest);
 	# меньше — nearest выкидывает целые строки шрифта, поэтому сглаживание.
-	var on_screen := dest.size.x / PIXEL_SIZE.x * get_screen_transform().get_scale().x
+	var on_screen := dest.size.x / face_size().x * get_screen_transform().get_scale().x
 	var filter := TEXTURE_FILTER_NEAREST if on_screen >= 0.99 else TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	if texture_filter != filter:
 		texture_filter = filter
 	draw_texture_rect_region(_pixel, dest, rects[1])
 	if clickable:
-		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 2.0)
+		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 1.0)
 
 
 func _notification(what: int) -> void:
@@ -214,7 +236,7 @@ static func _ignore_mouse(node: Node) -> void:
 func set_card(cid: String) -> void:
 	card_id = cid
 	if _pixel != null:
-		_pixel = pixel_texture(cid)
+		_pixel = mini_texture(cid) if _mini else pixel_texture(cid)
 		queue_redraw()
 		return
 	var data: Dictionary = CardLibrary.card_data(cid)

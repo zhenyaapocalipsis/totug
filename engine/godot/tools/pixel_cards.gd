@@ -8,6 +8,12 @@
 
 const ROOT := "C:/tyrants of the underdark godot/"
 const OUT := ROOT + "engine/godot/assets/cards_pixel/"
+const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
+## Мелкая карта для руки и маркета: на экране 640x360 полная карта не влезает,
+## а ужимать её нельзя — текст превратится в кашу. Поэтому у каждой карты есть
+## второе лицо, нарисованное сразу маленьким: имя, арт, цена и VP.
+const MINI_W := 64
+const MINI_H := 88
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const W := 176
 const ART_H := 100
@@ -114,6 +120,7 @@ var sheets_cache := {}
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
+	DirAccess.make_dir_recursive_absolute(OUT_MINI)
 	var all: Array = JSON.parse_string(FileAccess.get_file_as_string(ROOT + "engine/godot/data/cards/cards.json"))
 
 	# One layout for the whole set: the text box fits the longest card text.
@@ -139,6 +146,7 @@ func _init() -> void:
 		var card := render(c, H, text_top, text_h)
 		card.save_png(OUT + "%d.png" % int(c["card_id"]))
 		rendered.append(card)
+		render_mini(c).save_png(OUT_MINI + "%d.png" % int(c["card_id"]))
 	print("rendered: ", rendered.size())
 
 	# preview sheets: 5x5 cards at x2
@@ -464,3 +472,59 @@ func sv(v: Variant) -> String:
 
 
 
+
+## Мелкое лицо карты 64x88 для руки, маркета и полос сыгранных карт: шапка в
+## цвет аспекта с именем в две строки, арт, а внизу цена, тип и оба значения
+## VP. Текста способности здесь нет — его читают на большой карте под курсором.
+func render_mini(c: Dictionary) -> Image:
+	img = Image.create(MINI_W, MINI_H, false, Image.FORMAT_RGBA8)
+	img.fill(C_OUTLINE)
+	var aspect := sv(c["aspect"])
+	var aspect_col: Color = ASPECT_COLOR.get(aspect, C_GREY)
+	rect(1, 1, MINI_W - 2, MINI_H - 2, C_FRAME)
+	rect(1, 1, MINI_W - 2, 1, C_FRAME_HI)
+	rect(1, MINI_H - 2, MINI_W - 2, 1, C_FRAME_LO)
+
+	# шапка: имя в две строки на подложке цвета аспекта
+	rect(1, 1, MINI_W - 2, 18, Color(aspect_col.darkened(0.62), 1.0))
+	rect(1, 18, MINI_W - 2, 1, C_OUTLINE)
+	var name_lines := wrap_plain(clean(sv(c["name"])), MINI_W - 7)
+	for i in mini(name_lines.size(), 2):
+		var line: String = name_lines[i]
+		if i == 1 and name_lines.size() > 2:
+			line = line.substr(0, 8) + "."
+		text(3, 2 + i * 8, line, C_LIGHT, 1, C_OUTLINE)
+
+	# арт
+	var art := pixelize(art_region(int(c["card_id"]), MINI_W - 6, 34), MINI_W - 6, 34, 16)
+	img.blit_rect(art, Rect2i(0, 0, MINI_W - 6, 34), Vector2i(3, 20))
+	rect(2, 19, MINI_W - 4, 1, C_OUTLINE)
+	rect(2, 54, MINI_W - 4, 1, C_OUTLINE)
+
+	# Цена — золотым квадратом в углу арта. В маркете видно только верх карты,
+	# поэтому внизу цену держать нельзя: игрок должен видеть её сразу.
+	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
+	if cost_str != "":
+		var cw := text_width(cost_str, 1)
+		rect(MINI_W - 6 - cw - 3, 21, cw + 4, 10, C_OUTLINE)
+		rect(MINI_W - 6 - cw - 2, 22, cw + 2, 8, ASPECT_COLOR["AMBITION"])
+		text(MINI_W - 6 - cw - 1, 22, cost_str, C_INK, 1)
+
+	# строка аспекта и типа
+	if aspect != "":
+		glyph_rows(3, 57, ICONS[aspect], aspect_col)
+	var type_str := clean(sv(c["type"]))
+	text(12, 57, type_str.substr(0, 8), C_GREY, 1)
+
+	# VP колоды и Внутреннего круга
+	var dv := str(int(c["deck_vp"]))
+	rect(MINI_W - 31, 68, 14, 12, C_OUTLINE)
+	rect(MINI_W - 30, 69, 12, 10, C_LIGHT)
+	text(MINI_W - 24 - text_width(dv, 1) / 2, 71, dv, C_INK, 1)
+	circle(MINI_W - 10, 74, 7, C_OUTLINE)
+	circle(MINI_W - 10, 74, 6, C_IC)
+	circle(MINI_W - 11, 73, 4, C_IC_HI)
+	circle(MINI_W - 10, 74, 3, C_IC)
+	var iv := str(int(c["inner_circle_vp"]))
+	text(MINI_W - 10 - text_width(iv, 1) / 2, 71, iv, C_LIGHT, 1)
+	return img

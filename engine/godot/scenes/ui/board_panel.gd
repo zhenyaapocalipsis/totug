@@ -68,12 +68,14 @@ var top_inset := 0.0
 func _init() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = SchematicPainter.BG
-	style.set_corner_radius_all(6)
+	style.set_corner_radius_all(0)
 	add_theme_stylebox_override("panel", style)
-	custom_minimum_size = Vector2(520, 300)
+	custom_minimum_size = Vector2(200, 120)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
-	_font = ThemeDB.fallback_font
+	# Подписи поверх доски — тем же пиксельным шрифтом, что и весь интерфейс.
+	var pixel_font: Font = PixelTheme.theme().default_font
+	_font = pixel_font if pixel_font != null else ThemeDB.fallback_font
 
 
 func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) -> void:
@@ -386,11 +388,13 @@ func _draw_spy_targets() -> void:
 
 
 func _draw_hint() -> void:
-	var text := "wheel: zoom · drag: pan · double-click: fit board · H: %s · Alt: zoom a card" % (
-		"hex tiles" if _schematic_on() else "schematic")
-	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
-	draw_string(_font, Vector2(size.x - width - 8, size.y - 8), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.6, 0.6, 0.66, 0.7))
+	var text := "wheel zoom · drag pan · 2clicks fit · H %s · Alt card" % (
+		"hex" if _schematic_on() else "map")
+	# Подсказка про управление — строкой выше легенды колец, иначе на узком
+	# экране они налезают друг на друга.
+	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE).x
+	draw_string(_font, Vector2(size.x - width - 2, size.y - 14), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, Color(PixelTheme.TEXT_OFF, 0.9))
 
 	# Легенда колец — только те цвета, что сейчас есть на доске.
 	var legal: Dictionary = _view.get("legal", {})
@@ -399,15 +403,17 @@ func _draw_hint() -> void:
 	if DecisionDialog.BOARD_CHOICES.has(pending_type):
 		entries.append([DECISION_COLOR, "card target"])
 	if not (legal.get("deploy_slots", []) as Array).is_empty():
-		entries.append([DEPLOY_COLOR, "Deploy (1 Power)"])
+		entries.append([DEPLOY_COLOR, "Deploy 1P"])
 	if not (legal.get("assassinate_slots", []) as Array).is_empty() \
 			or not (legal.get("return_spy", []) as Array).is_empty():
-		entries.append([KILL_COLOR, "Assassinate / return spy (3 Power)"])
-	var at := Vector2(12, size.y - 12)
+		entries.append([KILL_COLOR, "Kill/spy 3P"])
+	var at := Vector2(3, size.y - 3)
 	for entry in entries:
-		draw_arc(at + Vector2(6, -5), 6.0, 0, TAU, 16, entry[0], 2.5)
-		draw_string(_font, at + Vector2(18, 0), String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.9, 0.9, 0.92))
-		at.x += 30 + _font.get_string_size(String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		draw_arc(at + Vector2(3, -3), 3.0, 0, TAU, 12, entry[0], 1.0)
+		draw_string(_font, at + Vector2(9, 0), String(entry[1]),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT)
+		at.x += 14 + _font.get_string_size(
+			String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE).x
 
 
 ## Навести обзор на точку доски с заданным масштабом. Нужно интерфейсу

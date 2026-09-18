@@ -19,9 +19,9 @@ extends PanelContainer
 signal option_chosen(answer: Variant)
 
 const BOARD_CHOICES := ["target_slot", "target_site", "target_return"]
-const OPTION_HEIGHT := 34
-const MAX_LIST_HEIGHT := 380
-const WIDTH := 460.0
+const OPTION_HEIGHT := 15
+const MAX_LIST_HEIGHT := 150
+const WIDTH := 300.0
 
 ## Статический снимок доски (StateView.board_snapshot) — нужен, чтобы
 ## подписывать цели по-человечески: "Caer Sidi · space 2" вместо "c_n1:C4_0_1".
@@ -55,26 +55,17 @@ func _init() -> void:
 	visible = false
 	custom_minimum_size = Vector2(WIDTH, 0)
 
-	_style = StyleBoxFlat.new()
-	_style.bg_color = Color(0.16, 0.15, 0.20, 0.97)
-	_style.border_color = Color(0.85, 0.65, 0.25)
-	_style.set_border_width_all(2)
-	_style.set_corner_radius_all(8)
-	_style.set_content_margin_all(12)
-	_style.shadow_color = Color(0, 0, 0, 0.5)
-	_style.shadow_size = 8
+	_style = PixelTheme.box(Color(PixelTheme.PANEL_HI, 0.97), PixelTheme.GOLD, 1, 3, 2)
 	add_theme_stylebox_override("panel", _style)
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 2)
 	add_child(col)
 
 	_who = Label.new()
-	_who.add_theme_font_size_override("font_size", 12)
 	col.add_child(_who)
 
 	_prompt = Label.new()
-	_prompt.add_theme_font_size_override("font_size", 17)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_prompt)
 
@@ -84,7 +75,7 @@ func _init() -> void:
 
 	_options_box = VBoxContainer.new()
 	_options_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_options_box.add_theme_constant_override("separation", 4)
+	_options_box.add_theme_constant_override("separation", 1)
 	_scroll.add_child(_options_box)
 
 
@@ -149,7 +140,7 @@ func _place(top: bool) -> void:
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	offset_left = -WIDTH * 0.5
 	offset_right = WIDTH * 0.5
-	offset_top = 10.0 if at_top else 0.0
+	offset_top = 2.0 if at_top else 0.0
 	offset_bottom = offset_top
 	reset_size()
 
@@ -166,7 +157,7 @@ func _add_button(text: String, value: Variant) -> void:
 	var button := Button.new()
 	button.text = text
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.custom_minimum_size = Vector2(0, OPTION_HEIGHT - 4)
+	button.custom_minimum_size = Vector2(0, OPTION_HEIGHT - 1)
 	button.pressed.connect(func(): option_chosen.emit(value))
 	_options_box.add_child(button)
 

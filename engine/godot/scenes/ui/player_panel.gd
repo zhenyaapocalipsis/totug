@@ -16,46 +16,46 @@ var _values: Dictionary = {}  # key -> Label
 var _style: StyleBoxFlat
 
 
+## Колонка узкая (112 px), поэтому строк мало и подписи короткие: парные
+## величины стоят в одной строке через косую черту.
 func _init() -> void:
-	_style = GameScreen.zone_style()
-	_style.border_width_top = 3
+	_style = GameScreen.zone_style(2)
+	_style.border_width_top = 2
 	add_theme_stylebox_override("panel", _style)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 1)
+	col.add_theme_constant_override("separation", 0)
 	add_child(col)
 
+	var head := HBoxContainer.new()
+	col.add_child(head)
 	_title = Label.new()
-	_title.add_theme_font_size_override("font_size", 15)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.clip_text = true
-	col.add_child(_title)
+	head.add_child(_title)
+	var vp_value := Label.new()
+	vp_value.add_theme_color_override("font_color", VP_COLOR)
+	head.add_child(vp_value)
+	_values["vp"] = vp_value
 
-	_add_row(col, "power", "Power", 15, POWER_COLOR)
-	_add_row(col, "influence", "Influence", 15, INFLUENCE_COLOR)
-	_add_row(col, "vp", "VP", 15, VP_COLOR)
-	var sep := HSeparator.new()
-	sep.add_theme_constant_override("separation", 5)
-	col.add_child(sep)
-	_add_row(col, "troops", "Troops", 11)
-	_add_row(col, "spies", "Spies", 11)
-	_add_row(col, "trophies", "Trophies", 11)
-	_add_row(col, "deck", "Deck / discard", 11)
-	_add_row(col, "inner", "Inner Circle", 11)
+	_add_row(col, "power", "Power", POWER_COLOR)
+	_add_row(col, "influence", "Influence", INFLUENCE_COLOR)
+	_add_row(col, "troops", "Troops/spies")
+	_add_row(col, "deck", "Deck/disc")
+	_add_row(col, "trophies", "Troph/circle")
 
 
-func _add_row(parent: Control, key: String, caption: String, font_size: int,
-		colour: Color = Color(0.88, 0.88, 0.92)) -> void:
+func _add_row(parent: Control, key: String, caption: String,
+		colour: Color = Color("f0e6d2")) -> void:
 	var row := HBoxContainer.new()
 	parent.add_child(row)
 	var name_label := Label.new()
 	name_label.text = caption
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", 11 if font_size <= 11 else 12)
-	name_label.add_theme_color_override("font_color", Color(0.62, 0.6, 0.7))
+	name_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	row.add_child(name_label)
 	var value := Label.new()
-	value.add_theme_font_size_override("font_size", font_size)
 	value.add_theme_color_override("font_color", colour)
 	row.add_child(value)
 	_values[key] = value
@@ -69,12 +69,12 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	(_values["power"] as Label).text = str(int(p["power"]))
 	(_values["influence"] as Label).text = str(int(p["influence"]))
-	(_values["vp"] as Label).text = str(int(p["vp_tokens"]))
-	(_values["troops"] as Label).text = str(int(p["troops_in_barracks"]))
-	(_values["spies"] as Label).text = str(int(p["spies_in_barracks"]))
-	(_values["trophies"] as Label).text = str(int(p["trophy_hall_count"]))
-	(_values["deck"] as Label).text = "%d / %d" % [int(p["deck_size"]), int(p["discard_size"])]
-	(_values["inner"] as Label).text = str((p.get("inner_circle", []) as Array).size())
+	(_values["vp"] as Label).text = "%d VP" % int(p["vp_tokens"])
+	(_values["troops"] as Label).text = "%d/%d" % [
+		int(p["troops_in_barracks"]), int(p["spies_in_barracks"])]
+	(_values["deck"] as Label).text = "%d/%d" % [int(p["deck_size"]), int(p["discard_size"])]
+	(_values["trophies"] as Label).text = "%d/%d" % [
+		int(p["trophy_hall_count"]), (p.get("inner_circle", []) as Array).size()]
 
 	tooltip_text = _describe_income(view.get("vp_income", {}))
 
@@ -122,21 +122,23 @@ static func describe_options(legal: Dictionary, p: Dictionary = {}) -> String:
 	var market: int = (legal.get("recruit_market", []) as Array).size()
 	var supply: int = (legal.get("recruit_supply", []) as Array).size()
 	var spies: int = (legal.get("return_spy", []) as Array).size()
+	# Экран маленький, поэтому строка подсказки — телеграфная: действие,
+	# цена и сколько целей. Подробности игрок видит на самой доске.
 	if cards > 0:
-		parts.append("play cards from your hand (%d)" % cards)
+		parts.append("play hand (%d)" % cards)
 	if deploys > 0:
-		parts.append("Deploy a troop, 1 Power (green rings: %d)" % deploys)
+		parts.append("Deploy 1P: green rings (%d)" % deploys)
 	if kills > 0:
-		parts.append("Assassinate, 3 Power (orange rings: %d)" % kills)
+		parts.append("Assassinate 3P: orange rings (%d)" % kills)
 	if spies > 0:
-		parts.append("return an enemy spy, 3 Power (orange diamonds: %d)" % spies)
+		parts.append("return spy 3P (%d)" % spies)
 	if market > 0 or supply > 0:
-		parts.append("recruit a bright card from the market (%d)" % (market + supply))
+		parts.append("recruit (%d)" % (market + supply))
 	if bool(legal.get("deploy_for_vp", false)):
-		parts.append("Deploy for 1 VP (barracks empty)")
+		parts.append("Deploy for 1 VP")
 	if parts.is_empty():
 		var note := "Nothing else to do — end your turn."
 		if not p.is_empty() and (int(p.get("power", 0)) > 0 or int(p.get("influence", 0)) > 0):
-			note = "Nothing affordable — end your turn (unspent Power and Influence are lost)."
+			note = "Nothing affordable — end your turn (Power and Influence are lost)."
 		return note
-	return "You can: " + "; ".join(parts) + "."
+	return " · ".join(parts)

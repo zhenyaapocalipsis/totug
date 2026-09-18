@@ -21,18 +21,19 @@ const ALL_PLAYER_IDS: Array[String] = ["red", "blue", "green", "purple"]
 const MIN_PLAYERS := 2
 const MAX_PLAYERS := 4
 
-# Сетка экрана (в пикселях расчётного размера 1280x800). Колонки:
-#   A — плашка хода / чат, B — рука, C — инфо игрока,
-#   D — маркет, а в нижнем ряду — стопки (Inner Circle / Discard) и End turn.
-# Сверху общая полоса сыгранных карт ходящего (B+C) и инфо противников (D).
-const MARGIN := 8.0
-const GAP := 8.0
-const COL_A := 240.0
-const COL_C := 140.0
-const COL_D := 270.0
-const PILES_W := 104.0       # колонка стопок в нижнем ряду, внутри колонки D
-const TOP_H := 150.0
-const BOTTOM_H := 212.0
+# Сетка экрана в пикселях расчётного размера 640x360 (пиксель-арт: цифры
+# только целые, отступы маленькие). Три колонки:
+#   A — плашка хода, журнал/чат и инфо игрока;
+#   B — полоса сыгранных карт, доска и рука;
+#   D — инфо противников, маркет, стопки и End turn.
+const MARGIN := 2.0
+const GAP := 2.0
+const COL_A := 112.0
+const COL_D := 134.0
+const TOP_H := 26.0
+const BOTTOM_H := 90.0
+## Ширина плашки одного противника в верхнем ряду.
+const ENEMY_W := 74.0
 ## Таймер хода: две минуты, по нулю ход завершается сам.
 const TURN_SECONDS := 120.0
 
@@ -59,7 +60,7 @@ var _status: Label
 var _played_zone: PanelContainer
 var _played_title: Label
 var _played_strip: CardStrip
-var _piles_column: VBoxContainer
+var _piles_column: HBoxContainer
 var _pile_inner: PileZone
 var _pile_discard: PileZone
 var _pile_dialog: PileDialog
@@ -87,6 +88,7 @@ static func player_ids_for(count: int) -> Array[String]:
 
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = []) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	theme = PixelTheme.theme()
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
 	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true)
@@ -98,65 +100,57 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 	_log_panel.add_note("Game started. Each player drew 5 cards and now chooses a starting site.")
 
 
-## Общий вид зон экрана.
-static func zone_style(margin: float = 8.0) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.105, 0.1, 0.135)
-	style.border_color = Color(0.22, 0.21, 0.28)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	style.set_content_margin_all(margin)
-	return style
+## Общий вид зон экрана: рамка в один пиксель, без скруглений.
+static func zone_style(margin: float = 2.0) -> StyleBoxFlat:
+	return PixelTheme.box(PixelTheme.PANEL, PixelTheme.BORDER, 1, int(margin), int(margin))
 
 
 ## Мелкий заголовок зоны капсом.
 static func section_label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 11)
-	label.add_theme_color_override("font_color", Color(0.6, 0.58, 0.68))
+	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	return label
 
 
 func _build_layout() -> void:
 	var bg := ColorRect.new()
-	bg.color = Color(0.055, 0.052, 0.07)
+	bg.color = PixelTheme.BG
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# 3a. Плашка хода: чей ход — крупно и в цвете игрока, ниже — чего ждём.
-	_turn_style = zone_style(10)
-	_turn_style.border_width_left = 5
+	# 3a. Плашка хода: чей ход, ниже — чего ждём. Левая грань — в цвет игрока.
+	_turn_style = zone_style(2)
+	_turn_style.border_width_left = 2
 	_turn_panel = PanelContainer.new()
 	_turn_panel.add_theme_stylebox_override("panel", _turn_style)
 	add_child(_turn_panel)
 	var turn_col := VBoxContainer.new()
+	turn_col.add_theme_constant_override("separation", 1)
 	turn_col.alignment = BoxContainer.ALIGNMENT_CENTER
 	_turn_panel.add_child(turn_col)
 	_header = Label.new()
-	_header.add_theme_font_size_override("font_size", 20)
 	turn_col.add_child(_header)
 	_status = Label.new()
-	_status.add_theme_font_size_override("font_size", 12)
-	_status.add_theme_color_override("font_color", Color(0.72, 0.7, 0.8))
-	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status.max_lines_visible = 2
+	_status.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	_status.clip_text = true
+	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	turn_col.add_child(_status)
 
 	# 3. Общая полоса сыгранных карт: что сыграл тот, чей сейчас ход.
 	_played_zone = PanelContainer.new()
-	_played_zone.add_theme_stylebox_override("panel", zone_style(6))
+	_played_zone.add_theme_stylebox_override("panel", zone_style(1))
 	add_child(_played_zone)
 	var played_row := HBoxContainer.new()
-	played_row.add_theme_constant_override("separation", 10)
+	played_row.add_theme_constant_override("separation", 3)
 	_played_zone.add_child(played_row)
 	_played_title = section_label("")
-	_played_title.custom_minimum_size = Vector2(84, 0)
-	_played_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_played_title.custom_minimum_size = Vector2(40, 0)
 	_played_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_played_title.clip_text = true
 	played_row.add_child(_played_title)
 	_played_strip = CardStrip.new()
-	_played_strip.card_aspect = 1.0
+	# Полоса низкая: видно верх карты — имя и цену.
 	_played_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	played_row.add_child(_played_strip)
 
@@ -177,23 +171,16 @@ func _build_layout() -> void:
 
 	# Подсказка «что можно сделать» — полупрозрачная плашка у верха доски.
 	_hint_panel = PanelContainer.new()
-	var hint_style := StyleBoxFlat.new()
-	hint_style.bg_color = Color(0.05, 0.05, 0.07, 0.82)
-	hint_style.set_corner_radius_all(6)
-	hint_style.content_margin_left = 10
-	hint_style.content_margin_right = 10
-	hint_style.content_margin_top = 4
-	hint_style.content_margin_bottom = 4
+	var hint_style := PixelTheme.box(Color(PixelTheme.BG, 0.85), PixelTheme.BORDER, 1, 3, 1)
 	_hint_panel.add_theme_stylebox_override("panel", hint_style)
 	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint_panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_hint_panel.offset_left = 10
-	_hint_panel.offset_right = -10
-	_hint_panel.offset_top = 8
+	_hint_panel.offset_left = 2
+	_hint_panel.offset_right = -2
+	_hint_panel.offset_top = 2
 	_board_area.add_child(_hint_panel)
 	_hint = Label.new()
-	_hint.add_theme_font_size_override("font_size", 13)
-	_hint.add_theme_color_override("font_color", Color(0.95, 0.88, 0.62))
+	_hint.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint_panel.add_child(_hint)
@@ -218,15 +205,15 @@ func _build_layout() -> void:
 
 	# 2. Стопки зрителя: Внутренний круг и сброс. Стоят между инфо игрока и
 	# кнопкой End turn, по щелчку показывают весь список карт.
-	_piles_column = VBoxContainer.new()
+	_piles_column = HBoxContainer.new()
 	_piles_column.add_theme_constant_override("separation", int(GAP))
 	add_child(_piles_column)
-	_pile_inner = PileZone.new("INNER CIRCLE")
-	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pile_inner = PileZone.new("INNER")
+	_pile_inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_pile_inner.clicked.connect(func(): _open_pile("inner"))
 	_piles_column.add_child(_pile_inner)
 	_pile_discard = PileZone.new("DISCARD")
-	_pile_discard.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pile_discard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_pile_discard.clicked.connect(func(): _open_pile("discard"))
 	_piles_column.add_child(_pile_discard)
 
@@ -243,14 +230,12 @@ func _build_layout() -> void:
 	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
 	_end_turn_area.add_child(_end_turn_button)
 	_timer_label = Label.new()
-	_timer_label.add_theme_font_size_override("font_size", 18)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_label.tooltip_text = "Turn timer: when it runs out the turn ends by itself"
 	_end_turn_area.add_child(_timer_label)
 	_deploy_vp_button = Button.new()
-	_deploy_vp_button.text = "Deploy for 1 VP"
+	_deploy_vp_button.text = "Deploy: 1 VP"
 	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
-	_deploy_vp_button.add_theme_font_size_override("font_size", 12)
 	_deploy_vp_button.pressed.connect(func(): _on_action_requested("deploy_for_vp"))
 	_end_turn_area.add_child(_deploy_vp_button)
 
@@ -277,11 +262,11 @@ func _build_layout() -> void:
 func _square_button() -> Button:
 	var button := Button.new()
 	button.text = "End turn"
-	button.add_theme_font_size_override("font_size", 19)
 	_end_turn_style = StyleBoxFlat.new()
-	_end_turn_style.set_corner_radius_all(6)
-	_end_turn_style.set_border_width_all(3)
-	_end_turn_style.shadow_size = 8
+	_end_turn_style.set_corner_radius_all(0)
+	_end_turn_style.set_border_width_all(1)
+	_end_turn_style.anti_aliasing = false
+	_end_turn_style.shadow_size = 0
 	var states := {
 		"normal": _end_turn_style,
 		"hover": _end_turn_style.duplicate(),
@@ -338,47 +323,44 @@ func _layout() -> void:
 		return
 	var a_x := MARGIN
 	var d_x := w - MARGIN - COL_D
-	var c_x := d_x - GAP - COL_C
 	var b_x := a_x + COL_A + GAP
-	var b_w := c_x - GAP - b_x
+	var b_w := d_x - GAP - b_x
 	var top_y := MARGIN
 	var mid_y := top_y + TOP_H + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
 	var mid_h := bottom_y - GAP - mid_y
 
-	# Инфо противников — вертикальный прямоугольник на каждого, поэтому зона
-	# шире при 3-4 игроках. Ширину отъедает у полосы сыгранных карт.
-	var info_w: float = maxf(COL_D, 124.0 * float(player_ids.size() - 1) + 24.0)
+	# Инфо противников — плашка на каждого, поэтому зона шире при 3-4 игроках.
+	# Ширину отъедает у полосы сыгранных карт.
+	var info_w: float = maxf(COL_D, ENEMY_W * float(player_ids.size() - 1))
 	var info_x: float = w - MARGIN - info_w
 	_place(_turn_panel, a_x, top_y, COL_A, TOP_H)
 	_place(_played_zone, b_x, top_y, info_x - GAP - b_x, TOP_H)
 	_place(_enemy_info, info_x, top_y, info_w, TOP_H)
-	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
+	_place(_board_area, b_x, mid_y, b_w, mid_h)
 	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
-	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
-	_place(_player_panel, c_x, bottom_y, COL_C, BOTTOM_H)
-	# Нижний ряд колонки D: слева стопки, справа квадратная кнопка с таймером.
-	var end_w := COL_D - PILES_W - GAP
-	_place(_piles_column, d_x, bottom_y, PILES_W, BOTTOM_H)
-	_place(_end_turn_area, d_x + PILES_W + GAP, bottom_y, end_w, BOTTOM_H)
-	# Рука занимает колонку B и целиком лежит на экране; запас сверху нужен
-	# карте под курсором — она выдвигается выше края нижнего ряда.
-	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 4.0
+	# Колонка A: под плашкой хода журнал с чатом, в самом низу — свои ресурсы.
+	_place(_chat_panel, a_x, mid_y, COL_A, mid_h)
+	_place(_player_panel, a_x, bottom_y, COL_A, BOTTOM_H)
+	# Нижний ряд колонки D: сверху стопки, ниже кнопка End turn с таймером.
+	var piles_h := 40.0
+	_place(_piles_column, d_x, bottom_y, COL_D, piles_h)
+	_place(_end_turn_area, d_x, bottom_y + piles_h + GAP, COL_D, BOTTOM_H - piles_h - GAP)
+	# Рука занимает колонку B; запас сверху нужен карте под курсором — она
+	# выдвигается выше края нижнего ряда.
+	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, b_x, hand_top, b_w, h - MARGIN - hand_top)
 
-	var d := 132.0
-	var timer_h := 24.0
-	var deploy_h := 26.0 if _deploy_vp_button.visible else 0.0
-	var deploy_block: float = deploy_h + 6.0 if deploy_h > 0.0 else 0.0
-	var block := deploy_block + d + 4.0 + timer_h
-	var y0 := (BOTTOM_H - block) * 0.5
-	_deploy_vp_button.position = Vector2((end_w - 150.0) * 0.5, y0)
-	_deploy_vp_button.size = Vector2(150, deploy_h)
-	var button_y := y0 + deploy_block
-	_end_turn_button.position = Vector2((end_w - d) * 0.5, button_y)
-	_end_turn_button.size = Vector2(d, d)
-	_timer_label.position = Vector2(0, button_y + d + 4.0)
-	_timer_label.size = Vector2(end_w, timer_h)
+	var button_h := 20.0
+	var timer_h := 11.0
+	var deploy_h := 13.0 if _deploy_vp_button.visible else 0.0
+	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
+	_deploy_vp_button.position = Vector2(0, 0)
+	_deploy_vp_button.size = Vector2(COL_D, deploy_h)
+	_end_turn_button.position = Vector2(0, deploy_block)
+	_end_turn_button.size = Vector2(COL_D, button_h)
+	_timer_label.position = Vector2(0, deploy_block + button_h + 1.0)
+	_timer_label.size = Vector2(COL_D, timer_h)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -465,7 +447,7 @@ func refresh(view: Dictionary) -> void:
 	_refresh_actions(view)
 	# Плашка выбора цели закрывает верх доски — доска вписывается ниже неё.
 	var covered: bool = _decision_dialog.visible and _decision_dialog.at_top
-	_board_panel.set_top_inset(_decision_dialog.get_combined_minimum_size().y + 16.0 if covered else 0.0)
+	_board_panel.set_top_inset(_decision_dialog.get_combined_minimum_size().y + 4.0 if covered else 0.0)
 
 
 func _refresh_header(view: Dictionary) -> void:
@@ -496,9 +478,9 @@ func _refresh_header(view: Dictionary) -> void:
 func _refresh_played(view: Dictionary) -> void:
 	var current := String(view["current_player"])
 	var p: Dictionary = (view["players"] as Dictionary).get(current, {})
-	_played_title.text = "%s PLAYS" % EventLogPanel.player_name(current).to_upper()
+	_played_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
 	_played_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
-	_played_strip.empty_text = "No cards played this turn yet"
+	_played_strip.empty_text = "nothing played yet"
 	_played_strip.set_cards(p.get("played_pile", []))
 
 
