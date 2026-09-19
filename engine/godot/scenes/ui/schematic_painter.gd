@@ -78,7 +78,7 @@ static func _site(img: Image, site: Dictionary) -> void:
 	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size())
 	var name_at: Vector2 = box["name_at"]
 	PixelFont.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
-		String(site["name"]).to_upper(), ink)
+		BoardSchematic.short_name(String(site["name"])), ink)
 	var vp_at: Vector2 = box["vp_at"]
 	PixelFont.draw_text(img, rect.position.x + int(vp_at.x), rect.position.y + int(vp_at.y),
 		str(site["vp"]), MARKER if marker else ink, BoardSchematic.VP_SCALE)

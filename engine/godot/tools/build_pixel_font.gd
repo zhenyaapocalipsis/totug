@@ -26,13 +26,28 @@ func _init() -> void:
 	atlas.fill(Color(1, 1, 1, 0))
 
 	var lines: Array[String] = []
+	var cell_of := {}
 	for i in chars.size():
 		var ch: String = chars[i]
 		var cx := (i % COLUMNS) * CELL_W
 		var cy := (i / COLUMNS) * CELL_H
 		_blit_glyph(atlas, ch, cx, cy)
+		cell_of[ch] = Vector2i(cx, cy)
 		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=0 xadvance=%d page=0 chnl=15"
 			% [ch.unicode_at(0), cx, cy, CELL_W, CELL_H, CELL_W])
+
+	# Замены из PixelFont.CHAR_MAP (типографское тире, кавычка и прочее) — это
+	# те же клетки атласа под другим кодом. Без них Label рисует пустой квадрат
+	# на каждом таком знаке: подмену CHAR_MAP знает только наш рисовальщик.
+	for alias: String in PixelFont.CHAR_MAP:
+		var target: String = PixelFont.CHAR_MAP[alias]
+		if not cell_of.has(target):
+			target = target.to_upper()
+		if not cell_of.has(target):
+			continue
+		var cell: Vector2i = cell_of[target]
+		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=0 xadvance=%d page=0 chnl=15"
+			% [alias.unicode_at(0), cell.x, cell.y, CELL_W, CELL_H, CELL_W])
 
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	var png_err := atlas.save_png(OUT_DIR + PNG_NAME)
@@ -46,7 +61,7 @@ func _init() -> void:
 		"common lineHeight=%d base=%d scaleW=%d scaleH=%d pages=1 packed=0" % [
 			CELL_H + 2, PixelFont.BASELINE, atlas.get_width(), atlas.get_height()],
 		"page id=0 file=\"%s\"" % PNG_NAME,
-		"chars count=%d" % chars.size(),
+		"chars count=%d" % lines.size(),
 	])
 	fnt.append_array(lines)
 	var f := FileAccess.open(OUT_DIR + FNT_NAME, FileAccess.WRITE)

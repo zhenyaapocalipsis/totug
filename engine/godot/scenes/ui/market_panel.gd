@@ -69,19 +69,22 @@ func update_from_view(view: Dictionary) -> void:
 		if cid == "":
 			_grid.add_child(_empty_slot())
 			continue
-		var card := _market_card(cid)
+		var slot := _market_slot(cid)
+		var card: CardView = slot.get_child(0)
 		card.set_clickable(affordable.has(i))
 		var index := i
 		card.pressed.connect(func(_cid: String): market_card_clicked.emit(index))
-		_grid.add_child(card)
+		_grid.add_child(slot)
 
 	# Ghost: верхняя сожранная карта до конца хода считается картой маркета.
 	var ghost_card: String = view.get("ghost_market_card", "")
 	if ghost_card != "":
-		var ghost := _market_card(ghost_card)
-		ghost.set_clickable(affordable.has(Market.DEVOURED_TOP_INDEX))
-		ghost.tooltip_text = "Top devoured card (Ghost)"
-		ghost.pressed.connect(func(_cid: String): market_card_clicked.emit(Market.DEVOURED_TOP_INDEX))
+		var ghost := _market_slot(ghost_card)
+		var ghost_card_view: CardView = ghost.get_child(0)
+		ghost_card_view.set_clickable(affordable.has(Market.DEVOURED_TOP_INDEX))
+		ghost_card_view.tooltip_text = "Top devoured card (Ghost)"
+		ghost_card_view.pressed.connect(
+			func(_cid: String): market_card_clicked.emit(Market.DEVOURED_TOP_INDEX))
 		_grid.add_child(ghost)
 
 	var supplies: Dictionary = view.get("supplies", {})
@@ -104,26 +107,48 @@ func update_from_view(view: Dictionary) -> void:
 		_supply_row.add_child(io)
 
 
-static func _market_card(cid: String) -> CardView:
-	return CardView.new(cid, SLOT.x, SLOT.y)
-
-
-## Карта общей стопки: остаток написан прямо поверх карты — отдельной строки
-## под неё в колонке нет.
-static func _supply_box(cid: String, count_text: String, has_cards: bool) -> Control:
+## Карта маркета в слоте: видно только верх лица карты, а цена нарисована на
+## самой карте внизу — поэтому в маркете её дублирует золотая плашка в углу
+## слота. Возвращает контейнер; сама карта — первый ребёнок.
+static func _market_slot(cid: String) -> Control:
 	var box := Control.new()
 	box.custom_minimum_size = SLOT
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card := CardView.new(cid, SLOT.x, SLOT.y)
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
 	box.add_child(card)
+	var cost := CardLibrary.card_cost(cid)
+	if cost >= 0:
+		box.add_child(_cost_badge(cost))
+	return box
+
+
+## Золотая плашка с ценой в правом нижнем углу слота, поверх арта.
+static func _cost_badge(cost: int) -> Control:
+	var badge := PanelContainer.new()
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_theme_stylebox_override("panel",
+		PixelTheme.box(PixelTheme.GOLD, PixelTheme.BG, 1, 2, 0))
+	badge.position = Vector2(SLOT.x - 13, SLOT.y - 12)
+	var label := Label.new()
+	label.text = str(cost)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", PixelTheme.BG)
+	badge.add_child(label)
+	return badge
+
+
+## Карта общей стопки: остаток написан прямо поверх карты — отдельной строки
+## под неё в колонке нет.
+static func _supply_box(cid: String, count_text: String, has_cards: bool) -> Control:
+	var box := _market_slot(cid)
 	var left_label := Label.new()
 	left_label.text = count_text
-	left_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	left_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	left_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	left_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	left_label.offset_top = -11
-	left_label.offset_right = -2
+	left_label.offset_left = 2
 	left_label.add_theme_color_override("font_color",
 		PixelTheme.TEXT if has_cards else PixelTheme.DANGER)
 	left_label.add_theme_color_override("font_outline_color", PixelTheme.BG)

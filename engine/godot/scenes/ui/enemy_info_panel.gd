@@ -39,8 +39,9 @@ func _make_block(pid: String) -> Dictionary:
 	col.add_theme_constant_override("separation", 0)
 	panel.add_child(col)
 
-	# Плашка узкая (74 px) и низкая: в неё влезают две строки — имя с VP и
-	# ресурсы. Всё остальное — во всплывающей подсказке.
+	# По решению владельца в плашке только две вещи: сколько войск осталось в
+	# бараке и что лежит в зале трофеев — отдельно нейтральные (белые) войска
+	# и войска игроков. Остальное открытое (VP, рука, колода) — в подсказке.
 	var head := HBoxContainer.new()
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	head.add_theme_constant_override("separation", 2)
@@ -55,17 +56,17 @@ func _make_block(pid: String) -> Dictionary:
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.clip_text = true
 	head.add_child(name_label)
-	var vp := Label.new()
-	vp.add_theme_color_override("font_color", PlayerPanel.VP_COLOR)
-	head.add_child(vp)
+	var troops := Label.new()
+	troops.add_theme_color_override("font_color", PixelTheme.TEXT)
+	head.add_child(troops)
 
-	var stats := Label.new()
-	stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	stats.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	stats.clip_text = true
-	col.add_child(stats)
+	var hall := Label.new()
+	hall.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hall.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	hall.clip_text = true
+	col.add_child(hall)
 
-	return {"panel": panel, "style": style, "turn": turn_mark, "vp": vp, "stats": stats}
+	return {"panel": panel, "style": style, "turn": turn_mark, "troops": troops, "hall": hall}
 
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
@@ -86,12 +87,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		(block["turn"] as Label).visible = pid == current
 		(block["style"] as StyleBoxFlat).bg_color = PixelTheme.PANEL if pid != current \
 			else PixelTheme.PANEL_HI
-		(block["vp"] as Label).text = "%dvp" % int(p["vp_tokens"])
-		(block["stats"] as Label).text = "P%d I%d H%d" % [
-			int(p["power"]), int(p["influence"]), int(p["hand_size"])]
+		var white := int(p.get("white_trophy_count", 0))
+		var taken := int(p["trophy_hall_count"]) - white
+		(block["troops"] as Label).text = "T%d" % int(p["troops_in_barracks"])
+		(block["hall"] as Label).text = "hall %dp %dn" % [taken, white]
 		(block["panel"] as PanelContainer).tooltip_text = \
-			"%s\nPower %d · Influence %d · Hand %d\nTroops/spies %d/%d\nDeck/discard %d/%d\nTrophies/circle %d/%d" % [
-				EventLogPanel.player_name(pid), int(p["power"]), int(p["influence"]),
-				int(p["hand_size"]), int(p["troops_in_barracks"]), int(p["spies_in_barracks"]),
-				int(p["deck_size"]), int(p["discard_size"]), int(p["trophy_hall_count"]),
-				(p.get("inner_circle", []) as Array).size()]
+			("%s\nTroops in barracks %d, spies %d\nTrophy hall: %d player troops, %d neutral\n"
+			+ "VP %d · Power %d · Influence %d · Hand %d · Deck/discard %d/%d") % [
+				EventLogPanel.player_name(pid), int(p["troops_in_barracks"]),
+				int(p["spies_in_barracks"]), taken, white, int(p["vp_tokens"]),
+				int(p["power"]), int(p["influence"]), int(p["hand_size"]),
+				int(p["deck_size"]), int(p["discard_size"])]

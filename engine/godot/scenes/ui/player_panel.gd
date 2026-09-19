@@ -40,10 +40,10 @@ func _init() -> void:
 	_values["vp"] = vp_value
 
 	_add_row(col, "power", "Power", POWER_COLOR)
-	_add_row(col, "influence", "Influence", INFLUENCE_COLOR)
-	_add_row(col, "troops", "Troops/spies")
-	_add_row(col, "deck", "Deck/disc")
-	_add_row(col, "trophies", "Troph/circle")
+	_add_row(col, "influence", "Infl", INFLUENCE_COLOR)
+	_add_row(col, "troops", "Troop/spy")
+	_add_row(col, "deck", "Deck/dis")
+	_add_row(col, "trophies", "Troph/IC")
 
 
 func _add_row(parent: Control, key: String, caption: String,

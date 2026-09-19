@@ -92,10 +92,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var on_board: bool = BOARD_CHOICES.has(choice_type)
 	var options: Array = pd.get("legal_options", [])
 	visible = true
+	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
+	# Схема доски занимает всю свою зону, поэтому вопрос про цель НА ДОСКЕ
+	# показываем одной узкой полосой сверху: имя ходящего и вопрос в строку.
 	_who.text = "%s decides" % EventLogPanel.player_name(decider)
 	_who.modulate = EventLogPanel.player_color(decider)
-	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
-	_prompt.text = String(pd.get("prompt", "Choose an option"))
+	_who.visible = not on_board
+	var prompt_text := String(pd.get("prompt", "Choose an option"))
+	_prompt.text = "%s: %s" % [EventLogPanel.player_name(decider), prompt_text] if on_board \
+		else prompt_text
 
 	for child in _options_box.get_children():
 		_options_box.remove_child(child)
@@ -111,7 +116,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# Цели на доске выбираются кликом по самой доске — она подсвечивает
 		# их золотым (board_panel.gd::_draw_decision_targets). Кнопка остаётся
 		# только для "отказаться", если решение необязательное.
-		_add_note("Click a gold-highlighted target on the board.")
+		# Подсказку про золотую подсветку дописываем в ту же строку: каждая
+		# лишняя строка полосы закрывает ряд локаций на схеме.
+		_prompt.text += " — click a gold target on the board."
 		if options.has(""):
 			_add_button("Skip", "")
 	else:
@@ -123,8 +130,11 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 				else _board_label(options[i], choice_type)
 			_add_button(text, options[i])
 
-	var rows: int = maxi(_options_box.get_child_count(), 1)
+	# Пустой список вариантов не должен занимать место: на доске вопрос — это
+	# одна строка, и лишние пиксели полосы закрывают схему.
+	var rows: int = _options_box.get_child_count()
 	_scroll.custom_minimum_size = Vector2(0, mini(rows * OPTION_HEIGHT, MAX_LIST_HEIGHT))
+	_scroll.visible = rows > 0
 	_place(on_board or decider != viewer_id)
 
 
@@ -132,17 +142,32 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 func _place(top: bool) -> void:
 	at_top = top
 	if at_top:
-		set_anchors_preset(Control.PRESET_CENTER_TOP)
+		# Полоса во всю ширину доски: так вопрос влезает в одну-две строки и
+		# закрывает минимум схемы.
+		set_anchors_preset(Control.PRESET_TOP_WIDE)
 		grow_vertical = Control.GROW_DIRECTION_END
+		custom_minimum_size = Vector2.ZERO
+		offset_left = 2.0
+		offset_right = -2.0
 	else:
 		set_anchors_preset(Control.PRESET_CENTER)
 		grow_vertical = Control.GROW_DIRECTION_BOTH
+		custom_minimum_size = Vector2(WIDTH, 0)
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
-	offset_left = -WIDTH * 0.5
-	offset_right = WIDTH * 0.5
-	offset_top = 2.0 if at_top else 0.0
-	offset_bottom = offset_top
-	reset_size()
+	if at_top:
+		# Ширину задают якоря (во всю доску), высоту — содержимое.
+		offset_left = 2.0
+		offset_right = -2.0
+		offset_top = 2.0
+		offset_bottom = 2.0 + get_combined_minimum_size().y
+	else:
+		# Размер считаем сами: reset_size() после полосы во всю ширину
+		# оставлял плашку смещённой влево (ловилось снимком экрана).
+		var wanted := get_combined_minimum_size()
+		offset_left = -wanted.x * 0.5
+		offset_right = wanted.x * 0.5
+		offset_top = -wanted.y * 0.5
+		offset_bottom = wanted.y * 0.5
 
 
 func _add_note(text: String) -> void:

@@ -31,25 +31,55 @@ extends RefCounted
 
 ## Pixels from a hex centre to its north edge midpoint (a diagonal edge
 ## midpoint is at (K/2, K/2)). Even, so every port lands on a whole pixel.
-const K := 128
+## Экран игры — 640x360, и доска должна читаться БЕЗ приближения (решение
+## владельца). Поэтому шаг сетки вдвое меньше прежнего (было 128), рамки
+## локаций ужаты, а длинные названия сокращены до восьми знаков (SHORT_NAMES):
+## так вся карта на двоих умещается в отведённые ей ~500x225 пикселей один
+## в один, и шрифт 5x7 остаётся чётким.
+const K := 64
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
-const STUB := 10           # shortest straight run out of an edge midpoint or a box
-const PIN_MARGIN := 5      # a tunnel enters a box at least this far from its corner
-const MIN_SEG := 6         # shortest visible trace segment
-const TRACE_GAP := 6       # closer parallel traces count as touching
-const NODE_GAP := 6
-const IMAGE_MARGIN := 12
+const STUB := 5            # shortest straight run out of an edge midpoint or a box
+const PIN_MARGIN := 3      # a tunnel enters a box at least this far from its corner
+const MIN_SEG := 4         # shortest visible trace segment
+const TRACE_GAP := 4       # closer parallel traces count as touching
+const NODE_GAP := 4
+const IMAGE_MARGIN := 6
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
-const RING_R := 5
-const BOX_PAD := 3
+const RING_R := 4
+const BOX_PAD := 1
 const SLOT_R := 4
-const SLOT_PITCH := 11
+const SLOT_PITCH := 10
 const SLOT_COLS := 3
-const VP_SCALE := 2
-const NAME_GAP := 3
+const VP_SCALE := 1
+const NAME_GAP := 2
+## Сколько знаков помещается в рамку локации.
+const NAME_MAX := 7
+
+## Короткие подписи локаций: полное название осталось в данных (журнал,
+## подсказки, диалоги целей), а на доске рисуется сокращение — иначе рамки
+## шире самого гекса. "Great Web" и "The Great Web" лежат на A3 и A1, то есть
+## в одной партии встречается только одно из них, и общая подпись им не мешает.
+const SHORT_NAMES := {
+	"Council Chamber": "COUNCIL", "Fountain of Screams": "SCREAMS",
+	"Wells of Darkness": "WELLS", "Darklight Realm": "DARKLGT",
+	"Menzoberranzan": "MENZOB", "The Great Web": "GRTWEB", "Great Web": "GRTWEB",
+	"Thanatos Gate": "THANATO", "Spiral Desert": "SPIRAL", "Rotting Plain": "ROTTING",
+	"Heaving Hills": "HEAVING", "Erelhei-Cinlu": "ERELHEI", "The Twilight": "TWILGHT",
+	"Lolth Shrine": "LOLTH", "Indifference": "INDIFF", "Xith Idrana": "XITH",
+	"Xal Veldrin": "XALVELD", "The Barrens": "BARRENS", "Iron Wastes": "IRONWST",
+	"Gallenghast": "GALLENG", "Spiderhome": "SPIDER", "Red Forest": "REDFRST",
+	"Magma Gate": "MAGMA", "Black Gate": "BLKGATE", "Red Gate": "REDGATE",
+	"Zi'Xzolca": "ZIXZOLC", "Shedaklah": "SHEDAKL", "Faerholme": "FAERHLM",
+	"Darkflame": "DARKFLM", "Caer Sidi": "CAERSID", "Araumycos": "ARAUMYC",
+	"Xelathir": "XELATHR", "Venathir": "VENATHR", "Enzithir": "ENZITHR",
+	# Шесть веток Паутины стоят в одном гексе вокруг Great Web, и полные
+	# подписи там просто не помещаются — остаётся только сторона света.
+	"Web (N)": "N", "Web (S)": "S", "Web (NE)": "NE",
+	"Web (NW)": "NW", "Web (SE)": "SE", "Web (SW)": "SW",
+}
 
 const DIRS: Array[Vector2] = [
 	Vector2(1, 0), Vector2(1, 1), Vector2(0, 1), Vector2(-1, 1),
@@ -92,6 +122,7 @@ var _visible: Array[PackedVector2Array] = []   # clipped segments, pairs of poin
 var _bbox: Array[Rect2] = []
 var _near: Dictionary = {}           # layout slot -> Array[int] of nearby sites and rings
 var _poly: Dictionary = {}           # layout slot -> hex outline
+var _poly_nodes: Dictionary = {}     # то же, но с отступом NODE_GAP — для рамок
 var _port_side: Dictionary = {}      # "port key|hex" -> that hex's name for the edge
 var _fallback_routes := 0            # tunnels not found in the tile table
 
@@ -223,17 +254,29 @@ static func to_schematic(v: Vector2) -> Vector2:
 
 
 ## Corners of the (invisible, squeezed) hex around its centre.
-static func hex_polygon(centre: Vector2) -> PackedVector2Array:
-	var k := float(K)
+static func hex_polygon(centre: Vector2, inset: float = 0.0) -> PackedVector2Array:
+	var k := float(K) - inset
 	return PackedVector2Array([
 		centre + Vector2(0, -2 * k / 3), centre + Vector2(k, -k / 3), centre + Vector2(k, k / 3),
 		centre + Vector2(0, 2 * k / 3), centre + Vector2(-k, k / 3), centre + Vector2(-k, -k / 3),
 	])
 
 
+## Подпись локации на доске: сокращение из SHORT_NAMES, а если названия там
+## нет — первые NAME_MAX знаков без лишних слов. Полное название нигде не
+## теряется, оно остаётся в данных локации.
+static func short_name(full: String) -> String:
+	if SHORT_NAMES.has(full):
+		return SHORT_NAMES[full]
+	var s := full.to_upper()
+	if s.begins_with("THE "):
+		s = s.substr(4)
+	return s if s.length() <= NAME_MAX else s.substr(0, NAME_MAX)
+
+
 ## Size of a site box and its troop spaces relative to the box's top-left corner.
 static func site_box(site_name: String, slot_count: int) -> Dictionary:
-	var name_w := PixelFont.text_width(site_name.to_upper())
+	var name_w := PixelFont.text_width(short_name(site_name))
 	var cols := mini(maxi(slot_count, 1), SLOT_COLS)
 	var rows := int(ceil(slot_count / float(SLOT_COLS)))
 	var slots_w := cols * SLOT_PITCH - 2
@@ -776,7 +819,10 @@ func _node_cost(n: int) -> float:
 	var p := _pos[n]
 	var cost := p.distance_to(_home[n]) * W_DISP
 	var centre: Vector2 = _centre[_hex[n]]
-	var poly: PackedVector2Array = _poly[_hex[n]]
+	# Рамки держатся дальше от края гекса, чем трассы: соседние гексы кладутся
+	# независимо друг от друга, и две рамки, прижатые к общему ребру с разных
+	# сторон, налезали бы друг на друга уже на собранной доске.
+	var poly: PackedVector2Array = _poly_nodes[_hex[n]]
 	var rect := _node_rect(n)
 	for corner in [rect.position, rect.end, Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y)]:
 		if not Geometry2D.is_point_in_polygon(corner, poly):
@@ -855,6 +901,7 @@ func _cost_around(n: int) -> float:
 func _index_neighbourhoods() -> void:
 	for hex: String in _centre.keys():
 		_poly[hex] = hex_polygon(_centre[hex])
+		_poly_nodes[hex] = hex_polygon(_centre[hex], NODE_GAP)
 		var near: Array[int] = []
 		for n in _key.size():
 			if _kind[n] != Kind.PORT and (_centre[hex] as Vector2).distance_to(_centre[_hex[n]]) < K * 2.1:
@@ -882,7 +929,8 @@ func _optimise() -> void:
 func _move_node(n: int, step: int, radius: int) -> void:
 	var start := _pos[n]
 	var inc: Array = _incident[n]
-	var poly := hex_polygon(_centre[_hex[n]])
+	var poly: PackedVector2Array = _poly_nodes[_hex[n]] if _kind[n] != Kind.PORT \
+		else hex_polygon(_centre[_hex[n]])
 	var best_cost := _cost_around(n)
 	var best_pos := start
 	var best_routes: Array = _snapshot_routes(inc)

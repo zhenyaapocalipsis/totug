@@ -188,10 +188,18 @@ func _fit_zoom() -> float:
 	var span := _board_rect().size
 	if span.x <= 0.0 or span.y <= 0.0:
 		return 0.2
+	var limits := _zoom_limits()
+	# Схема нарисована под то, чтобы влезать в зону доски целиком и читаться
+	# без приближения. Поэтому сначала меряем по всей зоне: если помещается,
+	# берём ЦЕЛЫЙ масштаб (пиксели остаются чёткими) и не ужимаем её из-за
+	# плашки вопроса — она временная и полупрозрачная.
+	if _schematic_on():
+		var full := minf(size.x / span.x, size.y / span.y)
+		if full >= 0.92:
+			return clampf(maxf(floorf(full), 1.0), limits.x, limits.y)
 	var fit := minf(size.x / span.x, maxf(size.y - top_inset, 100.0) / span.y)
 	if _schematic_on() and fit >= 1.0:
 		fit = floorf(fit)  # whole pixels stay crisp
-	var limits := _zoom_limits()
 	return clampf(fit, limits.x, limits.y)
 
 
@@ -206,7 +214,15 @@ func _ensure_view() -> void:
 
 
 ## Центр видимой части: сверху её может занимать плашка решения (top_inset).
+## Если схема и так помещается целиком, сдвигать её под плашку не нужно —
+## иначе нижний край уезжает за пределы зоны.
 func _view_centre() -> Vector2:
+	var span_y := _board_rect().size.y * _zoom
+	if span_y <= size.y:
+		# Схема влезает целиком: сдвигаем её вниз из-под плашки ровно
+		# настолько, насколько есть запас, и ни пикселем больше.
+		return Vector2(size.x * 0.5,
+			clampf((size.y + top_inset) * 0.5, span_y * 0.5, size.y - span_y * 0.5))
 	return Vector2(size.x * 0.5, (size.y + top_inset) * 0.5)
 
 
@@ -388,13 +404,10 @@ func _draw_spy_targets() -> void:
 
 
 func _draw_hint() -> void:
-	var text := "wheel zoom · drag pan · 2clicks fit · H %s · Alt card" % (
-		"hex" if _schematic_on() else "map")
-	# Подсказка про управление — строкой выше легенды колец, иначе на узком
-	# экране они налезают друг на друга.
-	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE).x
-	draw_string(_font, Vector2(size.x - width - 2, size.y - 14), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, Color(PixelTheme.TEXT_OFF, 0.9))
+	# Схема занимает зону целиком, поэтому подсказка про управление больше не
+	# рисуется поверх неё, а живёт во всплывающей подсказке зоны.
+	tooltip_text = "Wheel: zoom · drag: pan · double-click: fit the board\nH: %s · Alt over a card: enlarge it" % (
+		"hex tiles" if _schematic_on() else "schematic map")
 
 	# Легенда колец — только те цвета, что сейчас есть на доске.
 	var legal: Dictionary = _view.get("legal", {})
@@ -407,7 +420,15 @@ func _draw_hint() -> void:
 	if not (legal.get("assassinate_slots", []) as Array).is_empty() \
 			or not (legal.get("return_spy", []) as Array).is_empty():
 		entries.append([KILL_COLOR, "Kill/spy 3P"])
+	# Легенда лежит поверх схемы, поэтому под ней — тёмная полоса, иначе
+	# подписи сливаются с рамками локаций.
 	var at := Vector2(3, size.y - 3)
+	var legend_w := 0.0
+	for entry in entries:
+		legend_w += 14 + _font.get_string_size(
+			String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE).x
+	if legend_w > 0.0:
+		draw_rect(Rect2(0, size.y - 11, legend_w + 2, 11), Color(PixelTheme.BG, 0.85))
 	for entry in entries:
 		draw_arc(at + Vector2(3, -3), 3.0, 0, TAU, 12, entry[0], 1.0)
 		draw_string(_font, at + Vector2(9, 0), String(entry[1]),

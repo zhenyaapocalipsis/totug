@@ -501,22 +501,16 @@ func render_mini(c: Dictionary) -> Image:
 	rect(2, 19, MINI_W - 4, 1, C_OUTLINE)
 	rect(2, 54, MINI_W - 4, 1, C_OUTLINE)
 
-	# Цена — золотым квадратом в углу арта. В маркете видно только верх карты,
-	# поэтому внизу цену держать нельзя: игрок должен видеть её сразу.
-	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
-	if cost_str != "":
-		var cw := text_width(cost_str, 1)
-		rect(MINI_W - 6 - cw - 3, 21, cw + 4, 10, C_OUTLINE)
-		rect(MINI_W - 6 - cw - 2, 22, cw + 2, 8, ASPECT_COLOR["AMBITION"])
-		text(MINI_W - 6 - cw - 1, 22, cost_str, C_INK, 1)
-
 	# строка аспекта и типа
 	if aspect != "":
 		glyph_rows(3, 57, ICONS[aspect], aspect_col)
 	var type_str := clean(sv(c["type"]))
 	text(12, 57, type_str.substr(0, 8), C_GREY, 1)
 
-	# VP колоды и Внутреннего круга
+	# цена крупно слева, VP колоды и Внутреннего круга справа
+	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
+	if cost_str != "":
+		text(4, 68, cost_str, C_LIGHT, 2, C_OUTLINE)
 	var dv := str(int(c["deck_vp"]))
 	rect(MINI_W - 31, 68, 14, 12, C_OUTLINE)
 	rect(MINI_W - 30, 69, 12, 10, C_LIGHT)

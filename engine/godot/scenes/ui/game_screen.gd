@@ -22,13 +22,17 @@ const MIN_PLAYERS := 2
 const MAX_PLAYERS := 4
 
 # Сетка экрана в пикселях расчётного размера 640x360 (пиксель-арт: цифры
-# только целые, отступы маленькие). Три колонки:
-#   A — плашка хода, журнал/чат и инфо игрока;
+# только целые, отступы маленькие). Те же зоны и на тех же местах, что и до
+# перехода на пиксель-арт, только втрое мельче. Колонки:
+#   A — плашка хода сверху и чат с журналом снизу;
 #   B — полоса сыгранных карт, доска и рука;
-#   D — инфо противников, маркет, стопки и End turn.
+#   C — инфо игрока в нижнем ряду;
+#   D — инфо противников, маркет, а внизу стопки и End turn.
+# Доска в среднем ряду занимает всю ширину от A до D.
 const MARGIN := 2.0
 const GAP := 2.0
 const COL_A := 112.0
+const COL_C := 86.0
 const COL_D := 134.0
 const TOP_H := 26.0
 const BOTTOM_H := 90.0
@@ -323,8 +327,9 @@ func _layout() -> void:
 		return
 	var a_x := MARGIN
 	var d_x := w - MARGIN - COL_D
+	var c_x := d_x - GAP - COL_C
 	var b_x := a_x + COL_A + GAP
-	var b_w := d_x - GAP - b_x
+	var b_w := c_x - GAP - b_x
 	var top_y := MARGIN
 	var mid_y := top_y + TOP_H + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
@@ -337,11 +342,11 @@ func _layout() -> void:
 	_place(_turn_panel, a_x, top_y, COL_A, TOP_H)
 	_place(_played_zone, b_x, top_y, info_x - GAP - b_x, TOP_H)
 	_place(_enemy_info, info_x, top_y, info_w, TOP_H)
-	_place(_board_area, b_x, mid_y, b_w, mid_h)
+	# Доска занимает весь средний ряд — от левого края до маркета.
+	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
 	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
-	# Колонка A: под плашкой хода журнал с чатом, в самом низу — свои ресурсы.
-	_place(_chat_panel, a_x, mid_y, COL_A, mid_h)
-	_place(_player_panel, a_x, bottom_y, COL_A, BOTTOM_H)
+	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
+	_place(_player_panel, c_x, bottom_y, COL_C, BOTTOM_H)
 	# Нижний ряд колонки D: сверху стопки, ниже кнопка End turn с таймером.
 	var piles_h := 40.0
 	_place(_piles_column, d_x, bottom_y, COL_D, piles_h)

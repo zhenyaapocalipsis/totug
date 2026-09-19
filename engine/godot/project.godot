@@ -19,8 +19,11 @@ gdscript/warnings/untyped_declaration=1
 ; каждый нарисованный пиксель виден на экране как квадрат. Окно по
 ; умолчанию ровно вдвое больше (1280x720), а stretch integer растягивает
 ; картинку только целым числом раз — пиксели не мылятся и не рвутся.
+; На мониторе 1920x1080 картинка 640x360 укладывается ровно три раза,
+; поэтому игра стартует во весь экран (mode=3), а F11 возвращает окно.
 window/size/viewport_width=640
 window/size/viewport_height=360
+window/size/mode=3
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
@@ -31,3 +34,7 @@ window/stretch/scale_mode="integer"
 
 ; Ближайший сосед: иначе пиксельные лица карт и шрифт замыливаются.
 textures/canvas_textures/default_texture_filter=0
+
+[autoload]
+
+WindowKeys="*res://scenes/window_keys.gd"
