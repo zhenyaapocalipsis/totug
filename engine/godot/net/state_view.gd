@@ -182,6 +182,8 @@ static func board_snapshot(state: GameState) -> Dictionary:
 		"hex_radius_px": geometry.get("hex_radius_px", 1.0),
 		# pixel-art schematic view of the same board (empty for synthetic test boards)
 		"schematic": BoardSchematic.build(state),
+		# какие полуколоды собраны в маркет: по ним экран красит фон
+		"half_decks": state.half_decks.duplicate(),
 	}
 
 

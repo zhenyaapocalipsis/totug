@@ -129,6 +129,8 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 		chosen = _pick_two_half_decks(rng)
 	state.market = Market.build(expand_half_deck(chosen[0]), expand_half_deck(chosen[1]), state.rng)
 
+	state.half_decks = chosen.duplicate()
+
 	# 3-4. общие стопки; Insane Outcast — только если в игре Demons
 	state.supplies = Supplies.standard(chosen.has("demons"))
 

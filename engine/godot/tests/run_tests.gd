@@ -82,6 +82,9 @@ func _initialize() -> void:
 	# схема доски (pixel art, без гексов)
 	test_board_schematic()
 
+	# оформление экрана
+	test_background_palette()
+
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
 
@@ -2433,3 +2436,30 @@ func test_board_schematic() -> void:
 		"кольцо подсветки пустого места уже шага между местами")
 	check(BoardPanel.highlight_radius_world(true) * 2.0 <= BoardSchematic.SLOT_PITCH,
 		"кольцо подсветки вокруг фишки уже шага между местами")
+
+
+func test_background_palette() -> void:
+	section("Фон экрана: краска по полуколодам партии")
+	const Bg := preload("res://scenes/ui/underdark_bg.gd")
+
+	var state := GameSetup.new_game(["red", "blue"], 7, ["drow", "dragons"])
+	check_eq(state.half_decks, ["drow", "dragons"] as Array[String],
+		"партия помнит свои полуколоды")
+	var snapshot := StateView.board_snapshot(state)
+	check_eq(snapshot.get("half_decks", []), ["drow", "dragons"] as Array[String],
+		"полуколоды доезжают до экрана в board_snapshot")
+
+	var chosen := Bg.palette(snapshot["half_decks"])
+	check_eq(chosen[0], Bg.DECK_COLOURS["drow"], "первая краска — цвет первой полуколоды")
+	check_eq(chosen[1], Bg.DECK_COLOURS["dragons"], "вторая краска — цвет второй полуколоды")
+
+	# Случайная партия: полуколоды выбираются сами, но краска всё равно нужна.
+	var any := GameSetup.new_game(["red", "blue"], 11)
+	check_eq(any.half_decks.size(), 2, "случайная партия тоже помнит две полуколоды")
+
+	# Фон никогда не остаётся одноцветным: ни без полуколод, ни с мусором,
+	# ни когда обе полуколоды почему-то одинаковые.
+	for bad: Array in [[], ["no_such_deck"], ["drow"], ["drow", "drow"]]:
+		var colours := Bg.palette(bad)
+		check_eq(colours.size(), 2, "%s: две краски" % [bad])
+		check(colours[0] != colours[1], "%s: краски разные" % [bad])

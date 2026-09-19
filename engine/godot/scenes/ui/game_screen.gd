@@ -150,7 +150,7 @@ static func section_label(text: String) -> Label:
 func _build_layout() -> void:
 	# Тот же задник, что в меню, но приглушённый: за доской и картами он
 	# должен только слегка дышать, а не спорить с ними за внимание.
-	add_child(UnderdarkBg.make(UnderdarkBg.GAME_FADE))
+	add_child(UnderdarkBg.make(UnderdarkBg.GAME_FADE, board_data.get("half_decks", [])))
 
 	# 3a. Левый верхний угол: бараки всех игроков цветными квадратами.
 	_barracks = BarracksBar.new()

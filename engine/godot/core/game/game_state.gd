@@ -58,6 +58,11 @@ var ghost_market_player: String = ""
 ## тестам/sweep-прогонам) или для синтетических досок тестов.
 var starting_site_candidates: Array[String] = []
 
+## Какие две полуколоды собраны в маркет этой партии (ключи half_decks.json).
+## Правилам они больше не нужны — маркет уже собран, — но интерфейсу нужны:
+## по ним он красит фон экрана.
+var half_decks: Array[String] = []
+
 
 func _init(map_graph: MapGraph, seed_value: int = 0) -> void:
 	graph = map_graph

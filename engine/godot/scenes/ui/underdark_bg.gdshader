@@ -33,7 +33,7 @@ uniform vec4 fade_to : source_color = vec4(0.039, 0.023, 0.070, 1.0);
 /// 0 — фон во всю силу (меню), 1 — полностью погашен в fade_to.
 uniform float fade : hint_range(0.0, 1.0) = 0.0;
 /// Скорость течения. Медленно: фон не должен тянуть взгляд на себя.
-uniform float speed = 0.09;
+uniform float speed = 0.062;
 /// Крупность рисунка: больше — мельче и гуще.
 uniform float scale = 1.55;
 /// Сила закрутки в спираль.
