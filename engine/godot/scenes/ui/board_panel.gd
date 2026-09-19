@@ -69,7 +69,8 @@ var top_inset := 0.0
 
 func _init() -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = SchematicPainter.BG
+	# Подложка прозрачная: за доской видно живой фон экрана.
+	style.bg_color = Color(SchematicPainter.BG, 0.0)
 	style.set_corner_radius_all(0)
 	add_theme_stylebox_override("panel", style)
 	custom_minimum_size = Vector2(200, 120)

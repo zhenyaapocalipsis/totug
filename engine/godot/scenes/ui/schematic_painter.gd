@@ -18,7 +18,11 @@ const TRACE_WIDTH := 2
 static func paint(schematic: Dictionary) -> Image:
 	var size: Array = schematic.get("size", [1, 1])
 	var img := Image.create(maxi(1, int(size[0])), maxi(1, int(size[1])), false, Image.FORMAT_RGBA8)
-	img.fill(BG)
+	# Заливка прозрачная, а не BG: под доской лежит живой фон экрана
+	# (scenes/ui/underdark_bg.gd), и схема должна плыть поверх него.
+	# Внутренности колец ниже закрашиваются BG отдельно — там стоят фишки,
+	# и им нужен ровный тёмный кружок.
+	img.fill(Color(BG, 0.0))
 	for flat: Array in schematic.get("traces", []):
 		for i in range(0, flat.size() - 2, 2):
 			_line(img, Vector2(flat[i], flat[i + 1]), Vector2(flat[i + 2], flat[i + 3]), TRACE)

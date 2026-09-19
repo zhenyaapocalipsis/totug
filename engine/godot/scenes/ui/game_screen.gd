@@ -20,6 +20,10 @@ extends Control
 const ALL_PLAYER_IDS: Array[String] = ["red", "blue", "green", "purple"]
 const MIN_PLAYERS := 2
 const MAX_PLAYERS := 4
+## Задник экрана подключён файлом, а не по глобальному имени класса:
+## глобальные имена собирает редактор, а проект часто запускается из
+## командной строки, где нового имени ещё нет в кэше.
+const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 # Сетка экрана в пикселях расчётного размера 640x360 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по решению владельца
@@ -144,10 +148,9 @@ static func section_label(text: String) -> Label:
 
 
 func _build_layout() -> void:
-	var bg := ColorRect.new()
-	bg.color = PixelTheme.BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Тот же задник, что в меню, но приглушённый: за доской и картами он
+	# должен только слегка дышать, а не спорить с ними за внимание.
+	add_child(UnderdarkBg.make(UnderdarkBg.GAME_FADE))
 
 	# 3a. Левый верхний угол: бараки всех игроков цветными квадратами.
 	_barracks = BarracksBar.new()

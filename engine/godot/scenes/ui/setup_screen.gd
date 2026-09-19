@@ -15,16 +15,19 @@ signal started(player_ids: Array[String])
 
 const BUTTON_SIZE := Vector2(90, 16)
 const DOT := 7.0
+## Задник экрана подключён файлом, а не по глобальному имени класса:
+## глобальные имена собирает редактор, а проект часто запускается из
+## командной строки, где нового имени ещё нет в кэше.
+const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 
 func _init() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 
-	var bg := ColorRect.new()
-	bg.color = PixelTheme.BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Живой задник во всю силу: меню — единственное место, где фону не мешают
+	# ни доска, ни карты.
+	add_child(UnderdarkBg.make())
 
 	var centre := CenterContainer.new()
 	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
