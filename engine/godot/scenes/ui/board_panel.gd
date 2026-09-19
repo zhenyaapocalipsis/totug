@@ -16,8 +16,15 @@ extends PanelContainer
 ## Панель по-прежнему не знает правил: что подсвечивать, ей сообщает
 ## view["legal"], посчитанный сервером.
 ##
-## Управление: колесо — масштаб, перетаскивание — сдвиг, двойной щелчок по
-## пустому месту — вернуть обзор всей доски, H — схема / гексы.
+## Доска зафиксирована (решение владельца, 2026-09-19): ни масштаба колесом,
+## ни перетаскивания, ни переключения вида. Она сама вписывается в отведённую
+## зону и остаётся в ней, а мышь нужна только чтобы выбрать войско или локацию.
+##
+## Масштаб схемы подбирается не «как влезет», а так, чтобы один её пиксель
+## занимал ЦЕЛОЕ число экранных (см. _fit_zoom). Иначе картинка мылилась:
+## экран 640x360 растягивается на окно втрое, а схема на четверых (604x317)
+## в зону доски целиком не входит, и дробный масштаб размывал и трассы, и
+## подписи локаций.
 
 signal slot_clicked(slot_id: String)
 signal site_clicked(site_id: String)
@@ -57,11 +64,6 @@ var _tokens: Dictionary = {}     # colour html -> ImageTexture
 
 var _zoom := 0.0                 # 0 = ещё не подобран, подберётся под размер панели
 var _pan := Vector2.ZERO         # центр обзора в мировых координатах
-var _dragging := false
-var _drag_moved := false
-var _drag_from := Vector2.ZERO
-var _font: Font
-var _user_moved := false         # игрок сам менял масштаб/сдвиг
 var top_inset := 0.0
 
 
@@ -73,9 +75,6 @@ func _init() -> void:
 	custom_minimum_size = Vector2(200, 120)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
-	# Подписи поверх доски — тем же пиксельным шрифтом, что и весь интерфейс.
-	var pixel_font: Font = PixelTheme.theme().default_font
-	_font = pixel_font if pixel_font != null else ThemeDB.fallback_font
 
 
 func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) -> void:
@@ -112,7 +111,6 @@ func _schematic_on() -> bool:
 func set_schematic_mode(on: bool) -> void:
 	schematic_mode = on
 	_zoom = 0.0
-	_user_moved = false
 	queue_redraw()
 
 
@@ -184,22 +182,35 @@ func _board_rect() -> Rect2:
 	return rect
 
 
+## Во сколько раз окно растягивает расчётный экран 640x360. Игра стартует в
+## полный экран на 1920x1080, то есть обычно это 3; в окне 1280x720 — 2.
+func window_scale() -> float:
+	var vp := get_viewport()
+	if vp == null:
+		return 1.0
+	var scale: float = vp.get_final_transform().get_scale().x
+	return maxf(roundf(scale), 1.0)
+
+
+## Масштаб схемы: самый крупный из тех, при которых один пиксель схемы
+## занимает ЦЕЛОЕ число экранных пикселей и вся доска ещё влезает в зону.
+## При растяжении окна втрое это шаги 1/3: схема на двоих идёт 1:1, схема на
+## троих и четверых — в 2/3 расчётного пикселя, но каждый её пиксель ложится
+## ровно в два экранных и остаётся чётким.
 func _fit_zoom() -> float:
 	var span := _board_rect().size
 	if span.x <= 0.0 or span.y <= 0.0:
 		return 0.2
 	var limits := _zoom_limits()
-	# Схема нарисована под то, чтобы влезать в зону доски целиком и читаться
-	# без приближения. Поэтому сначала меряем по всей зоне: если помещается,
-	# берём ЦЕЛЫЙ масштаб (пиксели остаются чёткими) и не ужимаем её из-за
-	# плашки вопроса — она временная и полупрозрачная.
-	if _schematic_on():
-		var full := minf(size.x / span.x, size.y / span.y)
-		if full >= 0.92:
-			return clampf(maxf(floorf(full), 1.0), limits.x, limits.y)
-	var fit := minf(size.x / span.x, maxf(size.y - top_inset, 100.0) / span.y)
-	if _schematic_on() and fit >= 1.0:
-		fit = floorf(fit)  # whole pixels stay crisp
+	var fit := minf(size.x / span.x, size.y / span.y)
+	if not _schematic_on():
+		return clampf(fit, limits.x, limits.y)
+	var scale := window_scale()
+	var steps := floori(fit * scale + 0.001)
+	if steps >= 1:
+		return clampf(float(steps) / scale, limits.x, limits.y)
+	# Окно меньше самой схемы (расчётный размер один к одному): показываем
+	# её целиком — пусть мягко, но без обрезанных краёв.
 	return clampf(fit, limits.x, limits.y)
 
 
@@ -210,7 +221,9 @@ func _board_centre() -> Vector2:
 func _ensure_view() -> void:
 	if _zoom <= 0.0:
 		_zoom = _fit_zoom()
-		_pan = _board_centre()
+		# Центр обзора — в целых мировых пикселях: тогда и войска, и рамки
+		# локаций ложатся на ту же сетку, что и сама картинка схемы.
+		_pan = _board_centre().round()
 
 
 ## Центр видимой части: сверху её может занимать плашка решения (top_inset).
@@ -218,22 +231,24 @@ func _ensure_view() -> void:
 ## иначе нижний край уезжает за пределы зоны.
 func _view_centre() -> Vector2:
 	var span_y := _board_rect().size.y * _zoom
+	var centre := Vector2(size.x * 0.5, (size.y + top_inset) * 0.5)
 	if span_y <= size.y:
 		# Схема влезает целиком: сдвигаем её вниз из-под плашки ровно
 		# настолько, насколько есть запас, и ни пикселем больше.
-		return Vector2(size.x * 0.5,
-			clampf((size.y + top_inset) * 0.5, span_y * 0.5, size.y - span_y * 0.5))
-	return Vector2(size.x * 0.5, (size.y + top_inset) * 0.5)
+		centre.y = clampf(centre.y, span_y * 0.5, size.y - span_y * 0.5)
+	# Центр кладём на сетку ЭКРАННЫХ пикселей: иначе схема съезжает на треть
+	# пикселя и nearest рисует соседние ряды разной толщины.
+	var scale := window_scale()
+	return (centre * scale).round() / scale
 
 
-## Сколько пикселей сверху закрыто плашкой решения. Пока обзор не трогали
-## руками, доска заново вписывается в оставшееся место.
+## Сколько пикселей сверху закрыто плашкой решения. Масштаб от этого не
+## меняется (доска зафиксирована) — она лишь сдвигается вниз на свободное
+## место, если оно есть.
 func set_top_inset(value: float) -> void:
 	if is_equal_approx(value, top_inset):
 		return
 	top_inset = value
-	if not _user_moved:
-		_zoom = 0.0
 	queue_redraw()
 
 
@@ -253,11 +268,17 @@ func _draw() -> void:
 	_ensure_view()
 
 	if _schematic_on():
-		# pixel art: hard pixels when enlarged, smooth when shrunk below 1x
-		var filter := TEXTURE_FILTER_NEAREST if _zoom >= 0.99 else TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		# Пиксель-арт: пока пиксель схемы занимает целое число экранных,
+		# рисуем nearest — «жёсткими» квадратами. Мягкий фильтр остаётся
+		# только для запасного случая (окно меньше самой схемы).
+		var scale := window_scale()
+		var steps := _zoom * scale
+		var crisp: bool = absf(steps - roundf(steps)) < 0.01
+		var filter := TEXTURE_FILTER_NEAREST if crisp else TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		if texture_filter != filter:
 			texture_filter = filter
 		var origin := _to_screen(Vector2.ZERO)
+		origin = (origin * scale).round() / scale
 		draw_texture_rect(_schematic_texture, Rect2(origin, _schematic_texture.get_size() * _zoom), false)
 	else:
 		for tile: Dictionary in (_board.get("tiles", []) as Array):
@@ -304,7 +325,6 @@ func _draw() -> void:
 	_draw_spies()
 	_draw_spy_targets()
 	_draw_decision_targets()
-	_draw_hint()
 
 
 func _token(colour: Color) -> ImageTexture:
@@ -403,40 +423,6 @@ func _draw_spy_targets() -> void:
 		_outline_site(String((t as Dictionary)["site_id"]), KILL_COLOR)
 
 
-func _draw_hint() -> void:
-	# Схема занимает зону целиком, поэтому подсказка про управление больше не
-	# рисуется поверх неё, а живёт во всплывающей подсказке зоны.
-	tooltip_text = "Wheel: zoom · drag: pan · double-click: fit the board\nH: %s · Alt over a card: enlarge it" % (
-		"hex tiles" if _schematic_on() else "schematic map")
-
-	# Легенда колец — только те цвета, что сейчас есть на доске.
-	var legal: Dictionary = _view.get("legal", {})
-	var entries: Array = []
-	var pending_type := String((_view.get("pending_decision", {}) as Dictionary).get("choice_type", ""))
-	if DecisionDialog.BOARD_CHOICES.has(pending_type):
-		entries.append([DECISION_COLOR, "card target"])
-	if not (legal.get("deploy_slots", []) as Array).is_empty():
-		entries.append([DEPLOY_COLOR, "Deploy 1P"])
-	if not (legal.get("assassinate_slots", []) as Array).is_empty() \
-			or not (legal.get("return_spy", []) as Array).is_empty():
-		entries.append([KILL_COLOR, "Kill/spy 3P"])
-	# Легенда лежит поверх схемы, поэтому под ней — тёмная полоса, иначе
-	# подписи сливаются с рамками локаций.
-	var at := Vector2(3, size.y - 3)
-	var legend_w := 0.0
-	for entry in entries:
-		legend_w += 14 + _font.get_string_size(
-			String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE).x
-	if legend_w > 0.0:
-		draw_rect(Rect2(0, size.y - 11, legend_w + 2, 11), Color(PixelTheme.BG, 0.85))
-	for entry in entries:
-		draw_arc(at + Vector2(3, -3), 3.0, 0, TAU, 12, entry[0], 1.0)
-		draw_string(_font, at + Vector2(9, 0), String(entry[1]),
-			HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT)
-		at.x += 14 + _font.get_string_size(
-			String(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE).x
-
-
 ## Навести обзор на точку доски с заданным масштабом. Нужно интерфейсу
 ## (например, показать место, где что-то произошло) и проверкам скриншотами.
 func focus_on(world_point: Vector2, zoom_level: float) -> void:
@@ -448,60 +434,20 @@ func focus_on(world_point: Vector2, zoom_level: float) -> void:
 
 # --- ввод ---------------------------------------------------------------------
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.keycode == KEY_H and is_visible_in_tree():
-		set_schematic_mode(not schematic_mode)
-		get_viewport().set_input_as_handled()
-
-
-func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		var mb := event as InputEventMouseButton
-		match mb.button_index:
-			MOUSE_BUTTON_WHEEL_UP:
-				if mb.pressed:
-					_zoom_at(mb.position, 1.15)
-				accept_event()
-			MOUSE_BUTTON_WHEEL_DOWN:
-				if mb.pressed:
-					_zoom_at(mb.position, 1.0 / 1.15)
-				accept_event()
-			MOUSE_BUTTON_LEFT:
-				if mb.pressed:
-					if mb.double_click:
-						_zoom = 0.0  # вернуть обзор всей доски
-						_user_moved = false
-						queue_redraw()
-						accept_event()
-						return
-					_dragging = true
-					_drag_moved = false
-					_drag_from = mb.position
-				else:
-					_dragging = false
-					if not _drag_moved:
-						_click_at(mb.position)
-					accept_event()
-	elif event is InputEventMouseMotion and _dragging:
-		var mm := event as InputEventMouseMotion
-		if mm.position.distance_to(_drag_from) > 4.0:
-			_drag_moved = true
-		_pan -= mm.relative / _zoom
-		_user_moved = true
+## Размер зоны изменился (окно, полноэкранный режим) — доску вписываем заново.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_zoom = 0.0
 		queue_redraw()
+
+
+## Единственное действие мышью: выбрать войско или локацию. Масштаба и
+## перетаскивания у зафиксированной доски нет.
+func _gui_input(event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+		_click_at(mb.position)
 		accept_event()
-
-
-func _zoom_at(screen_point: Vector2, factor: float) -> void:
-	_ensure_view()
-	_user_moved = true
-	var before := _to_world(screen_point)
-	var limits := _zoom_limits()
-	_zoom = clampf(_zoom * factor, limits.x, limits.y)
-	# точка под курсором должна остаться на месте
-	_pan += before - _to_world(screen_point)
-	queue_redraw()
 
 
 ## Попадание по ближайшему слоту, а если рядом слота нет — по локации

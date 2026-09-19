@@ -22,22 +22,25 @@ const MIN_PLAYERS := 2
 const MAX_PLAYERS := 4
 
 # Сетка экрана в пикселях расчётного размера 640x360 (пиксель-арт: цифры
-# только целые, отступы маленькие). Те же зоны и на тех же местах, что и до
-# перехода на пиксель-арт, только втрое мельче. Колонки:
-#   A — плашка хода сверху и чат с журналом снизу;
-#   B — полоса сыгранных карт, доска и рука;
-#   C — инфо игрока в нижнем ряду;
-#   D — инфо противников, маркет, а внизу стопки и End turn.
-# Доска в среднем ряду занимает всю ширину от A до D.
+# только целые, отступы маленькие). Раскладка по решению владельца
+# (2026-09-19):
+#   верхний ряд — квадраты бараков слева, за ними Power/Influence и общая
+#     полоса сыгранных карт до правого края;
+#   средний ряд — доска во всю оставшуюся ширину и маркет справа;
+#   нижний ряд — чат с журналом, рука и колонка стопок с кнопкой End turn.
+# Чей сейчас ход, написано на самой кнопке End turn, а весь расклад по
+# игрокам показывается поверх экрана, пока зажат Tab (PlayersOverlay).
 const MARGIN := 2.0
 const GAP := 2.0
 const COL_A := 112.0
-const COL_C := 86.0
 const COL_D := 134.0
-const TOP_H := 26.0
+const TOP_H := 22.0
 const BOTTOM_H := 90.0
-## Ширина плашки одного противника в верхнем ряду.
-const ENEMY_W := 74.0
+## Ширина плашки Power/Influence рядом с зоной сыгранных карт.
+const RES_W := 36.0
+## Цвета ресурсов хода — те же, что и на картах.
+const POWER_COLOR := Color(0.95, 0.45, 0.35)
+const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
 ## Таймер хода: две минуты, по нулю ход завершается сам.
 const TURN_SECONDS := 120.0
 
@@ -48,8 +51,8 @@ var player_ids: Array[String] = ALL_PLAYER_IDS.slice(0, MIN_PLAYERS)
 var viewer_id: String = "red"
 var board_data: Dictionary = {}
 
-var _player_panel: PlayerPanel
-var _enemy_info: EnemyInfoPanel
+var _barracks: BarracksBar
+var _overlay: PlayersOverlay
 var _hand_panel: HandPanel
 var _market_panel: MarketPanel
 var _chat_panel: ChatPanel
@@ -57,10 +60,9 @@ var _log_panel: EventLogPanel
 var _board_panel: BoardPanel
 var _board_area: Control
 var _decision_dialog: DecisionDialog
-var _turn_panel: PanelContainer
-var _turn_style: StyleBoxFlat
-var _header: Label
-var _status: Label
+var _res_zone: PanelContainer
+var _res_power: Label
+var _res_influence: Label
 var _played_zone: PanelContainer
 var _played_title: Label
 var _played_strip: CardStrip
@@ -71,10 +73,12 @@ var _pile_dialog: PileDialog
 var _end_turn_area: Control
 var _end_turn_button: Button
 var _end_turn_style: StyleBoxFlat
+## Две строки поверх кнопки End turn: чей ход (в цвет игрока) и сама надпись.
+## Кнопка Godot однострочная, поэтому текст лежит отдельными подписями.
+var _turn_label: Label
+var _end_label: Label
 var _timer_label: Label
 var _deploy_vp_button: Button
-var _hint_panel: PanelContainer
-var _hint: Label
 var _preview: CardPreview
 
 ## Таймер хода: сколько секунд осталось и чей ход сейчас отсчитываем — смена
@@ -123,23 +127,24 @@ func _build_layout() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# 3a. Плашка хода: чей ход, ниже — чего ждём. Левая грань — в цвет игрока.
-	_turn_style = zone_style(2)
-	_turn_style.border_width_left = 2
-	_turn_panel = PanelContainer.new()
-	_turn_panel.add_theme_stylebox_override("panel", _turn_style)
-	add_child(_turn_panel)
-	var turn_col := VBoxContainer.new()
-	turn_col.add_theme_constant_override("separation", 1)
-	turn_col.alignment = BoxContainer.ALIGNMENT_CENTER
-	_turn_panel.add_child(turn_col)
-	_header = Label.new()
-	turn_col.add_child(_header)
-	_status = Label.new()
-	_status.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	_status.clip_text = true
-	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	turn_col.add_child(_status)
+	# 3a. Левый верхний угол: бараки всех игроков цветными квадратами.
+	_barracks = BarracksBar.new()
+	add_child(_barracks)
+
+	# 3b. Power и Influence ходящего — вплотную к зоне сыгранных карт.
+	_res_zone = PanelContainer.new()
+	_res_zone.add_theme_stylebox_override("panel", zone_style(1))
+	add_child(_res_zone)
+	var res_col := VBoxContainer.new()
+	res_col.add_theme_constant_override("separation", 0)
+	res_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	_res_zone.add_child(res_col)
+	_res_power = Label.new()
+	_res_power.add_theme_color_override("font_color", POWER_COLOR)
+	res_col.add_child(_res_power)
+	_res_influence = Label.new()
+	_res_influence.add_theme_color_override("font_color", INFLUENCE_COLOR)
+	res_col.add_child(_res_influence)
 
 	# 3. Общая полоса сыгранных карт: что сыграл тот, чей сейчас ход.
 	_played_zone = PanelContainer.new()
@@ -158,10 +163,6 @@ func _build_layout() -> void:
 	_played_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	played_row.add_child(_played_strip)
 
-	# 8. Инфо противников.
-	_enemy_info = EnemyInfoPanel.new()
-	add_child(_enemy_info)
-
 	# 4. Доска лежит в простом Control, чтобы поверх неё (а не поверх маркета)
 	# можно было повесить диалог решения и подсказку.
 	_board_area = Control.new()
@@ -172,22 +173,6 @@ func _build_layout() -> void:
 	_board_panel.slot_clicked.connect(_on_slot_clicked)
 	_board_panel.site_clicked.connect(_on_site_clicked)
 	_board_area.add_child(_board_panel)
-
-	# Подсказка «что можно сделать» — полупрозрачная плашка у верха доски.
-	_hint_panel = PanelContainer.new()
-	var hint_style := PixelTheme.box(Color(PixelTheme.BG, 0.85), PixelTheme.BORDER, 1, 3, 1)
-	_hint_panel.add_theme_stylebox_override("panel", hint_style)
-	_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint_panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_hint_panel.offset_left = 2
-	_hint_panel.offset_right = -2
-	_hint_panel.offset_top = 2
-	_board_area.add_child(_hint_panel)
-	_hint = Label.new()
-	_hint.add_theme_color_override("font_color", PixelTheme.GOLD)
-	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_panel.add_child(_hint)
 
 	_decision_dialog = DecisionDialog.new()
 	_decision_dialog.board = board_data  # чтобы подписывать цели названиями локаций
@@ -221,18 +206,26 @@ func _build_layout() -> void:
 	_pile_discard.clicked.connect(func(): _open_pile("discard"))
 	_piles_column.add_child(_pile_discard)
 
-	# 7. Инфо игрока.
-	_player_panel = PlayerPanel.new()
-	add_child(_player_panel)
-
-	# 9. End turn — квадратная кнопка; под ней таймер хода, над ней, когда
-	# можно, Deploy for 1 VP.
+	# 9. End turn — широкая кнопка, на ней же написано, чей сейчас ход; под
+	# ней таймер хода, над ней, когда можно, Deploy for 1 VP.
 	_end_turn_area = Control.new()
 	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_end_turn_area)
 	_end_turn_button = _square_button()
 	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
 	_end_turn_area.add_child(_end_turn_button)
+	# Подписи лежат ПОВЕРХ кнопки и не ловят мышь, поэтому щелчок по любой из
+	# них — это щелчок по кнопке.
+	_turn_label = Label.new()
+	_turn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_turn_label.clip_text = true
+	_end_turn_area.add_child(_turn_label)
+	_end_label = Label.new()
+	_end_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_end_label.text = "END TURN"
+	_end_turn_area.add_child(_end_label)
 	_timer_label = Label.new()
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_label.tooltip_text = "Turn timer: when it runs out the turn ends by itself"
@@ -255,6 +248,10 @@ func _build_layout() -> void:
 	_pile_dialog = PileDialog.new()
 	add_child(_pile_dialog)
 
+	# Полный расклад по игрокам — появляется, пока зажат Tab.
+	_overlay = PlayersOverlay.new()
+	add_child(_overlay)
+
 	# Увеличенная копия карты под курсором (с зажатым Alt) — над всем экраном.
 	_preview = CardPreview.new()
 	_preview.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -265,7 +262,7 @@ func _build_layout() -> void:
 
 func _square_button() -> Button:
 	var button := Button.new()
-	button.text = "End turn"
+	button.text = ""  # надписи лежат поверх кнопки отдельными Label
 	_end_turn_style = StyleBoxFlat.new()
 	_end_turn_style.set_corner_radius_all(0)
 	_end_turn_style.set_border_width_all(1)
@@ -308,6 +305,20 @@ func _style_end_turn(colour: Color) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _board_area != null:
 		_layout()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT and _overlay != null:
+		# Окно потеряло фокус с зажатым Tab — отпускания мы уже не услышим.
+		_overlay.visible = false
+
+
+## Tab показывает полный расклад по игрокам, пока клавишу держат. Событие
+## перехватываем целиком: иначе Tab уводит фокус по кнопкам интерфейса.
+func _input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key == null or key.keycode != KEY_TAB:
+		return
+	if not key.echo:
+		_overlay.visible = key.pressed
+	get_viewport().set_input_as_handled()
 
 
 ## Первый кадр: минимальные размеры панелей к этому моменту уже посчитаны, и
@@ -327,36 +338,35 @@ func _layout() -> void:
 		return
 	var a_x := MARGIN
 	var d_x := w - MARGIN - COL_D
-	var c_x := d_x - GAP - COL_C
 	var b_x := a_x + COL_A + GAP
-	var b_w := c_x - GAP - b_x
+	var b_w := d_x - GAP - b_x
 	var top_y := MARGIN
 	var mid_y := top_y + TOP_H + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
 	var mid_h := bottom_y - GAP - mid_y
 
-	# Инфо противников — плашка на каждого, поэтому зона шире при 3-4 игроках.
-	# Ширину отъедает у полосы сыгранных карт.
-	var info_w: float = maxf(COL_D, ENEMY_W * float(player_ids.size() - 1))
-	var info_x: float = w - MARGIN - info_w
-	_place(_turn_panel, a_x, top_y, COL_A, TOP_H)
-	_place(_played_zone, b_x, top_y, info_x - GAP - b_x, TOP_H)
-	_place(_enemy_info, info_x, top_y, info_w, TOP_H)
+	# Верхний ряд: квадраты бараков, ресурсы хода и сыгранные карты до края.
+	var bar_w := BarracksBar.width_for(player_ids.size())
+	var res_x := a_x + bar_w + GAP
+	var played_x := res_x + RES_W + GAP
+	_place(_barracks, a_x, top_y, bar_w, TOP_H)
+	_place(_res_zone, res_x, top_y, RES_W, TOP_H)
+	_place(_played_zone, played_x, top_y, w - MARGIN - played_x, TOP_H)
 	# Доска занимает весь средний ряд — от левого края до маркета.
 	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
 	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
 	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
-	_place(_player_panel, c_x, bottom_y, COL_C, BOTTOM_H)
 	# Нижний ряд колонки D: сверху стопки, ниже кнопка End turn с таймером.
-	var piles_h := 40.0
+	var piles_h := 34.0
 	_place(_piles_column, d_x, bottom_y, COL_D, piles_h)
 	_place(_end_turn_area, d_x, bottom_y + piles_h + GAP, COL_D, BOTTOM_H - piles_h - GAP)
-	# Рука занимает колонку B; запас сверху нужен карте под курсором — она
-	# выдвигается выше края нижнего ряда.
+	# Рука занимает середину нижнего ряда; запас сверху нужен карте под
+	# курсором — она выдвигается выше края ряда.
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, b_x, hand_top, b_w, h - MARGIN - hand_top)
 
-	var button_h := 20.0
+	# Кнопка End turn в две строки: сверху чей ход, снизу сама надпись.
+	var button_h := 24.0
 	var timer_h := 11.0
 	var deploy_h := 13.0 if _deploy_vp_button.visible else 0.0
 	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
@@ -364,6 +374,10 @@ func _layout() -> void:
 	_deploy_vp_button.size = Vector2(COL_D, deploy_h)
 	_end_turn_button.position = Vector2(0, deploy_block)
 	_end_turn_button.size = Vector2(COL_D, button_h)
+	_turn_label.position = Vector2(0, deploy_block + 1.0)
+	_turn_label.size = Vector2(COL_D, PixelTheme.LINE_H)
+	_end_label.position = Vector2(0, deploy_block + 1.0 + PixelTheme.LINE_H)
+	_end_label.size = Vector2(COL_D, PixelTheme.LINE_H)
 	_timer_label.position = Vector2(0, deploy_block + button_h + 1.0)
 	_timer_label.size = Vector2(COL_D, timer_h)
 
@@ -427,7 +441,10 @@ func _process(delta: float) -> void:
 		_time_left = TURN_SECONDS
 	_time_left = maxf(0.0, _time_left - delta)
 	var left := int(ceilf(_time_left))
-	_timer_label.text = "%d:%02d" % [left / 60, left % 60]
+	# Рядом с таймером — единственная оставшаяся пометка о состоянии партии:
+	# начался последний круг, дальше подсчёт очков.
+	var last_round := " · LAST ROUND" if server.state.game_end_triggered else ""
+	_timer_label.text = "%d:%02d%s" % [left / 60, left % 60, last_round]
 	_timer_label.add_theme_color_override("font_color",
 		Color(0.95, 0.38, 0.32) if _time_left <= 20.0 else Color(0.78, 0.76, 0.86))
 
@@ -440,9 +457,9 @@ func _process(delta: float) -> void:
 
 
 func refresh(view: Dictionary) -> void:
-	_refresh_header(view)
-	_player_panel.update_from_view(view, viewer_id)
-	_enemy_info.update_from_view(view, viewer_id)
+	_refresh_turn(view)
+	_barracks.update_from_view(view)
+	_overlay.update_from_view(view)
 	_hand_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
@@ -455,27 +472,17 @@ func refresh(view: Dictionary) -> void:
 	_board_panel.set_top_inset(_decision_dialog.get_combined_minimum_size().y + 4.0 if covered else 0.0)
 
 
-func _refresh_header(view: Dictionary) -> void:
+## Чей сейчас ход — на самой кнопке End turn (решение владельца, 2026-09-19).
+func _refresh_turn(view: Dictionary) -> void:
 	var current := String(view["current_player"])
-	var pending: Dictionary = view.get("pending_decision", {})
 	if bool(view["game_over"]):
-		_header.text = "GAME OVER"
-		_header.add_theme_color_override("font_color", Color(0.95, 0.9, 0.8))
-		_turn_style.border_color = Color(0.92, 0.75, 0.35)
-		_status.text = "Final scores are in the log."
+		_turn_label.text = "GAME OVER"
+		_turn_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+		_end_label.text = ""
 		return
-	_header.text = "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
-	_header.add_theme_color_override("font_color", EventLogPanel.player_color(current))
-	_turn_style.border_color = BoardPanel.PLAYER_COLORS.get(current, Color.GRAY)
-	var notes: Array[String] = []
-	var decider := String(pending.get("player_id", ""))
-	if decider != "":
-		notes.append("%s is deciding" % EventLogPanel.player_name(decider))
-	if bool(view["game_end_triggered"]):
-		notes.append("LAST ROUND")
-	if notes.is_empty():
-		notes.append("You are playing %s" % EventLogPanel.player_name(viewer_id))
-	_status.text = " · ".join(PackedStringArray(notes))
+	_turn_label.text = "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
+	_turn_label.add_theme_color_override("font_color", EventLogPanel.player_color(current))
+	_end_label.text = "END TURN"
 
 
 ## Общая полоса сыгранных карт: что сыграл в этот ход тот, чей сейчас ход.
@@ -487,6 +494,9 @@ func _refresh_played(view: Dictionary) -> void:
 	_played_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	_played_strip.empty_text = "nothing played yet"
 	_played_strip.set_cards(p.get("played_pile", []))
+	# Ресурсы хода — рядом с этой же зоной: тратит их тот, чей ход.
+	_res_power.text = "P %d" % int(p.get("power", 0))
+	_res_influence.text = "I %d" % int(p.get("influence", 0))
 
 
 ## Стопки зрителя. Сброс виден только своему игроку (StateView его прячет),
@@ -510,26 +520,12 @@ func _open_pile(which: String) -> void:
 
 func _refresh_actions(view: Dictionary) -> void:
 	var legal: Dictionary = view.get("legal", {})
-	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	_end_turn_button.disabled = not bool(legal.get("end_turn", false))
 	_style_end_turn(BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6)))
 	var show_deploy := bool(legal.get("deploy_for_vp", false))
 	if _deploy_vp_button.visible != show_deploy:
 		_deploy_vp_button.visible = show_deploy
 		_layout()
-
-	var pending: Dictionary = view.get("pending_decision", {})
-	var text := ""
-	if bool(view.get("game_over", false)):
-		text = "The game is over."
-	elif not pending.is_empty():
-		text = ""  # вопрос карты уже показан плашкой решения
-	elif String(view["current_player"]) != viewer_id:
-		text = "%s's turn." % EventLogPanel.player_name(String(view["current_player"]))
-	else:
-		text = PlayerPanel.describe_options(legal, p)
-	_hint.text = text
-	_hint_panel.visible = text != ""
 
 
 # --- обработчики кликов ------------------------------------------------------

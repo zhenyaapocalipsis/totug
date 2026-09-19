@@ -21,6 +21,10 @@ var _scenario := ""
 var _frame := 0
 ## Во сколько раз увеличить снимок при сохранении (--px=N), картинка та же.
 var _zoom := 1
+## Во сколько раз растянуть ОКНО (--scale=N): игра запускается в полный экран
+## на 1920x1080, то есть втрое, и доска подбирает масштаб именно под это.
+## Снимок тогда сохраняется как есть, в размере окна.
+var _scale := 1
 
 
 func _initialize() -> void:
@@ -35,14 +39,17 @@ func _initialize() -> void:
 			_out = "res://" + arg.get_slice("=", 1)
 		elif arg.begins_with("--px="):
 			_zoom = maxi(1, int(arg.get_slice("=", 1)))
+		elif arg.begins_with("--scale="):
+			_scale = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
 
 	# Окно ровно в расчётный размер: тогда сцена рисуется пиксель в пиксель
-	# и снимок не приходится пересчитывать.
+	# и снимок не приходится пересчитывать. С --scale=N окно во столько же раз
+	# больше — так видно настоящую картинку полноэкранной игры.
 	DisplayServer.window_set_size(Vector2i(
 		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
-		ProjectSettings.get_setting("display/window/size/viewport_height", 360)))
+		ProjectSettings.get_setting("display/window/size/viewport_height", 360)) * _scale)
 	_screen = GameScreen.new(game_seed, [], GameScreen.player_ids_for(players))
 	root.add_child(_screen)
 	_run_scenario()
@@ -161,10 +168,25 @@ func _run_scenario() -> void:
 					if _screen.server.state.troops[slot_id7] == pid6:
 						_screen._on_slot_clicked(slot_id7)
 						break
+		"tab":
+			# Полный расклад по игрокам: в игре он виден, пока зажат Tab.
+			var overlay := _find_overlay(_screen)
+			if overlay != null:
+				overlay.visible = true
 		"end_turn":
 			_screen.send(Intent.end_turn(_screen.server.state.current_player()))
 		_:
 			push_error("неизвестный сценарий: " + _scenario)
+
+
+func _find_overlay(node: Node) -> PlayersOverlay:
+	if node is PlayersOverlay:
+		return node
+	for child in node.get_children():
+		var found := _find_overlay(child)
+		if found != null:
+			return found
+	return null
 
 
 func _find_board(node: Node) -> BoardPanel:
@@ -187,7 +209,7 @@ func _process(_delta: float) -> bool:
 	# пиксель), а для просмотра увеличиваем целым числом раз без сглаживания.
 	var design := Vector2i(
 		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
-		ProjectSettings.get_setting("display/window/size/viewport_height", 360))
+		ProjectSettings.get_setting("display/window/size/viewport_height", 360)) * _scale
 	if image.get_size() != design:
 		image = image.get_region(Rect2i(Vector2i.ZERO, image.get_size()))
 		image.resize(design.x, design.y, Image.INTERPOLATE_NEAREST)
