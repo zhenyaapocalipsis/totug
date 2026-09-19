@@ -127,6 +127,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 func _make_card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
 	card.pressed.connect(func(clicked: String): card_clicked.emit(clicked))
+	# Ткнули в карту, которую сейчас играть нельзя — она дёргается и краснеет,
+	# вместо того чтобы молча ничего не сделать.
+	card.refused.connect(func(_clicked: String): card.shake_refusal())
 	card.mouse_entered.connect(func(): _hovered_card = card)
 	card.mouse_exited.connect(func(): _clear_hovered(card))
 	add_child(card)

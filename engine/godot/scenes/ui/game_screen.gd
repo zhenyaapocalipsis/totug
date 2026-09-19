@@ -84,6 +84,11 @@ var _decision_dialog: DecisionDialog
 var _res_zone: PanelContainer
 var _res_power: Label
 var _res_influence: Label
+## Что на плашке ресурсов было показано в прошлый раз и чьё оно — по этому
+## считается, на сколько всплыть цифре изменения.
+var _res_player := ""
+var _res_power_shown := 0
+var _res_influence_shown := 0
 var _played_zone: PanelContainer
 var _played_title: Label
 var _played_strip: CardStrip
@@ -567,6 +572,32 @@ func _refresh_played(view: Dictionary) -> void:
 		_res_zone.visible = show_res
 	if show_res:
 		_layout()  # ширина плашки зависит от самих цифр
+	# Цифры всплывают уже после _layout(): плашка только что могла появиться
+	# или изменить ширину, и до пересчёта её положение ещё старое.
+	_popup_resource_change(current, int(p.get("power", 0)), int(p.get("influence", 0)))
+
+
+## Изменилось Power или Influence — над плашкой всплывает «+2» или «-1».
+## Считаем только для того, чей ход: плашка показывает именно его ресурсы, а
+## при переходе хода цифры меняются не от траты, и всплывать там нечему.
+func _popup_resource_change(current: String, power: int, influence: int) -> void:
+	# size.x < 10 — экран ещё не разложен (см. _layout), места плашки нет, и
+	# цифра всплыла бы в углу за краем.
+	if current == _res_player and _res_zone.visible and size.x >= 10.0:
+		var top := _res_zone.position + Vector2(0, -PixelTheme.LINE_H)
+		if power != _res_power_shown:
+			FloatingText.spawn(self, _signed(power - _res_power_shown),
+				POWER_COLOR, top)
+		if influence != _res_influence_shown:
+			FloatingText.spawn(self, _signed(influence - _res_influence_shown),
+				INFLUENCE_COLOR, top + Vector2(_res_zone.size.x * 0.5, 0))
+	_res_player = current
+	_res_power_shown = power
+	_res_influence_shown = influence
+
+
+static func _signed(delta: int) -> String:
+	return ("+%d" % delta) if delta > 0 else str(delta)
 
 
 ## Стопки зрителя. Сброс виден только своему игроку (StateView его прячет),

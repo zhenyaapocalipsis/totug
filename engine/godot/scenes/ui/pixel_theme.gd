@@ -87,6 +87,10 @@ static func _setup_buttons(t: Theme) -> void:
 	var normal := box(PANEL_HI, BORDER, 1, 4, 2)
 	var hover := box(BORDER, BORDER_HI, 1, 4, 2)
 	var pressed := box(BORDER_HI, GOLD, 1, 4, 2)
+	# Нажатая кнопка вдавливается: надпись съезжает на пиксель вниз. Мелочь,
+	# но без неё нажатие ощущается как подсветка, а не как нажатие.
+	pressed.content_margin_top += 1
+	pressed.content_margin_bottom = maxf(pressed.content_margin_bottom - 1.0, 0.0)
 	var disabled := box(PANEL, TEXT_OFF, 1, 4, 2)
 	t.set_stylebox("normal", "Button", normal)
 	t.set_stylebox("hover", "Button", hover)

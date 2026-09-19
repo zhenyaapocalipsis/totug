@@ -14,6 +14,10 @@ extends PanelContainer
 ## карта рисуется приглушённой, чтобы было видно, что она сейчас недоступна.
 
 signal pressed(card_id: String)
+## Карту нажали, когда нажимать её нельзя. Сама карта на это не реагирует:
+## «нельзя» осмысленно в руке и в маркете, но не на полосе сыгранных карт,
+## поэтому тряску запускает та панель, которая подписалась (shake_refusal).
+signal refused(card_id: String)
 
 const ASPECT_COLORS := {
 	"CONQUEST": Color(0.72, 0.24, 0.22),
@@ -44,6 +48,13 @@ const PIXEL_HIGHLIGHT := Color("f2d23c")
 const PIXEL_TOP_H := 136.0  # шапка + арт
 const MINI_TOP_H := 73.0    # шапка + арт у мелкого лица
 
+## Отказ: карта дёргается вбок и краснеет. Дёргается ТОЛЬКО отрисовка
+## (draw_set_transform), а не position узла: в руке положение карты каждый
+## кадр задаёт пружина ряда, и тряска позицией с ней бы дралась.
+const SHAKE_TIME := 0.25
+const SHAKE_AMPLITUDE := 3.0
+const SHAKE_SPEED := 46.0
+
 var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
@@ -51,6 +62,8 @@ var hover_preview: bool = true
 var _pixel: Texture2D = null
 ## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
 var _mini := false
+## Сколько ещё трястись после отказа; 0 — карта спокойна.
+var _shake_left := 0.0
 
 var _name_label: Label
 var _cost_label: Label
@@ -69,6 +82,8 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 	card_id = cid
 	custom_minimum_size = Vector2(card_width, card_height)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# Кадр за кадром карта считается только пока трясётся после отказа.
+	set_process(false)
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
@@ -211,6 +226,9 @@ func _draw() -> void:
 		return
 	var rects := _pixel_rects()
 	var dest: Rect2 = rects[0]
+	var shift := _shake_offset()
+	if shift != Vector2.ZERO:
+		draw_set_transform(shift)
 	# Не меньше 1 экранного пикселя на пиксель карты — чёткие пиксели (nearest);
 	# меньше — nearest выкидывает целые строки шрифта, поэтому сглаживание.
 	var on_screen := dest.size.x / face_size().x * get_screen_transform().get_scale().x
@@ -220,6 +238,40 @@ func _draw() -> void:
 	draw_texture_rect_region(_pixel, dest, rects[1])
 	if clickable:
 		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 1.0)
+	if _shake_left > 0.0:
+		# Красная плёнка поверх лица и рамка — «сейчас нельзя».
+		var k := _shake_left / SHAKE_TIME
+		draw_rect(dest, Color(PixelTheme.DANGER, 0.32 * k))
+		draw_rect(dest.grow(1), Color(PixelTheme.DANGER, k), false, 1.0)
+
+
+## Смещение отрисовки при тряске: только по горизонтали и только целыми
+## пикселями — на дробном сдвиге пиксельное лицо карты мылится.
+func _shake_offset() -> Vector2:
+	if _shake_left <= 0.0:
+		return Vector2.ZERO
+	var k := _shake_left / SHAKE_TIME
+	return Vector2(roundf(sin(_shake_left * SHAKE_SPEED) * SHAKE_AMPLITUDE * k), 0.0)
+
+
+## Показать, что карту сейчас нажать нельзя. Трясётся только пиксельное лицо
+## карты (ветка _draw выше) — все карты игры пиксельные.
+func shake_refusal() -> void:
+	_shake_left = SHAKE_TIME
+	set_process(true)
+	queue_redraw()
+
+
+## Для проверок: карта сейчас трясётся после отказа.
+func is_shaking() -> bool:
+	return _shake_left > 0.0
+
+
+func _process(delta: float) -> void:
+	_shake_left = maxf(_shake_left - delta, 0.0)
+	if _shake_left <= 0.0:
+		set_process(false)
+	queue_redraw()
 
 
 func _notification(what: int) -> void:
@@ -316,8 +368,9 @@ func _on_mouse_exited() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if not clickable:
-		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		pressed.emit(card_id)
+		if clickable:
+			pressed.emit(card_id)
+		else:
+			refused.emit(card_id)
 		accept_event()

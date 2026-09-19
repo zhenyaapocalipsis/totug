@@ -124,6 +124,9 @@ static func _market_slot(cid: String) -> Control:
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card := CardView.new(cid, SLOT.x, SLOT.y)
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Не хватает Influence или стопка пуста — карта дёргается и краснеет,
+	# вместо того чтобы молча ничего не сделать.
+	card.refused.connect(func(_cid: String): card.shake_refusal())
 	box.add_child(card)
 	return box
 

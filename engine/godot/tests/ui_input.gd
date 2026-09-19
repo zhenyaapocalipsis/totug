@@ -35,6 +35,7 @@ var _hand_before := 0
 var _resources_before := 0
 var _discard_before := 0
 var _turn_owner := ""
+var _refused_card: CardView = null
 
 
 func _initialize() -> void:
@@ -74,12 +75,15 @@ func _process(_delta: float) -> bool:
 		8: _step_check_hand_card()
 		9: _step_open_pile()
 		10: _step_check_pile()
-		11: _step_prepare_market()
-		12: _step_click_market_card()
-		13: _step_click_end_turn()
-		14: _step_check_end_turn()
-		15: _step_timer_expire()
-		16: _step_check_timer()
+		11: _step_lock_market()
+		12: _step_click_locked_market()
+		13: _step_check_refusal()
+		14: _step_prepare_market()
+		15: _step_click_market_card()
+		16: _step_click_end_turn()
+		17: _step_check_end_turn()
+		18: _step_timer_expire()
+		19: _step_check_timer()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -191,6 +195,56 @@ func _step_check_hand_card() -> void:
 	check(player.power + player.influence > _resources_before,
 		"эффект карты применился: ресурсов стало больше (%d -> %d)"
 			% [_resources_before, player.power + player.influence])
+	check(_has_floating_text(), "над плашкой ресурсов всплыла цифра изменения")
+
+
+## Есть ли на экране хоть одна всплывающая цифра.
+func _has_floating_text() -> bool:
+	for child in _screen.get_children():
+		if child is FloatingText:
+			return true
+	return false
+
+
+## Обнуляем Influence — теперь в маркете нечего покупать. Искать карту прямо
+## здесь нельзя: маркет пересобирает свои карты, и прежние живут в дереве до
+## конца кадра. Клик по ним ушёл бы мимо — в новую карту на том же месте.
+func _step_lock_market() -> void:
+	var player := _current_player()
+	player.influence = 0
+	_screen.refresh(StateView.for_player_with_pending(
+		_screen.server.state, _screen.viewer_id, _screen.server.resolver.pending))
+	_discard_before = player.deck.discard_pile.size()
+
+
+## Карта маркета не по карману: щелчок по ней не покупает её, но и не молчит —
+## карта дёргается и краснеет.
+func _step_click_locked_market() -> void:
+	_refused_card = null
+	for c: CardView in _all_cards():
+		if not c.clickable and _in_market(c) and _fully_visible(c):
+			_refused_card = c
+			break
+	check(_refused_card != null, "в маркете есть карта, которая сейчас не по карману")
+	if _refused_card != null:
+		_click(_refused_card)
+
+
+func _step_check_refusal() -> void:
+	if _refused_card == null:
+		return
+	check(_refused_card.is_shaking(), "щелчок по недоступной карте тряхнул её")
+	check(_current_player().deck.discard_pile.size() == _discard_before,
+		"недоступная карта не куплена — в сбросе ничего не прибавилось")
+
+
+func _in_market(card: CardView) -> bool:
+	var node: Node = card.get_parent()
+	while node != null:
+		if node is MarketPanel:
+			return true
+		node = node.get_parent()
+	return false
 
 
 func _step_prepare_market() -> void:
