@@ -13,7 +13,7 @@ signal card_clicked(card_id: String)
 
 ## Карта в руке чуть меньше пиксельного оригинала: так ряд из шести карт
 ## помещается в колонку, не наезжая друг на друга до нечитаемости.
-const CARD_SIZE := Vector2(64, 88)   # = CardView.MINI_SIZE, пиксель в пиксель
+const CARD_SIZE := Vector2(80, 91)   # = CardView.MINI_SIZE, пиксель в пиксель
 const HOVER_LIFT := 6.0     # на сколько выдвигается карта под курсором
 const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края зоны
 const GAP := 2.0

@@ -80,7 +80,9 @@ func _rebuild() -> void:
 
 	var shown: int = mini(LAYERS, _ids.size())
 	var shift := LAYER_OFFSET * float(shown - 1)
-	var w := _slot.size.x - shift
+	# Слои сдвинуты только вниз: ширину карте оставляем всю, иначе она не
+	# попадает в целый масштаб и мылится. Нижние слои видно полосками снизу.
+	var w := _slot.size.x
 	var h := _slot.size.y - shift
 	for i in range(shown):
 		# снизу — нижние слои стопки, последним кладём верхнюю карту
@@ -89,7 +91,7 @@ func _rebuild() -> void:
 		card.set_clickable(false, false)
 		# PASS: карта ловит наведение (Alt-увеличение), но щелчок уходит зоне.
 		card.mouse_filter = Control.MOUSE_FILTER_PASS
-		card.position = Vector2(shift - LAYER_OFFSET * float(i), LAYER_OFFSET * float(i))
+		card.position = Vector2(0, LAYER_OFFSET * float(shown - 1 - i))
 		card.modulate = Color(1, 1, 1) if i == shown - 1 else Color(0.5, 0.5, 0.55)
 		_slot.add_child(card)
 

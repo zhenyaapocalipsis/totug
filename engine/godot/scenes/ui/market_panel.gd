@@ -13,13 +13,14 @@ signal market_card_clicked(index: int)
 signal supply_card_clicked(card_id: String)
 
 var _grid: GridContainer
-var _supply_row: HBoxContainer
+var _supply_row: GridContainer
 var _deck_label: Label
 
 
 ## Слот карты маркета: ровно ширина мелкого лица карты и такая высота, чтобы
-## в него попали имя и арт без дробного масштаба (иначе пиксели размажутся).
-const SLOT := Vector2i(64, 40)
+## в него попали имя, цена и верх арта без дробного масштаба (иначе пиксели
+## размажутся).
+const SLOT := Vector2i(80, 40)
 
 
 func _init() -> void:
@@ -45,8 +46,12 @@ func _init() -> void:
 
 	col.add_child(GameScreen.section_label("SUPPLY"))
 
-	_supply_row = HBoxContainer.new()
-	_supply_row.add_theme_constant_override("separation", 2)
+	# Сетка, а не ряд: с полуколодой Demons в снабжении три карты, и в одну
+	# строку колонки они не помещаются.
+	_supply_row = GridContainer.new()
+	_supply_row.columns = 2
+	_supply_row.add_theme_constant_override("h_separation", 2)
+	_supply_row.add_theme_constant_override("v_separation", 2)
 	col.add_child(_supply_row)
 
 
@@ -107,9 +112,9 @@ func update_from_view(view: Dictionary) -> void:
 		_supply_row.add_child(io)
 
 
-## Карта маркета в слоте: видно только верх лица карты, а цена нарисована на
-## самой карте внизу — поэтому в маркете её дублирует золотая плашка в углу
-## слота. Возвращает контейнер; сама карта — первый ребёнок.
+## Карта маркета в слоте: видно верх лица карты — имя и цену в правом верхнем
+## углу. Плашки с ценой поверх слота больше нет, цена читается с самой карты.
+## Возвращает контейнер; сама карта — первый ребёнок.
 static func _market_slot(cid: String) -> Control:
 	var box := Control.new()
 	box.custom_minimum_size = SLOT
@@ -117,26 +122,7 @@ static func _market_slot(cid: String) -> Control:
 	var card := CardView.new(cid, SLOT.x, SLOT.y)
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
 	box.add_child(card)
-	var cost := CardLibrary.card_cost(cid)
-	if cost >= 0:
-		box.add_child(_cost_badge(cost))
 	return box
-
-
-## Золотая плашка с ценой в правом нижнем углу слота, поверх арта.
-static func _cost_badge(cost: int) -> Control:
-	var badge := PanelContainer.new()
-	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_theme_stylebox_override("panel",
-		PixelTheme.box(PixelTheme.GOLD, PixelTheme.BG, 1, 2, 0))
-	badge.position = Vector2(SLOT.x - 13, SLOT.y - 12)
-	var label := Label.new()
-	label.text = str(cost)
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_color_override("font_color", PixelTheme.BG)
-	badge.add_child(label)
-	return badge
 
 
 ## Карта общей стопки: остаток написан прямо поверх карты — отдельной строки

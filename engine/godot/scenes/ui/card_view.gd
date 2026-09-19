@@ -37,12 +37,12 @@ const PIXEL_SIZE := Vector2(176, 254)
 ## Экран рисуется в 640x360, и в руке с маркетом помещается только оно;
 ## полную карту показывает увеличенная копия под курсором (CardPreview).
 const MINI_DIR := "res://assets/cards_mini/"
-const MINI_SIZE := Vector2(64, 88)
+const MINI_SIZE := Vector2(80, 91)
 ## Слот уже этого — берём мелкое лицо: крупное в нём было бы нечитаемой кашей.
 const MINI_MAX_WIDTH := 110.0
 const PIXEL_HIGHLIGHT := Color("f2d23c")
 const PIXEL_TOP_H := 136.0  # шапка + арт
-const MINI_TOP_H := 55.0    # шапка + арт у мелкого лица
+const MINI_TOP_H := 73.0    # шапка + арт у мелкого лица
 
 var card_id: String = ""
 var clickable: bool = false
@@ -186,6 +186,10 @@ func face_size() -> Vector2:
 ## Часть пиксельной карты, которая влезает в слот: слот уже карты — карта
 ## целиком по центру; слот шире — верх карты, но не ниже арта (пустое
 ## текстовое поле в мелком слоте ни к чему), вписанный по центру.
+##
+## Масштаб округляется вниз до целого, как только карта в слот помещается:
+## при 1.01x или 0.91x пиксели карты разъезжаются и шрифт мылится, а лишние
+## два-три пикселя слота лучше оставить пустыми.
 func _pixel_rects() -> Array[Rect2]:
 	var face := face_size()
 	var slot_aspect := size.x / maxf(size.y, 1.0)
@@ -194,10 +198,12 @@ func _pixel_rects() -> Array[Rect2]:
 	# Допуск в пару процентов: слот, который шире карты лишь на округление
 	# размера, должен показывать карту целиком, а не её верх.
 	if slot_aspect > card_aspect * 1.03:
-		region.size.y = minf(face.x / slot_aspect, MINI_TOP_H if _mini else PIXEL_TOP_H)
+		region.size.y = floorf(minf(face.x / slot_aspect, MINI_TOP_H if _mini else PIXEL_TOP_H))
 	var k := minf(size.x / region.size.x, size.y / region.size.y)
-	var dest_size := region.size * k
-	return [Rect2((size - dest_size) * 0.5, dest_size), region]
+	if k >= 1.0:
+		k = floorf(k)
+	var dest_size := (region.size * k).floor()
+	return [Rect2(((size - dest_size) * 0.5).floor(), dest_size), region]
 
 
 func _draw() -> void:

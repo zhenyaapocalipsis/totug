@@ -11,9 +11,18 @@ const OUT := ROOT + "engine/godot/assets/cards_pixel/"
 const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
 ## Мелкая карта для руки и маркета: на экране 640x360 полная карта не влезает,
 ## а ужимать её нельзя — текст превратится в кашу. Поэтому у каждой карты есть
-## второе лицо, нарисованное сразу маленьким: имя, арт, цена и VP.
-const MINI_W := 64
-const MINI_H := 88
+## второе лицо, нарисованное сразу маленьким: имя, цена, арт и оба VP.
+##
+## Ширина 80, а не 64: в 64 имена вроде WATER ELEMENTAL MYRMIDON не влезали
+## даже в две строки и обрезались, а WEAPONMASTER уезжал за край. Размер один
+## на все карты — иначе они не встанут ровным рядом в руке и маркете.
+const MINI_W := 80
+const MINI_H := 91
+## Шапка (имя + цена), арт под ней, внизу полоса с аспектом и двумя VP.
+const MINI_HEAD := 26
+const MINI_ART_H := 45
+const MINI_LINE_H := 8
+const MINI_NAME_LINES := 3
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const W := 176
 const ART_H := 100
@@ -32,6 +41,7 @@ const C_PARCH_LO := Color("bfae88")
 const C_INK := Color("2a1a30")
 const C_IC := Color("3b2c96")
 const C_IC_HI := Color("6a5ad0")
+const C_GOLD := Color("f2d23c")
 
 const ASPECT_COLOR := {
 	"CONQUEST": Color("8fd3ff"), "AMBITION": Color("f2d23c"), "GUILE": Color("5ccf5c"),
@@ -40,6 +50,12 @@ const ASPECT_COLOR := {
 
 const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE",
 	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
+
+## Где рвать слово, которое само шире строки мелкой карты: номер буквы, после
+## которой ставится дефис. Обычное правило «примерно посередине» даёт
+## WEAPON-MASTER и DOPPEL-GANGER, а вот SPELLSPINNER режет как SPELLS-PINNER —
+## такие случаи перечислены здесь. Слова, которых тут нет, рвутся по правилу.
+const NAME_BREAKS := {"SPELLSPINNER": 5}
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
 const SHEETS := {
@@ -122,6 +138,13 @@ func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 	DirAccess.make_dir_recursive_absolute(OUT_MINI)
 	var all: Array = JSON.parse_string(FileAccess.get_file_as_string(ROOT + "engine/godot/data/cards/cards.json"))
+
+	# "-- mini": перерисовать только мелкие лица, не трогая большие карты. Полный
+	# прогон долгий (подбор палитры для каждого арта), а разметку мелкой карты
+	# приходится перебирать по многу раз.
+	if OS.get_cmdline_user_args().has("mini"):
+		render_mini_preview(all)
+		return
 
 	# One layout for the whole set: the text box fits the longest card text.
 	var max_text_px := 0
@@ -473,9 +496,13 @@ func sv(v: Variant) -> String:
 
 
 
-## Мелкое лицо карты 64x88 для руки, маркета и полос сыгранных карт: шапка в
-## цвет аспекта с именем в две строки, арт, а внизу цена, тип и оба значения
-## VP. Текста способности здесь нет — его читают на большой карте под курсором.
+## Мелкое лицо карты 88x96 для руки, маркета и полос сыгранных карт: шапка в
+## цвет аспекта с именем и ценой, под ней арт, а под артом — аспект и оба
+## значения VP. Ни типа существа, ни текста способности здесь нет: тип для
+## хода ничего не решает, а текст читают на большой карте под курсором.
+##
+## Цена стоит в правом верхнем углу, как на большой карте: в маркете виден
+## только верх лица, и цена должна попадать в него вместе с именем.
 func render_mini(c: Dictionary) -> Image:
 	img = Image.create(MINI_W, MINI_H, false, Image.FORMAT_RGBA8)
 	img.fill(C_OUTLINE)
@@ -485,40 +512,125 @@ func render_mini(c: Dictionary) -> Image:
 	rect(1, 1, MINI_W - 2, 1, C_FRAME_HI)
 	rect(1, MINI_H - 2, MINI_W - 2, 1, C_FRAME_LO)
 
-	# шапка: имя в две строки на подложке цвета аспекта
-	rect(1, 1, MINI_W - 2, 18, Color(aspect_col.darkened(0.62), 1.0))
-	rect(1, 18, MINI_W - 2, 1, C_OUTLINE)
-	var name_lines := wrap_plain(clean(sv(c["name"])), MINI_W - 7)
-	for i in mini(name_lines.size(), 2):
-		var line: String = name_lines[i]
-		if i == 1 and name_lines.size() > 2:
-			line = line.substr(0, 8) + "."
-		text(3, 2 + i * 8, line, C_LIGHT, 1, C_OUTLINE)
+	# шапка: подложка цвета аспекта, цена справа, имя слева от неё
+	rect(1, 1, MINI_W - 2, MINI_HEAD, Color(aspect_col.darkened(0.62), 1.0))
+	# Цена ростом с обычную строку, золотом: крупная цифра отнимала у имени две
+	# строки из трёх и заставляла держать карту шире, чем нужно.
+	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
+	var cost_w := text_width(cost_str, 1)
+	if cost_str != "":
+		text(MINI_W - 3 - cost_w, 2, cost_str, C_GOLD, 1, C_OUTLINE)
+	# Цена занимает только первую строку, остальные идут во всю ширину.
+	var free := MINI_W - 5
+	var beside := free - (cost_w + 3 if cost_str != "" else 0)
+	var name_lines := wrap_name(clean(sv(c["name"])), beside, free, 1, MINI_NAME_LINES)
+	# По верхнему краю, а не по центру шапки: имя должно начинаться на одной
+	# линии с ценой, иначе короткие имена провисают относительно неё.
+	for i in name_lines.size():
+		text(3, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
 
 	# арт
-	var art := pixelize(art_region(int(c["card_id"]), MINI_W - 6, 34), MINI_W - 6, 34, 16)
-	img.blit_rect(art, Rect2i(0, 0, MINI_W - 6, 34), Vector2i(3, 20))
-	rect(2, 19, MINI_W - 4, 1, C_OUTLINE)
-	rect(2, 54, MINI_W - 4, 1, C_OUTLINE)
+	var art_y := 1 + MINI_HEAD + 1
+	var aw := MINI_W - 6
+	var art := pixelize(art_region(int(c["card_id"]), aw, MINI_ART_H), aw, MINI_ART_H, 16)
+	img.blit_rect(art, Rect2i(0, 0, aw, MINI_ART_H), Vector2i(3, art_y))
+	rect(2, art_y - 1, MINI_W - 4, 1, C_OUTLINE)
+	rect(2, art_y + MINI_ART_H, MINI_W - 4, 1, C_OUTLINE)
 
-	# строка аспекта и типа
+	# под артом: иконка аспекта слева, VP колоды и Внутреннего круга справа
+	var by := art_y + MINI_ART_H + 3
 	if aspect != "":
-		glyph_rows(3, 57, ICONS[aspect], aspect_col)
-	var type_str := clean(sv(c["type"]))
-	text(12, 57, type_str.substr(0, 8), C_GREY, 1)
-
-	# цена крупно слева, VP колоды и Внутреннего круга справа
-	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
-	if cost_str != "":
-		text(4, 68, cost_str, C_LIGHT, 2, C_OUTLINE)
+		glyph_rows(4, by + 3, ICONS[aspect], aspect_col)
 	var dv := str(int(c["deck_vp"]))
-	rect(MINI_W - 31, 68, 14, 12, C_OUTLINE)
-	rect(MINI_W - 30, 69, 12, 10, C_LIGHT)
-	text(MINI_W - 24 - text_width(dv, 1) / 2, 71, dv, C_INK, 1)
-	circle(MINI_W - 10, 74, 7, C_OUTLINE)
-	circle(MINI_W - 10, 74, 6, C_IC)
-	circle(MINI_W - 11, 73, 4, C_IC_HI)
-	circle(MINI_W - 10, 74, 3, C_IC)
+	rect(MINI_W - 33, by, 14, 12, C_OUTLINE)
+	rect(MINI_W - 32, by + 1, 12, 10, C_LIGHT)
+	text(MINI_W - 26 - text_width(dv, 1) / 2, by + 3, dv, C_INK, 1)
+	var cx := MINI_W - 11
+	var cy := by + 6
+	circle(cx, cy, 7, C_OUTLINE)
+	circle(cx, cy, 6, C_IC)
+	circle(cx - 1, cy - 1, 4, C_IC_HI)
+	circle(cx, cy, 3, C_IC)
 	var iv := str(int(c["inner_circle_vp"]))
-	text(MINI_W - 10 - text_width(iv, 1) / 2, 71, iv, C_LIGHT, 1)
+	text(cx - text_width(iv, 1) / 2, by + 3, iv, C_LIGHT, 1)
 	return img
+
+
+## Имя мелкой карты: до max_lines строк. Первые blocked строк помещаются слева
+## от цены (ширина beside), остальные идут под ней во всю ширину (free). Слово
+## длиннее строки рвётся: по дефису, если он есть, иначе просто по месту с
+## дефисом — иначе WEAPONMASTER и MELEE-MAGTHERE уезжают за край карты.
+func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) -> Array[String]:
+	var lines: Array[String] = []
+	var words: Array = Array(s.split(" ", false))
+	var cur := ""
+	var i := 0
+	while i < words.size():
+		var room: int = free if lines.size() >= blocked else beside
+		var word := String(words[i])
+		var joined := word if cur == "" else cur + " " + word
+		if text_width(joined, 1) <= room:
+			cur = joined
+			i += 1
+		elif cur != "":
+			lines.append(cur)
+			cur = ""
+		else:
+			var parts := split_word(word, room)
+			lines.append(parts[0])
+			words[i] = parts[1]
+	if cur != "":
+		lines.append(cur)
+	if lines.size() > max_lines:
+		print("name does not fit: ", s, " -> ", lines)
+		lines.resize(max_lines)
+		lines[max_lines - 1] = lines[max_lines - 1] + "."
+	return lines
+
+
+## Делит слово, которое само шире строки. Сначала пробуем последний дефис,
+## который ещё влезает, иначе ставим дефис сами — поближе к середине слова,
+## чтобы не получалось WEAPONMAST-ER вместо WEAPON-MASTER.
+func split_word(word: String, room: int) -> Array[String]:
+	for k in range(word.length() - 1, 0, -1):
+		if word[k] == "-" and text_width(word.substr(0, k + 1), 1) <= room:
+			return [word.substr(0, k + 1), word.substr(k + 1)]
+	var fit := maxi((room + 1) / 6 - 1, 1)
+	var half := (word.length() + 1) / 2
+	var cut := mini(fit, half)
+	if NAME_BREAKS.has(word) and int(NAME_BREAKS[word]) <= fit:
+		cut = int(NAME_BREAKS[word])
+	print("hyphenated: ", word, " -> ", word.substr(0, cut), "- ", word.substr(cut))
+	return [word.substr(0, cut) + "-", word.substr(cut)]
+
+
+## Мелкие лица в assets, а заодно листы в x4 для просмотра разметки глазом.
+func render_mini_preview(all: Array) -> void:
+	var dir := PREVIEW + "mini/"
+	DirAccess.make_dir_recursive_absolute(dir)
+	var rendered: Array[Image] = []
+	for c: Dictionary in all:
+		if not SHEETS.has(int(c["card_id"]) / 100):
+			continue
+		var m := render_mini(c)
+		m.save_png(OUT_MINI + "%d.png" % int(c["card_id"]))
+		rendered.append(m)
+	print("mini rendered: ", rendered.size(), " ", MINI_W, "x", MINI_H)
+
+	var s := 4
+	var gap := 8
+	var cols := 6
+	var rows := 4
+	var per_page := cols * rows
+	for page in ceili(rendered.size() / float(per_page)):
+		var sheet := Image.create(cols * (MINI_W * s + gap) + gap, rows * (MINI_H * s + gap) + gap,
+			false, Image.FORMAT_RGBA8)
+		sheet.fill(Color(0.04, 0.03, 0.07))
+		for i in range(page * per_page, mini(rendered.size(), (page + 1) * per_page)):
+			var j := i - page * per_page
+			var b := rendered[i].duplicate() as Image
+			b.resize(MINI_W * s, MINI_H * s, Image.INTERPOLATE_NEAREST)
+			sheet.blit_rect(b, Rect2i(0, 0, MINI_W * s, MINI_H * s),
+				Vector2i(gap + (j % cols) * (MINI_W * s + gap), gap + (j / cols) * (MINI_H * s + gap)))
+		sheet.save_png(dir + "sheet_%d.png" % (page + 1))
+	quit()
