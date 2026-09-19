@@ -17,14 +17,17 @@ var _supply_row: GridContainer
 var _deck_label: Label
 
 
-## Слот карты маркета: ровно ширина мелкого лица карты и такая высота, чтобы
-## в него попали имя, цена и верх арта без дробного масштаба (иначе пиксели
-## размажутся).
-const SLOT := Vector2i(80, 40)
+## Слот карты маркета: ровно ширина мелкого лица карты (пиксель в пиксель),
+## высота — наименьшая. Дальше слоты тянутся вверх по высоте колонки: пустого
+## места под маркетом больше нет, и арта видно столько, сколько влезло
+## (решение владельца, 2026-09-19).
+const SLOT := Vector2i(80, 32)
+## Отступ панели ровно в пиксель: два слота по 80 и зазор — вся ширина колонки.
+const PAD := 1
 
 
 func _init() -> void:
-	add_theme_stylebox_override("panel", GameScreen.zone_style(2))
+	add_theme_stylebox_override("panel", GameScreen.zone_style(PAD))
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 1)
@@ -42,16 +45,21 @@ func _init() -> void:
 	_grid.columns = 2
 	_grid.add_theme_constant_override("h_separation", 2)
 	_grid.add_theme_constant_override("v_separation", 2)
+	# Ряды дисплея (их три) и ряд снабжения (один) делят лишнюю высоту в
+	# отношении 3:1 — тогда все карты маркета одной высоты.
+	_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_grid.size_flags_stretch_ratio = 3.0
 	col.add_child(_grid)
 
 	col.add_child(GameScreen.section_label("SUPPLY"))
 
-	# Сетка, а не ряд: с полуколодой Demons в снабжении три карты, и в одну
-	# строку колонки они не помещаются.
+	# Сетка, а не ряд: слоты те же, что у дисплея, и их может стать больше.
 	_supply_row = GridContainer.new()
 	_supply_row.columns = 2
 	_supply_row.add_theme_constant_override("h_separation", 2)
 	_supply_row.add_theme_constant_override("v_separation", 2)
+	_supply_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_supply_row.size_flags_stretch_ratio = 1.0
 	col.add_child(_supply_row)
 
 
@@ -102,14 +110,8 @@ func update_from_view(view: Dictionary) -> void:
 		card.pressed.connect(func(cid: String): supply_card_clicked.emit(cid))
 		_supply_row.add_child(box)
 
-	# Стопка Insane Outcast выкладывается только с полуколодой Demons —
-	# если её в игре нет, карточку про неё не показываем вовсе.
-	if supplies.has(Supplies.INSANE_OUTCAST):
-		var io := _supply_box(Supplies.INSANE_OUTCAST, "×%d" % int(supplies[Supplies.INSANE_OUTCAST]), true)
-		var io_card: CardView = io.get_child(0)
-		io_card.set_clickable(false, false)  # его не покупают, только раздают эффектами карт
-		io_card.tooltip_text = "Not for sale: given by card effects"
-		_supply_row.add_child(io)
+	# Стопку Insane Outcast в маркете не показываем вовсе (решение владельца,
+	# 2026-09-19): её не вербуют, карты раздают её сами при розыгрыше.
 
 
 ## Карта маркета в слоте: видно верх лица карты — имя и цену в правом верхнем
@@ -118,6 +120,7 @@ func update_from_view(view: Dictionary) -> void:
 static func _market_slot(cid: String) -> Control:
 	var box := Control.new()
 	box.custom_minimum_size = SLOT
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card := CardView.new(cid, SLOT.x, SLOT.y)
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -146,6 +149,7 @@ static func _supply_box(cid: String, count_text: String, has_cards: bool) -> Con
 func _empty_slot() -> Control:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = SLOT
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel",
 		PixelTheme.box(PixelTheme.PANEL_LO, PixelTheme.BORDER, 1, 1, 1))
 	var label := Label.new()

@@ -11,8 +11,9 @@ extends Control
 
 signal card_clicked(card_id: String)
 
-## Карта в руке чуть меньше пиксельного оригинала: так ряд из шести карт
-## помещается в колонку, не наезжая друг на друга до нечитаемости.
+## Мелкое лицо карты пиксель в пиксель. Ширина зоны подобрана так, что пять
+## карт (обычная рука) стоят рядом с зазором в 2 пикселя и не наезжают друг на
+## друга; шестая и дальше ложатся внахлёст.
 const CARD_SIZE := Vector2(80, 91)   # = CardView.MINI_SIZE, пиксель в пиксель
 const HOVER_LIFT := 6.0     # на сколько выдвигается карта под курсором
 const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края зоны
@@ -87,14 +88,16 @@ func _layout() -> void:
 	_built_for = size
 	var base_y := size.y - BOTTOM_MARGIN - CARD_SIZE.y
 	var n := _cards.size()
+	# Шаг только целый: на дробном пиксели карты разъезжаются и лицо мылится.
 	var step := CARD_SIZE.x + GAP
 	if n > 1 and CARD_SIZE.x + step * (n - 1) > size.x:
-		step = (size.x - CARD_SIZE.x) / (n - 1)
+		step = maxf(floorf((size.x - CARD_SIZE.x) / (n - 1)), 6.0)
 	var total := CARD_SIZE.x + step * maxi(n - 1, 0)
-	var x0 := (size.x - total) * 0.5
+	var x0 := floorf((size.x - total) * 0.5)
 	for i in range(n):
 		var lift: float = _lifts[i] if i < _lifts.size() else 0.0
-		_cards[i].position = Vector2(x0 + step * i, base_y - HOVER_LIFT * smoothstep(0.0, 1.0, lift))
+		_cards[i].position = Vector2(x0 + step * i,
+			roundf(base_y - HOVER_LIFT * smoothstep(0.0, 1.0, lift)))
 		# Выдвинутая карта не должна прятаться под соседней справа.
 		_cards[i].z_index = 1 if lift > 0.01 else 0
 

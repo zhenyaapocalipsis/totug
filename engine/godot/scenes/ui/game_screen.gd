@@ -24,23 +24,30 @@ const MAX_PLAYERS := 4
 # Сетка экрана в пикселях расчётного размера 640x360 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по решению владельца
 # (2026-09-19):
-#   верхний ряд — квадраты бараков слева, за ними Power/Influence и общая
-#     полоса сыгранных карт до правого края;
-#   средний ряд — доска во всю оставшуюся ширину и маркет справа;
-#   нижний ряд — чат с журналом, рука и колонка стопок с кнопкой End turn.
+#   верхний ряд — бараки слева, ровно по ширине чата под ними, и полоса
+#     сыгранных карт, ровно по ширине руки под ней;
+#   средний ряд — доска во всю оставшуюся ширину, а правая колонка идёт от
+#     самого верха экрана: маркет, под ним End turn с таймером и
+#     Power/Influence;
+#   нижний ряд — чат, рука и две стопки, все одной высоты.
 # Чей сейчас ход, написано на самой кнопке End turn, а весь расклад по
 # игрокам показывается поверх экрана, пока зажат Tab (PlayersOverlay).
-const MARGIN := 2.0
+const MARGIN := 1.0
 const GAP := 2.0
-const COL_A := 72.0
-## Правая колонка: два слота маркета по 88 плюс отступы панели, и ровно
-## столько же нужно двум стопкам под ней, чтобы карта в них рисовалась
-## пиксель в пиксель.
-const COL_D := 170.0
+## Левая колонка: чат внизу и бараки над ним — одной ширины.
+const COL_A := 62.0
+## Правая колонка: два слота маркета по 80 плюс по пикселю отступа панели.
+## Столько же у двух стопок под ней, чтобы карта в них рисовалась пиксель в
+## пиксель. Руке достаётся весь остаток — ровно пять карт по 80 с зазором 2.
+const COL_D := 164.0
 const TOP_H := 22.0
-const BOTTOM_H := 90.0
-## Ширина плашки Power/Influence рядом с зоной сыгранных карт.
-const RES_W := 36.0
+## Высота нижнего ряда: мелкое лицо карты (91) плюс отступы подложки руки.
+const BOTTOM_H := 95.0
+## Блок под маркетом: кнопка End turn, строка таймера и плашка Power/Influence.
+const END_BUTTON_H := 24.0
+const TIMER_H := 11.0
+const RES_H := 13.0
+const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
@@ -134,21 +141,6 @@ func _build_layout() -> void:
 	_barracks = BarracksBar.new()
 	add_child(_barracks)
 
-	# 3b. Power и Influence ходящего — вплотную к зоне сыгранных карт.
-	_res_zone = PanelContainer.new()
-	_res_zone.add_theme_stylebox_override("panel", zone_style(1))
-	add_child(_res_zone)
-	var res_col := VBoxContainer.new()
-	res_col.add_theme_constant_override("separation", 0)
-	res_col.alignment = BoxContainer.ALIGNMENT_CENTER
-	_res_zone.add_child(res_col)
-	_res_power = Label.new()
-	_res_power.add_theme_color_override("font_color", POWER_COLOR)
-	res_col.add_child(_res_power)
-	_res_influence = Label.new()
-	_res_influence.add_theme_color_override("font_color", INFLUENCE_COLOR)
-	res_col.add_child(_res_influence)
-
 	# 3. Общая полоса сыгранных карт: что сыграл тот, чей сейчас ход.
 	_played_zone = PanelContainer.new()
 	_played_zone.add_theme_stylebox_override("panel", zone_style(1))
@@ -198,7 +190,9 @@ func _build_layout() -> void:
 	# 2. Стопки зрителя: Внутренний круг и сброс. Стоят между инфо игрока и
 	# кнопкой End turn, по щелчку показывают весь список карт.
 	_piles_column = HBoxContainer.new()
-	_piles_column.add_theme_constant_override("separation", int(GAP))
+	# Без зазора: тогда на стопку приходится ровно 82 пикселя, и мелкое лицо
+	# карты (80) рисуется внутри рамок пиксель в пиксель.
+	_piles_column.add_theme_constant_override("separation", 0)
 	add_child(_piles_column)
 	_pile_inner = PileZone.new("INNER")
 	_pile_inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -233,6 +227,22 @@ func _build_layout() -> void:
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_label.tooltip_text = "Turn timer: when it runs out the turn ends by itself"
 	_end_turn_area.add_child(_timer_label)
+	# Power и Influence ходящего — под таймером (решение владельца, 2026-09-19).
+	# В одну строку: в колонке шириной 164 обе цифры помещаются рядом.
+	_res_zone = PanelContainer.new()
+	_res_zone.add_theme_stylebox_override("panel", zone_style(1))
+	_res_zone.tooltip_text = "Power and Influence of the player to move"
+	_end_turn_area.add_child(_res_zone)
+	var res_row := HBoxContainer.new()
+	res_row.add_theme_constant_override("separation", 10)
+	res_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_res_zone.add_child(res_row)
+	_res_power = Label.new()
+	_res_power.add_theme_color_override("font_color", POWER_COLOR)
+	res_row.add_child(_res_power)
+	_res_influence = Label.new()
+	_res_influence.add_theme_color_override("font_color", INFLUENCE_COLOR)
+	res_row.add_child(_res_influence)
 	_deploy_vp_button = Button.new()
 	_deploy_vp_button.text = "Deploy: 1 VP"
 	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
@@ -348,41 +358,42 @@ func _layout() -> void:
 	var bottom_y := h - MARGIN - BOTTOM_H
 	var mid_h := bottom_y - GAP - mid_y
 
-	# Верхний ряд: квадраты бараков, ресурсы хода и сыгранные карты до края.
-	var bar_w := BarracksBar.width_for(player_ids.size())
-	var res_x := a_x + bar_w + GAP
-	var played_x := res_x + RES_W + GAP
-	_place(_barracks, a_x, top_y, bar_w, TOP_H)
-	_place(_res_zone, res_x, top_y, RES_W, TOP_H)
-	_place(_played_zone, played_x, top_y, w - MARGIN - played_x, TOP_H)
-	# Доска занимает весь средний ряд — от левого края до маркета.
+	# Верхний ряд: бараки по ширине чата и сыгранные карты по ширине руки.
+	_place(_barracks, a_x, top_y, COL_A, TOP_H)
+	_place(_played_zone, b_x, top_y, b_w, TOP_H)
+	# Доска занимает весь средний ряд — от левого края до правой колонки.
 	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
-	_place(_market_panel, d_x, mid_y, COL_D, mid_h)
+
+	# Правая колонка начинается от самого верха экрана: над маркетом ничего
+	# нет, и всё свободное место достаётся картам маркета. Под маркетом —
+	# кнопка End turn, таймер и Power/Influence, ниже — стопки.
+	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
+	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
+	var end_h := deploy_block + END_BUTTON_H + TIMER_H + RES_H
+	var market_h := bottom_y - GAP - top_y - end_h - GAP
+	_place(_market_panel, d_x, top_y, COL_D, market_h)
+	_place(_end_turn_area, d_x, top_y + market_h + GAP, COL_D, end_h)
+	_place(_piles_column, d_x, bottom_y, COL_D, BOTTOM_H)
+
 	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
-	# Нижний ряд колонки D: сверху стопки, ниже кнопка End turn с таймером.
-	var piles_h := 34.0
-	_place(_piles_column, d_x, bottom_y, COL_D, piles_h)
-	_place(_end_turn_area, d_x, bottom_y + piles_h + GAP, COL_D, BOTTOM_H - piles_h - GAP)
 	# Рука занимает середину нижнего ряда; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, b_x, hand_top, b_w, h - MARGIN - hand_top)
 
 	# Кнопка End turn в две строки: сверху чей ход, снизу сама надпись.
-	var button_h := 24.0
-	var timer_h := 11.0
-	var deploy_h := 13.0 if _deploy_vp_button.visible else 0.0
-	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
 	_deploy_vp_button.position = Vector2(0, 0)
 	_deploy_vp_button.size = Vector2(COL_D, deploy_h)
 	_end_turn_button.position = Vector2(0, deploy_block)
-	_end_turn_button.size = Vector2(COL_D, button_h)
+	_end_turn_button.size = Vector2(COL_D, END_BUTTON_H)
 	_turn_label.position = Vector2(0, deploy_block + 1.0)
 	_turn_label.size = Vector2(COL_D, PixelTheme.LINE_H)
 	_end_label.position = Vector2(0, deploy_block + 1.0 + PixelTheme.LINE_H)
 	_end_label.size = Vector2(COL_D, PixelTheme.LINE_H)
-	_timer_label.position = Vector2(0, deploy_block + button_h + 1.0)
-	_timer_label.size = Vector2(COL_D, timer_h)
+	_timer_label.position = Vector2(0, deploy_block + END_BUTTON_H)
+	_timer_label.size = Vector2(COL_D, TIMER_H)
+	_res_zone.position = Vector2(0, deploy_block + END_BUTTON_H + TIMER_H)
+	_res_zone.size = Vector2(COL_D, RES_H)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
