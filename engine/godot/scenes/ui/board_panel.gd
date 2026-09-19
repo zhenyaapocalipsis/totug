@@ -318,13 +318,47 @@ func _draw() -> void:
 				draw_circle(pos, radius * 0.82, colour)
 
 		if deployable.has(slot_id):
-			draw_arc(pos, radius + 3.0, 0, TAU, 24, DEPLOY_COLOR, maxf(2.0, radius * 0.18))
+			_mark_slot(pos, DEPLOY_COLOR, owner != "")
 		elif killable.has(slot_id):
-			draw_arc(pos, radius + 3.0, 0, TAU, 24, KILL_COLOR, maxf(2.0, radius * 0.18))
+			_mark_slot(pos, KILL_COLOR, owner != "")
 
 	_draw_spies()
 	_draw_spy_targets()
 	_draw_decision_targets()
+
+
+## Радиус кольца подсветки на схеме, в мировых пикселях: по самому кружку
+## места, а вокруг фишки — на пиксель шире. Больше делать нельзя: шаг между
+## местами BoardSchematic.SLOT_PITCH, и кольца соседей начнут пересекаться
+## (проверяется тестом).
+static func highlight_radius_world(occupied: bool) -> float:
+	return BoardSchematic.SLOT_R + (1.0 if occupied else 0.0)
+
+
+## Подсветка одного места: пустое — бледной «заготовкой» войска внутри самого
+## кружка, занятое — тонким кольцом вплотную вокруг фишки.
+##
+## Раньше вокруг каждого места рисовалась окружность радиусом слот+3 px. Шаг
+## между местами на схеме — 10 px, поэтому в локации с восемью местами (Wells
+## of Darkness) кольца налезали друг на друга и превращались в зелёное месиво,
+## закрывавшее название локации. Теперь подсветка не выходит за половину шага,
+## а её линия ложится на целые экранные пиксели — как и вся остальная схема.
+func _mark_slot(pos: Vector2, colour: Color, occupied: bool) -> void:
+	var scale := window_scale()
+	var at := (pos * scale).round() / scale
+	var width: float
+	var r: float
+	if _schematic_on():
+		width = maxf(1.0, roundf(_zoom))
+		r = highlight_radius_world(occupied) * _zoom
+	else:
+		r = _slot_radius_world() * _zoom * (1.18 if occupied else 1.0)
+		width = maxf(2.0, r * 0.16)
+	# Пустое место лишь слегка подкрашиваем: если залить его ярко, оно будет
+	# неотличимо от фишки зелёного игрока.
+	if not occupied:
+		draw_circle(at, maxf(r - width * 0.5, 1.0), Color(colour, 0.22))
+	draw_arc(at, r, 0, TAU, 24, colour, width)
 
 
 func _token(colour: Color) -> ImageTexture:
@@ -340,8 +374,13 @@ func _outline_site(site_id: String, colour: Color) -> void:
 	var rect: Variant = _site_rect(site_id)
 	if rect != null:
 		var r := rect as Rect2
-		var screen := Rect2(_to_screen(r.position), r.size * _zoom).grow(maxf(2.0, _zoom * 2.0))
-		draw_rect(screen, colour, false, maxf(2.0, _zoom))
+		# Рамка идёт по целым экранным пикселям и отступает от коробки ровно на
+		# свою толщину — иначе линия «плывёт» и местами двоится.
+		var scale := window_scale()
+		var width: float = maxf(1.0, roundf(_zoom))
+		var top_left := (_to_screen(r.position) * scale).round() / scale
+		var bottom_right := (_to_screen(r.end) * scale).round() / scale
+		draw_rect(Rect2(top_left, bottom_right - top_left).grow(width), colour, false, width)
 		return
 	var centre: Variant = _site_centre(site_id)
 	if centre != null:
@@ -406,11 +445,11 @@ func _draw_decision_targets() -> void:
 			if rest.size() == 2:
 				site_targets[rest[0]] = true
 
-	var radius: float = maxf(_slot_radius_world() * _zoom, 3.0)
+	var troops: Dictionary = _view.get("troops", {})
 	for slot_id: String in slot_targets.keys():
 		var at: Variant = _slot_world(slot_id)
 		if at != null:
-			draw_arc(_to_screen(at), radius + 3.0, 0, TAU, 24, DECISION_COLOR, maxf(2.0, radius * 0.2))
+			_mark_slot(_to_screen(at), DECISION_COLOR, String(troops.get(slot_id, "")) != "")
 	for site_id: String in site_targets.keys():
 		_outline_site(site_id, DECISION_COLOR)
 

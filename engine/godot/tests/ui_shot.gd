@@ -173,6 +173,25 @@ func _run_scenario() -> void:
 			var overlay := _find_overlay(_screen)
 			if overlay != null:
 				overlay.visible = true
+		"deploy":
+			# Подсветка мест для Deploy в САМОЙ БОЛЬШОЙ локации (Wells of
+			# Darkness, восемь мест): именно там кольца подсветки раньше
+			# сливались в сплошное зелёное пятно поверх названия.
+			while _screen.server.resolver.is_waiting():
+				var pd8: PendingDecision = _screen.server.resolver.pending
+				var pick := String(pd8.legal_options[0])
+				var most := -1
+				for opt8 in pd8.legal_options:
+					var site8: Dictionary = (_screen.board_data["sites"] as Dictionary).get(String(opt8), {})
+					var count8: int = (site8.get("slots", []) as Array).size()
+					if count8 > most:
+						most = count8
+						pick = String(opt8)
+				_screen.send(Intent.make_decision(pd8.player_id, pick))
+			var pid8: String = _screen.server.state.current_player()
+			_screen.server.state.players[pid8].power = 5
+			_screen.refresh(StateView.for_player_with_pending(
+				_screen.server.state, pid8, _screen.server.resolver.pending))
 		"end_turn":
 			_screen.send(Intent.end_turn(_screen.server.state.current_player()))
 		_:

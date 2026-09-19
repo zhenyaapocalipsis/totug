@@ -2425,3 +2425,11 @@ func test_board_schematic() -> void:
 	var board := StateView.board_snapshot(GameSetup.new_game(["red", "blue"], 5))
 	var image := SchematicPainter.paint(board["schematic"])
 	check(image.get_width() > 200 and image.get_height() > 100, "схема рисуется в картинку")
+
+	# Подсветка мест (Deploy, Assassinate, цели решения) не должна вылезать за
+	# половину шага между местами: в локации с девятью местами (Wells of
+	# Darkness) широкие кольца сливались в зелёное пятно поверх названия.
+	check(BoardPanel.highlight_radius_world(false) * 2.0 <= BoardSchematic.SLOT_PITCH,
+		"кольцо подсветки пустого места уже шага между местами")
+	check(BoardPanel.highlight_radius_world(true) * 2.0 <= BoardSchematic.SLOT_PITCH,
+		"кольцо подсветки вокруг фишки уже шага между местами")
