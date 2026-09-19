@@ -27,9 +27,11 @@ const MAX_PLAYERS := 4
 #   верхний ряд — бараки слева, ровно по ширине чата под ними, и полоса
 #     сыгранных карт, ровно по ширине руки под ней;
 #   средний ряд — доска во всю оставшуюся ширину, а правая колонка идёт от
-#     самого верха экрана: маркет, под ним End turn с таймером и
-#     Power/Influence;
-#   нижний ряд — чат, рука и две стопки, все одной высоты.
+#     самого верха экрана: маркет, под ним зона Devoured;
+#   нижний ряд — чат, рука и правый угол: Inner над Discard, рядом кнопка
+#     End turn с таймером.
+# Power/Influence ходящего висят оверлеем под зоной сыгранных карт и
+# появляются, только когда в этот ход что-то сыграно.
 # Чей сейчас ход, написано на самой кнопке End turn, а весь расклад по
 # игрокам показывается поверх экрана, пока зажат Tab (PlayersOverlay).
 const MARGIN := 1.0
@@ -43,11 +45,16 @@ const COL_D := 164.0
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (91) плюс отступы подложки руки.
 const BOTTOM_H := 95.0
-## Блок под маркетом: кнопка End turn, строка таймера и плашка Power/Influence.
-const END_BUTTON_H := 24.0
+## Зона Devoured — сразу под маркетом (решение владельца, 2026-09-19).
+const DEVOUR_H := 48.0
+## Нижний ряд правой колонки пополам: слева стопки зрителя (Inner над
+## Discard), справа кнопка End turn с таймером.
+const PILE_W := 82.0
 const TIMER_H := 11.0
-const RES_H := 13.0
 const DEPLOY_H := 13.0
+## Плашка Power/Influence: оверлей под зоной сыгранных карт, видна только
+## когда в этот ход что-то сыграно.
+const RES_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
@@ -76,9 +83,11 @@ var _res_influence: Label
 var _played_zone: PanelContainer
 var _played_title: Label
 var _played_strip: CardStrip
-var _piles_column: HBoxContainer
+var _piles_column: VBoxContainer
 var _pile_inner: PileZone
 var _pile_discard: PileZone
+## Общая для всех стопка сожранных карт: живёт под маркетом.
+var _pile_devour: PileZone
 var _pile_dialog: PileDialog
 var _end_turn_area: Control
 var _end_turn_button: Button
@@ -88,6 +97,9 @@ var _end_turn_style: StyleBoxFlat
 var _turn_label: Label
 var _end_label: Label
 var _timer_label: Label
+## Пометка «начался последний круг» — отдельной строкой: в узкую колонку
+## End turn она рядом с таймером не помещается.
+var _last_round_label: Label
 var _deploy_vp_button: Button
 var _preview: CardPreview
 
@@ -174,11 +186,37 @@ func _build_layout() -> void:
 	_decision_dialog.option_chosen.connect(_on_decision_answer)
 	_board_area.add_child(_decision_dialog)
 
+	# 3c. Power и Influence ходящего — оверлеем под зоной сыгранных карт
+	# (решение владельца, 2026-09-19). Лежит поверх доски и появляется, только
+	# когда в этот ход что-то сыграно, — поэтому и добавлена после доски.
+	_res_zone = PanelContainer.new()
+	_res_zone.add_theme_stylebox_override("panel", zone_style(1))
+	_res_zone.tooltip_text = "Power and Influence of the player to move"
+	_res_zone.visible = false
+	add_child(_res_zone)
+	var res_row := HBoxContainer.new()
+	res_row.add_theme_constant_override("separation", 6)
+	res_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_res_zone.add_child(res_row)
+	_res_power = Label.new()
+	_res_power.add_theme_color_override("font_color", POWER_COLOR)
+	res_row.add_child(_res_power)
+	_res_influence = Label.new()
+	_res_influence.add_theme_color_override("font_color", INFLUENCE_COLOR)
+	res_row.add_child(_res_influence)
+
 	# 6. Маркет.
 	_market_panel = MarketPanel.new()
 	_market_panel.market_card_clicked.connect(_on_market_clicked)
 	_market_panel.supply_card_clicked.connect(_on_supply_clicked)
 	add_child(_market_panel)
+
+	# 6b. Сожранные карты — общая для всех стопка прямо под маркетом: оттуда
+	# же берётся «призрак» (Ghost), верхняя карта этой стопки.
+	_pile_devour = PileZone.new("DEVOURED")
+	_pile_devour.tooltip_text = "Cards devoured out of the game. Click to see them all"
+	_pile_devour.clicked.connect(func(): _open_pile("devour"))
+	add_child(_pile_devour)
 
 	# 5. Чат и журнал.
 	_chat_panel = ChatPanel.new()
@@ -187,24 +225,23 @@ func _build_layout() -> void:
 	_log_panel = _chat_panel.log_panel
 	_log_panel.board = board_data
 
-	# 2. Стопки зрителя: Внутренний круг и сброс. Стоят между инфо игрока и
-	# кнопкой End turn, по щелчку показывают весь список карт.
-	_piles_column = HBoxContainer.new()
-	# Без зазора: тогда на стопку приходится ровно 82 пикселя, и мелкое лицо
-	# карты (80) рисуется внутри рамок пиксель в пиксель.
+	# 2. Стопки зрителя: Внутренний круг над сбросом, в левой половине правого
+	# нижнего угла. По щелчку показывают весь список карт.
+	_piles_column = VBoxContainer.new()
+	# Без зазора: рамки стопок стоят вплотную, как у слотов маркета.
 	_piles_column.add_theme_constant_override("separation", 0)
 	add_child(_piles_column)
 	_pile_inner = PileZone.new("INNER")
-	_pile_inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_inner.clicked.connect(func(): _open_pile("inner"))
 	_piles_column.add_child(_pile_inner)
 	_pile_discard = PileZone.new("DISCARD")
-	_pile_discard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pile_discard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_discard.clicked.connect(func(): _open_pile("discard"))
 	_piles_column.add_child(_pile_discard)
 
-	# 9. End turn — широкая кнопка, на ней же написано, чей сейчас ход; под
-	# ней таймер хода, над ней, когда можно, Deploy for 1 VP.
+	# 9. End turn — правая половина нижнего угла: высокая кнопка, на ней же
+	# написано, чей сейчас ход; под ней таймер, над ней Deploy for 1 VP.
 	_end_turn_area = Control.new()
 	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_end_turn_area)
@@ -227,22 +264,12 @@ func _build_layout() -> void:
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_label.tooltip_text = "Turn timer: when it runs out the turn ends by itself"
 	_end_turn_area.add_child(_timer_label)
-	# Power и Influence ходящего — под таймером (решение владельца, 2026-09-19).
-	# В одну строку: в колонке шириной 164 обе цифры помещаются рядом.
-	_res_zone = PanelContainer.new()
-	_res_zone.add_theme_stylebox_override("panel", zone_style(1))
-	_res_zone.tooltip_text = "Power and Influence of the player to move"
-	_end_turn_area.add_child(_res_zone)
-	var res_row := HBoxContainer.new()
-	res_row.add_theme_constant_override("separation", 10)
-	res_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_res_zone.add_child(res_row)
-	_res_power = Label.new()
-	_res_power.add_theme_color_override("font_color", POWER_COLOR)
-	res_row.add_child(_res_power)
-	_res_influence = Label.new()
-	_res_influence.add_theme_color_override("font_color", INFLUENCE_COLOR)
-	res_row.add_child(_res_influence)
+	_last_round_label = Label.new()
+	_last_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_last_round_label.text = "LAST ROUND"
+	_last_round_label.visible = false
+	_last_round_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+	_end_turn_area.add_child(_last_round_label)
 	_deploy_vp_button = Button.new()
 	_deploy_vp_button.text = "Deploy: 1 VP"
 	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
@@ -366,14 +393,12 @@ func _layout() -> void:
 
 	# Правая колонка начинается от самого верха экрана: над маркетом ничего
 	# нет, и всё свободное место достаётся картам маркета. Под маркетом —
-	# кнопка End turn, таймер и Power/Influence, ниже — стопки.
-	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
-	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
-	var end_h := deploy_block + END_BUTTON_H + TIMER_H + RES_H
-	var market_h := bottom_y - GAP - top_y - end_h - GAP
+	# стопка сожранных карт, а в нижнем ряду стопки зрителя и End turn.
+	var market_h := bottom_y - GAP - DEVOUR_H - GAP - top_y
 	_place(_market_panel, d_x, top_y, COL_D, market_h)
-	_place(_end_turn_area, d_x, top_y + market_h + GAP, COL_D, end_h)
-	_place(_piles_column, d_x, bottom_y, COL_D, BOTTOM_H)
+	_place(_pile_devour, d_x, top_y + market_h + GAP, COL_D, DEVOUR_H)
+	_place(_piles_column, d_x, bottom_y, PILE_W, BOTTOM_H)
+	_place(_end_turn_area, d_x + PILE_W, bottom_y, COL_D - PILE_W, BOTTOM_H)
 
 	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
 	# Рука занимает середину нижнего ряда; запас сверху нужен карте под
@@ -381,19 +406,37 @@ func _layout() -> void:
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, b_x, hand_top, b_w, h - MARGIN - hand_top)
 
-	# Кнопка End turn в две строки: сверху чей ход, снизу сама надпись.
+	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
+	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
+	# лежат по центру кнопки.
+	var ew := COL_D - PILE_W
+	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
+	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
+	var timer_block: float = TIMER_H
+	if _last_round_label.visible:
+		timer_block += float(PixelTheme.LINE_H)
+	var button_h: float = BOTTOM_H - deploy_block - timer_block
 	_deploy_vp_button.position = Vector2(0, 0)
-	_deploy_vp_button.size = Vector2(COL_D, deploy_h)
+	_deploy_vp_button.size = Vector2(ew, deploy_h)
 	_end_turn_button.position = Vector2(0, deploy_block)
-	_end_turn_button.size = Vector2(COL_D, END_BUTTON_H)
-	_turn_label.position = Vector2(0, deploy_block + 1.0)
-	_turn_label.size = Vector2(COL_D, PixelTheme.LINE_H)
-	_end_label.position = Vector2(0, deploy_block + 1.0 + PixelTheme.LINE_H)
-	_end_label.size = Vector2(COL_D, PixelTheme.LINE_H)
-	_timer_label.position = Vector2(0, deploy_block + END_BUTTON_H)
-	_timer_label.size = Vector2(COL_D, TIMER_H)
-	_res_zone.position = Vector2(0, deploy_block + END_BUTTON_H + TIMER_H)
-	_res_zone.size = Vector2(COL_D, RES_H)
+	_end_turn_button.size = Vector2(ew, button_h)
+	var caption_y := deploy_block + floorf((button_h - PixelTheme.LINE_H * 2.0) * 0.5)
+	_turn_label.position = Vector2(0, caption_y)
+	_turn_label.size = Vector2(ew, PixelTheme.LINE_H)
+	_end_label.position = Vector2(0, caption_y + PixelTheme.LINE_H)
+	_end_label.size = Vector2(ew, PixelTheme.LINE_H)
+	_timer_label.position = Vector2(0, deploy_block + button_h)
+	_timer_label.size = Vector2(ew, TIMER_H)
+	_last_round_label.position = Vector2(0, deploy_block + button_h + TIMER_H)
+	_last_round_label.size = Vector2(ew, PixelTheme.LINE_H)
+
+	# Оверлей Power/Influence висит под зоной сыгранных карт, прижатый к её
+	# правому краю: там он реже всего перекрывает плашку вопроса над доской.
+	# Ширину считаем по самому тексту: get_combined_minimum_size() в этом же
+	# кадре ещё не знает о только что заданных цифрах.
+	var res_w := float(PixelFont.text_width(_res_power.text)
+		+ PixelFont.text_width(_res_influence.text) + 6 + 4)
+	_place(_res_zone, b_x + b_w - res_w, top_y + TOP_H, res_w, RES_H)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -455,10 +498,13 @@ func _process(delta: float) -> void:
 		_time_left = TURN_SECONDS
 	_time_left = maxf(0.0, _time_left - delta)
 	var left := int(ceilf(_time_left))
-	# Рядом с таймером — единственная оставшаяся пометка о состоянии партии:
-	# начался последний круг, дальше подсчёт очков.
-	var last_round := " · LAST ROUND" if server.state.game_end_triggered else ""
-	_timer_label.text = "%d:%02d%s" % [left / 60, left % 60, last_round]
+	# Под таймером — единственная оставшаяся пометка о состоянии партии:
+	# начался последний круг, дальше подсчёт очков. Отдельной строкой: рядом с
+	# таймером она в узкую колонку не помещается.
+	if _last_round_label.visible != server.state.game_end_triggered:
+		_last_round_label.visible = server.state.game_end_triggered
+		_layout()
+	_timer_label.text = "%d:%02d" % [left / 60, left % 60]
 	_timer_label.add_theme_color_override("font_color",
 		Color(0.95, 0.38, 0.32) if _time_left <= 20.0 else Color(0.78, 0.76, 0.86))
 
@@ -507,10 +553,17 @@ func _refresh_played(view: Dictionary) -> void:
 	_played_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
 	_played_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	_played_strip.empty_text = "nothing played yet"
-	_played_strip.set_cards(p.get("played_pile", []))
-	# Ресурсы хода — рядом с этой же зоной: тратит их тот, чей ход.
+	var played: Array = p.get("played_pile", [])
+	_played_strip.set_cards(played)
+	# Ресурсы хода висят оверлеем под этой же зоной: тратит их тот, чей ход.
+	# Пока в этот ход ничего не сыграно, тратить нечего — плашки нет.
 	_res_power.text = "P %d" % int(p.get("power", 0))
 	_res_influence.text = "I %d" % int(p.get("influence", 0))
+	var show_res := not played.is_empty()
+	if _res_zone.visible != show_res:
+		_res_zone.visible = show_res
+	if show_res:
+		_layout()  # ширина плашки зависит от самих цифр
 
 
 ## Стопки зрителя. Сброс виден только своему игроку (StateView его прячет),
@@ -519,6 +572,8 @@ func _refresh_piles(view: Dictionary) -> void:
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	_pile_inner.set_cards(me.get("inner_circle", []))
 	_pile_discard.set_cards(me.get("discard_pile", []))
+	# Сожранные карты — стопка общая для всех, не своя у зрителя.
+	_pile_devour.set_cards(view.get("devoured_pile", []))
 
 
 ## Щелчок по стопке — весь её список поверх экрана.
@@ -526,10 +581,13 @@ func _open_pile(which: String) -> void:
 	var view := StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	var who := EventLogPanel.player_name(viewer_id)
-	if which == "inner":
-		_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []))
-	else:
-		_pile_dialog.open_pile("%s — Discard pile" % who, me.get("discard_pile", []))
+	match which:
+		"inner":
+			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []))
+		"devour":
+			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []))
+		_:
+			_pile_dialog.open_pile("%s — Discard pile" % who, me.get("discard_pile", []))
 
 
 func _refresh_actions(view: Dictionary) -> void:

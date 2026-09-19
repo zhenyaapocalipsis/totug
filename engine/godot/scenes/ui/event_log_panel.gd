@@ -46,7 +46,9 @@ func add_events(events: Array) -> void:
 			line = _escape(line)
 		_lines.append(line)
 		if String(evt.get("type", "")) == "turn_ended" and not bool(evt.get("game_over", false)):
-			_lines.append("[color=#8a8a95]────────────[/color]")
+			# Только дефисы: рамочных символов (─) в пиксельном шрифте нет,
+			# вместо них рисовались пустые квадратики.
+			_lines.append("[color=#8a8a95]------------[/color]")
 	_trim_and_show()
 
 
