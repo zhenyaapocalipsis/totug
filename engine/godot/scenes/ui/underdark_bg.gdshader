@@ -43,7 +43,7 @@ uniform float warp = 2.6;
 /// Ширина перехода: маленькая — плоская краска с чёткой кромкой.
 uniform float edge : hint_range(0.005, 0.30) = 0.045;
 /// Сколько места занимают языки: выше — краски меньше, темноты больше.
-uniform float ink : hint_range(0.0, 1.0) = 0.66;
+uniform float ink : hint_range(0.0, 1.0) = 0.46;
 /// Яркость блика на кромке.
 uniform float glow : hint_range(0.0, 2.0) = 0.5;
 /// Сила затемнения к краям экрана.
@@ -52,34 +52,41 @@ uniform float vignette : hint_range(0.0, 1.0) = 0.25;
 uniform float pixel_size = 1.0;
 
 
-float hash21(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+vec2 hash22(vec2 p) {
+	p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+	return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
 }
 
 
-/// Пятнистый шум: значения в узлах решётки, между ними — плавный переход.
-float vnoise(vec2 p) {
+/// Градиентный шум. Раньше здесь был шум попроще (значение в каждом узле
+/// решётки): он дешевле, но его линии уровня липнут к осям решётки, и края
+/// мазков выходят ступеньками под 45 градусов — та самая «лесенка».
+/// Градиентный шум хранит в узлах направления, а не значения, и таких
+/// уступов не даёт. Сглаживание тоже другое, пятой степени: у кубического
+/// на стыках клеток остаётся излом.
+float gnoise(vec2 p) {
 	vec2 i = floor(p);
 	vec2 f = fract(p);
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	float a = hash21(i);
-	float b = hash21(i + vec2(1.0, 0.0));
-	float c = hash21(i + vec2(0.0, 1.0));
-	float d = hash21(i + vec2(1.0, 1.0));
+	vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+	float a = dot(hash22(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0));
+	float b = dot(hash22(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
+	float c = dot(hash22(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
+	float d = dot(hash22(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
 	return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
 
-/// Пять слоёв шума: крупные пятна плюс всё более мелкая рябь.
+/// Четыре слоя шума: крупные пятна плюс всё более мелкая рябь.
+/// Результат приводится к 0..1 — по нему дальше ставятся пороги.
 float fbm(vec2 p) {
 	float sum = 0.0;
 	float amp = 0.5;
 	for (int i = 0; i < 4; i++) {
-		sum += amp * vnoise(p);
+		sum += amp * gnoise(p);
 		p = p * 2.03 + vec2(1.7, 9.2);
 		amp *= 0.5;
 	}
-	return sum;
+	return clamp(sum * 1.4 + 0.5, 0.0, 1.0);
 }
 
 
@@ -104,20 +111,29 @@ void fragment() {
 		fbm(p + warp * q + vec2(1.7, 9.2) + 0.30 * t),
 		fbm(p + warp * q + vec2(8.3, 2.8) - 0.25 * t)
 	);
-	float f = fbm(p + warp * s);
+	// Два поля с одинаковым разбросом — по одному на каждую краску.
+	float f1 = fbm(p + warp * s);
+	float f2 = fbm(p + warp * s + vec2(4.4, 1.1));
 
 	// 4. Языки краски выступают из темноты по порогу.
-	float gate = mix(0.30, 0.66, ink);
-	float m1 = smoothstep(gate - edge, gate + edge, f);
-	float m2 = smoothstep(gate - edge, gate + edge, length(s) * 0.78);
+	float gate = mix(0.42, 0.78, ink);
+	// Ширина перехода — не уже, чем значение меняется от пикселя к пикселю
+	// (fwidth). Фиксированный узкий порог рубит кромку ровно по границе
+	// пикселей, и наклонный край рассыпается на ступеньки; здесь край всегда
+	// размазан хотя бы на один пиксель и читается как линия, а не как лестница.
+	float w1 = max(edge, fwidth(f1) * 1.6);
+	float w2 = max(edge, fwidth(f2) * 1.6);
+	float m1 = smoothstep(gate - w1, gate + w1, f1);
+	// Вторая краска ложится реже первой: порог чуть выше.
+	float m2 = smoothstep(gate + 0.04 - w2, gate + 0.04 + w2, f2);
 
 	vec3 col = colour_1.rgb;
 	col = mix(col, colour_2.rgb, m1);
 	col = mix(col, colour_3.rgb, m2 * (1.0 - m1 * 0.55));
 
 	// Блик — узкая светлая линия по самой кромке языка.
-	float rim = (m1 - smoothstep(gate, gate + edge * 1.4, f))
-		+ (m2 - smoothstep(gate, gate + edge * 1.4, length(s) * 0.78));
+	float rim = (m1 - smoothstep(gate, gate + w1 * 2.4, f1))
+		+ (m2 - smoothstep(gate + 0.04, gate + 0.04 + w2 * 2.4, f2));
 	col += vec3(0.66, 0.56, 0.90) * rim * glow;
 
 	// Края темнее — в центре экрана лежит доска, ей нужен спокойный фон.
