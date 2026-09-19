@@ -14,6 +14,9 @@ extends SceneTree
 ## лист (наступали на это в tests/render_smoke.gd).
 
 const SETTLE_FRAMES := 6
+## Потолок ожидания: если рука почему-то не успокоится, снимок всё равно
+## будет сделан, а не зависнет навсегда.
+const MAX_FRAMES := 120
 
 var _screen: GameScreen
 var _out := "res://ui_shot.png"
@@ -218,10 +221,22 @@ func _find_board(node: Node) -> BoardPanel:
 	return null
 
 
+## Доехал ли ряд карт руки до своих мест.
+func _hand_settled() -> bool:
+	for child in _screen.get_children():
+		if child is HandPanel:
+			return (child as HandPanel).is_settled()
+	return true
+
+
 func _process(_delta: float) -> bool:
 	_frame += 1
 	_fake_hover()
 	if _frame < SETTLE_FRAMES + 12:
+		return false
+	# Рука раздаётся с анимацией: карты выезжают снизу друг за другом. Снимок
+	# ждёт, пока ряд доедет, иначе на картинке будет полупустая рука.
+	if _frame < MAX_FRAMES and not _hand_settled():
 		return false
 	var image: Image = root.get_texture().get_image()
 	# Игра рисуется в 640x360; снимок берём ровно в этом размере (пиксель в

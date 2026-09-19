@@ -54,6 +54,13 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < _next_step_at:
 		return false
+	# Первый шаг ждёт, пока рука доедет: карты раздачи выезжают снизу друг за
+	# другом и в первые кадры ещё не на своих местах.
+	if _step == 0:
+		var hand := _hand_panel()
+		if hand == null or not hand.is_settled():
+			_next_step_at = _frame + 1
+			return false
 	_next_step_at = _frame + SETTLE
 	_step += 1
 	match _step:
