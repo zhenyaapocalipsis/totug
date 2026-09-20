@@ -23,7 +23,7 @@ const MINI_H := 76
 ## высоты ради цифр, которые по ходу хода ничего не решают. Аспект видно по
 ## цвету шапки, а VP читают на увеличенной карте под курсором.
 const MINI_HEAD := 26
-const MINI_ART_H := 46
+const MINI_ART_H := 45
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
@@ -513,7 +513,10 @@ func render_mini(c: Dictionary) -> Image:
 	var aspect_col: Color = ASPECT_COLOR.get(aspect, C_GREY)
 	rect(1, 1, MINI_W - 2, MINI_H - 2, C_FRAME)
 	rect(1, 1, MINI_W - 2, 1, C_FRAME_HI)
-	rect(1, MINI_H - 2, MINI_W - 2, 1, C_FRAME_LO)
+	# Низ рамки того же цвета, что бока (а не темнее, как у большой карты):
+	# полоска в один пиксель под артом замыкает рамку, и карта перестаёт
+	# выглядеть обрезанной по нижнему краю.
+	rect(1, MINI_H - 2, MINI_W - 2, 1, C_FRAME)
 
 	# шапка: подложка цвета аспекта, цена справа, имя слева от неё
 	rect(1, 1, MINI_W - 2, MINI_HEAD, Color(aspect_col.darkened(0.62), 1.0))
