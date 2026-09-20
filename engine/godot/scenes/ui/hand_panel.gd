@@ -27,31 +27,35 @@ signal card_clicked(card_id: String)
 ## карт (обычная рука) стоят рядом с зазором в 2 пикселя и не наезжают друг на
 ## друга; шестая и дальше ложатся внахлёст.
 const CARD_SIZE := Vector2(80, 91)   # = CardView.MINI_SIZE, пиксель в пиксель
-const HOVER_LIFT := 6.0     # на сколько выдвигается карта под курсором
+## Подъём заметный: на шести пикселях движение видно ступеньками (положение
+## округляется до целого пикселя), на двенадцати оно читается как рывок вверх.
+const HOVER_LIFT := 12.0
 const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края зоны
 const GAP := 2.0
-const LIFT_TIME := 0.10
 
-## Жёсткость и затухание пружины. Затухание чуть меньше критического
-## (2*sqrt(жёсткость) ≈ 32) — карта слегка проскакивает место и возвращается.
-const SPRING_STIFFNESS := 260.0
-const SPRING_DAMPING := 24.0
+## Жёсткость и затухание пружины. Затухание примерно вдвое меньше критического
+## (2*sqrt(жёсткость) ≈ 41) — карта заметно проскакивает место и качнётся
+## назад. Мягче было вяло: карта приползала, а не прыгала.
+const SPRING_STIFFNESS := 420.0
+const SPRING_DAMPING := 20.0
 ## Пружину считаем шагом не длиннее 1/30 с: на длинном кадре (просадка, окно
 ## свернули) она иначе разлетается.
 const MAX_STEP := 1.0 / 30.0
 
 const ENTER_DROP := 60.0      # откуда выезжает новая карта — из-под края экрана
-const ENTER_STAGGER := 0.06   # пауза между соседними картами раздачи
-const LEAVE_TIME := 0.22      # сколько уплывает вниз сыгранная карта
-const LEAVE_SPEED := 260.0
+const ENTER_STAGGER := 0.05   # пауза между соседними картами раздачи
+## Сыгранная карта улетает ВВЕРХ — туда, где лежит полоса сыгранных карт.
+const LEAVE_TIME := 0.28
+const LEAVE_SPEED := 300.0
+const LEAVE_ACCEL := 900.0    # разгон: карту будто утягивает
 
 var _cards: Array[CardView] = []
 var _pos: Array[Vector2] = []    # текущее дробное положение карты
 var _vel: Array[Vector2] = []    # скорость пружины
-var _lifts: Array[float] = []    # 0..1 на карту: насколько она выдвинута
 var _delay: Array[float] = []    # сколько ещё ждать перед выездом в ряд
 var _leaving: Array[CardView] = []
 var _leaving_left: Array[float] = []
+var _leaving_speed: Array[float] = []
 ## Карта под курсором — именно узел, а не индекс: при обновлении руки карты
 ## переставляются местами, и запомненный индекс указал бы на чужую карту.
 var _hovered_card: CardView = null
@@ -85,13 +89,11 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var old_cards := _cards
 	var old_pos := _pos
 	var old_vel := _vel
-	var old_lifts := _lifts
 	var old_delay := _delay
 	var reused := {}   # индексы прежнего ряда, которые уже разобрали
 	_cards = []
 	_pos = []
 	_vel = []
-	_lifts = []
 	_delay = []
 
 	var fresh := 0
@@ -106,13 +108,11 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_cards.append(old_cards[found])
 			_pos.append(old_pos[found])
 			_vel.append(old_vel[found])
-			_lifts.append(old_lifts[found])
 			_delay.append(old_delay[found])
 		else:
 			_cards.append(_make_card(cid))
 			_pos.append(Vector2.ZERO)
 			_vel.append(Vector2.ZERO)
-			_lifts.append(0.0)
 			_delay.append(ENTER_STAGGER * fresh)
 			fresh += 1
 		_cards[_cards.size() - 1].set_clickable(playable.has(cid))
@@ -143,9 +143,10 @@ func _start_leaving(card: CardView) -> void:
 		_hovered_card = null
 	card.set_clickable(false)
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.z_index = 0
+	card.z_index = 2   # летит поверх оставшихся карт, а не под ними
 	_leaving.append(card)
 	_leaving_left.append(LEAVE_TIME)
+	_leaving_speed.append(LEAVE_SPEED)
 
 
 func _clear_hovered(card: CardView) -> void:
@@ -190,10 +191,12 @@ func _layout() -> void:
 
 
 ## Место, к которому едет карта: своё место в ряду, приподнятое, если карта
-## под курсором.
+## под курсором. Подъём переключается сразу, без своего сглаживания — плавность
+## даёт одна только пружина. Раньше сглаживаний было два, и они гасили друг
+## друга: карта выползала вверх по пикселю за кадр, то есть ступеньками.
 func _target_of(i: int) -> Vector2:
-	return Vector2(_row_x0 + _row_step * i,
-		_row_y - HOVER_LIFT * smoothstep(0.0, 1.0, _lifts[i]))
+	var lifted := HOVER_LIFT if _cards[i] == _hovered_card else 0.0
+	return Vector2(_row_x0 + _row_step * i, _row_y - lifted)
 
 
 func _process(delta: float) -> void:
@@ -202,8 +205,6 @@ func _process(delta: float) -> void:
 		_layout()
 
 	for i in range(_cards.size()):
-		var lift_to := 1.0 if _cards[i] == _hovered_card else 0.0
-		_lifts[i] = move_toward(_lifts[i], lift_to, dt / LIFT_TIME)
 		var want := _target_of(i)
 
 		if _delay[i] > 0.0:
@@ -216,24 +217,28 @@ func _process(delta: float) -> void:
 			continue
 
 		_vel[i] += (want - _pos[i]) * SPRING_STIFFNESS * dt
-		_vel[i] -= _vel[i] * minf(SPRING_DAMPING * dt, 1.0)
+		# Затухание экспоненциальное, а не линейное: на длинном кадре линейное
+		# съедало почти всю скорость и движение застывало.
+		_vel[i] *= exp(-SPRING_DAMPING * dt)
 		_pos[i] += _vel[i] * dt
 		if _pos[i].distance_to(want) < 0.05 and _vel[i].length() < 1.0:
 			_pos[i] = want
 			_vel[i] = Vector2.ZERO
 		_cards[i].position = _pos[i].round()
 		# Выдвинутая карта не должна прятаться под соседней справа.
-		_cards[i].z_index = 1 if _lifts[i] > 0.01 else 0
+		_cards[i].z_index = 1 if _pos[i].y < _row_y - 0.5 else 0
 
 	for j in range(_leaving.size() - 1, -1, -1):
 		var card: CardView = _leaving[j]
 		_leaving_left[j] -= dt
+		_leaving_speed[j] += LEAVE_ACCEL * dt
 		card.position = Vector2(card.position.x,
-			roundf(card.position.y + LEAVE_SPEED * dt))
+			roundf(card.position.y - _leaving_speed[j] * dt))
 		card.modulate.a = clampf(_leaving_left[j] / LEAVE_TIME, 0.0, 1.0)
 		if _leaving_left[j] <= 0.0:
 			_leaving.remove_at(j)
 			_leaving_left.remove_at(j)
+			_leaving_speed.remove_at(j)
 			remove_child(card)
 			card.queue_free()
 

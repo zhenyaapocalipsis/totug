@@ -51,9 +51,9 @@ const MINI_TOP_H := 73.0    # шапка + арт у мелкого лица
 ## Отказ: карта дёргается вбок и краснеет. Дёргается ТОЛЬКО отрисовка
 ## (draw_set_transform), а не position узла: в руке положение карты каждый
 ## кадр задаёт пружина ряда, и тряска позицией с ней бы дралась.
-const SHAKE_TIME := 0.25
-const SHAKE_AMPLITUDE := 3.0
-const SHAKE_SPEED := 46.0
+const SHAKE_TIME := 0.28
+const SHAKE_AMPLITUDE := 4.0
+const SHAKE_SPEED := 64.0
 
 var card_id: String = ""
 var clickable: bool = false
