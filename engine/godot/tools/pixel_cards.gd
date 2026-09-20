@@ -17,10 +17,13 @@ const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
 ## даже в две строки и обрезались, а WEAPONMASTER уезжал за край. Размер один
 ## на все карты — иначе они не встанут ровным рядом в руке и маркете.
 const MINI_W := 80
-const MINI_H := 91
-## Шапка (имя + цена), арт под ней, внизу полоса с аспектом и двумя VP.
+const MINI_H := 76
+## Шапка (имя + цена) и арт под ней — больше ничего. Значка аспекта и двух VP
+## внизу нет (решение владельца, 2026-09-20): полоса съедала шестую часть
+## высоты ради цифр, которые по ходу хода ничего не решают. Аспект видно по
+## цвету шапки, а VP читают на увеличенной карте под курсором.
 const MINI_HEAD := 26
-const MINI_ART_H := 45
+const MINI_ART_H := 46
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
@@ -496,10 +499,10 @@ func sv(v: Variant) -> String:
 
 
 
-## Мелкое лицо карты 88x96 для руки, маркета и полос сыгранных карт: шапка в
-## цвет аспекта с именем и ценой, под ней арт, а под артом — аспект и оба
-## значения VP. Ни типа существа, ни текста способности здесь нет: тип для
-## хода ничего не решает, а текст читают на большой карте под курсором.
+## Мелкое лицо карты 80x76 для руки, маркета и полос сыгранных карт: шапка в
+## цвет аспекта с именем и ценой, под ней арт — и всё. Ни типа существа, ни
+## текста способности, ни VP здесь нет: для хода они ничего не решают, а
+## прочесть их можно на большой карте под курсором.
 ##
 ## Цена стоит в правом верхнем углу, как на большой карте: в маркете виден
 ## только верх лица, и цена должна попадать в него вместе с именем.
@@ -536,23 +539,6 @@ func render_mini(c: Dictionary) -> Image:
 	img.blit_rect(art, Rect2i(0, 0, aw, MINI_ART_H), Vector2i(3, art_y))
 	rect(2, art_y - 1, MINI_W - 4, 1, C_OUTLINE)
 	rect(2, art_y + MINI_ART_H, MINI_W - 4, 1, C_OUTLINE)
-
-	# под артом: иконка аспекта слева, VP колоды и Внутреннего круга справа
-	var by := art_y + MINI_ART_H + 3
-	if aspect != "":
-		glyph_rows(4, by + 3, ICONS[aspect], aspect_col)
-	var dv := str(int(c["deck_vp"]))
-	rect(MINI_W - 33, by, 14, 12, C_OUTLINE)
-	rect(MINI_W - 32, by + 1, 12, 10, C_LIGHT)
-	text(MINI_W - 26 - text_width(dv, 1) / 2, by + 3, dv, C_INK, 1)
-	var cx := MINI_W - 11
-	var cy := by + 6
-	circle(cx, cy, 7, C_OUTLINE)
-	circle(cx, cy, 6, C_IC)
-	circle(cx - 1, cy - 1, 4, C_IC_HI)
-	circle(cx, cy, 3, C_IC)
-	var iv := str(int(c["inner_circle_vp"]))
-	text(cx - text_width(iv, 1) / 2, by + 3, iv, C_LIGHT, 1)
 	return img
 
 
