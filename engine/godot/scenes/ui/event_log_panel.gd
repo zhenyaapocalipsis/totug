@@ -11,11 +11,25 @@ extends PanelContainer
 
 const MAX_LINES := 300
 
+## Строки появляются по одной, а не пачкой: сыгранная карта часто порождает
+## сразу несколько событий, и вывалившись разом они читаются как один мазок.
+## Свежая строка короткое время подсвечена — видно, что именно добавилось.
+const STAGGER := 0.09        # пауза между строками
+const FRESH_TIME := 1.1      # сколько держится подсветка свежей строки
+## Если событий привалило больше, чем влезет в разумное ожидание, лишние
+## выводятся сразу: заставлять ждать конца длинной цепочки нельзя.
+const QUEUE_LIMIT := 10
+const FRESH_BG := "#2a1e4d"
+
 ## Статический снимок доски (StateView.board_snapshot) — для названий локаций.
 var board: Dictionary = {}
 
 var _text: RichTextLabel
 var _lines: Array[String] = []
+var _queue: Array[String] = []   # строки, ждущие своей очереди
+var _next_in := 0.0
+var _fresh_left := 0.0
+var _fresh_index := -1
 
 
 ## Журнал живёт вкладкой в зоне чата (chat_panel.gd), поэтому своей рамки и
@@ -29,6 +43,7 @@ func _init() -> void:
 	_text.selection_enabled = true
 	_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(_text)
+	set_process(false)
 
 
 func add_events(events: Array) -> void:
@@ -44,23 +59,64 @@ func add_events(events: Array) -> void:
 				player_color(who).to_html(false), pname, _escape(line.substr(pname.length()))]
 		else:
 			line = _escape(line)
-		_lines.append(line)
+		_queue.append(line)
 		if String(evt.get("type", "")) == "turn_ended" and not bool(evt.get("game_over", false)):
 			# Только дефисы: рамочных символов (─) в пиксельном шрифте нет,
 			# вместо них рисовались пустые квадратики.
-			_lines.append("[color=#8a8a95]------------[/color]")
-	_trim_and_show()
+			_queue.append("[color=#8a8a95]------------[/color]")
+	_start_queue()
 
 
 func add_note(text: String) -> void:
-	_lines.append("[i][color=#c8b98a]%s[/color][/i]" % _escape(text))
+	_queue.append("[i][color=#c8b98a]%s[/color][/i]" % _escape(text))
+	_start_queue()
+
+
+## Очередь длиннее разумного выводится сразу до остатка в QUEUE_LIMIT строк.
+func _start_queue() -> void:
+	while _queue.size() > QUEUE_LIMIT:
+		_lines.append(_queue.pop_front())
+	if not _queue.is_empty():
+		set_process(true)
+		if _next_in <= 0.0:
+			_release_line()
 	_trim_and_show()
+
+
+func _release_line() -> void:
+	_lines.append(_queue.pop_front())
+	_fresh_index = _lines.size() - 1
+	_fresh_left = FRESH_TIME
+	_next_in = STAGGER
+
+
+func _process(delta: float) -> void:
+	var changed := false
+	_next_in = maxf(_next_in - delta, 0.0)
+	if _next_in <= 0.0 and not _queue.is_empty():
+		_release_line()
+		changed = true
+	if _fresh_left > 0.0:
+		_fresh_left = maxf(_fresh_left - delta, 0.0)
+		if _fresh_left <= 0.0:
+			_fresh_index = -1
+			changed = true
+	if changed:
+		_trim_and_show()
+	if _queue.is_empty() and _fresh_left <= 0.0:
+		set_process(false)
 
 
 func _trim_and_show() -> void:
 	if _lines.size() > MAX_LINES:
-		_lines = _lines.slice(_lines.size() - MAX_LINES)
-	_text.text = "\n".join(_lines)
+		var cut := _lines.size() - MAX_LINES
+		_lines = _lines.slice(cut)
+		if _fresh_index >= 0:
+			_fresh_index -= cut
+	var shown := _lines.duplicate()
+	if _fresh_index >= 0 and _fresh_index < shown.size():
+		shown[_fresh_index] = "[bgcolor=%s]%s[/bgcolor]" % [FRESH_BG, shown[_fresh_index]]
+	_text.text = "\n".join(shown)
 
 
 static func _escape(text: String) -> String:

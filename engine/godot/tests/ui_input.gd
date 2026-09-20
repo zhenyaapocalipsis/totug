@@ -206,6 +206,8 @@ func _step_check_hand_card() -> void:
 		"эффект карты применился: ресурсов стало больше (%d -> %d)"
 			% [_resources_before, player.power + player.influence])
 	check(_has_floating_text(), "над плашкой ресурсов всплыла цифра изменения")
+	check(_screen._res_power.is_animating() or _screen._res_influence.is_animating(),
+		"счётчик ресурсов накручивается и вспыхивает")
 	var hand := _hand_panel()
 	check(hand != null and hand.leaving_cards().has(_played_view),
 		"улетает именно сыгранная карта, а не одноимённая соседка")

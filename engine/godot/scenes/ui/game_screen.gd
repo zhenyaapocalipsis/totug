@@ -82,8 +82,8 @@ var _board_panel: BoardPanel
 var _board_area: Control
 var _decision_dialog: DecisionDialog
 var _res_zone: PanelContainer
-var _res_power: Label
-var _res_influence: Label
+var _res_power: CounterLabel
+var _res_influence: CounterLabel
 ## Что на плашке ресурсов было показано в прошлый раз и чьё оно — по этому
 ## считается, на сколько всплыть цифре изменения.
 var _res_player := ""
@@ -206,11 +206,9 @@ func _build_layout() -> void:
 	res_row.add_theme_constant_override("separation", 6)
 	res_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_res_zone.add_child(res_row)
-	_res_power = Label.new()
-	_res_power.add_theme_color_override("font_color", POWER_COLOR)
+	_res_power = CounterLabel.make("P %d", POWER_COLOR)
 	res_row.add_child(_res_power)
-	_res_influence = Label.new()
-	_res_influence.add_theme_color_override("font_color", INFLUENCE_COLOR)
+	_res_influence = CounterLabel.make("I %d", INFLUENCE_COLOR)
 	res_row.add_child(_res_influence)
 
 	# 6. Маркет.
@@ -442,8 +440,10 @@ func _layout() -> void:
 	# правому краю: там он реже всего перекрывает плашку вопроса над доской.
 	# Ширину считаем по самому тексту: get_combined_minimum_size() в этом же
 	# кадре ещё не знает о только что заданных цифрах.
-	var res_w := float(PixelFont.text_width(_res_power.text)
-		+ PixelFont.text_width(_res_influence.text) + 6 + 4)
+	# Ширину считаем по КОНЕЧНЫМ цифрам: пока число накручивается, промежуточные
+	# значения бывают уже или шире, и плашка дёргалась бы вслед за ними.
+	var res_w := float(PixelFont.text_width(_res_power.target_text())
+		+ PixelFont.text_width(_res_influence.target_text()) + 6 + 4)
 	_place(_res_zone, b_x + b_w - res_w, top_y + TOP_H, res_w, RES_H)
 
 
@@ -565,8 +565,13 @@ func _refresh_played(view: Dictionary) -> void:
 	_played_strip.set_cards(played)
 	# Ресурсы хода висят оверлеем под этой же зоной: тратит их тот, чей ход.
 	# Пока в этот ход ничего не сыграно, тратить нечего — плашки нет.
-	_res_power.text = "P %d" % int(p.get("power", 0))
-	_res_influence.text = "I %d" % int(p.get("influence", 0))
+	var power := int(p.get("power", 0))
+	var influence := int(p.get("influence", 0))
+	# Накручиваем только в пределах одного хода: когда ход перешёл к другому,
+	# цифры стали чужими, и накрутка от чужого значения врала бы.
+	var same_player := current == _res_player
+	_res_power.set_value(power, same_player)
+	_res_influence.set_value(influence, same_player)
 	var show_res := not played.is_empty()
 	if _res_zone.visible != show_res:
 		_res_zone.visible = show_res
@@ -574,7 +579,7 @@ func _refresh_played(view: Dictionary) -> void:
 		_layout()  # ширина плашки зависит от самих цифр
 	# Цифры всплывают уже после _layout(): плашка только что могла появиться
 	# или изменить ширину, и до пересчёта её положение ещё старое.
-	_popup_resource_change(current, int(p.get("power", 0)), int(p.get("influence", 0)))
+	_popup_resource_change(current, power, influence)
 
 
 ## Изменилось Power или Influence — над плашкой всплывает «+2» или «-1».
