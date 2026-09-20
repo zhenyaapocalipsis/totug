@@ -286,6 +286,12 @@ func _step_click_market_card() -> void:
 			arriving = true
 			break
 	check(arriving, "на место купленной карты новая въехала со вспышкой")
+	var flying := false
+	for child in _screen.get_children():
+		if child is CardView:   # копия в полёте лежит прямо на экране
+			flying = true
+			break
+	check(flying, "купленная карта полетела в стопку сброса")
 
 
 func _step_click_end_turn() -> void:

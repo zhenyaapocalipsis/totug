@@ -40,6 +40,10 @@ const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 # игрокам показывается поверх экрана, пока зажат Tab (PlayersOverlay).
 const MARGIN := 1.0
 const GAP := 2.0
+## Полёт купленной карты в стопку сброса: сколько летит и насколько выгнута
+## дуга. По прямой полёт читается как рывок.
+const FLIGHT_TIME := 0.42
+const FLIGHT_ARC := 26.0
 ## Левая колонка: чат внизу и бараки над ним — одной ширины.
 const COL_A := 62.0
 ## Правая колонка: два слота маркета по 80 плюс по пикселю отступа панели.
@@ -656,11 +660,47 @@ func _on_hand_card_clicked(card_id: String) -> void:
 
 
 func _on_market_clicked(index: int) -> void:
+	_fly_to_discard(_market_panel.card_rect(index), _market_panel.card_id_at(index))
 	send(Intent.recruit(viewer_id, index))
 
 
 func _on_supply_clicked(card_id: String) -> void:
+	_fly_to_discard(_market_panel.supply_rect(card_id), card_id)
 	send(Intent.recruit_supply(viewer_id, card_id))
+
+
+## Купленная карта улетает в стопку сброса: снимок слота маркета летит по дуге
+## к зоне DISCARD и гаснет. Это только показ — саму карту сервер уже положил
+## в сброс, и полёт ни на что не влияет.
+##
+## Летит отдельная копия карты, а не сама карта слота: та в это же мгновение
+## уже показывает пришедшую ей на смену.
+func _fly_to_discard(from: Rect2, cid: String) -> void:
+	if cid == "" or from.size.x < 1.0 or not _pile_discard.visible:
+		return
+	var to := _pile_discard.get_global_rect().get_center() - from.size * 0.5
+	var start := from.position - get_global_position()
+	var finish := to - get_global_position()
+	if start.distance_to(finish) < 1.0:
+		return
+
+	var ghost := CardView.new(cid, int(from.size.x), int(from.size.y))
+	ghost.hover_preview = false   # это картинка в полёте, а не карта под курсором
+	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost.set_clickable(false, false)
+	ghost.position = start.round()
+	ghost.z_index = 6
+	add_child(ghost)
+
+	# Дуга: контрольная точка выше прямой, иначе полёт читается как рывок.
+	var mid := start.lerp(finish, 0.5) + Vector2(0, -FLIGHT_ARC)
+	var tween := create_tween()
+	tween.tween_method(func(t: float) -> void:
+			var p: Vector2 = start.lerp(mid, t).lerp(mid.lerp(finish, t), t)
+			ghost.position = p.round()
+			ghost.modulate.a = 1.0 - t * t,
+		0.0, 1.0, FLIGHT_TIME).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_callback(ghost.queue_free)
 
 
 ## Клик по троп-слоту двусмыслен: там может быть и Deploy в пустой слот, и

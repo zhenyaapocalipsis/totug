@@ -97,7 +97,6 @@ func _init() -> void:
 		_supply_cards.append(card)
 		_supply_counts.append(_add_count_label(box))
 		_supply_row.add_child(box)
-		_boxes.append(box)
 
 	# Стопку Insane Outcast в маркете не показываем вовсе (решение владельца,
 	# 2026-09-19): её не вербуют, карты раздают её сами при розыгрыше.
@@ -131,6 +130,31 @@ func update_from_view(view: Dictionary) -> void:
 		_supply_counts[k].add_theme_color_override("font_color",
 			PixelTheme.TEXT if left > 0 else PixelTheme.DANGER)
 		_supply_cards[k].set_clickable(left > 0 and affordable_supply.has(sid))
+
+
+## Где на экране лежит карта слота — чтобы от неё запустить полёт в сброс.
+## Пустой прямоугольник, если слота с таким номером нет или он пуст.
+func card_rect(index: int) -> Rect2:
+	var i := index if index < DISPLAY_SLOTS else DISPLAY_SLOTS
+	if i < 0 or i >= _cards.size() or _cards[i] == null or not _cards[i].visible:
+		return Rect2()
+	return _cards[i].get_global_rect()
+
+
+## Какая карта лежит в слоте — её копию запускают в полёт.
+func card_id_at(index: int) -> String:
+	var i := index if index < DISPLAY_SLOTS else DISPLAY_SLOTS
+	if i < 0 or i >= _cards.size() or _cards[i] == null or not _cards[i].visible:
+		return ""
+	return _cards[i].card_id
+
+
+## То же для карты общей стопки.
+func supply_rect(cid: String) -> Rect2:
+	var k: int = Supplies.PURCHASABLE.find(cid)
+	if k < 0:
+		return Rect2()
+	return _supply_cards[k].get_global_rect()
 
 
 ## Кладёт в слот карту cid (пустая строка — слот пуст). Если карта в слоте
