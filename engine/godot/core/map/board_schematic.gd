@@ -143,12 +143,20 @@ const W_OUT_BOX_PX := 100.0
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
+## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
+const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
 const PACK_PASSES := [[3, 9], [2, 4]]
 ## Сколько узлов улучшать и с какой цены считать узел проблемным. Двигать
 ## все подряд слишком дорого: один узел — около 40 мс.
 const PACK_FIX_NODES := 8
 ## Сколько раундов «найти худших — поправить — развести».
 const PACK_ROUNDS := 2
+## Спасательный дальний поиск места: шаг и радиус.
+const PACK_RESCUE := [4, 40]
+## Сколько узлов спасать: дальний поиск стоит около 90 мс на узел.
+const PACK_RESCUE_MAX := 4
+## Во сколько раз дороже наложение рамок при упаковке.
+const PACK_OVERLAP_FACTOR := 12.0
 const PACK_FIX_COST := 60.0
 
 var _key: Array[String] = []
@@ -899,7 +907,11 @@ func _node_cost(n: int) -> float:
 			continue
 		var other := _node_rect(m)
 		if grown.intersects(other):
-			cost += W_NODE_OVERLAP + grown.intersection(other).get_area() * 0.5
+			# При свободной упаковке наложение рамок запрещено наглухо: карта
+			# и так на пределе плотности, и узел иначе охотно меняет чистую
+			# разводку на «налезу чуть-чуть».
+			var weight: float = W_NODE_OVERLAP * PACK_OVERLAP_FACTOR if packing else W_NODE_OVERLAP
+			cost += weight + grown.intersection(other).get_area() * 0.5
 	return cost
 
 
@@ -986,37 +998,42 @@ func _index_neighbourhoods() -> void:
 func _pack(target: Vector2) -> void:
 	var started := Time.get_ticks_msec()
 	pack_stats = {}
-	# 1. Сжать всё целиком: узлы, порты и центры гексов — масштаб не меняет
-	# углов, поэтому трассы остаются под 45 градусами.
 	var span := _node_span()
 	if span.size.x <= 0.0 or span.size.y <= 0.0:
 		return
-	var scale: float = minf(target.x / span.size.x, target.y / span.size.y)
-	var from := span.get_center()
-	for n in _pos.size():
-		_pos[n] = _snap(from + (_pos[n] - from) * scale)
-	for hex: String in _centre.keys():
-		_centre[hex] = _snap(from + (_centre[hex] as Vector2 - from) * scale)
-	_pack_rect = Rect2(from - target * 0.5, target)
+	var centre := span.get_center()
 
-	# 2. Гексы больше ничего не ограничивают: и «не вылезать», и «с кем можно
+	# 1. Гексы больше ничего не ограничивают: и «не вылезать», и «с кем можно
 	# столкнуться» теперь считаются по всей картинке.
-	var frame := PackedVector2Array([_pack_rect.position,
-		Vector2(_pack_rect.end.x, _pack_rect.position.y), _pack_rect.end,
-		Vector2(_pack_rect.position.x, _pack_rect.end.y)])
 	var everyone: Array[int] = []
 	for n in _key.size():
 		if _kind[n] != Kind.PORT:
 			everyone.append(n)
-	for hex: String in _centre.keys():
-		_poly[hex] = frame
-		_poly_nodes[hex] = frame
-		_near[hex] = everyone
 
-	# 3. Развести наложившиеся рамки: пара расходится по той оси, где накладка
-	# меньше. Если одну из рамок держит край картинки, всю дорогу проходит
-	# вторая — иначе упёршиеся в край так и остаются внахлёст.
-	var left := _separate(everyone)
+	# 2. Сжимать постепенно. Одним рывком до нужного размера карта на четверых
+	# даёт сразу полтора десятка наложившихся пар, и растащить такой клубок
+	# сдвигами по одному узлу уже нельзя. По шагам каждое сжатие добавляет
+	# два-три наложения, они тут же разводятся, и следующий шаг начинается с
+	# чистой карты. Масштаб не меняет углов, поэтому трассы остаются под 45.
+	var left := 0
+	for factor: float in PACK_SHRINK:
+		var want := target * factor
+		var now := _node_span()
+		var scale: float = minf(want.x / now.size.x, want.y / now.size.y)
+		if scale < 1.0:
+			for n in _pos.size():
+				_pos[n] = _snap(centre + (_pos[n] - centre) * scale)
+			for hex: String in _centre.keys():
+				_centre[hex] = _snap(centre + (_centre[hex] as Vector2 - centre) * scale)
+		_pack_rect = Rect2(centre - want * 0.5, want)
+		var frame := PackedVector2Array([_pack_rect.position,
+			Vector2(_pack_rect.end.x, _pack_rect.position.y), _pack_rect.end,
+			Vector2(_pack_rect.position.x, _pack_rect.end.y)])
+		for hex: String in _centre.keys():
+			_poly[hex] = frame
+			_poly_nodes[hex] = frame
+			_near[hex] = everyone
+		left = _separate(everyone)
 	pack_stats["separate_ms"] = Time.get_ticks_msec() - started
 	pack_stats["overlaps_left"] = left
 
@@ -1048,6 +1065,21 @@ func _pack(target: Vector2) -> void:
 			_choose_route(e, {})
 		_separate(everyone)
 		pack_stats["round_%d_ms" % round_no] = Time.get_ticks_msec() - round_started
+
+	# 6. Спасательный проход. Если рамка всё ещё сидит на соседке, соседний
+	# пятачок ей не поможет — там и так занято. Такой рамке разрешается уйти
+	# далеко, хоть на другой конец карты: пустое место обычно есть, просто не
+	# рядом. Узлов таких единицы, поэтому дальний поиск по карману.
+	var stuck := _overlapping(everyone)
+	pack_stats["stuck"] = stuck.size()
+	if not stuck.is_empty():
+		var rescue := Time.get_ticks_msec()
+		for n: int in stuck.slice(0, PACK_RESCUE_MAX):
+			_move_node(n, PACK_RESCUE[0], PACK_RESCUE[1])
+		for e in _routes.size():
+			_choose_route(e, {})
+		_separate(everyone)
+		pack_stats["rescue_ms"] = Time.get_ticks_msec() - rescue
 	for e in _routes.size():
 		_choose_route(e, {})
 	pack_stats["fixed"] = fixed
@@ -1088,6 +1120,18 @@ func _separate(everyone: Array[int]) -> int:
 		if left == 0:
 			break
 	return left
+
+
+## Узлы, которые сейчас с кем-то внахлёст.
+func _overlapping(everyone: Array[int]) -> Array[int]:
+	var out: Array[int] = []
+	for i in everyone.size():
+		var a: int = everyone[i]
+		for b: int in everyone:
+			if a != b and _node_rect(a).intersects(_node_rect(b)):
+				out.append(a)
+				break
+	return out
 
 
 ## Узлы, вокруг которых сейчас хуже всего: наложения, задетые трассы,
@@ -1155,9 +1199,16 @@ func _move_node(n: int, step: int, radius: int) -> void:
 	var best_cost := _cost_around(n)
 	var best_pos := start
 	var best_routes: Array = _snapshot_routes(inc)
+	var packing := _pack_rect.size.x > 0.0 and _kind[n] != Kind.PORT
 	for offset: Vector2 in _offsets(step, radius):
 		var p := start + offset
-		if not Geometry2D.is_point_in_polygon(p, poly):
+		# При упаковке рамка обязана целиком остаться в картинке — это
+		# проверяется точно, а не штрафом: иначе узел, которому запрещено
+		# налезать на соседа, просто уходит за край, и картинка растёт.
+		if packing:
+			if not _pack_rect.encloses(Rect2(p - _half[n], _half[n] * 2.0)):
+				continue
+		elif not Geometry2D.is_point_in_polygon(p, poly):
 			continue
 		_pos[n] = p
 		var cost := _cost_around(n)
