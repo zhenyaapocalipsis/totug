@@ -494,9 +494,12 @@ func send(intent: Intent) -> void:
 func _react_to_events(events: Array) -> void:
 	var power := 0.0
 	for e in events:
-		match String((e as Dictionary).get("type", "")):
+		var evt: Dictionary = e
+		match String(evt.get("type", "")):
 			"assassinate", "supplant":
 				power = maxf(power, SHAKE_KILL)
+				_board_panel.spark_at_slot(String(evt.get("slot_id", "")),
+					BoardPanel.KILL_COLOR)
 			"return_troop", "return_spy", "return_own_spy":
 				power = maxf(power, SHAKE_NUDGE)
 	if power > 0.0:

@@ -350,6 +350,7 @@ func _step_check_capture() -> void:
 	var board: BoardPanel = _screen._board_panel
 	check(board.capture_flashes() > 0, "захваченная локация вспыхнула на доске")
 	check(board.is_shaking(), "доска дёрнулась на захвате")
+	check(board.spark_count() > 0, "из захваченной локации полетели искры")
 
 
 # --- вспомогательное ---------------------------------------------------------

@@ -51,6 +51,14 @@ const DECISION_COLOR := Color(0.95, 0.75, 0.15)
 const SHAKE_TIME := 0.32
 const SHAKE_FREQ := 52.0
 
+## Искры: из точки события разлетаются несколько квадратиков, падают и гаснут.
+## Квадратики целого размера и на целых координатах — иначе на пиксельной
+## схеме они расплываются в грязь.
+const SPARK_COUNT := 9
+const SPARK_LIFE := 0.55
+const SPARK_SPEED := 85.0
+const SPARK_GRAVITY := 150.0
+
 ## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
 ## расстановки войск, поэтому панель сравнивает site_control с прошлым видом.
@@ -85,6 +93,9 @@ var _shake_power := 0.0          # амплитуда тряски в пиксе
 var _control: Dictionary = {}
 var _control_known := false
 var _captures: Dictionary = {}
+## Летящие искры: pos и vel в координатах панели, не в мировых — живут они
+## доли секунды, и доска за это время никуда не уедет.
+var _sparks: Array[Dictionary] = []
 
 
 func _init() -> void:
@@ -119,14 +130,53 @@ func _note_captures(control: Dictionary) -> void:
 		_control_known = true
 		return
 	var captured := false
+	var taken: Array[String] = []
 	for site_id: String in control:
 		if String(_control.get(site_id, "")) != String(control[site_id]):
 			_captures[site_id] = CAPTURE_TIME
+			taken.append(site_id)
 			captured = true
 	_control = control.duplicate()
+	for site_id in taken:
+		spark_at_site(site_id, PLAYER_COLORS.get(String(control[site_id]), Color(0.8, 0.8, 0.8)))
 	if captured:
 		shake(3.0)
 		set_process(true)
+
+
+## Искры из места войска — туда, где его убили или вытеснили.
+func spark_at_slot(slot_id: String, colour: Color) -> void:
+	var at: Variant = _slot_world(slot_id)
+	if at != null:
+		_burst(_to_screen(at), colour)
+
+
+## Искры из середины локации — её только что захватили.
+func spark_at_site(site_id: String, colour: Color) -> void:
+	var centre: Variant = _site_centre(site_id)
+	if centre != null:
+		_burst(_to_screen(centre), colour)
+
+
+func _burst(at: Vector2, colour: Color) -> void:
+	for i in range(SPARK_COUNT):
+		var angle := TAU * i / SPARK_COUNT + randf() * 0.5
+		var speed := SPARK_SPEED * (0.5 + randf() * 0.8)
+		var life := SPARK_LIFE * (0.7 + randf() * 0.5)
+		_sparks.append({
+			"pos": at,
+			"vel": Vector2(cos(angle), sin(angle)) * speed,
+			"left": life,
+			"life": life,
+			"colour": colour,
+		})
+	set_process(true)
+	queue_redraw()
+
+
+## Для проверок: сколько искр сейчас в полёте.
+func spark_count() -> int:
+	return _sparks.size()
 
 
 ## Для проверок: сколько локаций сейчас вспыхивает захватом.
@@ -154,7 +204,17 @@ func _process(delta: float) -> void:
 			_captures.erase(site_id)
 		else:
 			_captures[site_id] = left
-	if _shake_left <= 0.0 and _captures.is_empty():
+	for i in range(_sparks.size() - 1, -1, -1):
+		var s: Dictionary = _sparks[i]
+		s["left"] = float(s["left"]) - delta
+		if float(s["left"]) <= 0.0:
+			_sparks.remove_at(i)
+			continue
+		var vel: Vector2 = (s["vel"] as Vector2) + Vector2(0, SPARK_GRAVITY) * delta
+		s["vel"] = vel
+		s["pos"] = (s["pos"] as Vector2) + vel * delta
+
+	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty():
 		set_process(false)
 	queue_redraw()
 
@@ -416,6 +476,20 @@ func _draw() -> void:
 	_draw_spy_targets()
 	_draw_decision_targets()
 	_draw_captures()
+	_draw_sparks()
+
+
+## Искры рисуются последними — поверх войск и подсветок. Пока искра молодая,
+## она в два пикселя, дальше — в один.
+func _draw_sparks() -> void:
+	# Размер искры считается в пикселях СХЕМЫ: когда доска приближена, её
+	# пиксель занимает несколько экранных, и искра должна расти вместе с ней.
+	var unit: float = maxf(1.0, roundf(_zoom))
+	for s in _sparks:
+		var k: float = float(s["left"]) / float(s["life"])
+		var side: float = unit * (2.0 if k > 0.45 else 1.0)
+		draw_rect(Rect2((s["pos"] as Vector2).round(), Vector2(side, side)),
+			Color((s["colour"] as Color).lightened(0.2), k))
 
 
 ## Только что захваченные локации: обводка в цвет нового хозяина, гаснущая

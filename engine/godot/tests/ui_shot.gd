@@ -22,6 +22,9 @@ var _screen: GameScreen
 var _out := "res://ui_shot.png"
 var _scenario := ""
 var _frame := 0
+## Кадр, на котором снимать, когда снимок ждёт отыгранного события (-1 — ждать
+## нечего). Нужен сценарию capture: искры живут доли секунды.
+var _shot_at := -1
 ## Во сколько раз увеличить снимок при сохранении (--px=N), картинка та же.
 var _zoom := 1
 ## Во сколько раз растянуть ОКНО (--scale=N): игра запускается в полный экран
@@ -115,6 +118,13 @@ func _run_scenario() -> void:
 			_screen.refresh(StateView.for_player_with_pending(
 				_screen.server.state, pid3, _screen.server.resolver.pending))
 			_screen.send(Intent.play_card(pid3, card))
+		"capture":
+			# Захват локации запускается не здесь, а на кадре (_run_capture):
+			# доска считает места искр по своему масштабу, а он подбирается
+			# только когда панель получила размер.
+			while _screen.server.resolver.is_waiting():
+				var pdc: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pdc.player_id, pdc.legal_options[0]))
 		"zoom":
 			# Приближаем доску к войску игрока — так проверяется, что масштаб и
 			# сдвиг считаются правильно и арт читается вблизи.
@@ -221,6 +231,20 @@ func _find_board(node: Node) -> BoardPanel:
 	return null
 
 
+## Отдаёт зрителю все места одной ещё не его локации: доска замечает смену
+## хозяина сама и отвечает вспышкой, искрами и толчком.
+func _run_capture() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	for site_id: String in state.graph.sites.keys():
+		if state.control.controller_of(site_id, state.troops) != me:
+			for slot_id in state.graph.slots_of_site(site_id):
+				state.troops[slot_id] = me
+			break
+	_screen.refresh(StateView.for_player_with_pending(
+		state, me, _screen.server.resolver.pending))
+
+
 ## Доехал ли ряд карт руки до своих мест.
 func _hand_settled() -> bool:
 	for child in _screen.get_children():
@@ -237,6 +261,13 @@ func _process(_delta: float) -> bool:
 	# Рука раздаётся с анимацией: карты выезжают снизу друг за другом. Снимок
 	# ждёт, пока ряд доедет, иначе на картинке будет полупустая рука.
 	if _frame < MAX_FRAMES and not _hand_settled():
+		return false
+	# Захват показывают на ходу: сначала доска разложилась, потом локация
+	# меняет хозяина, и через несколько кадров снимаем искры в полёте.
+	if _scenario == "capture" and _shot_at < 0:
+		_run_capture()
+		_shot_at = _frame + 6
+	if _shot_at >= 0 and _frame < _shot_at:
 		return false
 	var image: Image = root.get_texture().get_image()
 	# Игра рисуется в 640x360; снимок берём ровно в этом размере (пиксель в
