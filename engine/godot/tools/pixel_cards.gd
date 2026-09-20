@@ -539,9 +539,9 @@ func render_mini(c: Dictionary) -> Image:
 	var art_y := 1 + MINI_HEAD + 1
 	var aw := MINI_W - 6
 	var art := pixelize(art_region(int(c["card_id"]), aw, MINI_ART_H), aw, MINI_ART_H, 16)
+	# Чёрная обводка в пиксель по всему периметру арта, как на большой карте.
+	rect(2, art_y - 1, aw + 2, MINI_ART_H + 2, C_OUTLINE)
 	img.blit_rect(art, Rect2i(0, 0, aw, MINI_ART_H), Vector2i(3, art_y))
-	rect(2, art_y - 1, MINI_W - 4, 1, C_OUTLINE)
-	rect(2, art_y + MINI_ART_H, MINI_W - 4, 1, C_OUTLINE)
 	return img
 
 
