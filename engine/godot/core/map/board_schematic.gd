@@ -78,16 +78,18 @@ const NODE_GAP := 4
 ## Поле вокруг картинки: только чтобы обводка рамок и концы трасс не
 ## упирались в край. Было 6 — двенадцать пикселей ширины, из-за которых
 ## схема переставала влезать в зону доски (см. GRID_BY_PLAYERS).
-const IMAGE_MARGIN := 2
+const IMAGE_MARGIN := 1
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
 const RING_R := 4
-const BOX_PAD := 1
+## Отступ от рамки локации до её содержимого. Ноль: карта на четверых
+## упирается в плотность, и полтора десятка пикселей площади рамки решают.
+const BOX_PAD := 0
 const SLOT_R := 4
 const SLOT_PITCH := 10
 const SLOT_COLS := 3
 const VP_SCALE := 1
-const NAME_GAP := 2
+const NAME_GAP := 1
 ## Сколько знаков помещается в рамку локации.
 const NAME_MAX := 7
 
@@ -140,15 +142,20 @@ const TILE_ATTEMPTS := 5
 ## рамка обязана остаться внутри картинки, даже ценой кривоватой разводки.
 const W_OUT_BOX := 200.0
 const W_OUT_BOX_PX := 100.0
+## То же для ТРАССЫ при упаковке: выпирающая за край петля крадёт у доски
+## масштаб, потому что размер картинки считается и по трассам.
+const W_OUT_TRACE_PX := 60.0
+## Во сколько раз дороже при упаковке трасса, задевающая рамку локации.
+const PACK_HIT_FACTOR := 10.0
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
 ## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
 const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
-const PACK_PASSES := [[3, 9], [2, 4]]
+const PACK_PASSES := [[3, 9]]
 ## Сколько узлов улучшать и с какой цены считать узел проблемным. Двигать
 ## все подряд слишком дорого: один узел — около 40 мс.
-const PACK_FIX_NODES := 8
+const PACK_FIX_NODES := 6
 ## Сколько раундов «найти худших — поправить — развести».
 const PACK_ROUNDS := 2
 ## Спасательный дальний поиск места: шаг и радиус.
@@ -791,11 +798,16 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array) -
 	if _edge_dir[e] >= 0 and _dir_index(points[1] - points[0]) != _edge_dir[e]:
 		cost += W_HIT * 3.0
 	# tiles are laid out alone: a tunnel that leaves its hex could cross the neighbour's
+	#
+	# При свободной упаковке «свой гекс» — это вся картинка, и выход за её край
+	# стоит намного дороже: размер картинки считается по трассам тоже, и
+	# выпирающая петля отнимает у доски масштаб.
 	var poly: PackedVector2Array = _poly[_hex[_edge_b[e]]]
+	var out_px: float = W_OUT_TRACE_PX if _pack_rect.size.x > 0.0 else W_OUT_PX
 	for i in range(0, segs.size(), 2):
 		for p: Vector2 in [segs[i], segs[i + 1], (segs[i] + segs[i + 1]) * 0.5]:
 			if not Geometry2D.is_point_in_polygon(p, poly):
-				cost += _outside_by(p, poly) * W_OUT_PX
+				cost += _outside_by(p, poly) * out_px
 	var reach := _bounds(segs)
 	for n: int in _near[_hex[_edge_b[e]]]:
 		if n == _edge_a[e] or n == _edge_b[e]:
@@ -805,7 +817,9 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array) -
 			continue
 		for i in range(0, segs.size(), 2):
 			if _segment_hits_rect(segs[i], segs[i + 1], rect):
-				cost += W_HIT
+				# При упаковке трасса поверх рамки — самое заметное уродство: она
+				# перечёркивает название локации. Дороже любого крюка.
+				cost += W_HIT * PACK_HIT_FACTOR if _pack_rect.size.x > 0.0 else W_HIT
 				break
 	return cost
 
@@ -1026,6 +1040,11 @@ func _pack(target: Vector2) -> void:
 			for hex: String in _centre.keys():
 				_centre[hex] = _snap(centre + (_centre[hex] as Vector2 - centre) * scale)
 		_pack_rect = Rect2(centre - want * 0.5, want)
+		# Округление до чётного пикселя могло вынести крайний узел за рамку, а
+		# разведение поджимает только тех, кто с кем-то налез. Поджимаем всех:
+		# иначе картинка вылезает за зону на пиксель и теряет весь масштаб.
+		for n: int in everyone:
+			_pos[n] = _clamp_in_frame(n, _pos[n])
 		var frame := PackedVector2Array([_pack_rect.position,
 			Vector2(_pack_rect.end.x, _pack_rect.position.y), _pack_rect.end,
 			Vector2(_pack_rect.position.x, _pack_rect.end.y)])
