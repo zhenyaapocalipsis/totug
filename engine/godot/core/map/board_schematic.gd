@@ -61,6 +61,10 @@ static var K := 92
 ## кольца встали бы на половину пикселя.
 const GRID_BY_PLAYERS := {2: 92, 3: 92, 4: 72}
 const GRID_DEFAULT := 92
+## Куда упаковывать карту (см. _pack). Нулевой размер — старое поведение:
+## локация двигается только внутри своего гекса. Пока это эксперимент, и
+## включает его только инструмент предпросмотра.
+static var pack_into := Vector2.ZERO
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -130,6 +134,14 @@ const W_NODE_OVERLAP := 400.0
 const RING_TURN := [500.0, 300.0, 60.0, 6.0, 0.0]
 const PASSES := [[10, 40], [4, 12], [2, 4], [2, 4]]
 const TILE_ATTEMPTS := 5
+## То же, что W_OUT/W_OUT_PX, но для РАМКИ локации: при свободной упаковке
+## рамка обязана остаться внутри картинки, даже ценой кривоватой разводки.
+const W_OUT_BOX := 200.0
+const W_OUT_BOX_PX := 100.0
+## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
+## проходами потом улучшать разводку (шаг поиска, радиус).
+const PACK_SEPARATE_PASSES := 40
+const PACK_PASSES := [[4, 12], [2, 6]]
 
 var _key: Array[String] = []
 var _kind: Array[int] = []
@@ -152,6 +164,8 @@ var _poly: Dictionary = {}           # layout slot -> hex outline
 var _poly_nodes: Dictionary = {}     # то же, но с отступом NODE_GAP — для рамок
 var _port_side: Dictionary = {}      # "port key|hex" -> that hex's name for the edge
 var _fallback_routes := 0            # tunnels not found in the tile table
+## Прямоугольник свободной упаковки (см. _pack); нулевой — упаковки не было.
+var _pack_rect := Rect2()
 
 
 ## Returns {} for boards without hex layout (synthetic test graphs), else
@@ -176,6 +190,8 @@ static func build(state: GameState) -> Dictionary:
 	schematic._index_neighbourhoods()
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
 	schematic._repair()
+	if pack_into != Vector2.ZERO:
+		schematic._pack(pack_into)
 	return schematic._export(state)
 
 
@@ -858,10 +874,17 @@ func _node_cost(n: int) -> float:
 	# независимо друг от друга, и две рамки, прижатые к общему ребру с разных
 	# сторон, налезали бы друг на друга уже на собранной доске.
 	var poly: PackedVector2Array = _poly_nodes[_hex[n]]
+	# При свободной упаковке (_pack) выйти «наружу» значит выйти за КРАЙ
+	# КАРТИНКИ, а это недопустимо — там штраф на порядок больше. В обычной
+	# раскладке рамке можно слегка выступить за свой гекс: гекс невидимый, и
+	# выступ часто спрямляет трассу.
+	var packing := _pack_rect.size.x > 0.0
+	var out_flat: float = W_OUT_BOX if packing else W_OUT
+	var out_px: float = W_OUT_BOX_PX if packing else W_OUT_PX
 	var rect := _node_rect(n)
 	for corner in [rect.position, rect.end, Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y)]:
 		if not Geometry2D.is_point_in_polygon(corner, poly):
-			cost += W_OUT + _outside_by(corner, poly) * W_OUT_PX
+			cost += out_flat + _outside_by(corner, poly) * out_px
 	var grown := _node_rect(n, NODE_GAP)
 	for m: int in _near[_hex[n]]:
 		if m == n:
@@ -942,6 +965,94 @@ func _index_neighbourhoods() -> void:
 			if _kind[n] != Kind.PORT and (_centre[hex] as Vector2).distance_to(_centre[_hex[n]]) < K * 2.1:
 				near.append(n)
 		_near[hex] = near
+
+
+## Свободная упаковка карты в прямоугольник target (эксперимент 2026-09-20).
+##
+## Прежнее правило «локация двигается только внутри своего гекса» держит карту
+## разреженной: гекс должен быть таким, чтобы вместить свои рамки, и ужать
+## сетку нельзя. Здесь гексы перестают что-либо ограничивать — вся картинка
+## сжимается под нужный размер, а рамки разводятся между собой уже по всему
+## полю. Геометрия гексов при этом сохраняется как ПЕРВОЕ ПРИБЛИЖЕНИЕ: карта
+## остаётся похожей на настолку, но плотнее.
+func _pack(target: Vector2) -> void:
+	# 1. Сжать всё целиком: узлы, порты и центры гексов — масштаб не меняет
+	# углов, поэтому трассы остаются под 45 градусами.
+	var span := _node_span()
+	if span.size.x <= 0.0 or span.size.y <= 0.0:
+		return
+	var scale: float = minf(target.x / span.size.x, target.y / span.size.y)
+	var from := span.get_center()
+	for n in _pos.size():
+		_pos[n] = _snap(from + (_pos[n] - from) * scale)
+	for hex: String in _centre.keys():
+		_centre[hex] = _snap(from + (_centre[hex] as Vector2 - from) * scale)
+	_pack_rect = Rect2(from - target * 0.5, target)
+
+	# 2. Гексы больше ничего не ограничивают: и «не вылезать», и «с кем можно
+	# столкнуться» теперь считаются по всей картинке.
+	var frame := PackedVector2Array([_pack_rect.position,
+		Vector2(_pack_rect.end.x, _pack_rect.position.y), _pack_rect.end,
+		Vector2(_pack_rect.position.x, _pack_rect.end.y)])
+	var everyone: Array[int] = []
+	for n in _key.size():
+		if _kind[n] != Kind.PORT:
+			everyone.append(n)
+	for hex: String in _centre.keys():
+		_poly[hex] = frame
+		_poly_nodes[hex] = frame
+		_near[hex] = everyone
+
+	# 3. Развести наложившиеся рамки: каждая пара расходится по той оси, где
+	# накладка меньше, и обе половины — целыми пикселями сетки.
+	for _pass in PACK_SEPARATE_PASSES:
+		var moved := 0
+		for i in everyone.size():
+			for j in range(i + 1, everyone.size()):
+				var a: int = everyone[i]
+				var b: int = everyone[j]
+				var overlap := _node_rect(a, NODE_GAP * 0.5).intersection(_node_rect(b, NODE_GAP * 0.5))
+				if overlap.size.x <= 0.0 or overlap.size.y <= 0.0:
+					continue
+				var push := Vector2(overlap.size.x, 0.0) if overlap.size.x <= overlap.size.y \
+					else Vector2(0.0, overlap.size.y)
+				if (_pos[b] - _pos[a]).dot(push) < 0.0:
+					push = -push
+				_pos[a] = _clamp_in_frame(a, _snap(_pos[a] - push * 0.5))
+				_pos[b] = _clamp_in_frame(b, _snap(_pos[b] + push * 0.5))
+				moved += 1
+		if moved == 0:
+			break
+
+	# 4. Трассы считаются заново: узлы разъехались, прежние ходы устарели.
+	for e in _routes.size():
+		_choose_route(e, {})
+	for pass_info: Array in PACK_PASSES:
+		for n in _key.size():
+			if _kind[n] != Kind.PORT:
+				_move_node(n, int(pass_info[0]), int(pass_info[1]))
+		for e in _routes.size():
+			_choose_route(e, {})
+
+
+## Рамка узла целиком внутри картинки.
+func _clamp_in_frame(n: int, p: Vector2) -> Vector2:
+	var half: Vector2 = _half[n]
+	return Vector2(
+		clampf(p.x, _pack_rect.position.x + half.x, _pack_rect.end.x - half.x),
+		clampf(p.y, _pack_rect.position.y + half.y, _pack_rect.end.y - half.y))
+
+
+## Прямоугольник по рамкам локаций и кольцам, без трасс.
+func _node_span() -> Rect2:
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for n in _key.size():
+		if _kind[n] == Kind.PORT:
+			continue
+		lo = lo.min(_pos[n] - _half[n])
+		hi = hi.max(_pos[n] + _half[n])
+	return Rect2(lo, hi - lo) if lo.x < hi.x else Rect2()
 
 
 func _optimise() -> void:
