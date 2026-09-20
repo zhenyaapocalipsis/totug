@@ -55,6 +55,12 @@ const SHAKE_TIME := 0.28
 const SHAKE_AMPLITUDE := 4.0
 const SHAKE_SPEED := 64.0
 
+## Приход: в слоте появилась другая карта. Она въезжает сверху и вспыхивает
+## белым. Как и тряска, это только отрисовка — слот стоит на месте, а въезд
+## обрезается границами слота (clip_contents на время эффекта).
+const ARRIVE_TIME := 0.34
+const ARRIVE_DROP := 10.0
+
 var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
@@ -64,6 +70,8 @@ var _pixel: Texture2D = null
 var _mini := false
 ## Сколько ещё трястись после отказа; 0 — карта спокойна.
 var _shake_left := 0.0
+## Сколько ещё въезжать после смены карты в слоте.
+var _arrive_left := 0.0
 
 var _name_label: Label
 var _cost_label: Label
@@ -226,7 +234,7 @@ func _draw() -> void:
 		return
 	var rects := _pixel_rects()
 	var dest: Rect2 = rects[0]
-	var shift := _shake_offset()
+	var shift := _shake_offset() + _arrive_offset()
 	if shift != Vector2.ZERO:
 		draw_set_transform(shift)
 	# Не меньше 1 экранного пикселя на пиксель карты — чёткие пиксели (nearest);
@@ -243,6 +251,10 @@ func _draw() -> void:
 		var k := _shake_left / SHAKE_TIME
 		draw_rect(dest, Color(PixelTheme.DANGER, 0.32 * k))
 		draw_rect(dest.grow(1), Color(PixelTheme.DANGER, k), false, 1.0)
+	if _arrive_left > 0.0:
+		# Белая вспышка, гаснущая быстрее, чем карта доезжает.
+		var a := _arrive_left / ARRIVE_TIME
+		draw_rect(dest, Color(1, 1, 1, 0.5 * a * a))
 
 
 ## Смещение отрисовки при тряске: только по горизонтали и только целыми
@@ -254,10 +266,27 @@ func _shake_offset() -> Vector2:
 	return Vector2(roundf(sin(_shake_left * SHAKE_SPEED) * SHAKE_AMPLITUDE * k), 0.0)
 
 
+## Въезд сверху: замедляется к концу, чтобы карта «оседала» в слоте.
+func _arrive_offset() -> Vector2:
+	if _arrive_left <= 0.0:
+		return Vector2.ZERO
+	var k := _arrive_left / ARRIVE_TIME
+	return Vector2(0.0, -roundf(ARRIVE_DROP * k * k))
+
+
 ## Показать, что карту сейчас нажать нельзя. Трясётся только пиксельное лицо
 ## карты (ветка _draw выше) — все карты игры пиксельные.
 func shake_refusal() -> void:
 	_shake_left = SHAKE_TIME
+	set_process(true)
+	queue_redraw()
+
+
+## Показать, что в слоте теперь другая карта: она въезжает сверху и вспыхивает.
+func flash_arrival() -> void:
+	_arrive_left = ARRIVE_TIME
+	# Въезд не должен вылезать на соседний слот.
+	clip_contents = true
 	set_process(true)
 	queue_redraw()
 
@@ -267,9 +296,24 @@ func is_shaking() -> bool:
 	return _shake_left > 0.0
 
 
+## Для проверок: карта сейчас въезжает в слот.
+func is_arriving() -> bool:
+	return _arrive_left > 0.0
+
+
+## Пиксельное лицо (true) или запасная вёрстка из надписей (false). Слот
+## маркета по этому решает, можно ли переложить в него другую карту или узел
+## надо создать заново.
+func is_pixel() -> bool:
+	return _pixel != null
+
+
 func _process(delta: float) -> void:
 	_shake_left = maxf(_shake_left - delta, 0.0)
-	if _shake_left <= 0.0:
+	_arrive_left = maxf(_arrive_left - delta, 0.0)
+	if _arrive_left <= 0.0 and clip_contents:
+		clip_contents = false
+	if _shake_left <= 0.0 and _arrive_left <= 0.0:
 		set_process(false)
 	queue_redraw()
 

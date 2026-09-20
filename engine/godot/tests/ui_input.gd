@@ -76,15 +76,14 @@ func _process(_delta: float) -> bool:
 		8: _step_check_hand_card()
 		9: _step_open_pile()
 		10: _step_check_pile()
-		11: _step_lock_market()
-		12: _step_click_locked_market()
-		13: _step_check_refusal()
-		14: _step_prepare_market()
-		15: _step_click_market_card()
-		16: _step_click_end_turn()
-		17: _step_check_end_turn()
-		18: _step_timer_expire()
-		19: _step_check_timer()
+		11: _step_click_locked_market()
+		12: _step_check_refusal()
+		13: _step_prepare_market()
+		14: _step_click_market_card()
+		15: _step_click_end_turn()
+		16: _step_check_end_turn()
+		17: _step_timer_expire()
+		18: _step_check_timer()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -220,20 +219,15 @@ func _has_floating_text() -> bool:
 	return false
 
 
-## Обнуляем Influence — теперь в маркете нечего покупать. Искать карту прямо
-## здесь нельзя: маркет пересобирает свои карты, и прежние живут в дереве до
-## конца кадра. Клик по ним ушёл бы мимо — в новую карту на том же месте.
-func _step_lock_market() -> void:
+## Карта маркета не по карману: щелчок по ней не покупает её, но и не молчит —
+## карта дёргается и краснеет. Искать карту можно сразу после refresh: слоты
+## маркета живут всю партию, карта в слоте меняется на месте.
+func _step_click_locked_market() -> void:
 	var player := _current_player()
 	player.influence = 0
 	_screen.refresh(StateView.for_player_with_pending(
 		_screen.server.state, _screen.viewer_id, _screen.server.resolver.pending))
 	_discard_before = player.deck.discard_pile.size()
-
-
-## Карта маркета не по карману: щелчок по ней не покупает её, но и не молчит —
-## карта дёргается и краснеет.
-func _step_click_locked_market() -> void:
 	_refused_card = null
 	for c: CardView in _all_cards():
 		if not c.clickable and _in_market(c) and _fully_visible(c):
@@ -284,6 +278,12 @@ func _step_click_market_card() -> void:
 	check(player.deck.discard_pile.size() == _discard_before + 1,
 		"после щелчка по маркету карта легла в сброс (было %d, стало %d)"
 			% [_discard_before, player.deck.discard_pile.size()])
+	var arriving := false
+	for c: CardView in _all_cards():
+		if _in_market(c) and c.is_arriving():
+			arriving = true
+			break
+	check(arriving, "на место купленной карты новая въехала со вспышкой")
 
 
 func _step_click_end_turn() -> void:
