@@ -84,12 +84,12 @@ const IMAGE_MARGIN := 1
 const RING_R := 4
 ## Отступ от рамки локации до её содержимого. Ноль: карта на четверых
 ## упирается в плотность, и полтора десятка пикселей площади рамки решают.
-const BOX_PAD := 0
+const BOX_PAD := 1
 const SLOT_R := 4
 const SLOT_PITCH := 10
 const SLOT_COLS := 3
 const VP_SCALE := 1
-const NAME_GAP := 1
+const NAME_GAP := 2
 ## Сколько знаков помещается в рамку локации.
 const NAME_MAX := 7
 
@@ -147,12 +147,20 @@ const W_OUT_BOX_PX := 100.0
 const W_OUT_TRACE_PX := 60.0
 ## Во сколько раз дороже при упаковке трасса, задевающая рамку локации.
 const PACK_HIT_FACTOR := 10.0
+## Обход препятствий: запас коробки поиска вокруг концов тоннеля и потолок
+## по числу клеток — на длинных связях поиск стал бы дороже пользы.
+const PACK_ROUTE_MARGIN := 40.0
+const PACK_ROUTE_CELLS := 9000
+## Насколько жадно поиск тянется к цели: цена пикселя в прикидке остатка.
+const PACK_ROUTE_PULL := 0.6
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
 ## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
 const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
-const PACK_PASSES := [[3, 9]]
+## Шаги поиска ЧЁТНЫЕ: узлы обязаны остаться на сетке, по которой ищет
+## обход препятствий (_astar_route).
+const PACK_PASSES := [[4, 12]]
 ## Сколько узлов улучшать и с какой цены считать узел проблемным. Двигать
 ## все подряд слишком дорого: один узел — около 40 мс.
 const PACK_FIX_NODES := 6
@@ -358,8 +366,11 @@ static func site_box(site_name: String, slot_count: int) -> Dictionary:
 	var body_w := slots_w + 4 + vp_w
 	var inner_w := maxi(name_w, body_w)
 	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFont.HEIGHT * VP_SCALE)
-	var w := 2 + 2 * BOX_PAD + inner_w
-	var h := 2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h
+	# Стороны рамки ЧЁТНЫЕ. Узлы стоят на сетке с шагом GRID, и при нечётной
+	# стороне край рамки попадал бы на половину пикселя — тогда точка выхода
+	# тоннеля не ложится на ту же сетку, по которой ищет обход _astar_route.
+	var w := _even(2 + 2 * BOX_PAD + inner_w)
+	var h := _even(2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h)
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
 	var top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
 	var slots: Array[Vector2] = []
@@ -1039,7 +1050,7 @@ func _pack(target: Vector2) -> void:
 				_pos[n] = _snap(centre + (_pos[n] - centre) * scale)
 			for hex: String in _centre.keys():
 				_centre[hex] = _snap(centre + (_centre[hex] as Vector2 - centre) * scale)
-		_pack_rect = Rect2(centre - want * 0.5, want)
+		_pack_rect = Rect2(_snap(centre - want * 0.5), _snap(want))
 		# Округление до чётного пикселя могло вынести крайний узел за рамку, а
 		# разведение поджимает только тех, кто с кем-то налез. Поджимаем всех:
 		# иначе картинка вылезает за зону на пиксель и теряет весь масштаб.
@@ -1101,6 +1112,14 @@ func _pack(target: Vector2) -> void:
 		pack_stats["rescue_ms"] = Time.get_ticks_msec() - rescue
 	for e in _routes.size():
 		_choose_route(e, {})
+
+	# 7. Последним делом — обойти рамки. Прямые варианты в плотной карте почти
+	# все кого-нибудь задевают и перечёркивают названия локаций; здесь такие
+	# тоннели прокладываются поиском по сетке. Именно последним: сдвиг узла
+	# заново выбирает маршрут из прямых вариантов и обход бы затёр.
+	var around := Time.get_ticks_msec()
+	pack_stats["rerouted"] = _reroute_around_boxes()
+	pack_stats["reroute_around_ms"] = Time.get_ticks_msec() - around
 	pack_stats["fixed"] = fixed
 	pack_stats["nodes"] = everyone.size()
 	pack_stats["edges"] = _routes.size()
@@ -1168,12 +1187,14 @@ func _worst_nodes(everyone: Array[int], limit: int) -> Array[int]:
 	return out
 
 
-## Рамка узла целиком внутри картинки.
+## Рамка узла целиком внутри картинки, а сам узел — на чётной сетке. Сетка
+## важна: по ней ищет обход _astar_route, и съехавший на пиксель узел просто
+## выпадает из поиска.
 func _clamp_in_frame(n: int, p: Vector2) -> Vector2:
 	var half: Vector2 = _half[n]
 	return Vector2(
-		clampf(p.x, _pack_rect.position.x + half.x, _pack_rect.end.x - half.x),
-		clampf(p.y, _pack_rect.position.y + half.y, _pack_rect.end.y - half.y))
+		_snap_axis(p.x, _pack_rect.position.x + half.x, _pack_rect.end.x - half.x),
+		_snap_axis(p.y, _pack_rect.position.y + half.y, _pack_rect.end.y - half.y))
 
 
 ## Прямоугольник по рамкам локаций и кольцам, без трасс.
@@ -1337,3 +1358,353 @@ func _export(state: GameState) -> Dictionary:
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres,
 		"fallback_routes": _fallback_routes,
 	}
+
+
+## Ближайшее чётное число не меньше данного.
+static func _even(v: int) -> int:
+	return v + (v & 1)
+
+
+# --- разводка в обход препятствий (только при упаковке) ----------------------
+
+## Перекладывает тоннели, которые иначе идут прямо по рамке локации и
+## перечёркивают её название. Возвращает, сколько удалось исправить.
+##
+## Это отдельный проход в самом конце упаковки, а не часть _choose_route:
+## выбор маршрута зовётся тысячи раз внутри сдвигов узлов, и поиск по сетке
+## там не по карману. В разреженной раскладке по гексам прямые варианты
+## справляются и сами — там этот проход просто ничего не находит.
+func _reroute_around_boxes() -> int:
+	var fixed := 0
+	var hits := 0
+	var no_path := 0
+	for e in _routes.size():
+		var was_hits := _route_hit_count(e)
+		if was_hits == 0:
+			continue
+		hits += 1
+		var path := _astar_route(e)
+		if path.is_empty():
+			no_path += 1
+			continue
+		var was_route: PackedVector2Array = _routes[e]
+		var was_visible: PackedVector2Array = _visible[e]
+		var was_box: Rect2 = _bbox[e]
+		_routes[e] = path
+		_visible[e] = _clip(e, path)
+		_bbox[e] = _bounds(_visible[e])
+		# Обход оставляем, если он задевает МЕНЬШЕ рамок, а не только если
+		# чист совсем: в плотной карте «чуть лучше» тоже дорогого стоит.
+		var now_hits := _route_hit_count(e)
+		if now_hits >= was_hits:
+			_routes[e] = was_route
+			_visible[e] = was_visible
+			_bbox[e] = was_box
+		else:
+			fixed += was_hits - now_hits
+	pack_stats["route_hits"] = hits
+	pack_stats["route_no_path"] = no_path
+	return fixed
+
+
+## Сколько чужих рамок и колец задевает трасса.
+func _route_hit_count(e: int) -> int:
+	var hits := 0
+	var segs: PackedVector2Array = _visible[e]
+	if segs.is_empty():
+		return 0
+	var a: Vector2 = _pos[_edge_a[e]]
+	var b: Vector2 = _pos[_edge_b[e]]
+	for m in _key.size():
+		if _kind[m] == Kind.PORT or m == _edge_a[e] or m == _edge_b[e]:
+			continue
+		var rect := _node_rect(m)
+		if not _bbox[e].intersects(rect):
+			continue
+		# Узел, накрывший сам конец тоннеля, не в счёт: трасса обязана оттуда
+		# выйти, и никакой обход этого не изменит. Это наложение рамок, а не
+		# кривая разводка, и лечится оно разведением.
+		if rect.has_point(a) or rect.has_point(b):
+			continue
+		for i in range(0, segs.size(), 2):
+			if _segment_hits_rect(segs[i], segs[i + 1], rect):
+				hits += 1
+				break
+	return hits
+
+
+## Поиск маршрута по сетке в восемь направлений: рамки локаций и кольца —
+## стенки, поворот только на 45 градусов, цена — длина плюс штраф за излом
+## (те же веса, что в _local_cost). Пусто, если маршрута нет или коробка
+## поиска вышла слишком большой.
+func _astar_route(e: int) -> PackedVector2Array:
+	var a := _edge_a[e]
+	var b := _edge_b[e]
+	var starts := _ends(a, b, e)
+	var goals := _ends(b, a, e)
+	if starts.is_empty() or goals.is_empty():
+		return PackedVector2Array()
+
+	var box := Rect2(starts[0][0], Vector2.ZERO)
+	for s: Array in starts:
+		box = box.expand(s[0])
+	for g: Array in goals:
+		box = box.expand(g[0])
+	box = box.grow(PACK_ROUTE_MARGIN)
+	var origin := (box.position / GRID).floor() * GRID
+	var w := int((box.end.x - origin.x) / GRID) + 2
+	var h := int((box.end.y - origin.y) / GRID) + 2
+	if w < 2 or h < 2 or w * h > PACK_ROUTE_CELLS:
+		pack_stats["fail_big"] = int(pack_stats.get("fail_big", 0)) + 1
+		return PackedVector2Array()
+
+	var blocked := PackedByteArray()
+	blocked.resize(w * h)
+	for m in _key.size():
+		if _kind[m] == Kind.PORT or m == a or m == b:
+			continue
+		var r := _node_rect(m, 1.0)
+		var x0 := maxi(int(ceilf((r.position.x - origin.x) / GRID)), 0)
+		var x1 := mini(int(floorf((r.end.x - origin.x) / GRID)), w - 1)
+		var y0 := maxi(int(ceilf((r.position.y - origin.y) / GRID)), 0)
+		var y1 := mini(int(floorf((r.end.y - origin.y) / GRID)), h - 1)
+		for cy in range(y0, y1 + 1):
+			var row := cy * w
+			for cx in range(x0, x1 + 1):
+				blocked[row + cx] = 1
+
+	var states := w * h * 8
+	var dist := PackedFloat32Array()
+	dist.resize(states)
+	dist.fill(INF)
+	var seen := PackedByteArray()
+	seen.resize(states)
+	var prev := PackedInt32Array()
+	prev.resize(states)
+	prev.fill(-1)
+	var heap_cost := PackedFloat32Array()
+	var heap_state := PackedInt32Array()
+
+	# Точка выхода может лежать между узлами сетки — до ближайшего узла идём
+	# прямо по направлению выхода, излома это не добавляет.
+	var entry := {}
+	var starting: Array = []
+	for s: Array in starts:
+		var at: Vector2 = s[0]
+		var dir: int = int(s[1])
+		var lattice := _lattice_ahead(at, dir)
+		if lattice == Vector2.INF:
+			continue
+		var cell := _cell_of(lattice, origin, w, h)
+		if cell < 0:
+			continue
+		# Конец тоннеля может оказаться накрыт чужой рамкой — упаковка тесная.
+		# Его клетку всё равно открываем: выходить откуда-то надо.
+		blocked[cell] = 0
+		for d in range(8):
+			if dir >= 0 and d != dir:
+				continue
+			var st := cell * 8 + d
+			var reach := at.distance_to(lattice) * W_LEN
+			if reach < dist[st]:
+				dist[st] = reach
+				entry[st] = at
+				starting.append([reach, st])
+	if starting.is_empty():
+		pack_stats["fail_start"] = int(pack_stats.get("fail_start", 0)) + 1
+
+	var want := {}
+	var exit_at := {}
+	var goal_cells: Array[Vector2i] = []
+	for g: Array in goals:
+		var at: Vector2 = g[0]
+		var dir: int = int(g[1])
+		var lattice := _lattice_ahead(at, dir)
+		if lattice == Vector2.INF:
+			continue
+		var cell := _cell_of(lattice, origin, w, h)
+		if cell < 0:
+			continue
+		blocked[cell] = 0
+		want[cell] = -1 if dir < 0 else (dir + 4) % 8
+		exit_at[cell] = at
+		goal_cells.append(Vector2i(cell % w, cell / w))
+	if want.is_empty():
+		pack_stats["fail_goal"] = int(pack_stats.get("fail_goal", 0)) + 1
+		return PackedVector2Array()
+
+	# Старты кладём в кучу только теперь: прикидка остатка пути считается до
+	# целей, а они стали известны строкой выше.
+	for row: Array in starting:
+		var st_cell: int = int(row[1]) / 8
+		_heap_push(heap_cost, heap_state, float(row[0]) + _octile(st_cell % w, st_cell / w, goal_cells), int(row[1]))
+
+	var found := -1
+	while not heap_state.is_empty():
+		var st := _heap_pop(heap_cost, heap_state)
+		if seen[st] == 1:
+			continue
+		seen[st] = 1
+		var cell := st / 8
+		var dir := st % 8
+		if want.has(cell) and not entry.has(st):
+			var need: int = int(want[cell])
+			if need < 0 or need == dir:
+				found = st
+				break
+		var cx := cell % w
+		var cy := cell / w
+		for turn: int in [-1, 0, 1]:
+			var nd: int = (dir + turn + 8) % 8
+			var step: Vector2 = DIRS[nd]
+			var nx := cx + int(step.x)
+			var ny := cy + int(step.y)
+			if nx < 0 or ny < 0 or nx >= w or ny >= h:
+				continue
+			var ncell := ny * w + nx
+			if blocked[ncell] == 1:
+				continue
+			# По диагонали нельзя проскочить между двумя занятыми клетками:
+			# трасса прошла бы ровно по углу рамки.
+			if step.x != 0.0 and step.y != 0.0:
+				if blocked[cy * w + nx] == 1 or blocked[ny * w + cx] == 1:
+					continue
+			var nst: int = ncell * 8 + nd
+			var cost: float = dist[st] + step.length() * GRID * W_LEN
+			if turn != 0:
+				cost += W_BEND
+			if cost < dist[nst]:
+				dist[nst] = cost
+				prev[nst] = st
+				# В куче лежит цена С ПРИКИДКОЙ остатка пути: без неё это
+				# честный перебор всего поля, а он на сетке в тридцать тысяч
+				# состояний считается секундами. Прикидка намеренно жадная —
+				# маршрут может выйти чуть длиннее идеального, зато находится
+				# сразу и идёт в сторону цели.
+				_heap_push(heap_cost, heap_state, cost + _octile(nx, ny, goal_cells), nst)
+	if found < 0:
+		pack_stats["fail_search"] = int(pack_stats.get("fail_search", 0)) + 1
+		return PackedVector2Array()
+
+	var cells: Array[Vector2] = []
+	var at_state := found
+	while at_state >= 0:
+		var cell := at_state / 8
+		cells.append(origin + Vector2(cell % w, cell / w) * GRID)
+		if entry.has(at_state):
+			var real: Vector2 = entry[at_state]
+			if not real.is_equal_approx(cells[cells.size() - 1]):
+				cells.append(real)
+			break
+		at_state = prev[at_state]
+	cells.reverse()
+	var goal_cell := found / 8
+	if exit_at.has(goal_cell):
+		var real_end: Vector2 = exit_at[goal_cell]
+		if not real_end.is_equal_approx(cells[cells.size() - 1]):
+			cells.append(real_end)
+	if cells.size() < 2:
+		return PackedVector2Array()
+
+	var out := PackedVector2Array()
+	for i in cells.size():
+		if i == 0 or i == cells.size() - 1:
+			out.append(cells[i])
+			continue
+		var before: Vector2 = cells[i] - cells[i - 1]
+		var after: Vector2 = cells[i + 1] - cells[i]
+		if not before.normalized().is_equal_approx(after.normalized()):
+			out.append(cells[i])
+	return out
+
+
+## Номер клетки сетки под точкой, или -1 если точка вне коробки.
+func _cell_of(at: Vector2, origin: Vector2, w: int, h: int) -> int:
+	var cx := int(roundf((at.x - origin.x) / GRID))
+	var cy := int(roundf((at.y - origin.y) / GRID))
+	if cx < 0 or cy < 0 or cx >= w or cy >= h:
+		return -1
+	return cy * w + cx
+
+
+## Ближайший узел сетки по направлению выхода из рамки. Точка выхода лежит в
+## пикселе от края рамки и потому на нечётной координате, а поиск идёт по
+## чётной сетке: до неё нужно пройти прямо, чтобы не появилось лишнего излома.
+## Vector2.INF — узла по этому направлению нет (свободное направление у
+## кольца, которое само стоит не на сетке).
+static func _lattice_ahead(at: Vector2, dir: int) -> Vector2:
+	if _on_lattice(at):
+		return at
+	if dir < 0:
+		return Vector2.INF
+	for k in range(1, GRID + 1):
+		var p: Vector2 = at + DIRS[dir] * k
+		if _on_lattice(p):
+			return p
+	return Vector2.INF
+
+
+static func _on_lattice(p: Vector2) -> bool:
+	return int(roundf(p.x)) % GRID == 0 and int(roundf(p.y)) % GRID == 0
+
+
+static func _heap_push(costs: PackedFloat32Array, states: PackedInt32Array,
+		cost: float, state: int) -> void:
+	costs.append(cost)
+	states.append(state)
+	var i := states.size() - 1
+	while i > 0:
+		var parent := (i - 1) / 2
+		if costs[parent] <= costs[i]:
+			break
+		var c := costs[i]
+		costs[i] = costs[parent]
+		costs[parent] = c
+		var s := states[i]
+		states[i] = states[parent]
+		states[parent] = s
+		i = parent
+
+
+## Прикидка остатка пути до ближайшей цели: расстояние по сетке с диагоналями,
+## переведённое в цену. Намеренно завышена (см. PACK_ROUTE_PULL) — иначе штраф
+## за излом перевешивает всё и поиск вырождается в перебор поля.
+static func _octile(cx: int, cy: int, goals: Array[Vector2i]) -> float:
+	var best := INF
+	for g: Vector2i in goals:
+		var dx := absi(g.x - cx)
+		var dy := absi(g.y - cy)
+		var far := maxi(dx, dy)
+		var near := mini(dx, dy)
+		best = minf(best, float(far - near) + float(near) * sqrt(2.0))
+	return best * GRID * PACK_ROUTE_PULL
+
+
+## Достаёт самое дешёвое состояние. Повторы отсеивает вызывающий: у состояния
+## в куче могла остаться прежняя, более дорогая цена.
+static func _heap_pop(costs: PackedFloat32Array, states: PackedInt32Array) -> int:
+	var top := states[0]
+	var last := states.size() - 1
+	costs[0] = costs[last]
+	states[0] = states[last]
+	costs.resize(last)
+	states.resize(last)
+	var i := 0
+	while true:
+		var left := i * 2 + 1
+		var right := left + 1
+		var small := i
+		if left < last and costs[left] < costs[small]:
+			small = left
+		if right < last and costs[right] < costs[small]:
+			small = right
+		if small == i:
+			break
+		var c := costs[i]
+		costs[i] = costs[small]
+		costs[small] = c
+		var s := states[i]
+		states[i] = states[small]
+		states[small] = s
+		i = small
+	return top
