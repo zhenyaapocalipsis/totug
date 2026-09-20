@@ -65,6 +65,8 @@ const GRID_DEFAULT := 92
 ## локация двигается только внутри своего гекса. Пока это эксперимент, и
 ## включает его только инструмент предпросмотра.
 static var pack_into := Vector2.ZERO
+## Замеры последней упаковки — чтобы видеть, куда уходит время.
+static var pack_stats: Dictionary = {}
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -141,7 +143,13 @@ const W_OUT_BOX_PX := 100.0
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
-const PACK_PASSES := [[4, 12], [2, 6]]
+const PACK_PASSES := [[3, 9], [2, 4]]
+## Сколько узлов улучшать и с какой цены считать узел проблемным. Двигать
+## все подряд слишком дорого: один узел — около 40 мс.
+const PACK_FIX_NODES := 8
+## Сколько раундов «найти худших — поправить — развести».
+const PACK_ROUNDS := 2
+const PACK_FIX_COST := 60.0
 
 var _key: Array[String] = []
 var _kind: Array[int] = []
@@ -976,6 +984,8 @@ func _index_neighbourhoods() -> void:
 ## полю. Геометрия гексов при этом сохраняется как ПЕРВОЕ ПРИБЛИЖЕНИЕ: карта
 ## остаётся похожей на настолку, но плотнее.
 func _pack(target: Vector2) -> void:
+	var started := Time.get_ticks_msec()
+	pack_stats = {}
 	# 1. Сжать всё целиком: узлы, порты и центры гексов — масштаб не меняет
 	# углов, поэтому трассы остаются под 45 градусами.
 	var span := _node_span()
@@ -1003,10 +1013,54 @@ func _pack(target: Vector2) -> void:
 		_poly_nodes[hex] = frame
 		_near[hex] = everyone
 
-	# 3. Развести наложившиеся рамки: каждая пара расходится по той оси, где
-	# накладка меньше, и обе половины — целыми пикселями сетки.
+	# 3. Развести наложившиеся рамки: пара расходится по той оси, где накладка
+	# меньше. Если одну из рамок держит край картинки, всю дорогу проходит
+	# вторая — иначе упёршиеся в край так и остаются внахлёст.
+	var left := _separate(everyone)
+	pack_stats["separate_ms"] = Time.get_ticks_msec() - started
+	pack_stats["overlaps_left"] = left
+
+	# 4. Трассы считаются заново: узлы разъехались, прежние ходы устарели.
+	var routed := Time.get_ticks_msec()
+	for e in _routes.size():
+		_choose_route(e, {})
+	pack_stats["reroute_ms"] = Time.get_ticks_msec() - routed
+
+	# 5. Локальное улучшение — только там, где плохо. Двигать все узлы подряд
+	# слишком дорого (по 40 мс на узел), а после разведения у большинства из
+	# них и так всё в порядке: трасса идёт прямо и никого не задевает.
+	#
+	# Раундами: после каждого раунда список худших пересчитывается — узел,
+	# который мешал больше всех, уже поправлен, и на первое место выходит
+	# следующий. Разово взятая двадцатка так не умеет: половина её к середине
+	# работы уже не нужна.
+	var fixed := 0
+	for round_no in PACK_ROUNDS:
+		var round_started := Time.get_ticks_msec()
+		var picked := _worst_nodes(everyone, PACK_FIX_NODES)
+		if picked.is_empty():
+			break
+		fixed += picked.size()
+		for pass_info: Array in PACK_PASSES:
+			for n: int in picked:
+				_move_node(n, int(pass_info[0]), int(pass_info[1]))
+		for e in _routes.size():
+			_choose_route(e, {})
+		_separate(everyone)
+		pack_stats["round_%d_ms" % round_no] = Time.get_ticks_msec() - round_started
+	for e in _routes.size():
+		_choose_route(e, {})
+	pack_stats["fixed"] = fixed
+	pack_stats["nodes"] = everyone.size()
+	pack_stats["edges"] = _routes.size()
+
+
+## Разводит наложившиеся рамки и кольца. Возвращает, сколько пар осталось
+## внахлёст (ноль — всё чисто).
+func _separate(everyone: Array[int]) -> int:
+	var left := 0
 	for _pass in PACK_SEPARATE_PASSES:
-		var moved := 0
+		left = 0
 		for i in everyone.size():
 			for j in range(i + 1, everyone.size()):
 				var a: int = everyone[i]
@@ -1014,25 +1068,41 @@ func _pack(target: Vector2) -> void:
 				var overlap := _node_rect(a, NODE_GAP * 0.5).intersection(_node_rect(b, NODE_GAP * 0.5))
 				if overlap.size.x <= 0.0 or overlap.size.y <= 0.0:
 					continue
+				left += 1
 				var push := Vector2(overlap.size.x, 0.0) if overlap.size.x <= overlap.size.y \
 					else Vector2(0.0, overlap.size.y)
 				if (_pos[b] - _pos[a]).dot(push) < 0.0:
 					push = -push
-				_pos[a] = _clamp_in_frame(a, _snap(_pos[a] - push * 0.5))
-				_pos[b] = _clamp_in_frame(b, _snap(_pos[b] + push * 0.5))
-				moved += 1
-		if moved == 0:
+				var was_a: Vector2 = _pos[a]
+				var was_b: Vector2 = _pos[b]
+				_pos[a] = _clamp_in_frame(a, _snap(was_a - push * 0.5))
+				_pos[b] = _clamp_in_frame(b, _snap(was_b + push * 0.5))
+				# Кого-то придержал край — недостающую половину проходит сосед.
+				var done := (was_a - _pos[a]) + (_pos[b] - was_b)
+				var short_by := push - done
+				if short_by.length_squared() > 0.5:
+					if _pos[a] == was_a:
+						_pos[b] = _clamp_in_frame(b, _snap(_pos[b] + short_by))
+					else:
+						_pos[a] = _clamp_in_frame(a, _snap(_pos[a] - short_by))
+		if left == 0:
 			break
+	return left
 
-	# 4. Трассы считаются заново: узлы разъехались, прежние ходы устарели.
-	for e in _routes.size():
-		_choose_route(e, {})
-	for pass_info: Array in PACK_PASSES:
-		for n in _key.size():
-			if _kind[n] != Kind.PORT:
-				_move_node(n, int(pass_info[0]), int(pass_info[1]))
-		for e in _routes.size():
-			_choose_route(e, {})
+
+## Узлы, вокруг которых сейчас хуже всего: наложения, задетые трассы,
+## пересечения. Их и двигаем — по ним и видно кривую разводку.
+func _worst_nodes(everyone: Array[int], limit: int) -> Array[int]:
+	var scored: Array = []
+	for n: int in everyone:
+		scored.append([_node_cost(n), n])
+	scored.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
+	var out: Array[int] = []
+	for row: Array in scored.slice(0, limit):
+		if float(row[0]) < PACK_FIX_COST:
+			break
+		out.append(int(row[1]))
+	return out
 
 
 ## Рамка узла целиком внутри картинки.
@@ -1072,6 +1142,11 @@ func _optimise() -> void:
 			_choose_route(e, {})
 
 
+## Перебирает места вокруг узла и оставляет самое дешёвое. Квадратом (step,
+## radius) — в офлайновой раскладке тайла, где время не жмёт; при свободной
+## упаковке вместо квадрата берутся восемь направлений на нескольких
+## расстояниях (_ring_offsets): позиций втрое меньше при почти том же
+## результате, а одна проверка стоит около миллисекунды.
 func _move_node(n: int, step: int, radius: int) -> void:
 	var start := _pos[n]
 	var inc: Array = _incident[n]
@@ -1080,25 +1155,42 @@ func _move_node(n: int, step: int, radius: int) -> void:
 	var best_cost := _cost_around(n)
 	var best_pos := start
 	var best_routes: Array = _snapshot_routes(inc)
-	for dy in range(-radius, radius + 1, step):
-		for dx in range(-radius, radius + 1, step):
-			if dx == 0 and dy == 0:
-				continue
-			var p := start + Vector2(dx, dy)
-			if not Geometry2D.is_point_in_polygon(p, poly):
-				continue
-			_pos[n] = p
-			var cost := _cost_around(n)
-			if cost < best_cost - 0.01:
-				best_cost = cost
-				best_pos = p
-				best_routes = _snapshot_routes(inc)
+	for offset: Vector2 in _offsets(step, radius):
+		var p := start + offset
+		if not Geometry2D.is_point_in_polygon(p, poly):
+			continue
+		_pos[n] = p
+		var cost := _cost_around(n)
+		if cost < best_cost - 0.01:
+			best_cost = cost
+			best_pos = p
+			best_routes = _snapshot_routes(inc)
 	_pos[n] = best_pos
 	for i in inc.size():
 		var e: int = inc[i]
 		_routes[e] = best_routes[i][0]
 		_visible[e] = best_routes[i][1]
 		_bbox[e] = best_routes[i][2]
+
+
+## Куда пробовать сдвинуть узел. В офлайновой раскладке — весь квадрат; при
+## свободной упаковке — восемь направлений на расстояниях step, 2*step ... до
+## radius. Позиций втрое меньше, а направления те же, по каким вообще ходят
+## трассы.
+func _offsets(step: int, radius: int) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	if _pack_rect.size.x <= 0.0:
+		for dy in range(-radius, radius + 1, step):
+			for dx in range(-radius, radius + 1, step):
+				if dx != 0 or dy != 0:
+					out.append(Vector2(dx, dy))
+		return out
+	var away := step
+	while away <= radius:
+		for dir: Vector2 in DIRS:
+			out.append(dir * away)
+		away += step
+	return out
 
 
 func _snapshot_routes(inc: Array) -> Array:

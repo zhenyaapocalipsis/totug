@@ -10,7 +10,8 @@ func _init() -> void:
 	var players := int(args[1]) if args.size() > 1 else 4
 	var seed_value := int(args[2]) if args.size() > 2 else 3
 	var zone: Vector2 = GameScreen.board_zone_rect().size
-	BoardSchematic.pack_into = zone - Vector2(BoardSchematic.IMAGE_MARGIN, BoardSchematic.IMAGE_MARGIN) * 2.0
+	var grow := float(args[3]) if args.size() > 3 else 1.0
+	BoardSchematic.pack_into = (zone - Vector2(BoardSchematic.IMAGE_MARGIN, BoardSchematic.IMAGE_MARGIN) * 2.0) * grow
 	var state := GameSetup.new_game(GameScreen.player_ids_for(players), seed_value)
 	var started := Time.get_ticks_msec()
 	var s := BoardSchematic.build(state)
@@ -28,6 +29,7 @@ func _init() -> void:
 		for j in range(i + 1, rects.size()):
 			if (rects[i] as Rect2).intersects(rects[j]):
 				overlaps += 1
+	print(BoardSchematic.pack_stats)
 	print("%dp seed %d: %dx%d (зона %dx%d), наложений %d, %d мс" % [players, seed_value,
 		int(s["size"][0]), int(s["size"][1]), int(zone.x), int(zone.y), overlaps, took])
 	var img := SchematicPainter.paint(s)
