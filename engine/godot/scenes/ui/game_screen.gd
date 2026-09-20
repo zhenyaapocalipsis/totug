@@ -49,10 +49,13 @@ const FLIGHT_ARC := 26.0
 const SHAKE_KILL := 4.0
 const SHAKE_NUDGE := 2.0
 ## Левая колонка: чат внизу и бараки над ним — одной ширины.
-const COL_A := 62.0
+## Было 62 — в такую ширину влезало десять знаков строки, и чат не читался.
+## Теперь колонка широкая (решение владельца, 2026-09-20): чат берёт себе то,
+## что отдала рука, а карты в руке за это ложатся внахлёст.
+const COL_A := 128.0
 ## Правая колонка: два слота маркета по 80 плюс по пикселю отступа панели.
 ## Столько же у двух стопок под ней, чтобы карта в них рисовалась пиксель в
-## пиксель. Руке достаётся весь остаток — ровно пять карт по 80 с зазором 2.
+## пиксель. Руке достаётся весь остаток — пять карт по 80 внахлёст.
 const COL_D := 164.0
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
@@ -98,8 +101,11 @@ var _res_player := ""
 var _res_power_shown := 0
 var _res_influence_shown := 0
 var _played_zone: PanelContainer
+var _played_row: HBoxContainer
 var _played_title: Label
 var _played_strip: CardStrip
+## Надпись на месте зоны сыгранных карт, пока идёт стартовая расстановка.
+var _setup_label: Label
 var _piles_column: VBoxContainer
 var _pile_inner: PileZone
 var _pile_discard: PileZone
@@ -173,7 +179,8 @@ func _build_layout() -> void:
 	_played_zone = PanelContainer.new()
 	_played_zone.add_theme_stylebox_override("panel", zone_style(1))
 	add_child(_played_zone)
-	var played_row := HBoxContainer.new()
+	_played_row = HBoxContainer.new()
+	var played_row := _played_row
 	played_row.add_theme_constant_override("separation", 3)
 	_played_zone.add_child(played_row)
 	_played_title = section_label("")
@@ -185,6 +192,16 @@ func _build_layout() -> void:
 	# Полоса низкая: видно верх карты — имя и цену.
 	_played_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	played_row.add_child(_played_strip)
+	# 3b. Пока раздают стартовые локации, на месте этой же зоны стоит вопрос
+	# «выбери стартовую локацию» (решение владельца, 2026-09-20): плашка над
+	# доской закрывала как раз те локации, по которым надо щёлкнуть. Сама
+	# зона сыгранных карт появляется, когда расстановка закончена.
+	_setup_label = Label.new()
+	_setup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_setup_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_setup_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_setup_label.visible = false
+	_played_zone.add_child(_setup_label)
 
 	# 4. Доска лежит в простом Control, чтобы поверх неё (а не поверх маркета)
 	# можно было повесить диалог решения и подсказку.
@@ -444,15 +461,15 @@ func _layout() -> void:
 	_last_round_label.position = Vector2(0, deploy_block + button_h + TIMER_H)
 	_last_round_label.size = Vector2(ew, PixelTheme.LINE_H)
 
-	# Оверлей Power/Influence висит под зоной сыгранных карт, прижатый к её
-	# правому краю: там он реже всего перекрывает плашку вопроса над доской.
+	# Оверлей Power/Influence висит под зоной сыгранных карт, по её середине
+	# (решение владельца, 2026-09-20).
 	# Ширину считаем по самому тексту: get_combined_minimum_size() в этом же
 	# кадре ещё не знает о только что заданных цифрах.
 	# Ширину считаем по КОНЕЧНЫМ цифрам: пока число накручивается, промежуточные
 	# значения бывают уже или шире, и плашка дёргалась бы вслед за ними.
 	var res_w := float(PixelFont.text_width(_res_power.target_text())
 		+ PixelFont.text_width(_res_influence.target_text()) + 6 + 4)
-	_place(_res_zone, b_x + b_w - res_w, top_y + TOP_H, res_w, RES_H)
+	_place(_res_zone, b_x + (b_w - res_w) * 0.5, top_y + TOP_H, res_w, RES_H)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -559,6 +576,10 @@ func refresh(view: Dictionary) -> void:
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
 	_decision_dialog.update_from_view(view, viewer_id)
+	# Вопрос стартовой расстановки показывает не плашка над доской, а сама
+	# зона сыгранных карт — плашке тут делать нечего.
+	if _is_starting_pick(view):
+		_decision_dialog.visible = false
 	_refresh_played(view)
 	_refresh_piles(view)
 	_refresh_actions(view)
@@ -583,6 +604,19 @@ func _refresh_turn(view: Dictionary) -> void:
 ## Общая полоса сыгранных карт: что сыграл в этот ход тот, чей сейчас ход.
 ## Своя стопка сыгранных карт внизу больше не нужна — она была здесь же.
 func _refresh_played(view: Dictionary) -> void:
+	# Стартовая расстановка: на месте зоны — сам вопрос, а карт ещё нет.
+	var setup_pick := _is_starting_pick(view)
+	_played_row.visible = not setup_pick
+	_setup_label.visible = setup_pick
+	if setup_pick:
+		var pd: Dictionary = view["pending_decision"]
+		var who := String(pd.get("player_id", ""))
+		_setup_label.text = "%s: %s — click a gold site on the board" % [
+			EventLogPanel.player_name(who).to_upper(), String(pd.get("prompt", ""))]
+		_setup_label.add_theme_color_override("font_color", EventLogPanel.player_color(who))
+		_res_zone.visible = false
+		return
+
 	var current := String(view["current_player"])
 	var p: Dictionary = (view["players"] as Dictionary).get(current, {})
 	_played_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
@@ -607,6 +641,14 @@ func _refresh_played(view: Dictionary) -> void:
 	# Цифры всплывают уже после _layout(): плашка только что могла появиться
 	# или изменить ширину, и до пересчёта её положение ещё старое.
 	_popup_resource_change(current, power, influence)
+
+
+## Сейчас идёт стартовая расстановка: кто-то выбирает свою первую локацию.
+## Метку ставит сам эффект (ChooseStartingSite), а не угадывает интерфейс по
+## тексту вопроса.
+static func _is_starting_pick(view: Dictionary) -> bool:
+	var pd: Dictionary = view.get("pending_decision", {})
+	return String(pd.get("tag", "")) == "starting_site"
 
 
 ## Изменилось Power или Influence — над плашкой всплывает «+2» или «-1».

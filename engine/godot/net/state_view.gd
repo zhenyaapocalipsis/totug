@@ -260,6 +260,7 @@ static func _decision_dict(pending: PendingDecision, viewer_id: String) -> Dicti
 		"player_id": pending.player_id,
 		"prompt": pending.prompt,
 		"choice_type": pending.choice_type,
+		"tag": pending.tag,
 		"legal_options": pending.legal_options.duplicate() if mine else [],
 		"option_labels": pending.option_labels.duplicate() if mine else [],
 	}

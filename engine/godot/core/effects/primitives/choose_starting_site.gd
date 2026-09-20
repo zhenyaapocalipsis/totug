@@ -29,6 +29,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
 	pd.prompt = "Choose your starting site"
+	pd.tag = "starting_site"
 	pd.choice_type = "target_site"
 	pd.legal_options = legal
 	pd.target_effect = self

@@ -23,9 +23,9 @@ extends Control
 
 signal card_clicked(card_id: String)
 
-## Мелкое лицо карты пиксель в пиксель. Ширина зоны подобрана так, что пять
-## карт (обычная рука) стоят рядом с зазором в 2 пикселя и не наезжают друг на
-## друга; шестая и дальше ложатся внахлёст.
+## Мелкое лицо карты пиксель в пиксель. Зона руки ужата (решение владельца,
+## 2026-09-20): карты лежат внахлёст, а освободившаяся ширина отдана чату —
+## в прежнюю его колонку в 62 пикселя строка просто не помещалась.
 const CARD_SIZE := Vector2(80, 76)   # = CardView.MINI_SIZE, пиксель в пиксель
 ## Подъём заметный: на шести пикселях движение видно ступеньками (положение
 ## округляется до целого пикселя), на двенадцати оно читается как рывок вверх.
@@ -41,6 +41,11 @@ const SPRING_DAMPING := 20.0
 ## Пружину считаем шагом не длиннее 1/30 с: на длинном кадре (просадка, окно
 ## свернули) она иначе разлетается.
 const MAX_STEP := 1.0 / 30.0
+
+## Слои ряда: подложка снизу (0), карты между 1 и числом карт, выдвинутая
+## поверх всех, улетающая — над ней.
+const Z_LIFTED := 900
+const Z_FLYING := 901
 
 const ENTER_DROP := 60.0      # откуда выезжает новая карта — из-под края экрана
 const ENTER_STAGGER := 0.05   # пауза между соседними картами раздачи
@@ -170,7 +175,7 @@ func _start_leaving(card: CardView) -> void:
 		_hovered_card = null
 	card.set_clickable(false)
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.z_index = 2   # летит поверх оставшихся карт, а не под ними
+	card.z_index = Z_FLYING   # летит поверх оставшихся карт, а не под ними
 	_leaving.append(card)
 	_leaving_left.append(LEAVE_TIME)
 	_leaving_speed.append(LEAVE_SPEED)
@@ -217,6 +222,14 @@ func _layout() -> void:
 			_cards[i].position = _pos[i].round()
 
 
+## Порядок наложения карт в ряду. Карты лежат внахлёст, и ПРАВАЯ лежит поверх
+## левой: имя на мелком лице написано слева, поэтому из-под соседки должно
+## торчать начало имени, а не его хвост. Выдвинутая карта — поверх всех,
+## улетающая — ещё выше.
+func _z_of(index: int, lifted: bool) -> int:
+	return Z_LIFTED if lifted else index + 1
+
+
 ## Место, к которому едет карта: своё место в ряду, приподнятое, если карта
 ## под курсором. Подъём переключается сразу, без своего сглаживания — плавность
 ## даёт одна только пружина. Раньше сглаживаний было два, и они гасили друг
@@ -240,7 +253,7 @@ func _process(delta: float) -> void:
 			_pos[i] = want + Vector2(0, ENTER_DROP)
 			_vel[i] = Vector2.ZERO
 			_cards[i].position = _pos[i].round()
-			_cards[i].z_index = 0
+			_cards[i].z_index = _z_of(i, false)
 			continue
 
 		_vel[i] += (want - _pos[i]) * SPRING_STIFFNESS * dt
@@ -253,7 +266,7 @@ func _process(delta: float) -> void:
 			_vel[i] = Vector2.ZERO
 		_cards[i].position = _pos[i].round()
 		# Выдвинутая карта не должна прятаться под соседней справа.
-		_cards[i].z_index = 1 if _pos[i].y < _row_y - 0.5 else 0
+		_cards[i].z_index = _z_of(i, _pos[i].y < _row_y - 0.5)
 
 	for j in range(_leaving.size() - 1, -1, -1):
 		var card: CardView = _leaving[j]
