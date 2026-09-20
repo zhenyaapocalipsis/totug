@@ -28,6 +28,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"game_end_triggered": state.game_end_triggered,
 		"game_end_reason": state.game_end_reason,
 		"troops": state.troops.duplicate(),
+		"site_control": _site_control(state),
 		"spies": _duplicate_spies(state.spies),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
@@ -185,6 +186,19 @@ static func board_snapshot(state: GameState) -> Dictionary:
 		# какие полуколоды собраны в маркет: по ним экран красит фон
 		"half_decks": state.half_decks.duplicate(),
 	}
+
+
+## Кто сейчас контролирует какую локацию: site_id -> player_id, и только те
+## локации, у которых контролёр есть. Открытая информация — войска на доске
+## видны всем, — но считать её должен движок: правила контроля живут в
+## core/rules/site_control.gd, а интерфейс правил не знает.
+static func _site_control(state: GameState) -> Dictionary:
+	var out: Dictionary = {}
+	for site_id: String in state.graph.sites.keys():
+		var owner := state.control.controller_of(site_id, state.troops)
+		if owner != "":
+			out[site_id] = owner
+	return out
 
 
 static func _duplicate_spies(spies: Dictionary) -> Dictionary:

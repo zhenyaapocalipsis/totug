@@ -44,6 +44,18 @@ const KILL_COLOR := Color(1.0, 0.55, 0.15)
 ## кнопкой в диалоге (см. decision_dialog.gd, game_screen.gd).
 const DECISION_COLOR := Color(0.95, 0.75, 0.15)
 
+## Доска дёргается, когда на ней что-то случилось: убили войско, вытеснили
+## чужое, захватили локацию. Дёргается ОТРИСОВКА (вся картинка целиком), а не
+## узел: панель обрезает содержимое по себе, клики считаются по неподвижным
+## координатам, а раскладку экрана тряска не трогает вовсе.
+const SHAKE_TIME := 0.32
+const SHAKE_FREQ := 52.0
+
+## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
+## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
+## расстановки войск, поэтому панель сравнивает site_control с прошлым видом.
+const CAPTURE_TIME := 1.2
+
 ## Радиус кружка войска в МИРОВЫХ пикселях (печатные круги на арте примерно
 ## такого размера, шаг между слотами внутри локации ~47 px).
 const SLOT_RADIUS_WORLD := 19.0
@@ -66,6 +78,14 @@ var _zoom := 0.0                 # 0 = ещё не подобран, подбе�
 var _pan := Vector2.ZERO         # центр обзора в мировых координатах
 var top_inset := 0.0
 
+var _shake_left := 0.0
+var _shake_power := 0.0          # амплитуда тряски в пикселях панели
+## Кто чем владел в прошлый раз (site_id -> player_id) и что сейчас вспыхивает
+## (site_id -> сколько ещё гореть).
+var _control: Dictionary = {}
+var _control_known := false
+var _captures: Dictionary = {}
+
 
 func _init() -> void:
 	var style := StyleBoxFlat.new()
@@ -76,6 +96,7 @@ func _init() -> void:
 	custom_minimum_size = Vector2(200, 120)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
+	set_process(false)
 
 
 func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) -> void:
@@ -85,7 +106,69 @@ func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) ->
 		_board = board
 		_load_textures()
 		_zoom = 0.0  # новая доска — пересчитать обзор
+	_note_captures(view.get("site_control", {}))
 	queue_redraw()
+
+
+## Сравнивает, кто владеет локациями, с прошлым видом: сменившие хозяина
+## вспыхивают, доска коротко дёргается. Самый первый вид ничего не зажигает —
+## это не захват, а стартовая расстановка.
+func _note_captures(control: Dictionary) -> void:
+	if not _control_known:
+		_control = control.duplicate()
+		_control_known = true
+		return
+	var captured := false
+	for site_id: String in control:
+		if String(_control.get(site_id, "")) != String(control[site_id]):
+			_captures[site_id] = CAPTURE_TIME
+			captured = true
+	_control = control.duplicate()
+	if captured:
+		shake(3.0)
+		set_process(true)
+
+
+## Для проверок: сколько локаций сейчас вспыхивает захватом.
+func capture_flashes() -> int:
+	return _captures.size()
+
+
+## Для проверок: доска сейчас трясётся.
+func is_shaking() -> bool:
+	return _shake_left > 0.0
+
+
+## Тряхнуть доску: power — амплитуда в пикселях панели.
+func shake(power: float) -> void:
+	_shake_power = maxf(_shake_power * (_shake_left / SHAKE_TIME), power)
+	_shake_left = SHAKE_TIME
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	_shake_left = maxf(_shake_left - delta, 0.0)
+	for site_id: String in _captures.keys():
+		var left: float = float(_captures[site_id]) - delta
+		if left <= 0.0:
+			_captures.erase(site_id)
+		else:
+			_captures[site_id] = left
+	if _shake_left <= 0.0 and _captures.is_empty():
+		set_process(false)
+	queue_redraw()
+
+
+## Смещение всей картинки доски при тряске. Только целые пиксели: на дробном
+## сдвиге пиксельная схема мылится.
+func _shake_offset() -> Vector2:
+	if _shake_left <= 0.0:
+		return Vector2.ZERO
+	var k := _shake_left / SHAKE_TIME
+	var a := _shake_power * k * k
+	return Vector2(
+		roundf(sin(_shake_left * SHAKE_FREQ) * a),
+		roundf(cos(_shake_left * SHAKE_FREQ * 1.37) * a * 0.7))
 
 
 func _load_textures() -> void:
@@ -268,6 +351,12 @@ func _draw() -> void:
 		return
 	_ensure_view()
 
+	# Вся доска рисуется со смещением тряски: дальше координаты считаются как
+	# обычно, и ни один расчёт о тряске не знает.
+	var shake := _shake_offset()
+	if shake != Vector2.ZERO:
+		draw_set_transform(shake)
+
 	if _schematic_on():
 		# Пиксель-арт: пока пиксель схемы занимает целое число экранных,
 		# рисуем nearest — «жёсткими» квадратами. Мягкий фильтр остаётся
@@ -290,9 +379,9 @@ func _draw() -> void:
 			# Рисуем в системе координат тайла: начало — геометрический центр
 			# шестиугольника, поворот вокруг него же (вокруг начала координат арта
 			# тайлы разъезжаются — claude/progress.md, ошибка 12).
-			draw_set_transform(centre, deg_to_rad(float(tile["rotation_deg"])), Vector2(_zoom, _zoom))
+			draw_set_transform(centre + shake, deg_to_rad(float(tile["rotation_deg"])), Vector2(_zoom, _zoom))
 			draw_texture(texture, -Vector2(float(tile["tex_centre_x"]), float(tile["tex_centre_y"])))
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_set_transform(shake, 0.0, Vector2.ONE)
 
 	var slots := _slots()
 	var troops: Dictionary = _view.get("troops", {})
@@ -326,6 +415,18 @@ func _draw() -> void:
 	_draw_spies()
 	_draw_spy_targets()
 	_draw_decision_targets()
+	_draw_captures()
+
+
+## Только что захваченные локации: обводка в цвет нового хозяина, гаснущая
+## вместе со вспышкой. Толщина в два пикселя — обводка выбора цели рисуется
+## в один, и их не спутать.
+func _draw_captures() -> void:
+	for site_id: String in _captures:
+		var owner := String(_control.get(site_id, ""))
+		var colour: Color = PLAYER_COLORS.get(owner, Color(0.8, 0.8, 0.8))
+		var k: float = float(_captures[site_id]) / CAPTURE_TIME
+		_outline_site(site_id, Color(colour.lightened(0.25), k))
 
 
 ## Радиус кольца подсветки на схеме, в мировых пикселях: по самому кружку

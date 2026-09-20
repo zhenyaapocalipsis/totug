@@ -84,6 +84,8 @@ func _process(_delta: float) -> bool:
 		16: _step_check_end_turn()
 		17: _step_timer_expire()
 		18: _step_check_timer()
+		19: _step_capture_site()
+		20: _step_check_capture()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -321,6 +323,33 @@ func _step_check_timer() -> void:
 	check(_screen.server.state.current_player() != _turn_owner,
 		"время вышло — ход завершился сам (%s -> %s)"
 			% [_turn_owner, _screen.server.state.current_player()])
+
+
+## Локация сменила хозяина — доска должна вспыхнуть её обводкой и дёрнуться.
+## Отдельного события «захват» движок не шлёт: контроль считается из
+## расстановки войск, поэтому расставляем войска прямо в состоянии и обновляем
+## вид — ровно так это и приходит из сети.
+func _step_capture_site() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	var target := ""
+	for site_id: String in state.graph.sites.keys():
+		if state.control.controller_of(site_id, state.troops) != me:
+			target = site_id
+			break
+	check(target != "", "нашлась локация, которую зритель ещё не контролирует")
+	if target == "":
+		return
+	for slot_id in state.graph.slots_of_site(target):
+		state.troops[slot_id] = me
+	_screen.refresh(StateView.for_player_with_pending(
+		state, me, _screen.server.resolver.pending))
+
+
+func _step_check_capture() -> void:
+	var board: BoardPanel = _screen._board_panel
+	check(board.capture_flashes() > 0, "захваченная локация вспыхнула на доске")
+	check(board.is_shaking(), "доска дёрнулась на захвате")
 
 
 # --- вспомогательное ---------------------------------------------------------

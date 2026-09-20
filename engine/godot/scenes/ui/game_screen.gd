@@ -44,6 +44,10 @@ const GAP := 2.0
 ## дуга. По прямой полёт читается как рывок.
 const FLIGHT_TIME := 0.42
 const FLIGHT_ARC := 26.0
+## Насколько трясти доску: убийство и вытеснение — заметно, возврат войска или
+## шпиона — чуть.
+const SHAKE_KILL := 4.0
+const SHAKE_NUDGE := 2.0
 ## Левая колонка: чат внизу и бараки над ним — одной ширины.
 const COL_A := 62.0
 ## Правая колонка: два слота маркета по 80 плюс по пикселю отступа панели.
@@ -481,6 +485,22 @@ func send(intent: Intent) -> void:
 	if view.is_empty():
 		view = StateView.for_player_with_pending(server.state, viewer_id, pending)
 	refresh(view)
+	_react_to_events(result["events"])
+
+
+## Чем громче событие на доске, тем сильнее её тряхнёт. Захват локации доска
+## замечает сама (по смене владельца), а здесь — то, чего в расстановке войск
+## не видно: убийство, вытеснение, возврат чужого войска или шпиона.
+func _react_to_events(events: Array) -> void:
+	var power := 0.0
+	for e in events:
+		match String((e as Dictionary).get("type", "")):
+			"assassinate", "supplant":
+				power = maxf(power, SHAKE_KILL)
+			"return_troop", "return_spy", "return_own_spy":
+				power = maxf(power, SHAKE_NUDGE)
+	if power > 0.0:
+		_board_panel.shake(power)
 
 
 static func _error_name(err: int) -> String:
