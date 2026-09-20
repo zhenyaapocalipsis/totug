@@ -25,18 +25,42 @@ extends RefCounted
 ## tunnel picks the best octilinear route for the current positions, and the
 ## score punishes corners, crossings, overlapping traces, nodes leaving their
 ## hex and moving far from where the hex art puts them. The search runs per tile
-## and rotation offline (tools/build_schematic_tiles.gd -> TILES_PATH); a game
+## and rotation offline (tools/build_schematic_tiles.gd -> tiles_path(K)); a game
 ## just places those pieces. Tunnels stay inside their own hex, so pieces laid
 ## out alone still fit together, and the edge midpoints join them straight.
 
 ## Pixels from a hex centre to its north edge midpoint (a diagonal edge
 ## midpoint is at (K/2, K/2)). Even, so every port lands on a whole pixel.
-## Экран игры — 640x360, и доска должна читаться БЕЗ приближения (решение
-## владельца). Поэтому шаг сетки вдвое меньше прежнего (было 128), рамки
-## локаций ужаты, а длинные названия сокращены до восьми знаков (SHORT_NAMES):
-## так вся карта на двоих умещается в отведённые ей ~500x225 пикселей один
-## в один, и шрифт 5x7 остаётся чётким.
-const K := 64
+##
+## Шаг подобран под ЗОНУ ДОСКИ на экране (решение владельца, 2026-09-20:
+## «доска должна занимать максимальное пространство board zone»).
+##
+## Считать надо так. Схема рисуется только целым числом экранных пикселей на
+## свой пиксель — иначе трассы и шрифт 5x7 превращаются в кашу. На полном
+## экране расчётные 640x360 растянуты втрое, то есть зона доски — это
+## 474x254 расчётных или 1422x762 экранных пикселей, и на пиксель схемы
+## достаётся 1, 2 или 3 экранных, без промежуточных значений. Значит, чтобы
+## доска заполнила зону, картинка должна быть либо не больше 474x254 (по 3
+## экранных пикселя), либо около 711x381 (по 2). Между этими размерами
+## заполнения не будет — останутся пустые поля.
+##
+## Первый вариант (ужать схему до 474x254) не годится: при таком шаге рамки
+## локаций, размер которых задан шрифтом и не уменьшается, начинают налезать
+## друг на друга — примерно в трети партий, вплоть до наложения 29x12
+## пикселей. Поэтому взят второй: шаг УВЕЛИЧЕН, гексам просторнее прежнего, а
+## картинка заполняет зону на 90-94% в масштабе две трети. Подписи локаций
+## при этом такого же размера, как раньше.
+##
+## Шаг свой на каждое число игроков: на четверых гексов пятнадцать, на двоих
+## девять, и общий шаг одним из раскладов промахнулся бы мимо ступени.
+## Таблица тайлов у каждого шага своя (tiles_path).
+static var K := 92
+## Шаг сетки по числу игроков. Меняя его, проверь тестом «доска заполняет
+## зону»: картинка должна попадать в ступень масштаба почти впритык.
+## Делится на 4: решётка колец идёт с шагом K/4 (_lattice), и на нецелом шаге
+## кольца встали бы на половину пикселя.
+const GRID_BY_PLAYERS := {2: 92, 3: 92, 4: 72}
+const GRID_DEFAULT := 92
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -45,7 +69,10 @@ const PIN_MARGIN := 3      # a tunnel enters a box at least this far from its co
 const MIN_SEG := 4         # shortest visible trace segment
 const TRACE_GAP := 4       # closer parallel traces count as touching
 const NODE_GAP := 4
-const IMAGE_MARGIN := 6
+## Поле вокруг картинки: только чтобы обводка рамок и концы трасс не
+## упирались в край. Было 6 — двенадцать пикселей ширины, из-за которых
+## схема переставала влезать в зону доски (см. GRID_BY_PLAYERS).
+const IMAGE_MARGIN := 2
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
 const RING_R := 4
@@ -142,6 +169,8 @@ static func build(state: GameState) -> Dictionary:
 		return {}
 	var layouts: Dictionary = BoardData.load_all()["layouts"]
 	var players := int(state.layout.get("player_count", state.turn_order.size()))
+	# Шаг сетки свой на каждое число игроков, и таблица тайлов тоже своя.
+	K = int(GRID_BY_PLAYERS.get(players, GRID_DEFAULT))
 	var schematic := BoardSchematic.new()
 	schematic._collect(state.graph, layouts[str(players)], hex_by_slot)
 	schematic._index_neighbourhoods()
@@ -152,7 +181,7 @@ static func build(state: GameState) -> Dictionary:
 
 ## Lays out one tile at one rotation on its own, with a tunnel to every edge
 ## the tile prints. tools/build_schematic_tiles.gd stores the result for all
-## tiles in TILES_PATH; a game only assembles those pieces (the search itself
+## tiles in tiles_path(K); a game only assembles those pieces (the search itself
 ## takes seconds, too slow for every game start). Positions are relative to
 ## the hex centre; ports are named "port:<world direction>".
 static func layout_tile(builder: BoardBuilder, tile: String, rotation: int) -> Dictionary:
@@ -220,18 +249,24 @@ func _total_cost() -> float:
 			cost += _pair_cost(_visible[e], _visible[f])
 	return cost
 
-const TILES_PATH := "res://data/board/schematic_tiles.json"
-static var _tiles_cache: Dictionary = {}
+## Таблица тайлов своя на каждый шаг сетки: при другом K гекс другого размера,
+## и разложенные в нём узлы уже не годятся.
+static func tiles_path(grid: int) -> String:
+	return "res://data/board/schematic_tiles_%d.json" % grid
+
+static var _tiles_cache: Dictionary = {}   # K -> таблица
 
 
 static func _load_tiles() -> Dictionary:
-	if _tiles_cache.is_empty():
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(TILES_PATH))
+	if not _tiles_cache.has(K):
+		var path := tiles_path(K)
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 		if typeof(parsed) == TYPE_DICTIONARY:
-			_tiles_cache = parsed
+			_tiles_cache[K] = parsed
 		else:
-			push_warning("schematic: no tile table at %s, laying out from scratch" % TILES_PATH)
-	return _tiles_cache
+			push_warning("schematic: no tile table at %s, laying out from scratch" % path)
+			_tiles_cache[K] = {}
+	return _tiles_cache[K]
 
 
 static func rotation_key(rotation: float) -> String:

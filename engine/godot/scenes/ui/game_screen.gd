@@ -158,6 +158,17 @@ static func zone_style(margin: float = 2.0) -> StyleBoxFlat:
 	return PixelTheme.box(PixelTheme.PANEL, PixelTheme.BORDER, 1, int(margin), int(margin))
 
 
+## Зона доски: весь средний ряд — от самого края экрана до правой колонки,
+## без полей и зазоров (решение владельца, 2026-09-20). Пустое место вокруг
+## схемы — это потерянный размер самой доски, а схема рисуется только целым
+## числом экранных пикселей на свой пиксель, поэтому под эту зону подобран и
+## шаг её сетки (BoardSchematic.GRID_BY_PLAYERS); тест сверяет одно с другим.
+static func board_zone_rect(w: float = 640.0, h: float = 360.0) -> Rect2:
+	var top := MARGIN + TOP_H + GAP - 1.0
+	var bottom := h - MARGIN - BOTTOM_H - 1.0
+	return Rect2(0.0, top, w - MARGIN - COL_D - 1.0, bottom - top)
+
+
 ## Мелкий заголовок зоны капсом.
 static func section_label(text: String) -> Label:
 	var label := Label.new()
@@ -412,15 +423,13 @@ func _layout() -> void:
 	var b_x := a_x + COL_A + GAP
 	var b_w := d_x - GAP - b_x
 	var top_y := MARGIN
-	var mid_y := top_y + TOP_H + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
-	var mid_h := bottom_y - GAP - mid_y
 
 	# Верхний ряд: бараки по ширине чата и сыгранные карты по ширине руки.
 	_place(_barracks, a_x, top_y, COL_A, TOP_H)
 	_place(_played_zone, b_x, top_y, b_w, TOP_H)
-	# Доска занимает весь средний ряд — от левого края до правой колонки.
-	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
+	var zone := board_zone_rect(w, h)
+	_place(_board_area, zone.position.x, zone.position.y, zone.size.x, zone.size.y)
 
 	# Правая колонка начинается от самого верха экрана: над маркетом ничего
 	# нет, и всё свободное место достаётся картам маркета. Под маркетом —

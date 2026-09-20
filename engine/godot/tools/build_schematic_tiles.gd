@@ -1,10 +1,12 @@
 extends SceneTree
 
 ## Lays out every tile at every rotation for the schematic board and writes
-## data/board/schematic_tiles.json (see BoardSchematic.layout_tile). Re-run after
-## changing tile data or the layout rules in core/map/board_schematic.gd.
+## data/board/schematic_tiles_<K>.json (see BoardSchematic.layout_tile). Re-run
+## after changing tile data or the layout rules in core/map/board_schematic.gd.
 ## Run: Godot_v4.7.2-stable_win64_console.exe --headless --path engine/godot --script res://tools/build_schematic_tiles.gd
 ## Optional: --tiles=C1,A4 to rebuild only some tiles (others are kept).
+## Optional: --k=46 — шаг сетки. Своя таблица на каждый шаг: у каждого числа
+## игроков он свой (BoardSchematic.GRID_BY_PLAYERS).
 
 
 func _init() -> void:
@@ -12,6 +14,10 @@ func _init() -> void:
 	for arg in OS.get_cmdline_user_args() + OS.get_cmdline_args():
 		if arg.begins_with("--tiles="):
 			only.assign(arg.trim_prefix("--tiles=").split(","))
+		elif arg.begins_with("--k="):
+			BoardSchematic.K = int(arg.trim_prefix("--k="))
+	var path := BoardSchematic.tiles_path(BoardSchematic.K)
+	print("grid step K=%d -> %s" % [BoardSchematic.K, path])
 	var builder := BoardData.make_builder()
 	var data := BoardData.load_all()
 	var names := {}
@@ -23,7 +29,7 @@ func _init() -> void:
 	ids.sort()
 
 	var table := {}
-	var old: Variant = JSON.parse_string(FileAccess.get_file_as_string(BoardSchematic.TILES_PATH))
+	var old: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if typeof(old) == TYPE_DICTIONARY and not only.is_empty():
 		table = old
 	table["K"] = BoardSchematic.K
@@ -38,7 +44,7 @@ func _init() -> void:
 		tiles[tile] = per_rotation
 		print("%s  %d ms" % [tile, Time.get_ticks_msec() - started])
 	table["tiles"] = tiles
-	var file := FileAccess.open(BoardSchematic.TILES_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(table))
 	file.close()
 	quit()

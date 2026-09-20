@@ -2321,9 +2321,17 @@ func test_no_actions_while_decision_pending() -> void:
 ## нескольких настоящих раскладках. Трассы — только 0/45/90 градусов, изгиб —
 ## ровно 45 (угол 135), через ребро гекса — посередине и прямо, у каждой связи
 ## графа есть трасса, рамки локаций не налезают друг на друга.
+## Масштаб схемы так же, как его считает BoardPanel._fit_zoom при растяжении
+## расчётного экрана втрое (полный экран 1920x1080): один пиксель схемы —
+## целое число экранных.
+static func board_zoom(picture: Vector2, zone: Vector2) -> float:
+	var fit: float = minf(zone.x / picture.x, zone.y / picture.y)
+	return maxf(float(floori(fit * 3.0 + 0.001)), 1.0) / 3.0
+
+
 func test_board_schematic() -> void:
 	section("Схема доски: трассы по правилам разводки")
-	for run: Array in [[2, 1], [2, 7], [2, 42], [4, 3], [4, 11]]:
+	for run: Array in [[2, 1], [2, 7], [2, 42], [3, 5], [3, 9], [4, 3], [4, 11]]:
 		var ids: Array[String] = []
 		ids.assign(["red", "blue", "green", "purple"].slice(0, int(run[0])))
 		var state := GameSetup.new_game(ids, int(run[1]))
@@ -2341,6 +2349,22 @@ func test_board_schematic() -> void:
 				missing += 1
 		check_eq(missing, 0, "%s: у каждого места под войско есть точка на схеме" % tag)
 		check_eq((s["sites"] as Dictionary).size(), state.graph.site_count(), "%s: все локации на схеме" % tag)
+
+		# Доска должна ЗАПОЛНЯТЬ свою зону (решение владельца, 2026-09-20):
+		# пустые поля вокруг схемы — это потерянный размер доски. Рисуется она
+		# только целым числом экранных пикселей на свой пиксель, поэтому
+		# заполнение идёт ступенями, и под каждое число игроков подобран свой
+		# шаг сетки (BoardSchematic.GRID_BY_PLAYERS) — так, чтобы картинка
+		# попадала в ступень почти впритык.
+		var zone: Vector2 = GameScreen.board_zone_rect().size
+		var picture := Vector2(float(s["size"][0]), float(s["size"][1]))
+		var drawn := picture * board_zoom(picture, zone)
+		check(drawn.x <= zone.x and drawn.y <= zone.y,
+			"%s: доска %dx%d не вылезает из зоны %dx%d" % [tag,
+				int(drawn.x), int(drawn.y), int(zone.x), int(zone.y)])
+		check(drawn.x >= zone.x * 0.85,
+			"%s: доска %dx%d заполняет зону %dx%d по ширине" % [tag,
+				int(drawn.x), int(drawn.y), int(zone.x), int(zone.y)])
 
 		# 0/45/90 и только углы 135
 		var bad_angle := 0
