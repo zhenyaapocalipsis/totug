@@ -59,6 +59,11 @@ var _leaving_speed: Array[float] = []
 ## Карта под курсором — именно узел, а не индекс: при обновлении руки карты
 ## переставляются местами, и запомненный индекс указал бы на чужую карту.
 var _hovered_card: CardView = null
+## Карта, по которой только что щёлкнули: сервер вернёт руку без неё, и
+## улететь должна именно она. Без этой пометки в полёт уходила бы последняя
+## одноимённая карта ряда — в руке три Noble, и при розыгрыше самого левого
+## «сыгранной» выглядела бы самая правая.
+var _played_card: CardView = null
 var _tray: Panel
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
@@ -96,11 +101,20 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_vel = []
 	_delay = []
 
+	# Щёлкнутая карта из сопоставления исключается — иначе её место займёт она
+	# же, а улетит одноимённая соседка.
+	var played := -1
+	if _played_card != null and is_instance_valid(_played_card):
+		var played_id := _played_card.card_id
+		if hand.count(played_id) < _count_of(old_cards, played_id):
+			played = old_cards.find(_played_card)
+	_played_card = null
+
 	var fresh := 0
 	for cid: String in hand:
 		var found := -1
 		for j in range(old_cards.size()):
-			if not reused.has(j) and old_cards[j].card_id == cid:
+			if j != played and not reused.has(j) and old_cards[j].card_id == cid:
 				found = j
 				break
 		if found >= 0:
@@ -124,9 +138,22 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_layout()
 
 
+## Сколько карт с таким card_id лежит в ряду.
+static func _count_of(cards: Array[CardView], cid: String) -> int:
+	var n := 0
+	for card in cards:
+		if card.card_id == cid:
+			n += 1
+	return n
+
+
 func _make_card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
-	card.pressed.connect(func(clicked: String): card_clicked.emit(clicked))
+	card.pressed.connect(func(clicked: String):
+		# Запомнить до отправки: сервер ответит новой рукой синхронно, прямо
+		# внутри card_clicked, и к тому моменту пометка уже нужна.
+		_played_card = card
+		card_clicked.emit(clicked))
 	# Ткнули в карту, которую сейчас играть нельзя — она дёргается и краснеет,
 	# вместо того чтобы молча ничего не сделать.
 	card.refused.connect(func(_clicked: String): card.shake_refusal())
@@ -241,6 +268,11 @@ func _process(delta: float) -> void:
 			_leaving_speed.remove_at(j)
 			remove_child(card)
 			card.queue_free()
+
+
+## Для проверок: карты, которые сейчас улетают из руки.
+func leaving_cards() -> Array[CardView]:
+	return _leaving.duplicate()
 
 
 ## Для проверок: индекс карты, которая сейчас выдвинута (-1 — ни одной).

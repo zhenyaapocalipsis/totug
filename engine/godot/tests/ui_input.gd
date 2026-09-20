@@ -36,6 +36,7 @@ var _resources_before := 0
 var _discard_before := 0
 var _turn_owner := ""
 var _refused_card: CardView = null
+var _played_view: CardView = null
 
 
 func _initialize() -> void:
@@ -178,9 +179,19 @@ func _playable_hand_card() -> CardView:
 	return null
 
 
+## Играем САМУЮ ЛЕВУЮ карту руки: в руке три одинаковых Noble, и улететь
+## должна именно она, а не одноимённая соседка справа.
 func _step_click_hand_card() -> void:
 	var player := _current_player()
-	var card := _playable_hand_card()
+	var card: CardView = null
+	for c: CardView in _all_cards():
+		if not c.clickable or not (c.get_parent() is HandPanel):
+			continue
+		if not player.deck.hand.has(c.card_id):
+			continue
+		if card == null or c.position.x < card.position.x:
+			card = c
+	_played_view = card
 	if card == null:
 		return
 	_hand_before = player.deck.hand.size()
@@ -196,6 +207,9 @@ func _step_check_hand_card() -> void:
 		"эффект карты применился: ресурсов стало больше (%d -> %d)"
 			% [_resources_before, player.power + player.influence])
 	check(_has_floating_text(), "над плашкой ресурсов всплыла цифра изменения")
+	var hand := _hand_panel()
+	check(hand != null and hand.leaving_cards().has(_played_view),
+		"улетает именно сыгранная карта, а не одноимённая соседка")
 
 
 ## Есть ли на экране хоть одна всплывающая цифра.
@@ -274,9 +288,12 @@ func _step_click_market_card() -> void:
 
 func _step_click_end_turn() -> void:
 	_turn_owner = _screen.server.state.current_player()
-	var button := _find_button(_screen, "End turn")
+	# Кнопку берём по ссылке, а не по надписи: сама кнопка пустая, «END TURN» и
+	# чей ход лежат поверх неё отдельными Label (решение владельца, 2026-09-19).
+	# Поиск по тексту находил её раньше и молча перестал — отсюда два провала.
+	var button: Button = _screen._end_turn_button
 	check(button != null and not button.disabled, "кнопка завершения хода доступна")
-	if button != null:
+	if button != null and not button.disabled:
 		_click(button)
 
 
@@ -365,13 +382,3 @@ func _collect_cards(node: Node, out: Array) -> void:
 		out.append(node)
 	for child in node.get_children():
 		_collect_cards(child, out)
-
-
-func _find_button(node: Node, text: String) -> Button:
-	if node is Button and (node as Button).text == text:
-		return node
-	for child in node.get_children():
-		var found := _find_button(child, text)
-		if found != null:
-			return found
-	return null
