@@ -61,10 +61,14 @@ static var K := 92
 ## кольца встали бы на половину пикселя.
 const GRID_BY_PLAYERS := {2: 92, 3: 92, 4: 72}
 const GRID_DEFAULT := 92
-## Куда упаковывать карту (см. _pack). Нулевой размер — старое поведение:
-## локация двигается только внутри своего гекса. Пока это эксперимент, и
-## включает его только инструмент предпросмотра.
-static var pack_into := Vector2.ZERO
+## Куда упаковывать карту (см. _pack) — это зона доски на экране за вычетом
+## поля картинки: GameScreen.board_zone_rect() даёт 474x254, и по пикселю с
+## каждой стороны съедает IMAGE_MARGIN. Ровно в этот размер карта и должна
+## влезть, чтобы рисоваться один к одному.
+##
+## Ноль возвращает прежнее поведение (локация не выходит за свой гекс) —
+## нужно только инструментам сравнения.
+static var pack_into := Vector2(468, 248)
 ## Замеры последней упаковки — чтобы видеть, куда уходит время.
 static var pack_stats: Dictionary = {}
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
@@ -156,6 +160,8 @@ const PACK_ROUTE_PULL := 0.6
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
+## Сколько проходов без улучшения считать тупиком.
+const PACK_SEPARATE_STALL := 6
 ## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
 const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
 ## Шаги поиска ЧЁТНЫЕ: узлы обязаны остаться на сетке, по которой ищет
@@ -170,8 +176,11 @@ const PACK_ROUNDS := 2
 const PACK_RESCUE := [4, 40]
 ## Сколько узлов спасать: дальний поиск стоит около 90 мс на узел.
 const PACK_RESCUE_MAX := 4
+## Второй, широкий заход — только для слипшихся рамок локаций.
+const PACK_RESCUE_WIDE := 88
+const PACK_RESCUE_WIDE_MAX := 2
 ## Во сколько раз дороже наложение рамок при упаковке.
-const PACK_OVERLAP_FACTOR := 12.0
+const PACK_OVERLAP_FACTOR := 50.0
 const PACK_FIX_COST := 60.0
 
 var _key: Array[String] = []
@@ -948,7 +957,7 @@ func _choose_route(e: int, skip: Dictionary) -> float:
 		ranked.append([_local_cost(e, points, segs), points, segs])
 	ranked.sort_custom(func(x, y): return x[0] < y[0])
 	if ranked.is_empty():
-		_routes[e] = PackedVector2Array([_pos[_edge_a[e]], _pos[_edge_b[e]]])
+		_routes[e] = _fallback_octilinear(_pos[_edge_a[e]], _pos[_edge_b[e]])
 		_visible[e] = PackedVector2Array()
 		_bbox[e] = Rect2(Vector2(INF, INF), Vector2.ZERO)
 		return W_HIT * 10.0
@@ -1110,6 +1119,21 @@ func _pack(target: Vector2) -> void:
 			_choose_route(e, {})
 		_separate(everyone)
 		pack_stats["rescue_ms"] = Time.get_ticks_msec() - rescue
+
+		# Две слипшиеся РАМКИ ЛОКАЦИЙ — единственное, что видно сразу и портит
+		# доску. Если обычного спасения не хватило, значит вокруг всё занято:
+		# такой рамке разрешается уйти вдвое дальше. Случай редкий (одна
+		# партия из тридцати), поэтому широкий поиск по карману.
+		var wide := _stuck_sites(everyone)
+		if not wide.is_empty():
+			var far := Time.get_ticks_msec()
+			for n: int in wide.slice(0, PACK_RESCUE_WIDE_MAX):
+				_move_node(n, PACK_RESCUE[0], PACK_RESCUE_WIDE)
+			for e in _routes.size():
+				_choose_route(e, {})
+			_separate(everyone)
+			pack_stats["wide_ms"] = Time.get_ticks_msec() - far
+			pack_stats["wide"] = wide.size()
 	for e in _routes.size():
 		_choose_route(e, {})
 
@@ -1129,6 +1153,10 @@ func _pack(target: Vector2) -> void:
 ## внахлёст (ноль — всё чисто).
 func _separate(everyone: Array[int]) -> int:
 	var left := 0
+	# Если счёт наложений перестал падать, дальше толкать бессмысленно: пары
+	# ходят по кругу. На плотной карте это экономит сотни миллисекунд.
+	var best_left := 1 << 30
+	var stalled := 0
 	for _pass in PACK_SEPARATE_PASSES:
 		left = 0
 		for i in everyone.size():
@@ -1157,18 +1185,39 @@ func _separate(everyone: Array[int]) -> int:
 						_pos[a] = _clamp_in_frame(a, _snap(_pos[a] - short_by))
 		if left == 0:
 			break
+		if left < best_left:
+			best_left = left
+			stalled = 0
+		else:
+			stalled += 1
+			if stalled >= PACK_SEPARATE_STALL:
+				break
 	return left
 
 
-## Узлы, которые сейчас с кем-то внахлёст.
+## Узлы, которые сейчас с кем-то внахлёст, — сначала самые заметные.
+##
+## Спасать успеваем единицы (PACK_RESCUE_MAX), поэтому порядок важен: две
+## слипшиеся рамки локаций видно сразу, а кольцо, краем задевшее рамку, не
+## видно вовсе. Сперва рамка на рамке, потом рамка с кольцом, потом всё
+## остальное.
 func _overlapping(everyone: Array[int]) -> Array[int]:
-	var out: Array[int] = []
-	for i in everyone.size():
-		var a: int = everyone[i]
+	var scored: Array = []
+	for a: int in everyone:
+		var rank := -1
 		for b: int in everyone:
-			if a != b and _node_rect(a).intersects(_node_rect(b)):
-				out.append(a)
-				break
+			if a == b or not _node_rect(a).intersects(_node_rect(b)):
+				continue
+			var here := 0
+			if _kind[a] == Kind.SITE:
+				here = 2 if _kind[b] == Kind.SITE else 1
+			rank = maxi(rank, here)
+		if rank >= 0:
+			scored.append([rank, a])
+	scored.sort_custom(func(x: Array, y: Array) -> bool: return x[0] > y[0])
+	var out: Array[int] = []
+	for row: Array in scored:
+		out.append(int(row[1]))
 	return out
 
 
@@ -1380,10 +1429,21 @@ func _reroute_around_boxes() -> int:
 	var no_path := 0
 	for e in _routes.size():
 		var was_hits := _route_hit_count(e)
-		if was_hits == 0:
+		# Кривая трасса — тоже повод переложить. Когда прямых вариантов между
+		# концами не нашлось вовсе, _choose_route кладёт запасную линию прямо
+		# из центра в центр, под любым углом; в плотной карте это случается
+		# по десятку раз за партию. Поиск по сетке ходит только под 45.
+		var was_bent := not _route_is_octilinear(e) or not _route_leaves_port_right(e)
+		if was_hits == 0 and not was_bent:
 			continue
 		hits += 1
-		var path := _astar_route(e)
+		# Не нашлось в тесной коробке — пробуем ещё раз пошире: обход бывает
+		# длинным, а таких тоннелей единицы.
+		var path := _astar_route(e, PACK_ROUTE_MARGIN, PACK_ROUTE_CELLS)
+		if path.is_empty():
+			path = _astar_route(e, PACK_ROUTE_MARGIN * 2.5, PACK_ROUTE_CELLS * 3)
+		if path.is_empty() and _edge_dir[e] >= 0:
+			path = _astar_route(e, PACK_ROUTE_MARGIN * 2.5, PACK_ROUTE_CELLS * 3, true, true)
 		if path.is_empty():
 			no_path += 1
 			continue
@@ -1396,12 +1456,24 @@ func _reroute_around_boxes() -> int:
 		# Обход оставляем, если он задевает МЕНЬШЕ рамок, а не только если
 		# чист совсем: в плотной карте «чуть лучше» тоже дорогого стоит.
 		var now_hits := _route_hit_count(e)
-		if now_hits >= was_hits:
+		var straightened: bool = was_bent and _route_is_octilinear(e) \
+			and _route_leaves_port_right(e)
+		var better := now_hits < was_hits or straightened
+		if not better:
 			_routes[e] = was_route
 			_visible[e] = was_visible
 			_bbox[e] = was_box
 		else:
-			fixed += was_hits - now_hits
+			fixed += maxi(was_hits - now_hits, 1)
+	var bent_left := 0
+	var port_left := 0
+	for e in _routes.size():
+		if not _route_is_octilinear(e):
+			bent_left += 1
+		if not _route_leaves_port_right(e):
+			port_left += 1
+	pack_stats["bent_left"] = bent_left
+	pack_stats["port_left"] = port_left
 	pack_stats["route_hits"] = hits
 	pack_stats["route_no_path"] = no_path
 	return fixed
@@ -1437,7 +1509,12 @@ func _route_hit_count(e: int) -> int:
 ## стенки, поворот только на 45 градусов, цена — длина плюс штраф за излом
 ## (те же веса, что в _local_cost). Пусто, если маршрута нет или коробка
 ## поиска вышла слишком большой.
-func _astar_route(e: int) -> PackedVector2Array:
+## loose_goal — принять приход в цель с любой стороны. Помогает, когда
+## жёсткая сторона входа в рамку делает задачу неразрешимой: как трасса
+## вошла в локацию, глазу почти не видно, а вот тоннель, ушедший из стыка не
+## в ту сторону, виден сразу.
+func _astar_route(e: int, margin: float, cell_budget: int, loose_goal: bool = false,
+		loose_start: bool = false) -> PackedVector2Array:
 	var a := _edge_a[e]
 	var b := _edge_b[e]
 	var starts := _ends(a, b, e)
@@ -1450,11 +1527,16 @@ func _astar_route(e: int) -> PackedVector2Array:
 		box = box.expand(s[0])
 	for g: Array in goals:
 		box = box.expand(g[0])
-	box = box.grow(PACK_ROUTE_MARGIN)
+	box = box.grow(margin)
+	# Обход не должен вылезать за картинку: её размер считается и по трассам,
+	# и лишняя петля наружу делает карту больше зоны — а тогда масштаб падает
+	# с одного к одному до двух третей, и вся упаковка теряет смысл.
+	if _pack_rect.size.x > 0.0:
+		box = box.intersection(_pack_rect)
 	var origin := (box.position / GRID).floor() * GRID
 	var w := int((box.end.x - origin.x) / GRID) + 2
 	var h := int((box.end.y - origin.y) / GRID) + 2
-	if w < 2 or h < 2 or w * h > PACK_ROUTE_CELLS:
+	if w < 2 or h < 2 or w * h > cell_budget:
 		pack_stats["fail_big"] = int(pack_stats.get("fail_big", 0)) + 1
 		return PackedVector2Array()
 
@@ -1464,6 +1546,10 @@ func _astar_route(e: int) -> PackedVector2Array:
 		if _kind[m] == Kind.PORT or m == a or m == b:
 			continue
 		var r := _node_rect(m, 1.0)
+		# Рамка, накрывшая сам конец тоннеля, стенкой быть не может: трасса
+		# оказалась бы замурована внутри неё и маршрута не нашлось бы вовсе.
+		if r.has_point(_pos[a]) or r.has_point(_pos[b]):
+			continue
 		var x0 := maxi(int(ceilf((r.position.x - origin.x) / GRID)), 0)
 		var x1 := mini(int(floorf((r.end.x - origin.x) / GRID)), w - 1)
 		var y0 := maxi(int(ceilf((r.position.y - origin.y) / GRID)), 0)
@@ -1491,10 +1577,16 @@ func _astar_route(e: int) -> PackedVector2Array:
 	var starting: Array = []
 	for s: Array in starts:
 		var at: Vector2 = s[0]
-		var dir: int = int(s[1])
+		var dir: int = -1 if loose_start else int(s[1])
 		var lattice := _lattice_ahead(at, dir)
 		if lattice == Vector2.INF:
 			continue
+		# Направление выхода обязано выдержаться на ПЕРВОМ же отрезке, иначе
+		# трасса уйдёт вбок и стык с соседней трассой встанет изломом. Поэтому
+		# стартуем не в самой точке выхода, а на шаг дальше по этому
+		# направлению: тогда первый отрезок заведомо прямой.
+		if dir >= 0:
+			lattice += DIRS[dir] * GRID
 		var cell := _cell_of(lattice, origin, w, h)
 		if cell < 0:
 			continue
@@ -1526,7 +1618,7 @@ func _astar_route(e: int) -> PackedVector2Array:
 		if cell < 0:
 			continue
 		blocked[cell] = 0
-		want[cell] = -1 if dir < 0 else (dir + 4) % 8
+		want[cell] = -1 if dir < 0 or loose_goal else (dir + 4) % 8
 		exit_at[cell] = at
 		goal_cells.append(Vector2i(cell % w, cell / w))
 	if want.is_empty():
@@ -1708,3 +1800,75 @@ static func _heap_pop(costs: PackedFloat32Array, states: PackedInt32Array) -> in
 		states[small] = s
 		i = small
 	return top
+
+
+## Рамки локаций, которые всё ещё лежат одна на другой.
+func _stuck_sites(everyone: Array[int]) -> Array[int]:
+	var out: Array[int] = []
+	for a: int in everyone:
+		if _kind[a] != Kind.SITE:
+			continue
+		for b: int in everyone:
+			if a != b and _kind[b] == Kind.SITE and _node_rect(a).intersects(_node_rect(b)):
+				out.append(a)
+				break
+	return out
+
+
+## Все ли отрезки трассы идут под 0, 45 или 90 градусов.
+func _route_is_octilinear(e: int) -> bool:
+	var points: PackedVector2Array = _routes[e]
+	for i in points.size() - 1:
+		var d := points[i + 1] - points[i]
+		if not (is_zero_approx(d.x) or is_zero_approx(d.y) or is_equal_approx(absf(d.x), absf(d.y))):
+			return false
+	return true
+
+
+## Запасная трасса, когда обычных вариантов не нашлось: по диагонали, пока
+## один из концов не окажется на одной линии со вторым, и дальше прямо. Два
+## отрезка и один излом в 45 градусов — правило разводки соблюдено, а раньше
+## здесь стояла линия из центра в центр под любым углом.
+static func _fallback_octilinear(a: Vector2, b: Vector2, out_dir: int = -1) -> PackedVector2Array:
+	# Из точки стыка выходить можно только в одну сторону. Сначала короткий
+	# прямой участок в неё, и лишь потом обычная диагональ — если поворот с
+	# неё выходит ровно в 45 градусов.
+	if out_dir >= 0:
+		var stub := a + DIRS[out_dir] * STUB
+		var rest := _fallback_octilinear(stub, b)
+		if rest.size() >= 2 and _turn_is_45(DIRS[out_dir], rest[1] - rest[0]):
+			var joined := PackedVector2Array([a])
+			joined.append_array(rest)
+			return joined
+	var d := b - a
+	var run := minf(absf(d.x), absf(d.y))
+	if run <= 0.0:
+		return PackedVector2Array([a, b])
+	var corner := a + Vector2(signf(d.x), signf(d.y)) * run
+	# Ровная диагональ: излома нет вовсе, и лишняя точка дала бы отрезок
+	# нулевой длины — у него нет направления, и проверка изгибов спотыкается.
+	if corner.is_equal_approx(b) or corner.is_equal_approx(a):
+		return PackedVector2Array([a, b])
+	return PackedVector2Array([a, corner, b])
+
+
+## Уходит ли трасса из точки стыка (порта) в ту сторону, в какую должна.
+## У порта ровно одно допустимое направление: иначе две трассы, сходящиеся в
+## нём, встретятся под углом и стык будет выглядеть изломом на пустом месте.
+func _route_leaves_port_right(e: int) -> bool:
+	if _edge_dir[e] < 0:
+		return true
+	var points: PackedVector2Array = _routes[e]
+	if points.size() < 2:
+		return false
+	return _dir_index(points[1] - points[0]) == _edge_dir[e]
+
+
+## Поворот между двумя направлениями — ровно на 45 градусов (или его нет).
+static func _turn_is_45(from: Vector2, to: Vector2) -> bool:
+	var a := _dir_index(Vector2(signf(from.x), signf(from.y)))
+	var b := _dir_index(Vector2(signf(to.x), signf(to.y)))
+	if a < 0 or b < 0:
+		return false
+	var steps := absi(a - b)
+	return mini(steps, 8 - steps) <= 1
