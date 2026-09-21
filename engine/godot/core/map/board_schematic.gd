@@ -71,6 +71,8 @@ const GRID_DEFAULT := 92
 static var pack_into := Vector2(472, 252)
 ## Замеры последней упаковки — чтобы видеть, куда уходит время.
 static var pack_stats: Dictionary = {}
+## Класть узлы по строению графа (_spring_layout), а не по гексам настолки.
+static var layout_from_graph := false
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -160,6 +162,16 @@ const PACK_ROUTE_PULL := 0.6
 ## Цена пикселя длины при обходе. Двадцать пикселей крюка примерно равны
 ## одному лишнему излому — тогда обход остаётся коротким.
 const PACK_ROUTE_LEN := 0.6
+## Пружинная раскладка: сколько шагов, с какой «температуры» начинать (доля
+## ширины картинки), как быстро остывать и насколько размер узла добавляет
+## ему места вокруг.
+const SPRING_STEPS := 300
+const SPRING_HEAT := 0.08
+const SPRING_COOL := 0.975
+const SPRING_ROOM := 0.25
+## Запас над «в упор»: соседние рамки не должны стоять вплотную, иначе
+## трассе между ними не пройти.
+const SPRING_ROOMY := 1.35
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
@@ -247,6 +259,8 @@ static func build(state: GameState) -> Dictionary:
 	schematic._index_neighbourhoods()
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
 	schematic._repair()
+	if layout_from_graph and pack_into != Vector2.ZERO:
+		schematic._spring_layout(pack_into)
 	if pack_into != Vector2.ZERO:
 		schematic._pack(pack_into)
 	return schematic._export(state)
@@ -1980,3 +1994,100 @@ func _route_crossings(e: int) -> int:
 		if crossed:
 			count += 1
 	return count
+
+
+# --- раскладка из самого графа ----------------------------------------------
+
+## Кладёт узлы по строению графа, а не по гексам настолки (решение владельца,
+## 2026-09-21: «собирать карту процедурно»).
+##
+## Зачем. Гексовая раскладка имеет смысл на физическом поле с большими
+## тайлами, но не на схеме 474x254: соседние по тоннелю локации оказываются
+## далеко и не с тех сторон, и даже кратчайший путь между ними выглядит
+## петлёй. Отсюда же и пересечения. А граф у нас редкий — на четверых 68
+## узлов и 75 связей, почти дерево, — такой рисуется вообще без пересечений,
+## если класть узлы по связям.
+##
+## Как. Пружинная модель: все узлы отталкиваются друг от друга, связанные
+## притягиваются. Узел большой рамки отталкивает сильнее мелкого кольца,
+## иначе рамки налезают. Шаг ограничен «температурой», она падает — к концу
+## узлы только подрагивают. Это обычный Фрухтерман-Рейнгольд, отличия два:
+## размер узла и рамка картинки.
+func _spring_layout(target: Vector2) -> void:
+	var n := _key.size()
+	if n < 2:
+		return
+	var centre := target * 0.5
+	var frame := Rect2(Vector2.ZERO, target)
+
+	# Стартуем не со случайных точек, а с гексовой раскладки, сжатой в рамку:
+	# у неё уже примерно верная топология, пружинам остаётся её расправить.
+	var span := _node_span()
+	if span.size.x > 0.0 and span.size.y > 0.0:
+		var scale: float = minf(target.x / span.size.x, target.y / span.size.y)
+		var from := span.get_center()
+		for i in n:
+			_pos[i] = centre + (_pos[i] - from) * scale
+
+	# Идеальная длина связи: столько места приходится на узел.
+	# С запасом: при «в упор» соседние рамки стоят вплотную и трассам между
+	# ними не пролезть. Лишнее потом съест вписывание в картинку.
+	var ideal: float = sqrt(target.x * target.y / float(n)) * SPRING_ROOMY
+	var temp: float = target.x * SPRING_HEAT
+	var shift: Array[Vector2] = []
+	shift.resize(n)
+
+	for _step in SPRING_STEPS:
+		for i in n:
+			shift[i] = Vector2.ZERO
+		# отталкивание всех от всех
+		for i in n:
+			for j in range(i + 1, n):
+				var apart: Vector2 = _pos[i] - _pos[j]
+				var gap: float = maxf(apart.length(), 0.01)
+				# Крупная рамка занимает больше места — и отталкивает дальше.
+				var room: float = ideal + (_half[i] + _half[j]).length() * SPRING_ROOM
+				var force: float = room * room / gap
+				var dir: Vector2 = apart / gap
+				shift[i] += dir * force
+				shift[j] -= dir * force
+		# притяжение по связям
+		for e in _edge_a.size():
+			var a: int = _edge_a[e]
+			var b: int = _edge_b[e]
+			var apart2: Vector2 = _pos[a] - _pos[b]
+			var gap2: float = maxf(apart2.length(), 0.01)
+			var pull: float = gap2 * gap2 / ideal
+			var dir2: Vector2 = apart2 / gap2
+			shift[a] -= dir2 * pull
+			shift[b] += dir2 * pull
+		# сдвиг, ограниченный температурой, и не за край картинки
+		for i in n:
+			var move: Vector2 = shift[i]
+			var size: float = move.length()
+			if size > 0.01:
+				move = move / size * minf(size, temp)
+			# Рамкой во время счёта НЕ зажимаем: прижатые к краю узлы образуют
+			# кольцо с пустотой в середине. Форму ищем свободно, а в рамку
+			# картинка вписывается один раз в конце.
+			_pos[i] += move
+		temp *= SPRING_COOL
+
+	# Итоговую форму вписываем в картинку целиком.
+	var grown := _node_span()
+	if grown.size.x > 0.0 and grown.size.y > 0.0:
+		# Растягиваем по каждой оси отдельно: пружины дают примерно круглую
+		# форму, а зона доски вдвое шире своей высоты. Углы 45 градусов от
+		# этого ломаются, но трассы всё равно прокладываются заново.
+		var fit := Vector2(target.x / grown.size.x, target.y / grown.size.y)
+		var from2 := grown.get_center()
+		for i in n:
+			_pos[i] = _snap(centre + (_pos[i] - from2) * fit)
+	# Порты больше не лежат на рёбрах гексов, и держать их направление выхода
+	# незачем: это просто точка на тоннеле.
+	for e in _edge_dir.size():
+		_edge_dir[e] = -1
+	# Центры гексов остались от прежней раскладки; в проверках они больше не
+	# участвуют, но пусть не уезжают от узлов.
+	for hex: String in _centre.keys():
+		_centre[hex] = centre
