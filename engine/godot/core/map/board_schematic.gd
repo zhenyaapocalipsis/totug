@@ -68,7 +68,7 @@ const GRID_DEFAULT := 92
 ##
 ## Ноль возвращает прежнее поведение (локация не выходит за свой гекс) —
 ## нужно только инструментам сравнения.
-static var pack_into := Vector2(468, 248)
+static var pack_into := Vector2(472, 252)
 ## Замеры последней упаковки — чтобы видеть, куда уходит время.
 static var pack_stats: Dictionary = {}
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
@@ -148,7 +148,7 @@ const W_OUT_BOX := 200.0
 const W_OUT_BOX_PX := 100.0
 ## То же для ТРАССЫ при упаковке: выпирающая за край петля крадёт у доски
 ## масштаб, потому что размер картинки считается и по трассам.
-const W_OUT_TRACE_PX := 60.0
+const W_OUT_TRACE_PX := 400.0
 ## Во сколько раз дороже при упаковке трасса, задевающая рамку локации.
 const PACK_HIT_FACTOR := 10.0
 ## Обход препятствий: запас коробки поиска вокруг концов тоннеля и потолок
@@ -162,6 +162,12 @@ const PACK_ROUTE_PULL := 0.6
 const PACK_SEPARATE_PASSES := 40
 ## Сколько проходов без улучшения считать тупиком.
 const PACK_SEPARATE_STALL := 6
+## Зазор между трассой и чужой рамкой при упаковке. Вплотную проведённая
+## трасса мажет обводку рамки и читается как её часть.
+const PACK_CLEARANCE := 3.0
+## Во что обходу обходится шаг по чужой трассе. Дороже излома, но дешевле
+## стенки: пересечь соседа можно, если иначе пути нет.
+const PACK_BUSY_COST := 40.0
 ## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
 const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
 ## Шаги поиска ЧЁТНЫЕ: узлы обязаны остаться на сетке, по которой ищет
@@ -173,11 +179,14 @@ const PACK_FIX_NODES := 6
 ## Сколько раундов «найти худших — поправить — развести».
 const PACK_ROUNDS := 2
 ## Спасательный дальний поиск места: шаг и радиус.
-const PACK_RESCUE := [4, 40]
+const PACK_RESCUE := [6, 42]
 ## Сколько узлов спасать: дальний поиск стоит около 90 мс на узел.
 const PACK_RESCUE_MAX := 4
 ## Второй, широкий заход — только для слипшихся рамок локаций.
-const PACK_RESCUE_WIDE := 88
+const PACK_RESCUE_WIDE := 90
+## Шаг широкого захода крупнее: он ищет «куда-нибудь подальше», а точное
+## место потом всё равно подберёт разведение.
+const PACK_RESCUE_WIDE_STEP := 10
 const PACK_RESCUE_WIDE_MAX := 2
 ## Во сколько раз дороже наложение рамок при упаковке.
 const PACK_OVERLAP_FACTOR := 50.0
@@ -832,7 +841,9 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array) -
 	for n: int in _near[_hex[_edge_b[e]]]:
 		if n == _edge_a[e] or n == _edge_b[e]:
 			continue
-		var rect := _node_rect(n, 2.0)
+		# Зазор от рамки, а не просто «не задеть»: трасса, прижатая к рамке
+		# вплотную, читается как её продолжение и мажет обводку.
+		var rect := _node_rect(n, PACK_CLEARANCE if _pack_rect.size.x > 0.0 else 2.0)
 		if not reach.intersects(rect):
 			continue
 		for i in range(0, segs.size(), 2):
@@ -1128,7 +1139,7 @@ func _pack(target: Vector2) -> void:
 		if not wide.is_empty():
 			var far := Time.get_ticks_msec()
 			for n: int in wide.slice(0, PACK_RESCUE_WIDE_MAX):
-				_move_node(n, PACK_RESCUE[0], PACK_RESCUE_WIDE)
+				_move_node(n, PACK_RESCUE_WIDE_STEP, PACK_RESCUE_WIDE)
 			for e in _routes.size():
 				_choose_route(e, {})
 			_separate(everyone)
@@ -1434,6 +1445,7 @@ func _reroute_around_boxes() -> int:
 		# из центра в центр, под любым углом; в плотной карте это случается
 		# по десятку раз за партию. Поиск по сетке ходит только под 45.
 		var was_bent := not _route_is_octilinear(e) or not _route_leaves_port_right(e)
+		var was_cross := _route_crossings(e)
 		if was_hits == 0 and not was_bent:
 			continue
 		hits += 1
@@ -1458,7 +1470,8 @@ func _reroute_around_boxes() -> int:
 		var now_hits := _route_hit_count(e)
 		var straightened: bool = was_bent and _route_is_octilinear(e) \
 			and _route_leaves_port_right(e)
-		var better := now_hits < was_hits or straightened
+		var fewer_crossings: bool = now_hits == was_hits and _route_crossings(e) < was_cross
+		var better := now_hits < was_hits or straightened or fewer_crossings
 		if not better:
 			_routes[e] = was_route
 			_visible[e] = was_visible
@@ -1490,7 +1503,9 @@ func _route_hit_count(e: int) -> int:
 	for m in _key.size():
 		if _kind[m] == Kind.PORT or m == _edge_a[e] or m == _edge_b[e]:
 			continue
-		var rect := _node_rect(m)
+		# Считаем не только задетые рамки, но и те, к которым трасса подошла
+		# ближе зазора: прижатая вплотную линия мажет обводку.
+		var rect := _node_rect(m, PACK_CLEARANCE - 1.0)
 		if not _bbox[e].intersects(rect):
 			continue
 		# Узел, накрывший сам конец тоннеля, не в счёт: трасса обязана оттуда
@@ -1545,7 +1560,7 @@ func _astar_route(e: int, margin: float, cell_budget: int, loose_goal: bool = fa
 	for m in _key.size():
 		if _kind[m] == Kind.PORT or m == a or m == b:
 			continue
-		var r := _node_rect(m, 1.0)
+		var r := _node_rect(m, PACK_CLEARANCE)
 		# Рамка, накрывшая сам конец тоннеля, стенкой быть не может: трасса
 		# оказалась бы замурована внутри неё и маршрута не нашлось бы вовсе.
 		if r.has_point(_pos[a]) or r.has_point(_pos[b]):
@@ -1558,6 +1573,24 @@ func _astar_route(e: int, margin: float, cell_budget: int, loose_goal: bool = fa
 			var row := cy * w
 			for cx in range(x0, x1 + 1):
 				blocked[row + cx] = 1
+
+	# Чужие трассы — не стенка, но идти по ним дорого: так обход по
+	# возможности не пересекает соседей, а если деваться некуда — пересечёт.
+	var busy := PackedByteArray()
+	busy.resize(w * h)
+	for f in _visible.size():
+		# Дальние трассы в коробку поиска не попадают — их и не размечаем.
+		if f == e or not box.intersects(_bbox[f]):
+			continue
+		var segs: PackedVector2Array = _visible[f]
+		for i in range(0, segs.size(), 2):
+			var from := segs[i]
+			var to := segs[i + 1]
+			var steps := int(maxf(from.distance_to(to) / GRID, 1.0))
+			for k in range(steps + 1):
+				var cell := _cell_of(from.lerp(to, float(k) / float(steps)), origin, w, h)
+				if cell >= 0:
+					busy[cell] = 1
 
 	var states := w * h * 8
 	var dist := PackedFloat32Array()
@@ -1665,6 +1698,8 @@ func _astar_route(e: int, margin: float, cell_budget: int, loose_goal: bool = fa
 			var cost: float = dist[st] + step.length() * GRID * W_LEN
 			if turn != 0:
 				cost += W_BEND
+			if busy[ncell] == 1:
+				cost += PACK_BUSY_COST
 			if cost < dist[nst]:
 				dist[nst] = cost
 				prev[nst] = st
@@ -1872,3 +1907,28 @@ static func _turn_is_45(from: Vector2, to: Vector2) -> bool:
 		return false
 	var steps := absi(a - b)
 	return mini(steps, 8 - steps) <= 1
+
+
+## Сколько чужих трасс пересекает эта. Пересечения на схеме неизбежны, но
+## каждое лишнее мешает: игрок ведёт взглядом по тоннелю и теряет его.
+func _route_crossings(e: int) -> int:
+	var mine: PackedVector2Array = _visible[e]
+	if mine.is_empty():
+		return 0
+	var count := 0
+	for f in _visible.size():
+		if f == e or not _bbox[e].intersects(_bbox[f]):
+			continue
+		var other: PackedVector2Array = _visible[f]
+		var crossed := false
+		for i in range(0, mine.size(), 2):
+			for j in range(0, other.size(), 2):
+				if Geometry2D.segment_intersects_segment(mine[i], mine[i + 1],
+						other[j], other[j + 1]) != null:
+					crossed = true
+					break
+			if crossed:
+				break
+		if crossed:
+			count += 1
+	return count
