@@ -206,3 +206,39 @@ func connected_component_count() -> int:
 		for slot_id in reachable_slots(start):
 			seen[slot_id] = true
 	return components
+
+
+## Убирает тупиковые тоннели: маршрутные слоты (кольца), все соседи которых
+## лежат в одном и том же сайте. Такой тоннель выходит из локации и никуда не
+## ведёт — на схеме это линия в никуда, а места занимает как обычный тоннель.
+##
+## Это изменение ПРАВИЛ: убранные кольца были законными местами под войска.
+## Включается флагом BoardBuilder.DROP_DEAD_END_TUNNELS.
+##
+## Убирать надо до finalize(): смежность сайтов считается уже по тому, что
+## осталось.
+func drop_dead_end_tunnels() -> int:
+	var doomed: Array[String] = []
+	for slot_id: String in slots.keys():
+		if String(slots[slot_id]["site"]) != "":
+			continue
+		var owners := {}
+		for neighbour in adjacent_slots(slot_id):
+			var site := site_of_slot(neighbour)
+			# Сосед — тоже кольцо: значит тоннель куда-то ведёт, это не тупик.
+			if site == "":
+				owners.clear()
+				break
+			owners[site] = true
+		if owners.size() == 1:
+			doomed.append(slot_id)
+	for slot_id: String in doomed:
+		for neighbour in adjacent_slots(slot_id):
+			var list: PackedStringArray = _adjacency[neighbour]
+			var at := list.find(slot_id)
+			if at >= 0:
+				list.remove_at(at)
+				_adjacency[neighbour] = list
+		_adjacency.erase(slot_id)
+		slots.erase(slot_id)
+	return doomed.size()

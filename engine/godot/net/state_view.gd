@@ -169,6 +169,13 @@ static func board_snapshot(state: GameState) -> Dictionary:
 	# друга (так и было — доска выглядела кашей).
 	var geometry: Dictionary = BoardGeometry.build(state)
 	var slots: Dictionary = geometry.get("slots", {})
+	# Геометрия рисуется по арту гексов и не знает про правки графа: если из
+	# игры убрали места под войска (BoardBuilder.DROP_DEAD_END_TUNNELS), в
+	# снимке их быть не должно — иначе на доске окажется кружок, по которому
+	# нельзя ходить.
+	for slot_id: String in slots.keys():
+		if not state.graph.slots.has(slot_id):
+			slots.erase(slot_id)
 	if slots.is_empty():
 		# синтетические доски тестов: геометрии нет, отдаём то, что есть
 		for slot_id: String in state.graph.slots.keys():

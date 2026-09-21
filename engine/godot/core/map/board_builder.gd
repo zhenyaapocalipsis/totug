@@ -33,6 +33,15 @@ extends RefCounted
 ## Присутствия, а шпион уже даёт Присутствие — через него такие локации и
 ## разыгрываются.
 
+## Убирать ли тупиковые тоннели — кольца, у которых сосед только один сайт
+## и больше никого. На схеме они выглядят линией в никуда и занимают место,
+## которого в упакованной карте и так нет (проба по добру владельца,
+## 2026-09-21: «проверь, если убрать будет ли лучше»).
+##
+## ВНИМАНИЕ: это изменение ПРАВИЛ, а не только картинки — из игры уходят
+## настоящие места под войска (на четверых около двух десятков).
+const DROP_DEAD_END_TUNNELS := true
+
 const DIR_CYCLE: Array[String] = ["N", "NE", "SE", "S", "SW", "NW"]
 const OPPOSITE_DIR: Dictionary = {
 	"N": "S", "NE": "SW", "SE": "NW", "S": "N", "SW": "NE", "NW": "SE",
@@ -172,6 +181,9 @@ func build(player_count: int, hex_by_slot: Dictionary, rotation_by_slot: Diction
 			local_positions[layout_slot], site_id_by_name[layout_slot])
 
 	_sew_neighbours(graph, layout, hex_by_slot, rotation_by_slot, local_positions)
+
+	if DROP_DEAD_END_TUNNELS:
+		graph.drop_dead_end_tunnels()
 
 	graph.finalize()
 	return graph
