@@ -157,6 +157,9 @@ const PACK_ROUTE_MARGIN := 40.0
 const PACK_ROUTE_CELLS := 9000
 ## Насколько жадно поиск тянется к цели: цена пикселя в прикидке остатка.
 const PACK_ROUTE_PULL := 0.6
+## Цена пикселя длины при обходе. Двадцать пикселей крюка примерно равны
+## одному лишнему излому — тогда обход остаётся коротким.
+const PACK_ROUTE_LEN := 0.6
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
@@ -1737,7 +1740,10 @@ func _astar_route(e: int, margin: float, cell_budget: int, loose_goal: bool = fa
 				if blocked[cy * w + nx] == 1 or blocked[ny * w + cx] == 1:
 					continue
 			var nst: int = ncell * 8 + nd
-			var cost: float = dist[st] + step.length() * GRID * W_LEN
+			# Длина в обходе стоит ЗАМЕТНО: при копеечной цене (W_LEN) поиск
+			# охотно делал крюк через полкарты ради одного сэкономленного
+			# излома, и трассы выходили петлями.
+			var cost: float = dist[st] + step.length() * GRID * PACK_ROUTE_LEN
 			if turn != 0:
 				cost += W_BEND
 			if busy[ncell] == 1:
