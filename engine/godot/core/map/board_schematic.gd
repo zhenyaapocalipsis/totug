@@ -168,6 +168,11 @@ const PACK_CLEARANCE := 3.0
 ## Во что обходу обходится шаг по чужой трассе. Дороже излома, но дешевле
 ## стенки: пересечь соседа можно, если иначе пути нет.
 const PACK_BUSY_COST := 40.0
+## Групповая перекладка: сколько заходов и сколько всего поисков обхода
+## разрешено за партию. Заходами потому, что переложенная трасса освобождает
+## место соседям, а в одиночку каждая об этом не знает.
+const PACK_REROUTE_ROUNDS := 1
+const PACK_REROUTE_BUDGET := 60
 ## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
 const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
 ## Шаги поиска ЧЁТНЫЕ: узлы обязаны остаться на сетке, по которой ищет
@@ -1438,7 +1443,58 @@ func _reroute_around_boxes() -> int:
 	var fixed := 0
 	var hits := 0
 	var no_path := 0
+	var budget := PACK_REROUTE_BUDGET
+	for _round in PACK_REROUTE_ROUNDS:
+		var improved := 0
+		# Сначала самые плохие: кто задевает рамки и пересекает соседей, тот и
+		# выбирает свободное место первым. Соседи потом разойдутся по тому,
+		# что осталось, — в одиночку каждая трасса этого не видит.
+		for e: int in _worst_routes():
+			if budget <= 0:
+				break
+			budget -= 1
+			if _reroute_one(e):
+				improved += 1
+				fixed += 1
+			else:
+				hits += 1
+		if improved == 0 or budget <= 0:
+			break
+	var bent_left := 0
+	var port_left := 0
 	for e in _routes.size():
+		if not _route_is_octilinear(e):
+			bent_left += 1
+		if not _route_leaves_port_right(e):
+			port_left += 1
+	pack_stats["bent_left"] = bent_left
+	pack_stats["port_left"] = port_left
+	pack_stats["route_budget_left"] = budget
+	pack_stats["route_hits"] = hits
+	pack_stats["route_no_path"] = no_path
+	return fixed
+
+
+## Тоннели, которым сейчас хуже всего, — от худшего к лучшему. Задетая рамка
+## весит больше пересечения: трасса поверх названия локации портит доску
+## сильнее, чем перекрёсток.
+func _worst_routes() -> Array[int]:
+	var scored: Array = []
+	for e in _routes.size():
+		var bad := _route_hit_count(e) * 3 + _route_crossings(e)
+		if not _route_is_octilinear(e) or not _route_leaves_port_right(e):
+			bad += 5
+		if bad > 0:
+			scored.append([bad, e])
+	scored.sort_custom(func(x: Array, y: Array) -> bool: return x[0] > y[0])
+	var out: Array[int] = []
+	for row: Array in scored:
+		out.append(int(row[1]))
+	return out
+
+
+## Одна попытка переложить тоннель. true — новый маршрут лучше прежнего.
+func _reroute_one(e: int) -> bool:
 		var was_hits := _route_hit_count(e)
 		# Кривая трасса — тоже повод переложить. Когда прямых вариантов между
 		# концами не нашлось вовсе, _choose_route кладёт запасную линию прямо
@@ -1447,8 +1503,7 @@ func _reroute_around_boxes() -> int:
 		var was_bent := not _route_is_octilinear(e) or not _route_leaves_port_right(e)
 		var was_cross := _route_crossings(e)
 		if was_hits == 0 and not was_bent:
-			continue
-		hits += 1
+			return false
 		# Не нашлось в тесной коробке — пробуем ещё раз пошире: обход бывает
 		# длинным, а таких тоннелей единицы.
 		var path := _astar_route(e, PACK_ROUTE_MARGIN, PACK_ROUTE_CELLS)
@@ -1457,8 +1512,7 @@ func _reroute_around_boxes() -> int:
 		if path.is_empty() and _edge_dir[e] >= 0:
 			path = _astar_route(e, PACK_ROUTE_MARGIN * 2.5, PACK_ROUTE_CELLS * 3, true, true)
 		if path.is_empty():
-			no_path += 1
-			continue
+			return false
 		var was_route: PackedVector2Array = _routes[e]
 		var was_visible: PackedVector2Array = _visible[e]
 		var was_box: Rect2 = _bbox[e]
@@ -1476,20 +1530,8 @@ func _reroute_around_boxes() -> int:
 			_routes[e] = was_route
 			_visible[e] = was_visible
 			_bbox[e] = was_box
-		else:
-			fixed += maxi(was_hits - now_hits, 1)
-	var bent_left := 0
-	var port_left := 0
-	for e in _routes.size():
-		if not _route_is_octilinear(e):
-			bent_left += 1
-		if not _route_leaves_port_right(e):
-			port_left += 1
-	pack_stats["bent_left"] = bent_left
-	pack_stats["port_left"] = port_left
-	pack_stats["route_hits"] = hits
-	pack_stats["route_no_path"] = no_path
-	return fixed
+			return false
+		return true
 
 
 ## Сколько чужих рамок и колец задевает трасса.
