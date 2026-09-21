@@ -8,7 +8,10 @@ func _init() -> void:
 	var out: String = args[0] if args.size() > 0 else "C:/spring.png"
 	var players := int(args[1]) if args.size() > 1 else 4
 	var seed_value := int(args[2]) if args.size() > 2 else 3
-	BoardSchematic.layout_from_graph = true
+	BoardSchematic.layout_mode = BoardSchematic.Layout.TREE
+	for a in OS.get_cmdline_user_args():
+		if a == "spring":
+			BoardSchematic.layout_mode = BoardSchematic.Layout.SPRING
 	var state := GameSetup.new_game(GameScreen.player_ids_for(players), seed_value)
 	var started := Time.get_ticks_msec()
 	var s := BoardSchematic.build(state)

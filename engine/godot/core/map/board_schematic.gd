@@ -72,7 +72,10 @@ static var pack_into := Vector2(472, 252)
 ## Замеры последней упаковки — чтобы видеть, куда уходит время.
 static var pack_stats: Dictionary = {}
 ## Класть узлы по строению графа (_spring_layout), а не по гексам настолки.
-static var layout_from_graph := false
+## Откуда берутся места узлов: HEX — от гексов настолки (как было), SPRING —
+## пружинами по графу, TREE — деревом по графу.
+enum Layout { HEX, SPRING, TREE }
+static var layout_mode: int = Layout.HEX
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -172,6 +175,9 @@ const SPRING_ROOM := 0.25
 ## Запас над «в упор»: соседние рамки не должны стоять вплотную, иначе
 ## трассе между ними не пройти.
 const SPRING_ROOMY := 1.35
+## Раскладка деревом: запас места на узел и просвет между узлом и его детьми.
+const TREE_NODE_ROOM := 900.0
+const TREE_GAP := 8.0
 ## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
 ## проходами потом улучшать разводку (шаг поиска, радиус).
 const PACK_SEPARATE_PASSES := 40
@@ -259,7 +265,9 @@ static func build(state: GameState) -> Dictionary:
 	schematic._index_neighbourhoods()
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
 	schematic._repair()
-	if layout_from_graph and pack_into != Vector2.ZERO:
+	if layout_mode == Layout.TREE and pack_into != Vector2.ZERO:
+		schematic._tree_layout(pack_into)
+	elif layout_mode == Layout.SPRING and pack_into != Vector2.ZERO:
 		schematic._spring_layout(pack_into)
 	if pack_into != Vector2.ZERO:
 		schematic._pack(pack_into)
@@ -2091,3 +2099,122 @@ func _spring_layout(target: Vector2) -> void:
 	# участвуют, но пусть не уезжают от узлов.
 	for hex: String in _centre.keys():
 		_centre[hex] = centre
+
+
+# --- раскладка деревом ------------------------------------------------------
+
+## Кладёт карту как дерево (решение владельца, 2026-09-21).
+##
+## Почему дерево. Граф карты очень редкий: на четверых 68 узлов и 75 связей,
+## у дерева на 68 узлах было бы 67. То есть это дерево плюс восемь лишних
+## рёбер. А дерево рисуется БЕЗ ПЕРЕСЕЧЕНИЙ по построению, если каждому
+## поддереву отдать свой прямоугольник: соседние поддеревья не пересекаются,
+## значит и связи внутри них тоже.
+##
+## Как. Берём остов обходом в ширину от узла с наибольшим числом связей (он
+## обычно в середине карты). Считаем вес поддеревьев. Дальше рекурсивно:
+## узел занимает полосу у ближнего края своего прямоугольника, а остаток
+## делится между детьми поперёк — по весу. Пересекаться нечему.
+##
+## Оставшиеся вне остова рёбра (те самые восемь) просто прокладываются
+## поверх; они и дают немногие пересечения.
+func _tree_layout(target: Vector2) -> void:
+	var n := _key.size()
+	if n < 2:
+		return
+	var links: Array = []
+	links.resize(n)
+	for i in n:
+		links[i] = [] as Array[int]
+	for e in _edge_a.size():
+		(links[_edge_a[e]] as Array[int]).append(_edge_b[e])
+		(links[_edge_b[e]] as Array[int]).append(_edge_a[e])
+
+	# корень — самый связный узел: от него дерево расходится равномернее
+	var root := 0
+	for i in n:
+		if (links[i] as Array[int]).size() > (links[root] as Array[int]).size():
+			root = i
+
+	# остов обходом в ширину
+	var parent: PackedInt32Array = PackedInt32Array()
+	parent.resize(n)
+	parent.fill(-2)
+	var kids: Array = []
+	kids.resize(n)
+	for i in n:
+		kids[i] = [] as Array[int]
+	var order: Array[int] = []
+	var queue: Array[int] = [root]
+	parent[root] = -1
+	while not queue.is_empty():
+		var at: int = queue.pop_front()
+		order.append(at)
+		for next: int in (links[at] as Array[int]):
+			if parent[next] == -2:
+				parent[next] = at
+				(kids[at] as Array[int]).append(next)
+				queue.append(next)
+	# узлы, до которых обход не добрался (разорванный граф), вешаем на корень
+	for i in n:
+		if parent[i] == -2:
+			parent[i] = root
+			(kids[root] as Array[int]).append(i)
+			order.append(i)
+
+	# вес поддерева: сколько места ему нужно. Считаем с конца обхода — дети
+	# уже посчитаны.
+	var weight: PackedFloat32Array = PackedFloat32Array()
+	weight.resize(n)
+	for i in n:
+		weight[i] = _half[i].x * _half[i].y * 4.0 + TREE_NODE_ROOM
+	for k in range(order.size() - 1, -1, -1):
+		var node: int = order[k]
+		if parent[node] >= 0:
+			weight[parent[node]] += weight[node]
+
+	_place_subtree(root, Rect2(Vector2.ZERO, target), kids, weight)
+
+
+## Кладёт узел и его поддеревья в отведённый прямоугольник.
+func _place_subtree(node: int, rect: Rect2, kids: Array, weight: PackedFloat32Array) -> void:
+	var children: Array[int] = kids[node]
+	# Сам узел — у ближнего края, по середине поперёк: так связь к родителю
+	# выходит короткой, а детям остаётся сплошной кусок.
+	var along_x := rect.size.x >= rect.size.y
+	var own: float = (_half[node].x if along_x else _half[node].y) * 2.0 + TREE_GAP
+	_pos[node] = _snap(Vector2(
+		rect.position.x + (own * 0.5 if along_x else rect.size.x * 0.5),
+		rect.position.y + (rect.size.y * 0.5 if along_x else own * 0.5)))
+	if children.is_empty():
+		return
+
+	var rest := rect
+	if along_x:
+		rest.position.x += own
+		rest.size.x -= own
+	else:
+		rest.position.y += own
+		rest.size.y -= own
+	if rest.size.x <= 1.0 or rest.size.y <= 1.0:
+		for child: int in children:
+			_place_subtree(child, rect, kids, weight)
+		return
+
+	# Остаток делим ПОПЕРЁК: тогда поддеревья идут рядом, а не друг за другом,
+	# и их прямоугольники не пересекаются.
+	var total := 0.0
+	for child: int in children:
+		total += weight[child]
+	var offset := 0.0
+	for child: int in children:
+		var part: float = weight[child] / maxf(total, 0.001)
+		var piece := rest
+		if along_x:
+			piece.position.y = rest.position.y + rest.size.y * offset
+			piece.size.y = rest.size.y * part
+		else:
+			piece.position.x = rest.position.x + rest.size.x * offset
+			piece.size.x = rest.size.x * part
+		offset += part
+		_place_subtree(child, piece, kids, weight)
