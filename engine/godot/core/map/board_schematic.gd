@@ -2130,14 +2130,14 @@ func _tree_layout(target: Vector2) -> void:
 		(links[_edge_a[e]] as Array[int]).append(_edge_b[e])
 		(links[_edge_b[e]] as Array[int]).append(_edge_a[e])
 
-	# корень — самый связный узел: от него дерево расходится равномернее
-	var root := 0
-	for i in n:
-		if (links[i] as Array[int]).size() > (links[root] as Array[int]).size():
-			root = i
+	# Корень — в середине графа, а не с краю: тогда дерево не вытягивается в
+	# длинную кишку. Середину ищем двойным обходом: самый дальний узел от
+	# произвольного, потом самый дальний от него, и берём середину пути.
+	var far := _farthest(0, links)
+	var other := _farthest(far, links)
+	var root := _midpoint(far, other, links)
 
-	# остов обходом в ширину
-	var parent: PackedInt32Array = PackedInt32Array()
+	var parent := PackedInt32Array()
 	parent.resize(n)
 	parent.fill(-2)
 	var kids: Array = []
@@ -2155,66 +2155,112 @@ func _tree_layout(target: Vector2) -> void:
 				parent[next] = at
 				(kids[at] as Array[int]).append(next)
 				queue.append(next)
-	# узлы, до которых обход не добрался (разорванный граф), вешаем на корень
 	for i in n:
 		if parent[i] == -2:
 			parent[i] = root
 			(kids[root] as Array[int]).append(i)
 			order.append(i)
 
-	# вес поддерева: сколько места ему нужно. Считаем с конца обхода — дети
-	# уже посчитаны.
-	var weight: PackedFloat32Array = PackedFloat32Array()
-	weight.resize(n)
+	# Габарит поддерева ПОПЕРЁК (по высоте) — снизу вверх. Именно настоящий
+	# размер, а не доля площади: поддерево из трёх узлов иначе получало полосу,
+	# куда рамка не влезает, и узлы клались друг на друга.
+	var cross := PackedFloat32Array()
+	cross.resize(n)
 	for i in n:
-		weight[i] = _half[i].x * _half[i].y * 4.0 + TREE_NODE_ROOM
+		cross[i] = _half[i].y * 2.0
 	for k in range(order.size() - 1, -1, -1):
 		var node: int = order[k]
-		if parent[node] >= 0:
-			weight[parent[node]] += weight[node]
-
-	_place_subtree(root, Rect2(Vector2.ZERO, target), kids, weight)
-
-
-## Кладёт узел и его поддеревья в отведённый прямоугольник.
-func _place_subtree(node: int, rect: Rect2, kids: Array, weight: PackedFloat32Array) -> void:
-	var children: Array[int] = kids[node]
-	# Сам узел — у ближнего края, по середине поперёк: так связь к родителю
-	# выходит короткой, а детям остаётся сплошной кусок.
-	var along_x := rect.size.x >= rect.size.y
-	var own: float = (_half[node].x if along_x else _half[node].y) * 2.0 + TREE_GAP
-	_pos[node] = _snap(Vector2(
-		rect.position.x + (own * 0.5 if along_x else rect.size.x * 0.5),
-		rect.position.y + (rect.size.y * 0.5 if along_x else own * 0.5)))
-	if children.is_empty():
-		return
-
-	var rest := rect
-	if along_x:
-		rest.position.x += own
-		rest.size.x -= own
-	else:
-		rest.position.y += own
-		rest.size.y -= own
-	if rest.size.x <= 1.0 or rest.size.y <= 1.0:
+		var children: Array[int] = kids[node]
+		if children.is_empty():
+			continue
+		var stack := 0.0
 		for child: int in children:
-			_place_subtree(child, rect, kids, weight)
-		return
+			stack += cross[child] + TREE_GAP
+		cross[node] = maxf(cross[node], stack - TREE_GAP)
 
-	# Остаток делим ПОПЕРЁК: тогда поддеревья идут рядом, а не друг за другом,
-	# и их прямоугольники не пересекаются.
-	var total := 0.0
-	for child: int in children:
-		total += weight[child]
-	var offset := 0.0
-	for child: int in children:
-		var part: float = weight[child] / maxf(total, 0.001)
-		var piece := rest
-		if along_x:
-			piece.position.y = rest.position.y + rest.size.y * offset
-			piece.size.y = rest.size.y * part
+	# Дети корня делятся на две стороны: полдерева уходит вправо, полдерева
+	# влево. Так ширина вдвое меньше, и форма ближе к зоне доски, которая
+	# вдвое шире своей высоты.
+	var root_kids: Array[int] = kids[root]
+	var right: Array[int] = []
+	var left: Array[int] = []
+	var right_sum := 0.0
+	var left_sum := 0.0
+	for child: int in root_kids:
+		if right_sum <= left_sum:
+			right.append(child)
+			right_sum += cross[child] + TREE_GAP
 		else:
-			piece.position.x = rest.position.x + rest.size.x * offset
-			piece.size.x = rest.size.x * part
-		offset += part
-		_place_subtree(child, piece, kids, weight)
+			left.append(child)
+			left_sum += cross[child] + TREE_GAP
+	_pos[root] = Vector2.ZERO
+	var y := -maxf(right_sum - TREE_GAP, 0.0) * 0.5
+	for child: int in right:
+		_place_tidy(child, _half[root].x + TREE_GAP + _half[child].x, y, 1, kids, cross)
+		y += cross[child] + TREE_GAP
+	y = -maxf(left_sum - TREE_GAP, 0.0) * 0.5
+	for child: int in left:
+		_place_tidy(child, -(_half[root].x + TREE_GAP + _half[child].x), y, -1, kids, cross)
+		y += cross[child] + TREE_GAP
+
+	# Готовую форму вписываем в картинку — по каждой оси отдельно.
+	var span := _node_span()
+	if span.size.x > 0.0 and span.size.y > 0.0:
+		var fit := Vector2(target.x / span.size.x, target.y / span.size.y)
+		var from := span.get_center()
+		var centre := target * 0.5
+		for i in n:
+			_pos[i] = _snap(centre + (_pos[i] - from) * fit)
+	for e in _edge_dir.size():
+		_edge_dir[e] = -1
+	for hex: String in _centre.keys():
+		_centre[hex] = target * 0.5
+
+
+## Кладёт поддерево: узел на своей глубине, дети стопкой под ним по высоте.
+## Соседние поддеревья занимают непересекающиеся полосы, поэтому и связи
+## внутри них не пересекаются.
+func _place_tidy(node: int, x: float, y_start: float, dir: int,
+		kids: Array, cross: PackedFloat32Array) -> void:
+	_pos[node] = Vector2(x, y_start + cross[node] * 0.5)
+	var children: Array[int] = kids[node]
+	var y := y_start
+	for child: int in children:
+		var cx: float = x + float(dir) * (_half[node].x + TREE_GAP + _half[child].x)
+		_place_tidy(child, cx, y, dir, kids, cross)
+		y += cross[child] + TREE_GAP
+
+
+## Самый дальний узел от данного (по числу связей пути).
+func _farthest(from: int, links: Array) -> int:
+	var seen := {from: true}
+	var queue: Array[int] = [from]
+	var last := from
+	while not queue.is_empty():
+		var at: int = queue.pop_front()
+		last = at
+		for next: int in (links[at] as Array[int]):
+			if not seen.has(next):
+				seen[next] = true
+				queue.append(next)
+	return last
+
+
+## Середина пути между двумя узлами — годится за корень.
+func _midpoint(a: int, b: int, links: Array) -> int:
+	var parent := {a: -1}
+	var queue: Array[int] = [a]
+	while not queue.is_empty():
+		var at: int = queue.pop_front()
+		if at == b:
+			break
+		for next: int in (links[at] as Array[int]):
+			if not parent.has(next):
+				parent[next] = at
+				queue.append(next)
+	var path: Array[int] = []
+	var walk: int = b
+	while walk != -1 and parent.has(walk):
+		path.append(walk)
+		walk = int(parent[walk])
+	return path[path.size() / 2] if not path.is_empty() else a
