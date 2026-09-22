@@ -46,9 +46,12 @@ const FLIGHT_ARC := 26.0
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
 const SHAKE_NUDGE := 2.0
-## Ширина обеих боковых колонок: полная карта (176) плюс рамка зоны в пиксель
-## с каждой стороны — в зоне сыгранных карт она рисуется пиксель в пиксель.
+## Ширина левой колонки: полная карта (176) плюс рамка зоны в пиксель с каждой
+## стороны — в зоне сыгранных карт карта рисуется пиксель в пиксель.
 const COL := 178.0
+## Правая колонка уже: в ней два мелких лица карты по 80 с зазором и отступом
+## панели. Лишнее отдано доске — ей на четверых не хватало десятка пикселей.
+const COL_RIGHT := 164.0
 ## Высота зоны бараков.
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
@@ -400,7 +403,7 @@ func _layout() -> void:
 	if w < 10.0 or h < 10.0:
 		return
 	var a_x := MARGIN
-	var d_x := w - MARGIN - COL
+	var d_x := w - MARGIN - COL_RIGHT
 	var b_x := a_x + COL + GAP
 	var b_w := d_x - GAP - b_x
 	var top_y := MARGIN
@@ -416,8 +419,8 @@ func _layout() -> void:
 	_place(_board_area, b_x, top_y, b_w, bottom_y - GAP - top_y)
 
 	# Правая колонка: маркет от самого верха экрана, под ним End turn.
-	_place(_market_panel, d_x, top_y, COL, bottom_y - GAP - top_y)
-	_place(_end_turn_area, d_x, bottom_y, COL, BOTTOM_H)
+	_place(_market_panel, d_x, top_y, COL_RIGHT, bottom_y - GAP - top_y)
+	_place(_end_turn_area, d_x, bottom_y, COL_RIGHT, BOTTOM_H)
 
 	# Рука занимает середину нижнего ряда; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
@@ -427,7 +430,7 @@ func _layout() -> void:
 	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
 	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
 	# лежат по центру кнопки.
-	var ew := COL
+	var ew := COL_RIGHT
 	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
 	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
 	var timer_block: float = TIMER_H

@@ -32,33 +32,35 @@ extends RefCounted
 
 ## Pixels from a hex centre to its north edge midpoint (a diagonal edge
 ## midpoint is at (K/2, K/2)). Even, so every port lands on a whole pixel.
-## Экран игры — 640x360, и доска должна читаться БЕЗ приближения (решение
-## владельца, 2026-09-22): карта на четверых должна встать в зону доски
-## 472x252 один в один. Для этого: шаг 48 (было 128, потом 64), тупиковые
-## кольца убраны из игры (MapGraph.prune_dead_ends), подписи и очки шрифтом
-## 3x5 (PixelFontSmall), места под войска 7 px вплотную, зазоры ужаты,
-## длинные названия сокращены до семи знаков (SHORT_NAMES).
-const K := 48
+## Экран игры — 960x540 (x2 на 1920x1080), и доска должна читаться БЕЗ
+## приближения (решение владельца, 2026-09-22): карта на четверых встаёт в
+## зону доски 612x456 один в один. Шаг 60 (было 128, 64, 48 под экран
+## 640x360), подписи и очки шрифтом 5x7 (3x5 на новом экране не читался),
+## места под войска 9 px вплотную, тупиковые кольца убраны из игры
+## (MapGraph.prune_dead_ends), названия сокращены до пяти знаков (SHORT_NAMES):
+## при шести рамки на тесных гексах налезали друг на друга.
+## Замер: tools/measure_board.gd, наложения: tools/overlaps.gd.
+const K := 60
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
-const STUB := 4            # shortest straight run out of an edge midpoint or a box
-const PIN_MARGIN := 2      # a tunnel enters a box at least this far from its corner
-const MIN_SEG := 3         # shortest visible trace segment
-const TRACE_GAP := 3       # closer parallel traces count as touching
-const NODE_GAP := 3
-const IMAGE_MARGIN := 3
+const STUB := 5            # shortest straight run out of an edge midpoint or a box
+const PIN_MARGIN := 3      # a tunnel enters a box at least this far from its corner
+const MIN_SEG := 4         # shortest visible trace segment
+const TRACE_GAP := 4       # closer parallel traces count as touching
+const NODE_GAP := 4
+const IMAGE_MARGIN := 4
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
 const RING_R := 4
 const BOX_PAD := 1
-const SLOT_R := 3
-const SLOT_PITCH := 7
+const SLOT_R := 4
+const SLOT_PITCH := 9
 const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
 ## Сколько знаков помещается в рамку локации.
-const NAME_MAX := 7
+const NAME_MAX := 5
 
 ## Короткие подписи локаций: полное название осталось в данных (журнал,
 ## подсказки, диалоги целей), а на доске рисуется сокращение — иначе рамки
@@ -108,6 +110,10 @@ const PASSES := [[10, 40], [4, 12], [2, 4], [2, 4]]
 ## same result, half the time (measured 2026-09-22).
 const POLISH_PASSES := [[4, 12], [2, 4]]
 const TILE_ATTEMPTS := 5
+## How many times _repair goes over the board.
+const REPAIR_ROUNDS := 2
+## Сколько раз растаскивать оставшиеся пересечения (_push_apart).
+const PUSH_ROUNDS := 10
 
 var _key: Array[String] = []
 var _kind: Array[int] = []
@@ -279,7 +285,7 @@ static func hex_polygon(centre: Vector2, inset: float = 0.0) -> PackedVector2Arr
 ## теряется, оно остаётся в данных локации.
 static func short_name(full: String) -> String:
 	if SHORT_NAMES.has(full):
-		return SHORT_NAMES[full]
+		return String(SHORT_NAMES[full]).substr(0, NAME_MAX)
 	var s := full.to_upper()
 	if s.begins_with("THE "):
 		s = s.substr(4)
@@ -288,18 +294,20 @@ static func short_name(full: String) -> String:
 
 ## Size of a site box and its troop spaces relative to the box's top-left corner.
 static func site_box(site_name: String, slot_count: int) -> Dictionary:
-	var name_w := PixelFontSmall.text_width(short_name(site_name))
+	var name_w := PixelFont.text_width(short_name(site_name))
 	var cols := mini(maxi(slot_count, 1), SLOT_COLS)
 	var rows := int(ceil(slot_count / float(SLOT_COLS)))
 	var slots_w := cols * SLOT_PITCH - 2
-	var vp_w := PixelFontSmall.ADVANCE * VP_SCALE - VP_SCALE - 1
+	# Ширина цифры очков со свободным пикселем справа: без него цифра упиралась
+	# в рамку, а входящая в этом же ряду трасса читалась как перечёркивание.
+	var vp_w := PixelFont.ADVANCE * VP_SCALE
 	var body_w := slots_w + 4 + vp_w
 	var inner_w := maxi(name_w, body_w)
-	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFontSmall.HEIGHT * VP_SCALE)
+	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFont.HEIGHT * VP_SCALE)
 	var w := 2 + 2 * BOX_PAD + inner_w
-	var h := 2 + 2 * BOX_PAD + PixelFontSmall.HEIGHT + NAME_GAP + body_h
+	var h := 2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
-	var top := 1 + BOX_PAD + PixelFontSmall.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
+	var top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
 	var slots: Array[Vector2] = []
 	for i in slot_count:
 		var row := i / SLOT_COLS
@@ -310,7 +318,7 @@ static func site_box(site_name: String, slot_count: int) -> Dictionary:
 	return {
 		"w": w, "h": h, "slots": slots,
 		"name_at": Vector2(1 + BOX_PAD + (inner_w - name_w) / 2, 1 + BOX_PAD),
-		"vp_at": Vector2(left + slots_w + 4, 1 + BOX_PAD + PixelFontSmall.HEIGHT + NAME_GAP + (body_h - PixelFontSmall.HEIGHT * VP_SCALE) / 2),
+		"vp_at": Vector2(left + slots_w + 4, 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - PixelFont.HEIGHT * VP_SCALE) / 2),
 	}
 
 
@@ -467,35 +475,80 @@ func _near_end(p: Vector2, n: int) -> bool:
 
 
 ## Tiles are laid out alone, so a box near the edge can touch a box of the
-## neighbouring hex. Only those nodes are moved, a little. Rings go first:
-## a small ring steps aside easily. A move that lands the node on anything
-## (a box or ring of its own hex, say) is taken back, and the other node of
-## the pair gets its turn.
+## neighbouring hex; with the 5x7 board font boxes are big enough that the
+## polish can also leave two nodes of one hex touching. Only those nodes are
+## moved, a little. Rings go first: a small ring steps aside easily. A move
+## that lands the node on anything is taken back, and the other node of the
+## pair gets its turn. A move can free one pair and touch another, so the
+## pass runs a few times.
 func _repair() -> void:
-	for kind in [Kind.RING, Kind.SITE]:
-		for n in _key.size():
-			if _kind[n] != kind:
-				continue
-			var grown := _node_rect(n, NODE_GAP)
-			for m: int in _near[_hex[n]]:
-				if m != n and _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
-					var start := _pos[n]
-					var before: Array = _snapshot_routes(_incident[n])
-					for radius in [12, 20]:
-						_move_node(n, 2, radius)
-						if not _touches_any(n):
-							break
-						_pos[n] = start
-						for i in (_incident[n] as Array).size():
-							var e: int = _incident[n][i]
-							_routes[e] = before[i][0]
-							_visible[e] = before[i][1]
-							_bbox[e] = before[i][2]
-					break
+	for _round in REPAIR_ROUNDS:
+		for kind in [Kind.RING, Kind.SITE]:
+			for n in _key.size():
+				if _kind[n] == kind and _crowded(n):
+					_step_aside(n)
+	_push_apart()
 	# a moved box may now sit on a tunnel of the neighbouring hex
 	for e in _routes.size():
 		if _local_cost(e, _routes[e], _visible[e]) >= W_HIT:
 			_choose_route(e, {})
+
+
+## Последнее средство: рамки, которые всё ещё пересекаются, просто
+## растаскиваются в стороны по кратчайшей оси — по половине перекрытия каждой.
+## Поиск места до этого работает внутри своего гекса, и на тесных гексах
+## свободного места там иногда нет вовсе. Гексы не рисуются, так что выход
+## рамки за свой гекс не виден, а вот наложение видно сразу. Трассы после
+## сдвига перекладываются (см. конец _repair).
+func _push_apart() -> void:
+	for _round in PUSH_ROUNDS:
+		var moved := false
+		for n in _key.size():
+			if _kind[n] == Kind.PORT:
+				continue
+			for m: int in _near[_hex[n]]:
+				if m <= n or _kind[m] == Kind.PORT:
+					continue
+				var over := _node_rect(n).intersection(_node_rect(m))
+				if over.size.x <= 0.0 or over.size.y <= 0.0:
+					continue
+				# Двигаем один узел на целое число шагов сетки: половина
+				# перекрытия у соседних рамок бывает меньше шага, и _snap
+				# возвращал бы узел на прежнее место.
+				var by := over.size.x if over.size.x <= over.size.y else over.size.y
+				var steps := ceilf((by + 1.0) / float(GRID)) * float(GRID)
+				var axis := Vector2(1.0, 0.0) if over.size.x <= over.size.y else Vector2(0.0, 1.0)
+				# Уступает меньший: кольцу подвинуться проще, чем рамке локации.
+				var small := m if _node_rect(m).get_area() <= _node_rect(n).get_area() else n
+				var other := n if small == m else m
+				var away: float = (_pos[small] - _pos[other]).dot(axis)
+				_pos[small] = _snap(_pos[small] + axis * steps * (1.0 if away >= 0.0 else -1.0))
+				moved = true
+		if not moved:
+			return
+
+
+## A node of another hex closer than NODE_GAP, or one of its own hex touching.
+func _crowded(n: int) -> bool:
+	var grown := _node_rect(n, NODE_GAP)
+	var rect := _node_rect(n)
+	for m: int in _near[_hex[n]]:
+		if m == n:
+			continue
+		if _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
+			return true
+		if _hex[m] == _hex[n] and rect.intersects(_node_rect(m)):
+			return true
+	return false
+
+
+## Уводит узел на лучшее место рядом: так рамка не
+## уезжает далеко от своего места на арте. Место
+## оставляем за собой даже когда наложение убралось не
+## полностью, лучшее по цене место перекрывает соседа меньше, а доводка
+## сдвинет ещё и самого соседа (REPAIR_ROUNDS).
+func _step_aside(n: int) -> void:
+	_move_node(n, 2, 12)
 
 
 ## The node's box or ring actually overlaps another one (gaps not counted).
