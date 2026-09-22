@@ -6,20 +6,21 @@ extends RefCounted
 ## derived from the assembled hexes and their rotations (state.layout and
 ## state.graph), so the schematic has exactly the adjacency the rules use.
 ##
-## Owner's drawing rules (2026-09-16):
+## Owner's drawing rules (2026-09-16, changed 2026-09-22):
 ##   1. traces are straight and as parallel as possible;
-##   2. traces only turn by 45 degrees (a 135 degree corner); a 90 degree turn
-##      is two such corners with a short run between them;
-##   3. a trace that crosses a hex edge crosses it at the edge midpoint,
-##      perpendicular to the edge;
+##   2. traces run along the axes only and turn by 90 degrees; the corners are
+##      rounded when drawn (SchematicPainter);
+##   3. a trace that crosses a hex edge crosses it at the edge midpoint;
 ##   4. sites and rings may move, but only inside their own hex.
 ##
-## Hex geometry cannot give 45 degrees on its own: a hex neighbour sits 60
-## degrees from the next one. So the invisible hex grid is squeezed across its
-## N-S axis by sqrt(3): the diagonal neighbours then sit exactly at 45 degrees,
-## every edge midpoint lies on the centre-to-centre line and every crossing is
-## straight. The whole picture is also turned 90 degrees clockwise (hex north
-## points right) so the long axis of the board runs along the wide screen.
+## Rule 2 used to ask for 45-degree corners, and that is why the invisible hex
+## grid was squeezed across its N-S axis by exactly sqrt(3): only then do the
+## diagonal neighbours sit at 45 degrees. Right angles need no such angle, so
+## the squeeze is now a free parameter (SQUEEZE) and is chosen by proportion —
+## the board as a whole comes out close to the golden ratio, and the hexes are
+## much taller, which is what the site boxes were short of. The picture is
+## still turned 90 degrees clockwise (hex north points right), so the long axis
+## of the board runs along the wide screen.
 ##
 ## Layout is a small local search: each site/ring tries nearby positions, each
 ## tunnel picks the best octilinear route for the current positions, and the
@@ -41,6 +42,15 @@ extends RefCounted
 ## при шести рамки на тесных гексах налезали друг на друга.
 ## Замер: tools/measure_board.gd, наложения: tools/overlaps.gd.
 const K := 60
+## Во сколько раз невидимая сетка гексов сжата поперёк (см. заголовок файла).
+## Прежде было ровно sqrt(3) — только так диагональные соседи вставали под 45°,
+## как того требовали трассы. Трассы теперь прямоугольные, и угол не важен,
+## поэтому сжатие выбирается по пропорции: 1.30 даёт доске на четверых
+## соотношение сторон около золотого сечения (решение владельца, 2026-09-22).
+## 1.0 — правильные шестиугольники, sqrt(3) — прежние плоские.
+const SQUEEZE := 1.30
+## Пропорция, к которой подгоняется доска целиком.
+const GOLDEN := 1.6180339887
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -60,7 +70,7 @@ const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
 ## Сколько знаков помещается в рамку локации.
-const NAME_MAX := 5
+const NAME_MAX := 7
 
 ## Короткие подписи локаций: полное название осталось в данных (журнал,
 ## подсказки, диалоги целей), а на доске рисуется сокращение — иначе рамки
@@ -85,9 +95,11 @@ const SHORT_NAMES := {
 	"Web (NW)": "NW", "Web (SE)": "SE", "Web (SW)": "SW",
 }
 
+## Трассы идут только по горизонтали и вертикали, повороты на 90° (решение
+## владельца, 2026-09-22; углы скругляет SchematicPainter). Порядок важен:
+## соседние индексы — поворот на 90°, противоположный — +2.
 const DIRS: Array[Vector2] = [
-	Vector2(1, 0), Vector2(1, 1), Vector2(0, 1), Vector2(-1, 1),
-	Vector2(-1, 0), Vector2(-1, -1), Vector2(0, -1), Vector2(1, -1),
+	Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0), Vector2(0, -1),
 ]
 
 enum Kind { SITE, RING, PORT }
@@ -103,8 +115,9 @@ const W_DISP := 0.08
 const W_OUT := 15.0
 const W_OUT_PX := 6.0      # per pixel a box corner sticks out of its hex
 const W_NODE_OVERLAP := 400.0
-## Ring with two tunnels: penalty by the angle between them, index = steps of 45.
-const RING_TURN := [500.0, 300.0, 60.0, 6.0, 0.0]
+## Ring with two tunnels: penalty by the angle between them, index = steps of 90.
+## 0 — обе трассы уходят в одну сторону (так нельзя), 1 — поворот, 2 — насквозь.
+const RING_TURN := [500.0, 60.0, 0.0]
 const PASSES := [[10, 40], [4, 12], [2, 4], [2, 4]]
 ## Whole-board polish starts from good pieces, so the coarse pass is skipped:
 ## same result, half the time (measured 2026-09-22).
@@ -267,16 +280,19 @@ static func mini_key(a: String, b: String) -> String:
 
 ## Hex-local layout vector (x right, y down, units of the layout) to schematic pixels.
 static func to_schematic(v: Vector2) -> Vector2:
-	var squeezed := Vector2(v.x / sqrt(3.0), v.y)
+	var squeezed := Vector2(v.x / SQUEEZE, v.y)
 	return Vector2(-squeezed.y, squeezed.x) * (K / INRADIUS)
 
 
-## Corners of the (invisible, squeezed) hex around its centre.
+## Corners of the (invisible) hex around its centre. Height follows SQUEEZE:
+## at sqrt(3) the hex is the flat one the 45-degree traces needed, at 1.0 it is
+## a regular hexagon.
 static func hex_polygon(centre: Vector2, inset: float = 0.0) -> PackedVector2Array:
 	var k := float(K) - inset
+	var tall := k * (2.0 / 3.0) * (sqrt(3.0) / SQUEEZE)
 	return PackedVector2Array([
-		centre + Vector2(0, -2 * k / 3), centre + Vector2(k, -k / 3), centre + Vector2(k, k / 3),
-		centre + Vector2(0, 2 * k / 3), centre + Vector2(-k, k / 3), centre + Vector2(-k, -k / 3),
+		centre + Vector2(0, -tall), centre + Vector2(k, -tall / 2.0), centre + Vector2(k, tall / 2.0),
+		centre + Vector2(0, tall), centre + Vector2(-k, tall / 2.0), centre + Vector2(-k, -tall / 2.0),
 	])
 
 
@@ -564,28 +580,20 @@ static func _snap(p: Vector2) -> Vector2:
 	return (p / GRID).round() * GRID
 
 
-## Nearest point of the squeezed hex lattice (i*K/4, j*K/4) with i + j even:
-## neighbouring lattice points are always joined by a straight trace, so rings
-## that start there line up with each other and with the edge midpoints.
+## Ближайший узел ровной сетки с шагом K/4: кольца встают в один ряд и в один
+## столбец друг с другом и с серединами рёбер, и прямая трасса между соседями
+## идёт без изломов. Прежде сетка была шахматной (i + j чётное) — под трассы
+## под 45°; для прямых углов это только мешало бы ровным рядам.
 static func _lattice(v: Vector2) -> Vector2:
 	var step := K / 4.0
-	var best := Vector2.ZERO
-	var best_d := INF
-	var i0 := roundi(v.x / step)
-	var j0 := roundi(v.y / step)
-	for i in range(i0 - 1, i0 + 2):
-		for j in range(j0 - 1, j0 + 2):
-			if (i + j) % 2 != 0:
-				continue
-			var p := Vector2(i, j) * step
-			if p.distance_squared_to(v) < best_d:
-				best_d = p.distance_squared_to(v)
-				best = p
-	return best
+	return (v / step).round() * step
 
 
+## Ближайшее из четырёх направлений: по большей из двух осей.
 static func _dir_index(v: Vector2) -> int:
-	return DIRS.find(Vector2(signf(v.x), signf(v.y)))
+	if absf(v.x) >= absf(v.y):
+		return 0 if v.x >= 0.0 else 2
+	return 1 if v.y >= 0.0 else 3
 
 
 # --- routes ----------------------------------------------------------------------
@@ -655,20 +663,20 @@ func _ends(n: int, other: int, e: int) -> Array:
 	var rect := _node_rect(n)
 	var toward := _pos[other] - _pos[n]
 	var ends: Array = []
-	for side: Array in [[0, rect.end.x - 1], [4, rect.position.x + 1]]:
+	for side: Array in [[0, rect.end.x - 1], [2, rect.position.x + 1]]:
 		if toward.x * DIRS[side[0]].x > _half[n].x * 0.5:
 			var lo := rect.position.y + PIN_MARGIN
 			var hi := rect.end.y - PIN_MARGIN
 			for y: float in [clampf(_pos[other].y, lo, hi), _pos[n].y]:
 				_add_end(ends, Vector2(side[1], _snap_axis(y, lo, hi)), side[0])
-	for side2: Array in [[2, rect.end.y - 1], [6, rect.position.y + 1]]:
+	for side2: Array in [[1, rect.end.y - 1], [3, rect.position.y + 1]]:
 		if toward.y * DIRS[side2[0]].y > 0.0:
 			var lo2 := rect.position.x + PIN_MARGIN
 			var hi2 := rect.end.x - PIN_MARGIN
 			for x: float in [clampf(_pos[other].x, lo2, hi2), _pos[n].x]:
 				_add_end(ends, Vector2(_snap_axis(x, lo2, hi2), side2[1]), side2[0])
 	if ends.is_empty():
-		ends = [[Vector2(rect.end.x - 1, _pos[n].y), 0], [Vector2(rect.position.x + 1, _pos[n].y), 4]]
+		ends = [[Vector2(rect.end.x - 1, _pos[n].y), 0], [Vector2(rect.position.x + 1, _pos[n].y), 2]]
 	return ends
 
 
@@ -697,23 +705,23 @@ func _routes_between(out: Array[PackedVector2Array], a: Vector2, da: int, b: Vec
 	if da < 0:
 		_keep(out, _solve(a, b, [_dir_index(b - a)], [-1]))
 		# only the two directions that bracket the straight line can reach b
-		var d := int(floor(fposmod((b - a).angle(), TAU) / (PI / 4.0))) % 8
-		var d_next := (d + 1) % 8
+		var d := int(floor(fposmod((b - a).angle(), TAU) / (PI / 2.0))) % 4
+		var d_next := (d + 1) % 4
 		_keep(out, _solve(a, b, [d, d_next], [-1, -1]))
 		_keep(out, _solve(a, b, [d_next, d], [-1, -1]))
 		_keep(out, _solve(a, b, [d, d_next, d], [-1, -1, -1], true))
 		_keep(out, _solve(a, b, [d_next, d, d_next], [-1, -1, -1], true))
 		return
-	var last := -1 if db < 0 else (db + 4) % 8
+	var last := -1 if db < 0 else (db + 2) % 4
 	var found := out.size()
 	if last < 0 or last == da:
 		_keep(out, _solve(a, b, [da], [-1]))
 	for s1: int in [-1, 1]:
-		var d1 := (da + s1 + 8) % 8
+		var d1 := (da + s1 + 4) % 4
 		if last < 0 or last == d1:
 			_keep(out, _solve(a, b, [da, d1], [-1, -1]))
 		for s2: int in [-1, 1]:
-			var d2 := (d1 + s2 + 8) % 8
+			var d2 := (d1 + s2 + 4) % 4
 			if last >= 0 and last != d2:
 				continue
 			var dirs := [da, d1, d2]
@@ -728,9 +736,9 @@ func _routes_between(out: Array[PackedVector2Array], a: Vector2, da: int, b: Vec
 	for s1: int in [-1, 1]:
 		for s2: int in [-1, 1]:
 			for s3: int in [-1, 1]:
-				var d1 := (da + s1 + 8) % 8
-				var d2 := (d1 + s2 + 8) % 8
-				var d3 := (d2 + s3 + 8) % 8
+				var d1 := (da + s1 + 4) % 4
+				var d2 := (d1 + s2 + 4) % 4
+				var d3 := (d2 + s3 + 4) % 4
 				if last >= 0 and last != d3:
 					continue
 				_keep(out, _solve(a, b, [da, d1, d2, d3], [STUB, -1, -1, STUB]))
@@ -889,7 +897,7 @@ func _ring_cost(n: int) -> float:
 	for i in dirs.size():
 		for j in range(i + 1, dirs.size()):
 			var steps := absi(dirs[i] - dirs[j])
-			steps = mini(steps, 8 - steps)
+			steps = mini(steps, 4 - steps)
 			if dirs.size() == 2:
 				cost += RING_TURN[steps]
 			elif steps == 0:

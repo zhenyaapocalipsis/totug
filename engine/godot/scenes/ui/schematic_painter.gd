@@ -13,6 +13,10 @@ const BOX_DARK := Color("1c1830")
 const INK := Color("241c34")
 const MARKER := Color("f2d23c")
 const TRACE_WIDTH := 2
+## Скругление прямого угла: угол срезается на столько пикселей вдоль каждой
+## стороны, а срез заполняется диагональю. Больше 3 на пиксельной схеме уже не
+## «скругление», а заметный скос.
+const CORNER_R := 3.0
 
 
 static func paint(schematic: Dictionary) -> Image:
@@ -24,8 +28,11 @@ static func paint(schematic: Dictionary) -> Image:
 	# и им нужен ровный тёмный кружок.
 	img.fill(Color(BG, 0.0))
 	for flat: Array in schematic.get("traces", []):
-		for i in range(0, flat.size() - 2, 2):
-			_line(img, Vector2(flat[i], flat[i + 1]), Vector2(flat[i + 2], flat[i + 3]), TRACE)
+		var points := PackedVector2Array()
+		for i in range(0, flat.size(), 2):
+			points.append(Vector2(flat[i], flat[i + 1]))
+		for seg: Array in rounded(points):
+			_line(img, seg[0], seg[1], TRACE)
 	for slot_id: String in (schematic.get("rings", {}) as Dictionary).keys():
 		var at: Array = schematic["rings"][slot_id]
 		var c := Vector2i(roundi(at[0]), roundi(at[1]))
@@ -34,6 +41,36 @@ static func paint(schematic: Dictionary) -> Image:
 	for site_id: String in (schematic.get("sites", {}) as Dictionary).keys():
 		_site(img, schematic["sites"][site_id])
 	return img
+
+
+## Ломаная со скруглёнными углами, отрезками [от, до]. Каждый угол срезается
+## на CORNER_R вдоль обеих сторон (но не больше половины короткой стороны), а
+## сам срез рисуется диагональю: на пиксельной картинке это и читается как
+## скругление. Концы ломаной остаются на месте — трасса должна доходить до
+## рамки локации и до кольца.
+static func rounded(points: PackedVector2Array) -> Array:
+	var out: Array = []
+	if points.size() < 2:
+		return out
+	var at := points[0]
+	for i in range(1, points.size()):
+		var corner := points[i]
+		if i == points.size() - 1:
+			out.append([at, corner])
+			break
+		var into := (corner - at)
+		var out_of := (points[i + 1] - corner)
+		var r := minf(CORNER_R, minf(into.length(), out_of.length() * 0.5))
+		if r < 1.0:
+			out.append([at, corner])
+			at = corner
+			continue
+		var before := corner - into.normalized() * r
+		var after := corner + out_of.normalized() * r
+		out.append([at, before])
+		out.append([before, after])
+		at = after
+	return out
 
 
 ## Filled pixel circle (the same shape the card tool uses).

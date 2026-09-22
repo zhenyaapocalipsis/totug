@@ -2361,8 +2361,8 @@ func test_no_actions_while_decision_pending() -> void:
 
 
 ## Схема доски: правила владельца (2026-09-16) проверяются геометрически на
-## нескольких настоящих раскладках. Трассы — только 0/45/90 градусов, изгиб —
-## ровно 45 (угол 135), через ребро гекса — посередине и прямо, у каждой связи
+## нескольких настоящих раскладках. Трассы — только по осям, изгиб —
+## ровно 90 градусов, через ребро гекса — посередине встречно, у каждой связи
 ## графа есть трасса, рамки локаций не налезают друг на друга.
 func test_board_schematic() -> void:
 	section("Схема доски: трассы по правилам разводки")
@@ -2386,7 +2386,7 @@ func test_board_schematic() -> void:
 		check_eq(missing, 0, "%s: у каждого места под войско есть точка на схеме" % tag)
 		check_eq((s["sites"] as Dictionary).size(), state.graph.site_count(), "%s: все локации на схеме" % tag)
 
-		# 0/45/90 и только углы 135
+		# только по осям и только повороты на 90
 		var bad_angle := 0
 		var bad_turn := 0
 		var dir_at_port := {}   # port -> направления трасс, выходящих из него
@@ -2399,24 +2399,25 @@ func test_board_schematic() -> void:
 			var prev := -1
 			for i in range(0, flat.size() - 2, 2):
 				var d := Vector2(flat[i + 2] - flat[i], flat[i + 3] - flat[i + 1])
-				if not (is_zero_approx(d.x) or is_zero_approx(d.y) or is_equal_approx(absf(d.x), absf(d.y))):
+				if not (is_zero_approx(d.x) or is_zero_approx(d.y)):
 					bad_angle += 1
 					continue
 				var dir := BoardSchematic.DIRS.find(Vector2(signf(d.x), signf(d.y)))
 				if prev >= 0:
 					var steps := absi(dir - prev)
-					if mini(steps, 8 - steps) != 1:
+					if mini(steps, 4 - steps) != 1:
 						bad_turn += 1
 				prev = dir
 			if String(pair[0]).begins_with("port:"):
 				var list: Array = dir_at_port.get(pair[0], [])
 				list.append(Vector2(flat[2] - flat[0], flat[3] - flat[1]).normalized())
 				dir_at_port[pair[0]] = list
-		check_eq(bad_angle, 0, "%s: отрезки трасс только под 0/45/90 градусов" % tag)
-		check_eq(bad_turn, 0, "%s: каждый изгиб трассы — ровно 45 (угол 135)" % tag)
+		check_eq(bad_angle, 0, "%s: отрезки трасс идут только по осям" % tag)
+		check_eq(bad_turn, 0, "%s: каждый изгиб трассы — ровно 90 градусов" % tag)
 
-		# через ребро: точка — середина между центрами гексов, трасса идёт прямо
-		# и вдоль линии центров (перпендикулярно ребру сжатого гекса)
+		# через ребро: точка — середина между центрами гексов, и обе трассы
+		# сходятся в ней встречно (перпендикулярность ребру ушла вместе с
+		# трассами под 45°, решение владельца 2026-09-22)
 		var centres: Dictionary = s["hex_centres"]
 		var bad_port := 0
 		for port: String in (s["ports"] as Dictionary).keys():
@@ -2430,10 +2431,9 @@ func test_board_schematic() -> void:
 				if Vector2(centres[other][0], centres[other][1]).is_equal_approx(mirrored):
 					neighbour_found = true
 			if dirs.size() != 2 or not neighbour_found \
-					or not (dirs[0] as Vector2).is_equal_approx(-(dirs[1] as Vector2)) \
-					or absf((dirs[0] as Vector2).cross(outward.normalized())) > 0.001:
+					or not (dirs[0] as Vector2).is_equal_approx(-(dirs[1] as Vector2)):
 				bad_port += 1
-		check_eq(bad_port, 0, "%s: трассы пересекают ребро гекса посередине и прямо" % tag)
+		check_eq(bad_port, 0, "%s: трассы сходятся встречно в середине ребра гекса" % tag)
 
 		# у каждой связи графа есть трасса (напрямую или через середину ребра)
 		var node_of := func(slot_id: String) -> String:
