@@ -81,10 +81,10 @@ static func _site(img: Image, site: Dictionary) -> void:
 	img.fill_rect(rect.grow(-1), fill)
 	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size())
 	var name_at: Vector2 = box["name_at"]
-	PixelFont.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
+	PixelFontSmall.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
 		BoardSchematic.short_name(String(site["name"])), ink)
 	var vp_at: Vector2 = box["vp_at"]
-	PixelFont.draw_text(img, rect.position.x + int(vp_at.x), rect.position.y + int(vp_at.y),
+	PixelFontSmall.draw_text(img, rect.position.x + int(vp_at.x), rect.position.y + int(vp_at.y),
 		str(site["vp"]), MARKER if marker else ink, BoardSchematic.VP_SCALE)
 	for slot_id: String in (site["slots"] as Dictionary).keys():
 		var at: Array = site["slots"][slot_id]

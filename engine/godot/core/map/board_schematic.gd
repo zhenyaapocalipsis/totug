@@ -35,7 +35,8 @@ extends RefCounted
 ## владельца). Поэтому шаг сетки вдвое меньше прежнего (было 128), рамки
 ## локаций ужаты, а длинные названия сокращены до восьми знаков (SHORT_NAMES):
 ## так вся карта на двоих умещается в отведённые ей ~500x225 пикселей один
-## в один, и шрифт 5x7 остаётся чётким.
+## в один. Подписи и очки на доске — шрифтом 3x5 (PixelFontSmall): при 5x7
+## рамки выходили шире туннелей вокруг них.
 const K := 64
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
@@ -276,18 +277,18 @@ static func short_name(full: String) -> String:
 
 ## Size of a site box and its troop spaces relative to the box's top-left corner.
 static func site_box(site_name: String, slot_count: int) -> Dictionary:
-	var name_w := PixelFont.text_width(short_name(site_name))
+	var name_w := PixelFontSmall.text_width(short_name(site_name))
 	var cols := mini(maxi(slot_count, 1), SLOT_COLS)
 	var rows := int(ceil(slot_count / float(SLOT_COLS)))
 	var slots_w := cols * SLOT_PITCH - 2
-	var vp_w := PixelFont.ADVANCE * VP_SCALE - VP_SCALE - 1
+	var vp_w := PixelFontSmall.ADVANCE * VP_SCALE - VP_SCALE - 1
 	var body_w := slots_w + 4 + vp_w
 	var inner_w := maxi(name_w, body_w)
-	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFont.HEIGHT * VP_SCALE)
+	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFontSmall.HEIGHT * VP_SCALE)
 	var w := 2 + 2 * BOX_PAD + inner_w
-	var h := 2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h
+	var h := 2 + 2 * BOX_PAD + PixelFontSmall.HEIGHT + NAME_GAP + body_h
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
-	var top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
+	var top := 1 + BOX_PAD + PixelFontSmall.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
 	var slots: Array[Vector2] = []
 	for i in slot_count:
 		var row := i / SLOT_COLS
@@ -298,7 +299,7 @@ static func site_box(site_name: String, slot_count: int) -> Dictionary:
 	return {
 		"w": w, "h": h, "slots": slots,
 		"name_at": Vector2(1 + BOX_PAD + (inner_w - name_w) / 2, 1 + BOX_PAD),
-		"vp_at": Vector2(left + slots_w + 4, 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - PixelFont.HEIGHT * VP_SCALE) / 2),
+		"vp_at": Vector2(left + slots_w + 4, 1 + BOX_PAD + PixelFontSmall.HEIGHT + NAME_GAP + (body_h - PixelFontSmall.HEIGHT * VP_SCALE) / 2),
 	}
 
 
@@ -456,8 +457,9 @@ func _near_end(p: Vector2, n: int) -> bool:
 
 ## Tiles are laid out alone, so a box near the edge can touch a box of the
 ## neighbouring hex. Only those nodes are moved, a little. Rings go first:
-## a small ring steps aside easily, while a moved box can land on a ring of
-## its own hex.
+## a small ring steps aside easily. A move that lands the node on anything
+## (a box or ring of its own hex, say) is taken back, and the other node of
+## the pair gets its turn.
 func _repair() -> void:
 	for kind in [Kind.RING, Kind.SITE]:
 		for n in _key.size():
@@ -466,12 +468,32 @@ func _repair() -> void:
 			var grown := _node_rect(n, NODE_GAP)
 			for m: int in _near[_hex[n]]:
 				if m != n and _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
-					_move_node(n, 2, 12)
+					var start := _pos[n]
+					var before: Array = _snapshot_routes(_incident[n])
+					for radius in [12, 20]:
+						_move_node(n, 2, radius)
+						if not _touches_any(n):
+							break
+						_pos[n] = start
+						for i in (_incident[n] as Array).size():
+							var e: int = _incident[n][i]
+							_routes[e] = before[i][0]
+							_visible[e] = before[i][1]
+							_bbox[e] = before[i][2]
 					break
 	# a moved box may now sit on a tunnel of the neighbouring hex
 	for e in _routes.size():
 		if _local_cost(e, _routes[e], _visible[e]) >= W_HIT:
 			_choose_route(e, {})
+
+
+## The node's box or ring actually overlaps another one (gaps not counted).
+func _touches_any(n: int) -> bool:
+	var rect := _node_rect(n)
+	for m: int in _near[_hex[n]]:
+		if m != n and rect.intersects(_node_rect(m)):
+			return true
+	return false
 
 
 static func _snap(p: Vector2) -> Vector2:
