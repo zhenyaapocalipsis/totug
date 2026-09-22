@@ -32,27 +32,27 @@ extends RefCounted
 ## Pixels from a hex centre to its north edge midpoint (a diagonal edge
 ## midpoint is at (K/2, K/2)). Even, so every port lands on a whole pixel.
 ## Экран игры — 640x360, и доска должна читаться БЕЗ приближения (решение
-## владельца). Поэтому шаг сетки вдвое меньше прежнего (было 128), рамки
-## локаций ужаты, а длинные названия сокращены до восьми знаков (SHORT_NAMES):
-## так вся карта на двоих умещается в отведённые ей ~500x225 пикселей один
-## в один. Подписи и очки на доске — шрифтом 3x5 (PixelFontSmall): при 5x7
-## рамки выходили шире туннелей вокруг них.
-const K := 64
+## владельца, 2026-09-22): карта на четверых должна встать в зону доски
+## 472x252 один в один. Для этого: шаг 48 (было 128, потом 64), тупиковые
+## кольца убраны из игры (MapGraph.prune_dead_ends), подписи и очки шрифтом
+## 3x5 (PixelFontSmall), места под войска 7 px вплотную, зазоры ужаты,
+## длинные названия сокращены до семи знаков (SHORT_NAMES).
+const K := 48
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
-const STUB := 5            # shortest straight run out of an edge midpoint or a box
-const PIN_MARGIN := 3      # a tunnel enters a box at least this far from its corner
-const MIN_SEG := 4         # shortest visible trace segment
-const TRACE_GAP := 4       # closer parallel traces count as touching
-const NODE_GAP := 4
-const IMAGE_MARGIN := 6
+const STUB := 4            # shortest straight run out of an edge midpoint or a box
+const PIN_MARGIN := 2      # a tunnel enters a box at least this far from its corner
+const MIN_SEG := 3         # shortest visible trace segment
+const TRACE_GAP := 3       # closer parallel traces count as touching
+const NODE_GAP := 3
+const IMAGE_MARGIN := 3
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
 const RING_R := 4
 const BOX_PAD := 1
-const SLOT_R := 4
-const SLOT_PITCH := 10
+const SLOT_R := 3
+const SLOT_PITCH := 7
 const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
