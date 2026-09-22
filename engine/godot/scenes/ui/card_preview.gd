@@ -18,9 +18,10 @@ const GROW := 1.15
 const MIN_SIZE := Vector2(176, 254)
 const MARGIN := 4.0
 const ANIM_TIME := 0.09
-## Экран — 640x360, и полная карта 176x254 помещается на нём ровно один раз.
-## Целый масштаб обязателен: при дробном пиксели карты разъезжаются.
-const PIXEL_SCALE := 1.0
+## Полная карта 176x254 — в наибольшем целом масштабе, какой влезает в экран
+## (на 960x540 это 2x). Целый масштаб обязателен: при дробном пиксели карты
+## разъезжаются.
+const PIXEL_SCALE_MAX := 2.0
 
 static var active: CardPreview = null
 
@@ -33,7 +34,7 @@ var _alt := false
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 100
+	z_index = 1100  # над рукой (z до 901), меню и списком стопки (1000)
 
 
 func _enter_tree() -> void:
@@ -101,8 +102,10 @@ func _show(card: CardView) -> void:
 	_source = card
 	var s: Vector2 = (card.size * GROW).max(MIN_SIZE).round()
 	if CardView.pixel_texture(card.card_id) != null:
-		s = CardView.PIXEL_SIZE * PIXEL_SCALE  # целый масштаб — пиксели ровные
-		s = s.min(get_viewport_rect().size - Vector2.ONE * MARGIN * 2)
+		var room := get_viewport_rect().size - Vector2.ONE * MARGIN * 2
+		var fit := floorf(minf(room.x / CardView.PIXEL_SIZE.x, room.y / CardView.PIXEL_SIZE.y))
+		s = CardView.PIXEL_SIZE * clampf(fit, 1.0, PIXEL_SCALE_MAX)  # целый масштаб — пиксели ровные
+		s = s.min(room)
 	_card = CardView.new(card.card_id, int(s.x), int(s.y))
 	_card.hover_preview = false
 	_card.set_clickable(card.clickable, false)

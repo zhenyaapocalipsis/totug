@@ -18,12 +18,11 @@ extends PanelContainer
 signal market_card_clicked(index: int)
 signal supply_card_clicked(card_id: String)
 
-## Слот карты маркета: ровно ширина мелкого лица карты (пиксель в пиксель),
-## высота — наименьшая. Дальше слоты тянутся вверх по высоте колонки: пустого
-## места под маркетом больше нет, и арта видно столько, сколько влезло
-## (решение владельца, 2026-09-19).
-const SLOT := Vector2i(80, 32)
-## Отступ панели ровно в пиксель: два слота по 80 и зазор — вся ширина колонки.
+## Слот карты маркета — мелкое лицо карты целиком, пиксель в пиксель
+## (решение владельца, 2026-09-22: карты рынка не обрезаются). Слоты не
+## тянутся: на 960x540 вся сетка рынка влезает в колонку, остаток — снизу.
+const SLOT := Vector2i(CardView.MINI_SIZE)
+## Отступ панели ровно в пиксель.
 const PAD := 1
 ## Слотов дисплея столько же, сколько карт в маркете; последний, седьмой —
 ## ghost, верхняя сожранная карта. Он скрыт, пока сожранных карт нет:
@@ -60,10 +59,8 @@ func _init() -> void:
 	_grid.columns = 2
 	_grid.add_theme_constant_override("h_separation", 2)
 	_grid.add_theme_constant_override("v_separation", 2)
-	# Ряды дисплея (их три) и ряд снабжения (один) делят лишнюю высоту в
-	# отношении 3:1 — тогда все карты маркета одной высоты.
-	_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_grid.size_flags_stretch_ratio = 3.0
+	# Колонка шире двух слотов — сетка стоит посередине.
+	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_grid)
 
 	for i in range(DISPLAY_SLOTS + 1):
@@ -81,8 +78,7 @@ func _init() -> void:
 	_supply_row.columns = 2
 	_supply_row.add_theme_constant_override("h_separation", 2)
 	_supply_row.add_theme_constant_override("v_separation", 2)
-	_supply_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_supply_row.size_flags_stretch_ratio = 1.0
+	_supply_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_supply_row)
 
 	# Карты общих стопок не меняются всю партию — их слоты наполняются сразу.
@@ -201,7 +197,6 @@ func _ensure_card(i: int, cid: String) -> CardView:
 static func _make_slot() -> Control:
 	var box := Control.new()
 	box.custom_minimum_size = SLOT
-	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var empty := PanelContainer.new()

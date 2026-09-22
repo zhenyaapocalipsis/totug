@@ -19,7 +19,7 @@ var _body: PanelContainer
 func _init() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	z_index = 60
+	z_index = 1000  # над рукой: её поднятая карта рисуется с z_index до 901
 	visible = false
 
 	var dim := ColorRect.new()

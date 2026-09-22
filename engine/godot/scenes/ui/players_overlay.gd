@@ -1,10 +1,10 @@
 class_name PlayersOverlay
 extends Control
 
-## Полный расклад по всем игрокам. Висит поверх экрана, пока зажат Tab, и
-## исчезает, как только клавишу отпустили (решение владельца, 2026-09-19):
-## в обычной игре экран не занят таблицами, но всё открытое можно увидеть
-## в любой момент.
+## Меню по Tab: полный расклад по всем игрокам, а под ним чат с журналом
+## событий. Tab открывает меню, повторный Tab (или Esc) закрывает (решение
+## владельца, 2026-09-22: чат ушёл сюда с экрана, а печатать в него с зажатой
+## клавишей нельзя). Пока меню открыто, щелчки до игры под ним не доходят.
 ##
 ## Прямоугольники — в цветах игроков и в порядке хода; у того, кто начинал
 ## партию, сверху плашка FIRST PLAYER. Содержимое у всех одинаковое, скрытых
@@ -13,6 +13,8 @@ extends Control
 
 const BOX_W := 150.0
 const GAP := 4.0
+## Чат под прямоугольниками игроков: во всю ширину ряда на четверых.
+const CHAT_SIZE := Vector2(BOX_W * 4.0 + GAP * 3.0, 190.0)
 
 ## Строки прямоугольника: ключ в срезе игрока -> подпись.
 const ROWS: Array[Array] = [
@@ -29,27 +31,51 @@ const ROWS: Array[Array] = [
 	["white_trophy_count", "of them neutral"],
 ]
 
+var _column: VBoxContainer
 var _row: HBoxContainer
 var _boxes: Dictionary = {}   # player_id -> Dictionary с узлами блока
 
 
 func _init() -> void:
 	visible = false
+	# Над рукой: поднятая карта руки рисуется со своим z_index до 901.
+	z_index = 1000
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 	var dim := ColorRect.new()
 	dim.color = Color(PixelTheme.BG, 0.88)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
+
+	var centre := CenterContainer.new()
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(centre)
+	_column = VBoxContainer.new()
+	_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_column.add_theme_constant_override("separation", int(GAP))
+	centre.add_child(_column)
 
 	_row = HBoxContainer.new()
 	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_row.add_theme_constant_override("separation", int(GAP))
-	_row.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(_row)
+	_column.add_child(_row)
+
+
+## Чат с журналом живёт в меню под прямоугольниками игроков.
+## Чат лежит в простой рамке своего размера: Control не берёт минимальный
+## размер у детей, и длинная строка журнала не растянет меню во весь экран.
+func add_chat(chat: Control) -> void:
+	var frame := Control.new()
+	frame.custom_minimum_size = CHAT_SIZE
+	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	frame.clip_contents = true
+	_column.add_child(frame)
+	chat.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.add_child(chat)
 
 
 func _make_box(pid: String, first_player: bool) -> Dictionary:

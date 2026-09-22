@@ -25,19 +25,17 @@ const MAX_PLAYERS := 4
 ## командной строки, где нового имени ещё нет в кэше.
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
-# Сетка экрана в пикселях расчётного размера 640x360 (пиксель-арт: цифры
+# Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по решению владельца
-# (2026-09-19):
-#   верхний ряд — бараки слева, ровно по ширине чата под ними, и полоса
-#     сыгранных карт, ровно по ширине руки под ней;
-#   средний ряд — доска во всю оставшуюся ширину, а правая колонка идёт от
-#     самого верха экрана: маркет, под ним зона Devoured;
-#   нижний ряд — чат, рука и правый угол: Inner над Discard, рядом кнопка
-#     End turn с таймером.
-# Power/Influence ходящего висят оверлеем под зоной сыгранных карт и
-# появляются, только когда в этот ход что-то сыграно.
-# Чей сейчас ход, написано на самой кнопке End turn, а весь расклад по
-# игрокам показывается поверх экрана, пока зажат Tab (PlayersOverlay).
+# (2026-09-22), три колонки:
+#   левая — бараки (1), под ними сыгранные карты во весь рост лесенкой (2),
+#     внизу кнопки стопок Discard / Inner / Devoured (3);
+#   середина — доска на всё свободное место (4), под ней рука (5);
+#   правая — маркет от самого верха экрана (6), под ним End turn (7).
+# Обе боковые колонки одной ширины — полная карта с рамкой.
+# Power/Influence ходящего — в заголовке зоны сыгранных карт.
+# Чей сейчас ход, написано на самой кнопке End turn; расклад по игрокам, чат и
+# журнал — в меню по Tab (PlayersOverlay).
 const MARGIN := 1.0
 const GAP := 2.0
 ## Полёт купленной карты в стопку сброса: сколько летит и насколько выгнута
@@ -48,28 +46,18 @@ const FLIGHT_ARC := 26.0
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
 const SHAKE_NUDGE := 2.0
-## Левая колонка: чат внизу и бараки над ним — одной ширины.
-## Было 62 — в такую ширину влезало десять знаков строки, и чат не читался.
-## Теперь колонка широкая (решение владельца, 2026-09-20): чат берёт себе то,
-## что отдала рука, а карты в руке за это ложатся внахлёст.
-const COL_A := 128.0
-## Правая колонка: два слота маркета по 80 плюс по пикселю отступа панели.
-## Столько же у двух стопок под ней, чтобы карта в них рисовалась пиксель в
-## пиксель. Руке достаётся весь остаток — пять карт по 80 внахлёст.
-const COL_D := 164.0
+## Ширина обеих боковых колонок: полная карта (176) плюс рамка зоны в пиксель
+## с каждой стороны — в зоне сыгранных карт она рисуется пиксель в пиксель.
+const COL := 178.0
+## Высота зоны бараков.
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
+## Той же высоты кнопки стопок слева и End turn справа.
 const BOTTOM_H := 80.0
-## Зона Devoured — сразу под маркетом (решение владельца, 2026-09-19).
-const DEVOUR_H := 48.0
-## Нижний ряд правой колонки пополам: слева стопки зрителя (Inner над
-## Discard), справа кнопка End turn с таймером.
-const PILE_W := 82.0
+## Заголовок зоны сыгранных карт: чей ход и его Power/Influence.
+const PLAYED_HEAD_H := 11.0
 const TIMER_H := 11.0
 const DEPLOY_H := 13.0
-## Плашка Power/Influence: оверлей под зоной сыгранных карт, видна только
-## когда в этот ход что-то сыграно.
-const RES_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
@@ -92,7 +80,7 @@ var _log_panel: EventLogPanel
 var _board_panel: BoardPanel
 var _board_area: Control
 var _decision_dialog: DecisionDialog
-var _res_zone: PanelContainer
+var _res_zone: HBoxContainer
 var _res_power: CounterLabel
 var _res_influence: CounterLabel
 ## Что на плашке ресурсов было показано в прошлый раз и чьё оно — по этому
@@ -101,15 +89,15 @@ var _res_player := ""
 var _res_power_shown := 0
 var _res_influence_shown := 0
 var _played_zone: PanelContainer
-var _played_row: HBoxContainer
+var _played_head: HBoxContainer
 var _played_title: Label
-var _played_strip: CardStrip
+var _played_stack: PlayedStack
 ## Надпись на месте зоны сыгранных карт, пока идёт стартовая расстановка.
 var _setup_label: Label
 var _piles_column: VBoxContainer
 var _pile_inner: PileZone
 var _pile_discard: PileZone
-## Общая для всех стопка сожранных карт: живёт под маркетом.
+## Общая для всех стопка сожранных карт — кнопкой рядом со своими стопками.
 var _pile_devour: PileZone
 var _pile_dialog: PileDialog
 var _end_turn_area: Control
@@ -175,24 +163,38 @@ func _build_layout() -> void:
 	_barracks = BarracksBar.new()
 	add_child(_barracks)
 
-	# 3. Общая полоса сыгранных карт: что сыграл тот, чей сейчас ход.
+	# 2. Сыгранные карты того, чей сейчас ход: во весь рост, лесенкой. Сверху
+	# заголовок — чей ход и его Power/Influence.
 	_played_zone = PanelContainer.new()
 	_played_zone.add_theme_stylebox_override("panel", zone_style(1))
 	add_child(_played_zone)
-	_played_row = HBoxContainer.new()
-	var played_row := _played_row
-	played_row.add_theme_constant_override("separation", 3)
-	_played_zone.add_child(played_row)
+	var played_col := VBoxContainer.new()
+	played_col.add_theme_constant_override("separation", 1)
+	_played_zone.add_child(played_col)
+	_played_head = HBoxContainer.new()
+	_played_head.custom_minimum_size = Vector2(0, PLAYED_HEAD_H)
+	_played_head.add_theme_constant_override("separation", 6)
+	played_col.add_child(_played_head)
 	_played_title = section_label("")
-	_played_title.custom_minimum_size = Vector2(40, 0)
+	_played_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_played_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_played_title.clip_text = true
-	played_row.add_child(_played_title)
-	_played_strip = CardStrip.new()
-	# Полоса низкая: видно верх карты — имя и цену.
-	_played_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	played_row.add_child(_played_strip)
-	# 3b. Пока раздают стартовые локации, на месте этой же зоны стоит вопрос
+	_played_head.add_child(_played_title)
+	# Power и Influence ходящего (решение владельца, 2026-09-22: в заголовке
+	# этой же зоны) — тратит их тот, чьи карты под ними.
+	_res_zone = HBoxContainer.new()
+	_res_zone.add_theme_constant_override("separation", 6)
+	_res_zone.tooltip_text = "Power and Influence of the player to move"
+	_res_zone.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
+	_played_head.add_child(_res_zone)
+	_res_power = CounterLabel.make("P %d", POWER_COLOR)
+	_res_zone.add_child(_res_power)
+	_res_influence = CounterLabel.make("I %d", INFLUENCE_COLOR)
+	_res_zone.add_child(_res_influence)
+	_played_stack = PlayedStack.new()
+	_played_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	played_col.add_child(_played_stack)
+	# 2b. Пока раздают стартовые локации, на месте этой же зоны стоит вопрос
 	# «выбери стартовую локацию» (решение владельца, 2026-09-20): плашка над
 	# доской закрывала как раз те локации, по которым надо щёлкнуть. Сама
 	# зона сыгранных карт появляется, когда расстановка закончена.
@@ -201,7 +203,7 @@ func _build_layout() -> void:
 	_setup_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_setup_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_setup_label.visible = false
-	_played_zone.add_child(_setup_label)
+	played_col.add_child(_setup_label)
 
 	# 4. Доска лежит в простом Control, чтобы поверх неё (а не поверх маркета)
 	# можно было повесить диалог решения и подсказку.
@@ -219,60 +221,34 @@ func _build_layout() -> void:
 	_decision_dialog.option_chosen.connect(_on_decision_answer)
 	_board_area.add_child(_decision_dialog)
 
-	# 3c. Power и Influence ходящего — оверлеем под зоной сыгранных карт
-	# (решение владельца, 2026-09-19). Лежит поверх доски и появляется, только
-	# когда в этот ход что-то сыграно, — поэтому и добавлена после доски.
-	_res_zone = PanelContainer.new()
-	_res_zone.add_theme_stylebox_override("panel", zone_style(1))
-	_res_zone.tooltip_text = "Power and Influence of the player to move"
-	_res_zone.visible = false
-	add_child(_res_zone)
-	var res_row := HBoxContainer.new()
-	res_row.add_theme_constant_override("separation", 6)
-	res_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_res_zone.add_child(res_row)
-	_res_power = CounterLabel.make("P %d", POWER_COLOR)
-	res_row.add_child(_res_power)
-	_res_influence = CounterLabel.make("I %d", INFLUENCE_COLOR)
-	res_row.add_child(_res_influence)
-
 	# 6. Маркет.
 	_market_panel = MarketPanel.new()
 	_market_panel.market_card_clicked.connect(_on_market_clicked)
 	_market_panel.supply_card_clicked.connect(_on_supply_clicked)
 	add_child(_market_panel)
 
-	# 6b. Сожранные карты — общая для всех стопка прямо под маркетом: оттуда
-	# же берётся «призрак» (Ghost), верхняя карта этой стопки.
-	_pile_devour = PileZone.new("DEVOURED")
-	_pile_devour.tooltip_text = "Cards devoured out of the game. Click to see them all"
-	_pile_devour.clicked.connect(func(): _open_pile("devour"))
-	add_child(_pile_devour)
-
-	# 5. Чат и журнал.
-	_chat_panel = ChatPanel.new()
-	_chat_panel.message_sent.connect(func(text: String): _chat_panel.add_message(viewer_id, text))
-	add_child(_chat_panel)
-	_log_panel = _chat_panel.log_panel
-	_log_panel.board = board_data
-
-	# 2. Стопки зрителя: Внутренний круг над сбросом, в левой половине правого
-	# нижнего угла. По щелчку показывают весь список карт.
+	# 3. Стопки кнопками одна под другой в левом нижнем углу: свой сброс,
+	# свой Внутренний круг и общая для всех стопка сожранных карт (из неё же
+	# берётся «призрак», Ghost). По щелчку — весь список карт стопки.
 	_piles_column = VBoxContainer.new()
-	# Без зазора: рамки стопок стоят вплотную, как у слотов маркета.
-	_piles_column.add_theme_constant_override("separation", 0)
+	_piles_column.add_theme_constant_override("separation", int(GAP))
 	add_child(_piles_column)
-	_pile_inner = PileZone.new("INNER")
-	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_pile_inner.clicked.connect(func(): _open_pile("inner"))
-	_piles_column.add_child(_pile_inner)
 	_pile_discard = PileZone.new("DISCARD")
 	_pile_discard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_discard.clicked.connect(func(): _open_pile("discard"))
 	_piles_column.add_child(_pile_discard)
+	_pile_inner = PileZone.new("INNER CIRCLE")
+	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pile_inner.clicked.connect(func(): _open_pile("inner"))
+	_piles_column.add_child(_pile_inner)
+	_pile_devour = PileZone.new("DEVOURED")
+	_pile_devour.tooltip_text = "Cards devoured out of the game. Click to see them all"
+	_pile_devour.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_pile_devour.clicked.connect(func(): _open_pile("devour"))
+	_piles_column.add_child(_pile_devour)
 
-	# 9. End turn — правая половина нижнего угла: высокая кнопка, на ней же
-	# написано, чей сейчас ход; под ней таймер, над ней Deploy for 1 VP.
+	# 7. End turn — правый нижний угол: высокая кнопка, на ней же написано,
+	# чей сейчас ход; под ней таймер, над ней Deploy for 1 VP.
 	_end_turn_area = Control.new()
 	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_end_turn_area)
@@ -319,9 +295,14 @@ func _build_layout() -> void:
 	_pile_dialog = PileDialog.new()
 	add_child(_pile_dialog)
 
-	# Полный расклад по игрокам — появляется, пока зажат Tab.
+	# Меню по Tab: полный расклад по игрокам, под ним чат и журнал событий.
 	_overlay = PlayersOverlay.new()
 	add_child(_overlay)
+	_chat_panel = ChatPanel.new()
+	_chat_panel.message_sent.connect(func(text: String): _chat_panel.add_message(viewer_id, text))
+	_overlay.add_chat(_chat_panel)
+	_log_panel = _chat_panel.log_panel
+	_log_panel.board = board_data
 
 	# Увеличенная копия карты под курсором (с зажатым Alt) — над всем экраном.
 	_preview = CardPreview.new()
@@ -376,20 +357,31 @@ func _style_end_turn(colour: Color) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _board_area != null:
 		_layout()
-	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT and _overlay != null:
-		# Окно потеряло фокус с зажатым Tab — отпускания мы уже не услышим.
-		_overlay.visible = false
 
 
-## Tab показывает полный расклад по игрокам, пока клавишу держат. Событие
-## перехватываем целиком: иначе Tab уводит фокус по кнопкам интерфейса.
+## Tab открывает и закрывает меню (расклад по игрокам, чат, журнал), Esc его
+## закрывает. Tab перехватываем целиком — даже из строки чата: иначе он уводит
+## фокус по кнопкам интерфейса.
 func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or key.keycode != KEY_TAB:
+	if key == null:
 		return
-	if not key.echo:
-		_overlay.visible = key.pressed
-	get_viewport().set_input_as_handled()
+	if key.keycode == KEY_TAB:
+		if key.pressed and not key.echo:
+			set_menu_open(not _overlay.visible)
+		get_viewport().set_input_as_handled()
+	elif key.keycode == KEY_ESCAPE and key.pressed and _overlay.visible:
+		set_menu_open(false)
+		get_viewport().set_input_as_handled()
+
+
+func set_menu_open(open: bool) -> void:
+	_overlay.visible = open
+	if not open:
+		# Строка чата не должна держать фокус под закрытым меню.
+		var focused := get_viewport().gui_get_focus_owner()
+		if focused != null and _overlay.is_ancestor_of(focused):
+			focused.release_focus()
 
 
 ## Первый кадр: минимальные размеры панелей к этому моменту уже посчитаны, и
@@ -408,30 +400,25 @@ func _layout() -> void:
 	if w < 10.0 or h < 10.0:
 		return
 	var a_x := MARGIN
-	var d_x := w - MARGIN - COL_D
-	var b_x := a_x + COL_A + GAP
+	var d_x := w - MARGIN - COL
+	var b_x := a_x + COL + GAP
 	var b_w := d_x - GAP - b_x
 	var top_y := MARGIN
-	var mid_y := top_y + TOP_H + GAP
 	var bottom_y := h - MARGIN - BOTTOM_H
-	var mid_h := bottom_y - GAP - mid_y
 
-	# Верхний ряд: бараки по ширине чата и сыгранные карты по ширине руки.
-	_place(_barracks, a_x, top_y, COL_A, TOP_H)
-	_place(_played_zone, b_x, top_y, b_w, TOP_H)
-	# Доска занимает весь средний ряд — от левого края до правой колонки.
-	_place(_board_area, a_x, mid_y, d_x - GAP - a_x, mid_h)
+	# Левая колонка: бараки, под ними сыгранные карты, внизу кнопки стопок.
+	_place(_barracks, a_x, top_y, COL, TOP_H)
+	var played_y := top_y + TOP_H + GAP
+	_place(_played_zone, a_x, played_y, COL, bottom_y - GAP - played_y)
+	_place(_piles_column, a_x, bottom_y, COL, BOTTOM_H)
 
-	# Правая колонка начинается от самого верха экрана: над маркетом ничего
-	# нет, и всё свободное место достаётся картам маркета. Под маркетом —
-	# стопка сожранных карт, а в нижнем ряду стопки зрителя и End turn.
-	var market_h := bottom_y - GAP - DEVOUR_H - GAP - top_y
-	_place(_market_panel, d_x, top_y, COL_D, market_h)
-	_place(_pile_devour, d_x, top_y + market_h + GAP, COL_D, DEVOUR_H)
-	_place(_piles_column, d_x, bottom_y, PILE_W, BOTTOM_H)
-	_place(_end_turn_area, d_x + PILE_W, bottom_y, COL_D - PILE_W, BOTTOM_H)
+	# Доска — всё, что между колонками, от верха экрана до руки.
+	_place(_board_area, b_x, top_y, b_w, bottom_y - GAP - top_y)
 
-	_place(_chat_panel, a_x, bottom_y, COL_A, BOTTOM_H)
+	# Правая колонка: маркет от самого верха экрана, под ним End turn.
+	_place(_market_panel, d_x, top_y, COL, bottom_y - GAP - top_y)
+	_place(_end_turn_area, d_x, bottom_y, COL, BOTTOM_H)
+
 	# Рука занимает середину нижнего ряда; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
@@ -440,7 +427,7 @@ func _layout() -> void:
 	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
 	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
 	# лежат по центру кнопки.
-	var ew := COL_D - PILE_W
+	var ew := COL
 	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
 	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
 	var timer_block: float = TIMER_H
@@ -460,16 +447,6 @@ func _layout() -> void:
 	_timer_label.size = Vector2(ew, TIMER_H)
 	_last_round_label.position = Vector2(0, deploy_block + button_h + TIMER_H)
 	_last_round_label.size = Vector2(ew, PixelTheme.LINE_H)
-
-	# Оверлей Power/Influence висит под зоной сыгранных карт, по её середине
-	# (решение владельца, 2026-09-20).
-	# Ширину считаем по самому тексту: get_combined_minimum_size() в этом же
-	# кадре ещё не знает о только что заданных цифрах.
-	# Ширину считаем по КОНЕЧНЫМ цифрам: пока число накручивается, промежуточные
-	# значения бывают уже или шире, и плашка дёргалась бы вслед за ними.
-	var res_w := float(PixelFont.text_width(_res_power.target_text())
-		+ PixelFont.text_width(_res_influence.target_text()) + 6 + 4)
-	_place(_res_zone, b_x + (b_w - res_w) * 0.5, top_y + TOP_H, res_w, RES_H)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -606,7 +583,8 @@ func _refresh_turn(view: Dictionary) -> void:
 func _refresh_played(view: Dictionary) -> void:
 	# Стартовая расстановка: на месте зоны — сам вопрос, а карт ещё нет.
 	var setup_pick := _is_starting_pick(view)
-	_played_row.visible = not setup_pick
+	_played_head.visible = not setup_pick
+	_played_stack.visible = not setup_pick
 	_setup_label.visible = setup_pick
 	if setup_pick:
 		var pd: Dictionary = view["pending_decision"]
@@ -614,18 +592,15 @@ func _refresh_played(view: Dictionary) -> void:
 		_setup_label.text = "%s: %s — click a gold site on the board" % [
 			EventLogPanel.player_name(who).to_upper(), String(pd.get("prompt", ""))]
 		_setup_label.add_theme_color_override("font_color", EventLogPanel.player_color(who))
-		_res_zone.visible = false
 		return
 
 	var current := String(view["current_player"])
 	var p: Dictionary = (view["players"] as Dictionary).get(current, {})
 	_played_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
 	_played_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
-	_played_strip.empty_text = "nothing played yet"
-	var played: Array = p.get("played_pile", [])
-	_played_strip.set_cards(played)
-	# Ресурсы хода висят оверлеем под этой же зоной: тратит их тот, чей ход.
-	# Пока в этот ход ничего не сыграно, тратить нечего — плашки нет.
+	_played_stack.empty_text = "nothing played yet"
+	_played_stack.set_cards(p.get("played_pile", []))
+	# Ресурсы хода — в заголовке этой же зоны: тратит их тот, чей ход.
 	var power := int(p.get("power", 0))
 	var influence := int(p.get("influence", 0))
 	# Накручиваем только в пределах одного хода: когда ход перешёл к другому,
@@ -633,13 +608,6 @@ func _refresh_played(view: Dictionary) -> void:
 	var same_player := current == _res_player
 	_res_power.set_value(power, same_player)
 	_res_influence.set_value(influence, same_player)
-	var show_res := not played.is_empty()
-	if _res_zone.visible != show_res:
-		_res_zone.visible = show_res
-	if show_res:
-		_layout()  # ширина плашки зависит от самих цифр
-	# Цифры всплывают уже после _layout(): плашка только что могла появиться
-	# или изменить ширину, и до пересчёта её положение ещё старое.
 	_popup_resource_change(current, power, influence)
 
 
@@ -657,8 +625,10 @@ static func _is_starting_pick(view: Dictionary) -> bool:
 func _popup_resource_change(current: String, power: int, influence: int) -> void:
 	# size.x < 10 — экран ещё не разложен (см. _layout), места плашки нет, и
 	# цифра всплыла бы в углу за краем.
-	if current == _res_player and _res_zone.visible and size.x >= 10.0:
-		var top := _res_zone.position + Vector2(0, -PixelTheme.LINE_H)
+	if current == _res_player and _res_zone.is_visible_in_tree() and size.x >= 10.0:
+		# Цифра всплывает под заголовком, над самими картами: выше него —
+		# бараки, и там её не разглядеть.
+		var top := _res_zone.global_position - global_position + Vector2(0, PixelTheme.LINE_H)
 		if power != _res_power_shown:
 			FloatingText.spawn(self, _signed(power - _res_power_shown),
 				POWER_COLOR, top)

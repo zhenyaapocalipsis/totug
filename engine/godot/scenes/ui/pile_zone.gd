@@ -1,101 +1,50 @@
 class_name PileZone
 extends PanelContainer
 
-## Стопка карт зрителя рядом с кнопкой End turn: Внутренний круг и сброс.
-## Видна верхняя карта и число карт; по щелчку открывается весь список
-## (PileDialog). Наведение с зажатым Alt увеличивает верхнюю карту.
+## Стопка карт — горизонтальная кнопка в левом нижнем углу экрана: подпись
+## слева, число карт справа (решение владельца, 2026-09-22: Discard, Inner
+## и Devoured просто кнопками одна под другой). По щелчку открывается весь
+## список карт стопки (PileDialog).
 
 signal clicked
 
-## Сколько карт рисуем «слоями», чтобы стопка выглядела стопкой.
-const LAYERS := 3
-const LAYER_OFFSET := 2.0
-
 var _caption: Label
 var _count: Label
-var _slot: Control
-var _empty: Label
-var _ids: Array = []
-var _built_for := Vector2.ZERO
+var _style: StyleBoxFlat
+var _hover_style: StyleBoxFlat
 
 
 func _init(caption: String = "") -> void:
-	add_theme_stylebox_override("panel", GameScreen.zone_style(1))
+	_style = GameScreen.zone_style(3)
+	_hover_style = GameScreen.zone_style(3)
+	_hover_style.bg_color = PixelTheme.PANEL_HI
+	add_theme_stylebox_override("panel", _style)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	tooltip_text = "Click to see every card in this pile"
+	mouse_entered.connect(func(): add_theme_stylebox_override("panel", _hover_style))
+	mouse_exited.connect(func(): add_theme_stylebox_override("panel", _style))
 
-	var col := VBoxContainer.new()
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_theme_constant_override("separation", 2)
-	add_child(col)
-
-	var head := HBoxContainer.new()
-	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	head.add_theme_constant_override("separation", 2)
-	col.add_child(head)
-	_caption = GameScreen.section_label(caption)
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 2)
+	add_child(row)
+	_caption = Label.new()
+	_caption.text = caption
+	_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_caption.clip_text = true
-	head.add_child(_caption)
+	row.add_child(_caption)
 	_count = Label.new()
+	_count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_count.add_theme_color_override("font_color", PixelTheme.GOLD)
-	head.add_child(_count)
-
-	_slot = Control.new()
-	_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_slot.clip_contents = true
-	_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_slot.resized.connect(_rebuild)
-	col.add_child(_slot)
-
-	_empty = Label.new()
-	_empty.text = "empty"
-	_empty.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
-	_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_empty.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_slot.add_child(_empty)
+	row.add_child(_count)
 
 
 func set_cards(ids: Array) -> void:
 	_count.text = str(ids.size())
-	if ids == _ids and _slot.size == _built_for:
-		return
-	_ids = ids.duplicate()
-	_rebuild()
-
-
-## Верхняя карта стопки — последняя положенная.
-func _rebuild() -> void:
-	_built_for = _slot.size
-	for child in _slot.get_children():
-		if child is CardView:
-			_slot.remove_child(child)
-			child.queue_free()
-	_empty.visible = _ids.is_empty()
-	if _ids.is_empty() or _slot.size.y < 12.0:
-		return
-
-	var shown: int = mini(LAYERS, _ids.size())
-	var shift := LAYER_OFFSET * float(shown - 1)
-	# Слои сдвинуты только вниз. Шире мелкого лица карту не растягиваем —
-	# иначе она не попадает в целый масштаб и мылится; лишнее место по бокам
-	# остаётся пустым (широкая зона Devoured). Нижние слои видно снизу.
-	var w := minf(_slot.size.x, CardView.MINI_SIZE.x)
-	var h := _slot.size.y - shift
-	var x := floorf((_slot.size.x - w) * 0.5)
-	for i in range(shown):
-		# снизу — нижние слои стопки, последним кладём верхнюю карту
-		var cid := String(_ids[_ids.size() - shown + i])
-		var card := CardView.new(cid, int(w), int(h))
-		card.set_clickable(false, false)
-		# PASS: карта ловит наведение (Alt-увеличение), но щелчок уходит зоне.
-		card.mouse_filter = Control.MOUSE_FILTER_PASS
-		card.position = Vector2(x, LAYER_OFFSET * float(shown - 1 - i))
-		card.modulate = Color(1, 1, 1) if i == shown - 1 else Color(0.5, 0.5, 0.55)
-		_slot.add_child(card)
 
 
 func _gui_input(event: InputEvent) -> void:
