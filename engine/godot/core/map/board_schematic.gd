@@ -26,8 +26,9 @@ extends RefCounted
 ## score punishes corners, crossings, overlapping traces, nodes leaving their
 ## hex and moving far from where the hex art puts them. The search runs per tile
 ## and rotation offline (tools/build_schematic_tiles.gd -> TILES_PATH); a game
-## just places those pieces. Tunnels stay inside their own hex, so pieces laid
-## out alone still fit together, and the edge midpoints join them straight.
+## places those pieces and polishes the whole board once (see build).
+## Tunnels stay inside their own hex, so pieces laid out alone still fit
+## together, and the edge midpoints join them straight.
 
 ## Pixels from a hex centre to its north edge midpoint (a diagonal edge
 ## midpoint is at (K/2, K/2)). Even, so every port lands on a whole pixel.
@@ -103,6 +104,9 @@ const W_NODE_OVERLAP := 400.0
 ## Ring with two tunnels: penalty by the angle between them, index = steps of 45.
 const RING_TURN := [500.0, 300.0, 60.0, 6.0, 0.0]
 const PASSES := [[10, 40], [4, 12], [2, 4], [2, 4]]
+## Whole-board polish starts from good pieces, so the coarse pass is skipped:
+## same result, half the time (measured 2026-09-22).
+const POLISH_PASSES := [[4, 12], [2, 4]]
 const TILE_ATTEMPTS := 5
 
 var _key: Array[String] = []
@@ -137,7 +141,12 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ##             "slots": {slot_id: [x, y]}}},
 ##   "slots": {slot_id: {"x", "y"}},   # every troop space, rings included
 ## }
-static func build(state: GameState) -> Dictionary:
+## polish: after the pieces are placed, run the search once more over the
+## whole board (POLISH_PASSES). Without dead ends (MapGraph.prune_dead_ends)
+## nodes near the board edge get room the pieces had to keep for tunnels to
+## neighbours that are not there; the board comes out narrower and cleaner.
+## Takes ~2-4 s, so it runs once per game (StateView.board_snapshot).
+static func build(state: GameState, polish := true) -> Dictionary:
 	var hex_by_slot: Dictionary = state.layout.get("hex_by_slot", {})
 	if hex_by_slot.is_empty():
 		return {}
@@ -147,6 +156,8 @@ static func build(state: GameState) -> Dictionary:
 	schematic._collect(state.graph, layouts[str(players)], hex_by_slot)
 	schematic._index_neighbourhoods()
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
+	if polish:
+		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
 	return schematic._export(state)
 
@@ -934,13 +945,13 @@ func _index_neighbourhoods() -> void:
 		_near[hex] = near
 
 
-func _optimise() -> void:
+func _optimise(passes: Array = PASSES) -> void:
 	_index_neighbourhoods()
 	for e in _routes.size():
 		_choose_route(e, {e: true})
 	for e in _routes.size():
 		_choose_route(e, {})
-	for pass_info: Array in PASSES:
+	for pass_info: Array in passes:
 		var step: int = pass_info[0]
 		var radius: int = pass_info[1]
 		for n in _key.size():

@@ -2374,7 +2374,8 @@ func test_board_schematic() -> void:
 		var s := BoardSchematic.build(state)
 		var took := Time.get_ticks_msec() - started
 		var tag := "%dp seed %d" % [run[0], run[1]]
-		check(took < 1500, "%s: схема собирается быстро (%d мс)" % [tag, took])
+		# доводка всей доски (решение владельца 2026-09-22): несколько секунд на партию
+		check(took < 6000, "%s: схема собирается за приемлемое время (%d мс)" % [tag, took])
 		check_eq(int(s["fallback_routes"]), 0, "%s: все трассы взяты из таблицы тайлов" % tag)
 
 		var slots: Dictionary = s["slots"]
