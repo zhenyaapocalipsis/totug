@@ -9,7 +9,7 @@ var SEEDS := [1, 3, 7, 11, 42, 99]
 
 
 func _init() -> void:
-	var zone := Vector2(612, 456)
+	var zone := Vector2(598, 456)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--zone="):
 			var p := arg.trim_prefix("--zone=").split("x")
