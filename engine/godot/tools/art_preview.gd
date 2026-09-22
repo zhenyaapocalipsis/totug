@@ -196,6 +196,42 @@ func _init() -> void:
 		if moved == 0 or not any_overlap:
 			break
 
+	# Связи к 45 градусам. Узел пробует сдвинуться на шаг в каждую из восьми
+	# сторон и остаётся там, где его связи ближе всего к кратным 45 углам.
+	# Шаг принимается, только если не рождает ни пересечения, ни наложения
+	# рамок и не выводит рамку за зону — то есть всё, чего уже добились,
+	# сохраняется. Кольца двигаются охотнее рамок: они мелкие и на карте
+	# служат изломами линии.
+	var octo_dirs: Array[Vector2] = [Vector2(1,0), Vector2(1,1), Vector2(0,1), Vector2(-1,1),
+		Vector2(-1,0), Vector2(-1,-1), Vector2(0,-1), Vector2(1,-1)]
+	for _pass in OCTO_PASSES:
+		var improved := 0
+		for k: String in keys:
+			var was: Vector2 = at[k]
+			var best_cost := _angle_cost(k, at, edges, incident)
+			if best_cost < 0.01:
+				continue
+			var best_at := was
+			for step_len: float in [2.0, 4.0, 6.0]:
+				for dir: Vector2 in octo_dirs:
+					var p: Vector2 = was + dir * step_len
+					var r := Rect2(p - half[k], (half[k] as Vector2) * 2.0)
+					if not Rect2(Vector2.ZERO, target).encloses(r):
+						continue
+					at[k] = p
+					var cost := _angle_cost(k, at, edges, incident)
+					if cost >= best_cost - 0.01:
+						continue
+					if _crosses(k, at, edges, incident) or _overlaps_any(k, at, half, keys):
+						continue
+					best_cost = cost
+					best_at = p
+			at[k] = best_at
+			if best_at != was:
+				improved += 1
+		if improved == 0:
+			break
+
 	var sites := {}
 	var rects: Array = []
 	for site_id: String in g.sites:
@@ -218,29 +254,79 @@ func _init() -> void:
 		if not g.sites.has(key):
 			rings[key] = [(at[key] as Vector2).x, (at[key] as Vector2).y]
 			rects.append(Rect2((at[key] as Vector2) - Vector2(4, 4), Vector2(8, 8)))
+	# Сначала все связи прямыми; потом те, что не кратны 45 градусам, получают
+	# один излом в 45 — с той стороны, где излом никого не пересекает и не
+	# лезет в чужую рамку. Если обе стороны заняты, связь остаётся прямой: она
+	# чуть косая, зато ничего не ломает.
+	var poly := {}
+	var ends := {}
+	var box_of := {}
+	for key: String in keys:
+		box_of[key] = Rect2((at[key] as Vector2) - half[key], (half[key] as Vector2) * 2.0)
+	for e: Array in edges:
+		var k3: String = e[0] + "|" + e[1]
+		poly[k3] = PackedVector2Array([at[e[0]], at[e[1]]])
+		ends[k3] = e
+	for k3: String in poly.keys():
+		var pts: PackedVector2Array = poly[k3]
+		var d: Vector2 = pts[1] - pts[0]
+		var off := fposmod(rad_to_deg(atan2(d.y, d.x)), 45.0)
+		if minf(off, 45.0 - off) <= 3.0:
+			continue
+		var run := minf(absf(d.x), absf(d.y))
+		var diag := Vector2(signf(d.x), signf(d.y)) * run
+		var e3: Array = ends[k3]
+		for corner: Vector2 in [pts[0] + diag, pts[1] - diag]:
+			var cand := PackedVector2Array([pts[0], corner, pts[1]])
+			if _bend_ok(cand, k3, e3, poly, ends, box_of):
+				poly[k3] = cand
+				break
 	var traces: Array = []
-	var seen := {}
-	for slot_id: String in g.slots.keys():
-		var sa := g.site_of_slot(slot_id)
-		var a := sa if sa != "" else slot_id
-		for other in g.adjacent_slots(slot_id):
-			var sb := g.site_of_slot(other)
-			var b := sb if sb != "" else other
-			if a == b or not at.has(a) or not at.has(b):
-				continue
-			var key2 := a + "|" + b if a < b else b + "|" + a
-			if seen.has(key2):
-				continue
-			seen[key2] = true
-			var pa: Vector2 = at[a]
-			var pb: Vector2 = at[b]
-			traces.append([pa.x, pa.y, pb.x, pb.y])
+	for k3: String in poly.keys():
+		var flat: Array = []
+		for p: Vector2 in (poly[k3] as PackedVector2Array):
+			flat.append(p.x)
+			flat.append(p.y)
+		traces.append(flat)
 	var overlaps := 0
 	for i in rects.size():
 		for j in range(i + 1, rects.size()):
 			if (rects[i] as Rect2).intersects(rects[j]):
 				overlaps += 1
-	print("%dp сид %d: наложений рамок %d, связей %d" % [players, seed_value, overlaps, traces.size()])
+	# Проверка по ГОТОВЫМ трассам (с изломами), а не по прямым связям.
+	var crossings := 0
+	var plist: Array = poly.keys()
+	for i in plist.size():
+		for j in range(i + 1, plist.size()):
+			var ea: Array = ends[plist[i]]
+			var eb: Array = ends[plist[j]]
+			var shares: bool = ea[0] == eb[0] or ea[0] == eb[1] or ea[1] == eb[0] or ea[1] == eb[1]
+			var pa2: PackedVector2Array = poly[plist[i]]
+			var pb2: PackedVector2Array = poly[plist[j]]
+			var hit_any := false
+			for s in pa2.size() - 1:
+				for t in pb2.size() - 1:
+					var hit: Variant = Geometry2D.segment_intersects_segment(pa2[s], pa2[s + 1], pb2[t], pb2[t + 1])
+					if hit == null:
+						continue
+					var hp: Vector2 = hit
+					if shares and (hp.is_equal_approx(pa2[0]) or hp.is_equal_approx(pa2[pa2.size() - 1])):
+						continue
+					hit_any = true
+			if hit_any:
+				crossings += 1
+	var straight := 0
+	for k4: String in poly.keys():
+		var pp: PackedVector2Array = poly[k4]
+		var all_ok := true
+		for s in pp.size() - 1:
+			var dd := pp[s + 1] - pp[s]
+			var off := fposmod(rad_to_deg(atan2(dd.y, dd.x)), 45.0)
+			if minf(off, 45.0 - off) > 3.0:
+				all_ok = false
+		if all_ok:
+			straight += 1
+	print("%dp сид %d: наложений %d, пересечений %d, связей %d, под 45° %d" % [players, seed_value, overlaps, crossings, traces.size(), straight])
 	var schematic := {"size": [target.x, target.y], "traces": traces, "rings": rings,
 		"sites": sites, "slots": {}}
 	var img := SchematicPainter.paint(schematic)
@@ -272,4 +358,72 @@ static func _inner_overlap(members: Array, at: Dictionary, half: Dictionary) -> 
 			if Rect2((at[a] as Vector2) - half[a], (half[a] as Vector2) * 2.0).intersects(
 					Rect2((at[b] as Vector2) - half[b], (half[b] as Vector2) * 2.0)):
 				return true
+	return false
+
+
+const OCTO_PASSES := 60
+
+## Насколько связи узла отклоняются от кратных 45 градусов (в градусах,
+## сумма по связям).
+static func _angle_cost(k: String, at: Dictionary, edges: Array, incident: Dictionary) -> float:
+	var total := 0.0
+	for ei: int in (incident.get(k, []) as Array):
+		var e: Array = edges[ei]
+		var d: Vector2 = (at[e[1]] as Vector2) - (at[e[0]] as Vector2)
+		if d.length() < 0.5:
+			continue
+		var deg := rad_to_deg(atan2(d.y, d.x))
+		var off := fposmod(deg, 45.0)
+		total += minf(off, 45.0 - off)
+	return total
+
+
+## Налезает ли рамка узла k на чужую.
+static func _overlaps_any(k: String, at: Dictionary, half: Dictionary, keys: Array) -> bool:
+	var rk := Rect2((at[k] as Vector2) - half[k], (half[k] as Vector2) * 2.0)
+	for o: String in keys:
+		if o == k:
+			continue
+		if rk.intersects(Rect2((at[o] as Vector2) - half[o], (half[o] as Vector2) * 2.0)):
+			return true
+	return false
+
+
+## Годится ли ломаная для связи k: ни один её отрезок не пересекает чужие
+## трассы (кроме общих концов) и не заходит в чужую рамку.
+static func _bend_ok(cand: PackedVector2Array, k: String, e: Array, poly: Dictionary,
+		ends: Dictionary, box_of: Dictionary) -> bool:
+	for i in cand.size() - 1:
+		var a: Vector2 = cand[i]
+		var b: Vector2 = cand[i + 1]
+		for other: String in poly.keys():
+			if other == k:
+				continue
+			var oe: Array = ends[other]
+			var shares: bool = oe[0] == e[0] or oe[0] == e[1] or oe[1] == e[0] or oe[1] == e[1]
+			var op: PackedVector2Array = poly[other]
+			for j in op.size() - 1:
+				var hit: Variant = Geometry2D.segment_intersects_segment(a, b, op[j], op[j + 1])
+				if hit == null:
+					continue
+				var at_hit: Vector2 = hit
+				if shares and (at_hit.is_equal_approx(cand[0]) or at_hit.is_equal_approx(cand[cand.size() - 1])):
+					continue
+				return false
+		for node: String in box_of.keys():
+			if node == e[0] or node == e[1]:
+				continue
+			var r: Rect2 = (box_of[node] as Rect2).grow(1.0)
+			if _seg_hits(a, b, r):
+				return false
+	return true
+
+
+static func _seg_hits(a: Vector2, b: Vector2, r: Rect2) -> bool:
+	if r.has_point(a) or r.has_point(b):
+		return true
+	var c := [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+	for i in 4:
+		if Geometry2D.segment_intersects_segment(a, b, c[i], c[(i + 1) % 4]) != null:
+			return true
 	return false
