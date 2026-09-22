@@ -2321,17 +2321,9 @@ func test_no_actions_while_decision_pending() -> void:
 ## нескольких настоящих раскладках. Трассы — только 0/45/90 градусов, изгиб —
 ## ровно 45 (угол 135), через ребро гекса — посередине и прямо, у каждой связи
 ## графа есть трасса, рамки локаций не налезают друг на друга.
-## Масштаб схемы так же, как его считает BoardPanel._fit_zoom при растяжении
-## расчётного экрана втрое (полный экран 1920x1080): один пиксель схемы —
-## целое число экранных.
-static func board_zoom(picture: Vector2, zone: Vector2) -> float:
-	var fit: float = minf(zone.x / picture.x, zone.y / picture.y)
-	return maxf(float(floori(fit * 3.0 + 0.001)), 1.0) / 3.0
-
-
 func test_board_schematic() -> void:
 	section("Схема доски: трассы по правилам разводки")
-	for run: Array in [[2, 1], [2, 7], [2, 42], [3, 5], [3, 9], [4, 3], [4, 11]]:
+	for run: Array in [[2, 1], [2, 7], [2, 42], [4, 3], [4, 11]]:
 		var ids: Array[String] = []
 		ids.assign(["red", "blue", "green", "purple"].slice(0, int(run[0])))
 		var state := GameSetup.new_game(ids, int(run[1]))
@@ -2339,13 +2331,7 @@ func test_board_schematic() -> void:
 		var s := BoardSchematic.build(state)
 		var took := Time.get_ticks_msec() - started
 		var tag := "%dp seed %d" % [run[0], run[1]]
-		# Порог по времени — на старте партии доска раскладывается заново.
-		# Было 1500, когда схема просто собиралась из готовых кусков за
-		# миллисекунды; теперь это настоящая укладка карты в зону (сжатие
-		# ступенями, разведение рамок, обход препятствий), и на четверых она
-		# занимает около секунды. Две с небольшим — потолок, за которым пауза
-		# перед партией станет заметной.
-		check(took < 2200, "%s: схема собирается быстро (%d мс)" % [tag, took])
+		check(took < 1500, "%s: схема собирается быстро (%d мс)" % [tag, took])
 		check_eq(int(s["fallback_routes"]), 0, "%s: все трассы взяты из таблицы тайлов" % tag)
 
 		var slots: Dictionary = s["slots"]
@@ -2355,22 +2341,6 @@ func test_board_schematic() -> void:
 				missing += 1
 		check_eq(missing, 0, "%s: у каждого места под войско есть точка на схеме" % tag)
 		check_eq((s["sites"] as Dictionary).size(), state.graph.site_count(), "%s: все локации на схеме" % tag)
-
-		# Доска должна ЗАПОЛНЯТЬ свою зону (решение владельца, 2026-09-20):
-		# пустые поля вокруг схемы — это потерянный размер доски. Рисуется она
-		# только целым числом экранных пикселей на свой пиксель, поэтому
-		# заполнение идёт ступенями, и под каждое число игроков подобран свой
-		# шаг сетки (BoardSchematic.GRID_BY_PLAYERS) — так, чтобы картинка
-		# попадала в ступень почти впритык.
-		var zone: Vector2 = GameScreen.board_zone_rect().size
-		var picture := Vector2(float(s["size"][0]), float(s["size"][1]))
-		var drawn := picture * board_zoom(picture, zone)
-		check(drawn.x <= zone.x and drawn.y <= zone.y,
-			"%s: доска %dx%d не вылезает из зоны %dx%d" % [tag,
-				int(drawn.x), int(drawn.y), int(zone.x), int(zone.y)])
-		check(drawn.x >= zone.x * 0.85,
-			"%s: доска %dx%d заполняет зону %dx%d по ширине" % [tag,
-				int(drawn.x), int(drawn.y), int(zone.x), int(zone.y)])
 
 		# 0/45/90 и только углы 135
 		var bad_angle := 0
@@ -2401,27 +2371,25 @@ func test_board_schematic() -> void:
 		check_eq(bad_angle, 0, "%s: отрезки трасс только под 0/45/90 градусов" % tag)
 		check_eq(bad_turn, 0, "%s: каждый изгиб трассы — ровно 45 (угол 135)" % tag)
 
-		# Правило «трасса пересекает ребро гекса ровно посередине и прямо»
-		# (владелец, 2026-09-16) здесь больше не проверяется: с переходом на
-		# свободную упаковку (BoardSchematic._pack, решение владельца
-		# 2026-09-20) локации перестали сидеть каждая в своём гексе, и гекса
-		# как границы просто нет. Осталось то, что видно глазу: в точке стыка
-		# сходятся ровно две трассы и вторая не разворачивается обратно по
-		# первой. Излом там допустим — точка невидимая, а изгиб в 45 градусов
-		# на схеме встречается на каждом шагу.
-		#
-		# Допуск в один стык на партию: в самой плотной карте на четверых
-		# изредка находится тоннель, которому обхода нет вовсе (конец зажат
-		# рамками со всех сторон), и тогда две трассы идут рядом первые
-		# несколько пикселей. На доске этого не видно — линии сливаются в
-		# одну, — но совсем закрывать глаза на такие стыки нельзя: если их
-		# станет больше, значит упаковка развалилась.
+		# через ребро: точка — середина между центрами гексов, трасса идёт прямо
+		# и вдоль линии центров (перпендикулярно ребру сжатого гекса)
+		var centres: Dictionary = s["hex_centres"]
 		var bad_port := 0
 		for port: String in (s["ports"] as Dictionary).keys():
+			var at := Vector2(s["ports"][port][0], s["ports"][port][1])
 			var dirs: Array = dir_at_port.get(port, [])
-			if dirs.size() != 2 or (dirs[0] as Vector2).is_equal_approx(dirs[1]):
+			var hex: String = port.get_slice(":", 1)
+			var outward := at - Vector2(centres[hex][0], centres[hex][1])
+			var mirrored := Vector2(centres[hex][0], centres[hex][1]) + outward * 2.0
+			var neighbour_found := false
+			for other: String in centres.keys():
+				if Vector2(centres[other][0], centres[other][1]).is_equal_approx(mirrored):
+					neighbour_found = true
+			if dirs.size() != 2 or not neighbour_found \
+					or not (dirs[0] as Vector2).is_equal_approx(-(dirs[1] as Vector2)) \
+					or absf((dirs[0] as Vector2).cross(outward.normalized())) > 0.001:
 				bad_port += 1
-		check(bad_port <= 1, "%s: в точке стыка сходятся ровно две трассы (плохих %d)" % [tag, bad_port])
+		check_eq(bad_port, 0, "%s: трассы пересекают ребро гекса посередине и прямо" % tag)
 
 		# у каждой связи графа есть трасса (напрямую или через середину ребра)
 		var node_of := func(slot_id: String) -> String:

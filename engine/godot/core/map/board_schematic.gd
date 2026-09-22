@@ -25,57 +25,18 @@ extends RefCounted
 ## tunnel picks the best octilinear route for the current positions, and the
 ## score punishes corners, crossings, overlapping traces, nodes leaving their
 ## hex and moving far from where the hex art puts them. The search runs per tile
-## and rotation offline (tools/build_schematic_tiles.gd -> tiles_path(K)); a game
+## and rotation offline (tools/build_schematic_tiles.gd -> TILES_PATH); a game
 ## just places those pieces. Tunnels stay inside their own hex, so pieces laid
 ## out alone still fit together, and the edge midpoints join them straight.
 
 ## Pixels from a hex centre to its north edge midpoint (a diagonal edge
 ## midpoint is at (K/2, K/2)). Even, so every port lands on a whole pixel.
-##
-## Шаг подобран под ЗОНУ ДОСКИ на экране (решение владельца, 2026-09-20:
-## «доска должна занимать максимальное пространство board zone»).
-##
-## Считать надо так. Схема рисуется только целым числом экранных пикселей на
-## свой пиксель — иначе трассы и шрифт 5x7 превращаются в кашу. На полном
-## экране расчётные 640x360 растянуты втрое, то есть зона доски — это
-## 474x254 расчётных или 1422x762 экранных пикселей, и на пиксель схемы
-## достаётся 1, 2 или 3 экранных, без промежуточных значений. Значит, чтобы
-## доска заполнила зону, картинка должна быть либо не больше 474x254 (по 3
-## экранных пикселя), либо около 711x381 (по 2). Между этими размерами
-## заполнения не будет — останутся пустые поля.
-##
-## Первый вариант (ужать схему до 474x254) не годится: при таком шаге рамки
-## локаций, размер которых задан шрифтом и не уменьшается, начинают налезать
-## друг на друга — примерно в трети партий, вплоть до наложения 29x12
-## пикселей. Поэтому взят второй: шаг УВЕЛИЧЕН, гексам просторнее прежнего, а
-## картинка заполняет зону на 90-94% в масштабе две трети. Подписи локаций
-## при этом такого же размера, как раньше.
-##
-## Шаг свой на каждое число игроков: на четверых гексов пятнадцать, на двоих
-## девять, и общий шаг одним из раскладов промахнулся бы мимо ступени.
-## Таблица тайлов у каждого шага своя (tiles_path).
-static var K := 92
-## Шаг сетки по числу игроков. Меняя его, проверь тестом «доска заполняет
-## зону»: картинка должна попадать в ступень масштаба почти впритык.
-## Делится на 4: решётка колец идёт с шагом K/4 (_lattice), и на нецелом шаге
-## кольца встали бы на половину пикселя.
-const GRID_BY_PLAYERS := {2: 92, 3: 92, 4: 72}
-const GRID_DEFAULT := 92
-## Куда упаковывать карту (см. _pack) — это зона доски на экране за вычетом
-## поля картинки: GameScreen.board_zone_rect() даёт 474x254, и по пикселю с
-## каждой стороны съедает IMAGE_MARGIN. Ровно в этот размер карта и должна
-## влезть, чтобы рисоваться один к одному.
-##
-## Ноль возвращает прежнее поведение (локация не выходит за свой гекс) —
-## нужно только инструментам сравнения.
-static var pack_into := Vector2(472, 252)
-## Замеры последней упаковки — чтобы видеть, куда уходит время.
-static var pack_stats: Dictionary = {}
-## Класть узлы по строению графа (_spring_layout), а не по гексам настолки.
-## Откуда берутся места узлов: HEX — от гексов настолки (как было), SPRING —
-## пружинами по графу, TREE — деревом по графу.
-enum Layout { HEX, SPRING, TREE }
-static var layout_mode: int = Layout.HEX
+## Экран игры — 640x360, и доска должна читаться БЕЗ приближения (решение
+## владельца). Поэтому шаг сетки вдвое меньше прежнего (было 128), рамки
+## локаций ужаты, а длинные названия сокращены до восьми знаков (SHORT_NAMES):
+## так вся карта на двоих умещается в отведённые ей ~500x225 пикселей один
+## в один, и шрифт 5x7 остаётся чётким.
+const K := 64
 ## Layout units from a hex centre to an edge midpoint (half the neighbour step).
 const INRADIUS := 7.3612159
 const GRID := 2
@@ -84,15 +45,10 @@ const PIN_MARGIN := 3      # a tunnel enters a box at least this far from its co
 const MIN_SEG := 4         # shortest visible trace segment
 const TRACE_GAP := 4       # closer parallel traces count as touching
 const NODE_GAP := 4
-## Поле вокруг картинки: только чтобы обводка рамок и концы трасс не
-## упирались в край. Было 6 — двенадцать пикселей ширины, из-за которых
-## схема переставала влезать в зону доски (см. GRID_BY_PLAYERS).
-const IMAGE_MARGIN := 1
+const IMAGE_MARGIN := 6
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
 const RING_R := 4
-## Отступ от рамки локации до её содержимого. Ноль: карта на четверых
-## упирается в плотность, и полтора десятка пикселей площади рамки решают.
 const BOX_PAD := 1
 const SLOT_R := 4
 const SLOT_PITCH := 10
@@ -147,76 +103,6 @@ const W_NODE_OVERLAP := 400.0
 const RING_TURN := [500.0, 300.0, 60.0, 6.0, 0.0]
 const PASSES := [[10, 40], [4, 12], [2, 4], [2, 4]]
 const TILE_ATTEMPTS := 5
-## То же, что W_OUT/W_OUT_PX, но для РАМКИ локации: при свободной упаковке
-## рамка обязана остаться внутри картинки, даже ценой кривоватой разводки.
-const W_OUT_BOX := 200.0
-const W_OUT_BOX_PX := 100.0
-## То же для ТРАССЫ при упаковке: выпирающая за край петля крадёт у доски
-## масштаб, потому что размер картинки считается и по трассам.
-const W_OUT_TRACE_PX := 400.0
-## Во сколько раз дороже при упаковке трасса, задевающая рамку локации.
-const PACK_HIT_FACTOR := 10.0
-## Обход препятствий: запас коробки поиска вокруг концов тоннеля и потолок
-## по числу клеток — на длинных связях поиск стал бы дороже пользы.
-const PACK_ROUTE_MARGIN := 40.0
-const PACK_ROUTE_CELLS := 9000
-## Насколько жадно поиск тянется к цели: цена пикселя в прикидке остатка.
-const PACK_ROUTE_PULL := 0.6
-## Цена пикселя длины при обходе. Двадцать пикселей крюка примерно равны
-## одному лишнему излому — тогда обход остаётся коротким.
-const PACK_ROUTE_LEN := 0.6
-## Пружинная раскладка: сколько шагов, с какой «температуры» начинать (доля
-## ширины картинки), как быстро остывать и насколько размер узла добавляет
-## ему места вокруг.
-const SPRING_STEPS := 300
-const SPRING_HEAT := 0.08
-const SPRING_COOL := 0.975
-const SPRING_ROOM := 0.25
-## Запас над «в упор»: соседние рамки не должны стоять вплотную, иначе
-## трассе между ними не пройти.
-const SPRING_ROOMY := 1.35
-## Раскладка деревом: запас места на узел и просвет между узлом и его детьми.
-const TREE_NODE_ROOM := 900.0
-const TREE_GAP := 8.0
-## Свободная упаковка: сколько раз разводить наложившиеся рамки и какими
-## проходами потом улучшать разводку (шаг поиска, радиус).
-const PACK_SEPARATE_PASSES := 40
-## Сколько проходов без улучшения считать тупиком.
-const PACK_SEPARATE_STALL := 6
-## Зазор между трассой и чужой рамкой при упаковке. Вплотную проведённая
-## трасса мажет обводку рамки и читается как её часть.
-const PACK_CLEARANCE := 3.0
-## Во что обходу обходится шаг по чужой трассе. Дороже излома, но дешевле
-## стенки: пересечь соседа можно, если иначе пути нет.
-const PACK_BUSY_COST := 40.0
-## Групповая перекладка: сколько заходов и сколько всего поисков обхода
-## разрешено за партию. Заходами потому, что переложенная трасса освобождает
-## место соседям, а в одиночку каждая об этом не знает.
-const PACK_REROUTE_ROUNDS := 1
-const PACK_REROUTE_BUDGET := 60
-## Ступени сжатия: доля от нужного размера. Последняя обязательно 1.0.
-const PACK_SHRINK := [1.5, 1.3, 1.15, 1.05, 1.0]
-## Шаги поиска ЧЁТНЫЕ: узлы обязаны остаться на сетке, по которой ищет
-## обход препятствий (_astar_route).
-const PACK_PASSES := [[4, 12]]
-## Сколько узлов улучшать и с какой цены считать узел проблемным. Двигать
-## все подряд слишком дорого: один узел — около 40 мс.
-const PACK_FIX_NODES := 6
-## Сколько раундов «найти худших — поправить — развести».
-const PACK_ROUNDS := 2
-## Спасательный дальний поиск места: шаг и радиус.
-const PACK_RESCUE := [6, 42]
-## Сколько узлов спасать: дальний поиск стоит около 90 мс на узел.
-const PACK_RESCUE_MAX := 4
-## Второй, широкий заход — только для слипшихся рамок локаций.
-const PACK_RESCUE_WIDE := 90
-## Шаг широкого захода крупнее: он ищет «куда-нибудь подальше», а точное
-## место потом всё равно подберёт разведение.
-const PACK_RESCUE_WIDE_STEP := 10
-const PACK_RESCUE_WIDE_MAX := 2
-## Во сколько раз дороже наложение рамок при упаковке.
-const PACK_OVERLAP_FACTOR := 50.0
-const PACK_FIX_COST := 60.0
 
 var _key: Array[String] = []
 var _kind: Array[int] = []
@@ -239,8 +125,6 @@ var _poly: Dictionary = {}           # layout slot -> hex outline
 var _poly_nodes: Dictionary = {}     # то же, но с отступом NODE_GAP — для рамок
 var _port_side: Dictionary = {}      # "port key|hex" -> that hex's name for the edge
 var _fallback_routes := 0            # tunnels not found in the tile table
-## Прямоугольник свободной упаковки (см. _pack); нулевой — упаковки не было.
-var _pack_rect := Rect2()
 
 
 ## Returns {} for boards without hex layout (synthetic test graphs), else
@@ -258,25 +142,17 @@ static func build(state: GameState) -> Dictionary:
 		return {}
 	var layouts: Dictionary = BoardData.load_all()["layouts"]
 	var players := int(state.layout.get("player_count", state.turn_order.size()))
-	# Шаг сетки свой на каждое число игроков, и таблица тайлов тоже своя.
-	K = int(GRID_BY_PLAYERS.get(players, GRID_DEFAULT))
 	var schematic := BoardSchematic.new()
 	schematic._collect(state.graph, layouts[str(players)], hex_by_slot)
 	schematic._index_neighbourhoods()
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
 	schematic._repair()
-	if layout_mode == Layout.TREE and pack_into != Vector2.ZERO:
-		schematic._tree_layout(pack_into)
-	elif layout_mode == Layout.SPRING and pack_into != Vector2.ZERO:
-		schematic._spring_layout(pack_into)
-	if pack_into != Vector2.ZERO:
-		schematic._pack(pack_into)
 	return schematic._export(state)
 
 
 ## Lays out one tile at one rotation on its own, with a tunnel to every edge
 ## the tile prints. tools/build_schematic_tiles.gd stores the result for all
-## tiles in tiles_path(K); a game only assembles those pieces (the search itself
+## tiles in TILES_PATH; a game only assembles those pieces (the search itself
 ## takes seconds, too slow for every game start). Positions are relative to
 ## the hex centre; ports are named "port:<world direction>".
 static func layout_tile(builder: BoardBuilder, tile: String, rotation: int) -> Dictionary:
@@ -344,24 +220,18 @@ func _total_cost() -> float:
 			cost += _pair_cost(_visible[e], _visible[f])
 	return cost
 
-## Таблица тайлов своя на каждый шаг сетки: при другом K гекс другого размера,
-## и разложенные в нём узлы уже не годятся.
-static func tiles_path(grid: int) -> String:
-	return "res://data/board/schematic_tiles_%d.json" % grid
-
-static var _tiles_cache: Dictionary = {}   # K -> таблица
+const TILES_PATH := "res://data/board/schematic_tiles.json"
+static var _tiles_cache: Dictionary = {}
 
 
 static func _load_tiles() -> Dictionary:
-	if not _tiles_cache.has(K):
-		var path := tiles_path(K)
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if _tiles_cache.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(TILES_PATH))
 		if typeof(parsed) == TYPE_DICTIONARY:
-			_tiles_cache[K] = parsed
+			_tiles_cache = parsed
 		else:
-			push_warning("schematic: no tile table at %s, laying out from scratch" % path)
-			_tiles_cache[K] = {}
-	return _tiles_cache[K]
+			push_warning("schematic: no tile table at %s, laying out from scratch" % TILES_PATH)
+	return _tiles_cache
 
 
 static func rotation_key(rotation: float) -> String:
@@ -414,11 +284,8 @@ static func site_box(site_name: String, slot_count: int) -> Dictionary:
 	var body_w := slots_w + 4 + vp_w
 	var inner_w := maxi(name_w, body_w)
 	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFont.HEIGHT * VP_SCALE)
-	# Стороны рамки ЧЁТНЫЕ. Узлы стоят на сетке с шагом GRID, и при нечётной
-	# стороне край рамки попадал бы на половину пикселя — тогда точка выхода
-	# тоннеля не ложится на ту же сетку, по которой ищет обход _astar_route.
-	var w := _even(2 + 2 * BOX_PAD + inner_w)
-	var h := _even(2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h)
+	var w := 2 + 2 * BOX_PAD + inner_w
+	var h := 2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
 	var top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
 	var slots: Array[Vector2] = []
@@ -857,30 +724,21 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array) -
 	if _edge_dir[e] >= 0 and _dir_index(points[1] - points[0]) != _edge_dir[e]:
 		cost += W_HIT * 3.0
 	# tiles are laid out alone: a tunnel that leaves its hex could cross the neighbour's
-	#
-	# При свободной упаковке «свой гекс» — это вся картинка, и выход за её край
-	# стоит намного дороже: размер картинки считается по трассам тоже, и
-	# выпирающая петля отнимает у доски масштаб.
 	var poly: PackedVector2Array = _poly[_hex[_edge_b[e]]]
-	var out_px: float = W_OUT_TRACE_PX if _pack_rect.size.x > 0.0 else W_OUT_PX
 	for i in range(0, segs.size(), 2):
 		for p: Vector2 in [segs[i], segs[i + 1], (segs[i] + segs[i + 1]) * 0.5]:
 			if not Geometry2D.is_point_in_polygon(p, poly):
-				cost += _outside_by(p, poly) * out_px
+				cost += _outside_by(p, poly) * W_OUT_PX
 	var reach := _bounds(segs)
 	for n: int in _near[_hex[_edge_b[e]]]:
 		if n == _edge_a[e] or n == _edge_b[e]:
 			continue
-		# Зазор от рамки, а не просто «не задеть»: трасса, прижатая к рамке
-		# вплотную, читается как её продолжение и мажет обводку.
-		var rect := _node_rect(n, PACK_CLEARANCE if _pack_rect.size.x > 0.0 else 2.0)
+		var rect := _node_rect(n, 2.0)
 		if not reach.intersects(rect):
 			continue
 		for i in range(0, segs.size(), 2):
 			if _segment_hits_rect(segs[i], segs[i + 1], rect):
-				# При упаковке трасса поверх рамки — самое заметное уродство: она
-				# перечёркивает название локации. Дороже любого крюка.
-				cost += W_HIT * PACK_HIT_FACTOR if _pack_rect.size.x > 0.0 else W_HIT
+				cost += W_HIT
 				break
 	return cost
 
@@ -965,28 +823,17 @@ func _node_cost(n: int) -> float:
 	# независимо друг от друга, и две рамки, прижатые к общему ребру с разных
 	# сторон, налезали бы друг на друга уже на собранной доске.
 	var poly: PackedVector2Array = _poly_nodes[_hex[n]]
-	# При свободной упаковке (_pack) выйти «наружу» значит выйти за КРАЙ
-	# КАРТИНКИ, а это недопустимо — там штраф на порядок больше. В обычной
-	# раскладке рамке можно слегка выступить за свой гекс: гекс невидимый, и
-	# выступ часто спрямляет трассу.
-	var packing := _pack_rect.size.x > 0.0
-	var out_flat: float = W_OUT_BOX if packing else W_OUT
-	var out_px: float = W_OUT_BOX_PX if packing else W_OUT_PX
 	var rect := _node_rect(n)
 	for corner in [rect.position, rect.end, Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y)]:
 		if not Geometry2D.is_point_in_polygon(corner, poly):
-			cost += out_flat + _outside_by(corner, poly) * out_px
+			cost += W_OUT + _outside_by(corner, poly) * W_OUT_PX
 	var grown := _node_rect(n, NODE_GAP)
 	for m: int in _near[_hex[n]]:
 		if m == n:
 			continue
 		var other := _node_rect(m)
 		if grown.intersects(other):
-			# При свободной упаковке наложение рамок запрещено наглухо: карта
-			# и так на пределе плотности, и узел иначе охотно меняет чистую
-			# разводку на «налезу чуть-чуть».
-			var weight: float = W_NODE_OVERLAP * PACK_OVERLAP_FACTOR if packing else W_NODE_OVERLAP
-			cost += weight + grown.intersection(other).get_area() * 0.5
+			cost += W_NODE_OVERLAP + grown.intersection(other).get_area() * 0.5
 	return cost
 
 
@@ -998,7 +845,7 @@ func _choose_route(e: int, skip: Dictionary) -> float:
 		ranked.append([_local_cost(e, points, segs), points, segs])
 	ranked.sort_custom(func(x, y): return x[0] < y[0])
 	if ranked.is_empty():
-		_routes[e] = _fallback_octilinear(_pos[_edge_a[e]], _pos[_edge_b[e]])
+		_routes[e] = PackedVector2Array([_pos[_edge_a[e]], _pos[_edge_b[e]]])
 		_visible[e] = PackedVector2Array()
 		_bbox[e] = Rect2(Vector2(INF, INF), Vector2.ZERO)
 		return W_HIT * 10.0
@@ -1062,243 +909,6 @@ func _index_neighbourhoods() -> void:
 		_near[hex] = near
 
 
-## Свободная упаковка карты в прямоугольник target (эксперимент 2026-09-20).
-##
-## Прежнее правило «локация двигается только внутри своего гекса» держит карту
-## разреженной: гекс должен быть таким, чтобы вместить свои рамки, и ужать
-## сетку нельзя. Здесь гексы перестают что-либо ограничивать — вся картинка
-## сжимается под нужный размер, а рамки разводятся между собой уже по всему
-## полю. Геометрия гексов при этом сохраняется как ПЕРВОЕ ПРИБЛИЖЕНИЕ: карта
-## остаётся похожей на настолку, но плотнее.
-func _pack(target: Vector2) -> void:
-	var started := Time.get_ticks_msec()
-	pack_stats = {}
-	var span := _node_span()
-	if span.size.x <= 0.0 or span.size.y <= 0.0:
-		return
-	var centre := span.get_center()
-
-	# 1. Гексы больше ничего не ограничивают: и «не вылезать», и «с кем можно
-	# столкнуться» теперь считаются по всей картинке.
-	var everyone: Array[int] = []
-	for n in _key.size():
-		if _kind[n] != Kind.PORT:
-			everyone.append(n)
-
-	# 2. Сжимать постепенно. Одним рывком до нужного размера карта на четверых
-	# даёт сразу полтора десятка наложившихся пар, и растащить такой клубок
-	# сдвигами по одному узлу уже нельзя. По шагам каждое сжатие добавляет
-	# два-три наложения, они тут же разводятся, и следующий шаг начинается с
-	# чистой карты. Масштаб не меняет углов, поэтому трассы остаются под 45.
-	var left := 0
-	for factor: float in PACK_SHRINK:
-		var want := target * factor
-		var now := _node_span()
-		var scale: float = minf(want.x / now.size.x, want.y / now.size.y)
-		if scale < 1.0:
-			for n in _pos.size():
-				_pos[n] = _snap(centre + (_pos[n] - centre) * scale)
-			for hex: String in _centre.keys():
-				_centre[hex] = _snap(centre + (_centre[hex] as Vector2 - centre) * scale)
-		_pack_rect = Rect2(_snap(centre - want * 0.5), _snap(want))
-		# Округление до чётного пикселя могло вынести крайний узел за рамку, а
-		# разведение поджимает только тех, кто с кем-то налез. Поджимаем всех:
-		# иначе картинка вылезает за зону на пиксель и теряет весь масштаб.
-		for n: int in everyone:
-			_pos[n] = _clamp_in_frame(n, _pos[n])
-		var frame := PackedVector2Array([_pack_rect.position,
-			Vector2(_pack_rect.end.x, _pack_rect.position.y), _pack_rect.end,
-			Vector2(_pack_rect.position.x, _pack_rect.end.y)])
-		for hex: String in _centre.keys():
-			_poly[hex] = frame
-			_poly_nodes[hex] = frame
-			_near[hex] = everyone
-		left = _separate(everyone)
-	pack_stats["separate_ms"] = Time.get_ticks_msec() - started
-	pack_stats["overlaps_left"] = left
-
-	# 4. Трассы считаются заново: узлы разъехались, прежние ходы устарели.
-	var routed := Time.get_ticks_msec()
-	for e in _routes.size():
-		_choose_route(e, {})
-	pack_stats["reroute_ms"] = Time.get_ticks_msec() - routed
-
-	# 5. Локальное улучшение — только там, где плохо. Двигать все узлы подряд
-	# слишком дорого (по 40 мс на узел), а после разведения у большинства из
-	# них и так всё в порядке: трасса идёт прямо и никого не задевает.
-	#
-	# Раундами: после каждого раунда список худших пересчитывается — узел,
-	# который мешал больше всех, уже поправлен, и на первое место выходит
-	# следующий. Разово взятая двадцатка так не умеет: половина её к середине
-	# работы уже не нужна.
-	var fixed := 0
-	for round_no in PACK_ROUNDS:
-		var round_started := Time.get_ticks_msec()
-		var picked := _worst_nodes(everyone, PACK_FIX_NODES)
-		if picked.is_empty():
-			break
-		fixed += picked.size()
-		for pass_info: Array in PACK_PASSES:
-			for n: int in picked:
-				_move_node(n, int(pass_info[0]), int(pass_info[1]))
-		for e in _routes.size():
-			_choose_route(e, {})
-		_separate(everyone)
-		pack_stats["round_%d_ms" % round_no] = Time.get_ticks_msec() - round_started
-
-	# 6. Спасательный проход. Если рамка всё ещё сидит на соседке, соседний
-	# пятачок ей не поможет — там и так занято. Такой рамке разрешается уйти
-	# далеко, хоть на другой конец карты: пустое место обычно есть, просто не
-	# рядом. Узлов таких единицы, поэтому дальний поиск по карману.
-	var stuck := _overlapping(everyone)
-	pack_stats["stuck"] = stuck.size()
-	if not stuck.is_empty():
-		var rescue := Time.get_ticks_msec()
-		for n: int in stuck.slice(0, PACK_RESCUE_MAX):
-			_move_node(n, PACK_RESCUE[0], PACK_RESCUE[1])
-		for e in _routes.size():
-			_choose_route(e, {})
-		_separate(everyone)
-		pack_stats["rescue_ms"] = Time.get_ticks_msec() - rescue
-
-		# Две слипшиеся РАМКИ ЛОКАЦИЙ — единственное, что видно сразу и портит
-		# доску. Если обычного спасения не хватило, значит вокруг всё занято:
-		# такой рамке разрешается уйти вдвое дальше. Случай редкий (одна
-		# партия из тридцати), поэтому широкий поиск по карману.
-		var wide := _stuck_sites(everyone)
-		if not wide.is_empty():
-			var far := Time.get_ticks_msec()
-			for n: int in wide.slice(0, PACK_RESCUE_WIDE_MAX):
-				_move_node(n, PACK_RESCUE_WIDE_STEP, PACK_RESCUE_WIDE)
-			for e in _routes.size():
-				_choose_route(e, {})
-			_separate(everyone)
-			pack_stats["wide_ms"] = Time.get_ticks_msec() - far
-			pack_stats["wide"] = wide.size()
-	for e in _routes.size():
-		_choose_route(e, {})
-
-	# 7. Последним делом — обойти рамки. Прямые варианты в плотной карте почти
-	# все кого-нибудь задевают и перечёркивают названия локаций; здесь такие
-	# тоннели прокладываются поиском по сетке. Именно последним: сдвиг узла
-	# заново выбирает маршрут из прямых вариантов и обход бы затёр.
-	var around := Time.get_ticks_msec()
-	pack_stats["rerouted"] = _reroute_around_boxes()
-	pack_stats["reroute_around_ms"] = Time.get_ticks_msec() - around
-	pack_stats["fixed"] = fixed
-	pack_stats["nodes"] = everyone.size()
-	pack_stats["edges"] = _routes.size()
-
-
-## Разводит наложившиеся рамки и кольца. Возвращает, сколько пар осталось
-## внахлёст (ноль — всё чисто).
-func _separate(everyone: Array[int]) -> int:
-	var left := 0
-	# Если счёт наложений перестал падать, дальше толкать бессмысленно: пары
-	# ходят по кругу. На плотной карте это экономит сотни миллисекунд.
-	var best_left := 1 << 30
-	var stalled := 0
-	for _pass in PACK_SEPARATE_PASSES:
-		left = 0
-		for i in everyone.size():
-			for j in range(i + 1, everyone.size()):
-				var a: int = everyone[i]
-				var b: int = everyone[j]
-				var overlap := _node_rect(a, NODE_GAP * 0.5).intersection(_node_rect(b, NODE_GAP * 0.5))
-				if overlap.size.x <= 0.0 or overlap.size.y <= 0.0:
-					continue
-				left += 1
-				var push := Vector2(overlap.size.x, 0.0) if overlap.size.x <= overlap.size.y \
-					else Vector2(0.0, overlap.size.y)
-				if (_pos[b] - _pos[a]).dot(push) < 0.0:
-					push = -push
-				var was_a: Vector2 = _pos[a]
-				var was_b: Vector2 = _pos[b]
-				_pos[a] = _clamp_in_frame(a, _snap(was_a - push * 0.5))
-				_pos[b] = _clamp_in_frame(b, _snap(was_b + push * 0.5))
-				# Кого-то придержал край — недостающую половину проходит сосед.
-				var done := (was_a - _pos[a]) + (_pos[b] - was_b)
-				var short_by := push - done
-				if short_by.length_squared() > 0.5:
-					if _pos[a] == was_a:
-						_pos[b] = _clamp_in_frame(b, _snap(_pos[b] + short_by))
-					else:
-						_pos[a] = _clamp_in_frame(a, _snap(_pos[a] - short_by))
-		if left == 0:
-			break
-		if left < best_left:
-			best_left = left
-			stalled = 0
-		else:
-			stalled += 1
-			if stalled >= PACK_SEPARATE_STALL:
-				break
-	return left
-
-
-## Узлы, которые сейчас с кем-то внахлёст, — сначала самые заметные.
-##
-## Спасать успеваем единицы (PACK_RESCUE_MAX), поэтому порядок важен: две
-## слипшиеся рамки локаций видно сразу, а кольцо, краем задевшее рамку, не
-## видно вовсе. Сперва рамка на рамке, потом рамка с кольцом, потом всё
-## остальное.
-func _overlapping(everyone: Array[int]) -> Array[int]:
-	var scored: Array = []
-	for a: int in everyone:
-		var rank := -1
-		for b: int in everyone:
-			if a == b or not _node_rect(a).intersects(_node_rect(b)):
-				continue
-			var here := 0
-			if _kind[a] == Kind.SITE:
-				here = 2 if _kind[b] == Kind.SITE else 1
-			rank = maxi(rank, here)
-		if rank >= 0:
-			scored.append([rank, a])
-	scored.sort_custom(func(x: Array, y: Array) -> bool: return x[0] > y[0])
-	var out: Array[int] = []
-	for row: Array in scored:
-		out.append(int(row[1]))
-	return out
-
-
-## Узлы, вокруг которых сейчас хуже всего: наложения, задетые трассы,
-## пересечения. Их и двигаем — по ним и видно кривую разводку.
-func _worst_nodes(everyone: Array[int], limit: int) -> Array[int]:
-	var scored: Array = []
-	for n: int in everyone:
-		scored.append([_node_cost(n), n])
-	scored.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
-	var out: Array[int] = []
-	for row: Array in scored.slice(0, limit):
-		if float(row[0]) < PACK_FIX_COST:
-			break
-		out.append(int(row[1]))
-	return out
-
-
-## Рамка узла целиком внутри картинки, а сам узел — на чётной сетке. Сетка
-## важна: по ней ищет обход _astar_route, и съехавший на пиксель узел просто
-## выпадает из поиска.
-func _clamp_in_frame(n: int, p: Vector2) -> Vector2:
-	var half: Vector2 = _half[n]
-	return Vector2(
-		_snap_axis(p.x, _pack_rect.position.x + half.x, _pack_rect.end.x - half.x),
-		_snap_axis(p.y, _pack_rect.position.y + half.y, _pack_rect.end.y - half.y))
-
-
-## Прямоугольник по рамкам локаций и кольцам, без трасс.
-func _node_span() -> Rect2:
-	var lo := Vector2(INF, INF)
-	var hi := Vector2(-INF, -INF)
-	for n in _key.size():
-		if _kind[n] == Kind.PORT:
-			continue
-		lo = lo.min(_pos[n] - _half[n])
-		hi = hi.max(_pos[n] + _half[n])
-	return Rect2(lo, hi - lo) if lo.x < hi.x else Rect2()
-
-
 func _optimise() -> void:
 	_index_neighbourhoods()
 	for e in _routes.size():
@@ -1316,11 +926,6 @@ func _optimise() -> void:
 			_choose_route(e, {})
 
 
-## Перебирает места вокруг узла и оставляет самое дешёвое. Квадратом (step,
-## radius) — в офлайновой раскладке тайла, где время не жмёт; при свободной
-## упаковке вместо квадрата берутся восемь направлений на нескольких
-## расстояниях (_ring_offsets): позиций втрое меньше при почти том же
-## результате, а одна проверка стоит около миллисекунды.
 func _move_node(n: int, step: int, radius: int) -> void:
 	var start := _pos[n]
 	var inc: Array = _incident[n]
@@ -1329,49 +934,25 @@ func _move_node(n: int, step: int, radius: int) -> void:
 	var best_cost := _cost_around(n)
 	var best_pos := start
 	var best_routes: Array = _snapshot_routes(inc)
-	var packing := _pack_rect.size.x > 0.0 and _kind[n] != Kind.PORT
-	for offset: Vector2 in _offsets(step, radius):
-		var p := start + offset
-		# При упаковке рамка обязана целиком остаться в картинке — это
-		# проверяется точно, а не штрафом: иначе узел, которому запрещено
-		# налезать на соседа, просто уходит за край, и картинка растёт.
-		if packing:
-			if not _pack_rect.encloses(Rect2(p - _half[n], _half[n] * 2.0)):
+	for dy in range(-radius, radius + 1, step):
+		for dx in range(-radius, radius + 1, step):
+			if dx == 0 and dy == 0:
 				continue
-		elif not Geometry2D.is_point_in_polygon(p, poly):
-			continue
-		_pos[n] = p
-		var cost := _cost_around(n)
-		if cost < best_cost - 0.01:
-			best_cost = cost
-			best_pos = p
-			best_routes = _snapshot_routes(inc)
+			var p := start + Vector2(dx, dy)
+			if not Geometry2D.is_point_in_polygon(p, poly):
+				continue
+			_pos[n] = p
+			var cost := _cost_around(n)
+			if cost < best_cost - 0.01:
+				best_cost = cost
+				best_pos = p
+				best_routes = _snapshot_routes(inc)
 	_pos[n] = best_pos
 	for i in inc.size():
 		var e: int = inc[i]
 		_routes[e] = best_routes[i][0]
 		_visible[e] = best_routes[i][1]
 		_bbox[e] = best_routes[i][2]
-
-
-## Куда пробовать сдвинуть узел. В офлайновой раскладке — весь квадрат; при
-## свободной упаковке — восемь направлений на расстояниях step, 2*step ... до
-## radius. Позиций втрое меньше, а направления те же, по каким вообще ходят
-## трассы.
-func _offsets(step: int, radius: int) -> Array[Vector2]:
-	var out: Array[Vector2] = []
-	if _pack_rect.size.x <= 0.0:
-		for dy in range(-radius, radius + 1, step):
-			for dx in range(-radius, radius + 1, step):
-				if dx != 0 or dy != 0:
-					out.append(Vector2(dx, dy))
-		return out
-	var away := step
-	while away <= radius:
-		for dir: Vector2 in DIRS:
-			out.append(dir * away)
-		away += step
-	return out
 
 
 func _snapshot_routes(inc: Array) -> Array:
@@ -1448,819 +1029,3 @@ func _export(state: GameState) -> Dictionary:
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres,
 		"fallback_routes": _fallback_routes,
 	}
-
-
-## Ближайшее чётное число не меньше данного.
-static func _even(v: int) -> int:
-	return v + (v & 1)
-
-
-# --- разводка в обход препятствий (только при упаковке) ----------------------
-
-## Перекладывает тоннели, которые иначе идут прямо по рамке локации и
-## перечёркивают её название. Возвращает, сколько удалось исправить.
-##
-## Это отдельный проход в самом конце упаковки, а не часть _choose_route:
-## выбор маршрута зовётся тысячи раз внутри сдвигов узлов, и поиск по сетке
-## там не по карману. В разреженной раскладке по гексам прямые варианты
-## справляются и сами — там этот проход просто ничего не находит.
-func _reroute_around_boxes() -> int:
-	var fixed := 0
-	var hits := 0
-	var no_path := 0
-	var budget := PACK_REROUTE_BUDGET
-	for _round in PACK_REROUTE_ROUNDS:
-		var improved := 0
-		# Сначала самые плохие: кто задевает рамки и пересекает соседей, тот и
-		# выбирает свободное место первым. Соседи потом разойдутся по тому,
-		# что осталось, — в одиночку каждая трасса этого не видит.
-		for e: int in _worst_routes():
-			if budget <= 0:
-				break
-			budget -= 1
-			if _reroute_one(e):
-				improved += 1
-				fixed += 1
-			else:
-				hits += 1
-		if improved == 0 or budget <= 0:
-			break
-	var bent_left := 0
-	var port_left := 0
-	for e in _routes.size():
-		if not _route_is_octilinear(e):
-			bent_left += 1
-		if not _route_leaves_port_right(e):
-			port_left += 1
-	pack_stats["bent_left"] = bent_left
-	pack_stats["port_left"] = port_left
-	pack_stats["route_budget_left"] = budget
-	pack_stats["route_hits"] = hits
-	pack_stats["route_no_path"] = no_path
-	return fixed
-
-
-## Тоннели, которым сейчас хуже всего, — от худшего к лучшему. Задетая рамка
-## весит больше пересечения: трасса поверх названия локации портит доску
-## сильнее, чем перекрёсток.
-func _worst_routes() -> Array[int]:
-	var scored: Array = []
-	for e in _routes.size():
-		var bad := _route_hit_count(e) * 3 + _route_crossings(e)
-		if not _route_is_octilinear(e) or not _route_leaves_port_right(e):
-			bad += 5
-		if bad > 0:
-			scored.append([bad, e])
-	scored.sort_custom(func(x: Array, y: Array) -> bool: return x[0] > y[0])
-	var out: Array[int] = []
-	for row: Array in scored:
-		out.append(int(row[1]))
-	return out
-
-
-## Одна попытка переложить тоннель. true — новый маршрут лучше прежнего.
-func _reroute_one(e: int) -> bool:
-		var was_hits := _route_hit_count(e)
-		# Кривая трасса — тоже повод переложить. Когда прямых вариантов между
-		# концами не нашлось вовсе, _choose_route кладёт запасную линию прямо
-		# из центра в центр, под любым углом; в плотной карте это случается
-		# по десятку раз за партию. Поиск по сетке ходит только под 45.
-		var was_bent := not _route_is_octilinear(e) or not _route_leaves_port_right(e)
-		var was_cross := _route_crossings(e)
-		if was_hits == 0 and not was_bent:
-			return false
-		# Не нашлось в тесной коробке — пробуем ещё раз пошире: обход бывает
-		# длинным, а таких тоннелей единицы.
-		var path := _astar_route(e, PACK_ROUTE_MARGIN, PACK_ROUTE_CELLS)
-		if path.is_empty():
-			path = _astar_route(e, PACK_ROUTE_MARGIN * 2.5, PACK_ROUTE_CELLS * 3)
-		if path.is_empty() and _edge_dir[e] >= 0:
-			path = _astar_route(e, PACK_ROUTE_MARGIN * 2.5, PACK_ROUTE_CELLS * 3, true, true)
-		if path.is_empty():
-			return false
-		var was_route: PackedVector2Array = _routes[e]
-		var was_visible: PackedVector2Array = _visible[e]
-		var was_box: Rect2 = _bbox[e]
-		_routes[e] = path
-		_visible[e] = _clip(e, path)
-		_bbox[e] = _bounds(_visible[e])
-		# Обход оставляем, если он задевает МЕНЬШЕ рамок, а не только если
-		# чист совсем: в плотной карте «чуть лучше» тоже дорогого стоит.
-		var now_hits := _route_hit_count(e)
-		var straightened: bool = was_bent and _route_is_octilinear(e) \
-			and _route_leaves_port_right(e)
-		var fewer_crossings: bool = now_hits == was_hits and _route_crossings(e) < was_cross
-		var better := now_hits < was_hits or straightened or fewer_crossings
-		if not better:
-			_routes[e] = was_route
-			_visible[e] = was_visible
-			_bbox[e] = was_box
-			return false
-		return true
-
-
-## Сколько чужих рамок и колец задевает трасса.
-func _route_hit_count(e: int) -> int:
-	var hits := 0
-	var segs: PackedVector2Array = _visible[e]
-	if segs.is_empty():
-		return 0
-	var a: Vector2 = _pos[_edge_a[e]]
-	var b: Vector2 = _pos[_edge_b[e]]
-	for m in _key.size():
-		if _kind[m] == Kind.PORT or m == _edge_a[e] or m == _edge_b[e]:
-			continue
-		# Считаем не только задетые рамки, но и те, к которым трасса подошла
-		# ближе зазора: прижатая вплотную линия мажет обводку.
-		var rect := _node_rect(m, PACK_CLEARANCE - 1.0)
-		if not _bbox[e].intersects(rect):
-			continue
-		# Узел, накрывший сам конец тоннеля, не в счёт: трасса обязана оттуда
-		# выйти, и никакой обход этого не изменит. Это наложение рамок, а не
-		# кривая разводка, и лечится оно разведением.
-		if rect.has_point(a) or rect.has_point(b):
-			continue
-		for i in range(0, segs.size(), 2):
-			if _segment_hits_rect(segs[i], segs[i + 1], rect):
-				hits += 1
-				break
-	return hits
-
-
-## Поиск маршрута по сетке в восемь направлений: рамки локаций и кольца —
-## стенки, поворот только на 45 градусов, цена — длина плюс штраф за излом
-## (те же веса, что в _local_cost). Пусто, если маршрута нет или коробка
-## поиска вышла слишком большой.
-## loose_goal — принять приход в цель с любой стороны. Помогает, когда
-## жёсткая сторона входа в рамку делает задачу неразрешимой: как трасса
-## вошла в локацию, глазу почти не видно, а вот тоннель, ушедший из стыка не
-## в ту сторону, виден сразу.
-func _astar_route(e: int, margin: float, cell_budget: int, loose_goal: bool = false,
-		loose_start: bool = false) -> PackedVector2Array:
-	var a := _edge_a[e]
-	var b := _edge_b[e]
-	var starts := _ends(a, b, e)
-	var goals := _ends(b, a, e)
-	if starts.is_empty() or goals.is_empty():
-		return PackedVector2Array()
-
-	var box := Rect2(starts[0][0], Vector2.ZERO)
-	for s: Array in starts:
-		box = box.expand(s[0])
-	for g: Array in goals:
-		box = box.expand(g[0])
-	box = box.grow(margin)
-	# Обход не должен вылезать за картинку: её размер считается и по трассам,
-	# и лишняя петля наружу делает карту больше зоны — а тогда масштаб падает
-	# с одного к одному до двух третей, и вся упаковка теряет смысл.
-	if _pack_rect.size.x > 0.0:
-		box = box.intersection(_pack_rect)
-	var origin := (box.position / GRID).floor() * GRID
-	var w := int((box.end.x - origin.x) / GRID) + 2
-	var h := int((box.end.y - origin.y) / GRID) + 2
-	if w < 2 or h < 2 or w * h > cell_budget:
-		pack_stats["fail_big"] = int(pack_stats.get("fail_big", 0)) + 1
-		return PackedVector2Array()
-
-	var blocked := PackedByteArray()
-	blocked.resize(w * h)
-	for m in _key.size():
-		if _kind[m] == Kind.PORT or m == a or m == b:
-			continue
-		var r := _node_rect(m, PACK_CLEARANCE)
-		# Рамка, накрывшая сам конец тоннеля, стенкой быть не может: трасса
-		# оказалась бы замурована внутри неё и маршрута не нашлось бы вовсе.
-		if r.has_point(_pos[a]) or r.has_point(_pos[b]):
-			continue
-		var x0 := maxi(int(ceilf((r.position.x - origin.x) / GRID)), 0)
-		var x1 := mini(int(floorf((r.end.x - origin.x) / GRID)), w - 1)
-		var y0 := maxi(int(ceilf((r.position.y - origin.y) / GRID)), 0)
-		var y1 := mini(int(floorf((r.end.y - origin.y) / GRID)), h - 1)
-		for cy in range(y0, y1 + 1):
-			var row := cy * w
-			for cx in range(x0, x1 + 1):
-				blocked[row + cx] = 1
-
-	# Чужие трассы — не стенка, но идти по ним дорого: так обход по
-	# возможности не пересекает соседей, а если деваться некуда — пересечёт.
-	var busy := PackedByteArray()
-	busy.resize(w * h)
-	for f in _visible.size():
-		# Дальние трассы в коробку поиска не попадают — их и не размечаем.
-		if f == e or not box.intersects(_bbox[f]):
-			continue
-		var segs: PackedVector2Array = _visible[f]
-		for i in range(0, segs.size(), 2):
-			var from := segs[i]
-			var to := segs[i + 1]
-			var steps := int(maxf(from.distance_to(to) / GRID, 1.0))
-			for k in range(steps + 1):
-				var cell := _cell_of(from.lerp(to, float(k) / float(steps)), origin, w, h)
-				if cell >= 0:
-					busy[cell] = 1
-
-	var states := w * h * 8
-	var dist := PackedFloat32Array()
-	dist.resize(states)
-	dist.fill(INF)
-	var seen := PackedByteArray()
-	seen.resize(states)
-	var prev := PackedInt32Array()
-	prev.resize(states)
-	prev.fill(-1)
-	var heap_cost := PackedFloat32Array()
-	var heap_state := PackedInt32Array()
-
-	# Точка выхода может лежать между узлами сетки — до ближайшего узла идём
-	# прямо по направлению выхода, излома это не добавляет.
-	var entry := {}
-	var starting: Array = []
-	for s: Array in starts:
-		var at: Vector2 = s[0]
-		var dir: int = -1 if loose_start else int(s[1])
-		var lattice := _lattice_ahead(at, dir)
-		if lattice == Vector2.INF:
-			continue
-		# Направление выхода обязано выдержаться на ПЕРВОМ же отрезке, иначе
-		# трасса уйдёт вбок и стык с соседней трассой встанет изломом. Поэтому
-		# стартуем не в самой точке выхода, а на шаг дальше по этому
-		# направлению: тогда первый отрезок заведомо прямой.
-		if dir >= 0:
-			lattice += DIRS[dir] * GRID
-		var cell := _cell_of(lattice, origin, w, h)
-		if cell < 0:
-			continue
-		# Конец тоннеля может оказаться накрыт чужой рамкой — упаковка тесная.
-		# Его клетку всё равно открываем: выходить откуда-то надо.
-		blocked[cell] = 0
-		for d in range(8):
-			if dir >= 0 and d != dir:
-				continue
-			var st := cell * 8 + d
-			var reach := at.distance_to(lattice) * W_LEN
-			if reach < dist[st]:
-				dist[st] = reach
-				entry[st] = at
-				starting.append([reach, st])
-	if starting.is_empty():
-		pack_stats["fail_start"] = int(pack_stats.get("fail_start", 0)) + 1
-
-	var want := {}
-	var exit_at := {}
-	var goal_cells: Array[Vector2i] = []
-	for g: Array in goals:
-		var at: Vector2 = g[0]
-		var dir: int = int(g[1])
-		var lattice := _lattice_ahead(at, dir)
-		if lattice == Vector2.INF:
-			continue
-		var cell := _cell_of(lattice, origin, w, h)
-		if cell < 0:
-			continue
-		blocked[cell] = 0
-		want[cell] = -1 if dir < 0 or loose_goal else (dir + 4) % 8
-		exit_at[cell] = at
-		goal_cells.append(Vector2i(cell % w, cell / w))
-	if want.is_empty():
-		pack_stats["fail_goal"] = int(pack_stats.get("fail_goal", 0)) + 1
-		return PackedVector2Array()
-
-	# Старты кладём в кучу только теперь: прикидка остатка пути считается до
-	# целей, а они стали известны строкой выше.
-	for row: Array in starting:
-		var st_cell: int = int(row[1]) / 8
-		_heap_push(heap_cost, heap_state, float(row[0]) + _octile(st_cell % w, st_cell / w, goal_cells), int(row[1]))
-
-	var found := -1
-	while not heap_state.is_empty():
-		var st := _heap_pop(heap_cost, heap_state)
-		if seen[st] == 1:
-			continue
-		seen[st] = 1
-		var cell := st / 8
-		var dir := st % 8
-		if want.has(cell) and not entry.has(st):
-			var need: int = int(want[cell])
-			if need < 0 or need == dir:
-				found = st
-				break
-		var cx := cell % w
-		var cy := cell / w
-		for turn: int in [-1, 0, 1]:
-			var nd: int = (dir + turn + 8) % 8
-			var step: Vector2 = DIRS[nd]
-			var nx := cx + int(step.x)
-			var ny := cy + int(step.y)
-			if nx < 0 or ny < 0 or nx >= w or ny >= h:
-				continue
-			var ncell := ny * w + nx
-			if blocked[ncell] == 1:
-				continue
-			# По диагонали нельзя проскочить между двумя занятыми клетками:
-			# трасса прошла бы ровно по углу рамки.
-			if step.x != 0.0 and step.y != 0.0:
-				if blocked[cy * w + nx] == 1 or blocked[ny * w + cx] == 1:
-					continue
-			var nst: int = ncell * 8 + nd
-			# Длина в обходе стоит ЗАМЕТНО: при копеечной цене (W_LEN) поиск
-			# охотно делал крюк через полкарты ради одного сэкономленного
-			# излома, и трассы выходили петлями.
-			var cost: float = dist[st] + step.length() * GRID * PACK_ROUTE_LEN
-			if turn != 0:
-				cost += W_BEND
-			if busy[ncell] == 1:
-				cost += PACK_BUSY_COST
-			if cost < dist[nst]:
-				dist[nst] = cost
-				prev[nst] = st
-				# В куче лежит цена С ПРИКИДКОЙ остатка пути: без неё это
-				# честный перебор всего поля, а он на сетке в тридцать тысяч
-				# состояний считается секундами. Прикидка намеренно жадная —
-				# маршрут может выйти чуть длиннее идеального, зато находится
-				# сразу и идёт в сторону цели.
-				_heap_push(heap_cost, heap_state, cost + _octile(nx, ny, goal_cells), nst)
-	if found < 0:
-		pack_stats["fail_search"] = int(pack_stats.get("fail_search", 0)) + 1
-		return PackedVector2Array()
-
-	var cells: Array[Vector2] = []
-	var at_state := found
-	while at_state >= 0:
-		var cell := at_state / 8
-		cells.append(origin + Vector2(cell % w, cell / w) * GRID)
-		if entry.has(at_state):
-			var real: Vector2 = entry[at_state]
-			if not real.is_equal_approx(cells[cells.size() - 1]):
-				cells.append(real)
-			break
-		at_state = prev[at_state]
-	cells.reverse()
-	var goal_cell := found / 8
-	if exit_at.has(goal_cell):
-		var real_end: Vector2 = exit_at[goal_cell]
-		if not real_end.is_equal_approx(cells[cells.size() - 1]):
-			cells.append(real_end)
-	if cells.size() < 2:
-		return PackedVector2Array()
-
-	var out := PackedVector2Array()
-	for i in cells.size():
-		if i == 0 or i == cells.size() - 1:
-			out.append(cells[i])
-			continue
-		var before: Vector2 = cells[i] - cells[i - 1]
-		var after: Vector2 = cells[i + 1] - cells[i]
-		if not before.normalized().is_equal_approx(after.normalized()):
-			out.append(cells[i])
-	return out
-
-
-## Номер клетки сетки под точкой, или -1 если точка вне коробки.
-func _cell_of(at: Vector2, origin: Vector2, w: int, h: int) -> int:
-	var cx := int(roundf((at.x - origin.x) / GRID))
-	var cy := int(roundf((at.y - origin.y) / GRID))
-	if cx < 0 or cy < 0 or cx >= w or cy >= h:
-		return -1
-	return cy * w + cx
-
-
-## Ближайший узел сетки по направлению выхода из рамки. Точка выхода лежит в
-## пикселе от края рамки и потому на нечётной координате, а поиск идёт по
-## чётной сетке: до неё нужно пройти прямо, чтобы не появилось лишнего излома.
-## Vector2.INF — узла по этому направлению нет (свободное направление у
-## кольца, которое само стоит не на сетке).
-static func _lattice_ahead(at: Vector2, dir: int) -> Vector2:
-	if _on_lattice(at):
-		return at
-	if dir < 0:
-		return Vector2.INF
-	for k in range(1, GRID + 1):
-		var p: Vector2 = at + DIRS[dir] * k
-		if _on_lattice(p):
-			return p
-	return Vector2.INF
-
-
-static func _on_lattice(p: Vector2) -> bool:
-	return int(roundf(p.x)) % GRID == 0 and int(roundf(p.y)) % GRID == 0
-
-
-static func _heap_push(costs: PackedFloat32Array, states: PackedInt32Array,
-		cost: float, state: int) -> void:
-	costs.append(cost)
-	states.append(state)
-	var i := states.size() - 1
-	while i > 0:
-		var parent := (i - 1) / 2
-		if costs[parent] <= costs[i]:
-			break
-		var c := costs[i]
-		costs[i] = costs[parent]
-		costs[parent] = c
-		var s := states[i]
-		states[i] = states[parent]
-		states[parent] = s
-		i = parent
-
-
-## Прикидка остатка пути до ближайшей цели: расстояние по сетке с диагоналями,
-## переведённое в цену. Намеренно завышена (см. PACK_ROUTE_PULL) — иначе штраф
-## за излом перевешивает всё и поиск вырождается в перебор поля.
-static func _octile(cx: int, cy: int, goals: Array[Vector2i]) -> float:
-	var best := INF
-	for g: Vector2i in goals:
-		var dx := absi(g.x - cx)
-		var dy := absi(g.y - cy)
-		var far := maxi(dx, dy)
-		var near := mini(dx, dy)
-		best = minf(best, float(far - near) + float(near) * sqrt(2.0))
-	return best * GRID * PACK_ROUTE_PULL
-
-
-## Достаёт самое дешёвое состояние. Повторы отсеивает вызывающий: у состояния
-## в куче могла остаться прежняя, более дорогая цена.
-static func _heap_pop(costs: PackedFloat32Array, states: PackedInt32Array) -> int:
-	var top := states[0]
-	var last := states.size() - 1
-	costs[0] = costs[last]
-	states[0] = states[last]
-	costs.resize(last)
-	states.resize(last)
-	var i := 0
-	while true:
-		var left := i * 2 + 1
-		var right := left + 1
-		var small := i
-		if left < last and costs[left] < costs[small]:
-			small = left
-		if right < last and costs[right] < costs[small]:
-			small = right
-		if small == i:
-			break
-		var c := costs[i]
-		costs[i] = costs[small]
-		costs[small] = c
-		var s := states[i]
-		states[i] = states[small]
-		states[small] = s
-		i = small
-	return top
-
-
-## Рамки локаций, которые всё ещё лежат одна на другой.
-func _stuck_sites(everyone: Array[int]) -> Array[int]:
-	var out: Array[int] = []
-	for a: int in everyone:
-		if _kind[a] != Kind.SITE:
-			continue
-		for b: int in everyone:
-			if a != b and _kind[b] == Kind.SITE and _node_rect(a).intersects(_node_rect(b)):
-				out.append(a)
-				break
-	return out
-
-
-## Все ли отрезки трассы идут под 0, 45 или 90 градусов.
-func _route_is_octilinear(e: int) -> bool:
-	var points: PackedVector2Array = _routes[e]
-	for i in points.size() - 1:
-		var d := points[i + 1] - points[i]
-		if not (is_zero_approx(d.x) or is_zero_approx(d.y) or is_equal_approx(absf(d.x), absf(d.y))):
-			return false
-	return true
-
-
-## Запасная трасса, когда обычных вариантов не нашлось: по диагонали, пока
-## один из концов не окажется на одной линии со вторым, и дальше прямо. Два
-## отрезка и один излом в 45 градусов — правило разводки соблюдено, а раньше
-## здесь стояла линия из центра в центр под любым углом.
-static func _fallback_octilinear(a: Vector2, b: Vector2, out_dir: int = -1) -> PackedVector2Array:
-	# Из точки стыка выходить можно только в одну сторону. Сначала короткий
-	# прямой участок в неё, и лишь потом обычная диагональ — если поворот с
-	# неё выходит ровно в 45 градусов.
-	if out_dir >= 0:
-		var stub := a + DIRS[out_dir] * STUB
-		var rest := _fallback_octilinear(stub, b)
-		if rest.size() >= 2 and _turn_is_45(DIRS[out_dir], rest[1] - rest[0]):
-			var joined := PackedVector2Array([a])
-			joined.append_array(rest)
-			return joined
-	var d := b - a
-	var run := minf(absf(d.x), absf(d.y))
-	if run <= 0.0:
-		return PackedVector2Array([a, b])
-	var corner := a + Vector2(signf(d.x), signf(d.y)) * run
-	# Ровная диагональ: излома нет вовсе, и лишняя точка дала бы отрезок
-	# нулевой длины — у него нет направления, и проверка изгибов спотыкается.
-	if corner.is_equal_approx(b) or corner.is_equal_approx(a):
-		return PackedVector2Array([a, b])
-	return PackedVector2Array([a, corner, b])
-
-
-## Уходит ли трасса из точки стыка (порта) в ту сторону, в какую должна.
-## У порта ровно одно допустимое направление: иначе две трассы, сходящиеся в
-## нём, встретятся под углом и стык будет выглядеть изломом на пустом месте.
-func _route_leaves_port_right(e: int) -> bool:
-	if _edge_dir[e] < 0:
-		return true
-	var points: PackedVector2Array = _routes[e]
-	if points.size() < 2:
-		return false
-	return _dir_index(points[1] - points[0]) == _edge_dir[e]
-
-
-## Поворот между двумя направлениями — ровно на 45 градусов (или его нет).
-static func _turn_is_45(from: Vector2, to: Vector2) -> bool:
-	var a := _dir_index(Vector2(signf(from.x), signf(from.y)))
-	var b := _dir_index(Vector2(signf(to.x), signf(to.y)))
-	if a < 0 or b < 0:
-		return false
-	var steps := absi(a - b)
-	return mini(steps, 8 - steps) <= 1
-
-
-## Сколько чужих трасс пересекает эта. Пересечения на схеме неизбежны, но
-## каждое лишнее мешает: игрок ведёт взглядом по тоннелю и теряет его.
-func _route_crossings(e: int) -> int:
-	var mine: PackedVector2Array = _visible[e]
-	if mine.is_empty():
-		return 0
-	var count := 0
-	for f in _visible.size():
-		if f == e or not _bbox[e].intersects(_bbox[f]):
-			continue
-		var other: PackedVector2Array = _visible[f]
-		var crossed := false
-		for i in range(0, mine.size(), 2):
-			for j in range(0, other.size(), 2):
-				if Geometry2D.segment_intersects_segment(mine[i], mine[i + 1],
-						other[j], other[j + 1]) != null:
-					crossed = true
-					break
-			if crossed:
-				break
-		if crossed:
-			count += 1
-	return count
-
-
-# --- раскладка из самого графа ----------------------------------------------
-
-## Кладёт узлы по строению графа, а не по гексам настолки (решение владельца,
-## 2026-09-21: «собирать карту процедурно»).
-##
-## Зачем. Гексовая раскладка имеет смысл на физическом поле с большими
-## тайлами, но не на схеме 474x254: соседние по тоннелю локации оказываются
-## далеко и не с тех сторон, и даже кратчайший путь между ними выглядит
-## петлёй. Отсюда же и пересечения. А граф у нас редкий — на четверых 68
-## узлов и 75 связей, почти дерево, — такой рисуется вообще без пересечений,
-## если класть узлы по связям.
-##
-## Как. Пружинная модель: все узлы отталкиваются друг от друга, связанные
-## притягиваются. Узел большой рамки отталкивает сильнее мелкого кольца,
-## иначе рамки налезают. Шаг ограничен «температурой», она падает — к концу
-## узлы только подрагивают. Это обычный Фрухтерман-Рейнгольд, отличия два:
-## размер узла и рамка картинки.
-func _spring_layout(target: Vector2) -> void:
-	var n := _key.size()
-	if n < 2:
-		return
-	var centre := target * 0.5
-	var frame := Rect2(Vector2.ZERO, target)
-
-	# Стартуем не со случайных точек, а с гексовой раскладки, сжатой в рамку:
-	# у неё уже примерно верная топология, пружинам остаётся её расправить.
-	var span := _node_span()
-	if span.size.x > 0.0 and span.size.y > 0.0:
-		var scale: float = minf(target.x / span.size.x, target.y / span.size.y)
-		var from := span.get_center()
-		for i in n:
-			_pos[i] = centre + (_pos[i] - from) * scale
-
-	# Идеальная длина связи: столько места приходится на узел.
-	# С запасом: при «в упор» соседние рамки стоят вплотную и трассам между
-	# ними не пролезть. Лишнее потом съест вписывание в картинку.
-	var ideal: float = sqrt(target.x * target.y / float(n)) * SPRING_ROOMY
-	var temp: float = target.x * SPRING_HEAT
-	var shift: Array[Vector2] = []
-	shift.resize(n)
-
-	for _step in SPRING_STEPS:
-		for i in n:
-			shift[i] = Vector2.ZERO
-		# отталкивание всех от всех
-		for i in n:
-			for j in range(i + 1, n):
-				var apart: Vector2 = _pos[i] - _pos[j]
-				var gap: float = maxf(apart.length(), 0.01)
-				# Крупная рамка занимает больше места — и отталкивает дальше.
-				var room: float = ideal + (_half[i] + _half[j]).length() * SPRING_ROOM
-				var force: float = room * room / gap
-				var dir: Vector2 = apart / gap
-				shift[i] += dir * force
-				shift[j] -= dir * force
-		# притяжение по связям
-		for e in _edge_a.size():
-			var a: int = _edge_a[e]
-			var b: int = _edge_b[e]
-			var apart2: Vector2 = _pos[a] - _pos[b]
-			var gap2: float = maxf(apart2.length(), 0.01)
-			var pull: float = gap2 * gap2 / ideal
-			var dir2: Vector2 = apart2 / gap2
-			shift[a] -= dir2 * pull
-			shift[b] += dir2 * pull
-		# сдвиг, ограниченный температурой, и не за край картинки
-		for i in n:
-			var move: Vector2 = shift[i]
-			var size: float = move.length()
-			if size > 0.01:
-				move = move / size * minf(size, temp)
-			# Рамкой во время счёта НЕ зажимаем: прижатые к краю узлы образуют
-			# кольцо с пустотой в середине. Форму ищем свободно, а в рамку
-			# картинка вписывается один раз в конце.
-			_pos[i] += move
-		temp *= SPRING_COOL
-
-	# Итоговую форму вписываем в картинку целиком.
-	var grown := _node_span()
-	if grown.size.x > 0.0 and grown.size.y > 0.0:
-		# Растягиваем по каждой оси отдельно: пружины дают примерно круглую
-		# форму, а зона доски вдвое шире своей высоты. Углы 45 градусов от
-		# этого ломаются, но трассы всё равно прокладываются заново.
-		var fit := Vector2(target.x / grown.size.x, target.y / grown.size.y)
-		var from2 := grown.get_center()
-		for i in n:
-			_pos[i] = _snap(centre + (_pos[i] - from2) * fit)
-	# Порты больше не лежат на рёбрах гексов, и держать их направление выхода
-	# незачем: это просто точка на тоннеле.
-	for e in _edge_dir.size():
-		_edge_dir[e] = -1
-	# Центры гексов остались от прежней раскладки; в проверках они больше не
-	# участвуют, но пусть не уезжают от узлов.
-	for hex: String in _centre.keys():
-		_centre[hex] = centre
-
-
-# --- раскладка деревом ------------------------------------------------------
-
-## Кладёт карту как дерево (решение владельца, 2026-09-21).
-##
-## Почему дерево. Граф карты очень редкий: на четверых 68 узлов и 75 связей,
-## у дерева на 68 узлах было бы 67. То есть это дерево плюс восемь лишних
-## рёбер. А дерево рисуется БЕЗ ПЕРЕСЕЧЕНИЙ по построению, если каждому
-## поддереву отдать свой прямоугольник: соседние поддеревья не пересекаются,
-## значит и связи внутри них тоже.
-##
-## Как. Берём остов обходом в ширину от узла с наибольшим числом связей (он
-## обычно в середине карты). Считаем вес поддеревьев. Дальше рекурсивно:
-## узел занимает полосу у ближнего края своего прямоугольника, а остаток
-## делится между детьми поперёк — по весу. Пересекаться нечему.
-##
-## Оставшиеся вне остова рёбра (те самые восемь) просто прокладываются
-## поверх; они и дают немногие пересечения.
-func _tree_layout(target: Vector2) -> void:
-	var n := _key.size()
-	if n < 2:
-		return
-	var links: Array = []
-	links.resize(n)
-	for i in n:
-		links[i] = [] as Array[int]
-	for e in _edge_a.size():
-		(links[_edge_a[e]] as Array[int]).append(_edge_b[e])
-		(links[_edge_b[e]] as Array[int]).append(_edge_a[e])
-
-	# Корень — в середине графа, а не с краю: тогда дерево не вытягивается в
-	# длинную кишку. Середину ищем двойным обходом: самый дальний узел от
-	# произвольного, потом самый дальний от него, и берём середину пути.
-	var far := _farthest(0, links)
-	var other := _farthest(far, links)
-	var root := _midpoint(far, other, links)
-
-	var parent := PackedInt32Array()
-	parent.resize(n)
-	parent.fill(-2)
-	var kids: Array = []
-	kids.resize(n)
-	for i in n:
-		kids[i] = [] as Array[int]
-	var order: Array[int] = []
-	var queue: Array[int] = [root]
-	parent[root] = -1
-	while not queue.is_empty():
-		var at: int = queue.pop_front()
-		order.append(at)
-		for next: int in (links[at] as Array[int]):
-			if parent[next] == -2:
-				parent[next] = at
-				(kids[at] as Array[int]).append(next)
-				queue.append(next)
-	for i in n:
-		if parent[i] == -2:
-			parent[i] = root
-			(kids[root] as Array[int]).append(i)
-			order.append(i)
-
-	# Габарит поддерева ПОПЕРЁК (по высоте) — снизу вверх. Именно настоящий
-	# размер, а не доля площади: поддерево из трёх узлов иначе получало полосу,
-	# куда рамка не влезает, и узлы клались друг на друга.
-	var cross := PackedFloat32Array()
-	cross.resize(n)
-	for i in n:
-		cross[i] = _half[i].y * 2.0
-	for k in range(order.size() - 1, -1, -1):
-		var node: int = order[k]
-		var children: Array[int] = kids[node]
-		if children.is_empty():
-			continue
-		var stack := 0.0
-		for child: int in children:
-			stack += cross[child] + TREE_GAP
-		cross[node] = maxf(cross[node], stack - TREE_GAP)
-
-	# Дети корня делятся на две стороны: полдерева уходит вправо, полдерева
-	# влево. Так ширина вдвое меньше, и форма ближе к зоне доски, которая
-	# вдвое шире своей высоты.
-	var root_kids: Array[int] = kids[root]
-	var right: Array[int] = []
-	var left: Array[int] = []
-	var right_sum := 0.0
-	var left_sum := 0.0
-	for child: int in root_kids:
-		if right_sum <= left_sum:
-			right.append(child)
-			right_sum += cross[child] + TREE_GAP
-		else:
-			left.append(child)
-			left_sum += cross[child] + TREE_GAP
-	_pos[root] = Vector2.ZERO
-	var y := -maxf(right_sum - TREE_GAP, 0.0) * 0.5
-	for child: int in right:
-		_place_tidy(child, _half[root].x + TREE_GAP + _half[child].x, y, 1, kids, cross)
-		y += cross[child] + TREE_GAP
-	y = -maxf(left_sum - TREE_GAP, 0.0) * 0.5
-	for child: int in left:
-		_place_tidy(child, -(_half[root].x + TREE_GAP + _half[child].x), y, -1, kids, cross)
-		y += cross[child] + TREE_GAP
-
-	# Готовую форму вписываем в картинку — по каждой оси отдельно.
-	var span := _node_span()
-	if span.size.x > 0.0 and span.size.y > 0.0:
-		var fit := Vector2(target.x / span.size.x, target.y / span.size.y)
-		var from := span.get_center()
-		var centre := target * 0.5
-		for i in n:
-			_pos[i] = _snap(centre + (_pos[i] - from) * fit)
-	for e in _edge_dir.size():
-		_edge_dir[e] = -1
-	for hex: String in _centre.keys():
-		_centre[hex] = target * 0.5
-
-
-## Кладёт поддерево: узел на своей глубине, дети стопкой под ним по высоте.
-## Соседние поддеревья занимают непересекающиеся полосы, поэтому и связи
-## внутри них не пересекаются.
-func _place_tidy(node: int, x: float, y_start: float, dir: int,
-		kids: Array, cross: PackedFloat32Array) -> void:
-	_pos[node] = Vector2(x, y_start + cross[node] * 0.5)
-	var children: Array[int] = kids[node]
-	var y := y_start
-	for child: int in children:
-		var cx: float = x + float(dir) * (_half[node].x + TREE_GAP + _half[child].x)
-		_place_tidy(child, cx, y, dir, kids, cross)
-		y += cross[child] + TREE_GAP
-
-
-## Самый дальний узел от данного (по числу связей пути).
-func _farthest(from: int, links: Array) -> int:
-	var seen := {from: true}
-	var queue: Array[int] = [from]
-	var last := from
-	while not queue.is_empty():
-		var at: int = queue.pop_front()
-		last = at
-		for next: int in (links[at] as Array[int]):
-			if not seen.has(next):
-				seen[next] = true
-				queue.append(next)
-	return last
-
-
-## Середина пути между двумя узлами — годится за корень.
-func _midpoint(a: int, b: int, links: Array) -> int:
-	var parent := {a: -1}
-	var queue: Array[int] = [a]
-	while not queue.is_empty():
-		var at: int = queue.pop_front()
-		if at == b:
-			break
-		for next: int in (links[at] as Array[int]):
-			if not parent.has(next):
-				parent[next] = at
-				queue.append(next)
-	var path: Array[int] = []
-	var walk: int = b
-	while walk != -1 and parent.has(walk):
-		path.append(walk)
-		walk = int(parent[walk])
-	return path[path.size() / 2] if not path.is_empty() else a

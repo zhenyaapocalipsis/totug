@@ -87,13 +87,6 @@ static func build(state: GameState) -> Dictionary:
 			slots[prefix + String(slot2["id"])] = _slot_entry(
 				centre, art_offset, art_scale, rot, slot2, "", hex_id)
 
-	# Арт гексов нарисован раз и навсегда, а граф партии мог лишиться мест под
-	# войска (BoardBuilder.DROP_DEAD_END_TUNNELS). Отдаём только то, что в
-	# правилах есть: иначе на доске окажется кружок, по которому нельзя ходить.
-	for slot_id: String in slots.keys():
-		if not state.graph.slots.has(slot_id):
-			slots.erase(slot_id)
-
 	return {
 		"tiles": tiles,
 		"slots": slots,
