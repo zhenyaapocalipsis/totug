@@ -130,7 +130,11 @@ func hex_has_connection_facing(hex_id: String, world_dir: String, rot_deg: float
 
 ## hex_by_slot: имя слота раскладки -> id гекса ("B1", "C3", ...)
 ## rotation_by_slot: имя слота раскладки -> поворот в градусах (кратен 60)
-func build(player_count: int, hex_by_slot: Dictionary, rotation_by_slot: Dictionary) -> MapGraph:
+## prune_dead_ends:  убрать тупиковые кольца (MapGraph.prune_dead_ends). Не
+##                   убирают только для раскладки одиночного тайла в схеме:
+##                   там туннели к рёбрам ведут к будущим соседям.
+func build(player_count: int, hex_by_slot: Dictionary, rotation_by_slot: Dictionary,
+		prune_dead_ends := true) -> MapGraph:
 	var graph := MapGraph.new()
 	var layout: Dictionary = _layouts[str(player_count)]
 
@@ -173,6 +177,8 @@ func build(player_count: int, hex_by_slot: Dictionary, rotation_by_slot: Diction
 
 	_sew_neighbours(graph, layout, hex_by_slot, rotation_by_slot, local_positions)
 
+	if prune_dead_ends:
+		graph.prune_dead_ends()
 	graph.finalize()
 	return graph
 

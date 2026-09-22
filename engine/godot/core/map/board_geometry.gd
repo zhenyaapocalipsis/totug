@@ -84,6 +84,9 @@ static func build(state: GameState) -> Dictionary:
 				slots[prefix + String(slot["id"])] = _slot_entry(
 					centre, art_offset, art_scale, rot, slot, site_id, hex_id)
 		for slot2: Dictionary in routes.get(hex_id, []):
+			# Тупиковых колец в графе нет (MapGraph.prune_dead_ends) — и на доске тоже.
+			if not state.graph.slots.has(prefix + String(slot2["id"])):
+				continue
 			slots[prefix + String(slot2["id"])] = _slot_entry(
 				centre, art_offset, art_scale, rot, slot2, "", hex_id)
 

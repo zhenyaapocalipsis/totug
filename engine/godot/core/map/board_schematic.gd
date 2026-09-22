@@ -156,7 +156,7 @@ static func build(state: GameState) -> Dictionary:
 ## takes seconds, too slow for every game start). Positions are relative to
 ## the hex centre; ports are named "port:<world direction>".
 static func layout_tile(builder: BoardBuilder, tile: String, rotation: int) -> Dictionary:
-	var graph := builder.build(2, {"a": tile}, {"a": float(rotation)})
+	var graph := builder.build(2, {"a": tile}, {"a": float(rotation)}, false)
 	# The search is local, so it can get stuck; tables are built offline, so
 	# try a few starts (the first is the plain one) and keep the cheapest.
 	var schematic: BoardSchematic = null
@@ -455,16 +455,19 @@ func _near_end(p: Vector2, n: int) -> bool:
 
 
 ## Tiles are laid out alone, so a box near the edge can touch a box of the
-## neighbouring hex. Only those nodes are moved, a little.
+## neighbouring hex. Only those nodes are moved, a little. Rings go first:
+## a small ring steps aside easily, while a moved box can land on a ring of
+## its own hex.
 func _repair() -> void:
-	for n in _key.size():
-		if _kind[n] == Kind.PORT:
-			continue
-		var grown := _node_rect(n, NODE_GAP)
-		for m: int in _near[_hex[n]]:
-			if m != n and _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
-				_move_node(n, 2, 12)
-				break
+	for kind in [Kind.RING, Kind.SITE]:
+		for n in _key.size():
+			if _kind[n] != kind:
+				continue
+			var grown := _node_rect(n, NODE_GAP)
+			for m: int in _near[_hex[n]]:
+				if m != n and _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
+					_move_node(n, 2, 12)
+					break
 	# a moved box may now sit on a tunnel of the neighbouring hex
 	for e in _routes.size():
 		if _local_cost(e, _routes[e], _visible[e]) >= W_HIT:

@@ -21,6 +21,7 @@ func _initialize() -> void:
 	test_rotation_optimizer()
 	test_presence_rules()
 	test_direct_site_links()
+	test_dead_ends_pruned()
 	test_control_rules()
 
 	# этап 2: базовый цикл хода
@@ -461,6 +462,48 @@ func test_control_rules() -> void:
 ## Прямая связь локаций проверяется на ОТДЕЛЬНОМ графе: подмешивать её в общий
 ## мини-граф нельзя — она меняет достижимость и ломает более ранние проверки
 ## («войско вне зоны Присутствия недоступно» переставало быть верным).
+func test_dead_ends_pruned() -> void:
+	section("тупики: кольца, ведущие не дальше одного соседа, убраны")
+
+	# Синтетика: A - r1 - B, и хвост A - r2 - r3 в никуда.
+	var graph := MapGraph.new()
+	graph.add_site("A", "A", 1, "T")
+	graph.add_site("B", "B", 1, "T")
+	for id in ["a0", "a1"]:
+		graph.add_slot(id, "T", Vector2.ZERO, "A")
+	graph.add_slot("b0", "T", Vector2.ZERO, "B")
+	for id in ["r1", "r2", "r3"]:
+		graph.add_slot(id, "T", Vector2.ZERO)
+	graph.connect_slots("a0", "r1")
+	graph.connect_slots("r1", "b0")
+	# r2 касается двух мест одной локации — это всё равно один сосед
+	graph.connect_slots("a0", "r2")
+	graph.connect_slots("a1", "r2")
+	graph.connect_slots("r2", "r3")
+	var removed := graph.prune_dead_ends()
+	removed.sort()
+	check_eq(Array(removed), ["r2", "r3"], "хвост убран цепочкой, проходное кольцо осталось")
+	check(not graph.adjacent_slots("a0").has("r2"), "у локации не осталось связи с удалённым кольцом")
+	check(graph.slots.has("a1") and graph.slots.has("r1"), "места локаций и проходные кольца на месте")
+
+	# Настоящие доски: ни одного тупика не осталось.
+	for players in [2, 3, 4]:
+		var ids: Array[String] = []
+		ids.assign(["red", "blue", "green", "purple"].slice(0, players))
+		var state := GameSetup.new_game(ids, 7)
+		var dead := 0
+		for slot_id: String in state.graph.slots:
+			if not state.graph.is_route_slot(slot_id):
+				continue
+			var near := {}
+			for other in state.graph.adjacent_slots(slot_id):
+				var site := state.graph.site_of_slot(other)
+				near[site if site != "" else other] = true
+			if near.size() <= 1:
+				dead += 1
+		check_eq(dead, 0, "на %d игроков тупиков нет" % players)
+
+
 func test_direct_site_links() -> void:
 	section("прямая связь локаций (туннель без троп-слотов)")
 

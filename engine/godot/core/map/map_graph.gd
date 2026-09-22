@@ -124,6 +124,41 @@ func sites_adjacent_to_slot(slot_id: String) -> PackedStringArray:
 	return result
 
 
+## Убирает тупики: кольца туннелей, которые ведут не дальше одного соседа
+## (локация считается одним соседом, сколько бы её мест ни касалось кольца).
+## Такие кольца стоят на туннелях, упирающихся в край доски. Решение владельца
+## (2026-09-22): тупиков в игре нет — они занимали треть колец и место на
+## экране. Удаляется цепочкой: без последнего кольца предпоследнее тоже
+## становится тупиком. Места в локациях не трогаются никогда.
+## Возвращает id удалённых слотов.
+func prune_dead_ends() -> PackedStringArray:
+	var removed := PackedStringArray()
+	var changed := true
+	while changed:
+		changed = false
+		for slot_id: String in slots.keys():
+			if not is_route_slot(slot_id):
+				continue
+			var neighbours := {}
+			for other in adjacent_slots(slot_id):
+				var site := site_of_slot(other)
+				neighbours[site if site != "" else other] = true
+			if neighbours.size() <= 1:
+				_remove_slot(slot_id)
+				removed.append(slot_id)
+				changed = true
+	return removed
+
+
+func _remove_slot(slot_id: String) -> void:
+	for other in adjacent_slots(slot_id):
+		var list: PackedStringArray = _adjacency[other]
+		list.remove_at(list.find(slot_id))
+		_adjacency[other] = list
+	_adjacency.erase(slot_id)
+	slots.erase(slot_id)
+
+
 ## Должен вызываться после того, как все узлы и рёбра добавлены.
 func finalize() -> void:
 	_site_adjacent_slots.clear()
