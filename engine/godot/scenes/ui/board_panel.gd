@@ -78,6 +78,13 @@ var _viewer_id: String = ""
 var _textures: Dictionary = {}   # hex_id -> Texture2D
 
 var schematic_mode := true
+## Stage 0 фонового арта гексов (PixelLab): если выкл — прежний вид, ни один
+## расчёт больше нигде на этот флаг не смотрит. См. SchematicPainter.paint.
+var art_layer := false
+## Тематические объекты (PixelLab, владелец 2026-09-23) на 5 подобранных
+## плитках — отдельно от art_layer, чтобы не путаться с ещё не принятым фоном
+## гексов. См. SchematicPainter.OBJECT_TILES.
+var object_layer := false
 var _schematic_texture: ImageTexture = null
 var _tokens: Dictionary = {}     # colour html -> ImageTexture
 
@@ -239,10 +246,14 @@ func _load_textures() -> void:
 		var path := String(tile["texture"])
 		if ResourceLoader.exists(path):
 			_textures[hex_id] = load(path)
+	_rebuild_schematic_texture()
+
+
+func _rebuild_schematic_texture() -> void:
 	_schematic_texture = null
 	var schematic: Dictionary = _board.get("schematic", {})
 	if not schematic.is_empty():
-		var image := SchematicPainter.paint(schematic)
+		var image := SchematicPainter.paint(schematic, art_layer, object_layer)
 		image.generate_mipmaps()
 		_schematic_texture = ImageTexture.create_from_image(image)
 
@@ -254,6 +265,23 @@ func _schematic_on() -> bool:
 func set_schematic_mode(on: bool) -> void:
 	schematic_mode = on
 	_zoom = 0.0
+	queue_redraw()
+
+
+## Stage 0: фон из арта гексов под схемой (см. SchematicPainter._paint_background).
+func set_art_layer(on: bool) -> void:
+	if art_layer == on:
+		return
+	art_layer = on
+	_rebuild_schematic_texture()
+	queue_redraw()
+
+
+func set_object_layer(on: bool) -> void:
+	if object_layer == on:
+		return
+	object_layer = on
+	_rebuild_schematic_texture()
 	queue_redraw()
 
 

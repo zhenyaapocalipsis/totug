@@ -18,8 +18,37 @@ const TRACE_WIDTH := 2
 ## «скругление», а заметный скос.
 const CORNER_R := 3.0
 
+## Stage 0 (см. memory project_board_packing / чат 2026-09-23): фон под схемой
+## из арта отдельных гексов, PixelLab, dark fantasy card art. Сырой арт —
+## res://assets/hex_bg/hex_<ID>.png, ОДНА картинка на плитку (не 6 поворотов):
+## поворот и «сжатие» схемы (BoardSchematic.SQUEEZE) применяются к пикселям
+## арта на лету при выборке (_sample_art), той же формулой, что кладёт узлы и
+## трассы (BoardBuilder.rotate_local -> BoardSchematic.to_schematic). Плитки
+## без файла просто остаются без фона — старый вид не меняется.
+##
+## Соседи на схеме не гасятся друг под друга (владелец, 2026-09-23: без
+## виньетки) — на стыке виден настоящий край арта, каким его сгенерировали.
+const ART_DIR := "res://assets/hex_bg/"
+## Пикселей арта на единицу раскладки (те же единицы, что INRADIUS). Подобрано
+## так, чтобы апофема гекса (INRADIUS) укладывалась в разумный радиус арта —
+## величина того же порядка, что и сама плитка при генерации (~176x176).
+const ART_SCALE := 10.0
+## Схема развёрнута на 90° (см. _blit_hex_art) — этим компенсируем, чтобы арт
+## смотрел на игрока, а не «лежал на боку».
+const ART_FACING_OFFSET := -90.0
 
-static func paint(schematic: Dictionary) -> Image:
+static var _art_cache: Dictionary = {}   # tile id -> Image or null (нет файла)
+
+## Тематические объекты (PixelLab, владелец 2026-09-23): вручную подобраны
+## под лор конкретных плиток, а не под все 27 — рисуются как есть, без обрезки
+## по гексу и без поворота под rotation плитки (это отдельно стоящий объект,
+## а не сама поверхность гекса).
+const OBJECTS_DIR := "res://assets/hex_objects/"
+const OBJECT_TILES := ["B2", "C2"]   # Lolth Shrine (паук), Araumycos (грибы)
+static var _object_cache: Dictionary = {}   # tile id -> Image or null (нет файла)
+
+
+static func paint(schematic: Dictionary, show_art := false, show_objects := false) -> Image:
 	var size: Array = schematic.get("size", [1, 1])
 	var img := Image.create(maxi(1, int(size[0])), maxi(1, int(size[1])), false, Image.FORMAT_RGBA8)
 	# Заливка прозрачная, а не BG: под доской лежит живой фон экрана
@@ -27,6 +56,10 @@ static func paint(schematic: Dictionary) -> Image:
 	# Внутренности колец ниже закрашиваются BG отдельно — там стоят фишки,
 	# и им нужен ровный тёмный кружок.
 	img.fill(Color(BG, 0.0))
+	if show_art:
+		_paint_background(img, schematic)
+	if show_objects:
+		_paint_objects(img, schematic)
 	for flat: Array in schematic.get("traces", []):
 		var points := PackedVector2Array()
 		for i in range(0, flat.size(), 2):
@@ -128,3 +161,103 @@ static func _site(img: Image, site: Dictionary) -> void:
 		var c := Vector2i(roundi(at[0]), roundi(at[1]))
 		disc(img, c, BoardSchematic.SLOT_R, ink)
 		disc(img, c, BoardSchematic.SLOT_R - 1, fill)
+
+
+# --- фон из арта гексов (Stage 0) ---------------------------------------------
+
+static func _raw_art(tile_id: String) -> Variant:
+	if tile_id == "":
+		return null
+	if not _art_cache.has(tile_id):
+		var path := ART_DIR + "hex_%s.png" % tile_id
+		_art_cache[tile_id] = Image.load_from_file(path) if FileAccess.file_exists(path) else null
+	return _art_cache[tile_id]
+
+
+static func _paint_background(img: Image, schematic: Dictionary) -> void:
+	for hex: String in (schematic.get("hexes", {}) as Dictionary).keys():
+		var info: Dictionary = schematic["hexes"][hex]
+		var art: Variant = _raw_art(String(info.get("tile", "")))
+		if art == null:
+			continue
+		var centre := Vector2(float(info["x"]), float(info["y"]))
+		_blit_hex_art(img, art, centre, float(info.get("rotation", 0.0)))
+
+
+# --- тематические объекты на отдельных плитках -----------------------------
+
+static func _raw_object(tile_id: String) -> Variant:
+	if tile_id == "" or not OBJECT_TILES.has(tile_id):
+		return null
+	if not _object_cache.has(tile_id):
+		var path := OBJECTS_DIR + "obj_%s.png" % tile_id
+		_object_cache[tile_id] = Image.load_from_file(path) if FileAccess.file_exists(path) else null
+	return _object_cache[tile_id]
+
+
+## В отличие от _blit_hex_art: без обрезки по контуру гекса и без поворота —
+## объект просто стоит по центру своего гекса, своей высотой вверх.
+static func _paint_objects(img: Image, schematic: Dictionary) -> void:
+	for hex: String in (schematic.get("hexes", {}) as Dictionary).keys():
+		var info: Dictionary = schematic["hexes"][hex]
+		var obj: Variant = _raw_object(String(info.get("tile", "")))
+		if obj == null:
+			continue
+		var object_img: Image = obj
+		var centre := Vector2(float(info["x"]), float(info["y"]))
+		var at := Vector2i(centre) - object_img.get_size() / 2
+		# У крайних гексов доски центр стоит близко к краю самой картинки схемы
+		# (IMAGE_MARGIN всего в пару пикселей) — без этого объект обрезался бы
+		# рамкой картинки. Сдвигаем внутрь, а не обрезаем.
+		at.x = clampi(at.x, 0, img.get_width() - object_img.get_width())
+		at.y = clampi(at.y, 0, img.get_height() - object_img.get_height())
+		img.blend_rect(object_img, Rect2i(Vector2i.ZERO, object_img.get_size()), at)
+
+
+## Кладёт арт одной плитки в её гекс схемы. Гекс на схеме сжат и повёрнут на
+## 90° (BoardSchematic.to_schematic), а сама плитка ещё повёрнута на свою
+## rotation_deg (BoardBuilder.rotate_local) — картинка идёт ВЫБОРКОЙ (обратным
+## преобразованием) из неповёрнутого сырого арта в уже готовые пиксели схемы,
+## а не наоборот: тогда никакой домашней заготовки на 6 поворотов не нужно,
+## одна картинка на плитку покрывает все.
+##
+## Вывод формулы — core/map/board_schematic.gd (_collect, to_schematic) и
+## core/map/board_builder.gd (rotate_local), сведены в две линейные замены:
+##   печатное (x,z) --rotate_local(rot)--> (rx,rz)
+##   (rx,rz) --to_schematic--> (fx,fy) = (rz, rx/SQUEEZE) * (K/INRADIUS)
+## Обратная замена (dest -> печатное) — ниже, x/z даны через cos/sin поворота.
+static func _blit_hex_art(img: Image, art: Image, centre: Vector2, rotation_deg: float) -> void:
+	var poly := BoardSchematic.hex_polygon(centre)
+	var bbox := Rect2(poly[0], Vector2.ZERO)
+	for p: Vector2 in poly:
+		bbox = bbox.expand(p)
+	var x0 := maxi(0, int(floor(bbox.position.x)))
+	var y0 := maxi(0, int(floor(bbox.position.y)))
+	var x1 := mini(img.get_width() - 1, int(ceil(bbox.end.x)))
+	var y1 := mini(img.get_height() - 1, int(ceil(bbox.end.y)))
+
+	# Вся схема развёрнута на 90° по часовой (BoardSchematic: "hex north points
+	# right") — арт рисовался «как смотрят на карту сверху», поэтому его нужно
+	# довернуть на те же 90°, иначе сюжет ложится на бок.
+	var rad := deg_to_rad(rotation_deg + ART_FACING_OFFSET)
+	var cos_r := cos(rad)
+	var sin_r := sin(rad)
+	var k_ir := BoardSchematic.K / BoardSchematic.INRADIUS
+	var art_c := Vector2(art.get_width() / 2.0, art.get_height() / 2.0)
+
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			var pt := Vector2(x, y)
+			if not Geometry2D.is_point_in_polygon(pt, poly):
+				continue
+			var f := pt - centre
+			# dest (f) -> печатное (x,z), обратное to_schematic + rotate_local
+			var a := f.x / k_ir
+			var b := f.y * BoardSchematic.SQUEEZE / k_ir
+			var lx := cos_r * b - sin_r * a
+			var lz := sin_r * b + cos_r * a
+			var ax := roundi(art_c.x + lx * ART_SCALE)
+			var ay := roundi(art_c.y - lz * ART_SCALE)
+			if ax < 0 or ay < 0 or ax >= art.get_width() or ay >= art.get_height():
+				continue
+			img.set_pixel(x, y, art.get_pixel(ax, ay))

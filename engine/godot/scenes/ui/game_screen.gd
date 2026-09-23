@@ -375,6 +375,14 @@ func _input(event: InputEvent) -> void:
 	elif key.keycode == KEY_ESCAPE and key.pressed and _overlay.visible:
 		set_menu_open(false)
 		get_viewport().set_input_as_handled()
+	elif key.keycode == KEY_B and key.pressed and not key.echo:
+		# Stage 0 фонового арта гексов (PixelLab) — временная клавиша, пока
+		# владелец не решил, входит ли это в игру насовсем.
+		_board_panel.set_art_layer(not _board_panel.art_layer)
+	elif key.keycode == KEY_O and key.pressed and not key.echo:
+		# Тематические объекты на 5 плитках (PixelLab) — временная клавиша,
+		# пока владелец не решил, входит ли это в игру насовсем.
+		_board_panel.set_object_layer(not _board_panel.object_layer)
 
 
 func set_menu_open(open: bool) -> void:

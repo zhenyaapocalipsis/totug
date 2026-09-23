@@ -1120,9 +1120,23 @@ func _export(state: GameState) -> Dictionary:
 	var centres := {}
 	for hex: String in _centre.keys():
 		centres[hex] = [(_centre[hex] as Vector2).x + shift.x, (_centre[hex] as Vector2).y + shift.y]
+
+	# Какая печатная плитка стоит в каждом гексе схемы и с каким поворотом —
+	# нужно только фоновому арту (SchematicPainter._paint_background):
+	# трассы и рамки сами по себе от id и поворота плитки не зависят.
+	var hex_by_slot: Dictionary = state.layout.get("hex_by_slot", {})
+	var rotations: Dictionary = state.layout.get("rotations", {})
+	var hexes := {}
+	for hex: String in _centre.keys():
+		hexes[hex] = {
+			"tile": String(hex_by_slot.get(hex, "")),
+			"rotation": float(rotations.get(hex, 0.0)),
+			"x": (_centre[hex] as Vector2).x + shift.x,
+			"y": (_centre[hex] as Vector2).y + shift.y,
+		}
 	return {
 		"size": [size.x, size.y], "traces": traces, "rings": rings, "sites": sites, "slots": slots,
 		# for checks and debugging: which nodes each trace joins, edge midpoints, hex centres
-		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres,
+		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres, "hexes": hexes,
 		"fallback_routes": _fallback_routes,
 	}
