@@ -3,7 +3,7 @@ extends Control
 
 ## Профиль игрока: имя и герб. Герб рисуется в маленьком пиксельном
 ## редакторе, холст которого — сама фишка войска 9x9 (PlayerProfile): ободок
-## не красится, пустые пиксели на доске будут цветом места игрока.
+## цвета места не красится, пустые пиксели на доске тоже будут цветом места.
 ##
 ## Левая кнопка мыши — красить, правая — стирать (можно вести с зажатой
 ## кнопкой). Вёрстка кодом, как у остальных экранов меню.
@@ -21,7 +21,6 @@ const PALETTE := [
 const CELL := 18
 const SWATCH := 14
 const PREVIEW_ZOOM := 3
-const RIM := Color(0.04, 0.03, 0.06)
 const BUTTON_SIZE := Vector2(70, 16)
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
@@ -113,7 +112,7 @@ func _init() -> void:
 		_previews.append(small)
 
 	var hint := Label.new()
-	hint.text = "Left mouse: paint. Right mouse: erase.\nEmpty pixels show your seat colour."
+	hint.text = "Left mouse: paint. Right mouse: erase.\nThe dotted ring always stays your seat colour."
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(hint)
@@ -246,8 +245,11 @@ func _draw_canvas() -> void:
 				var px := _pixels[y * PlayerProfile.SIZE + x]
 				colour = px if px.a > 0.0 else seat_colour
 			elif dx * dx + dy * dy <= r * r + r:
-				colour = RIM
+				colour = seat_colour
 			_canvas.draw_rect(rect, colour)
+			# Ободок не красится: в редакторе помечен тёмной точкой (на доске её нет).
+			if not PlayerProfile.paintable(x, y) and dx * dx + dy * dy <= r * r + r:
+				_canvas.draw_rect(Rect2(rect.get_center() - Vector2(2, 2), Vector2(4, 4)), seat_colour.darkened(0.5))
 	_canvas.draw_rect(Rect2(Vector2.ZERO, _canvas.custom_minimum_size), PixelTheme.BORDER, false, 1.0)
 
 

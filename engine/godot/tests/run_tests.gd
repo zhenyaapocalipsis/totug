@@ -2667,7 +2667,13 @@ func test_player_profile() -> void:
 	var img := SchematicPainter.token(Color("d93838"), emblem)
 	check(img.get_pixel(4, 4).to_html(false) == "ac3232", "на фишке нарисован герб")
 	check(img.get_pixel(3, 4).is_equal_approx(Color("d93838")), "пустой пиксель герба — цвет места")
-	check(img.get_pixel(0, 4).a > 0.9 and img.get_pixel(0, 4).v < 0.1, "ободок фишки остаётся тёмным")
+	check(img.get_pixel(0, 4).is_equal_approx(Color("d93838")), "ободок фишки — цвет места")
+	var full: Array[Color] = []
+	full.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
+	full.fill(Color("000000"))
+	var solid := SchematicPainter.token(Color("d93838"), PlayerProfile.emblem_from_pixels(full))
+	check(solid.get_pixel(4, 0).is_equal_approx(Color("d93838")) and solid.get_pixel(8, 4).is_equal_approx(Color("d93838")),
+		"закрашенный целиком герб не трогает ободок")
 
 	PlayerProfile.seats = {"blue": {"name": "Vizeran", "emblem": emblem}}
 	check_eq(EventLogPanel.player_name("blue"), "Vizeran", "имя из профиля в журнале")

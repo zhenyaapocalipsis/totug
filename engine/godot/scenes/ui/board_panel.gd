@@ -501,7 +501,8 @@ func _draw() -> void:
 			var colour: Color = NEUTRAL_TROOP_COLOR if owner == GameState.WHITE \
 				else PLAYER_COLORS.get(owner, Color(0.6, 0.6, 0.6))
 			if _schematic_on():
-				var token := _token(colour, "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner))
+				var neutral := owner == GameState.WHITE
+				var token := _token(colour, "" if neutral else PlayerProfile.emblem_of(owner), not neutral)
 				draw_texture_rect(token, Rect2(pos - token.get_size() * 0.5 * _zoom, token.get_size() * _zoom), false)
 			else:
 				draw_circle(pos, radius, Color(0, 0, 0, 0.75))
@@ -592,10 +593,10 @@ func _pulse() -> float:
 	return 0.5 - 0.5 * cos(TAU * _pulse_t / PULSE_PERIOD)
 
 
-func _token(colour: Color, emblem: String = "") -> ImageTexture:
-	var key := colour.to_html() + emblem
+func _token(colour: Color, emblem: String = "", seat_rim: bool = true) -> ImageTexture:
+	var key := colour.to_html() + emblem + str(seat_rim)
 	if not _tokens.has(key):
-		_tokens[key] = ImageTexture.create_from_image(SchematicPainter.token(colour, emblem))
+		_tokens[key] = ImageTexture.create_from_image(SchematicPainter.token(colour, emblem, seat_rim))
 	return _tokens[key]
 
 
