@@ -89,7 +89,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	_start_button = _button("START")
 	_start_button.disabled = true
 	_start_button.visible = kind != "join_ip" and kind != "join_code"
-	_start_button.pressed.connect(func(): _net.start_game(int(Time.get_unix_time_from_system())))
+	_start_button.pressed.connect(_on_start)
 	buttons.add_child(_start_button)
 
 	_net.lobby_changed.connect(_on_lobby_changed)
@@ -124,6 +124,9 @@ func _build_server_part(col: VBoxContainer) -> void:
 	_server_edit = LineEdit.new()
 	_server_edit.custom_minimum_size = Vector2(110, 16)
 	_server_edit.text = _load("server", NetSession.DEFAULT_SERVER)
+	# Адрес локальной проверки не должен навсегда заслонить настоящий сервер.
+	if _server_edit.text == "127.0.0.1":
+		_server_edit.text = NetSession.DEFAULT_SERVER
 	server_row.add_child(_server_edit)
 
 	if _kind == "join_code":
@@ -210,6 +213,14 @@ func _on_go() -> void:
 		return
 	_set_editable(false)
 	_status.text = "Connecting..."
+
+
+## Раздача партии занимает несколько секунд (схема доски рисуется долго, на
+## слабом сервере — дольше) — без надписи кажется, что кнопка не сработала.
+func _on_start() -> void:
+	_start_button.disabled = true
+	_status.text = "Dealing the cards, a few seconds..."
+	_net.start_game(int(Time.get_unix_time_from_system()))
 
 
 func _set_editable(on: bool) -> void:

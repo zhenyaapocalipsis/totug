@@ -31,9 +31,9 @@ signal upnp_finished(address: String, note: String)
 const DEFAULT_PORT := 7777
 ## Выделенный сервер с комнатами.
 const SERVER_PORT := 7780
-## Адрес сервера по умолчанию. Пока своего сервера в интернете нет — этот же
-## компьютер (сервер запускают рядом, start-server.bat).
-const DEFAULT_SERVER := "127.0.0.1"
+## Адрес сервера по умолчанию — наш VPS (Ubuntu, systemd-служба tyrants,
+## см. server/README.md). Для проверки на одном компьютере — 127.0.0.1.
+const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
 const PROTOCOL := 1

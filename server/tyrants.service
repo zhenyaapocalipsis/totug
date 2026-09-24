@@ -1,0 +1,23 @@
+[Unit]
+Description=Tyrants of the Underdark game server (room codes, UDP 7780)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=tyrants
+Group=tyrants
+WorkingDirectory=/opt/tyrants
+Environment=HOME=/opt/tyrants
+ExecStart=/opt/tyrants/godot --headless --main-pack /opt/tyrants/tyrants_server.pck -- --server
+Restart=always
+RestartSec=3
+# Сервер ничего не пишет на диск, кроме своих логов движка.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tyrants
+PrivateTmp=true
+MemoryMax=600M
+
+[Install]
+WantedBy=multi-user.target
