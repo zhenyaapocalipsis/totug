@@ -4,8 +4,8 @@ extends RefCounted
 ##
 ## Один и тот же задник стоит и в меню, и в партии — разницы две:
 ## в меню он показан во всю мощь, за игровым экраном приглушён почти до
-## обычной заливки; и краска в партии берёт цвета тех двух полуколод, что
-## собраны в маркет этой партии.
+## обычной заливки; и краска в партии берёт цвета тех полуколод, из которых
+## собран маркет этой партии (2, 4 или 6 — по режиму игры).
 ##
 ## Экраны не знают про шейдер: они просят UnderdarkBg.make() и кладут
 ## полученный ColorRect первым ребёнком, ровно на место прежней заливки.
@@ -31,25 +31,31 @@ const DECK_COLOURS := {
 ## Чем красить, если полуколоды неизвестны (меню, тесты, старые сохранения).
 const DEFAULT_COLOURS: Array[Color] = [Color(0.400, 0.110, 0.700), Color(0.040, 0.450, 0.500)]
 
+## Сколько красок понимает шейдер (по числу полуколод).
+const MAX_PAINTS := 6
+## Насколько светлее вторая краска в DOUBLE.
+const SHADE_LIGHTEN := 0.35
+
 static var _shader: Shader = null
 
 
-## Две краски фона по списку полуколод партии. Незнакомые ключи и нехватка
-## полуколод добиваются цветами по умолчанию, чтобы фон никогда не остался
-## одноцветным.
+## Краски фона по полуколодам партии — столько, сколько полуколод в режиме:
+## STANDARD — две, RANDOM 4 / RANDOM 6 — четыре / шесть. DOUBLE (одна
+## полуколода дважды) даёт одну краску — вторую делаем светлым оттенком
+## той же, чтобы фон был «одноцветной» партией, но не плоским. Без
+## полуколод (меню, тесты, старые сохранения) — цвета по умолчанию.
 static func palette(half_decks: Array = []) -> Array[Color]:
 	var colours: Array[Color] = []
 	for key: Variant in half_decks:
 		var colour: Variant = DECK_COLOURS.get(String(key))
 		if colour != null and not colours.has(colour):
 			colours.append(colour)
-		if colours.size() == 2:
+		if colours.size() == MAX_PAINTS:
 			break
-	for fallback: Color in DEFAULT_COLOURS:
-		if colours.size() == 2:
-			break
-		if not colours.has(fallback):
-			colours.append(fallback)
+	if colours.is_empty():
+		return DEFAULT_COLOURS.duplicate()
+	if colours.size() == 1:
+		colours.append(colours[0].lightened(SHADE_LIGHTEN))
 	return colours
 
 
@@ -69,8 +75,11 @@ static func make(fade: float = 0.0, half_decks: Array = []) -> ColorRect:
 	mat.set_shader_parameter("fade", fade)
 	mat.set_shader_parameter("fade_to", PixelTheme.BG)
 	mat.set_shader_parameter("colour_1", _water(colours))
-	mat.set_shader_parameter("colour_2", colours[0])
-	mat.set_shader_parameter("colour_3", colours[1])
+	var paints := PackedColorArray(colours)
+	while paints.size() < MAX_PAINTS:
+		paints.append(colours[paints.size() % colours.size()])
+	mat.set_shader_parameter("paints", paints)
+	mat.set_shader_parameter("paint_count", colours.size())
 	rect.material = mat
 	return rect
 
@@ -78,7 +87,10 @@ static func make(fade: float = 0.0, half_decks: Array = []) -> ColorRect:
 ## Тёмная вода под краской: фон темы, чуть подкрашенный самими красками —
 ## иначе на стыке чёрного и яркого мазка видна грязная кайма.
 static func _water(colours: Array[Color]) -> Color:
-	var tint := (colours[0] + colours[1]) * 0.5
+	var tint := Color(0, 0, 0)
+	for c: Color in colours:
+		tint += c
+	tint /= float(colours.size())
 	return PixelTheme.BG.lerp(tint, 0.14)
 
 

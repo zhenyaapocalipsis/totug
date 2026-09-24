@@ -25,10 +25,13 @@ shader_type canvas_item;
 
 /// Тёмная вода: занимает большую часть экрана.
 uniform vec4 colour_1 : source_color = vec4(0.042, 0.024, 0.090, 1.0);
-/// Первая краска — пурпур Подземья.
-uniform vec4 colour_2 : source_color = vec4(0.400, 0.110, 0.700, 1.0);
-/// Вторая краска — холодная бирюза.
-uniform vec4 colour_3 : source_color = vec4(0.040, 0.450, 0.500, 1.0);
+/// Краски — по одной на полуколоду партии (до шести). Чётные ложатся
+/// первым полем языков, нечётные — вторым; внутри поля краска меняется
+/// по секторам вихря, поэтому при 4-6 красках каждая получает свой рукав
+/// спирали, а при двух всё выглядит как раньше.
+uniform vec4 paints[6] : source_color;
+/// Сколько красок в paints реально задано (2..6).
+uniform int paint_count = 2;
 /// Куда гасится фон за игровым экраном (обычно цвет фона темы).
 uniform vec4 fade_to : source_color = vec4(0.039, 0.023, 0.070, 1.0);
 /// 0 — фон во всю силу (меню), 1 — полностью погашен в fade_to.
@@ -143,10 +146,19 @@ void fragment() {
 	float m1 = step(g1, f1);
 	float m2 = step(g2, f2);
 
+	// Какая краска у каждого поля здесь: сектор вихря (угол a уже закручен),
+	// граница сектора рвётся тем же шумом s и дрожит шахматкой.
+	int n = clamp(paint_count, 2, 6);
+	int n1 = (n + 1) / 2;
+	int n2 = n / 2;
+	float sector = fract(a / 6.2831853 + 0.35 * (s.x - 0.5) + d * 0.02);
+	int i1 = 2 * min(int(sector * float(n1)), n1 - 1);
+	int i2 = 2 * min(int(fract(sector + 0.5 / float(n)) * float(n2)), n2 - 1) + 1;
+
 	vec3 col = colour_1.rgb;
-	col = mix(col, colour_2.rgb, m1);
+	col = mix(col, paints[i1].rgb, m1);
 	// Где краски легли друг на друга — ровно середина, без лишних оттенков.
-	col = mix(col, colour_3.rgb, m2 * (1.0 - m1 * 0.5));
+	col = mix(col, paints[i2].rgb, m2 * (1.0 - m1 * 0.5));
 
 	// Блик — светлая полоска по самой кромке языка.
 	float rim = max(m1 * (1.0 - step(g1 + rim_width, f1)),

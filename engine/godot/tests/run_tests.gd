@@ -2588,6 +2588,15 @@ func test_background_palette() -> void:
 		check_eq(colours.size(), 2, "%s: две краски" % [bad])
 		check(colours[0] != colours[1], "%s: краски разные" % [bad])
 
+	# Режимы: сколько полуколод — столько красок; DOUBLE — два оттенка одной.
+	for mode: String in ["random4", "random6"]:
+		var st := GameSetup.new_game(["red", "blue"], 3, [], false, false, false, mode)
+		check_eq(Bg.palette(st.half_decks).size(), st.half_decks.size(), "%s: краска на каждую полуколоду" % mode)
+	var dbl := GameSetup.new_game(["red", "blue"], 3, [], false, false, false, "double")
+	var two := Bg.palette(dbl.half_decks)
+	check_eq(two[0], Bg.DECK_COLOURS[dbl.half_decks[0]], "DOUBLE: первая краска — цвет полуколоды")
+	check_eq(two[1], two[0].lightened(Bg.SHADE_LIGHTEN), "DOUBLE: вторая — её светлый оттенок")
+
 
 ## Все ChooseEffect в дереве эффектов карты (по полям-эффектам и массивам).
 func _collect_choose(node: Variant, out: Array = []) -> Array:
