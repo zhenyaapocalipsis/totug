@@ -20,6 +20,16 @@
     "ability_text": "+1 Power"
   },
   {
+    "card_id": 48345,
+    "name": "Conscription Officer",
+    "cost": null,
+    "aspect": "OBEDIENCE",
+    "type": "DUERGAR",
+    "deck_vp": 0,
+    "inner_circle_vp": 1,
+    "ability_text": "Choose one:\n• +1 Influence\n• Promote another card in your hand."
+  },
+  {
     "card_id": 48341,
     "name": "Insane Outcast",
     "cost": null,

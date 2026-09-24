@@ -30,6 +30,7 @@ const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETU
 ## Названия вариантов — по тексту варианта (ChooseEffect.labels), одинаковые
 ## действия у разных карт называются одинаково. Нет в таблице — шапка пустая.
 const NAMES := {
+	"+1 Influence": "Pull Rank",
 	"+2 Influence": "Silver Tongue",
 	"+3 Influence": "Honeyed Words",
 	"+2 Power": "Iron Resolve",
@@ -45,6 +46,7 @@ const NAMES := {
 	"Supplant a troop": "Usurper",
 	"Supplant a white troop anywhere on the board": "Overthrow",
 	"At end of turn, promote another card played this turn": "Patronage",
+	"Promote another card in your hand": "Draft Orders",
 	"Return one of your spies -> Supplant a troop at that spy's site": "Inside Job",
 	"Return one of your spies -> assassinate a troop at that spy's site": "Hidden Blade",
 	"Return one of your spies -> +3 Influence": "Spy's Report",

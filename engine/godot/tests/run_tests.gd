@@ -1210,6 +1210,18 @@ func test_focus_effect() -> void:
 	check_eq(red.power, before + 18, "Focus срабатывает, если Guile уже был в этот ход раньше")
 
 
+	section("Conscription Officer: promote карты из руки")
+	red.deck.hand = ["48344", "48342"] as Array[String]
+	red.deck.played_pile = ["48342"] as Array[String]
+	red.deck.inner_circle.clear()
+	resolver.apply(CardLibrary.get_effect("48345"), "red", state)
+	resolver.resume(state, 1)
+	check_eq(resolver.pending.legal_options, ["48344", "48342"], "на выбор — только карты из руки")
+	resolver.resume(state, "48342")
+	check_eq(red.deck.inner_circle, ["48342"], "Noble ушёл во внутренний круг")
+	check_eq(red.deck.hand, ["48344"], "и именно из руки")
+	check_eq(red.deck.played_pile, ["48342"], "сыгранный Noble не тронут")
+
 func test_deploy_and_assassinate_effects() -> void:
 	section("DeployTroop / AssassinateTroop / MoveTroop (примитивы)")
 	var state := _build_rich_state()
@@ -1295,10 +1307,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 125 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 126 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 125, "cards.json содержит 125 карт")
+	check_eq(all_ids.size(), 126, "cards.json содержит 126 карт")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -1627,7 +1639,8 @@ func test_game_setup_real_game() -> void:
 		for cid: String in all_cards:
 			if cid == "48342":
 				nobles += 1
-		check_eq(nobles, 7, "%s: из них 7 Noble" % pid)
+		check_eq(nobles, 6, "%s: из них 6 Noble" % pid)
+		check(all_cards.has("48345"), "%s: вместо седьмого Noble — Conscription Officer" % pid)
 
 	# белые войска и стартовые войска игроков на доске
 	var white := 0

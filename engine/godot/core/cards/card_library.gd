@@ -228,6 +228,11 @@ static func _build_effect(card_id: String) -> CardEffect:
 			return GainInfluence.new(1)
 		"48344":  # Soldier
 			return GainPower.new(1)
+		"48345":  # Conscription Officer (стартовая колода вместо одного Noble)
+			return ChooseEffect.new([
+				GainInfluence.new(1),
+				PromoteCard.new("hand"),
+			], ["+1 Influence", "Promote another card in your hand"])
 		"48341":  # Insane Outcast
 			return RemoveSelfFromPlay.new(card_id)
 		"48343":  # Priestess of Lolth

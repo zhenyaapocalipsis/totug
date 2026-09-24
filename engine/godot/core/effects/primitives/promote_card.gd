@@ -11,6 +11,7 @@ extends CardEffect
 ##                       текст прямо это говорит ("promote this card") — тогда
 ##                       используется source "this" или "hand_or_discard", а
 ##                       не "played_other".
+##   "hand"           — выбор из руки ("promote another card in your hand")
 ##   "discard"        — выбор из сброса
 ##   "hand_or_discard"— выбор из руки ИЛИ сброса (плюс card_id как ещё один вариант "this")
 ##
@@ -87,6 +88,8 @@ func _candidates(state: GameState, player_id: String) -> Array:
 				var self_idx := pool.find(card_id)
 				if self_idx != -1:
 					pool.remove_at(self_idx)
+		"hand":
+			pool = p.deck.hand.duplicate()
 		"discard":
 			pool = p.deck.discard_pile.duplicate()
 		"hand_or_discard":
@@ -102,7 +105,9 @@ func _candidates(state: GameState, player_id: String) -> Array:
 func _promote_from(state: GameState, player_id: String, chosen: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[player_id]
 	var removed := false
-	for pile in [p.deck.played_pile, p.deck.discard_pile, p.deck.hand]:
+	# Из руки ищем сначала в руке: та же карта может лежать и в played_pile.
+	var piles: Array = [p.deck.hand] if source == "hand" else [p.deck.played_pile, p.deck.discard_pile, p.deck.hand]
+	for pile in piles:
 		var idx: int = pile.find(chosen)
 		if idx != -1:
 			pile.remove_at(idx)

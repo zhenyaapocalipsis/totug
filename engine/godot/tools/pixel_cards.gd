@@ -76,6 +76,10 @@ const SHEETS := {
 	486: ["elemental.jpg", 10, 749, 1046, Rect2i(25, 195, 693, 365)],
 	487: ["aberations + undead.jpg", 7, 750, 1000, Rect2i(24, 200, 690, 340)],
 }
+## Карты не из листов TTS: отдельная картинка карты и окно арта в ней.
+const SINGLE_ART := {
+	48345: ["conscription_officer.webp", Rect2i(60, 172, 675, 420)],
+}
 
 const FONT := {
 	"A": ["01110","10001","10001","11111","10001","10001","10001"],
@@ -174,7 +178,7 @@ func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(PREVIEW)
 	var rendered: Array[Image] = []
 	for c: Dictionary in all:
-		if not SHEETS.has(int(c["card_id"]) / 100):
+		if not SHEETS.has(int(c["card_id"]) / 100) and not SINGLE_ART.has(int(c["card_id"])):
 			print("no art sheet for card ", c["card_id"], " ", c["name"])
 			continue
 		var card := render(c, H, text_top, text_h)
@@ -282,6 +286,9 @@ func set_name(card_id: int, type: String) -> String:
 
 
 func art_region(card_id: int, aw: int, ah: int) -> Image:
+	if SINGLE_ART.has(card_id):
+		var one: Array = SINGLE_ART[card_id]
+		return crop_to(Image.load_from_file(ROOT + "cards/" + String(one[0])), one[1], aw, ah)
 	var deck := card_id / 100
 	var idx := card_id % 100
 	var info: Array = SHEETS[deck]
@@ -292,6 +299,11 @@ func art_region(card_id: int, aw: int, ah: int) -> Image:
 	var cw: int = info[2]
 	var ch: int = info[3]
 	var r: Rect2i = info[4]
+	var cell := Vector2i((idx % cols) * cw, (idx / cols) * ch)
+	return crop_to(sheet, Rect2i(cell + r.position, r.size), aw, ah)
+
+
+func crop_to(sheet: Image, r: Rect2i, aw: int, ah: int) -> Image:
 	# largest crop with the art window's aspect ratio, centred in the art area
 	var want_w := int(r.size.y * aw / float(ah))
 	var crop := r
@@ -300,7 +312,7 @@ func art_region(card_id: int, aw: int, ah: int) -> Image:
 	else:
 		var want_h := int(r.size.x * ah / float(aw))
 		crop = Rect2i(r.position.x, r.position.y + (r.size.y - want_h) / 2, r.size.x, want_h)
-	return sheet.get_region(Rect2i((idx % cols) * cw + crop.position.x, (idx / cols) * ch + crop.position.y, crop.size.x, crop.size.y))
+	return sheet.get_region(crop)
 
 
 ## Card text lines in cards.json are the printed line breaks, not paragraphs.
@@ -609,7 +621,7 @@ func render_mini_preview(all: Array) -> void:
 	DirAccess.make_dir_recursive_absolute(dir)
 	var rendered: Array[Image] = []
 	for c: Dictionary in all:
-		if not SHEETS.has(int(c["card_id"]) / 100):
+		if not SHEETS.has(int(c["card_id"]) / 100) and not SINGLE_ART.has(int(c["card_id"])):
 			continue
 		var m := render_mini(c)
 		m.save_png(OUT_MINI + "%d.png" % int(c["card_id"]))
