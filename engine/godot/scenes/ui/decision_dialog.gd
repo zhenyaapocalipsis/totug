@@ -240,9 +240,6 @@ static func _can_show_option_cards(pd: Dictionary) -> bool:
 func _add_option_cards(pd: Dictionary) -> void:
 	var options: Array = pd.get("legal_options", [])
 	var labels: Array = pd.get("option_labels", [])
-	var lines := 1
-	for label in labels:
-		lines = maxi(lines, OptionCard.line_count(String(label)))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
@@ -253,7 +250,7 @@ func _add_option_cards(pd: Dictionary) -> void:
 			or_label.modulate = PixelTheme.GOLD
 			or_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			row.add_child(or_label)
-		var card := OptionCard.new(String(pd.get("source_card", "")), String(labels[i]), lines)
+		var card := OptionCard.new(String(pd.get("source_card", "")), String(labels[i]))
 		var value: Variant = options[i]
 		card.pressed.connect(func(): option_chosen.emit(value))
 		row.add_child(card)

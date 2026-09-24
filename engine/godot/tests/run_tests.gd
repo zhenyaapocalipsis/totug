@@ -1951,6 +1951,19 @@ func test_choose_option_answer_protocol() -> void:
 	answers.clear()
 	(option_cards[1] as OptionCard).pressed.emit()
 	check_eq(answers, [1], "клик по правой карте выбирает второй вариант")
+	check_eq((option_cards[0] as OptionCard).custom_minimum_size, CardView.PIXEL_SIZE,
+		"карта-вариант размером с обычную полную карту")
+	var unnamed: Array = []
+	var named := 0
+	CardLibrary._ensure_loaded()
+	for cid in CardLibrary._data.keys():
+		for choose in _collect_choose(CardLibrary.get_effect(cid)):
+			for label in (choose as ChooseEffect).labels:
+				named += 1
+				if OptionCard.option_name(label) == "" and not unnamed.has(label):
+					unnamed.append(label)
+	check(named > 40, "проверка названий дошла до вариантов карт (%d)" % named)
+	check_eq(unnamed, [], "у каждого варианта Choose one есть название")
 	dlg.free()
 
 
@@ -2532,3 +2545,19 @@ func test_background_palette() -> void:
 		var colours := Bg.palette(bad)
 		check_eq(colours.size(), 2, "%s: две краски" % [bad])
 		check(colours[0] != colours[1], "%s: краски разные" % [bad])
+
+
+## Все ChooseEffect в дереве эффектов карты (по полям-эффектам и массивам).
+func _collect_choose(node: Variant, out: Array = []) -> Array:
+	if node is Array:
+		for item in node:
+			_collect_choose(item, out)
+	elif node is CardEffect:
+		if node is ChooseEffect:
+			out.append(node)
+		for prop in (node as Object).get_property_list():
+			if prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				var v: Variant = (node as Object).get(prop["name"])
+				if v is CardEffect or v is Array:
+					_collect_choose(v, out)
+	return out

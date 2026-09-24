@@ -1,85 +1,126 @@
 class_name OptionCard
 extends Control
 
-## Вариант "Choose one" в виде полноформатной карты: рамка и арт сыгранной
-## карты, а в поле текста — только этот вариант. Без названия, цены, аспекта,
-## фракции и VP (решение владельца, 2026-09-24): игрок выбирает не карту, а
-## действие, и арт лишь напоминает, чья это способность.
+## Вариант "Choose one" в виде полноформатной карты — того же размера и той же
+## разметки, что обычная карта (tools/pixel_cards.gd): название варианта в
+## шапке, арт сыгранной карты, в поле текста — только этот вариант. Цены,
+## аспекта, фракции и VP нет (решения владельца, 2026-09-24): игрок выбирает
+## не карту, а действие, и арт лишь напоминает, чья это способность.
 ##
-## Лицо собирается в Image пиксель в пиксель по разметке tools/pixel_cards.gd
-## (те же цвета, шрифт 5x7 заглавными, ключевые слова жирным) и рисуется в 1x.
+## Лицо собирается из пиксельной карты: шапка, поле текста и подвал
+## перерисовываются, арт и рамка остаются как есть. Рисуется в 1x.
 
 signal pressed
 
 const W := 176
-## Окно арта на полной карте (tools/pixel_cards.gd: rect(5, 33, aw + 2, ART_H + 2)).
-const ART_SRC := Rect2i(5, 33, W - 10, 102)
-const TOP := 4
-const TEXT_TOP := TOP + 102 + 5
+const H := 254
+const TEXT_TOP := 139
+const TEXT_H := 93
 const LINE_H := 9
-const TEXT_MIN_H := 30
-const BOTTOM := 5
 
 const C_OUTLINE := Color("0a0612")
 const C_FRAME := Color("24153f")
-const C_FRAME_HI := Color("4a2f82")
-const C_FRAME_LO := Color("160c28")
+const C_LIGHT := Color("f0e6d2")
 const C_PARCH := Color("e6d9bc")
 const C_PARCH_LO := Color("bfae88")
 const C_INK := Color("2a1a30")
 const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE",
 	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
 
+## Названия вариантов — по тексту варианта (ChooseEffect.labels), одинаковые
+## действия у разных карт называются одинаково. Нет в таблице — шапка пустая.
+const NAMES := {
+	"+2 Influence": "Silver Tongue",
+	"+3 Influence": "Honeyed Words",
+	"+2 Power": "Iron Resolve",
+	"Place a spy": "Shadow Agent",
+	"Place 2 spies": "Web of Eyes",
+	"Deploy a troop": "Muster",
+	"Deploy 3 troops": "Legion",
+	"Deploy three troops": "Legion",
+	"Deploy 4 troops": "War Host",
+	"Assassinate a troop": "Poisoned Blade",
+	"Assassinate a white troop": "Cull the Weak",
+	"Assassinate 2 white troops": "Purge",
+	"Supplant a troop": "Usurper",
+	"Supplant a white troop anywhere on the board": "Overthrow",
+	"At end of turn, promote another card played this turn": "Patronage",
+	"Return one of your spies -> Supplant a troop at that spy's site": "Inside Job",
+	"Return one of your spies -> assassinate a troop at that spy's site": "Hidden Blade",
+	"Return one of your spies -> +3 Influence": "Spy's Report",
+	"Return one of your spies -> +4 Power": "Rally Signal",
+	"Return one of your spies -> +5 Power": "Call to Arms",
+	"Return one of your spies -> +2 Power +2 Influence": "Double Agent",
+	"Return one of your spies -> Draw 2 cards": "Whispers",
+	"Return one of your spies -> Draw 3 cards": "Secrets Sold",
+	"Return one of your spies -> Deploy 3 troops": "Open the Gates",
+	"Return one of your spies -> Draw a card; each opponent with more than 3 cards discards a card": "Sow Dread",
+	"Return one of your spies -> treat the top devoured card as if it was in the market this turn": "Grave Robber",
+	"Return one of your spies -> Recruit up to 2 cards that cost 3 or less": "Recruiters",
+	"Return any number of your spies -> supplant a troop at each of those sites": "Night of Knives",
+	"Place a spy, then supplant a troop at that site": "Infiltrate",
+	"Return one of your spies -> supplant a troop at that spy's site, then gain VP per site controlled": "Coup",
+	"Draw a card, then choose an opponent with more than 3 cards to discard a card": "Mind Games",
+	"Return up to two troops or spies": "Banishment",
+	"Draw a card for each spy you have on the board": "Spymaster",
+	"Devour this card -> at end of turn, promote up to 2 other cards played this turn": "Final Gift",
+	"Devour this card -> assassinate up to three white troops at a single site": "Massacre",
+	"Devour a card in your hand -> Supplant a troop": "Sacrifice",
+	"Promote this card, or a card from your hand or discard pile": "Ascension",
+	"Take a white troop from any trophy hall and deploy it": "Turncoats",
+	"Promote a card from your discard pile, then gain VP per inner circle card": "Exaltation",
+}
+
 var _tex: ImageTexture
 var _hover := false
 
 
-## text_lines — высота поля текста в строках: у всех вариантов одного выбора
-## она одинаковая, чтобы карты стояли ровным рядом.
-func _init(card_id: String, text: String, text_lines: int) -> void:
-	var text_h := maxi(TEXT_MIN_H, text_lines * LINE_H + 8)
-	var h := TEXT_TOP + text_h + BOTTOM
-	custom_minimum_size = Vector2(W, h)
+func _init(card_id: String, text: String) -> void:
+	custom_minimum_size = Vector2(W, H)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	mouse_entered.connect(func(): _hover = true; queue_redraw())
 	mouse_exited.connect(func(): _hover = false; queue_redraw())
-	_tex = ImageTexture.create_from_image(render(card_id, text, text_h))
+	_tex = ImageTexture.create_from_image(render(card_id, text))
 
 
-## Число строк, в которые текст варианта ляжет на карте.
-static func line_count(text: String) -> int:
-	return _wrap(text).size()
+static func option_name(text: String) -> String:
+	return String(NAMES.get(text, ""))
 
 
-static func render(card_id: String, text: String, text_h: int) -> Image:
-	var h := TEXT_TOP + text_h + BOTTOM
-	var img := Image.create(W, h, false, Image.FORMAT_RGBA8)
-	img.fill(C_OUTLINE)
-	img.fill_rect(Rect2i(1, 1, W - 2, h - 2), C_FRAME)
-	img.fill_rect(Rect2i(1, 1, W - 2, 1), C_FRAME_HI)
-	img.fill_rect(Rect2i(1, 1, 1, h - 2), C_FRAME_HI)
-	img.fill_rect(Rect2i(1, h - 2, W - 2, 1), C_FRAME_LO)
-	img.fill_rect(Rect2i(W - 2, 1, 1, h - 2), C_FRAME_LO)
-
-	# арт (с чёрной обводкой) — прямо с полной карты
+static func render(card_id: String, text: String) -> Image:
+	var img: Image
 	var face: Texture2D = CardView.pixel_texture(card_id)
 	if face != null:
-		var src := face.get_image()
-		if src.is_compressed():
-			src.decompress()
-		src.convert(Image.FORMAT_RGBA8)
-		img.blit_rect(src, ART_SRC, Vector2i(ART_SRC.position.x, TOP))
+		img = face.get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.convert(Image.FORMAT_RGBA8)
 	else:
-		img.fill_rect(Rect2i(ART_SRC.position.x, TOP, ART_SRC.size.x, ART_SRC.size.y), C_FRAME_LO)
+		img = Image.create(W, H, false, Image.FORMAT_RGBA8)
+		img.fill(C_OUTLINE)
+		img.fill_rect(Rect2i(2, 2, W - 4, H - 4), C_FRAME)
+
+	# шапка и строка аспекта — фон рамки, затем название варианта
+	img.fill_rect(Rect2i(2, 2, W - 4, 31), C_FRAME)
+	var name := option_name(text).to_upper()
+	var room := W - 14
+	if _text_width(name, 2) <= room:
+		_text(img, (W - _text_width(name, 2)) / 2, 11, name, C_LIGHT, 2)
+	else:
+		var lines := _wrap_plain(name, room)
+		var y := 13 if lines.size() == 1 else 8
+		for line in lines.slice(0, 2):
+			_text(img, (W - _text_width(line, 1)) / 2, y, line, C_LIGHT, 1)
+			y += 10
 
 	# поле текста
-	img.fill_rect(Rect2i(7, TEXT_TOP, W - 14, text_h), C_OUTLINE)
-	img.fill_rect(Rect2i(8, TEXT_TOP + 1, W - 16, text_h - 2), C_PARCH)
-	img.fill_rect(Rect2i(8, TEXT_TOP + text_h - 2, W - 16, 1), C_PARCH_LO)
-	img.fill_rect(Rect2i(W - 9, TEXT_TOP + 1, 1, text_h - 2), C_PARCH_LO)
+	img.fill_rect(Rect2i(7, TEXT_TOP, W - 14, TEXT_H), C_OUTLINE)
+	img.fill_rect(Rect2i(8, TEXT_TOP + 1, W - 16, TEXT_H - 2), C_PARCH)
+	img.fill_rect(Rect2i(8, TEXT_TOP + TEXT_H - 2, W - 16, 1), C_PARCH_LO)
+	img.fill_rect(Rect2i(W - 9, TEXT_TOP + 1, 1, TEXT_H - 2), C_PARCH_LO)
 	var lines := _wrap(text)
-	var y := TEXT_TOP + (text_h - (lines.size() * LINE_H - 2)) / 2
+	var y := TEXT_TOP + (TEXT_H - (lines.size() * LINE_H - 2)) / 2
 	for line: Array in lines:
 		var line_w := -5
 		for word: String in line:
@@ -89,6 +130,9 @@ static func render(card_id: String, text: String, text_h: int) -> Image:
 			_draw_word(img, x, y, word)
 			x += _word_width(word) + 5
 		y += LINE_H
+
+	# подвал без фракции и VP
+	img.fill_rect(Rect2i(2, TEXT_TOP + TEXT_H + 1, W - 4, H - TEXT_TOP - TEXT_H - 3), C_FRAME)
 	return img
 
 
@@ -111,6 +155,42 @@ static func _wrap(text: String) -> Array:
 	if not cur.is_empty():
 		lines.append(cur)
 	return lines
+
+
+static func _wrap_plain(s: String, max_px: int) -> Array[String]:
+	var out: Array[String] = []
+	var cur := ""
+	for word in s.split(" "):
+		var t := word if cur == "" else cur + " " + word
+		if _text_width(t, 1) > max_px and cur != "":
+			out.append(cur)
+			cur = word
+		else:
+			cur = t
+	out.append(cur)
+	return out
+
+
+## Шаг букв как в генераторе карт: при 2x буквы стоят плотнее (11 px, не 12).
+static func _text_width(s: String, scale: int) -> int:
+	return maxi(0, s.length() * (6 * scale - (scale - 1)) - 1)
+
+
+## Текст с тенью (как название на обычной карте).
+static func _text(img: Image, x: int, y: int, s: String, c: Color, scale: int) -> void:
+	var step := 6 * scale - (scale - 1)
+	for i in s.length():
+		_glyph(img, x + i * step + scale, y + scale, s[i], C_OUTLINE, scale)
+		_glyph(img, x + i * step, y, s[i], c, scale)
+
+
+static func _glyph(img: Image, x: int, y: int, ch: String, c: Color, scale: int) -> void:
+	var rows: Array = PixelFont.glyph(ch)
+	for ry in rows.size():
+		var row: String = rows[ry]
+		for rx in row.length():
+			if row[rx] == "1":
+				img.fill_rect(Rect2i(x + rx * scale, y + ry * scale, scale, scale), c)
 
 
 static func _is_keyword(word: String) -> bool:
