@@ -130,6 +130,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_add_card_grid(options)
 		if options.has(""):
 			_add_button("Skip", "")
+	elif _can_show_option_cards(pd):
+		_add_option_cards(pd)
 	else:
 		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
 		# берём их — только карта знает, что означает её вариант №2.
@@ -142,10 +144,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
 	var rows: int = _options_box.get_child_count()
-	var max_h := CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
+	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
+	if _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
+		max_h = INF  # карты-варианты не прокручиваются: их всего два-три
 	_scroll.custom_minimum_size = Vector2(0, minf(_options_box.get_combined_minimum_size().y, max_h))
 	_scroll.visible = rows > 0
 	_place(on_board or decider != viewer_id)
+	# Вопрос с переносом слов знает свою высоту только после раскладки по новой
+	# ширине: до неё окно карт-вариантов выходило вдвое выше содержимого.
+	_place.call_deferred(on_board or decider != viewer_id)
 
 
 ## Плашка у верхнего края (не закрывает доску) или окно по центру.
@@ -210,6 +217,47 @@ func _add_card_grid(options: Array) -> void:
 		card.pressed.connect(func(_id): option_chosen.emit(value))
 		grid.add_child(card)
 	_options_box.add_child(grid)
+
+
+## "Choose one" карты с пиксельным лицом рисуется полноформатными картами
+## (OptionCard); если карта неизвестна или у варианта нет подписи — списком.
+static func _can_show_option_cards(pd: Dictionary) -> bool:
+	if String(pd.get("choice_type", "")) != "choose_option":
+		return false
+	if CardView.pixel_texture(String(pd.get("source_card", ""))) == null:
+		return false
+	var labels: Array = pd.get("option_labels", [])
+	var options: Array = pd.get("legal_options", [])
+	if labels.size() != options.size():
+		return false
+	for label in labels:
+		if String(label) == "":
+			return false
+	return true
+
+
+## Карты-варианты в ряд, между ними "or".
+func _add_option_cards(pd: Dictionary) -> void:
+	var options: Array = pd.get("legal_options", [])
+	var labels: Array = pd.get("option_labels", [])
+	var lines := 1
+	for label in labels:
+		lines = maxi(lines, OptionCard.line_count(String(label)))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	for i in range(options.size()):
+		if i > 0:
+			var or_label := Label.new()
+			or_label.text = "or"
+			or_label.modulate = PixelTheme.GOLD
+			or_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			row.add_child(or_label)
+		var card := OptionCard.new(String(pd.get("source_card", "")), String(labels[i]), lines)
+		var value: Variant = options[i]
+		card.pressed.connect(func(): option_chosen.emit(value))
+		row.add_child(card)
+	_options_box.add_child(row)
 
 
 func _add_button(text: String, value: Variant) -> void:

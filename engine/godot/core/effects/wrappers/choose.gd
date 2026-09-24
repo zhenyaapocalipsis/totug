@@ -8,6 +8,9 @@ extends CardEffect
 var options: Array[CardEffect] = []
 var labels: Array[String] = []
 var prompt: String = "Choose one:"
+## Карта, которой принадлежит выбор (её арт рисуется на вариантах); пусто —
+## выбор создан не при сборке карты, интерфейс покажет список строк.
+var source_card: String = CardLibrary.building_card
 
 
 func _init(opts: Array[CardEffect], lbls: Array[String], p: String = "Choose one:") -> void:
@@ -40,5 +43,6 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		shown_labels.append(labels[i] if i < labels.size() else "")
 	pd.legal_options = indices
 	pd.option_labels = shown_labels
+	pd.source_card = source_card
 	pd.target_effect = self
 	resolver.request_decision(pd)

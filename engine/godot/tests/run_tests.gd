@@ -1940,6 +1940,17 @@ func test_choose_option_answer_protocol() -> void:
 	(cards[1] as CardView).pressed.emit("48306")
 	check_eq(answers, ["inner:48306"], "клик по карте отвечает исходным вариантом")
 	check_eq(dlg.find_children("*", "Button", true, false).size(), 1, "отказ остаётся кнопкой Skip")
+
+	# "Choose one" — полноформатные карты с артом сыгранной карты и "or" между ними
+	check_eq(pdv.get("source_card", ""), "48325", "вопрос Choose one знает, какая карта его задала")
+	dlg.update_from_view(red_view, "red")
+	var option_cards: Array = dlg.find_children("*", "OptionCard", true, false)
+	check_eq(option_cards.size(), 2, "Inquisitor: две карты-варианта")
+	var ors: Array = dlg.find_children("*", "Label", true, false).filter(func(l): return l.text == "or")
+	check_eq(ors.size(), 1, "между вариантами написано or")
+	answers.clear()
+	(option_cards[1] as OptionCard).pressed.emit()
+	check_eq(answers, [1], "клик по правой карте выбирает второй вариант")
 	dlg.free()
 
 

@@ -209,7 +209,20 @@ class _LichEffect extends CardEffect:
 
 ## ---- главная таблица ----
 
+## Карта, чьё дерево эффектов сейчас строится. ChooseEffect запоминает её при
+## создании, чтобы интерфейс мог нарисовать варианты артом этой карты.
+static var building_card := ""
+
+
 static func get_effect(card_id: String) -> CardEffect:
+	var outer := building_card
+	building_card = card_id
+	var effect := _build_effect(card_id)
+	building_card = outer
+	return effect
+
+
+static func _build_effect(card_id: String) -> CardEffect:
 	match card_id:
 		"48342":  # Noble
 			return GainInfluence.new(1)
