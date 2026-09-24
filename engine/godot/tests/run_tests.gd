@@ -87,6 +87,9 @@ func _initialize() -> void:
 	# оформление экрана
 	test_background_palette()
 
+	# сеть
+	test_public_address_check()
+
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
 
@@ -2628,3 +2631,14 @@ func _collect_choose(node: Variant, out: Array = []) -> Array:
 				if v is CardEffect or v is Array:
 					_collect_choose(v, out)
 	return out
+
+
+# --- сеть: какие адреса видны из интернета ----------------------------------
+
+func test_public_address_check() -> void:
+	section("сеть: «белый» адрес для UPnP")
+	check(NetSession.is_public_ipv4("85.140.12.7"), "обычный внешний адрес — белый")
+	for grey in ["192.168.0.104", "10.1.2.3", "172.19.0.1", "100.72.5.9", "26.12.34.56x", "", "127.0.0.1", "169.254.1.1"]:
+		check(not NetSession.is_public_ipv4(grey), "%s — не белый" % grey)
+	check(NetSession.is_public_ipv4("172.32.0.1"), "172.32.* уже не частная сеть")
+	check(Intent.from_dict(Intent.recruit("red", 3).to_dict()).market_index == 3, "намерение переживает пересылку словарём")

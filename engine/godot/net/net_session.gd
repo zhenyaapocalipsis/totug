@@ -18,6 +18,9 @@ signal chat_received(seat: String, text: String)
 signal player_left(seat: String)
 ## Связь не установилась или оборвалась (для клиента — хост пропал).
 signal connection_lost(reason: String)
+## Хост: чем кончилась попытка открыть порт на роутере (UPnP). address — внешний
+## адрес для друзей, "" если не вышло; note — пояснение для лобби.
+signal upnp_finished(address: String, note: String)
 
 const DEFAULT_PORT := 7777
 
@@ -73,6 +76,7 @@ func _lost(reason: String) -> void:
 
 
 func close() -> void:
+	_close_upnp()
 	if multiplayer.multiplayer_peer != null:
 		multiplayer.multiplayer_peer.close()
 		multiplayer.multiplayer_peer = null
@@ -80,6 +84,104 @@ func close() -> void:
 
 func is_full() -> bool:
 	return seats.size() >= _needed
+
+
+# --- UPnP: порт на роутере хоста ---------------------------------------------
+#
+# Чтобы друг из интернета достучался до хоста, роутер хоста должен пропускать
+# порт внутрь. UPnP просит роутер сделать это самому, без настроек вручную.
+# Поиск роутера занимает пару секунд, поэтому — в отдельном потоке.
+# Не сработает, если UPnP в роутере выключен или провайдер не даёт «белый»
+# адрес (тогда выручает Radmin VPN).
+
+var _upnp: UPNP
+var _upnp_thread: Thread
+var _upnp_port := 0
+
+
+func open_upnp(port: int) -> void:
+	if _upnp_thread != null:
+		return
+	_upnp_port = port
+	_upnp_thread = Thread.new()
+	_upnp_thread.start(_upnp_work.bind(port))
+
+
+## Итог потока. Лежит в полях, а не в аргументах отложенного вызова: если
+## лобби закроют раньше, _close_upnp всё равно узнает про открытый порт.
+var _found_upnp: UPNP
+var _found_address := ""
+var _found_note := ""
+
+
+func _upnp_work(port: int) -> void:
+	var upnp := UPNP.new()
+	var result := upnp.discover(2000, 2, "InternetGatewayDevice")
+	if result != UPNP.UPNP_RESULT_SUCCESS or upnp.get_gateway() == null \
+			or not upnp.get_gateway().is_valid_gateway():
+		_found_note = "Router did not answer (UPnP is off or unsupported)."
+	else:
+		var external := upnp.query_external_address()
+		if not is_public_ipv4(external):
+			_found_note = "Your provider gives no public address (%s)." % (
+				external if external != "" else "unknown")
+		elif upnp.add_port_mapping(port, port, "Tyrants of the Underdark", "UDP", 0) != UPNP.UPNP_RESULT_SUCCESS:
+			_found_note = "Router refused to open port %d." % port
+		else:
+			_found_upnp = upnp
+			_found_address = external
+			_found_note = "Port %d is open on your router." % port
+	_upnp_done.call_deferred()
+
+
+func _upnp_done() -> void:
+	if _upnp_thread == null:
+		return  # уже закрыли
+	_upnp_thread.wait_to_finish()
+	_upnp_thread = null
+	_upnp = _found_upnp
+	upnp_finished.emit(_found_address, _found_note)
+
+
+## Закрыть порт на роутере за собой. Поток поиска дожидаемся: бросить его
+## посреди работы нельзя.
+func _close_upnp() -> void:
+	if _upnp_thread != null:
+		_upnp_thread.wait_to_finish()
+		_upnp_thread = null
+		_upnp = _found_upnp
+	_found_upnp = null
+	if _upnp != null:
+		_upnp.delete_port_mapping(_upnp_port, "UDP")
+		_upnp = null
+
+
+func _exit_tree() -> void:
+	close()
+
+
+## «Белый» ли адрес: частные сети (10.*, 172.16-31.*, 192.168.*) и адреса
+## провайдерского NAT (100.64-127.*) из интернета недоступны.
+static func is_public_ipv4(address: String) -> bool:
+	var parts := address.split(".")
+	if parts.size() != 4:
+		return false
+	for p in parts:
+		if not p.is_valid_int() or int(p) < 0 or int(p) > 255:
+			return false
+	var a := int(parts[0])
+	var b := int(parts[1])
+	if a == 10 or a == 127 or a == 0 or a >= 224:
+		return false
+	if a == 172 and b >= 16 and b <= 31:
+		return false
+	if a == 192 and b == 168:
+		return false
+	if a == 100 and b >= 64 and b <= 127:
+		return false
+	if a == 169 and b == 254:
+		return false
+	return true
 
 
 # --- лобби (хост) ------------------------------------------------------------

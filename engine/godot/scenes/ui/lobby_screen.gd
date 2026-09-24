@@ -20,6 +20,9 @@ var _seats: HBoxContainer
 var _ip_edit: LineEdit
 var _join_button: Button
 var _start_button: Button
+## Хост: внешний адрес (UPnP) и пояснение под ним.
+var _internet: Label
+var _internet_note: Label
 
 
 func _init(net: NetSession, hosting: bool, player_count: int = 2, mode: String = "") -> void:
@@ -50,7 +53,13 @@ func _init(net: NetSession, hosting: bool, player_count: int = 2, mode: String =
 	if hosting:
 		col.add_child(_dim("%d players, mode %s, port %d (UDP)" % [
 			player_count, SetupScreen.MODE_TITLES.get(mode, mode), NetSession.DEFAULT_PORT]))
-		col.add_child(GameScreen.section_label("TELL THE OTHERS ONE OF YOUR ADDRESSES"))
+		col.add_child(GameScreen.section_label("OVER THE INTERNET"))
+		_internet = _centred("Asking your router to open the port (up to 10 s)...")
+		col.add_child(_internet)
+		_internet_note = _dim("")
+		_internet_note.visible = false
+		col.add_child(_internet_note)
+		col.add_child(GameScreen.section_label("SAME HOME NETWORK OR RADMIN VPN"))
 		for address: String in local_addresses():
 			col.add_child(_centred(address + ("   (Radmin VPN)" if address.begins_with("26.") else "")))
 	else:
@@ -100,6 +109,21 @@ func _init(net: NetSession, hosting: bool, player_count: int = 2, mode: String =
 		if err != OK:
 			_status.text = "Could not open port %d (error %d). Is another game already hosting?" % [
 				NetSession.DEFAULT_PORT, err]
+			_internet.text = "-"
+		else:
+			_net.upnp_finished.connect(_on_upnp_finished)
+			_net.open_upnp(NetSession.DEFAULT_PORT)
+
+
+func _on_upnp_finished(address: String, note: String) -> void:
+	_internet_note.visible = true
+	if address != "":
+		_internet.text = address
+		_internet.add_theme_color_override("font_color", PixelTheme.GOLD)
+		_internet_note.text = note + " Friends can join by this address."
+	else:
+		_internet.text = "Not available"
+		_internet_note.text = note + " Use Radmin VPN instead."
 
 
 ## Свои IPv4-адреса: локальная сеть и Radmin VPN (26.x.x.x — первым).
