@@ -263,16 +263,9 @@ func render(c: Dictionary, H: int, text_top: int, text_h: int) -> Image:
 
 	# footer: set name + VP
 	var by := H - 19
-	rect(W - 42, by, 17, 15, C_OUTLINE)
-	rect(W - 41, by + 1, 15, 13, C_LIGHT)
-	var dv := str(int(c["deck_vp"]))
-	text(W - 33 - text_width(dv, 1) / 2, by + 4, dv, C_INK, 1)
-	circle(W - 15, by + 7, 8, C_OUTLINE)
-	circle(W - 15, by + 7, 7, C_IC)
-	circle(W - 16, by + 6, 5, C_IC_HI)
-	circle(W - 15, by + 7, 4, C_IC)
-	var iv := str(int(c["inner_circle_vp"]))
-	text(W - 15 - text_width(iv, 1) / 2, by + 4, iv, C_LIGHT, 1)
+	# Плашки VP такие же, как на мелкой карте (решение владельца, 2026-09-24).
+	var ic_x := mini_vp_badge(W - 7, by + 3, str(int(c["inner_circle_vp"])), C_IC_HI, C_LIGHT)
+	mini_vp_badge(ic_x - 1, by + 3, str(int(c["deck_vp"])), C_PARCH, C_INK)
 	text(9, by + 4, set_name(card_id, sv(c["type"])), C_GREY, 1)
 	return img
 
@@ -426,13 +419,6 @@ func glyph(ch: String) -> Array:
 
 func rect(x: int, y: int, w: int, h: int, c: Color) -> void:
 	img.fill_rect(Rect2i(x, y, w, h), c)
-
-
-func circle(cx: int, cy: int, r: int, c: Color) -> void:
-	for dy in range(-r, r + 1):
-		for dx in range(-r, r + 1):
-			if dx * dx + dy * dy <= r * r + r:
-				img.set_pixel(cx + dx, cy + dy, c)
 
 
 func glyph_rows(x: int, y: int, rows: Array, c: Color, s: int = 1) -> void:
