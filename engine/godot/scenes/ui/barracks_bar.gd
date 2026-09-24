@@ -8,21 +8,20 @@ extends Control
 ##
 ## Прямоугольники стоят в порядке хода: слева тот, кто ходил первым.
 ##
-## Полоса занимает всю отведённую ей ширину (ширину левой колонки,
-## GameScreen.COL), а прямоугольники делят её поровну. На троих-четверых
-## прямоугольник становится уже четырёх знаков, поэтому цифры там ложатся в
-## две строки: сверху войска, снизу шпионы.
+## Полоса занимает всю отведённую ей ширину (ширину правой колонки,
+## GameScreen.COL), а прямоугольники делят её поровну. Если прямоугольник
+## выходит уже четырёх знаков, цифры ложатся в две строки: сверху войска,
+## снизу шпионы. Решается по настоящей ширине полосы, а не по числу игроков.
 
 ## Наименьший размер одного прямоугольника. Ширины хватает на четыре знака
 ## ("40/5"): шрифт 5x7 с шагом 6 пикселей плюс рамка и отступ.
 const BOX := Vector2(30, 20)
 const GAP := 2.0
-## С этого числа игроков прямоугольники узкие и цифры идут в две строки.
-const COMPACT_FROM := 3
-
 var _row: HBoxContainer
-var _compact := false
 var _boxes: Dictionary = {}   # player_id -> {"style": StyleBoxFlat, "value": Label, "panel": PanelContainer}
+## Последний показанный расклад — чтобы переписать цифры, когда полоса
+## получит настоящую ширину.
+var _view: Dictionary = {}
 
 
 func _init() -> void:
@@ -56,9 +55,8 @@ func _make_box(pid: String) -> Dictionary:
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value.add_theme_color_override("font_color", PixelTheme.TEXT)
-	if _compact:
-		# Две строки вплотную: иначе они не влезают в 20 пикселей высоты.
-		value.add_theme_constant_override("line_spacing", -3)
+	# Две строки (узкий режим) вплотную: иначе они не влезают в 20 пикселей.
+	value.add_theme_constant_override("line_spacing", -3)
 	panel.add_child(value)
 
 	return {"panel": panel, "style": style, "value": value}
@@ -67,10 +65,26 @@ func _make_box(pid: String) -> Dictionary:
 func update_from_view(view: Dictionary) -> void:
 	var order: Array = view.get("turn_order", [])
 	if _boxes.is_empty():
-		_compact = order.size() >= COMPACT_FROM
 		for pid in order:
 			_boxes[String(pid)] = _make_box(String(pid))
+	_view = view
+	_show_values()
 
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and not _view.is_empty():
+		_show_values()
+
+
+## Узкий режим — когда на прямоугольник меньше BOX.x пикселей ширины.
+func _is_compact() -> bool:
+	var n := _boxes.size()
+	return n > 0 and size.x > 0.0 and size.x < width_for(n)
+
+
+func _show_values() -> void:
+	var view := _view
+	var compact := _is_compact()
 	for pid: String in _boxes:
 		var box: Dictionary = _boxes[pid]
 		var p: Dictionary = (view["players"] as Dictionary).get(pid, {})
@@ -78,6 +92,6 @@ func update_from_view(view: Dictionary) -> void:
 			continue
 		var troops := int(p["troops_in_barracks"])
 		var spies := int(p["spies_in_barracks"])
-		(box["value"] as Label).text = ("%d\n%d" if _compact else "%d/%d") % [troops, spies]
+		(box["value"] as Label).text = ("%d\n%d" if compact else "%d/%d") % [troops, spies]
 		(box["panel"] as PanelContainer).tooltip_text = "%s\nTroops: %d, spies: %d" % [
 			EventLogPanel.player_name(pid), troops, spies]
