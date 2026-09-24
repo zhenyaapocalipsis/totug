@@ -74,6 +74,7 @@ func _process(delta: float) -> bool:
 				check(not (boards[players[0]].get("schematic", {}) as Dictionary).is_empty(),
 					"[%s] чертёж доски пришёл" % _scenario)
 				_check_hidden_hands()
+				_check_profiles()
 				_step = "setup"
 		"setup":
 			_answer_setup()
@@ -148,6 +149,7 @@ func _session() -> NetSession:
 
 
 func _track(p: NetSession) -> void:
+	p.profile = {"name": "Player %d" % _branches, "emblem": _emblem_for(_branches)}
 	views[p] = {}
 	errors[p] = []
 	chats[p] = []
@@ -230,3 +232,21 @@ func _finish() -> bool:
 	print("сеть: пройдено %d, провалено %d" % [passed, failed])
 	quit(1 if failed > 0 else 0)
 	return true
+
+
+## Герб-метка: один пиксель в центре, цвет зависит от номера игрока.
+func _emblem_for(n: int) -> String:
+	var pixels: Array[Color] = []
+	pixels.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
+	pixels.fill(Color(0, 0, 0, 0))
+	pixels[40] = Color8(n * 20, 200, 10)
+	return PlayerProfile.emblem_from_pixels(pixels)
+
+
+## Имя и герб каждого дошли до всех, и каждый у своего цвета.
+func _check_profiles() -> void:
+	for owner_p in players:
+		for other in players:
+			var got: Dictionary = other.profiles.get(owner_p.seat, {})
+			check(got.get("name", "") == owner_p.profile["name"] and got.get("emblem", "") == owner_p.profile["emblem"],
+				"[%s] профиль %s дошёл до %s" % [_scenario, owner_p.seat, other.seat])

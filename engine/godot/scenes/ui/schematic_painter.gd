@@ -117,13 +117,20 @@ static func disc(img: Image, c: Vector2i, r: int, colour: Color) -> void:
 					img.set_pixel(x, y, colour)
 
 
-## A troop token as a small image: coloured disc with a dark rim.
-static func token(colour: Color) -> Image:
+## A troop token as a small image: coloured disc with a dark rim. The
+## player's emblem (PlayerProfile) is painted over the disc; its empty
+## pixels keep the seat colour.
+static func token(colour: Color, emblem: String = "") -> Image:
 	var r := BoardSchematic.SLOT_R
 	var img := Image.create(r * 2 + 1, r * 2 + 1, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	disc(img, Vector2i(r, r), r, Color(0.04, 0.03, 0.06))
 	disc(img, Vector2i(r, r), r - 1, colour)
+	if emblem != "":
+		var pixels := PlayerProfile.emblem_pixels(emblem)
+		for i in pixels.size():
+			if pixels[i].a > 0.0:
+				img.set_pixel(i % PlayerProfile.SIZE, i / PlayerProfile.SIZE, pixels[i])
 	return img
 
 

@@ -13,7 +13,6 @@ extends Control
 signal back_requested
 
 const CONFIG_PATH := "user://online.cfg"
-const DOT := 7.0
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 var _net: NetSession
@@ -239,12 +238,9 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		_code_label.text = "ROOM  %s" % code
 	for child in _seats.get_children():
 		child.queue_free()
+	PlayerProfile.seats = _net.profiles
 	for pid in joined:
-		var dot := ColorRect.new()
-		dot.color = BoardPanel.PLAYER_COLORS.get(String(pid), Color.GRAY)
-		dot.custom_minimum_size = Vector2(DOT, DOT)
-		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		_seats.add_child(dot)
+		_seats.add_child(ProfileScreen.token_icon(String(pid), PlayerProfile.emblem_of(String(pid))))
 		var name_label := Label.new()
 		name_label.text = EventLogPanel.player_name(String(pid)) + (" (you)" if String(pid) == _net.seat else "")
 		_seats.add_child(name_label)

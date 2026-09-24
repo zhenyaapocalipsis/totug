@@ -32,11 +32,18 @@ func _ready() -> void:
 ## MAIN MENU из меню по Esc; новая партия получает новый сид.
 func _show_setup(game_seed: int) -> void:
 	_close_net()
+	PlayerProfile.seats = {}
 	for child in get_children():
 		child.queue_free()
 	var setup := SetupScreen.new()
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
 	setup.online_requested.connect(_show_lobby)
+	setup.profile_requested.connect(func():
+		for child in get_children():
+			child.queue_free()
+		var profile := ProfileScreen.new()
+		profile.closed.connect(func(): _show_setup(game_seed))
+		add_child(profile))
 	add_child(setup)
 
 
@@ -48,6 +55,7 @@ func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STA
 	_close_net()
 	var net := NetSession.new()
 	net.name = "Net"
+	net.profile = PlayerProfile.load_local()
 	get_tree().root.add_child(net)
 	net.game_started.connect(_start_net_game)
 	var lobby := LobbyScreen.new(net, kind, count, mode)
@@ -59,6 +67,7 @@ func _start_net_game(seat: String, board: Dictionary, view: Dictionary) -> void:
 	for child in get_children():
 		child.queue_free()
 	var net: NetSession = get_tree().root.get_node("Net")
+	PlayerProfile.seats = net.profiles
 	var screen := GameScreen.new(0, [], [], GameSetup.MODE_STANDARD,
 		{"session": net, "seat": seat, "board": board, "view": view})
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -81,6 +90,8 @@ func _close_net() -> void:
 func _start_game(player_ids: Array[String], game_seed: int, mode: String) -> void:
 	for child in get_children():
 		child.queue_free()
+	# За одним экраном профиль на компьютере один — он у первого цвета.
+	PlayerProfile.seats = {player_ids[0]: PlayerProfile.load_local()}
 	var screen := GameScreen.new(game_seed, [], player_ids, mode)
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():

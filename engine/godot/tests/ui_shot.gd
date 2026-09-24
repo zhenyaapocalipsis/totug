@@ -207,6 +207,30 @@ func _run_scenario() -> void:
 				_screen.server.state, pid8, _screen.server.resolver.pending))
 		"end_turn":
 			_screen.send(Intent.end_turn(_screen.server.state.current_player()))
+		"profile":
+			# Редактор герба поверх партии, с нарисованным крестом.
+			var editor := ProfileScreen.new()
+			root.add_child(editor)
+			for i in range(1, 8):
+				editor.paint(4, i, Color("fbf236"))
+				editor.paint(i, 4, Color("fbf236"))
+			editor.paint(4, 4, Color("000000"))
+		"emblems":
+			# Войска на доске с гербами: у красного крест, у синего точка.
+			var cross: Array[Color] = []
+			cross.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
+			cross.fill(Color(0, 0, 0, 0))
+			var dot := cross.duplicate()
+			for i in range(1, 8):
+				cross[4 * 9 + i] = Color("fbf236")
+				cross[i * 9 + 4] = Color("fbf236")
+			dot[40] = Color("ffffff")
+			PlayerProfile.seats = {
+				"red": {"name": "Jarlaxle", "emblem": PlayerProfile.emblem_from_pixels(cross)},
+				"blue": {"name": "Vizeran", "emblem": PlayerProfile.emblem_from_pixels(dot)}}
+			while _screen.server.resolver.is_waiting():
+				var pd9: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd9.player_id, pd9.legal_options[0]))
 		_:
 			push_error("неизвестный сценарий: " + _scenario)
 

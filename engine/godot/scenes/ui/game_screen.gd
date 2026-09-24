@@ -650,7 +650,15 @@ func _refresh_turn(view: Dictionary) -> void:
 		_turn_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 		_end_label.text = ""
 		return
-	_turn_label.text = "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
+	# Длинное имя из профиля не влезает в кнопку вместе с "'S TURN" —
+	# тогда пишем одно имя: цвет надписи и так говорит, чей ход.
+	var who := EventLogPanel.player_name(current).to_upper()
+	var text := "%s'S TURN" % who
+	var font := _turn_label.get_theme_font("font")
+	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			_turn_label.get_theme_font_size("font_size")).x > _turn_label.size.x:
+		text = who
+	_turn_label.text = text
 	_turn_label.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	_end_label.text = "END TURN"
 

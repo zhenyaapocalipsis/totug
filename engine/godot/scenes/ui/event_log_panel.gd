@@ -126,7 +126,8 @@ static func _escape(text: String) -> String:
 static func player_name(player_id: String) -> String:
 	if player_id == GameState.WHITE:
 		return "White"
-	return player_id.capitalize()
+	var own := PlayerProfile.name_of(player_id)
+	return own if own != "" else player_id.capitalize()
 
 
 static func player_color(player_id: String) -> Color:
@@ -233,7 +234,7 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 		"return_spy":
 			return "%s returns %s's spy from %s" % [who, player_name(String(e.get("spy_owner", "?"))), site]
 		"take_trophy":
-			return "%s takes a %s troop from a trophy hall" % [who, player_name(String(e.get("color", "?")))]
+			return "%s takes a %s troop from a trophy hall" % [who, String(e.get("color", "?")).capitalize()]
 		"choose_starting_site":
 			return "%s starts at %s" % [who, site]
 		"turn_income":

@@ -18,6 +18,8 @@ var mode: String
 ## Кто создал комнату (или сел первым, если создатель ушёл) — он жмёт START.
 var owner_peer := 0
 var seats: Dictionary = {}  # peer id -> player id
+## Профили сидящих (PlayerProfile): player id -> {name, emblem}.
+var profiles: Dictionary = {}
 var started := false
 var server: GameServer
 ## Задача WorkerThreadPool, что считает снимок доски на выделенном сервере;
@@ -58,6 +60,8 @@ func add(peer: int) -> String:
 
 
 func remove(peer: int) -> void:
+	if not started:
+		profiles.erase(String(seats.get(peer, "")))
 	seats.erase(peer)
 	if owner_peer == peer:
 		owner_peer = int(seats.keys()[0]) if not seats.is_empty() else 0

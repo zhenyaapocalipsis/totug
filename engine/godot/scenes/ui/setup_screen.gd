@@ -15,6 +15,8 @@ signal started(player_ids: Array[String], mode: String)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
 ## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN).
 signal online_requested(kind: String, player_count: int, mode: String)
+## Открыть профиль игрока (имя и герб, ProfileScreen).
+signal profile_requested
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -74,6 +76,8 @@ func _init() -> void:
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(subtitle)
 
+	col.add_child(_profile_row())
+
 	col.add_child(HSeparator.new())
 	col.add_child(GameScreen.section_label("GAME MODE"))
 	col.add_child(_mode_row())
@@ -113,6 +117,27 @@ func _init() -> void:
 	_style_button(quit)
 	quit.pressed.connect(func(): get_tree().quit())
 	quit_row.add_child(quit)
+
+
+## Своя фишка с гербом, имя и кнопка PROFILE.
+func _profile_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var local := PlayerProfile.load_local()
+	row.add_child(ProfileScreen.token_icon("red", String(local["emblem"])))
+	var name_label := Label.new()
+	name_label.text = String(local["name"]) if String(local["name"]) != "" else "No name yet"
+	name_label.add_theme_color_override("font_color", PixelTheme.TEXT)
+	row.add_child(name_label)
+	var button := Button.new()
+	button.text = "PROFILE"
+	button.tooltip_text = "Your name and emblem (drawn on your troops)"
+	button.custom_minimum_size = Vector2(60, 16)
+	_style_button(button)
+	button.pressed.connect(func(): profile_requested.emit())
+	row.add_child(button)
+	return row
 
 
 ## Четыре кнопки режима; нажатая остаётся подсвеченной (ButtonGroup).

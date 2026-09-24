@@ -36,7 +36,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 1
+const PROTOCOL := 2
 const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
@@ -50,6 +50,10 @@ var dedicated := false
 var seat := ""
 var room_code := ""
 var started := false
+## Свой профиль {name, emblem} (PlayerProfile) — уходит в комнату при входе.
+var profile: Dictionary = {}
+## Профили за столом: цвет -> {name, emblem}; приходят с лобби и стартом.
+var profiles: Dictionary = {}
 
 var rooms: Dictionary = {}      # code -> GameRoom
 var peer_room: Dictionary = {}  # peer id -> code
@@ -124,7 +128,12 @@ func _connect(address: String, port: int, then: Callable) -> int:
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
-	_on_connected = then
+	# Профиль идёт следом за входом: пакеты надёжные и по порядку, так что
+	# комната к его приходу уже знает, за каким цветом этот игрок.
+	_on_connected = func():
+		then.call()
+		var p := PlayerProfile.clean(profile)
+		_profile_up.rpc_id(1, p["name"], p["emblem"])
 	return OK
 
 
@@ -146,6 +155,7 @@ func close() -> void:
 	seat = ""
 	room_code = ""
 	started = false
+	profiles = {}
 
 
 ## Своя комната полна (для лобби хоста по IP).
@@ -296,9 +306,25 @@ func _room_of(peer: int) -> GameRoom:
 
 
 func _seat_peer(room: GameRoom, peer: int) -> void:
-	if room.add(peer) == "":
+	var pid := room.add(peer)
+	if pid == "":
 		return
 	peer_room[peer] = room.code
+	# Хост по IP сам сидит в своей комнате: его профиль не нужно слать по сети.
+	if peer == 1 and is_host and not dedicated:
+		room.profiles[pid] = PlayerProfile.clean(profile)
+	_broadcast_lobby(room)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _profile_up(player_name: String, emblem: String) -> void:
+	if not is_host:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	var room := _room_of(peer)
+	if room == null or room.started or not room.seats.has(peer):
+		return
+	room.profiles[String(room.seats[peer])] = PlayerProfile.clean({"name": player_name, "emblem": emblem})
 	_broadcast_lobby(room)
 
 
@@ -377,13 +403,16 @@ func _on_peer_disconnected(id: int) -> void:
 
 func _broadcast_lobby(room: GameRoom) -> void:
 	for peer: int in room.seats:
-		_send(peer, "_lobby", [room.seats[peer], room.joined(), room.needed, room.code, room.owner_seat()])
+		_send(peer, "_lobby", [room.seats[peer], room.joined(), room.needed, room.code, room.owner_seat(),
+			room.profiles])
 
 
 @rpc("authority", "call_remote", "reliable")
-func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_seat: String) -> void:
+func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_seat: String,
+		seat_profiles: Dictionary) -> void:
 	seat = your_seat
 	room_code = code
+	profiles = seat_profiles.duplicate(true)
 	lobby_changed.emit(joined, needed, code, owner_seat)
 
 
@@ -438,13 +467,14 @@ func _board_ready(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
 
 func _deliver(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
 	for peer: int in room.seats:
-		_send(peer, "_start", [board, views[room.seats[peer]]])
+		_send(peer, "_start", [board, views[room.seats[peer]], room.profiles])
 	_log("room %s started" % room.code)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _start(board: Dictionary, view: Dictionary) -> void:
+func _start(board: Dictionary, view: Dictionary, seat_profiles: Dictionary) -> void:
 	started = true
+	profiles = seat_profiles.duplicate(true)
 	game_started.emit(seat, board, view)
 
 

@@ -89,6 +89,7 @@ func _initialize() -> void:
 
 	# сеть
 	test_public_address_check()
+	test_player_profile()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -2642,3 +2643,33 @@ func test_public_address_check() -> void:
 		check(not NetSession.is_public_ipv4(grey), "%s — не белый" % grey)
 	check(NetSession.is_public_ipv4("172.32.0.1"), "172.32.* уже не частная сеть")
 	check(Intent.from_dict(Intent.recruit("red", 3).to_dict()).market_index == 3, "намерение переживает пересылку словарём")
+
+
+func test_player_profile() -> void:
+	section("профиль игрока: имя и герб на фишке")
+	check_eq(PlayerProfile.SIZE, BoardSchematic.SLOT_R * 2 + 1, "холст герба = размер фишки войска")
+	check(PlayerProfile.paintable(4, 4) and PlayerProfile.paintable(1, 4), "центр и край кружка красятся")
+	check(not PlayerProfile.paintable(0, 4) and not PlayerProfile.paintable(0, 0), "ободок и угол не красятся")
+	check_eq(PlayerProfile.clean_name("  Dr0w Лорд <b>King of all  "), "Dr0w bKing o", "имя: только знаки шрифта, до 12")
+	check_eq(PlayerProfile.clean_emblem("zz"), "", "испорченный герб отбрасывается")
+
+	var pixels: Array[Color] = []
+	pixels.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
+	pixels.fill(Color(0, 0, 0, 0))
+	pixels[4 * 9 + 4] = Color("ac3232")
+	pixels[0] = Color("ffffff")  # угол — вне кружка, должен стереться
+	var emblem := PlayerProfile.emblem_from_pixels(pixels)
+	check_eq(emblem.length(), PlayerProfile.EMBLEM_LENGTH, "герб — строка 648 знаков")
+	var back := PlayerProfile.emblem_pixels(emblem)
+	check(back[40].to_html(false) == "ac3232" and back[0].a == 0.0, "герб переживает кодирование, угол стёрт")
+	check(not PlayerProfile.is_blank(emblem) and PlayerProfile.is_blank(PlayerProfile.blank_emblem()), "пустой герб узнаётся")
+
+	var img := SchematicPainter.token(Color("d93838"), emblem)
+	check(img.get_pixel(4, 4).to_html(false) == "ac3232", "на фишке нарисован герб")
+	check(img.get_pixel(3, 4).is_equal_approx(Color("d93838")), "пустой пиксель герба — цвет места")
+	check(img.get_pixel(0, 4).a > 0.9 and img.get_pixel(0, 4).v < 0.1, "ободок фишки остаётся тёмным")
+
+	PlayerProfile.seats = {"blue": {"name": "Vizeran", "emblem": emblem}}
+	check_eq(EventLogPanel.player_name("blue"), "Vizeran", "имя из профиля в журнале")
+	check_eq(EventLogPanel.player_name("red"), "Red", "без профиля — имя цвета")
+	PlayerProfile.seats = {}
