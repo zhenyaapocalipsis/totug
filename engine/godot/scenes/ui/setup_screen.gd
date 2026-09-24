@@ -93,6 +93,16 @@ func _init() -> void:
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(note)
 
+	var quit_row := HBoxContainer.new()
+	quit_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(quit_row)
+	var quit := Button.new()
+	quit.text = "QUIT GAME"
+	quit.custom_minimum_size = BUTTON_SIZE
+	_style_button(quit)
+	quit.pressed.connect(func(): get_tree().quit())
+	quit_row.add_child(quit)
+
 
 ## Четыре кнопки режима; нажатая остаётся подсвеченной (ButtonGroup).
 func _mode_row() -> Control:

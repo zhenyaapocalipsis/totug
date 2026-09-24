@@ -15,6 +15,10 @@ extends Control
 ## и проверяется в контейнере без редактора. .tscn остаётся тонкой обёрткой —
 ## один узел со скриптом.
 
+## Кнопка MAIN MENU в меню по Esc: вернуться к экрану выбора режима
+## (его показывает обёртка game_scene.gd).
+signal main_menu_requested
+
 ## Все цвета, за какие можно сесть, в порядке рассадки: партия на N человек
 ## берёт первые N. Цвета — те же, что у фишек на доске (BoardPanel.PLAYER_COLORS).
 const ALL_PLAYER_IDS: Array[String] = ["red", "blue", "green", "purple"]
@@ -114,6 +118,7 @@ var _timer_label: Label
 var _last_round_label: Label
 var _deploy_vp_button: Button
 var _preview: CardPreview
+var _pause_menu: PauseMenu
 
 ## Таймер хода: сколько секунд осталось и чей ход сейчас отсчитываем — смена
 ## ходящего перезапускает отсчёт.
@@ -311,6 +316,11 @@ func _build_layout() -> void:
 	_preview.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_preview)
 
+	# Меню по Esc: главное меню или выход из игры.
+	_pause_menu = PauseMenu.new()
+	_pause_menu.main_menu_requested.connect(func(): main_menu_requested.emit())
+	add_child(_pause_menu)
+
 	_layout()
 
 
@@ -368,7 +378,12 @@ func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null:
 		return
-	if key.keycode == KEY_TAB:
+	if _pause_menu.visible:
+		# Под меню паузы клавиши до игры не доходят; Esc его закрывает.
+		if key.keycode == KEY_ESCAPE and key.pressed and not key.echo:
+			_pause_menu.visible = false
+		get_viewport().set_input_as_handled()
+	elif key.keycode == KEY_TAB:
 		if key.pressed and not key.echo:
 			set_menu_open(not _overlay.visible)
 		get_viewport().set_input_as_handled()
@@ -383,6 +398,15 @@ func _input(event: InputEvent) -> void:
 		# Тематические объекты на 5 плитках (PixelLab) — временная клавиша,
 		# пока владелец не решил, входит ли это в игру насовсем.
 		_board_panel.set_object_layer(not _board_panel.object_layer)
+
+
+## Esc без открытого меню по Tab открывает меню паузы. Через unhandled — чтобы
+## сперва свой Esc получили окна поменьше (список карт стопки закрывается им).
+func _unhandled_key_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key.keycode == KEY_ESCAPE and key.pressed and not key.echo and not _overlay.visible:
+		_pause_menu.visible = true
+		get_viewport().set_input_as_handled()
 
 
 func set_menu_open(open: bool) -> void:
@@ -532,6 +556,9 @@ func _process(delta: float) -> void:
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
 		return
 	var current := server.state.current_player()
+	# Пока открыто меню паузы, таймер хода стоит.
+	if _pause_menu.visible and current == _timed_player:
+		return
 	if current != _timed_player:
 		_timed_player = current
 		_time_left = TURN_SECONDS
