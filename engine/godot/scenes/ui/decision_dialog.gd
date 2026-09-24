@@ -146,15 +146,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_add_button("Skip", "")
 			# без окна вокруг кнопка во всю ширину — просто полоса; ставим по центру
 			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
-			skip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			skip.alignment = HORIZONTAL_ALIGNMENT_CENTER
-			# только надпись: без фона и рамки, под курсором — золотая
-			for state in ["normal", "hover", "pressed", "focus", "disabled"]:
-				skip.add_theme_stylebox_override(state, StyleBoxEmpty.new())
-			skip.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
-			skip.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
-			skip.add_theme_constant_override("shadow_offset_x", 1)
-			skip.add_theme_constant_override("shadow_offset_y", 1)
+			_make_plain(skip)
+	elif choice_type == "target_player":
+		# Соперники — крупные надписи цвета игрока, без окна вокруг.
+		for value in options:
+			_add_button(_board_label(value, choice_type), value)
+			var b := _options_box.get_child(_options_box.get_child_count() - 1) as Button
+			_make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
+				else PixelTheme.TEXT, PixelTheme.SIZE_BIG)
+		cards_mode = true
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
 		cards_mode = true
@@ -246,6 +246,26 @@ func _add_card_grid(options: Array) -> void:
 		card.pressed.connect(func(_id): option_chosen.emit(value))
 		grid.add_child(card)
 	_options_box.add_child(grid)
+
+
+## Кнопка — одна надпись по центру: без фона и рамки, с тенью; под курсором
+## светлее (Skip — золотая).
+func _make_plain(b: Button, color: Color = PixelTheme.TEXT, font_size: int = 0) -> void:
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		b.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	b.add_theme_color_override("font_color", color)
+	var hover := PixelTheme.GOLD if color == PixelTheme.TEXT else color.lightened(0.4)
+	b.add_theme_color_override("font_hover_color", hover)
+	b.add_theme_color_override("font_pressed_color", hover)
+	b.add_theme_color_override("font_focus_color", color)
+	b.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+	b.add_theme_constant_override("shadow_offset_x", 1)
+	b.add_theme_constant_override("shadow_offset_y", 1)
+	if font_size > 0:
+		b.add_theme_font_size_override("font_size", font_size)
+		b.custom_minimum_size.y = font_size + 4
 
 
 ## Выбор карты затемняет весь экран: окно поднимается над рукой (её поднятая
