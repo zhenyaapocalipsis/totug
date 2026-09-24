@@ -126,16 +126,11 @@ func _hide() -> void:
 		_card = null
 
 
-## Копия стоит по центру исходной карты, но не вылезает за край экрана:
-## у нижней руки растёт вверх, у верхней полосы — вниз, у маркета — влево.
+## Копия стоит по центру экрана (решение владельца, 2026-09-24), откуда бы ни
+## была исходная карта.
 func _place() -> void:
-	var r: Rect2 = _source.get_global_rect()
-	var s: Vector2 = _card.size
-	var area: Rect2 = get_global_rect().grow(-MARGIN)
-	var pos: Vector2 = r.get_center() - s * 0.5
-	pos.x = clampf(pos.x, area.position.x, maxf(area.end.x - s.x, area.position.x))
-	pos.y = clampf(pos.y, area.position.y, maxf(area.end.y - s.y, area.position.y))
-	_card.global_position = pos
+	var area: Rect2 = get_global_rect()
+	_card.global_position = (area.get_center() - _card.size * 0.5).floor()
 
 
 func _process(_delta: float) -> void:

@@ -69,7 +69,6 @@ var _hovered_card: CardView = null
 ## одноимённая карта ряда — в руке три Noble, и при розыгрыше самого левого
 ## «сыгранной» выглядела бы самая правая.
 var _played_card: CardView = null
-var _tray: Panel
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
 ## посчитанным по нулевой ширине и уезжает за нижний край.
@@ -83,12 +82,8 @@ var _row_y := 0.0
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Подложка под картами — чтобы зона руки читалась как зона.
-	_tray = Panel.new()
-	_tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tray.add_theme_stylebox_override("panel",
-		PixelTheme.box(PixelTheme.PANEL, PixelTheme.BORDER, 1, 0, 0))
-	add_child(_tray)
+	# Подложки под картами нет (макет владельца, 2026-09-24): зона руки
+	# прозрачная, видны только сами карты.
 
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
@@ -193,7 +188,7 @@ func _notification(what: int) -> void:
 		_hovered_card = null  # курсор ушёл из окна
 
 
-## Считает геометрию ряда и кладёт подложку. Сами карты сюда не ставятся — их
+## Считает геометрию ряда. Сами карты сюда не ставятся — их
 ## каждый кадр подтягивает к своим местам пружина в _process().
 ##
 ## Ряд карт прижат к низу зоны. Если карт больше, чем влезает, они ложатся
@@ -209,9 +204,6 @@ func _layout() -> void:
 		_row_step = maxf(floorf((size.x - CARD_SIZE.x) / (n - 1)), 6.0)
 	var total := CARD_SIZE.x + _row_step * maxi(n - 1, 0)
 	_row_x0 = floorf((size.x - total) * 0.5)
-
-	_tray.position = Vector2(0, _row_y - 2)
-	_tray.size = Vector2(size.x, size.y - _row_y + 2)
 
 	# До первого настоящего размера ряд считался по нулевой ширине; ехать
 	# оттуда пружиной незачем — ставим карты сразу на места.

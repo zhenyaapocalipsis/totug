@@ -26,13 +26,12 @@ const MAX_PLAYERS := 4
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 # Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
-# только целые, отступы маленькие). Раскладка по решению владельца
-# (2026-09-22), три колонки:
-#   левая — бараки (1), под ними сыгранные карты во весь рост лесенкой (2),
-#     внизу кнопки стопок Discard / Inner / Devoured (3);
-#   середина — доска на всё свободное место (4), под ней рука (5);
-#   правая — маркет от самого верха экрана (6), под ним End turn (7).
-# Обе боковые колонки одной ширины — полная карта с рамкой.
+# только целые, отступы маленькие). Раскладка по макету владельца
+# (2026-09-24): доска слева на всё свободное место (6), под ней прозрачная
+# рука (5); справа одна колонка шириной с рынок, сверху вниз:
+#   бараки (1), сыгранные карты мелкими лицами лесенкой по диагонали (2),
+#   рынок с мелкими картами целиком (3), кнопки высотой с руку (4) — стопки
+#   Discard / Inner Circle / Devoured и End turn.
 # Power/Influence ходящего — в заголовке зоны сыгранных карт.
 # Чей сейчас ход, написано на самой кнопке End turn; расклад по игрокам, чат и
 # журнал — в меню по Tab (PlayersOverlay).
@@ -46,11 +45,11 @@ const FLIGHT_ARC := 26.0
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
 const SHAKE_NUDGE := 2.0
-## Ширина боковых колонок, обеих одинаковая (решение владельца, 2026-09-23):
-## полная карта (176) плюс рамка зоны в пиксель с каждой стороны — в зоне
-## сыгранных карт карта рисуется пиксель в пиксель. Рынку столько не нужно
-## (два мелких лица по 80), лишнее у него остаётся по краям.
-const COL := 178.0
+## Ширина правой колонки — ширина рынка в три мелких карты; все зоны колонки
+## той же ширины (макет владельца, 2026-09-24).
+const COL := float(MarketPanel.WIDTH)
+## Ширина столбика кнопок стопок в зоне кнопок; остальное — End turn.
+const PILES_W := 96.0
 ## Высота зоны бараков.
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
@@ -411,33 +410,33 @@ func _layout() -> void:
 		return
 	var a_x := MARGIN
 	var d_x := w - MARGIN - COL
-	var b_x := a_x + COL + GAP
-	var b_w := d_x - GAP - b_x
+	var b_w := d_x - GAP - a_x
 	var top_y := MARGIN
 	var bottom_y := h - MARGIN - BOTTOM_H
 
-	# Левая колонка: бараки, под ними сыгранные карты, внизу кнопки стопок.
-	_place(_barracks, a_x, top_y, COL, TOP_H)
+	# Правая колонка: бараки, сыгранные карты, рынок, внизу кнопки. Рынок
+	# ровно своего размера (карты целиком), сыгранным — всё, что осталось.
+	_place(_barracks, d_x, top_y, COL, TOP_H)
+	var market_h := _market_panel.get_combined_minimum_size().y
+	var market_y := bottom_y - GAP - market_h
+	_place(_market_panel, d_x, market_y, COL, market_h)
 	var played_y := top_y + TOP_H + GAP
-	_place(_played_zone, a_x, played_y, COL, bottom_y - GAP - played_y)
-	_place(_piles_column, a_x, bottom_y, COL, BOTTOM_H)
+	_place(_played_zone, d_x, played_y, COL, market_y - GAP - played_y)
+	_place(_piles_column, d_x, bottom_y, PILES_W, BOTTOM_H)
+	var ew := COL - PILES_W - GAP
+	_place(_end_turn_area, d_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
 
-	# Доска — всё, что между колонками, от верха экрана до руки.
-	_place(_board_area, b_x, top_y, b_w, bottom_y - GAP - top_y)
+	# Доска — всё слева от колонки, от верха экрана до руки.
+	_place(_board_area, a_x, top_y, b_w, bottom_y - GAP - top_y)
 
-	# Правая колонка: маркет от самого верха экрана, под ним End turn.
-	_place(_market_panel, d_x, top_y, COL, bottom_y - GAP - top_y)
-	_place(_end_turn_area, d_x, bottom_y, COL, BOTTOM_H)
-
-	# Рука занимает середину нижнего ряда; запас сверху нужен карте под
+	# Рука — под доской, без подложки; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
-	_place(_hand_panel, b_x, hand_top, b_w, h - MARGIN - hand_top)
+	_place(_hand_panel, a_x, hand_top, b_w, h - MARGIN - hand_top)
 
 	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
 	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
 	# лежат по центру кнопки.
-	var ew := COL
 	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
 	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
 	var timer_block: float = TIMER_H

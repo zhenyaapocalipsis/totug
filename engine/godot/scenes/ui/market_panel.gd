@@ -20,14 +20,19 @@ signal supply_card_clicked(card_id: String)
 
 ## Слот карты маркета — мелкое лицо карты целиком, пиксель в пиксель
 ## (решение владельца, 2026-09-22: карты рынка не обрезаются). Слоты не
-## тянутся: на 960x540 вся сетка рынка влезает в колонку, остаток — снизу.
+## тянутся. Рынок в три столбца (макет владельца, 2026-09-24): дисплей — два
+## ряда, общие стопки и ghost — третий ряд.
 const SLOT := Vector2i(CardView.MINI_SIZE)
 ## Отступ панели ровно в пиксель.
 const PAD := 1
 ## Слотов дисплея столько же, сколько карт в маркете; последний, седьмой —
-## ghost, верхняя сожранная карта. Он скрыт, пока сожранных карт нет:
-## невидимые узлы GridContainer пропускает, и ряды не разъезжаются.
+## ghost, верхняя сожранная карта. Он стоит третьим в ряду общих стопок и
+## скрыт, пока сожранных карт нет.
 const DISPLAY_SLOTS := 6
+const COLUMNS := 3
+## Ширина панели: три слота, промежутки между ними и рамка. По ней же
+## GameScreen задаёт ширину всей правой колонки.
+const WIDTH := SLOT.x * COLUMNS + 2 * (COLUMNS - 1) + PAD * 2
 
 var _grid: GridContainer
 var _supply_row: GridContainer
@@ -56,16 +61,16 @@ func _init() -> void:
 	title_row.add_child(_deck_label)
 
 	_grid = GridContainer.new()
-	_grid.columns = 2
+	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", 2)
 	_grid.add_theme_constant_override("v_separation", 2)
-	# Колонка шире двух слотов — сетка стоит посередине.
-	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_grid.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(_grid)
 
 	for i in range(DISPLAY_SLOTS + 1):
 		var box := _make_slot()
-		_grid.add_child(box)
+		if i < DISPLAY_SLOTS:
+			_grid.add_child(box)  # ghost ляжет в ряд общих стопок
 		_boxes.append(box)
 		_cards.append(null)
 		_empties.append(box.get_child(0))
@@ -75,10 +80,10 @@ func _init() -> void:
 
 	# Сетка, а не ряд: слоты те же, что у дисплея, и их может стать больше.
 	_supply_row = GridContainer.new()
-	_supply_row.columns = 2
+	_supply_row.columns = COLUMNS
 	_supply_row.add_theme_constant_override("h_separation", 2)
 	_supply_row.add_theme_constant_override("v_separation", 2)
-	_supply_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_supply_row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(_supply_row)
 
 	# Карты общих стопок не меняются всю партию — их слоты наполняются сразу.
@@ -93,6 +98,7 @@ func _init() -> void:
 		_supply_cards.append(card)
 		_supply_counts.append(_add_count_label(box))
 		_supply_row.add_child(box)
+	_supply_row.add_child(_boxes[DISPLAY_SLOTS])  # ghost — последним в ряду стопок
 
 	# Стопку Insane Outcast в маркете не показываем вовсе (решение владельца,
 	# 2026-09-19): её не вербуют, карты раздают её сами при розыгрыше.
