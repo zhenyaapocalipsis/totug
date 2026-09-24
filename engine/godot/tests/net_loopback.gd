@@ -27,6 +27,7 @@ var _branches := 0
 ## Кто играет (первый — создатель), их последние срезы, ошибки и чат.
 var players: Array[NetSession] = []
 var views: Dictionary = {}
+var boards: Dictionary = {}
 var errors: Dictionary = {}
 var chats: Dictionary = {}
 var lost: Dictionary = {}
@@ -70,6 +71,8 @@ func _process(delta: float) -> bool:
 				_step = "started"
 		"started":
 			if not views[players[0]].is_empty() and not views[players[1]].is_empty():
+				check(not (boards[players[0]].get("schematic", {}) as Dictionary).is_empty(),
+					"[%s] чертёж доски пришёл" % _scenario)
 				_check_hidden_hands()
 				_step = "setup"
 		"setup":
@@ -126,6 +129,7 @@ func _reset() -> void:
 	_answered_at = -1
 	_spoof_sent = false
 	views.clear()
+	boards.clear()
 	errors.clear()
 	chats.clear()
 	lost.clear()
@@ -147,7 +151,9 @@ func _track(p: NetSession) -> void:
 	views[p] = {}
 	errors[p] = []
 	chats[p] = []
-	p.game_started.connect(func(_s: String, _b: Dictionary, v: Dictionary): views[p] = v)
+	p.game_started.connect(func(_s: String, b: Dictionary, v: Dictionary):
+		boards[p] = b
+		views[p] = v)
 	p.result_received.connect(func(e: int, _ev: Array, v: Dictionary):
 		errors[p].append(e)
 		views[p] = v)

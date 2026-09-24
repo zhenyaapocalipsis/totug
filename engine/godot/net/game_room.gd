@@ -20,6 +20,9 @@ var owner_peer := 0
 var seats: Dictionary = {}  # peer id -> player id
 var started := false
 var server: GameServer
+## Задача WorkerThreadPool, что считает снимок доски на выделенном сервере;
+## -1 — не считается. Пока считается, ходы комнаты не принимаются.
+var board_task := -1
 
 
 func _init(room_code: String, player_count: int, game_mode: String) -> void:
@@ -67,6 +70,14 @@ func owner_seat() -> String:
 ## Раздать партию. Колоды тасует только тот, у кого комната.
 ## Возвращает {board, views}.
 func start(game_seed: int) -> Dictionary:
+	var views := deal(game_seed)
+	return {"board": StateView.board_snapshot(server.state), "views": views}
+
+
+## Раздача без снимка доски: снимок (чертёж доски, BoardSchematic) считается
+## дольше всего, и выделенный сервер делает его в фоне (NetSession._start_room),
+## чтобы другие комнаты не ждали. Возвращает срезы игроков: цвет -> view.
+func deal(game_seed: int) -> Dictionary:
 	started = true
 	var ids: Array[String] = []
 	for pid in joined():
@@ -76,7 +87,7 @@ func start(game_seed: int) -> Dictionary:
 	var views: Dictionary = {}
 	for pid: String in ids:
 		views[pid] = StateView.for_player_with_pending(state, pid, server.resolver.pending)
-	return {"board": StateView.board_snapshot(state), "views": views}
+	return views
 
 
 ## Применить ход игрока. Цвет берём из рассадки, а не из намерения: сходить

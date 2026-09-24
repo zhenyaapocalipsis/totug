@@ -136,6 +136,11 @@ func close() -> void:
 		multiplayer.multiplayer_peer = null
 	is_host = false
 	dedicated = false
+	# Фоновые снимки доски (_start_room) дожидаемся: бросить поток нельзя.
+	for room: GameRoom in rooms.values():
+		if room.board_task >= 0:
+			WorkerThreadPool.wait_for_task_completion(room.board_task)
+			room.board_task = -1
 	rooms.clear()
 	peer_room.clear()
 	seat = ""
@@ -404,9 +409,36 @@ func _start_request() -> void:
 func _start_room(room: GameRoom, game_seed: int) -> void:
 	if room.started or not room.is_full():
 		return
-	var dealt: Dictionary = room.start(game_seed)
+	if not dedicated:
+		var dealt: Dictionary = room.start(game_seed)
+		_deliver(room, dealt["board"], dealt["views"])
+		return
+	# Выделенный сервер: снимок доски (чертёж BoardSchematic) на одном ядре VPS
+	# считается секунды, и всё это время молчали бы все комнаты. Поэтому он
+	# считается в фоне; раздача (колоды, первый ход) — здесь: она быстрая и
+	# трогает общие статические поля правил. Снимку нужны только данные этой
+	# партии и таблицы, которые читаются, но не пишутся (прогреваем их здесь).
+	var views := room.deal(game_seed)
+	var state := room.server.state
+	BoardSchematic.warm_up(state)
+	room.board_task = WorkerThreadPool.add_task(func():
+		_board_ready.call_deferred(room, StateView.board_snapshot(state), views))
+	_log("room %s dealing" % room.code)
+
+
+func _board_ready(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
+	if room.board_task < 0:
+		return  # сессию закрыли, задачу уже дождался close()
+	WorkerThreadPool.wait_for_task_completion(room.board_task)
+	room.board_task = -1
+	if rooms.get(room.code) != room:
+		return  # пока считали, комната опустела
+	_deliver(room, board, views)
+
+
+func _deliver(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
 	for peer: int in room.seats:
-		_send(peer, "_start", [dealt["board"], dealt["views"][room.seats[peer]]])
+		_send(peer, "_start", [board, views[room.seats[peer]]])
 	_log("room %s started" % room.code)
 
 
@@ -443,7 +475,7 @@ func _intent(d: Dictionary) -> void:
 
 func _room_apply(sender: int, d: Dictionary) -> void:
 	var room := _room_of(sender)
-	if room == null or not room.started:
+	if room == null or not room.started or room.board_task >= 0:
 		return
 	var result: Dictionary = room.apply(sender, d)
 	var err := int(result["error"])

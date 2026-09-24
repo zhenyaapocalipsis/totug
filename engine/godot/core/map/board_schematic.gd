@@ -102,6 +102,9 @@ const DIRS: Array[Vector2] = [
 	Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0), Vector2(0, -1),
 ]
 
+## Два поворота на 90° от направления: -1 и +1 по индексу DIRS.
+const SIGNS: Array[int] = [-1, 1]
+
 enum Kind { SITE, RING, PORT }
 
 const W_BEND := 12.0
@@ -164,7 +167,9 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ## whole board (POLISH_PASSES). Without dead ends (MapGraph.prune_dead_ends)
 ## nodes near the board edge get room the pieces had to keep for tunnels to
 ## neighbours that are not there; the board comes out narrower and cleaner.
-## Takes ~2-4 s, so it runs once per game (StateView.board_snapshot).
+## Takes ~0.4-0.9 s (was 2-4 s before the exact cuts in _cost_around and
+## _choose_route), so it runs once per game (StateView.board_snapshot); the
+## dedicated server runs it off the main thread (NetSession._start_room).
 static func build(state: GameState, polish := true) -> Dictionary:
 	var hex_by_slot: Dictionary = state.layout.get("hex_by_slot", {})
 	if hex_by_slot.is_empty():
@@ -246,13 +251,21 @@ func _total_cost() -> float:
 		if _kind[n] != Kind.PORT:
 			cost += _node_cost(n) + _ring_cost(n)
 	for e in _routes.size():
-		cost += _local_cost(e, _routes[e], _visible[e])
+		cost += _local_cost(e, _routes[e], _visible[e], _obstacles(e))
 		for f in range(e + 1, _routes.size()):
 			cost += _pair_cost(_visible[e], _visible[f])
 	return cost
 
 const TILES_PATH := "res://data/board/schematic_tiles.json"
 static var _tiles_cache: Dictionary = {}
+
+
+## Загрузить общие таблицы, которые build только читает. Выделенный сервер
+## зовёт build из фонового потока (NetSession._start_room), а ленивая
+## загрузка из двух потоков сразу — гонка; поэтому грузим в основном.
+static func warm_up(state: GameState) -> void:
+	_load_tiles()
+	ControlMarkers.marked_sites(state)
 
 
 static func _load_tiles() -> Dictionary:
@@ -506,7 +519,7 @@ func _repair() -> void:
 	_push_apart()
 	# a moved box may now sit on a tunnel of the neighbouring hex
 	for e in _routes.size():
-		if _local_cost(e, _routes[e], _visible[e]) >= W_HIT:
+		if _local_cost(e, _routes[e], _visible[e], _obstacles(e)) >= W_HIT:
 			_choose_route(e, {})
 
 
@@ -598,56 +611,88 @@ static func _dir_index(v: Vector2) -> int:
 
 # --- routes ----------------------------------------------------------------------
 
-## Polyline through the given directions; lens < 0 are solved so the line ends at B.
-static func _solve(a: Vector2, b: Vector2, dirs: Array, lens: Array, equal_ends := false) -> PackedVector2Array:
+## Polyline through `count` runs in directions d0..d3 with lengths l0..l3;
+## a length < 0 is solved so the line ends at B. The search calls this a few
+## hundred thousand times per board, so the runs are plain arguments rather
+## than arrays: allocating two arrays per call was most of the build time.
+static func _solve(a: Vector2, b: Vector2, count: int, d0: int, d1: int, d2: int, d3: int,
+		l0: float, l1: float, l2: float, l3: float, equal_ends := false) -> PackedVector2Array:
 	var rest := b - a
-	var unknown: Array[int] = []
-	lens = lens.duplicate()
-	for i in dirs.size():
-		if float(lens[i]) < 0.0:
-			unknown.append(i)
+	var unknown_a := -1
+	var unknown_b := -1
+	var unknowns := 0
+	for i in count:
+		var l := _pick_f(i, l0, l1, l2, l3)
+		if l < 0.0:
+			if unknowns == 0:
+				unknown_a = i
+			elif unknowns == 1:
+				unknown_b = i
+			unknowns += 1
 		else:
-			rest -= DIRS[dirs[i]] * float(lens[i])
+			rest -= DIRS[_pick_i(i, d0, d1, d2, d3)] * l
 	if equal_ends:
 		# [d1 x, d2 y, d1 x]: symmetric jog, the two outer runs share a length
-		var u := DIRS[dirs[0]] * 2.0
-		var v := DIRS[dirs[1]]
+		var u := DIRS[d0] * 2.0
+		var v := DIRS[d1]
 		var den := u.x * v.y - u.y * v.x
 		if absf(den) < 0.001:
 			return PackedVector2Array()
-		lens[0] = (rest.x * v.y - rest.y * v.x) / den
-		lens[2] = lens[0]
-		lens[1] = (u.x * rest.y - u.y * rest.x) / den
-	elif unknown.size() == 2:
-		var u2 := DIRS[dirs[unknown[0]]]
-		var v2 := DIRS[dirs[unknown[1]]]
+		l0 = (rest.x * v.y - rest.y * v.x) / den
+		l2 = l0
+		l1 = (u.x * rest.y - u.y * rest.x) / den
+	elif unknowns == 2:
+		var u2 := DIRS[_pick_i(unknown_a, d0, d1, d2, d3)]
+		var v2 := DIRS[_pick_i(unknown_b, d0, d1, d2, d3)]
 		var den2 := u2.x * v2.y - u2.y * v2.x
 		if absf(den2) < 0.001:
 			return PackedVector2Array()
-		lens[unknown[0]] = (rest.x * v2.y - rest.y * v2.x) / den2
-		lens[unknown[1]] = (u2.x * rest.y - u2.y * rest.x) / den2
-	elif unknown.size() == 1:
-		var d := DIRS[dirs[unknown[0]]]
+		var len_a := (rest.x * v2.y - rest.y * v2.x) / den2
+		var len_b := (u2.x * rest.y - u2.y * rest.x) / den2
+		if unknown_a == 0: l0 = len_a
+		elif unknown_a == 1: l1 = len_a
+		elif unknown_a == 2: l2 = len_a
+		else: l3 = len_a
+		if unknown_b == 1: l1 = len_b
+		elif unknown_b == 2: l2 = len_b
+		else: l3 = len_b
+	elif unknowns == 1:
+		var d := DIRS[_pick_i(unknown_a, d0, d1, d2, d3)]
 		var t := rest.dot(d) / d.length_squared()
 		if not (rest - d * t).is_zero_approx():
 			return PackedVector2Array()
-		lens[unknown[0]] = t
-	var points := PackedVector2Array([a])
+		if unknown_a == 0: l0 = t
+		elif unknown_a == 1: l1 = t
+		elif unknown_a == 2: l2 = t
+		else: l3 = t
+	# a run that came out too short (or unsolved) rules the route out
+	if l0 < 0.99 or (count > 1 and l1 < 0.99) or (count > 2 and l2 < 0.99) or (count > 3 and l3 < 0.99):
+		return PackedVector2Array()
+	var points := PackedVector2Array()
+	points.resize(count + 1)
+	points[0] = a
 	var at := a
-	for i in dirs.size():
-		if float(lens[i]) < 0.99:
-			return PackedVector2Array()
-		at += DIRS[dirs[i]] * float(lens[i])
-		points.append(at)
+	for i in count:
+		at += DIRS[_pick_i(i, d0, d1, d2, d3)] * _pick_f(i, l0, l1, l2, l3)
+		points[i + 1] = at
 	return points
+
+
+static func _pick_i(i: int, v0: int, v1: int, v2: int, v3: int) -> int:
+	return v0 if i == 0 else (v1 if i == 1 else (v2 if i == 2 else v3))
+
+
+static func _pick_f(i: int, v0: float, v1: float, v2: float, v3: float) -> float:
+	return v0 if i == 0 else (v1 if i == 1 else (v2 if i == 2 else v3))
 
 
 func _variants(e: int) -> Array[PackedVector2Array]:
 	var out: Array[PackedVector2Array] = []
 	var a := _edge_a[e]
 	var b := _edge_b[e]
+	var ends_b := _ends(b, a, e)
 	for end_a: Array in _ends(a, b, e):
-		for end_b: Array in _ends(b, a, e):
+		for end_b: Array in ends_b:
 			_routes_between(out, end_a[0], end_a[1], end_b[0], end_b[1])
 	return out
 
@@ -703,46 +748,46 @@ func _routes_between(out: Array[PackedVector2Array], a: Vector2, da: int, b: Vec
 			out.append(points)
 		return
 	if da < 0:
-		_keep(out, _solve(a, b, [_dir_index(b - a)], [-1]))
+		_keep(out, _solve(a, b, 1, _dir_index(b - a), 0, 0, 0, -1, -1, -1, -1))
 		# only the two directions that bracket the straight line can reach b
 		var d := int(floor(fposmod((b - a).angle(), TAU) / (PI / 2.0))) % 4
 		var d_next := (d + 1) % 4
-		_keep(out, _solve(a, b, [d, d_next], [-1, -1]))
-		_keep(out, _solve(a, b, [d_next, d], [-1, -1]))
-		_keep(out, _solve(a, b, [d, d_next, d], [-1, -1, -1], true))
-		_keep(out, _solve(a, b, [d_next, d, d_next], [-1, -1, -1], true))
+		_keep(out, _solve(a, b, 2, d, d_next, 0, 0, -1, -1, -1, -1))
+		_keep(out, _solve(a, b, 2, d_next, d, 0, 0, -1, -1, -1, -1))
+		_keep(out, _solve(a, b, 3, d, d_next, d, 0, -1, -1, -1, -1, true))
+		_keep(out, _solve(a, b, 3, d_next, d, d_next, 0, -1, -1, -1, -1, true))
 		return
 	var last := -1 if db < 0 else (db + 2) % 4
 	var found := out.size()
 	if last < 0 or last == da:
-		_keep(out, _solve(a, b, [da], [-1]))
-	for s1: int in [-1, 1]:
+		_keep(out, _solve(a, b, 1, da, 0, 0, 0, -1, -1, -1, -1))
+	for s1: int in SIGNS:
 		var d1 := (da + s1 + 4) % 4
 		if last < 0 or last == d1:
-			_keep(out, _solve(a, b, [da, d1], [-1, -1]))
-		for s2: int in [-1, 1]:
+			_keep(out, _solve(a, b, 2, da, d1, 0, 0, -1, -1, -1, -1))
+		for s2: int in SIGNS:
 			var d2 := (d1 + s2 + 4) % 4
 			if last >= 0 and last != d2:
 				continue
-			var dirs := [da, d1, d2]
-			_keep(out, _solve(a, b, dirs, [STUB, -1, -1]))
-			_keep(out, _solve(a, b, dirs, [-1, -1, STUB]))
-			_keep(out, _solve(a, b, dirs, [-1, STUB, -1]))
+			_keep(out, _solve(a, b, 3, da, d1, d2, 0, STUB, -1, -1, -1))
+			_keep(out, _solve(a, b, 3, da, d1, d2, 0, -1, -1, STUB, -1))
+			# [-1, STUB, -1] is not tried: da and d2 are parallel, so the two
+			# unknown runs can never be solved (it always came out empty).
 			if d2 == da:
-				_keep(out, _solve(a, b, dirs, [-1, -1, -1], true))
+				_keep(out, _solve(a, b, 3, da, d1, d2, 0, -1, -1, -1, -1, true))
 	if out.size() > found:
 		return
 	# nothing short fits: allow a third corner
-	for s1: int in [-1, 1]:
-		for s2: int in [-1, 1]:
-			for s3: int in [-1, 1]:
+	for s1: int in SIGNS:
+		for s2: int in SIGNS:
+			for s3: int in SIGNS:
 				var d1 := (da + s1 + 4) % 4
 				var d2 := (d1 + s2 + 4) % 4
 				var d3 := (d2 + s3 + 4) % 4
 				if last >= 0 and last != d3:
 					continue
-				_keep(out, _solve(a, b, [da, d1, d2, d3], [STUB, -1, -1, STUB]))
-				_keep(out, _solve(a, b, [da, d1, d2, d3], [STUB, STUB, -1, -1]))
+				_keep(out, _solve(a, b, 4, da, d1, d2, d3, STUB, -1, -1, STUB))
+				_keep(out, _solve(a, b, 4, da, d1, d2, d3, STUB, STUB, -1, -1))
 
 
 static func _keep(out: Array[PackedVector2Array], points: PackedVector2Array) -> void:
@@ -807,7 +852,27 @@ static func _segment_hits_rect(p: Vector2, q: Vector2, rect: Rect2) -> bool:
 	return false
 
 
-func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array) -> float:
+## Boxes and rings a tunnel of edge e must not run through (its own two ends
+## excluded), grown by 2 px. Depends only on node positions, so _choose_route
+## makes it once for all route variants.
+func _obstacles(e: int) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for n: int in _near[_hex[_edge_b[e]]]:
+		if n != _edge_a[e] and n != _edge_b[e]:
+			out.append(_node_rect(n, 2.0))
+	return out
+
+
+## The first terms of _local_cost (corners and length), summed the same way.
+## Everything else _local_cost adds is >= 0, so this is a floor under it.
+static func _shape_cost(points: PackedVector2Array) -> float:
+	var cost := (points.size() - 2) * W_BEND
+	for i in points.size() - 1:
+		cost += points[i].distance_to(points[i + 1]) * W_LEN
+	return cost
+
+
+func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array, obstacles: Array[Rect2]) -> float:
 	var cost := (points.size() - 2) * W_BEND
 	for i in points.size() - 1:
 		var run := points[i].distance_to(points[i + 1])
@@ -823,14 +888,17 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array) -
 	# tiles are laid out alone: a tunnel that leaves its hex could cross the neighbour's
 	var poly: PackedVector2Array = _poly[_hex[_edge_b[e]]]
 	for i in range(0, segs.size(), 2):
-		for p: Vector2 in [segs[i], segs[i + 1], (segs[i] + segs[i + 1]) * 0.5]:
-			if not Geometry2D.is_point_in_polygon(p, poly):
-				cost += _outside_by(p, poly) * W_OUT_PX
+		var p0 := segs[i]
+		var p1 := segs[i + 1]
+		var mid := (p0 + p1) * 0.5
+		if not Geometry2D.is_point_in_polygon(p0, poly):
+			cost += _outside_by(p0, poly) * W_OUT_PX
+		if not Geometry2D.is_point_in_polygon(p1, poly):
+			cost += _outside_by(p1, poly) * W_OUT_PX
+		if not Geometry2D.is_point_in_polygon(mid, poly):
+			cost += _outside_by(mid, poly) * W_OUT_PX
 	var reach := _bounds(segs)
-	for n: int in _near[_hex[_edge_b[e]]]:
-		if n == _edge_a[e] or n == _edge_b[e]:
-			continue
-		var rect := _node_rect(n, 2.0)
+	for rect in obstacles:
 		if not reach.intersects(rect):
 			continue
 		for i in range(0, segs.size(), 2):
@@ -935,12 +1003,24 @@ func _node_cost(n: int) -> float:
 
 
 ## Pick the cheapest route for edge e with the endpoints where they are now.
-func _choose_route(e: int, skip: Dictionary) -> float:
+## base, hits, limit: the cut of _cost_around. If even the cheapest route
+## would bring the sum to limit, nothing is chosen and INF is returned.
+func _choose_route(e: int, skip: Dictionary, base := 0.0, hits := 0, limit := INF) -> float:
 	var ranked: Array = []
-	for points in _variants(e):
+	var variants := _variants(e)
+	if limit < INF and not variants.is_empty():
+		var floor_cost := INF
+		for points in variants:
+			floor_cost = minf(floor_cost, _shape_cost(points))
+		if _with_hits(base + floor_cost, hits) >= limit:
+			return INF
+	var obstacles := _obstacles(e)
+	for points in variants:
 		var segs := _clip(e, points)
-		ranked.append([_local_cost(e, points, segs), points, segs])
+		ranked.append([_local_cost(e, points, segs, obstacles), points, segs])
 	ranked.sort_custom(func(x, y): return x[0] < y[0])
+	if not ranked.is_empty() and _with_hits(base + float(ranked[0][0]), hits) >= limit:
+		return INF
 	if ranked.is_empty():
 		_routes[e] = PackedVector2Array([_pos[_edge_a[e]], _pos[_edge_b[e]]])
 		_visible[e] = PackedVector2Array()
@@ -966,21 +1046,20 @@ func _choose_route(e: int, skip: Dictionary) -> float:
 
 
 ## Cost of everything that depends on node n; routes of n are re-chosen.
-func _cost_around(n: int) -> float:
+## Every term is >= 0, so once the sum so far reaches limit the node's place
+## cannot win and the rest is skipped (returns INF). That cut is exact: the
+## search keeps the same places it would without it, just ~3x faster. Routes
+## of n are then left half-chosen, which is fine: _move_node restores them.
+func _cost_around(n: int, limit: float = INF) -> float:
 	var inc: Array = _incident[n]
 	var skip := {}
 	for e: int in inc:
 		skip[e] = true
 	var cost := _node_cost(n)
-	for e: int in inc:
-		cost += _choose_route(e, skip)
-	for i in inc.size():
-		for j in range(i + 1, inc.size()):
-			cost += _pair_cost(_visible[inc[i]], _visible[inc[j]])
-	cost += _ring_cost(n)
-	for e: int in inc:
-		var other := _edge_b[e] if _edge_a[e] == n else _edge_a[e]
-		cost += _ring_cost(other)
+	# Traces of other nodes that run through n's box. They do not depend on
+	# n's own routes, so they are counted first (for the cut) and added last
+	# (so the sum is the same number, bit for bit, as before the cut).
+	var hits := 0
 	var rect := _node_rect(n, 2.0)
 	for f in _routes.size():
 		if skip.has(f) or _edge_a[f] == n or _edge_b[f] == n or not rect.intersects(_bbox[f]):
@@ -988,8 +1067,30 @@ func _cost_around(n: int) -> float:
 		var segs := _visible[f]
 		for i in range(0, segs.size(), 2):
 			if _segment_hits_rect(segs[i], segs[i + 1], rect):
-				cost += W_HIT
+				hits += 1
 				break
+	if _with_hits(cost, hits) >= limit:
+		return INF
+	for e: int in inc:
+		var route_cost := _choose_route(e, skip, cost, hits, limit)
+		if route_cost == INF:
+			return INF
+		cost += route_cost
+		if _with_hits(cost, hits) >= limit:
+			return INF
+	for i in inc.size():
+		for j in range(i + 1, inc.size()):
+			cost += _pair_cost(_visible[inc[i]], _visible[inc[j]])
+	cost += _ring_cost(n)
+	for e: int in inc:
+		var other := _edge_b[e] if _edge_a[e] == n else _edge_a[e]
+		cost += _ring_cost(other)
+	return _with_hits(cost, hits)
+
+
+static func _with_hits(cost: float, hits: int) -> float:
+	for _i in hits:
+		cost += W_HIT
 	return cost
 
 
@@ -1039,7 +1140,7 @@ func _move_node(n: int, step: int, radius: int) -> void:
 			if not Geometry2D.is_point_in_polygon(p, poly):
 				continue
 			_pos[n] = p
-			var cost := _cost_around(n)
+			var cost := _cost_around(n, best_cost - 0.01)
 			if cost < best_cost - 0.01:
 				best_cost = cost
 				best_pos = p
