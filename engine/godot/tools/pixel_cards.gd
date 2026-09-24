@@ -78,7 +78,7 @@ const SHEETS := {
 }
 ## Карты не из листов TTS: отдельная картинка карты и окно арта в ней.
 const SINGLE_ART := {
-	48345: ["conscription_officer.webp", Rect2i(60, 172, 675, 420)],
+	48345: ["conscription_officer.webp", Rect2i(148, 172, 587, 358)],
 }
 
 const FONT := {
