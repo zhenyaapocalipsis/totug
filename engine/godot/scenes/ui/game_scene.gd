@@ -9,6 +9,10 @@ extends Control
 ##   godot47 --path . res://scenes/ui/game_scene.tscn -- --seed=123 --players=4 --mode=random4
 ## --players=2..4 пропускает меню и сразу раздаёт столько цветов.
 
+## Файлом, а не глобальным именем класса: так экран виден и без кэша редактора.
+const HowToPlayScreen := preload("res://scenes/ui/how_to_play_screen.gd")
+
+
 func _ready() -> void:
 	var game_seed := int(Time.get_unix_time_from_system())
 	var players := 0
@@ -44,6 +48,12 @@ func _show_setup(game_seed: int) -> void:
 		var profile := ProfileScreen.new()
 		profile.closed.connect(func(): _show_setup(game_seed))
 		add_child(profile))
+	setup.how_to_play_requested.connect(func():
+		for child in get_children():
+			child.queue_free()
+		var learn: Control = HowToPlayScreen.new()
+		learn.closed.connect(func(): _show_setup(game_seed))
+		add_child(learn))
 	add_child(setup)
 
 

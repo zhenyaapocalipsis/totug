@@ -17,6 +17,8 @@ signal started(player_ids: Array[String], mode: String)
 signal online_requested(kind: String, player_count: int, mode: String)
 ## Открыть профиль игрока (имя и герб, ProfileScreen).
 signal profile_requested
+## Открыть обучение для новичков (how_to_play_screen.gd).
+signal how_to_play_requested
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -77,6 +79,17 @@ func _init() -> void:
 	col.add_child(subtitle)
 
 	col.add_child(_profile_row())
+
+	var learn_row := HBoxContainer.new()
+	learn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(learn_row)
+	var learn := Button.new()
+	learn.text = "HOW TO PLAY"
+	learn.tooltip_text = "Rules for beginners, page by page"
+	learn.custom_minimum_size = BUTTON_SIZE
+	_style_button(learn)
+	learn.pressed.connect(func(): how_to_play_requested.emit())
+	learn_row.add_child(learn)
 
 	col.add_child(HSeparator.new())
 	col.add_child(GameScreen.section_label("GAME MODE"))

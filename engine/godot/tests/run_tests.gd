@@ -90,6 +90,7 @@ func _initialize() -> void:
 	# сеть
 	test_public_address_check()
 	test_player_profile()
+	test_how_to_play()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -2690,3 +2691,30 @@ func test_player_profile() -> void:
 	check_eq(EventLogPanel.player_name("blue"), "Vizeran", "имя из профиля в журнале")
 	check_eq(EventLogPanel.player_name("red"), "Red", "без профиля — имя цвета")
 	PlayerProfile.seats = {}
+
+
+func test_how_to_play() -> void:
+	section("обучение HOW TO PLAY: страницы и картинки")
+	var screen: Control = load("res://scenes/ui/how_to_play_screen.gd").new()
+	check_eq(screen.page_count(), 14, "в обучении 14 страниц")
+	for i in screen.page_count():
+		screen.show_page(i)
+		check(screen.current_page() == i, "страница %d открывается" % (i + 1))
+	screen.show_page(99)
+	check_eq(screen.current_page(), screen.page_count() - 1, "дальше последней страницы не листается")
+	screen.free()
+
+	var sites := {"A": {"name": "Araumycos", "vp": 2, "slots": 3, "at": [2, 10]}}
+	var img: Image = load("res://scenes/ui/how_to_play_screen.gd").mini_board(
+		sites, [], [], [60, 40], {"A0": "red"}, {"A": ["blue"]}, ["A1"])
+	var box := BoardSchematic.site_box("Araumycos", 3)
+	var slot0: Vector2 = Vector2(2, 10) + (box["slots"] as Array)[0]
+	check(_close_colour(img.get_pixelv(Vector2i(slot0)), BoardPanel.PLAYER_COLORS["red"]),
+		"на мини-доске красная фишка стоит в клетке")
+	check(_close_colour(img.get_pixel(2 + int(box["w"]) / 2, 5), BoardPanel.PLAYER_COLORS["blue"]),
+		"над местом нарисован синий шпион")
+
+
+## Цвет из картинки RGBA8 совпадает с заданным с точностью до округления в 8 бит.
+func _close_colour(a: Color, b: Color) -> bool:
+	return absf(a.r - b.r) < 0.01 and absf(a.g - b.g) < 0.01 and absf(a.b - b.b) < 0.01
