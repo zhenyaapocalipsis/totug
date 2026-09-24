@@ -110,6 +110,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	for child in _options_box.get_children():
 		_options_box.remove_child(child)
 		child.queue_free()
+	var cards_mode := false
 
 	if decider != viewer_id:
 		# Не наш вопрос: сам факт показываем (чтобы было видно, чего ждём),
@@ -132,6 +133,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_add_button("Skip", "")
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
+		cards_mode = true
 	else:
 		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
 		# берём их — только карта знает, что означает её вариант №2.
@@ -143,6 +145,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
+	_set_cards_look(cards_mode, decider)
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
 	if _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
@@ -219,6 +222,26 @@ func _add_card_grid(options: Array) -> void:
 	_options_box.add_child(grid)
 
 
+## Карты-варианты висят прямо над доской: окно без фона и рамки, вопрос по
+## центру двойным шрифтом с тенью (решение владельца, 2026-09-24).
+func _set_cards_look(on: bool, decider: String) -> void:
+	_style.bg_color = Color(PixelTheme.PANEL_HI, 0.0 if on else 0.97)
+	_style.border_color = Color(0, 0, 0, 0) if on \
+		else BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
+	for label: Label in [_who, _prompt]:
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if on else HORIZONTAL_ALIGNMENT_LEFT
+		if on:
+			label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+			label.add_theme_constant_override("shadow_offset_x", 1)
+			label.add_theme_constant_override("shadow_offset_y", 1)
+		else:
+			label.remove_theme_color_override("font_shadow_color")
+	if on:
+		_prompt.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	else:
+		_prompt.remove_theme_font_size_override("font_size")
+
+
 ## "Choose one" карты с пиксельным лицом рисуется полноформатными картами
 ## (OptionCard); если карта неизвестна или у варианта нет подписи — списком.
 static func _can_show_option_cards(pd: Dictionary) -> bool:
@@ -247,7 +270,11 @@ func _add_option_cards(pd: Dictionary) -> void:
 		if i > 0:
 			var or_label := Label.new()
 			or_label.text = "or"
-			or_label.modulate = PixelTheme.GOLD
+			or_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+			or_label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+			or_label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+			or_label.add_theme_constant_override("shadow_offset_x", 1)
+			or_label.add_theme_constant_override("shadow_offset_y", 1)
 			or_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			row.add_child(or_label)
 		var card := OptionCard.new(String(pd.get("source_card", "")), String(labels[i]))
