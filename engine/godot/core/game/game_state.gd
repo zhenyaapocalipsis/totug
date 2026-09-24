@@ -62,6 +62,8 @@ var starting_site_candidates: Array[String] = []
 ## Правилам они больше не нужны — маркет уже собран, — но интерфейсу нужны:
 ## по ним он красит фон экрана.
 var half_decks: Array[String] = []
+## Режим сборки маркета (GameSetup.MODE_*), чтобы интерфейс мог его показать.
+var game_mode: String = "standard"
 
 
 func _init(map_graph: MapGraph, seed_value: int = 0) -> void:

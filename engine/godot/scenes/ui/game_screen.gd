@@ -128,12 +128,13 @@ static func player_ids_for(count: int) -> Array[String]:
 	return ids
 
 
-func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = []) -> void:
+func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
+		mode: String = GameSetup.MODE_STANDARD) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
-	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true)
+	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode)
 	server = GameServer.new(state)
 	board_data = StateView.board_snapshot(state)
 	viewer_id = server.resolver.pending.player_id if server.resolver.is_waiting() else state.current_player()

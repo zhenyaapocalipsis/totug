@@ -11,7 +11,23 @@ extends Control
 ## Вёрстка кодом по той же причине, что и в game_screen.gd: .tscn в этом
 ## проекте правится вслепую, без редактора.
 
-signal started(player_ids: Array[String])
+signal started(player_ids: Array[String], mode: String)
+
+const MODE_TITLES := {
+	"standard": "STANDARD",
+	"double": "DOUBLE",
+	"random4": "RANDOM 4",
+	"random6": "RANDOM 6",
+}
+const MODE_NOTES := {
+	"standard": "Market: two random half-decks.",
+	"double": "Market: one random half-deck, taken twice.",
+	"random4": "Market: 4 random half-decks, 20 cards of each aspect.",
+	"random6": "Market: 6 random half-decks, 20 cards of each aspect.",
+}
+
+var _mode: String = GameSetup.MODE_STANDARD
+var _mode_note: Label
 
 const BUTTON_SIZE := Vector2(90, 16)
 const DOT := 7.0
@@ -56,6 +72,15 @@ func _init() -> void:
 	col.add_child(subtitle)
 
 	col.add_child(HSeparator.new())
+	col.add_child(GameScreen.section_label("GAME MODE"))
+	col.add_child(_mode_row())
+	_mode_note = Label.new()
+	_mode_note.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	_mode_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_mode_note)
+	_select_mode(GameSetup.MODE_STANDARD)
+
+	col.add_child(HSeparator.new())
 	col.add_child(GameScreen.section_label("HOW MANY PLAYERS?"))
 
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
@@ -63,10 +88,34 @@ func _init() -> void:
 
 	col.add_child(HSeparator.new())
 	var note := Label.new()
-	note.text = "Two random half-decks; the first player is drawn at random."
+	note.text = "The first player is drawn at random."
 	note.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(note)
+
+
+## Четыре кнопки режима; нажатая остаётся подсвеченной (ButtonGroup).
+func _mode_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var group := ButtonGroup.new()
+	for mode: String in GameSetup.MODES:
+		var button := Button.new()
+		button.text = MODE_TITLES[mode]
+		button.toggle_mode = true
+		button.button_group = group
+		button.button_pressed = mode == GameSetup.MODE_STANDARD
+		button.custom_minimum_size = Vector2(60, 16)
+		_style_button(button)
+		button.pressed.connect(func(): _select_mode(mode))
+		row.add_child(button)
+	return row
+
+
+func _select_mode(mode: String) -> void:
+	_mode = mode
+	_mode_note.text = MODE_NOTES[mode]
 
 
 ## Строка выбора: кнопка с числом и цветные фишки тех, кто сядет за стол.
@@ -80,7 +129,7 @@ func _count_row(count: int) -> Control:
 	button.text = "%d PLAYERS" % count
 	button.custom_minimum_size = BUTTON_SIZE
 	_style_button(button)
-	button.pressed.connect(func(): started.emit(ids))
+	button.pressed.connect(func(): started.emit(ids, _mode))
 	row.add_child(button)
 
 	# Фишки лежат в блоке постоянной ширины (место под все четыре), иначе

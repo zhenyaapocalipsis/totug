@@ -60,6 +60,7 @@ func _initialize() -> void:
 
 	# этап 7: настоящая партия и общие стопки
 	test_half_deck_data()
+	test_game_modes()
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
 	test_recruit_from_supply()
@@ -1701,6 +1702,34 @@ func test_hotseat_three_and_four_players() -> void:
 		for pid: String in ids:
 			check_eq(int(on_board.get(pid, 0)), 1, "%d игроков: у %s одно стартовое войско" % [count, pid])
 			check_eq(state.players[pid].deck.hand.size(), 5, "%d игроков: у %s 5 карт в руке" % [count, pid])
+
+
+func test_game_modes() -> void:
+	section("Режимы игры: STANDARD / DOUBLE / RANDOM 4 / RANDOM 6")
+	var pids: Array[String] = ["red", "blue"]
+	var expected := {"standard": 2, "double": 2, "random4": 4, "random6": 6}
+	for mode: String in GameSetup.MODES:
+		var state := GameSetup.new_game(pids, 99, [], false, false, false, mode)
+		var total := state.market.deck.size() + state.market.display.size()
+		check_eq(total, 80, "%s: в маркете 80 карт" % mode)
+		check_eq(state.half_decks.size(), int(expected[mode]), "%s: число полуколод" % mode)
+		check_eq(state.game_mode, mode, "%s: режим записан в состояние" % mode)
+		var per_aspect := {}
+		for cid: String in state.market.deck + state.market.display:
+			var a := CardLibrary.card_aspect(cid)
+			per_aspect[a] = int(per_aspect.get(a, 0)) + 1
+		check_eq(per_aspect.size(), 4, "%s: 4 аспекта" % mode)
+		for a: String in per_aspect.keys():
+			check_eq(int(per_aspect[a]), 20, "%s: аспект %s — 20 карт" % [mode, a])
+	var dbl := GameSetup.new_game(pids, 99, [], false, false, false, "double")
+	check_eq(dbl.half_decks[0], dbl.half_decks[1], "DOUBLE: одна и та же полуколода дважды")
+	var r4 := GameSetup.new_game(pids, 5, [], false, false, false, "random4")
+	var uniq := {}
+	for d: String in r4.half_decks:
+		uniq[d] = true
+	check_eq(uniq.size(), 4, "RANDOM 4: четыре разные полуколоды")
+	var r4b := GameSetup.new_game(pids, 5, [], false, false, false, "random4")
+	check_eq(r4b.market.deck, r4.market.deck, "RANDOM 4: одинаковый сид — одинаковый маркет")
 
 
 func test_half_deck_data() -> void:
