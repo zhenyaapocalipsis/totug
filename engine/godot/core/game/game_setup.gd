@@ -255,7 +255,8 @@ static func find_starting_sites(graph: MapGraph) -> Array[String]:
 ## однажды алгоритм, написанный дважды, уже разошёлся (claude/progress.md,
 ## ошибка 9), повторять не хочется.
 static func pick_hexes(players: int, rng: RandomNumberGenerator, with_x: bool = false) -> Dictionary:
-	var centre_pool := ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9"]
+	# Решение владельца: в центре только A1, A2, A3 и A9 (Wells of Darkness).
+	var centre_pool := ["A1", "A2", "A3", "A9"]
 	var ring_pool := ["C1", "C2", "C3", "C4", "C5", "C6"]
 	if with_x:
 		ring_pool.append_array(["X1", "X2", "X3", "X4"])

@@ -2190,7 +2190,7 @@ func test_vp_income_is_explained() -> void:
 
 func test_control_markers() -> void:
 	section("Маркеры контроля: Influence в начале хода, VP за тотальный контроль в конце")
-	var state := GameSetup.new_game(["red", "blue"], 7)
+	var state := GameSetup.new_game(["red", "blue"], 2)  # сид с A1/A3 в центре
 	var marked: Array[String] = ControlMarkers.marked_sites(state)
 	# На доску на 2 игроков попадает один гекс A (A1 или A3) и два гекса B —
 	# значит ровно три локации с маркерами. Остальные пять маркеров описаны
@@ -2220,16 +2220,16 @@ func test_control_markers() -> void:
 
 func test_cross_hex_site_to_site_presence() -> void:
 	section("Cross-hex site-to-site tunnel gives Presence from any slot of the site")
-	# Seed 13: Ath-Qua (C5) is sewn directly to Gallenghast (A2) across a hex
+	# Seed 44: Ath-Qua (C5) is sewn directly to Gallenghast (A2) across a hex
 	# edge. A troop in a NON-port slot of Ath-Qua must still give Presence there.
-	var state := GameSetup.new_game(["red", "blue"], 13, ["drow", "dragons"], false, true)
+	var state := GameSetup.new_game(["red", "blue"], 44, ["drow", "dragons"], false, true)
 	var g := state.graph
 	var ath := ""
 	var gall := ""
 	for s: String in g.sites.keys():
 		if g.sites[s]["name"] == "Ath-Qua": ath = s
 		if g.sites[s]["name"] == "Gallenghast": gall = s
-	check(ath != "" and gall != "", "both sites are on the seed-13 board")
+	check(ath != "" and gall != "", "both sites are on the seed-44 board")
 	check(g.adjacent_sites(ath).has(gall), "Ath-Qua and Gallenghast are adjacent sites")
 	for slot_id in g.slots_of_site(ath):
 		var troops := {slot_id: "red"}
