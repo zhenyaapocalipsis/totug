@@ -141,8 +141,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_add_button("Skip", "")
 	elif choice_type == "target_card":
 		_add_card_grid(options)
+		cards_mode = true
 		if options.has(""):
 			_add_button("Skip", "")
+			# без окна вокруг кнопка во всю ширину — просто полоса; ставим по центру
+			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
+			skip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			skip.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			skip.custom_minimum_size.x = 60
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
 		cards_mode = true
