@@ -2217,6 +2217,22 @@ func test_control_markers() -> void:
 		reward.influence + ClusterBonus.evaluate(state, "red").influence,
 		"start_turn выдал Influence маркера (и бонуса A2, если он есть)")
 
+	# Контроль взят посреди хода -> Influence сразу, но не больше раза за ход.
+	var site2: String = marked[1]
+	var before2: int = state.players["red"].influence
+	TurnEngine.grant_marker_influence(state, "red")
+	check_eq(state.players["red"].influence, before2, "без нового контроля Influence не растёт")
+	for slot_id in state.graph.slots_of_site(site2):
+		state.troops[String(slot_id)] = "red"
+	TurnEngine.grant_marker_influence(state, "red")
+	check_eq(state.players["red"].influence - before2,
+		int(ControlMarkers.marker_for(state, site2)["control_influence"]),
+		"новый контроль посреди хода сразу даёт Influence")
+	TurnEngine.grant_marker_influence(state, "red")
+	check_eq(state.players["red"].influence - before2,
+		int(ControlMarkers.marker_for(state, site2)["control_influence"]),
+		"повторно в тот же ход за ту же локацию не платится")
+
 
 func test_cross_hex_site_to_site_presence() -> void:
 	section("Cross-hex site-to-site tunnel gives Presence from any slot of the site")

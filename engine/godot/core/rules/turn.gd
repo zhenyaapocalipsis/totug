@@ -39,15 +39,43 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	p.influence += bonus.influence
 	# Маркеры контроля (A1, A3, B1-B6): +1 Influence за каждую контролируемую
 	# локацию с маркером. Тоже в начале хода — иначе сгорит, не успев пригодиться.
-	var markers: ControlMarkers.Reward = ControlMarkers.evaluate(state, player_id)
-	p.influence += markers.influence
-	if resolver != null and (bonus.power + bonus.influence + markers.influence) > 0:
+	state.marker_influence_paid.clear()
+	var marker_influence: int = _pay_marker_influence(state, player_id)
+	if resolver != null and (bonus.power + bonus.influence + marker_influence) > 0:
 		resolver.log_event("turn_income", {
 			"player_id": player_id,
 			"a2_power": bonus.power,
 			"a2_influence": bonus.influence,
-			"marker_influence": markers.influence,
+			"marker_influence": marker_influence,
 		})
+
+
+## Правило владельца игры (2026-09-24): Influence за локацию с маркером
+## выдаётся СРАЗУ, как только игрок взял её под контроль посреди хода, а не
+## только в начале следующего. Не чаще раза за ход на локацию
+## (state.marker_influence_paid). Зовётся после каждого действия игрока.
+static func grant_marker_influence(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
+	var gained: int = _pay_marker_influence(state, player_id)
+	if resolver != null and gained > 0:
+		resolver.log_event("turn_income", {
+			"player_id": player_id,
+			"a2_power": 0,
+			"a2_influence": 0,
+			"marker_influence": gained,
+		})
+
+
+static func _pay_marker_influence(state: GameState, player_id: String) -> int:
+	var gained := 0
+	for site_id: String in ControlMarkers.marked_sites(state):
+		if state.marker_influence_paid.has(site_id):
+			continue
+		if state.control.controller_of(site_id, state.troops) != player_id:
+			continue
+		state.marker_influence_paid.append(site_id)
+		gained += int(ControlMarkers.marker_for(state, site_id).get("control_influence", 0))
+	state.players[player_id].influence += gained
+	return gained
 
 
 ## Розыгрыш карты (этап 5). Переносит карту из руки в played_pile, регистрирует

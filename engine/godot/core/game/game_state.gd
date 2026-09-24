@@ -41,6 +41,9 @@ var game_over: bool = false
 ## Этап 5: аспекты карт, сыгранных (или сожранных) в этот ход — используется
 ## FocusEffect ("<Aspect> Focus ► ..."). Сбрасывается в TurnEngine.start_turn().
 var played_aspects_this_turn: Array[String] = []
+## Локации с маркером контроля, за которые текущий игрок уже получил Influence
+## в этом ходу (TurnEngine.grant_marker_influence). Сбрасывается в start_turn.
+var marker_influence_paid: Array[String] = []
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.
