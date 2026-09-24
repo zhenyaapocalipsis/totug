@@ -488,7 +488,7 @@ static func get_effect(card_id: String) -> CardEffect:
 		"48713":  # Death Tyrant
 			return AssassinateTroop.new(3, false, true, true, 1, 0)
 		"48737":  # Carrion Crawler
-			return SequenceEffect.new([GainInfluence.new(3), _CarrionCrawlerDevour.new()])
+			return SequenceEffect.new([GainPower.new(3), _CarrionCrawlerDevour.new()])
 		"48730":  # Wraith
 			return PlaceSpy.new(1, false, func(site): return DevourCard.new("this", "48730", AssassinateTroop.new(1, false, false, false, 0, 0, site)))
 		"48729":  # Skeletal Horde

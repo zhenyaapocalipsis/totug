@@ -1737,7 +1737,7 @@
     "seen_in_deck": "Undead Half-Deck",
     "image_status": "ok",
     "image_file": "48737_Carrion_Crawler.jpg",
-    "ocr_ability_text": "+3 Influence\nDevour a card in the market. Instead of\nreplacing it with the top card from the market\ndeck, replace it with this card.",
+    "ocr_ability_text": "+3 Power\nDevour a card in the market. Instead of\nreplacing it with the top card from the market\ndeck, replace it with this card.",
     "aspect": "MALICE",
     "type": "MONSTROSITY",
     "deck_vp": 0,

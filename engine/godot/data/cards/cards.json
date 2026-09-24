@@ -1057,7 +1057,7 @@
     "type": "MONSTROSITY",
     "deck_vp": 0,
     "inner_circle_vp": 2,
-    "ability_text": "+3 Influence\nDevour a card in the market. Instead of\nreplacing it with the top card from the market\ndeck, replace it with this card."
+    "ability_text": "+3 Power\nDevour a card in the market. Instead of\nreplacing it with the top card from the market\ndeck, replace it with this card."
   },
   {
     "card_id": 48730,

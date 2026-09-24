@@ -713,7 +713,7 @@ each troop removed gain 1 Influence.
 ### Carrion Crawler (стоимость 2, CardID 48737)
 Аспект: MALICE · Тип: MONSTROSITY · deck-VP: 0 · inner-circle-VP: 2
 
-+3 Influence
++3 Power
 Devour a card in the market. Instead of
 replacing it with the top card from the market
 deck, replace it with this card.
