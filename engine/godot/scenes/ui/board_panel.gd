@@ -103,6 +103,13 @@ var _captures: Dictionary = {}
 ## доли секунды, и доска за это время никуда не уедет.
 var _sparks: Array[Dictionary] = []
 
+## Мерцание подсказок (зелёные/жёлтые/оранжевые кружки): время пульса и флаг
+## «на прошлом кадре была хоть одна подсказка» — пока он поднят, доска
+## перерисовывается каждый кадр.
+const PULSE_PERIOD := 1.1
+var _pulse_t := 0.0
+var _pulse_active := false
+
 
 func _init() -> void:
 	var style := StyleBoxFlat.new()
@@ -204,6 +211,7 @@ func shake(power: float) -> void:
 
 func _process(delta: float) -> void:
 	_shake_left = maxf(_shake_left - delta, 0.0)
+	_pulse_t = fmod(_pulse_t + delta, PULSE_PERIOD)
 	for site_id: String in _captures.keys():
 		var left: float = float(_captures[site_id]) - delta
 		if left <= 0.0:
@@ -220,7 +228,7 @@ func _process(delta: float) -> void:
 		s["vel"] = vel
 		s["pos"] = (s["pos"] as Vector2) + vel * delta
 
-	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty():
+	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty() and not _pulse_active:
 		set_process(false)
 	queue_redraw()
 
@@ -438,6 +446,7 @@ func _to_world(screen: Vector2) -> Vector2:
 # --- отрисовка ----------------------------------------------------------------
 
 func _draw() -> void:
+	_pulse_active = false
 	if _board.is_empty():
 		return
 	_ensure_view()
@@ -562,11 +571,25 @@ func _mark_slot(pos: Vector2, colour: Color, occupied: bool) -> void:
 	else:
 		r = _slot_radius_world() * _zoom * (1.18 if occupied else 1.0)
 		width = maxf(2.0, r * 0.16)
-	# Пустое место лишь слегка подкрашиваем: если залить его ярко, оно будет
-	# неотличимо от фишки зелёного игрока.
+	var k := _pulse()
+	# Тёмная обводка изнутри кольца — чтобы оно читалось на светлом арте.
+	# Изнутри, а не снаружи: наружу нельзя, упрёмся в кольцо соседа.
+	draw_arc(at, maxf(r - width, 1.0), 0, TAU, 24, Color(0, 0, 0, 0.75), width)
+	# Пустое место подкрашиваем мерцающей заливкой, но не до полной яркости:
+	# иначе оно станет неотличимо от фишки зелёного игрока.
 	if not occupied:
-		draw_circle(at, maxf(r - width * 0.5, 1.0), Color(colour, 0.22))
-	draw_arc(at, r, 0, TAU, 24, colour, width)
+		draw_circle(at, maxf(r - width * 0.5, 1.0), Color(colour, lerpf(0.2, 0.55, k)))
+	draw_arc(at, r, 0, TAU, 24, colour.lerp(Color.WHITE, 0.45 * k), width)
+
+
+## Фаза мерцания подсказок: 0..1 по синусу. Заодно будит _process, чтобы
+## подсказка мерцала, даже когда больше ничего не анимируется.
+func _pulse() -> float:
+	if not _pulse_active:
+		_pulse_active = true
+		if not is_processing():
+			set_process(true)
+	return 0.5 - 0.5 * cos(TAU * _pulse_t / PULSE_PERIOD)
 
 
 func _token(colour: Color) -> ImageTexture:
