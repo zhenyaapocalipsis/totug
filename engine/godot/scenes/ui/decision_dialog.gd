@@ -41,6 +41,7 @@ var _style: StyleBoxFlat
 var at_top := false
 var _market_display: Array = []
 var _ghost_card := ""
+var _dim: ColorRect
 
 
 ## Подпись карты маркета по индексу: название и цена. Публичная — для тестов.
@@ -62,6 +63,17 @@ func _init() -> void:
 
 	_style = PixelTheme.box(Color(PixelTheme.PANEL_HI, 0.97), PixelTheme.GOLD, 1, 3, 2)
 	add_theme_stylebox_override("panel", _style)
+
+	# Затемнение всего экрана под выбором карт: верхнеуровневый узел, его не
+	# раскладывает панель, и он же ловит клики мимо карт.
+	_dim = ColorRect.new()
+	_dim.top_level = true
+	_dim.color = Color(0.02, 0.02, 0.03, 0.62)
+	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_dim.visible = false
+	# top_level не наследует z окна — задаём свой: над рукой, под окном.
+	_dim.z_index = 999
+	add_child(_dim)
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
@@ -146,6 +158,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
 	_set_cards_look(cards_mode, decider)
+	_set_dim(_options_box.get_child_count() > 0 and (cards_mode or choice_type == "target_card"))
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
 	if _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
@@ -220,6 +233,25 @@ func _add_card_grid(options: Array) -> void:
 		card.pressed.connect(func(_id): option_chosen.emit(value))
 		grid.add_child(card)
 	_options_box.add_child(grid)
+
+
+## Выбор карты затемняет весь экран: окно поднимается над рукой (её поднятая
+## карта рисуется с z_index до 901) и маркетом, как окно стопки.
+func _set_dim(on: bool) -> void:
+	_dim.visible = on
+	z_index = 1000 if on else 0
+	if on and is_inside_tree():
+		_dim.position = Vector2.ZERO
+		_dim.size = get_viewport_rect().size
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not visible:
+		z_index = 0
+	elif what == NOTIFICATION_ENTER_TREE:
+		get_viewport().size_changed.connect(func():
+			if _dim.visible:
+				_dim.size = get_viewport_rect().size)
 
 
 ## Карты-варианты висят прямо над доской: окно без фона и рамки, вопрос по
