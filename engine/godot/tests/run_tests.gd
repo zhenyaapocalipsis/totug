@@ -2667,13 +2667,24 @@ func test_player_profile() -> void:
 	var img := SchematicPainter.token(Color("d93838"), emblem)
 	check(img.get_pixel(4, 4).to_html(false) == "ac3232", "на фишке нарисован герб")
 	check(img.get_pixel(3, 4).is_equal_approx(Color("d93838")), "пустой пиксель герба — цвет места")
-	check(img.get_pixel(0, 4).is_equal_approx(Color("d93838")), "ободок фишки — цвет места")
+	check(img.get_pixel(0, 4).a > 0.9 and img.get_pixel(0, 4).v < 0.1, "ободок фишки остаётся тёмным")
+
+	check_eq(PlayerProfile.paintable_count(), 37, "внутри кружка 37 пикселей")
 	var full: Array[Color] = []
 	full.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
 	full.fill(Color("000000"))
-	var solid := SchematicPainter.token(Color("d93838"), PlayerProfile.emblem_from_pixels(full))
-	check(solid.get_pixel(4, 0).is_equal_approx(Color("d93838")) and solid.get_pixel(8, 4).is_equal_approx(Color("d93838")),
-		"закрашенный целиком герб не трогает ободок")
+	check_eq(PlayerProfile.clean_emblem(PlayerProfile.emblem_from_pixels(full)), "",
+		"целиком закрашенный герб не принимается")
+	var editor := ProfileScreen.new()
+	editor.paint(4, 4, Color(0, 0, 0, 0))
+	for y in PlayerProfile.SIZE:
+		for x in PlayerProfile.SIZE:
+			editor.paint(x, y, Color("ffffff"))
+	var left_empty := PlayerProfile.paintable_count() - PlayerProfile.painted_count(
+		PlayerProfile.emblem_pixels(editor.emblem()))
+	check_eq(left_empty, PlayerProfile.MIN_SEAT_PIXELS, "редактор оставляет %d пикселей цвета места" % PlayerProfile.MIN_SEAT_PIXELS)
+	check(PlayerProfile.clean_emblem(editor.emblem()) != "", "самый закрашенный герб из редактора годится")
+	editor.free()
 
 	PlayerProfile.seats = {"blue": {"name": "Vizeran", "emblem": emblem}}
 	check_eq(EventLogPanel.player_name("blue"), "Vizeran", "имя из профиля в журнале")

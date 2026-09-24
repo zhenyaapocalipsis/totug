@@ -3,9 +3,10 @@ extends RefCounted
 
 ## Профиль игрока: имя и герб. Герб рисуется прямо на фишке войска — это
 ## картинка 9x9 (как SchematicPainter.token), рисовать можно только внутри
-## ободка. Ободок всегда цвета места (red/blue/...) и не меняется — даже
-## целиком закрашенная фишка показывает, чьё это войско; незакрашенные пиксели
-## тоже остаются цветом места.
+## кружка; ободок остаётся тёмным, а незакрашенные пиксели заливаются цветом
+## места (red/blue/...), чтобы чужие войска всё равно отличались по цвету.
+## Закрасить кружок целиком нельзя: не меньше MIN_SEAT_PIXELS пикселей
+## остаются цветом места (решение владельца, 2026-09-25).
 ##
 ## Профиль хранится у игрока (user://profile.cfg), в сетевой игре уходит в
 ## комнату (NetSession._profile_up) и раздаётся всем вместе с лобби.
@@ -18,6 +19,8 @@ const RADIUS := 4
 const NAME_MAX := 12
 const EMBLEM_LENGTH := SIZE * SIZE * 8
 const PATH := "user://profile.cfg"
+## Сколько пикселей кружка (из 37) должны остаться цветом места.
+const MIN_SEAT_PIXELS := 12
 ## Имя рисуется пиксельным шрифтом: только знаки, которые в нём есть.
 const NAME_CHARS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -_.'"
 
@@ -33,6 +36,28 @@ static func paintable(x: int, y: int) -> bool:
 	var dx := x - RADIUS
 	var dy := y - RADIUS
 	return dx * dx + dy * dy <= r * r + r
+
+
+## Сколько всего пикселей можно красить (37 при фишке 9x9).
+static func paintable_count() -> int:
+	var n := 0
+	for i in SIZE * SIZE:
+		if paintable(i % SIZE, i / SIZE):
+			n += 1
+	return n
+
+
+## Сколько пикселей можно закрасить, не нарушив MIN_SEAT_PIXELS.
+static func max_painted() -> int:
+	return paintable_count() - MIN_SEAT_PIXELS
+
+
+static func painted_count(pixels: Array[Color]) -> int:
+	var n := 0
+	for i in mini(pixels.size(), SIZE * SIZE):
+		if pixels[i].a > 0.5 and paintable(i % SIZE, i / SIZE):
+			n += 1
+	return n
 
 
 static func blank_emblem() -> String:
@@ -71,8 +96,9 @@ static func is_blank(emblem: String) -> bool:
 	return clean_emblem(emblem) == "" or clean_emblem(emblem) == blank_emblem()
 
 
-## Герб из чужих рук (файл, сеть): неверный — "", иначе пиксели вне кружка
-## стёрты, прозрачность только 0 или 255.
+## Герб из чужих рук (файл, сеть): неверный или закрашенный сильнее
+## max_painted() — "", иначе пиксели вне кружка стёрты, прозрачность только
+## 0 или 255.
 static func clean_emblem(emblem: String) -> String:
 	if emblem.length() != EMBLEM_LENGTH:
 		return ""
@@ -80,12 +106,16 @@ static func clean_emblem(emblem: String) -> String:
 		if not "0123456789abcdefABCDEF".contains(ch):
 			return ""
 	var bytes := emblem.hex_decode()
+	var painted := 0
 	for i in SIZE * SIZE:
 		if bytes[i * 4 + 3] == 0 or not paintable(i % SIZE, i / SIZE):
 			for k in 4:
 				bytes[i * 4 + k] = 0
 		else:
 			bytes[i * 4 + 3] = 255
+			painted += 1
+	if painted > max_painted():
+		return ""
 	return bytes.hex_encode()
 
 

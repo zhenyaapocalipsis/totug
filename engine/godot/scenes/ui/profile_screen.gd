@@ -3,7 +3,8 @@ extends Control
 
 ## Профиль игрока: имя и герб. Герб рисуется в маленьком пиксельном
 ## редакторе, холст которого — сама фишка войска 9x9 (PlayerProfile): ободок
-## цвета места не красится, пустые пиксели на доске тоже будут цветом места.
+## не красится, пустые пиксели на доске будут цветом места игрока. Целиком
+## закрасить нельзя — хотя бы PlayerProfile.MIN_SEAT_PIXELS остаются пустыми.
 ##
 ## Левая кнопка мыши — красить, правая — стирать (можно вести с зажатой
 ## кнопкой). Вёрстка кодом, как у остальных экранов меню.
@@ -21,6 +22,7 @@ const PALETTE := [
 const CELL := 18
 const SWATCH := 14
 const PREVIEW_ZOOM := 3
+const RIM := Color(0.04, 0.03, 0.06)
 const BUTTON_SIZE := Vector2(70, 16)
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
@@ -32,6 +34,8 @@ var _canvas: Control
 var _custom: ColorPickerButton
 var _previews: Array[TextureRect] = []
 var _saved_note: Label
+## Сколько пикселей ещё можно закрасить (PlayerProfile.MIN_SEAT_PIXELS).
+var _counter: Label
 
 
 func _init() -> void:
@@ -112,7 +116,7 @@ func _init() -> void:
 		_previews.append(small)
 
 	var hint := Label.new()
-	hint.text = "Left mouse: paint. Right mouse: erase.\nThe dotted ring always stays your seat colour."
+	hint.text = "Left mouse: paint. Right mouse: erase.\nEmpty pixels show your seat colour."
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(hint)
@@ -130,6 +134,7 @@ func _init() -> void:
 	col.add_child(_saved_note)
 
 	_refresh_previews()
+	_refresh_counter()
 
 
 ## Палитра, текущий цвет (он же выбор любого цвета) и ERASE ALL.
@@ -173,6 +178,9 @@ func _tools() -> Control:
 	any.text = "< any colour"
 	any.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	row.add_child(any)
+
+	_counter = Label.new()
+	box.add_child(_counter)
 
 	box.add_child(_button("ERASE ALL", func():
 		_pixels.fill(Color(0, 0, 0, 0))
@@ -218,6 +226,11 @@ func paint(x: int, y: int, colour: Color) -> void:
 	var i := y * PlayerProfile.SIZE + x
 	if _pixels[i] == colour:
 		return
+	# Новый закрашенный пиксель — только пока цвета места остаётся достаточно.
+	if colour.a > 0.0 and _pixels[i].a == 0.0 \
+			and PlayerProfile.painted_count(_pixels) >= PlayerProfile.max_painted():
+		_saved_note.text = "Keep at least %d pixels in your seat colour." % PlayerProfile.MIN_SEAT_PIXELS
+		return
 	_pixels[i] = colour
 	_changed()
 
@@ -226,6 +239,13 @@ func _changed() -> void:
 	_saved_note.text = ""
 	_canvas.queue_redraw()
 	_refresh_previews()
+	_refresh_counter()
+
+
+func _refresh_counter() -> void:
+	var left := PlayerProfile.max_painted() - PlayerProfile.painted_count(_pixels)
+	_counter.text = "Pixels left to paint: %d" % left
+	_counter.add_theme_color_override("font_color", PixelTheme.GOLD if left == 0 else PixelTheme.TEXT_DIM)
 
 
 func emblem() -> String:
@@ -245,11 +265,8 @@ func _draw_canvas() -> void:
 				var px := _pixels[y * PlayerProfile.SIZE + x]
 				colour = px if px.a > 0.0 else seat_colour
 			elif dx * dx + dy * dy <= r * r + r:
-				colour = seat_colour
+				colour = RIM
 			_canvas.draw_rect(rect, colour)
-			# Ободок не красится: в редакторе помечен тёмной точкой (на доске её нет).
-			if not PlayerProfile.paintable(x, y) and dx * dx + dy * dy <= r * r + r:
-				_canvas.draw_rect(Rect2(rect.get_center() - Vector2(2, 2), Vector2(4, 4)), seat_colour.darkened(0.5))
 	_canvas.draw_rect(Rect2(Vector2.ZERO, _canvas.custom_minimum_size), PixelTheme.BORDER, false, 1.0)
 
 
