@@ -148,7 +148,13 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
 			skip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			skip.alignment = HORIZONTAL_ALIGNMENT_CENTER
-			skip.custom_minimum_size.x = 60
+			# только надпись: без фона и рамки, под курсором — золотая
+			for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+				skip.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+			skip.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
+			skip.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+			skip.add_theme_constant_override("shadow_offset_x", 1)
+			skip.add_theme_constant_override("shadow_offset_y", 1)
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
 		cards_mode = true
@@ -234,6 +240,7 @@ func _add_card_grid(options: Array) -> void:
 		var value := String(raw)
 		var cid := value.substr(6) if value.begins_with("inner:") else value
 		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
+		card.highlight = false
 		card.set_clickable(true)
 		card.tooltip_text = _card_label(value)
 		card.pressed.connect(func(_id): option_chosen.emit(value))

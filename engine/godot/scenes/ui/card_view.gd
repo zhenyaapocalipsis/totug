@@ -65,6 +65,8 @@ var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
 var hover_preview: bool = true
+## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
+var highlight: bool = true
 var _pixel: Texture2D = null
 ## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
 var _mini := false
@@ -244,7 +246,7 @@ func _draw() -> void:
 	if texture_filter != filter:
 		texture_filter = filter
 	draw_texture_rect_region(_pixel, dest, rects[1])
-	if clickable:
+	if clickable and highlight:
 		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 1.0)
 	if _shake_left > 0.0:
 		# Красная плёнка поверх лица и рамка — «сейчас нельзя».

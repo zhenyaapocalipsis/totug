@@ -72,15 +72,12 @@ const NAMES := {
 }
 
 var _tex: ImageTexture
-var _hover := false
 
 
 func _init(card_id: String, text: String) -> void:
 	custom_minimum_size = Vector2(W, H)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	mouse_entered.connect(func(): _hover = true; queue_redraw())
-	mouse_exited.connect(func(): _hover = false; queue_redraw())
 	_tex = ImageTexture.create_from_image(render(card_id, text))
 
 
@@ -216,10 +213,6 @@ static func _draw_word(img: Image, x: int, y: int, word: String) -> void:
 
 func _draw() -> void:
 	draw_texture(_tex, Vector2.ZERO)
-	# золотая рамка — карту можно выбрать; под курсором — толще
-	draw_rect(Rect2(Vector2.ZERO, size).grow(-0.5), PixelTheme.GOLD, false, 1.0)
-	if _hover:
-		draw_rect(Rect2(Vector2.ONE, size - Vector2(2, 2)).grow(-0.5), PixelTheme.GOLD, false, 1.0)
 
 
 func _gui_input(event: InputEvent) -> void:
