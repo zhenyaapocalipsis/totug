@@ -8,6 +8,7 @@
 - Tests: `"C:\godot\Godot_v4.7.2-stable_win64_console.exe" --headless --path "C:\tyrants of the underdark godot\engine\godot" --script res://tests/run_tests.gd` (last line: `пройдено: N, провалено: 0`).
 - Network test: same command with `--script res://tests/net_loopback.gd` (host + client over 127.0.0.1; last line: `сеть: пройдено N, провалено 0`).
 - Play: open `engine/godot/project.godot` in `C:\godot\Godot_v4.7.2-stable_win64.exe`, press F5.
+- Online: `start-server.bat` = local room-code server (UDP 7780, `-- --server`); `start-game.bat` opens one game window (run twice to test).
 - Build exe: `GAME 1v1/build-game.bat`.
 
 ## Workflow

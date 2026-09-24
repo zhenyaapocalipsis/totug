@@ -36,14 +36,13 @@ func _show_setup(game_seed: int) -> void:
 		child.queue_free()
 	var setup := SetupScreen.new()
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
-	setup.host_requested.connect(func(count: int, m: String): _show_lobby(true, count, m))
-	setup.join_requested.connect(func(): _show_lobby(false))
+	setup.online_requested.connect(_show_lobby)
 	add_child(setup)
 
 
 ## Сетевая игра: лобби хоста или входа по IP. Связь (NetSession) живёт в
 ## /root/Net — по одному и тому же пути у всех, иначе RPC не найдут узел.
-func _show_lobby(hosting: bool, count: int = 2, mode: String = GameSetup.MODE_STANDARD) -> void:
+func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STANDARD) -> void:
 	for child in get_children():
 		child.queue_free()
 	_close_net()
@@ -51,7 +50,7 @@ func _show_lobby(hosting: bool, count: int = 2, mode: String = GameSetup.MODE_ST
 	net.name = "Net"
 	get_tree().root.add_child(net)
 	net.game_started.connect(_start_net_game)
-	var lobby := LobbyScreen.new(net, hosting, count, mode)
+	var lobby := LobbyScreen.new(net, kind, count, mode)
 	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system())))
 	add_child(lobby)
 

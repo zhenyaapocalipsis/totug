@@ -1,73 +1,74 @@
 class_name NetSession
 extends Node
 
-## Сетевая партия по ENet (этап 6): один игрок хостит, остальные входят по IP.
+## Сетевая игра по ENet (этап 6). Три роли одного и того же узла:
 ##
-## Хост — единственный, у кого есть GameState и GameServer. Клиенты шлют ему
-## только Intent (словарём), он применяет его и рассылает каждому ЕГО срез
-## (StateView) — чужую руку клиент не получает вовсе. Хост играет тем же путём,
-## только без пересылки по сети.
+##   - хост по IP (host): держит одну комнату и сам в ней играет;
+##   - выделенный сервер (serve с dedicated=true, запуск `-- --server`):
+##     держит много комнат с кодами, сам не играет;
+##   - клиент (join / create_room / enter_room): только шлёт намерения.
+##
+## Партию держит только тот, у кого комнаты (GameRoom -> GameServer). Клиент
+## шлёт Intent словарём и получает свой срез (StateView) — чужую руку он не
+## получает вовсе.
 ##
 ## Узел должен лежать по одному и тому же пути у всех (RPC адресуются путём
-## узла) — game_scene.gd кладёт его в /root/Net.
+## узла) — /root/Net. Скрипт тоже должен совпадать: сервер со старой версией
+## игры отвечает «обновите игру» (PROTOCOL).
 
-signal lobby_changed(joined: Array, needed: int)
+signal lobby_changed(joined: Array, needed: int, code: String, owner_seat: String)
 signal game_started(seat: String, board: Dictionary, view: Dictionary)
 signal result_received(err: int, events: Array, view: Dictionary)
 signal chat_received(seat: String, text: String)
 signal player_left(seat: String)
-## Связь не установилась или оборвалась (для клиента — хост пропал).
+## Связь не установилась, оборвалась или сервер отказал (нет комнаты и т.п.).
 signal connection_lost(reason: String)
 ## Хост: чем кончилась попытка открыть порт на роутере (UPnP). address — внешний
 ## адрес для друзей, "" если не вышло; note — пояснение для лобби.
 signal upnp_finished(address: String, note: String)
 
+## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
+## Выделенный сервер с комнатами.
+const SERVER_PORT := 7780
+## Адрес сервера по умолчанию. Пока своего сервера в интернете нет — этот же
+## компьютер (сервер запускают рядом, start-server.bat).
+const DEFAULT_SERVER := "127.0.0.1"
+## Меняется при любой несовместимой правке сети или правил: сервер и игроки
+## должны играть одной версией.
+const PROTOCOL := 1
+const MAX_ROOMS := 64
+const MAX_SERVER_PEERS := 128
+## Без похожих друг на друга знаков (0/O, 1/I).
+const CODE_CHARS := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+const CODE_LENGTH := 4
 
+## У этой программы есть комнаты (хост по IP или сервер).
 var is_host := false
-## Свой цвет за столом ("" — пока хост не рассадил).
+var dedicated := false
+## Свой цвет за столом ("" — пока не рассадили) и код своей комнаты.
 var seat := ""
+var room_code := ""
 var started := false
-## Только у хоста: кто за каким цветом (peer id -> player id) и сама партия.
-var seats: Dictionary = {}
-var server: GameServer
-var _needed := 2
-var _mode := GameSetup.MODE_STANDARD
+
+var rooms: Dictionary = {}      # code -> GameRoom
+var peer_room: Dictionary = {}  # peer id -> code
+var _lan_code := ""
+## Что отправить серверу, как только связь установится (вход или создание).
+var _on_connected: Callable
+var _rng := RandomNumberGenerator.new()
 
 
-## Открыть игру на порту. Хост сразу садится за первый цвет.
-func host(port: int, player_count: int, mode: String) -> int:
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(port, GameScreen.MAX_PLAYERS)
-	if err != OK:
-		return err
-	multiplayer.multiplayer_peer = peer
-	is_host = true
-	_needed = clampi(player_count, GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS)
-	_mode = mode
-	seats = {1: GameScreen.ALL_PLAYER_IDS[0]}
-	seat = seats[1]
-	_broadcast_lobby.call_deferred()
-	return OK
-
-
-func join(address: String, port: int) -> int:
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(address, port)
-	if err != OK:
-		return err
-	multiplayer.multiplayer_peer = peer
-	is_host = false
-	return OK
-
-
-## Подписки на события связи — один раз: повторный CONNECT после ошибки не
-## должен их удваивать.
+## Подписки на события связи — один раз: повторное подключение после ошибки
+## не должно их удваивать.
 func _ready() -> void:
-	multiplayer.peer_connected.connect(_on_peer_connected)
+	_rng.randomize()
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-	multiplayer.connection_failed.connect(func(): _lost("Could not connect to the host"))
-	multiplayer.server_disconnected.connect(func(): _lost("The host has left the game"))
+	multiplayer.connected_to_server.connect(func():
+		if _on_connected.is_valid():
+			_on_connected.call())
+	multiplayer.connection_failed.connect(func(): _lost("Could not connect"))
+	multiplayer.server_disconnected.connect(func(): _lost("The connection to the game was lost"))
 
 
 func _lost(reason: String) -> void:
@@ -75,15 +76,77 @@ func _lost(reason: String) -> void:
 	connection_lost.emit(reason)
 
 
+## Принимать подключения. dedicated — выделенный сервер: комнаты заводят
+## сами игроки, сам сервер не играет.
+func serve(port: int, is_dedicated: bool = false) -> int:
+	close()
+	var peer := ENetMultiplayerPeer.new()
+	var err := peer.create_server(port, MAX_SERVER_PEERS if is_dedicated else GameRoom.MAX_PLAYERS)
+	if err != OK:
+		return err
+	multiplayer.multiplayer_peer = peer
+	is_host = true
+	dedicated = is_dedicated
+	return OK
+
+
+## Хост по IP: одна комната, хост сидит за первым цветом.
+func host(port: int, player_count: int, mode: String) -> int:
+	var err := serve(port)
+	if err != OK:
+		return err
+	var room := _new_room(player_count, mode)
+	_lan_code = room.code
+	_seat_peer.call_deferred(room, 1)
+	return OK
+
+
+## Клиент: к хосту по IP.
+func join(address: String, port: int) -> int:
+	return _connect(address, port, func(): _enter.rpc_id(1, PROTOCOL, ""))
+
+
+## Клиент: на сервере завести новую комнату.
+func create_room(address: String, port: int, player_count: int, mode: String) -> int:
+	return _connect(address, port, func(): _create.rpc_id(1, PROTOCOL, player_count, mode))
+
+
+## Клиент: на сервере войти в комнату по коду.
+func enter_room(address: String, port: int, code: String) -> int:
+	var clean := code.strip_edges().to_upper()
+	return _connect(address, port, func(): _enter.rpc_id(1, PROTOCOL, clean))
+
+
+func _connect(address: String, port: int, then: Callable) -> int:
+	close()
+	var peer := ENetMultiplayerPeer.new()
+	var err := peer.create_client(address, port)
+	if err != OK:
+		return err
+	multiplayer.multiplayer_peer = peer
+	_on_connected = then
+	return OK
+
+
 func close() -> void:
 	_close_upnp()
+	_on_connected = Callable()
 	if multiplayer.multiplayer_peer != null:
 		multiplayer.multiplayer_peer.close()
 		multiplayer.multiplayer_peer = null
+	is_host = false
+	dedicated = false
+	rooms.clear()
+	peer_room.clear()
+	seat = ""
+	room_code = ""
+	started = false
 
 
+## Своя комната полна (для лобби хоста по IP).
 func is_full() -> bool:
-	return seats.size() >= _needed
+	var room: GameRoom = rooms.get(_lan_code)
+	return room != null and room.is_full()
 
 
 # --- UPnP: порт на роутере хоста ---------------------------------------------
@@ -210,74 +273,141 @@ static func is_public_ipv4(address: String) -> bool:
 	return true
 
 
-# --- лобби (хост) ------------------------------------------------------------
+# --- комнаты (хост / сервер) -------------------------------------------------
 
-func _on_peer_connected(id: int) -> void:
-	# У клиента это событие приходит и про других клиентов — рассаживает хост.
+func _new_room(player_count: int, mode: String) -> GameRoom:
+	var code := ""
+	while code == "" or rooms.has(code):
+		code = ""
+		for i in CODE_LENGTH:
+			code += CODE_CHARS[_rng.randi_range(0, CODE_CHARS.length() - 1)]
+	var room := GameRoom.new(code, player_count, mode)
+	rooms[code] = room
+	return room
+
+
+func _room_of(peer: int) -> GameRoom:
+	return rooms.get(peer_room.get(peer, ""))
+
+
+func _seat_peer(room: GameRoom, peer: int) -> void:
+	if room.add(peer) == "":
+		return
+	peer_room[peer] = room.code
+	_broadcast_lobby(room)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _create(version: int, player_count: int, mode: String) -> void:
+	# Заводить комнаты по сети можно только на выделенном сервере.
+	if not dedicated:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	if not _check_newcomer(peer, version):
+		return
+	if rooms.size() >= MAX_ROOMS:
+		_refuse(peer, "The server is full, try again later")
+		return
+	var room := _new_room(player_count, mode)
+	_seat_peer(room, peer)
+	_log("room %s created: %d players, %s" % [room.code, room.needed, room.mode])
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _enter(version: int, code: String) -> void:
 	if not is_host:
 		return
-	if started or is_full():
-		# Мест нет — вежливо отказываем: клиент увидит обрыв связи.
-		multiplayer.multiplayer_peer.disconnect_peer(id)
+	var peer := multiplayer.get_remote_sender_id()
+	if not _check_newcomer(peer, version):
 		return
-	for pid: String in GameScreen.ALL_PLAYER_IDS:
-		if not seats.values().has(pid):
-			seats[id] = pid
-			break
-	_broadcast_lobby()
+	var key := _lan_code if not dedicated else code
+	var room: GameRoom = rooms.get(key)
+	if room == null:
+		_refuse(peer, "There is no room %s" % code)
+	elif room.started:
+		_refuse(peer, "This game has already started")
+	elif room.is_full():
+		_refuse(peer, "This game is full")
+	else:
+		_seat_peer(room, peer)
+		_log("room %s: %d of %d" % [room.code, room.seats.size(), room.needed])
 
 
-func _on_peer_disconnected(id: int) -> void:
-	if not is_host or not seats.has(id):
-		return
-	var gone := String(seats[id])
-	if started:
-		# Место оставляем за ним: переподключение — следующий этап.
-		_left.rpc(gone)
-		player_left.emit(gone)
-		return
-	seats.erase(id)
-	_broadcast_lobby()
+func _check_newcomer(peer: int, version: int) -> bool:
+	if version != PROTOCOL:
+		_refuse(peer, "Different game version (yours %d, server %d): update the game" % [version, PROTOCOL])
+		return false
+	return not peer_room.has(peer)
 
 
-func _joined() -> Array:
-	var ids: Array = []
-	for pid: String in GameScreen.ALL_PLAYER_IDS:
-		if seats.values().has(pid):
-			ids.append(pid)
-	return ids
-
-
-func _broadcast_lobby() -> void:
-	var joined := _joined()
-	for id: int in seats:
-		if id != 1:
-			_lobby.rpc_id(id, seats[id], joined, _needed)
-	lobby_changed.emit(joined, _needed)
+func _refuse(peer: int, reason: String) -> void:
+	_refused.rpc_id(peer, reason)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _lobby(your_seat: String, joined: Array, needed: int) -> void:
-	seat = your_seat
-	lobby_changed.emit(joined, needed)
+func _refused(reason: String) -> void:
+	# Связь рвём не сразу: закрывать её прямо внутри приёма пакета нельзя.
+	close.call_deferred()
+	connection_lost.emit(reason)
 
 
-## Все на местах — хост раздаёт партию. Колоды тасует только он.
-func start_game(game_seed: int) -> void:
-	if not is_host or started or not is_full():
+func _on_peer_disconnected(id: int) -> void:
+	var room := _room_of(id)
+	peer_room.erase(id)
+	if room == null:
 		return
-	started = true
-	var ids: Array[String] = []
-	for pid in _joined():
-		ids.append(String(pid))
-	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, _mode)
-	server = GameServer.new(state)
-	var board := StateView.board_snapshot(state)
-	var views: Dictionary = _views()
-	for id: int in seats:
-		if id != 1:
-			_start.rpc_id(id, board, views[seats[id]])
-	game_started.emit(seat, board, views[seat])
+	var gone := String(room.seats.get(id, ""))
+	room.remove(id)
+	if room.seats.is_empty() or (not dedicated and id == 1):
+		rooms.erase(room.code)
+		_log("room %s closed" % room.code)
+		return
+	if room.started:
+		# Место не освобождается: переподключение — следующий этап.
+		for peer: int in room.seats:
+			_send(peer, "_left", [gone])
+	else:
+		_broadcast_lobby(room)
+
+
+func _broadcast_lobby(room: GameRoom) -> void:
+	for peer: int in room.seats:
+		_send(peer, "_lobby", [room.seats[peer], room.joined(), room.needed, room.code, room.owner_seat()])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_seat: String) -> void:
+	seat = your_seat
+	room_code = code
+	lobby_changed.emit(joined, needed, code, owner_seat)
+
+
+## START. У хоста по IP — сразу, у клиента — просьба серверу: начать может
+## только создатель комнаты, и только когда все на местах.
+func start_game(game_seed: int) -> void:
+	if is_host and not dedicated:
+		var room: GameRoom = rooms.get(_lan_code)
+		if room != null and room.owner_peer == 1:
+			_start_room(room, game_seed)
+	elif not is_host:
+		_start_request.rpc_id(1)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _start_request() -> void:
+	var peer := multiplayer.get_remote_sender_id()
+	var room := _room_of(peer)
+	if room != null and room.owner_peer == peer:
+		_start_room(room, _rng.randi())
+
+
+func _start_room(room: GameRoom, game_seed: int) -> void:
+	if room.started or not room.is_full():
+		return
+	var dealt: Dictionary = room.start(game_seed)
+	for peer: int in room.seats:
+		_send(peer, "_start", [dealt["board"], dealt["views"][room.seats[peer]]])
+	_log("room %s started" % room.code)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -286,18 +416,21 @@ func _start(board: Dictionary, view: Dictionary) -> void:
 	game_started.emit(seat, board, view)
 
 
-func _views() -> Dictionary:
-	var views: Dictionary = {}
-	for pid: String in server.state.players.keys():
-		views[pid] = StateView.for_player_with_pending(server.state, pid, server.resolver.pending)
-	return views
+## Отправить игроку: себе (хост по IP играет сам) — вызовом, другим — по сети.
+func _send(peer: int, method: String, args: Array) -> void:
+	if peer == 1 and is_host and not dedicated:
+		callv(method, args)
+	else:
+		var call_args: Array = [peer, method]
+		call_args.append_array(args)
+		callv("rpc_id", call_args)
 
 
 # --- ходы --------------------------------------------------------------------
 
 func send_intent(intent: Intent) -> void:
 	if is_host:
-		_host_apply(1, intent.to_dict())
+		_room_apply(1, intent.to_dict())
 	else:
 		_intent.rpc_id(1, intent.to_dict())
 
@@ -305,30 +438,22 @@ func send_intent(intent: Intent) -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func _intent(d: Dictionary) -> void:
 	if is_host:
-		_host_apply(multiplayer.get_remote_sender_id(), d)
+		_room_apply(multiplayer.get_remote_sender_id(), d)
 
 
-## Ход применяет только хост. Цвет берём из рассадки, а не из намерения:
-## клиент не может сходить за другого.
-func _host_apply(sender: int, d: Dictionary) -> void:
-	if not started or not seats.has(sender):
+func _room_apply(sender: int, d: Dictionary) -> void:
+	var room := _room_of(sender)
+	if room == null or not room.started:
 		return
-	var intent := Intent.from_dict(d)
-	intent.player_id = String(seats[sender])
-	var result: Dictionary = server.apply_intent(intent)
+	var result: Dictionary = room.apply(sender, d)
 	var err := int(result["error"])
-	var events: Array = result["events"]
 	var views: Dictionary = result["views"]
-	for id: int in seats:
+	for peer: int in room.seats:
 		# Отказ касается только того, кто ошибся: остальным слать нечего.
-		if err != GameServer.Error.OK and id != sender:
+		if err != GameServer.Error.OK and peer != sender:
 			continue
-		var own_err := err if id == sender else GameServer.Error.OK
-		var view: Dictionary = views[seats[id]]
-		if id == 1:
-			result_received.emit(own_err, events, view)
-		else:
-			_result.rpc_id(id, own_err, events, view)
+		var own_err := err if peer == sender else GameServer.Error.OK
+		_send(peer, "_result", [own_err, result["events"], views[room.seats[peer]]])
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -345,7 +470,7 @@ func _left(gone: String) -> void:
 
 func send_chat(text: String) -> void:
 	if is_host:
-		_host_chat(1, text)
+		_room_chat(1, text)
 	else:
 		_chat_up.rpc_id(1, text)
 
@@ -353,18 +478,24 @@ func send_chat(text: String) -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func _chat_up(text: String) -> void:
 	if is_host:
-		_host_chat(multiplayer.get_remote_sender_id(), text)
+		_room_chat(multiplayer.get_remote_sender_id(), text)
 
 
-func _host_chat(sender: int, text: String) -> void:
-	if not seats.has(sender):
+func _room_chat(sender: int, text: String) -> void:
+	var room := _room_of(sender)
+	if room == null:
 		return
-	var who := String(seats[sender])
+	var who := String(room.seats[sender])
 	var clean := text.strip_edges().left(300)
-	_chat_down.rpc(who, clean)
-	chat_received.emit(who, clean)
+	for peer: int in room.seats:
+		_send(peer, "_chat_down", [who, clean])
 
 
 @rpc("authority", "call_remote", "reliable")
 func _chat_down(who: String, text: String) -> void:
 	chat_received.emit(who, text)
+
+
+func _log(text: String) -> void:
+	if dedicated:
+		print("[%s] %s" % [Time.get_datetime_string_from_system(), text])

@@ -12,8 +12,9 @@ extends Control
 ## проекте правится вслепую, без редактора.
 
 signal started(player_ids: Array[String], mode: String)
-signal host_requested(player_count: int, mode: String)
-signal join_requested
+## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
+## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN).
+signal online_requested(kind: String, player_count: int, mode: String)
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -89,8 +90,12 @@ func _init() -> void:
 		col.add_child(_count_row(count))
 
 	col.add_child(HSeparator.new())
-	col.add_child(GameScreen.section_label("PLAY ONLINE (same game mode)"))
-	col.add_child(_online_row())
+	col.add_child(GameScreen.section_label("ONLINE: ROOM CODE (same game mode)"))
+	col.add_child(_online_row("create", "CREATE", "join_code", "JOIN CODE",
+		"Create a room on the server for %d players; friends join by its code"))
+	col.add_child(GameScreen.section_label("DIRECT: HOME NETWORK OR RADMIN VPN"))
+	col.add_child(_online_row("host", "HOST", "join_ip", "JOIN IP",
+		"Open a game for %d players; the others join by your IP"))
 
 	col.add_child(HSeparator.new())
 	var note := Label.new()
@@ -134,25 +139,26 @@ func _select_mode(mode: String) -> void:
 	_mode_note.text = MODE_NOTES[mode]
 
 
-## Сетевая игра: хост на 2/3/4 места или вход к чужому хосту по IP.
-func _online_row() -> Control:
+## Строка сетевой игры: открыть партию на 2/3/4 места или войти в чужую.
+func _online_row(open_kind: String, open_text: String, join_kind: String, join_text: String,
+		open_tip: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
-		var host := Button.new()
-		host.text = "HOST %d" % count
-		host.tooltip_text = "Open a game for %d players; the others join by your IP" % count
-		host.custom_minimum_size = Vector2(52, 16)
-		_style_button(host)
-		host.pressed.connect(func(): host_requested.emit(count, _mode))
-		row.add_child(host)
+		var open := Button.new()
+		open.text = "%s %d" % [open_text, count]
+		open.tooltip_text = open_tip % count
+		open.custom_minimum_size = Vector2(56, 16)
+		_style_button(open)
+		open.pressed.connect(func(): online_requested.emit(open_kind, count, _mode))
+		row.add_child(open)
 	var join := Button.new()
-	join.text = "JOIN"
-	join.tooltip_text = "Join a game someone else is hosting"
-	join.custom_minimum_size = Vector2(52, 16)
+	join.text = join_text
+	join.tooltip_text = "Join a game someone else has opened"
+	join.custom_minimum_size = Vector2(62, 16)
 	_style_button(join)
-	join.pressed.connect(func(): join_requested.emit())
+	join.pressed.connect(func(): online_requested.emit(join_kind, 0, _mode))
 	row.add_child(join)
 	return row
 
