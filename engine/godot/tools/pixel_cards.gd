@@ -18,14 +18,14 @@ const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
 ## на все карты — иначе они не встанут ровным рядом в руке и маркете.
 const MINI_W := 80
 const MINI_H := 76
-## Шапка (имя + цена) и арт под ней — больше ничего. Значка аспекта и двух VP
-## внизу нет (решение владельца, 2026-09-20): полоса съедала шестую часть
-## высоты ради цифр, которые по ходу хода ничего не решают. Аспект видно по
-## цвету шапки, а VP читают на увеличенной карте под курсором.
+## Шапка и арт под ней. В шапке слева имя, справа колонка: цена, значок
+## аспекта, VP в колоде и во внутреннем круге (решение владельца, 2026-09-24).
 const MINI_HEAD := 26
 const MINI_ART_H := 45
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
+## Ширина правой колонки шапки: две плашки VP по 7 пикселей с зазором в 1.
+const MINI_VP_W := 15
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const W := 176
 const ART_H := 100
@@ -54,11 +54,19 @@ const ASPECT_COLOR := {
 const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE",
 	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
 
-## Где рвать слово, которое само шире строки мелкой карты: номер буквы, после
-## которой ставится дефис. Обычное правило «примерно посередине» даёт
-## WEAPON-MASTER и DOPPEL-GANGER, а вот SPELLSPINNER режет как SPELLS-PINNER —
-## такие случаи перечислены здесь. Слова, которых тут нет, рвутся по правилу.
-const NAME_BREAKS := {"SPELLSPINNER": 5}
+## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
+## (номер буквы, после которой ставится дефис). Берётся самая дальняя граница,
+## что влезает в строку (решение владельца, 2026-09-24: переносить по слогам).
+## Слова, которых тут нет, рвутся примерно посередине — генератор печатает их
+## как "hyphenated", их стоит дописать сюда.
+const NAME_BREAKS := {
+	"AMBASSADOR": [2, 5, 7], "BLACKGUARD": [5], "BRAINWASHED": [5], "DEATHBLADE": [5],
+	"DEMOGORGON": [2, 4, 7], "DOPPELGANGER": [3, 6, 9], "DRAGONCLAW": [3, 6],
+	"INFILTRATOR": [2, 5, 8], "INFORMATION": [2, 5, 7], "INQUISITOR": [2, 5, 7],
+	"JACKALWERE": [4, 6], "MINDWITNESS": [4, 7], "NALFESHNEE": [3, 7],
+	"NECROMANCER": [3, 5, 8], "NEGOTIATOR": [2, 4, 6, 7], "SHATTERKEEL": [4, 7],
+	"SPELLSPINNER": [5, 9], "WEAPONMASTER": [6, 9], "WYRMSPEAKER": [4, 9],
+}
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
 const SHEETS := {
@@ -518,18 +526,22 @@ func render_mini(c: Dictionary) -> Image:
 	# выглядеть обрезанной по нижнему краю.
 	rect(1, MINI_H - 2, MINI_W - 2, 1, C_FRAME)
 
-	# шапка: подложка цвета аспекта, цена справа, имя слева от неё
-	rect(1, 1, MINI_W - 2, MINI_HEAD, Color(aspect_col.darkened(0.62), 1.0))
-	# Цена ростом с обычную строку, золотом: крупная цифра отнимала у имени две
-	# строки из трёх и заставляла держать карту шире, чем нужно.
+	# Шапка цвета рамки карты, одна на все карты (решение владельца,
+	# 2026-09-24): аспект теперь показывает значок, а не подложка.
+	rect(1, 1, MINI_W - 2, MINI_HEAD, C_FRAME)
+	# Правая колонка сверху вниз: цена (того же цвета, что имя), значок
+	# аспекта, плашки VP в колоде и VP во внутреннем круге.
 	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
-	var cost_w := text_width(cost_str, 1)
 	if cost_str != "":
-		text(MINI_W - 3 - cost_w, 2, cost_str, C_GOLD, 1, C_OUTLINE)
-	# Цена занимает только первую строку, остальные идут во всю ширину.
-	var free := MINI_W - 5
-	var beside := free - (cost_w + 3 if cost_str != "" else 0)
-	var name_lines := wrap_name(clean(sv(c["name"])), beside, free, 1, MINI_NAME_LINES)
+		text(MINI_W - 3 - text_width(cost_str, 1), 2, cost_str, C_LIGHT, 1, C_OUTLINE)
+	if aspect != "":
+		glyph_rows(MINI_W - 3 - 7, 10, ICONS[aspect], aspect_col)
+	# Плашки прижаты к правому краю; ширина по числу (у Insane Outcast -1).
+	var ic_x := mini_vp_badge(MINI_W - 3, 18, str(int(c["inner_circle_vp"])), C_IC_HI, C_LIGHT)
+	mini_vp_badge(ic_x - 1, 18, str(int(c["deck_vp"])), C_PARCH, C_INK)
+	# Колонка во всю высоту шапки, поэтому имя идёт слева от неё во всех строках.
+	var room := MINI_W - 5 - (MINI_VP_W + 3)
+	var name_lines := wrap_name(clean(sv(c["name"])), room, room, MINI_NAME_LINES, MINI_NAME_LINES)
 	# По верхнему краю, а не по центру шапки: имя должно начинаться на одной
 	# линии с ценой, иначе короткие имена провисают относительно неё.
 	for i in name_lines.size():
@@ -543,6 +555,16 @@ func render_mini(c: Dictionary) -> Image:
 	rect(2, art_y - 1, aw + 2, MINI_ART_H + 2, C_OUTLINE)
 	img.blit_rect(art, Rect2i(0, 0, aw, MINI_ART_H), Vector2i(3, art_y))
 	return img
+
+
+## Плашка VP высотой 9, правым краем на right: светлая — VP в колоде,
+## фиолетовая — во внутреннем круге (цвета как на большой карте). Возвращает
+## левый край плашки.
+func mini_vp_badge(right: int, y: int, v: String, bg: Color, fg: Color) -> int:
+	var w := text_width(v, 1) + 2
+	rect(right - w, y, w, 9, bg)
+	text(right - w + 1, y + 1, v, fg, 1)
+	return right - w
 
 
 ## Имя мелкой карты: до max_lines строк. Первые blocked строк помещаются слева
@@ -578,18 +600,20 @@ func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) 
 
 
 ## Делит слово, которое само шире строки. Сначала пробуем последний дефис,
-## который ещё влезает, иначе ставим дефис сами — поближе к середине слова,
-## чтобы не получалось WEAPONMAST-ER вместо WEAPON-MASTER.
+## который ещё влезает, потом границу слога из NAME_BREAKS, иначе ставим дефис
+## сами — поближе к середине слова.
 func split_word(word: String, room: int) -> Array[String]:
 	for k in range(word.length() - 1, 0, -1):
 		if word[k] == "-" and text_width(word.substr(0, k + 1), 1) <= room:
 			return [word.substr(0, k + 1), word.substr(k + 1)]
 	var fit := maxi((room + 1) / 6 - 1, 1)
-	var half := (word.length() + 1) / 2
-	var cut := mini(fit, half)
-	if NAME_BREAKS.has(word) and int(NAME_BREAKS[word]) <= fit:
-		cut = int(NAME_BREAKS[word])
-	print("hyphenated: ", word, " -> ", word.substr(0, cut), "- ", word.substr(cut))
+	var cut := 0
+	for b: int in NAME_BREAKS.get(word, []):
+		if b <= fit:
+			cut = maxi(cut, b)
+	if cut == 0:
+		cut = mini(fit, (word.length() + 1) / 2)
+		print("hyphenated: ", word, " -> ", word.substr(0, cut), "- ", word.substr(cut))
 	return [word.substr(0, cut) + "-", word.substr(cut)]
 
 
