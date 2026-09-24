@@ -65,11 +65,13 @@ func _init() -> void:
 	add_theme_stylebox_override("panel", _style)
 
 	# Затемнение всего экрана под выбором карт: верхнеуровневый узел, его не
-	# раскладывает панель, и он же ловит клики мимо карт.
+	# раскладывает панель. Клики он НЕ ловит: верхнеуровневый узел Godot
+	# опрашивает раньше детей окна, и карты переставали нажиматься. Клики
+	# мимо окна гасит _input.
 	_dim = ColorRect.new()
 	_dim.top_level = true
 	_dim.color = Color(0.02, 0.02, 0.03, 0.62)
-	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dim.visible = false
 	# top_level не наследует z окна — задаём свой: над рукой, под окном.
 	_dim.z_index = 999
@@ -276,6 +278,15 @@ func _set_dim(on: bool) -> void:
 	if on and is_inside_tree():
 		_dim.position = Vector2.ZERO
 		_dim.size = get_viewport_rect().size
+
+
+## Пока экран затемнён, щелчки мимо окна выбора никуда не доходят: ни до
+## доски, ни до руки, ни до маркета.
+func _input(event: InputEvent) -> void:
+	if not (_dim.visible and is_visible_in_tree()):
+		return
+	if event is InputEventMouseButton and not get_global_rect().has_point(event.position):
+		get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:
