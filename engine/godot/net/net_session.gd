@@ -115,11 +115,37 @@ var _found_note := ""
 
 
 func _upnp_work(port: int) -> void:
-	var upnp := UPNP.new()
-	var result := upnp.discover(2000, 2, "InternetGatewayDevice")
-	if result != UPNP.UPNP_RESULT_SUCCESS or upnp.get_gateway() == null \
-			or not upnp.get_gateway().is_valid_gateway():
-		_found_note = "Router did not answer (UPnP is off or unsupported)."
+	# Роутер ищем через каждую сетевую карту по очереди: без явного выбора
+	# поиск уходил в туннель VPN-программы (так было у владельца — happ-xray)
+	# и роутер «не отвечал».
+	var upnp: UPNP = null
+	var saw_router := false
+	# Домашние сети (192.168.*, 10.*) — первыми, выбор системы ("") — последним.
+	var cards: Array[String] = []
+	for address: String in IP.get_local_addresses():
+		if address.contains(":") or address.begins_with("127.") or address.begins_with("26."):
+			continue
+		if address.begins_with("192.168.") or address.begins_with("10."):
+			cards.push_front(address)
+		else:
+			cards.append(address)
+	cards.append("")
+	for card in cards:
+		var probe := UPNP.new()
+		probe.discover_multicast_if = card
+		if probe.discover(2000, 2, "InternetGatewayDevice") != UPNP.UPNP_RESULT_SUCCESS \
+				or probe.get_device_count() == 0:
+			continue
+		# Роутер ответил — дальше не ищем, ответ другой карты будет тем же.
+		saw_router = true
+		if probe.get_gateway() != null and probe.get_gateway().is_valid_gateway():
+			upnp = probe
+		break
+	if upnp == null:
+		# Роутер ответил, но годным не назвался — чаще всего у него самого
+		# нет «белого» адреса: провайдер делит один адрес на многих.
+		_found_note = "Your router has no public internet address (provider NAT)." if saw_router \
+			else "Router did not answer (UPnP is off or unsupported)."
 	else:
 		var external := upnp.query_external_address()
 		if not is_public_ipv4(external):
