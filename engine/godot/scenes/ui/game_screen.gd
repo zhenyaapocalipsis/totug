@@ -45,11 +45,11 @@ const FLIGHT_ARC := 26.0
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
 const SHAKE_NUDGE := 2.0
-## Ширина правой колонки — ширина рынка в три мелких карты; все зоны колонки
+## Ширина правой колонки — ширина рынка в две мелкие карты; все зоны колонки
 ## той же ширины (макет владельца, 2026-09-24).
 const COL := float(MarketPanel.WIDTH)
 ## Ширина столбика кнопок стопок в зоне кнопок; остальное — End turn.
-const PILES_W := 96.0
+const PILES_W := 80.0
 ## Высота зоны бараков.
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
@@ -238,11 +238,11 @@ func _build_layout() -> void:
 	_pile_discard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_discard.clicked.connect(func(): _open_pile("discard"))
 	_piles_column.add_child(_pile_discard)
-	_pile_inner = PileZone.new("INNER CIRCLE")
+	_pile_inner = PileZone.new("INNER")
 	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_inner.clicked.connect(func(): _open_pile("inner"))
 	_piles_column.add_child(_pile_inner)
-	_pile_devour = PileZone.new("DEVOURED")
+	_pile_devour = PileZone.new("DEVOUR")
 	_pile_devour.tooltip_text = "Cards devoured out of the game. Click to see them all"
 	_pile_devour.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_devour.clicked.connect(func(): _open_pile("devour"))
@@ -569,6 +569,10 @@ func refresh(view: Dictionary) -> void:
 	_refresh_played(view)
 	_refresh_piles(view)
 	_refresh_actions(view)
+	# Появился или ушёл ghost — рынок вырос или сжался на ряд, колонку
+	# раскладываем заново.
+	if not is_equal_approx(_market_panel.get_combined_minimum_size().y, _market_panel.size.y):
+		_layout()
 	# Плашка выбора цели закрывает верх доски — доска вписывается ниже неё.
 	var covered: bool = _decision_dialog.visible and _decision_dialog.at_top
 	_board_panel.set_top_inset(_decision_dialog.get_combined_minimum_size().y + 4.0 if covered else 0.0)
