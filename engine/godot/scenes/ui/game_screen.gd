@@ -69,7 +69,13 @@ const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
 ## Таймер хода: две минуты, по нулю ход завершается сам.
 const TURN_SECONDS := 120.0
 
+## Хотсит: партия живёт прямо здесь. В сетевой партии null — партия у хоста
+## в NetSession, а экран знает только свой срез.
 var server: GameServer
+## Сетевая партия: через неё уходят намерения и чат. null — хотсит.
+var net: NetSession
+## Последний полученный срез — всё, что экран знает о партии.
+var _view: Dictionary = {}
 ## Кто сидит за экраном, в порядке рассадки. Очередь хода — отдельно: её
 ## перемешивает GameSetup, чтобы первый ходящий выбирался случайно.
 var player_ids: Array[String] = ALL_PLAYER_IDS.slice(0, MIN_PLAYERS)
@@ -133,10 +139,26 @@ static func player_ids_for(count: int) -> Array[String]:
 	return ids
 
 
+## online — сетевая партия: {session, seat, board, view} из NetSession.game_started.
+## Пустой — хотсит, партию собирает сам экран.
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
-		mode: String = GameSetup.MODE_STANDARD) -> void:
+		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {}) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
+	if not online.is_empty():
+		net = online["session"]
+		viewer_id = String(online["seat"])
+		board_data = online["board"]
+		net.result_received.connect(_on_result)
+		net.chat_received.connect(func(who: String, text: String): _chat_panel.add_message(who, text))
+		net.player_left.connect(func(who: String):
+			_log_panel.add_note("%s has disconnected." % EventLogPanel.player_name(who)))
+		net.connection_lost.connect(func(reason: String): _log_panel.add_note(reason + "."))
+		_build_layout()
+		_chat_panel.set_online()
+		refresh(online["view"])
+		_log_panel.add_note("Online game started. You play %s." % EventLogPanel.player_name(viewer_id))
+		return
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
 	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode)
@@ -306,7 +328,11 @@ func _build_layout() -> void:
 	_overlay = PlayersOverlay.new()
 	add_child(_overlay)
 	_chat_panel = ChatPanel.new()
-	_chat_panel.message_sent.connect(func(text: String): _chat_panel.add_message(viewer_id, text))
+	_chat_panel.message_sent.connect(func(text: String):
+		if net != null:
+			net.send_chat(text)
+		else:
+			_chat_panel.add_message(viewer_id, text))
 	_overlay.add_chat(_chat_panel)
 	_log_panel = _chat_panel.log_panel
 	_log_panel.board = board_data
@@ -494,11 +520,11 @@ static func _place(control: Control, x: float, y: float, width: float, height: f
 ## журнале, а не глотаем: если UI предложил недопустимое действие, это его
 ## баг, и он должен быть виден.
 func send(intent: Intent) -> void:
+	if net != null:
+		# Ответ придёт позже сигналом result_received -> _on_result.
+		net.send_intent(intent)
+		return
 	var result: Dictionary = server.apply_intent(intent)
-	var err: int = int(result["error"])
-	if err != GameServer.Error.OK:
-		_log_panel.add_note("Not allowed: %s" % _error_name(err))
-	_log_panel.add_events(result["events"])
 
 	# Ход мог перейти к другому игроку — в локальном режиме зритель следует
 	# за ходом, кроме случая, когда решение ждут от кого-то конкретного.
@@ -512,8 +538,16 @@ func send(intent: Intent) -> void:
 	var view: Dictionary = views.get(viewer_id, {})
 	if view.is_empty():
 		view = StateView.for_player_with_pending(server.state, viewer_id, pending)
+	_on_result(int(result["error"]), result["events"], view)
+
+
+## Ответ сервера — свой или пришедший по сети: журнал, перерисовка, тряска.
+func _on_result(err: int, events: Array, view: Dictionary) -> void:
+	if err != GameServer.Error.OK:
+		_log_panel.add_note("Not allowed: %s" % _error_name(err))
+	_log_panel.add_events(events)
 	refresh(view)
-	_react_to_events(result["events"])
+	_react_to_events(events)
 
 
 ## Чем громче событие на доске, тем сильнее её тряхнёт. Захват локации доска
@@ -549,13 +583,13 @@ static func _error_name(err: int) -> String:
 ## Пока на экране висит вопрос карты, завершить ход нельзя, поэтому таймер ждёт
 ## ответа и завершает ход сразу после него.
 func _process(delta: float) -> void:
-	if _timer_label == null:
+	if _timer_label == null or _view.is_empty():
 		return
-	if server.state.game_over:
+	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
 		return
-	var current := server.state.current_player()
+	var current := String(_view["current_player"])
 	# Пока открыто меню паузы, таймер хода стоит.
 	if _pause_menu.visible and current == _timed_player:
 		return
@@ -567,8 +601,9 @@ func _process(delta: float) -> void:
 	# Под таймером — единственная оставшаяся пометка о состоянии партии:
 	# начался последний круг, дальше подсчёт очков. Отдельной строкой: рядом с
 	# таймером она в узкую колонку не помещается.
-	if _last_round_label.visible != server.state.game_end_triggered:
-		_last_round_label.visible = server.state.game_end_triggered
+	var last_round := bool(_view["game_end_triggered"])
+	if _last_round_label.visible != last_round:
+		_last_round_label.visible = last_round
 		_layout()
 	_timer_label.text = "%d:%02d" % [left / 60, left % 60]
 	_timer_label.add_theme_color_override("font_color",
@@ -583,6 +618,7 @@ func _process(delta: float) -> void:
 
 
 func refresh(view: Dictionary) -> void:
+	_view = view
 	_refresh_turn(view)
 	_barracks.update_from_view(view)
 	_overlay.update_from_view(view)
@@ -697,7 +733,7 @@ func _refresh_piles(view: Dictionary) -> void:
 
 ## Щелчок по стопке — весь её список поверх экрана.
 func _open_pile(which: String) -> void:
-	var view := StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
+	var view := _view
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	var who := EventLogPanel.player_name(viewer_id)
 	match which:
@@ -784,15 +820,15 @@ func _fly_to_discard(from: Rect2, cid: String) -> void:
 ## если допустимо и то и другое (так не бывает — слот либо занят, либо нет),
 ## приоритет у Assassinate как у более редкого намеренного действия.
 func _on_slot_clicked(slot_id: String) -> void:
-	var pending: PendingDecision = server.resolver.pending
-	if pending != null and pending.player_id == viewer_id:
+	var pending: Dictionary = _view.get("pending_decision", {})
+	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
 		if _try_resolve_board_decision(pending, slot_id, _site_of_slot(slot_id)):
 			return
-		if _is_board_choice(pending.choice_type):
+		if _is_board_choice(String(pending["choice_type"])):
 			_log_panel.add_note("That is not a valid target — valid targets have gold rings.")
 			return
 
-	var view := StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
+	var view := _view
 	var legal: Dictionary = view.get("legal", {})
 	if (legal.get("assassinate_slots", []) as Array).has(slot_id):
 		send(Intent.assassinate(viewer_id, slot_id))
@@ -812,24 +848,25 @@ func _is_board_choice(choice_type: String) -> bool:
 ## кодирует составные цели ("troop|<slot_id>" / "spy|<site_id>|<owner>") —
 ## те же префиксы, что и в decision_dialog.gd::_board_label. Возвращает true,
 ## если ответ отправлен на сервер.
-func _try_resolve_board_decision(pending: PendingDecision, slot_id: String, site_id: String) -> bool:
-	match pending.choice_type:
+func _try_resolve_board_decision(pending: Dictionary, slot_id: String, site_id: String) -> bool:
+	var options: Array = pending.get("legal_options", [])
+	match String(pending["choice_type"]):
 		"target_slot":
-			if slot_id != "" and pending.legal_options.has(slot_id):
+			if slot_id != "" and options.has(slot_id):
 				send(Intent.make_decision(viewer_id, slot_id))
 				return true
 		"target_site":
-			if site_id != "" and pending.legal_options.has(site_id):
+			if site_id != "" and options.has(site_id):
 				send(Intent.make_decision(viewer_id, site_id))
 				return true
 		"target_return":
 			if slot_id != "":
 				var composite := "troop|" + slot_id
-				if pending.legal_options.has(composite):
+				if options.has(composite):
 					send(Intent.make_decision(viewer_id, composite))
 					return true
 			if site_id != "":
-				for opt in pending.legal_options:
+				for opt in options:
 					var raw := String(opt)
 					if raw.begins_with("spy|" + site_id + "|"):
 						send(Intent.make_decision(viewer_id, raw))
@@ -885,15 +922,15 @@ func _slot_name(slot_id: String) -> String:
 
 ## Клик по названию локации — возврат вражеского шпиона оттуда (3 Power).
 func _on_site_clicked(site_id: String) -> void:
-	var pending: PendingDecision = server.resolver.pending
-	if pending != null and pending.player_id == viewer_id:
+	var pending: Dictionary = _view.get("pending_decision", {})
+	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
 		if _try_resolve_board_decision(pending, "", site_id):
 			return
-		if _is_board_choice(pending.choice_type):
+		if _is_board_choice(String(pending["choice_type"])):
 			_log_panel.add_note("That is not a valid target — valid targets have gold rings.")
 			return
 
-	var view := StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
+	var view := _view
 	for target in ((view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
 		var t: Dictionary = target
 		if String(t["site_id"]) == site_id:

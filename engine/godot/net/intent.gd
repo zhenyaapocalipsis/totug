@@ -99,3 +99,29 @@ static func make_decision(pid: String, ans) -> Intent:
 
 static func end_turn(pid: String) -> Intent:
 	return Intent.new(Type.END_TURN, pid)
+
+
+## Намерение по сети едет словарём: объекты движок по RPC не передаёт.
+func to_dict() -> Dictionary:
+	return {
+		"type": type,
+		"player_id": player_id,
+		"card_id": card_id,
+		"slot_id": slot_id,
+		"market_index": market_index,
+		"site_id": site_id,
+		"spy_owner": spy_owner,
+		"answer": answer,
+	}
+
+
+## Обратно из словаря. Чужие поля не доверяем типам: приводим явно.
+static func from_dict(d: Dictionary) -> Intent:
+	var i := Intent.new(int(d.get("type", -1)), String(d.get("player_id", "")))
+	i.card_id = String(d.get("card_id", ""))
+	i.slot_id = String(d.get("slot_id", ""))
+	i.market_index = int(d.get("market_index", -1))
+	i.site_id = String(d.get("site_id", ""))
+	i.spy_owner = String(d.get("spy_owner", ""))
+	i.answer = d.get("answer", null)
+	return i

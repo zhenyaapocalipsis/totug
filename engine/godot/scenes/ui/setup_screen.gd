@@ -12,6 +12,8 @@ extends Control
 ## проекте правится вслепую, без редактора.
 
 signal started(player_ids: Array[String], mode: String)
+signal host_requested(player_count: int, mode: String)
+signal join_requested
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -66,7 +68,7 @@ func _init() -> void:
 	col.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Hotseat: everyone plays at this screen, one by one"
+	subtitle.text = "Play at one screen (hotseat) or online"
 	subtitle.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(subtitle)
@@ -85,6 +87,10 @@ func _init() -> void:
 
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
 		col.add_child(_count_row(count))
+
+	col.add_child(HSeparator.new())
+	col.add_child(GameScreen.section_label("PLAY ONLINE (same game mode)"))
+	col.add_child(_online_row())
 
 	col.add_child(HSeparator.new())
 	var note := Label.new()
@@ -126,6 +132,29 @@ func _mode_row() -> Control:
 func _select_mode(mode: String) -> void:
 	_mode = mode
 	_mode_note.text = MODE_NOTES[mode]
+
+
+## Сетевая игра: хост на 2/3/4 места или вход к чужому хосту по IP.
+func _online_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
+		var host := Button.new()
+		host.text = "HOST %d" % count
+		host.tooltip_text = "Open a game for %d players; the others join by your IP" % count
+		host.custom_minimum_size = Vector2(52, 16)
+		_style_button(host)
+		host.pressed.connect(func(): host_requested.emit(count, _mode))
+		row.add_child(host)
+	var join := Button.new()
+	join.text = "JOIN"
+	join.tooltip_text = "Join a game someone else is hosting"
+	join.custom_minimum_size = Vector2(52, 16)
+	_style_button(join)
+	join.pressed.connect(func(): join_requested.emit())
+	row.add_child(join)
+	return row
 
 
 ## Строка выбора: кнопка с числом и цветные фишки тех, кто сядет за стол.

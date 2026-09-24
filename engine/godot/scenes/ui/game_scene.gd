@@ -31,11 +31,52 @@ func _ready() -> void:
 ## Главное меню: выбор режима и числа игроков. Сюда же возвращает кнопка
 ## MAIN MENU из меню по Esc; новая партия получает новый сид.
 func _show_setup(game_seed: int) -> void:
+	_close_net()
 	for child in get_children():
 		child.queue_free()
 	var setup := SetupScreen.new()
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
+	setup.host_requested.connect(func(count: int, m: String): _show_lobby(true, count, m))
+	setup.join_requested.connect(func(): _show_lobby(false))
 	add_child(setup)
+
+
+## Сетевая игра: лобби хоста или входа по IP. Связь (NetSession) живёт в
+## /root/Net — по одному и тому же пути у всех, иначе RPC не найдут узел.
+func _show_lobby(hosting: bool, count: int = 2, mode: String = GameSetup.MODE_STANDARD) -> void:
+	for child in get_children():
+		child.queue_free()
+	_close_net()
+	var net := NetSession.new()
+	net.name = "Net"
+	get_tree().root.add_child(net)
+	net.game_started.connect(_start_net_game)
+	var lobby := LobbyScreen.new(net, hosting, count, mode)
+	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system())))
+	add_child(lobby)
+
+
+func _start_net_game(seat: String, board: Dictionary, view: Dictionary) -> void:
+	for child in get_children():
+		child.queue_free()
+	var net: NetSession = get_tree().root.get_node("Net")
+	var screen := GameScreen.new(0, [], [], GameSetup.MODE_STANDARD,
+		{"session": net, "seat": seat, "board": board, "view": view})
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.main_menu_requested.connect(func():
+		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))
+	add_child(screen)
+
+
+## Закрыть связь. Узел снимаем с дерева сразу: новый NetSession должен
+## получить то же имя "Net", а занятое имя движок молча переименует.
+func _close_net() -> void:
+	var old := get_tree().root.get_node_or_null("Net")
+	if old == null:
+		return
+	(old as NetSession).close()
+	get_tree().root.remove_child(old)
+	old.queue_free()
 
 
 func _start_game(player_ids: Array[String], game_seed: int, mode: String) -> void:

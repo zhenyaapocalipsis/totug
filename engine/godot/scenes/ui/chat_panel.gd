@@ -56,6 +56,12 @@ func _on_submitted(text: String) -> void:
 	message_sent.emit(clean)
 
 
+## Сетевая партия: чат настоящий, открываем его вкладку первой.
+func set_online() -> void:
+	_history.text = "[color=#77748a][i]Chat with the other players. Enter to send.[/i][/color]"
+	_tabs.current_tab = 0
+
+
 func add_message(player_id: String, text: String) -> void:
 	_history.append_text("\n[b][color=%s]%s:[/color][/b] %s" % [
 		EventLogPanel.player_color(player_id).to_html(false),
