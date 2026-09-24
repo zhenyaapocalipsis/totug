@@ -19,17 +19,13 @@ const CHAT_SIZE := Vector2(BOX_W * 4.0 + GAP * 3.0, 190.0)
 ## Строки прямоугольника: ключ в срезе игрока -> подпись.
 const ROWS: Array[Array] = [
 	["vp_tokens", "VP"],
-	["power", "Power"],
-	["influence", "Influence"],
-	["troops_in_barracks", "Troops"],
-	["spies_in_barracks", "Spies"],
 	["hand_size", "Hand"],
 	["deck_size", "Deck"],
 	["discard_size", "Discard"],
 	["inner_circle", "Inner circle"],
-	["trophy_hall_count", "Trophies"],
-	["white_trophy_count", "of them neutral"],
 ]
+## Нейтральные (белые) войска в зале трофеев — серой цифрой.
+const NEUTRAL_COLOR := Color(0.6, 0.6, 0.6)
 
 var _column: VBoxContainer
 var _row: HBoxContainer
@@ -127,7 +123,46 @@ func _make_box(pid: String, first_player: bool) -> Dictionary:
 		line.add_child(value)
 		values[String(row[0])] = value
 
-	return {"panel": panel, "style": style, "values": values, "colour": colour}
+	# Трофеи: по цифре на каждый цвет убитых войск, цифра того же цвета.
+	var trophy_line := HBoxContainer.new()
+	trophy_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(trophy_line)
+	var trophy_caption := Label.new()
+	trophy_caption.text = "Trophies"
+	trophy_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	trophy_caption.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	trophy_line.add_child(trophy_caption)
+	var trophy_numbers := HBoxContainer.new()
+	trophy_numbers.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	trophy_numbers.add_theme_constant_override("separation", 4)
+	trophy_line.add_child(trophy_numbers)
+
+	return {"panel": panel, "style": style, "values": values, "colour": colour,
+		"trophies": trophy_numbers}
+
+
+## Цифры трофеев: сначала нейтральные, потом игроки в порядке хода.
+## Пустой зал — просто 0.
+func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Array) -> void:
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
+	var colours: Array = ["white"]
+	colours.append_array(order)
+	for colour_id in colours:
+		var count := int(trophies.get(String(colour_id), 0))
+		if count <= 0:
+			continue
+		var label := Label.new()
+		label.text = str(count)
+		label.add_theme_color_override("font_color", NEUTRAL_COLOR if colour_id == "white" \
+			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR))
+		box.add_child(label)
+	if box.get_child_count() == 0:
+		var zero := Label.new()
+		zero.text = "0"
+		zero.add_theme_color_override("font_color", PixelTheme.TEXT)
+		box.add_child(zero)
 
 
 func update_from_view(view: Dictionary) -> void:
@@ -148,7 +183,6 @@ func update_from_view(view: Dictionary) -> void:
 			var raw: Variant = p.get(key, 0)
 			var shown: int = (raw as Array).size() if raw is Array else int(raw)
 			(values[key] as Label).text = str(shown)
-		# Зал трофеев отдаёт общее число и сколько из него нейтральных —
-		# вторая строка уже про первую, поэтому её видно приглушённой.
+		_fill_trophies(box["trophies"], p.get("trophies", {}), order)
 		(box["style"] as StyleBoxFlat).bg_color = \
 			PixelTheme.PANEL_HI if pid == current else PixelTheme.PANEL

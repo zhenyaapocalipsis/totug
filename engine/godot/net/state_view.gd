@@ -217,6 +217,7 @@ static func _player_view(p: PlayerState, is_owner: bool) -> Dictionary:
 		"spies_in_barracks": p.spies_in_barracks,
 		"trophy_hall_count": p.trophy_hall_count,
 		"white_trophy_count": p.white_trophy_count,
+		"trophies": p.trophies.duplicate(),
 		"vp_tokens": p.vp_tokens,
 		"inner_circle": p.deck.inner_circle.duplicate(),
 		"played_pile": p.deck.played_pile.duplicate(),
