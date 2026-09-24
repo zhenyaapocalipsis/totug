@@ -1928,6 +1928,20 @@ func test_choose_option_answer_protocol() -> void:
 		"-1 среди индексов маркета — тоже отказ")
 	check_eq(DecisionDialog.label_for(true, "confirm"), "Yes", "подтверждение читается словом")
 
+	# выбор карты (promote/discard) — сетка мелких карт, клик отвечает id карты
+	var dlg := DecisionDialog.new()
+	dlg.update_from_view({"pending_decision": {"player_id": "red", "choice_type": "target_card",
+		"prompt": "Promote a card", "legal_options": ["48342", "inner:48306", ""]}}, "red")
+	var cards: Array = dlg.find_children("*", "CardView", true, false)
+	check_eq(cards.size(), 2, "promote: по мелкой карте на каждый вариант, кроме отказа")
+	check_eq((cards[1] as CardView).card_id, "48306", "карта из Inner Circle показана без префикса")
+	var answers: Array = []
+	dlg.option_chosen.connect(func(a): answers.append(a))
+	(cards[1] as CardView).pressed.emit("48306")
+	check_eq(answers, ["inner:48306"], "клик по карте отвечает исходным вариантом")
+	check_eq(dlg.find_children("*", "Button", true, false).size(), 1, "отказ остаётся кнопкой Skip")
+	dlg.free()
+
 
 func test_return_troop_on_real_board_ids() -> void:
 	section("Return troop/spy на настоящих id слотов (с двоеточием)")

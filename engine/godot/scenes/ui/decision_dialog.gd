@@ -22,6 +22,11 @@ const BOARD_CHOICES := ["target_slot", "target_site", "target_return"]
 const OPTION_HEIGHT := 15
 const MAX_LIST_HEIGHT := 150
 const WIDTH := 300.0
+## Выбор карты (promote, discard, devour...) — сетка мелких лиц карт вместо
+## строк с названиями: карту узнают по арту, а полную читают через Alt.
+const CARD_SIZE := Vector2(80, 76)
+const CARD_COLUMNS_MAX := 6
+const CARD_LIST_MAX_HEIGHT := 240
 
 ## Статический снимок доски (StateView.board_snapshot) — нужен, чтобы
 ## подписывать цели по-человечески: "Caer Sidi · space 2" вместо "c_n1:C4_0_1".
@@ -121,6 +126,10 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_prompt.text += " — click a gold target on the board."
 		if options.has(""):
 			_add_button("Skip", "")
+	elif choice_type == "target_card":
+		_add_card_grid(options)
+		if options.has(""):
+			_add_button("Skip", "")
 	else:
 		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
 		# берём их — только карта знает, что означает её вариант №2.
@@ -133,7 +142,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
 	var rows: int = _options_box.get_child_count()
-	_scroll.custom_minimum_size = Vector2(0, mini(rows * OPTION_HEIGHT, MAX_LIST_HEIGHT))
+	var max_h := CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
+	_scroll.custom_minimum_size = Vector2(0, minf(_options_box.get_combined_minimum_size().y, max_h))
 	_scroll.visible = rows > 0
 	_place(on_board or decider != viewer_id)
 
@@ -176,6 +186,30 @@ func _add_note(text: String) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.modulate = Color(0.8, 0.8, 0.85)
 	_options_box.add_child(label)
+
+
+## Мелкие карты-кнопки. Одинаковые карты (два Soldier в руке) показываются
+## каждая отдельно — ответ у них один и тот же id, серверу это безразлично.
+## "inner:<id>" — карта из Внутреннего круга: лицо то же, в ответ уходит
+## исходная строка с префиксом.
+func _add_card_grid(options: Array) -> void:
+	var ids: Array = options.filter(func(o): return typeof(o) == TYPE_STRING and String(o) != "")
+	if ids.is_empty():
+		return
+	var grid := GridContainer.new()
+	grid.columns = mini(ids.size(), CARD_COLUMNS_MAX)
+	grid.add_theme_constant_override("h_separation", 2)
+	grid.add_theme_constant_override("v_separation", 2)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	for raw in ids:
+		var value := String(raw)
+		var cid := value.substr(6) if value.begins_with("inner:") else value
+		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
+		card.set_clickable(true)
+		card.tooltip_text = _card_label(value)
+		card.pressed.connect(func(_id): option_chosen.emit(value))
+		grid.add_child(card)
+	_options_box.add_child(grid)
 
 
 func _add_button(text: String, value: Variant) -> void:
