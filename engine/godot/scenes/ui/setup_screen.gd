@@ -164,11 +164,11 @@ func _count_row(count: int) -> Control:
 ## на тёмном фоне непонятно, что на них надо нажимать.
 static func _style_button(button: Button) -> void:
 	button.add_theme_stylebox_override("normal",
-		PixelTheme.box(PixelTheme.PANEL_HI, PixelTheme.BORDER, 1, 4, 2))
+		PixelTheme.button_box(PixelTheme.PANEL_HI, PixelTheme.BORDER))
 	button.add_theme_stylebox_override("hover",
-		PixelTheme.box(PixelTheme.BORDER, PixelTheme.GOLD, 1, 4, 2))
+		PixelTheme.button_box(PixelTheme.BORDER, PixelTheme.GOLD))
 	button.add_theme_stylebox_override("pressed",
-		PixelTheme.box(PixelTheme.GOLD, PixelTheme.GOLD, 1, 4, 2))
+		PixelTheme.button_box(PixelTheme.GOLD, PixelTheme.GOLD))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	button.add_theme_color_override("font_color", PixelTheme.TEXT)
 	button.add_theme_color_override("font_hover_color", PixelTheme.GOLD)

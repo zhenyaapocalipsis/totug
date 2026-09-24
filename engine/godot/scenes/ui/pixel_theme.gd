@@ -70,6 +70,21 @@ static func box(bg: Color, border_color: Color = BORDER, border_width: int = 1,
 	return s
 
 
+## Рамка кнопки. Строка шрифта высотой LINE_H (11), а заглавные буквы занимают
+## только верхние 7 пикселей — ниже место под хвосты g, y. По центру строки
+## надпись сидит на 2 пикселя выше середины кнопки, поэтому 2 пикселя отступа
+## переносим снизу наверх: высота кнопки та же, заглавные ровно по центру.
+const CAPS_SHIFT := 2
+
+
+static func button_box(bg: Color, border_color: Color = BORDER, border_width: int = 1,
+		pad_x: int = 4, pad_y: int = 2) -> StyleBoxFlat:
+	var s := box(bg, border_color, border_width, pad_x, pad_y)
+	s.content_margin_top = pad_y + CAPS_SHIFT
+	s.content_margin_bottom = maxi(pad_y - CAPS_SHIFT, 0)
+	return s
+
+
 ## Заливка без рамки (шапки зон, полосы выделения).
 static func fill(bg: Color, pad_x: int = 2, pad_y: int = 1) -> StyleBoxFlat:
 	var s := box(bg, bg, 0, pad_x, pad_y)
@@ -84,14 +99,14 @@ static func _setup_panels(t: Theme) -> void:
 
 
 static func _setup_buttons(t: Theme) -> void:
-	var normal := box(PANEL_HI, BORDER, 1, 4, 2)
-	var hover := box(BORDER, BORDER_HI, 1, 4, 2)
-	var pressed := box(BORDER_HI, GOLD, 1, 4, 2)
+	var normal := button_box(PANEL_HI, BORDER)
+	var hover := button_box(BORDER, BORDER_HI)
+	var pressed := button_box(BORDER_HI, GOLD)
 	# Нажатая кнопка вдавливается: надпись съезжает на пиксель вниз. Мелочь,
 	# но без неё нажатие ощущается как подсветка, а не как нажатие.
 	pressed.content_margin_top += 1
 	pressed.content_margin_bottom = maxf(pressed.content_margin_bottom - 1.0, 0.0)
-	var disabled := box(PANEL, TEXT_OFF, 1, 4, 2)
+	var disabled := button_box(PANEL, TEXT_OFF)
 	t.set_stylebox("normal", "Button", normal)
 	t.set_stylebox("hover", "Button", hover)
 	t.set_stylebox("pressed", "Button", pressed)
