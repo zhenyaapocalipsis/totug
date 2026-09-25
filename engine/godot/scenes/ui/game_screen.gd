@@ -125,6 +125,7 @@ var _last_round_label: Label
 var _deploy_vp_button: Button
 var _preview: CardPreview
 var _pause_menu: PauseMenu
+var _game_over_panel: GameOverPanel
 
 ## Таймер хода: сколько секунд осталось и чей ход сейчас отсчитываем — смена
 ## ходящего перезапускает отсчёт.
@@ -347,6 +348,11 @@ func _build_layout() -> void:
 	_pause_menu.main_menu_requested.connect(func(): main_menu_requested.emit())
 	add_child(_pause_menu)
 
+	# Итоги партии — открываются сами после GAME OVER.
+	_game_over_panel = GameOverPanel.new()
+	_game_over_panel.main_menu_requested.connect(func(): main_menu_requested.emit())
+	add_child(_game_over_panel)
+
 	_layout()
 
 
@@ -431,7 +437,11 @@ func _input(event: InputEvent) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key.keycode == KEY_ESCAPE and key.pressed and not key.echo and not _overlay.visible:
-		_pause_menu.visible = true
+		# После конца партии Esc возвращает спрятанные итоги (VIEW BOARD).
+		if bool(_view.get("game_over", false)) and not _game_over_panel.visible:
+			_game_over_panel.visible = true
+		else:
+			_pause_menu.visible = true
 		get_viewport().set_input_as_handled()
 
 
@@ -622,6 +632,7 @@ func refresh(view: Dictionary) -> void:
 	_refresh_turn(view)
 	_barracks.update_from_view(view)
 	_overlay.update_from_view(view)
+	_game_over_panel.update_from_view(view)
 	_hand_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)

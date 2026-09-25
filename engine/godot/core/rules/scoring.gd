@@ -34,6 +34,54 @@ static func final_score(
 	return total
 
 
+## Итоговый счёт по статьям — для экрана конца партии. VP карт берутся из
+## CardLibrary (у карт без VP там null → 0). Сумма статей = final_score с теми
+## же VP карт (проверяет тест).
+static func breakdown(state: GameState, player_id: String) -> Dictionary:
+	var p: PlayerState = state.players[player_id]
+	var sites := 0
+	var total_control := 0
+	for site_id: String in state.graph.sites.keys():
+		if state.control.controller_of(site_id, state.troops) != player_id:
+			continue
+		sites += int(state.graph.sites[site_id]["vp"])
+		if state.control.has_total_control(player_id, site_id, state.troops, state.spies):
+			total_control += 2
+	var deck := 0
+	for card_id: String in p.deck.cards_outside_inner_circle():
+		deck += _card_vp(card_id, "deck_vp")
+	var inner := 0
+	for card_id: String in p.deck.inner_circle:
+		inner += _card_vp(card_id, "inner_circle_vp")
+	var result := {
+		"sites": sites,
+		"total_control": total_control,
+		"trophies": p.trophy_hall_count,
+		"deck": deck,
+		"inner_circle": inner,
+		"tokens": p.vp_tokens,
+	}
+	result["total"] = sites + total_control + p.trophy_hall_count + deck + inner + p.vp_tokens
+	return result
+
+
+static func _card_vp(card_id: String, key: String) -> int:
+	var v = CardLibrary.card_data(card_id).get(key)
+	return int(v) if v != null else 0
+
+
+## VP карт из CardLibrary в виде словарей для final_score / winners.
+static func library_card_vp(state: GameState) -> Array[Dictionary]:
+	var deck_vp := {}
+	var inner_vp := {}
+	for pid: String in state.players.keys():
+		var d: Deck = state.players[pid].deck
+		for card_id: String in d.cards_outside_inner_circle() + d.inner_circle:
+			deck_vp[card_id] = _card_vp(card_id, "deck_vp")
+			inner_vp[card_id] = _card_vp(card_id, "inner_circle_vp")
+	return [deck_vp, inner_vp]
+
+
 ## Игроки с максимальным итоговым счётом (может быть несколько — ничья,
 ## рулбук стр. 14: "If there's a tie for most, the tied players each win").
 static func winners(

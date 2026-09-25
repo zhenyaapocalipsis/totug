@@ -35,6 +35,7 @@ func _initialize() -> void:
 	test_turn_engine()
 	test_game_end()
 	test_scoring()
+	test_final_breakdown()
 	test_cluster_bonus()
 
 	# этап 5: система эффектов карт
@@ -933,6 +934,39 @@ func test_scoring() -> void:
 	var single := Scoring.winners(state, deck_vp, inner_vp)
 	check_eq(single.size(), 1, "при разном счёте победитель один")
 	check_eq(single[0], "red", "red набрал больше")
+
+
+func test_final_breakdown() -> void:
+	section("итоги партии по статьям")
+	var state := _build_two_player_state()
+	var red: PlayerState = state.players["red"]
+	state.troops["a1"] = "red"
+	state.troops["a2"] = "red"
+	state.troops["b1"] = "blue"
+	red.trophy_hall_count = 2
+	red.vp_tokens = 7
+	red.deck = Deck.new(["48734", "48324"])
+	red.deck.inner_circle = ["48501"]
+
+	var s := Scoring.breakdown(state, "red")
+	check_eq(int(s["sites"]), 4, "red: VP сайта site_a")
+	check_eq(int(s["total_control"]), 2, "red: +2 за тотальный контроль")
+	check_eq(int(s["trophies"]), 2, "red: трофеи")
+	check_eq(int(s["inner_circle"]), 10, "red: Demogorgon во Внутреннем круге = 10")
+	check_eq(int(s["tokens"]), 7, "red: VP-жетоны")
+	var vp := Scoring.library_card_vp(state)
+	check_eq(int(s["total"]), Scoring.final_score(state, "red", vp[0], vp[1]),
+			"сумма статей = final_score с VP карт из библиотеки")
+
+	# Срез состояния — на полной партии (у мини-графа нет рынка).
+	var rich := _build_rich_state(55)
+	var view := StateView.for_player(rich, "blue")
+	check(not view.has("final_scores"), "до конца партии итогов в срезе нет")
+	rich.game_over = true
+	rich.players["red"].vp_tokens = 50
+	view = StateView.for_player(rich, "blue")
+	check(view.has("final_scores") and view["final_scores"].has("blue"), "после конца — итоги всех игроков")
+	check_eq(view["winners"], ["red"], "победитель red")
 
 
 ## Граф с тремя сайтами гекса A2 (по 3 слота, как на настоящем тайле —

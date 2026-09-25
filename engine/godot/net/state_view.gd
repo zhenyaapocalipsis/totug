@@ -49,6 +49,15 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	for pid: String in state.players.keys():
 		view["players"][pid] = _player_view(state.players[pid], pid == viewer_id)
 	view["legal"] = _legal_actions(state, viewer_id)
+	# Партия окончена — итоговый счёт по статьям и победители (ничья — все
+	# с лучшим счётом). Колоды здесь уже не тайна: подсчёт открытый.
+	if state.game_over:
+		var scores := {}
+		for pid: String in state.turn_order:
+			scores[pid] = Scoring.breakdown(state, pid)
+		view["final_scores"] = scores
+		var vp := Scoring.library_card_vp(state)
+		view["winners"] = Array(Scoring.winners(state, vp[0], vp[1]))
 	# Сколько VP игрок получит в конце хода и за что. Игрок видел растущий
 	# счёт и не понимал причину — вопрос владельца игры "за что 18 VP?".
 	# ВАЖНО: VP за контроль ОБЫЧНЫХ локаций начисляются только в финальном

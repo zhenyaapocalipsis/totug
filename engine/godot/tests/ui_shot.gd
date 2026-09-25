@@ -82,6 +82,20 @@ func _run_scenario() -> void:
 	match _scenario:
 		"":
 			return
+		"game_over":
+			# Итоги партии: конец объявлен сразу, круг доигрывается пустыми
+			# ходами, у второго игрока немного VP-жетонов для разницы в счёте.
+			var st := _screen.server.state
+			st.players[st.turn_order[1]].vp_tokens = 9
+			for guard in 40:
+				if st.game_over:
+					break
+				if _screen.server.resolver.is_waiting():
+					var pd0: PendingDecision = _screen.server.resolver.pending
+					_screen.send(Intent.make_decision(pd0.player_id, pd0.legal_options[0]))
+					continue
+				GameEnd.trigger(st, "market_empty")
+				_screen.send(Intent.end_turn(st.current_player()))
 		"play_card":
 			# Разыграть первую карту руки текущего игрока.
 			var pid: String = _screen.server.state.current_player()
