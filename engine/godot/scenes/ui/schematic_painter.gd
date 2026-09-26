@@ -11,8 +11,8 @@ const TRACE := Color("d9d2ea")
 const BOX_LIGHT := Color("e6e0f0")
 const BOX_DARK := Color("1c1830")
 const INK := Color("241c34")
-const MARKER := Color("f2d23c")
-const MARKER_FILL := Color("4a3a10")
+const MARKER_FILL := Color("f6e08a")
+const MARKER_EDGE := Color("e0a820")
 const TRACE_WIDTH := 2
 ## Скругление прямого угла: угол срезается на столько пикселей вдоль каждой
 ## стороны, а срез заполняется диагональю. Больше 3 на пиксельной схеме уже не
@@ -153,14 +153,14 @@ static func _site(img: Image, site: Dictionary) -> void:
 	var dark := bool(site.get("starting", false))
 	var marker := bool(site.get("marker", false))
 	var fill := MARKER_FILL if marker else (BOX_DARK if dark else BOX_LIGHT)
-	var ink := BOX_LIGHT if dark or marker else INK
+	var ink := BOX_LIGHT if dark and not marker else INK
 
-	# Город с маркером контроля (даёт Influence) — тёмно-золотая плашка в
-	# золотой рамке толщиной 2: второй пиксель рамки снаружи, чтобы не
-	# налезть на название и места под войска.
+	# Город с маркером контроля (даёт Influence) — светло-золотая плашка в
+	# золотой рамке толщиной 2 (тёмная плашка читалась бы как стартовый город).
+	# Второй пиксель рамки снаружи, чтобы не налезть на название и места.
 	if marker:
-		img.fill_rect(rect.grow(1), MARKER)
-	img.fill_rect(rect, MARKER if marker else (BOX_LIGHT if dark else INK))
+		img.fill_rect(rect.grow(1), MARKER_EDGE)
+	img.fill_rect(rect, MARKER_EDGE if marker else (BOX_LIGHT if dark else INK))
 	img.fill_rect(rect.grow(-1), fill)
 	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size())
 	var name_at: Vector2 = box["name_at"]
@@ -168,7 +168,7 @@ static func _site(img: Image, site: Dictionary) -> void:
 		BoardSchematic.short_name(String(site["name"])), ink)
 	var vp_at: Vector2 = box["vp_at"]
 	PixelFont.draw_text(img, rect.position.x + int(vp_at.x), rect.position.y + int(vp_at.y),
-		str(site["vp"]), MARKER if marker else ink, BoardSchematic.VP_SCALE)
+		str(site["vp"]), ink, BoardSchematic.VP_SCALE)
 	for slot_id: String in (site["slots"] as Dictionary).keys():
 		var at: Array = site["slots"][slot_id]
 		var c := Vector2i(roundi(at[0]), roundi(at[1]))
