@@ -428,7 +428,7 @@ func _add_trophy_tokens(pd: Dictionary) -> void:
 			group.add_child(name_label)
 			row.add_child(group)
 			tokens_of[hall] = tokens
-		var token := TrophyButton.new(BoardPanel.troop_colour(parts[1]))
+		var token := TrophyButton.new(parts[1])
 		if int(value) < labels.size():
 			token.tooltip_text = String(labels[int(value)])
 		var answer: Variant = value
@@ -440,26 +440,29 @@ func _add_trophy_tokens(pd: Dictionary) -> void:
 		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 
 
-## Кнопка-фишка войска из трофейного зала: кружок цвета войска (как на доске
-## в виде гексов); под курсором — золотое кольцо.
+## Кнопка-фишка войска из трофейного зала: та же картинка, что на доске
+## (цвет войска и эмблема его хозяина, у белых эмблемы нет), втрое крупнее
+## целым числом — пиксели не плывут; под курсором — золотое кольцо.
 class TrophyButton extends Button:
-	const TOKEN_R := 14.0
-	var colour: Color
+	const ZOOM := 3
+	var _texture: ImageTexture
 
-	func _init(troop_colour: Color) -> void:
-		colour = troop_colour
-		custom_minimum_size = Vector2(TOKEN_R * 2.0 + 6.0, TOKEN_R * 2.0 + 6.0)
+	func _init(owner: String) -> void:
+		var emblem := "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner)
+		_texture = ImageTexture.create_from_image(
+			SchematicPainter.token(BoardPanel.troop_colour(owner), emblem))
+		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		custom_minimum_size = _texture.get_size() * ZOOM + Vector2(6, 6)
 		for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 			add_theme_stylebox_override(state, StyleBoxEmpty.new())
 		mouse_entered.connect(queue_redraw)
 		mouse_exited.connect(queue_redraw)
 
 	func _draw() -> void:
-		var at := size * 0.5
+		var s := _texture.get_size() * ZOOM
 		if is_hovered():
-			draw_circle(at, TOKEN_R + 2.0, PixelTheme.GOLD)
-		draw_circle(at, TOKEN_R, Color(0, 0, 0, 0.75))
-		draw_circle(at, TOKEN_R * 0.82, colour)
+			draw_circle(size * 0.5, s.x * 0.5 + 2.0, PixelTheme.GOLD)
+		draw_texture_rect(_texture, Rect2(((size - s) * 0.5).round(), s), false)
 
 
 func _add_button(text: String, value: Variant) -> void:

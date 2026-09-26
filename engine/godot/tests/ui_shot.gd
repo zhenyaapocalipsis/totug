@@ -149,6 +149,20 @@ func _run_scenario() -> void:
 			_screen.server.state.players[pid3].deck.hand.append(card)
 			# --trophies: в залах у всех по два белых войска и по одному войску
 			# соседа — иначе "take from a trophy hall" (Orcus, Lich) не спросит.
+			# --emblems: у красного крест, у зелёного точка — видно на фишках.
+			if OS.get_cmdline_user_args().has("--emblems"):
+				var cross_e: Array[Color] = []
+				cross_e.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
+				cross_e.fill(Color(0, 0, 0, 0))
+				var dot_e := cross_e.duplicate()
+				for i_e in range(1, 8):
+					cross_e[4 * 9 + i_e] = Color("fbf236")
+					cross_e[i_e * 9 + 4] = Color("fbf236")
+				for i_e in [30, 31, 32, 39, 40, 41, 48, 49, 50]:
+					dot_e[i_e] = Color("ffffff")
+				PlayerProfile.seats = {
+					"red": {"name": "Jarlaxle", "emblem": PlayerProfile.emblem_from_pixels(cross_e)},
+					"green": {"name": "Zinda", "emblem": PlayerProfile.emblem_from_pixels(dot_e)}}
 			if OS.get_cmdline_user_args().has("--trophies"):
 				var order: Array = _screen.server.state.turn_order
 				for i_t in order.size():
