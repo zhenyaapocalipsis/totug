@@ -2498,6 +2498,11 @@ func test_audit_card_fixes() -> void:
 	red.add_trophy("white")
 	check_eq(red.player_trophy_count(), 1, "белое войско не считается player troop")
 	var blue_barracks := blue.troops_in_barracks
+	# свой зал не в счёт: red берёт синее войско из зала green, не из своего
+	check(not TakeFromTrophyHall.new(1, false, false).is_available(state, "red"),
+		"свой трофейный зал не предлагается")
+	var green_hall: PlayerState = state.players["green"]
+	green_hall.add_trophy("blue")
 	r = EffectResolver.new()
 	r.apply(TakeFromTrophyHall.new(1, false, false), "red", state)
 	var labels: Array[String] = r.pending.option_labels
@@ -2505,14 +2510,15 @@ func test_audit_card_fixes() -> void:
 	for i in range(labels.size()):
 		if labels[i].begins_with("Blue"):
 			blue_index = i
-	check(blue_index != -1, "в вариантах есть синее войско из зала red")
+	check(blue_index != -1, "в вариантах есть синее войско из зала green")
 	r.resume(state, blue_index)
 	check(r.is_waiting() and r.pending.choice_type == "target_slot", "дальше выбираем, куда выставить")
 	var slot: String = r.pending.legal_options[0]
 	r.resume(state, slot)
 	check_eq(state.troops[slot], "blue", "войско выставлено своим (синим) цветом")
 	check_eq(blue.troops_in_barracks, blue_barracks, "бараки blue не изменились")
-	check_eq(red.trophy_hall_count, 1, "в зале red осталось одно (белое) войско")
+	check_eq(green_hall.trophy_hall_count, 0, "войско ушло из зала green")
+	check_eq(red.trophy_hall_count, 2, "зал red не тронут")
 
 	section("Lich: несколько соперников на сайте — выбор, чей зал (этап 8)")
 	state = _build_rich_state()
@@ -2544,7 +2550,7 @@ func test_audit_card_fixes() -> void:
 		"после выбора blue — берём войско из его зала")
 	var only_from_blue := true
 	for label: String in (r.pending.option_labels as Array):
-		if not label.ends_with("Blue's trophy hall") and label != "Stop":
+		if not label.ends_with("Blue's trophy hall") and label != "Skip":
 			only_from_blue = false
 	check(only_from_blue, "варианты только из зала blue, зал green не предлагается")
 

@@ -186,6 +186,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
 				else PixelTheme.TEXT, PixelTheme.SIZE_BIG)
 		cards_mode = true
+	elif String(pd.get("tag", "")) == "trophy_hall":
+		_add_trophy_tokens(pd)
+		cards_mode = true
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
 		cards_mode = true
@@ -390,6 +393,73 @@ func _add_option_cards(pd: Dictionary) -> void:
 		card.pressed.connect(func(): option_chosen.emit(value))
 		row.add_child(card)
 	_options_box.add_child(row)
+
+
+## "Take a troop from a trophy hall" (Orcus, Mummy Lord, Lich): фишки войск в
+## ряд, сгруппированные по залам: над подписью "Green's hall" (цветом хозяина)
+## — фишки из этого зала, цвет фишки = цвет войска.
+## Отказ (-1) — Skip под рядом, как у выбора карты.
+func _add_trophy_tokens(pd: Dictionary) -> void:
+	var trophies: Array = (pd.get("data", {}) as Dictionary).get("trophies", [])
+	var labels: Array = pd.get("option_labels", [])
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	var tokens_of := {}  # хозяин зала -> ряд его фишек
+	for value in pd.get("legal_options", []):
+		if int(value) < 0 or int(value) >= trophies.size():
+			continue
+		var parts := String(trophies[int(value)]).split("|")
+		var hall := parts[0]
+		if not tokens_of.has(hall):
+			var group := VBoxContainer.new()
+			group.add_theme_constant_override("separation", 0)
+			var tokens := HBoxContainer.new()
+			tokens.alignment = BoxContainer.ALIGNMENT_CENTER
+			tokens.add_theme_constant_override("separation", 2)
+			group.add_child(tokens)
+			var name_label := Label.new()
+			name_label.text = "%s's hall" % EventLogPanel.player_name(hall)
+			name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name_label.add_theme_color_override("font_color", EventLogPanel.player_color(hall))
+			name_label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+			name_label.add_theme_constant_override("shadow_offset_x", 1)
+			name_label.add_theme_constant_override("shadow_offset_y", 1)
+			group.add_child(name_label)
+			row.add_child(group)
+			tokens_of[hall] = tokens
+		var token := TrophyButton.new(BoardPanel.troop_colour(parts[1]))
+		if int(value) < labels.size():
+			token.tooltip_text = String(labels[int(value)])
+		var answer: Variant = value
+		token.pressed.connect(func(): option_chosen.emit(answer))
+		(tokens_of[hall] as HBoxContainer).add_child(token)
+	_options_box.add_child(row)
+	if (pd.get("legal_options", []) as Array).has(-1):
+		_add_button("Skip", -1)
+		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+
+
+## Кнопка-фишка войска из трофейного зала: кружок цвета войска (как на доске
+## в виде гексов); под курсором — золотое кольцо.
+class TrophyButton extends Button:
+	const TOKEN_R := 14.0
+	var colour: Color
+
+	func _init(troop_colour: Color) -> void:
+		colour = troop_colour
+		custom_minimum_size = Vector2(TOKEN_R * 2.0 + 6.0, TOKEN_R * 2.0 + 6.0)
+		for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+			add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		mouse_entered.connect(queue_redraw)
+		mouse_exited.connect(queue_redraw)
+
+	func _draw() -> void:
+		var at := size * 0.5
+		if is_hovered():
+			draw_circle(at, TOKEN_R + 2.0, PixelTheme.GOLD)
+		draw_circle(at, TOKEN_R, Color(0, 0, 0, 0.75))
+		draw_circle(at, TOKEN_R * 0.82, colour)
 
 
 func _add_button(text: String, value: Variant) -> void:

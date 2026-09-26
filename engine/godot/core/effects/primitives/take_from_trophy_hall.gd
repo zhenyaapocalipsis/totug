@@ -12,6 +12,7 @@ extends CardEffect
 ## Присутствие игрока, как у любого эффекта карты без "anywhere on the board".
 
 var remaining: int
+var _total: int  # сколько всего можно взять — для "(1 of 2)" в вопросе
 var up_to: bool
 var white_only: bool
 var specific_player_id: String  # "" = "any trophy hall" (выбор игрока)
@@ -22,6 +23,7 @@ var _options: Array[String] = []  # "hall_owner|color", параллельно �
 func _init(count: int = 1, allow_fewer: bool = false, is_white_only: bool = false,
 		specific_id: String = "", deploy_anywhere: bool = true) -> void:
 	remaining = count
+	_total = count
 	up_to = allow_fewer
 	white_only = is_white_only
 	specific_player_id = specific_id
@@ -32,7 +34,10 @@ func _collect(state: GameState, player_id: String) -> Array[String]:
 	var result: Array[String] = []
 	if DeployTrophyTroop.legal_slots(state, player_id, anywhere).is_empty():
 		return result
-	var halls: Array = [specific_player_id] if specific_player_id != "" else state.turn_order
+	# "any trophy hall" — только залы соперников, свой не в счёт (решение
+	# владельца, 2026-09-26).
+	var halls: Array = [specific_player_id] if specific_player_id != "" \
+		else state.turn_order.filter(func(pid): return pid != player_id)
 	for hall: String in halls:
 		var p: PlayerState = state.players[hall]
 		var colors: Array = p.trophies.keys()
@@ -71,6 +76,11 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
 	pd.prompt = "Take a troop from a trophy hall"
+	if _total > 1:
+		pd.prompt += " (%d of %d)" % [_total - remaining + 1, _total]
+	pd.tag = "trophy_hall"
+	# "зал|цвет" по порядку вариантов — окно рисует фишку нужного цвета.
+	pd.data = {"trophies": Array(_options)}
 	pd.choice_type = "choose_option"
 	for i in range(_options.size()):
 		var parts: PackedStringArray = _options[i].split("|")
@@ -78,7 +88,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		pd.option_labels.append("%s troop from %s's trophy hall" % [parts[1].capitalize(), parts[0].capitalize()])
 	if up_to:
 		pd.legal_options.append(-1)
-		pd.option_labels.append("Stop")
+		pd.option_labels.append("Skip")
 	pd.target_effect = self
 	resolver.request_decision(pd)
 

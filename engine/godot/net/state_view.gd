@@ -278,4 +278,5 @@ static func _decision_dict(pending: PendingDecision, viewer_id: String) -> Dicti
 		"legal_options": pending.legal_options.duplicate() if mine else [],
 		"option_labels": pending.option_labels.duplicate() if mine else [],
 		"source_card": pending.source_card,
+		"data": pending.data.duplicate(true) if mine else {},
 	}
