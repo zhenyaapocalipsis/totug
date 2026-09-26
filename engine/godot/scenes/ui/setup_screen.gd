@@ -53,6 +53,7 @@ const PAGE_HINTS := {
 }
 
 const BIG_BUTTON := Vector2(170, 22)
+const MENU_WIDTH := 400.0
 const BUTTON_SIZE := Vector2(90, 16)
 const DOT := 7.0
 ## Задник экрана подключён файлом, а не по глобальному имени класса:
@@ -92,6 +93,9 @@ func _init() -> void:
 	centre.add_child(card)
 
 	_col = VBoxContainer.new()
+	# Ширина постоянная: иначе окно (оно по центру) раздувалось бы и прыгало,
+	# когда под мышью меняется строка-подсказка или описание режима.
+	_col.custom_minimum_size.x = MENU_WIDTH
 	_col.add_theme_constant_override("separation", 4)
 	card.add_child(_col)
 
@@ -217,6 +221,7 @@ func _add_game_options() -> void:
 		modes.append(b)
 	_col.add_child(_row(modes))
 	_mode_note = _add_dim(MODE_NOTES[_mode])
+	_mode_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	_col.add_child(_heading("PLAYERS"))
 	var counts: Array[Button] = []
@@ -311,6 +316,7 @@ func _add_dim(text: String) -> Label:
 func _heading(text: String, colour: Color = PixelTheme.TEXT_DIM) -> Label:
 	var label := GameScreen.section_label(text)
 	label.add_theme_color_override("font_color", colour)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
 
@@ -319,6 +325,7 @@ func _add_hint(default_text: String) -> void:
 	_col.add_child(HSeparator.new())
 	_hint_default = default_text
 	_hint = _add_dim(default_text)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
 func _set_hint(text: String) -> void:
