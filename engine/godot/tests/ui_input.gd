@@ -96,6 +96,8 @@ func _process(_delta: float) -> bool:
 		26: _step_check_move_and_return()
 		27: _step_showcase()
 		28: _step_check_showcase()
+		29: _step_recap()
+		30: _step_check_recap()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -496,6 +498,36 @@ func _step_check_showcase() -> void:
 		"витрина показывает чужую покупку, промоут и devour, свою покупку — нет (%d)" % showcase.queued())
 	showcase.skip()
 	check(showcase.queued() == 3, "промотка уводит карту, а не выкидывает её из очереди")
+
+
+## Сводка хода соперника: что он купил и съел, показывается, когда ход
+## пришёл к зрителю — после того как доиграет витрина.
+func _step_recap() -> void:
+	var me := _screen.viewer_id
+	var foe := ""
+	for pid in _screen.server.state.turn_order:
+		if pid != me:
+			foe = pid
+	var cid := _screen._market_panel.card_id_at(1)
+	# Сводку могли уже показать концы ходов в прошлых шагах — убираем.
+	_screen._recap.visible = false
+	_screen._recap.set_process(false)
+	_screen._recap_items.clear()
+	_screen._react_to_events([
+		{"type": "recruit", "player_id": foe, "market_index": 1, "card_id": cid},
+		{"type": "devour", "player_id": foe, "card_id": cid, "source": "market"},
+		{"type": "recruit", "player_id": me, "market_index": 1, "card_id": cid},
+		{"type": "turn_ended", "player_id": foe, "game_over": false}])
+	check(not _screen._recap.visible, "пока идёт витрина, сводка ждёт")
+	var showcase: CardShowcase = _screen._showcase
+	showcase._queue.clear()
+	showcase._next()
+
+
+func _step_check_recap() -> void:
+	var recap: TurnRecap = _screen._recap
+	check(recap.visible and recap.card_count() == 2,
+		"сводка показала покупку и devour соперника, но не свою покупку (%d)" % recap.card_count())
 
 
 # --- вспомогательное ---------------------------------------------------------

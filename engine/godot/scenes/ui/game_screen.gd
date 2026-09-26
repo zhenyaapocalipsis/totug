@@ -100,6 +100,11 @@ var _barracks: BarracksBar
 var _overlay: PlayersOverlay
 var _hand_panel: HandPanel
 var _showcase: CardShowcase
+var _recap: TurnRecap
+## Что соперники купили, промоутили и съели, пока зритель ждал хода:
+## player_id -> [{"cid", "tag"}]. Показывается сводкой (TurnRecap).
+var _recap_items: Dictionary = {}
+var _recap_pending := false
 var _market_panel: MarketPanel
 var _chat_panel: ChatPanel
 var _log_panel: EventLogPanel
@@ -352,6 +357,11 @@ func _build_layout() -> void:
 	_showcase.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_showcase.z_index = 950
 	add_child(_showcase)
+
+	# Сводка ходов соперников — над рукой, когда ход приходит к зрителю.
+	_recap = TurnRecap.new()
+	_recap.z_index = 940
+	add_child(_recap)
 
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
 	_pile_dialog = PileDialog.new()
@@ -684,6 +694,47 @@ func _react_to_events(events: Array) -> void:
 			launched += 1
 	if power > 0.0:
 		_board_panel.shake(power)
+	_note_recap(events)
+
+
+## Подписи сводки хода для событий, которые в неё попадают.
+const RECAP_TAGS := {
+	"recruit": "BOUGHT", "recruit_supply": "BOUGHT", "recruit_free": "BOUGHT",
+	"promote": "PROMOTED", "devour": "DEVOURED",
+}
+
+
+## Копит для сводки чужие покупки, промоуты и devour; когда ход перешёл к
+## зрителю, сводка покажется (как только доиграет витрина — _process).
+func _note_recap(events: Array) -> void:
+	for e in events:
+		var evt: Dictionary = e
+		var type := String(evt.get("type", ""))
+		if RECAP_TAGS.has(type):
+			var pid := String(evt.get("player_id", ""))
+			var cid := String(evt.get("card_id", ""))
+			if pid != "" and cid != "":
+				if not _recap_items.has(pid):
+					_recap_items[pid] = []
+				(_recap_items[pid] as Array).append({"cid": cid, "tag": RECAP_TAGS[type]})
+		elif type == "turn_ended" and not bool(evt.get("game_over", false)) \
+				and String(_view.get("current_player", "")) == viewer_id:
+			_recap_pending = true
+
+
+func _show_recap() -> void:
+	_recap_pending = false
+	var groups: Array = []
+	for pid in (_view.get("turn_order", []) as Array):
+		var items: Array = _recap_items.get(String(pid), [])
+		if String(pid) != viewer_id and not items.is_empty():
+			groups.append({"pid": String(pid), "items": items})
+	_recap_items.clear()
+	if groups.is_empty():
+		return
+	var area := _board_area.get_global_rect()
+	_recap.show_groups(groups,
+		Vector2(area.get_center().x, area.end.y - 4.0) - get_global_position())
 
 
 ## Крупный показ карты cid, которую взял pid (см. CardShowcase).
@@ -913,6 +964,9 @@ static func _error_name(err: int) -> String:
 ## Пока на экране висит вопрос карты, завершить ход нельзя, поэтому таймер ждёт
 ## ответа и завершает ход сразу после него.
 func _process(delta: float) -> void:
+	# Сводка ходов соперников ждёт, пока доиграет витрина их последних карт.
+	if _recap_pending and not _showcase.is_busy():
+		_show_recap()
 	if _timer_label == null or _view.is_empty():
 		return
 	if bool(_view["game_over"]):
