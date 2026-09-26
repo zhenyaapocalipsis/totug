@@ -6,3 +6,4 @@
 - Update after any network/rules change: `bash server/deploy.sh` (Git Bash). Bump `NetSession.PROTOCOL` when old clients must not join.
 - Logs: `ssh -i ~/.ssh/tyrants_vps root@129.101.123.70 journalctl -u tyrants -f`
 - Ratings (Elo of online games): `/opt/tyrants/.local/share/godot/app_userdata/Tyrants of the Underdark/ratings.json` (appears after the first rated game). `deploy.sh` only replaces the .pck, so ratings survive updates; back the file up now and then.
+- Auto-update: nginx (config `server/nginx-tyrants.conf`) serves `/opt/tyrants/www` at `http://129.101.123.70/tyrants/` — `game.pck` and `version.txt` ("<build> <sha256>"). `deploy.sh` stamps the build number (`engine/godot/build_info.gd`, not in git), uploads the new game and refreshes `GAME online/`. Clients: `scenes/updater.gd`.

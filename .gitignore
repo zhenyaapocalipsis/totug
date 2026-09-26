@@ -14,3 +14,8 @@ __pycache__/
 Thumbs.db
 desktop.ini
 GAME online/*.zip
+
+# Build number, written by server/deploy.sh
+engine/godot/build_info.gd
+engine/godot/build_info.gd.uid
+engine/build/version.txt

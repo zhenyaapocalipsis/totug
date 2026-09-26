@@ -31,8 +31,17 @@ func _ready() -> void:
 			server = true
 		elif arg.begins_with("--port="):
 			port = int(arg.get_slice("=", 1))
+	# Номер версии — в журнал (user://logs/godot.log): видно, какая игра запущена.
+	print("Tyrants build %d" % Updater.own_build())
 	if server:
 		_start_server.call_deferred(port)
+		return
+	# Собранная игра сперва проверяет обновление (scenes/updater.gd): новая
+	# версия запустится отдельной программой, эта закроется.
+	if not viewer and Updater.wanted():
+		var updater := Updater.new()
+		updater.finished.connect(func(): get_tree().change_scene_to_file.call_deferred(GAME_SCENE))
+		add_child(updater)
 		return
 	# Через call_deferred: смена сцены прямо в _ready() происходит в момент,
 	# когда дерево ещё добавляет узлы, и движок ругается
