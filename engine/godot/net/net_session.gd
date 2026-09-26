@@ -21,6 +21,8 @@ signal game_started(seat: String, board: Dictionary, view: Dictionary)
 signal result_received(err: int, events: Array, view: Dictionary)
 signal chat_received(seat: String, text: String)
 signal player_left(seat: String)
+## Сервер пересчитал рейтинг после партии: место -> {rating, delta}.
+signal rating_changed(result: Dictionary)
 ## Связь не установилась, оборвалась или сервер отказал (нет комнаты и т.п.).
 signal connection_lost(reason: String)
 ## Хост: чем кончилась попытка открыть порт на роутере (UPnP). address — внешний
@@ -36,7 +38,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 2
+const PROTOCOL := 3
 const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
@@ -52,9 +54,13 @@ var room_code := ""
 var started := false
 ## Свой профиль {name, emblem} (PlayerProfile) — уходит в комнату при входе.
 var profile: Dictionary = {}
+## Ключ рейтинга; пустой — из профиля (PlayerProfile.key). Тест даёт свой.
+var rating_key := ""
 ## Профили за столом: цвет -> {name, emblem}; приходят с лобби и стартом.
 var profiles: Dictionary = {}
 
+## Рейтинги онлайн-партий — только у выделенного сервера (RatingBook).
+var ratings: RatingBook
 var rooms: Dictionary = {}      # code -> GameRoom
 var peer_room: Dictionary = {}  # peer id -> code
 var _lan_code := ""
@@ -91,6 +97,8 @@ func serve(port: int, is_dedicated: bool = false) -> int:
 	multiplayer.multiplayer_peer = peer
 	is_host = true
 	dedicated = is_dedicated
+	if dedicated and ratings == null:
+		ratings = RatingBook.new()
 	return OK
 
 
@@ -133,7 +141,7 @@ func _connect(address: String, port: int, then: Callable) -> int:
 	_on_connected = func():
 		then.call()
 		var p := PlayerProfile.clean(profile)
-		_profile_up.rpc_id(1, p["name"], p["emblem"])
+		_profile_up.rpc_id(1, p["name"], p["emblem"], rating_key if rating_key != "" else PlayerProfile.key())
 	return OK
 
 
@@ -317,14 +325,22 @@ func _seat_peer(room: GameRoom, peer: int) -> void:
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _profile_up(player_name: String, emblem: String) -> void:
+func _profile_up(player_name: String, emblem: String, key: String) -> void:
 	if not is_host:
 		return
 	var peer := multiplayer.get_remote_sender_id()
 	var room := _room_of(peer)
 	if room == null or room.started or not room.seats.has(peer):
 		return
-	room.profiles[String(room.seats[peer])] = PlayerProfile.clean({"name": player_name, "emblem": emblem})
+	var pid := String(room.seats[peer])
+	var p := PlayerProfile.clean({"name": player_name, "emblem": emblem})
+	# Рейтинг видят все за столом; сам ключ дальше сервера не уходит.
+	if ratings != null:
+		var account := RatingBook.account_of(key)
+		room.accounts[pid] = account
+		if account != "":
+			p["rating"] = ratings.rating_of(account)
+	room.profiles[pid] = p
 	_broadcast_lobby(room)
 
 
@@ -413,6 +429,9 @@ func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_s
 	seat = your_seat
 	room_code = code
 	profiles = seat_profiles.duplicate(true)
+	var own: Dictionary = profiles.get(seat, {})
+	if own.has("rating"):
+		PlayerProfile.cache_rating(int(own["rating"]))
 	lobby_changed.emit(joined, needed, code, owner_seat)
 
 
@@ -516,6 +535,37 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 			continue
 		var own_err := err if peer == sender else GameServer.Error.OK
 		_send(peer, "_result", [own_err, result["events"], views[room.seats[peer]]])
+	if room.server.state.game_over and not room.rated:
+		_rate_room(room)
+
+
+## Партия в комнате окончена — пересчитать рейтинг (только выделенный сервер).
+func _rate_room(room: GameRoom) -> void:
+	room.rated = true
+	if ratings == null:
+		return
+	var state := room.server.state
+	var players := {}
+	var scores := {}
+	for pid: String in state.turn_order:
+		players[pid] = {"account": String(room.accounts.get(pid, "")),
+			"name": String((room.profiles.get(pid, {}) as Dictionary).get("name", ""))}
+		scores[pid] = int(Scoring.breakdown(state, pid)["total"])
+	var vp := Scoring.library_card_vp(state)
+	var result := ratings.record(players, scores, Array(Scoring.winners(state, vp[0], vp[1])))
+	if result.is_empty():
+		_log("room %s: game over, not rated" % room.code)
+		return
+	_log("room %s: rated %s" % [room.code, JSON.stringify(result)])
+	for peer: int in room.seats:
+		_send(peer, "_rating", [result])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _rating(result: Dictionary) -> void:
+	if result.has(seat):
+		PlayerProfile.cache_rating(int(result[seat]["rating"]))
+	rating_changed.emit(result)
 
 
 @rpc("authority", "call_remote", "reliable")

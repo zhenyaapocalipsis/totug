@@ -37,6 +37,8 @@ var _spoof_sent := false
 var _turn_player := ""
 var _stranger: NetSession
 var _old_version: NetSession
+var ratings: Dictionary = {}
+const RATINGS_PATH := "user://ratings_nettest.json"
 
 
 func _process(delta: float) -> bool:
@@ -88,8 +90,34 @@ func _process(delta: float) -> bool:
 				if _scenario == "lan":
 					_start_server()
 				else:
-					return _finish()
+					_end_game()
+		"rated":
+			if ratings.has(players[0]) and ratings.has(players[1]):
+				var r: Dictionary = ratings[players[0]]
+				check(r == ratings[players[1]], "[server] рейтинг пришёл обоим одинаковый")
+				check(r.has(players[0].seat) and r.has(players[1].seat), "[server] рейтинг обоих мест")
+				check(int(r[players[0].seat]["delta"]) + int(r[players[1].seat]["delta"]) == 0,
+					"[server] рейтинг: сколько один получил, столько другой потерял")
+				check(server.ratings.accounts.size() == 2, "[server] на сервере две учётные записи")
+				check(not (views[players[0]] as Dictionary).get("final_scores", {}).is_empty(),
+					"[server] итоги партии пришли в срезе")
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+				return _finish()
 	return false
+
+
+## Конец партии: на сервере объявлен последний круг, который кончается на
+## текущем игроке; он жмёт End turn — сервер считает рейтинг и рассылает его.
+func _end_game() -> void:
+	var room: GameRoom = server.rooms.values()[0]
+	var state := room.server.state
+	GameEnd.trigger(state, "market_empty")
+	state.final_round_ends_after_index = state.current_player_index
+	var current := state.current_player()
+	for p in players:
+		if p.seat == current:
+			p.send_intent(Intent.end_turn(current))
+	_step = "rated"
 
 
 # --- сценарии ----------------------------------------------------------------
@@ -113,6 +141,8 @@ func _start_server() -> void:
 	_scenario = "server"
 	_reset()
 	server = _session()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+	server.ratings = RatingBook.new(RATINGS_PATH)
 	check(server.serve(SERVER_PORT, true) == OK, "[server] сервер открыл порт")
 	var a := _session()
 	var b := _session()
@@ -150,6 +180,8 @@ func _session() -> NetSession:
 
 func _track(p: NetSession) -> void:
 	p.profile = {"name": "Player %d" % _branches, "emblem": _emblem_for(_branches)}
+	p.rating_key = "%032d" % p.get_instance_id()
+	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	views[p] = {}
 	errors[p] = []
 	chats[p] = []

@@ -36,6 +36,7 @@ func _initialize() -> void:
 	test_game_end()
 	test_scoring()
 	test_final_breakdown()
+	test_rating()
 	test_cluster_bonus()
 
 	# этап 5: система эффектов карт
@@ -967,6 +968,38 @@ func test_final_breakdown() -> void:
 	view = StateView.for_player(rich, "blue")
 	check(view.has("final_scores") and view["final_scores"].has("blue"), "после конца — итоги всех игроков")
 	check_eq(view["winners"], ["red"], "победитель red")
+
+
+func test_rating() -> void:
+	section("рейтинг Эло")
+	var d := RatingBook.elo_deltas({"red": 1000, "blue": 1000}, {"red": 40, "blue": 30})
+	check_eq(d["red"], 16, "1v1 равные: победитель +16")
+	check_eq(d["blue"], -16, "1v1 равные: проигравший -16")
+	d = RatingBook.elo_deltas({"red": 1000, "blue": 1000}, {"red": 30, "blue": 30})
+	check_eq(d["red"], 0, "ничья равных — без изменений")
+	d = RatingBook.elo_deltas({"red": 1200, "blue": 1000}, {"red": 40, "blue": 30})
+	check(int(d["red"]) < 16 and int(d["red"]) > 0, "сильный за победу над слабым получает меньше")
+	d = RatingBook.elo_deltas({"red": 1000, "blue": 1000, "green": 1000, "purple": 1000},
+			{"red": 50, "blue": 40, "green": 30, "purple": 20})
+	check_eq(d["red"], 16, "на четверых: первый +16 (как 1v1)")
+	check_eq(int(d["red"]) + int(d["blue"]) + int(d["green"]) + int(d["purple"]), 0, "на четверых: сумма 0")
+
+	var path := "user://ratings_test.json"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var book := RatingBook.new(path)
+	var a := RatingBook.account_of("0123456789abcdef0123456789abcdef")
+	var b := RatingBook.account_of("fedcba9876543210fedcba9876543210")
+	check(a != "" and a != b, "ключ даёт учётную запись")
+	check_eq(RatingBook.account_of("short"), "", "короткий ключ не годится")
+	var r := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": b, "name": "Bob"}},
+			{"red": 40, "blue": 30}, ["red"])
+	check_eq(r["red"]["rating"], 1016, "рейтинг победителя записан")
+	check_eq(RatingBook.new(path).rating_of(b), 984, "рейтинг сохранён в файл")
+	check_eq(int(book.accounts[a]["wins"]), 1, "победа засчитана")
+	var same := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": a, "name": "Ann"}},
+			{"red": 40, "blue": 30}, ["red"])
+	check(same.is_empty(), "один человек за двумя цветами — партия без рейтинга")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 ## Граф с тремя сайтами гекса A2 (по 3 слота, как на настоящем тайле —

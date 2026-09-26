@@ -20,6 +20,11 @@ var owner_peer := 0
 var seats: Dictionary = {}  # peer id -> player id
 ## Профили сидящих (PlayerProfile): player id -> {name, emblem}.
 var profiles: Dictionary = {}
+## Учётные записи рейтинга (RatingBook.account_of): player id -> account.
+## Только на выделенном сервере; игрокам не рассылаются.
+var accounts: Dictionary = {}
+## Рейтинг по итогам этой партии уже пересчитан.
+var rated := false
 var started := false
 var server: GameServer
 ## Задача WorkerThreadPool, что считает снимок доски на выделенном сервере;
@@ -62,6 +67,7 @@ func add(peer: int) -> String:
 func remove(peer: int) -> void:
 	if not started:
 		profiles.erase(String(seats.get(peer, "")))
+		accounts.erase(String(seats.get(peer, "")))
 	seats.erase(peer)
 	if owner_peer == peer:
 		owner_peer = int(seats.keys()[0]) if not seats.is_empty() else 0

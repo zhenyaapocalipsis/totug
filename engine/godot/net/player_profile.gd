@@ -134,19 +134,59 @@ static func clean(profile: Dictionary) -> Dictionary:
 	}
 
 
+## Файл профиля. `-- --profile=2` в строке запуска — отдельный профиль (и свой
+## ключ рейтинга): так два окна на одном компьютере — два разных игрока.
+static func path() -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--profile="):
+			return "user://profile_%s.cfg" % clean_name(arg.get_slice("=", 1)).replace(" ", "_")
+	return PATH
+
+
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
-	if cfg.load(PATH) != OK:
+	if cfg.load(path()) != OK:
 		return {"name": "", "emblem": ""}
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", "")})
 
 
+## Имя и герб; ключ рейтинга и запомненный рейтинг в файле не трогаются.
 static func save_local(profile: Dictionary) -> int:
 	var p := clean(profile)
 	var cfg := ConfigFile.new()
+	cfg.load(path())
 	cfg.set_value("profile", "name", p["name"])
 	cfg.set_value("profile", "emblem", p["emblem"])
-	return cfg.save(PATH)
+	return cfg.save(path())
+
+
+## Секретный ключ игрока для рейтинга (RatingBook). Создаётся при первом
+## обращении и больше не меняется; никому, кроме сервера, не показывается.
+static func key() -> String:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	var k := String(cfg.get_value("rating", "key", ""))
+	if k.length() < 32:
+		var bytes := Crypto.new().generate_random_bytes(16)
+		k = bytes.hex_encode()
+		cfg.set_value("rating", "key", k)
+		cfg.save(path())
+	return k
+
+
+## Рейтинг, который сервер сообщил в последний раз (-1 — ещё не играл онлайн).
+## Только для показа в меню: настоящий хранится на сервере.
+static func cached_rating() -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	return int(cfg.get_value("rating", "value", -1))
+
+
+static func cache_rating(value: int) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	cfg.set_value("rating", "value", value)
+	cfg.save(path())
 
 
 static func name_of(seat: String) -> String:

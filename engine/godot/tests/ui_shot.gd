@@ -82,7 +82,7 @@ func _run_scenario() -> void:
 	match _scenario:
 		"":
 			return
-		"game_over":
+		"game_over", "game_over_rated":
 			# Итоги партии: конец объявлен сразу, круг доигрывается пустыми
 			# ходами, у второго игрока немного VP-жетонов для разницы в счёте.
 			var st := _screen.server.state
@@ -103,6 +103,12 @@ func _run_scenario() -> void:
 					continue
 				GameEnd.trigger(st, "market_empty")
 				_screen.send(Intent.end_turn(st.current_player()))
+			# Как придёт от сервера после онлайн-партии (здесь — выдуманный).
+			if _scenario == "game_over_rated":
+				var fake := {}
+				for i_r in st.turn_order.size():
+					fake[st.turn_order[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r}
+				_screen._game_over_panel.set_ratings(fake)
 		"play_card":
 			# Разыграть первую карту руки текущего игрока.
 			var pid: String = _screen.server.state.current_player()

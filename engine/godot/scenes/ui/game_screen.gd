@@ -155,6 +155,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		net.player_left.connect(func(who: String):
 			_log_panel.add_note("%s has disconnected." % EventLogPanel.player_name(who)))
 		net.connection_lost.connect(func(reason: String): _log_panel.add_note(reason + "."))
+		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
 		_build_layout()
 		_chat_panel.set_online()
 		refresh(online["view"])

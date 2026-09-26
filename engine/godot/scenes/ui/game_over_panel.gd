@@ -31,6 +31,9 @@ var _title: Label
 var _grid: GridContainer
 var _decks: Control
 var _shown_once := false
+## Рейтинг после онлайн-партии (NetSession.rating_changed): место -> {rating, delta}.
+var _ratings: Dictionary = {}
+var _view: Dictionary = {}
 
 
 func _init() -> void:
@@ -76,7 +79,7 @@ func _init() -> void:
 	col.add_child(_title)
 
 	_grid = GridContainer.new()
-	_grid.columns = COLUMNS.size() + 2
+	_grid.columns = COLUMNS.size() + 3
 	_grid.add_theme_constant_override("h_separation", 4)
 	_grid.add_theme_constant_override("v_separation", 3)
 	col.add_child(_grid)
@@ -94,6 +97,7 @@ func _init() -> void:
 func update_from_view(view: Dictionary) -> void:
 	if not bool(view.get("game_over", false)) or not view.has("final_scores"):
 		return
+	_view = view
 	var scores: Dictionary = view["final_scores"]
 	var winners: Array = view.get("winners", [])
 
@@ -114,6 +118,7 @@ func update_from_view(view: Dictionary) -> void:
 	for c in COLUMNS:
 		_grid.add_child(_cell(c[1], PixelTheme.TEXT_DIM, COL_W))
 	_grid.add_child(_cell("SUM", PixelTheme.GOLD, COL_W))
+	_grid.add_child(_cell("RATING" if not _ratings.is_empty() else "", PixelTheme.TEXT_DIM, 0))
 
 	# Строки — по убыванию счёта, при равенстве в порядке хода.
 	var order: Array = view["turn_order"].duplicate()
@@ -128,6 +133,7 @@ func update_from_view(view: Dictionary) -> void:
 			_grid.add_child(_cell(str(int(s[c[0]])), PixelTheme.TEXT, COL_W))
 		_grid.add_child(_cell(str(int(s["total"])),
 				PixelTheme.GOLD if winners.has(pid) else PixelTheme.TEXT, COL_W))
+		_grid.add_child(_rating_cell(String(pid)))
 
 	_build_decks(view)
 
@@ -221,3 +227,24 @@ func _button(text: String, action: Callable) -> Button:
 	SetupScreen._style_button(button)
 	button.pressed.connect(action)
 	return button
+
+
+## Сервер пересчитал рейтинг — таблица получает столбец RATING.
+func set_ratings(result: Dictionary) -> void:
+	_ratings = result
+	if not _view.is_empty():
+		update_from_view(_view)
+
+
+## "1016 +16": новый рейтинг и изменение (рост — зелёным, падение — красным).
+func _rating_cell(pid: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	if not _ratings.has(pid):
+		return row
+	var r: Dictionary = _ratings[pid]
+	var delta := int(r["delta"])
+	row.add_child(_cell(str(int(r["rating"])), PixelTheme.TEXT, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	var colour := Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)
+	row.add_child(_cell("%+d" % delta, colour, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	return row

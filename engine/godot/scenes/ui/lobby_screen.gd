@@ -243,6 +243,9 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		_seats.add_child(ProfileScreen.token_icon(String(pid), PlayerProfile.emblem_of(String(pid))))
 		var name_label := Label.new()
 		name_label.text = EventLogPanel.player_name(String(pid)) + (" (you)" if String(pid) == _net.seat else "")
+		var seat_profile: Dictionary = _net.profiles.get(pid, {})
+		if seat_profile.has("rating"):
+			name_label.text += "  %d" % int(seat_profile["rating"])
 		_seats.add_child(name_label)
 	var full := joined.size() >= needed
 	var i_start := owner_seat == _net.seat

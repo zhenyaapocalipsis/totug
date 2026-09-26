@@ -143,6 +143,13 @@ func _profile_row() -> Control:
 	name_label.text = String(local["name"]) if String(local["name"]) != "" else "No name yet"
 	name_label.add_theme_color_override("font_color", PixelTheme.TEXT)
 	row.add_child(name_label)
+	# Рейтинг онлайн-партий — каким его сервер сообщил в последний раз.
+	var rating := PlayerProfile.cached_rating()
+	if rating >= 0:
+		var rating_label := Label.new()
+		rating_label.text = "RATING %d" % rating
+		rating_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+		row.add_child(rating_label)
 	var button := Button.new()
 	button.text = "PROFILE"
 	button.tooltip_text = "Your name and emblem (drawn on your troops)"
