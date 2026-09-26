@@ -177,8 +177,18 @@ func _run_scenario() -> void:
 			for arg4 in OS.get_cmdline_user_args():
 				if arg4.begins_with("--pick=") and _screen.server.resolver.is_waiting():
 					var pd4: PendingDecision = _screen.server.resolver.pending
-					_screen.send(Intent.make_decision(pd4.player_id,
-						pd4.legal_options[int(arg4.get_slice("=", 1))]))
+					var want := arg4.get_slice("=", 1)
+					var ans4: Variant = pd4.legal_options[0]
+					if want.is_valid_int():
+						ans4 = pd4.legal_options[int(want)]
+					else:
+						# --pick=Caer: вариант, в id или названии локации которого есть текст
+						for opt4 in pd4.legal_options:
+							var site4: Dictionary = (_screen.board_data["sites"] as Dictionary).get(str(opt4), {})
+							if str(opt4).contains(want) or String(site4.get("name", "")).contains(want):
+								ans4 = opt4
+								break
+					_screen.send(Intent.make_decision(pd4.player_id, ans4))
 		"capture":
 			# Захват локации запускается не здесь, а на кадре (_run_capture):
 			# доска считает места искр по своему масштабу, а он подбирается
