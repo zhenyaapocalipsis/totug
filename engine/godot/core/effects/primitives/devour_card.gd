@@ -19,13 +19,17 @@ var source: String  # "hand" | "market" | "inner_circle" | "this"
 var card_id: String
 var then_effect: CardEffect = null
 var ask_confirm: bool = true
+## "You may devour..." без платы-стрелки: отказ — тот же пропуск в списке
+## вариантов, отдельного вопроса "да/нет" нет (White Wyrmling, Cult Fanatic).
+var may_skip: bool = false
 
 
-func _init(src: String, cid: String = "", then: CardEffect = null, confirm: bool = true) -> void:
+func _init(src: String, cid: String = "", then: CardEffect = null, confirm: bool = true, skip: bool = false) -> void:
 	source = src
 	card_id = cid
 	then_effect = then
 	ask_confirm = confirm
+	may_skip = skip
 
 
 func is_available(state: GameState, player_id: String) -> bool:
@@ -38,7 +42,7 @@ func is_available(state: GameState, player_id: String) -> bool:
 
 
 func _is_optional() -> bool:
-	return then_effect != null
+	return then_effect != null or may_skip
 
 
 func _devour(state: GameState, player_id: String, chosen: String, src: String, resolver: EffectResolver) -> void:
@@ -92,7 +96,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			options.append(-1)
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Devour a card in the market"
+		pd.prompt = "You may devour a card in the market" if _is_optional() else "Devour a card in the market"
 		pd.choice_type = "target_market_index"
 		pd.legal_options = options
 		pd.target_effect = self

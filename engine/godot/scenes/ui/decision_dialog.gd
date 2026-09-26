@@ -57,6 +57,15 @@ static func market_label(index: int, display: Array, ghost_card: String = "") ->
 	return "%s (%d)" % [_card_label(card_id), cost] if cost >= 0 else _card_label(card_id)
 
 
+## id карты рынка по номеру варианта ("" — не карта: отказ или пустое место).
+func _market_card_id(index: int) -> String:
+	if index == Market.DEVOURED_TOP_INDEX:
+		return _ghost_card
+	if index >= 0 and index < _market_display.size():
+		return String(_market_display[index])
+	return ""
+
+
 func _init() -> void:
 	visible = false
 	custom_minimum_size = Vector2(WIDTH, 0)
@@ -142,10 +151,25 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	elif choice_type == "confirm" and CardView.pixel_texture(String(pd.get("source_card", ""))) != null:
 		# "You may..." — как выбор карты для Promote: сама карта (щелчок —
 		# "да") и под ней Skip ("нет").
-		_add_card_grid([String(pd["source_card"])], true)
+		_add_card_grid([String(pd["source_card"])], [true])
 		cards_mode = true
 		_add_button("Skip", false)
 		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+	elif choice_type == "target_market_index":
+		# Карты рынка — такой же сеткой, как выбор для Promote; в ответ уходит
+		# номер карты на рынке. -1 — отказ ("You may devour..."), это Skip.
+		var ids: Array = []
+		var indices: Array = []
+		for value in options:
+			var cid := _market_card_id(int(value))
+			if cid != "":
+				ids.append(cid)
+				indices.append(int(value))
+		_add_card_grid(ids, indices)
+		cards_mode = true
+		if options.has(-1):
+			_add_button("Skip", -1)
+			_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 	elif choice_type == "target_card":
 		_add_card_grid(options)
 		cards_mode = true
@@ -233,9 +257,9 @@ func _add_note(text: String) -> void:
 ## Мелкие карты-кнопки. Одинаковые карты (два Soldier в руке) показываются
 ## каждая отдельно — ответ у них один и тот же id, серверу это безразлично.
 ## "inner:<id>" — карта из Внутреннего круга: лицо то же, в ответ уходит
-## исходная строка с префиксом. answer не null — любая карта отвечает им
-## (окно "You may..." отвечает true).
-func _add_card_grid(options: Array, answer: Variant = null) -> void:
+## исходная строка с префиксом. answers (если заданы) — ответ каждой карты по
+## порядку: номер карты на рынке, true у окна "You may...".
+func _add_card_grid(options: Array, answers: Array = []) -> void:
 	var ids: Array = options.filter(func(o): return typeof(o) == TYPE_STRING and String(o) != "")
 	if ids.is_empty():
 		return
@@ -244,14 +268,15 @@ func _add_card_grid(options: Array, answer: Variant = null) -> void:
 	grid.add_theme_constant_override("h_separation", 2)
 	grid.add_theme_constant_override("v_separation", 2)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	for raw in ids:
+	for i in ids.size():
+		var raw = ids[i]
 		var value := String(raw)
 		var cid := value.substr(6) if value.begins_with("inner:") else value
 		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
 		card.highlight = false
 		card.set_clickable(true)
 		card.tooltip_text = _card_label(value)
-		var reply: Variant = value if answer == null else answer
+		var reply: Variant = answers[i] if i < answers.size() else value
 		card.pressed.connect(func(_id): option_chosen.emit(reply))
 		grid.add_child(card)
 	_options_box.add_child(grid)
