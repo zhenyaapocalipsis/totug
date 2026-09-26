@@ -100,11 +100,7 @@ var _barracks: BarracksBar
 var _overlay: PlayersOverlay
 var _hand_panel: HandPanel
 var _showcase: CardShowcase
-var _recap: TurnRecap
-## Что соперники купили, промоутили и съели, пока зритель ждал хода:
-## player_id -> [{"cid", "tag"}]. Показывается сводкой (TurnRecap).
-var _recap_items: Dictionary = {}
-var _recap_pending := false
+var _feed: TurnFeed
 var _market_panel: MarketPanel
 var _chat_panel: ChatPanel
 var _log_panel: EventLogPanel
@@ -358,10 +354,9 @@ func _build_layout() -> void:
 	_showcase.z_index = 950
 	add_child(_showcase)
 
-	# Сводка ходов соперников — над рукой, когда ход приходит к зрителю.
-	_recap = TurnRecap.new()
-	_recap.z_index = 940
-	add_child(_recap)
+	# Сводка ходов — постоянная колонка у левого края, слева от доски.
+	_feed = TurnFeed.new()
+	add_child(_feed)
 
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
 	_pile_dialog = PileDialog.new()
@@ -554,8 +549,13 @@ func _layout() -> void:
 	var ew := COL - PILES_W - GAP
 	_place(_end_turn_area, d_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
 
-	# Доска — всё слева от колонки, от верха экрана до руки.
-	_place(_board_area, a_x, top_y, b_w, bottom_y - GAP - top_y)
+	# Слева — сводка ходов во всю высоту доски; доска — всё между ней и
+	# правой колонкой, от верха экрана до руки. Ширины сводки доске не жалко:
+	# масштаб схемы от неё не падает ни на двоих, ни на четверых.
+	var board_h := bottom_y - GAP - top_y
+	_place(_feed, a_x, top_y, TurnFeed.WIDTH, board_h)
+	var board_x := a_x + TurnFeed.WIDTH + GAP
+	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
 
 	# Рука — под доской, без подложки; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
@@ -704,8 +704,8 @@ const RECAP_TAGS := {
 }
 
 
-## Копит для сводки чужие покупки, промоуты и devour; когда ход перешёл к
-## зрителю, сводка покажется (как только доиграет витрина — _process).
+## Пополняет сводку ходов (колонку слева) сыгранными картами, покупками,
+## промоутами и devour всех игроков; конец хода начинает в ней новый блок.
 func _note_recap(events: Array) -> void:
 	for e in events:
 		var evt: Dictionary = e
@@ -714,28 +714,11 @@ func _note_recap(events: Array) -> void:
 			var pid := String(evt.get("player_id", ""))
 			var cid := String(evt.get("card_id", ""))
 			if pid != "" and cid != "":
-				if not _recap_items.has(pid):
-					_recap_items[pid] = []
-				(_recap_items[pid] as Array).append({"cid": cid, "tag": RECAP_TAGS[type]})
-		elif type == "turn_ended" and not bool(evt.get("game_over", false)) \
-				and String(_view.get("current_player", "")) == viewer_id:
-			_recap_pending = true
-
-
-func _show_recap() -> void:
-	_recap_pending = false
-	var groups: Array = []
-	for pid in (_view.get("turn_order", []) as Array):
-		var items: Array = _recap_items.get(String(pid), [])
-		if String(pid) != viewer_id and not items.is_empty():
-			groups.append({"pid": String(pid), "items": items})
-	_recap_items.clear()
-	if groups.is_empty():
-		return
-	# Колонкой у левого края доски, от её верха до низа экрана (левее руки).
-	var area := _board_area.get_global_rect()
-	var top_left := area.position + Vector2(2, 2) - get_global_position()
-	_recap.show_groups(groups, top_left, size.y - MARGIN - top_left.y)
+				_feed.add(pid, cid, RECAP_TAGS[type])
+		elif type == "play_card":
+			_feed.add_played(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
+		elif type == "turn_ended":
+			_feed.end_turn()
 
 
 ## Крупный показ карты cid, которую взял pid (см. CardShowcase).
@@ -965,9 +948,6 @@ static func _error_name(err: int) -> String:
 ## Пока на экране висит вопрос карты, завершить ход нельзя, поэтому таймер ждёт
 ## ответа и завершает ход сразу после него.
 func _process(delta: float) -> void:
-	# Сводка ходов соперников ждёт, пока доиграет витрина их последних карт.
-	if _recap_pending and not _showcase.is_busy():
-		_show_recap()
 	if _timer_label == null or _view.is_empty():
 		return
 	if bool(_view["game_over"]):

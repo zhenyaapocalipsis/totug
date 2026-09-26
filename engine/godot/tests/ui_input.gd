@@ -40,6 +40,7 @@ var _played_view: CardView = null
 var _capture_site := ""
 var _move_to := ""
 var _feed_before := 0
+var _feed_cells_before := 0
 
 
 func _initialize() -> void:
@@ -513,7 +514,14 @@ func _step_recap() -> void:
 			foe = pid
 	var cid := _screen._market_panel.card_id_at(1)
 	_feed_before = _screen._feed.card_count()
+	_feed_cells_before = _screen._feed._cells.size()
+	# Длинное имя из профиля: заголовок хода должен ужаться до одного имени.
+	PlayerProfile.seats[foe] = {"name": "Jekadiscoteka"}
+	var played := String(_screen.server.state.players[foe].deck.hand[0])
 	_screen._react_to_events([
+		{"type": "turn_ended", "player_id": me, "game_over": false},
+		{"type": "play_card", "player_id": foe, "card_id": played},
+		{"type": "play_card", "player_id": foe, "card_id": played},
 		{"type": "recruit", "player_id": foe, "market_index": 1, "card_id": cid},
 		{"type": "devour", "player_id": foe, "card_id": cid, "source": "market"},
 		{"type": "turn_ended", "player_id": foe, "game_over": false},
@@ -522,8 +530,20 @@ func _step_recap() -> void:
 
 func _step_check_recap() -> void:
 	var feed: TurnFeed = _screen._feed
-	check(feed.visible and feed.card_count() - _feed_before == 3,
-		"сводка слева пополнилась тремя картами (%d)" % (feed.card_count() - _feed_before))
+	check(feed.visible and feed.card_count() - _feed_before == 5,
+		"сводка слева пополнилась пятью картами (%d)" % (feed.card_count() - _feed_before))
+	check(feed._cells.size() - _feed_cells_before == 4,
+		"две сыгранные подряд карты легли одной лесенкой (%d записей)" % (feed._cells.size() - _feed_cells_before))
+	var fits := true
+	for child in feed._list.get_children():
+		if child is Label:
+			var label := child as Label
+			var w := label.get_theme_font("font").get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT,
+				-1, label.get_theme_font_size("font_size")).x
+			if w > TurnFeed.CARD.x and label.text.ends_with("'S TURN"):
+				fits = false
+	check(fits, "длинное имя не обрезает заголовок хода — остаётся одно имя")
+	PlayerProfile.seats.clear()
 	check(feed.get_global_rect().end.x < _screen._board_area.get_global_rect().position.x,
 		"сводка стоит слева от доски и её не закрывает")
 
@@ -533,7 +553,7 @@ func _step_hover_feed() -> void:
 	var feed: TurnFeed = _screen._feed
 	var card: CardView = null
 	for cell in feed._cells:
-		var c: CardView = cell.get_child(0)
+		var c: CardView = cell.find_children("*", "CardView", true, false).back()
 		if c.is_visible_in_tree() and feed.get_global_rect().encloses(c.get_global_rect()):
 			card = c
 	check(card != null, "в сводке видна карта")
