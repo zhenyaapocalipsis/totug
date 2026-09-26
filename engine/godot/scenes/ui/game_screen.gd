@@ -732,9 +732,10 @@ func _show_recap() -> void:
 	_recap_items.clear()
 	if groups.is_empty():
 		return
+	# Колонкой у левого края доски, от её верха до низа экрана (левее руки).
 	var area := _board_area.get_global_rect()
-	_recap.show_groups(groups,
-		Vector2(area.get_center().x, area.end.y - 4.0) - get_global_position())
+	var top_left := area.position + Vector2(2, 2) - get_global_position()
+	_recap.show_groups(groups, top_left, size.y - MARGIN - top_left.y)
 
 
 ## Крупный показ карты cid, которую взял pid (см. CardShowcase).
