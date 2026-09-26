@@ -34,7 +34,7 @@ const MAX_SPEED := 3.0
 const CRUMBLE_BLOCK := 8
 const TRAIL := 3
 
-## Зона, которую витрина затемняет и в центре которой показывает карту.
+## Зона, в центре которой витрина показывает карту (затемняется весь экран).
 var board_area: Control = null
 
 var _queue: Array[Dictionary] = []
@@ -171,7 +171,9 @@ func _area() -> Rect2:
 func _draw() -> void:
 	var area := _area()
 	if _dim > 0.0:
-		draw_rect(area, Color(0, 0, 0, DIM_ALPHA * _dim))
+		# Затемняем весь экран, а не только доску: вокруг доски стоят сводка,
+		# рука и рынок, и тёмный прямоугольник обрывался бы посреди экрана.
+		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, DIM_ALPHA * _dim))
 	_banner.visible = false
 	_card_rect = Rect2()
 	if _item.is_empty():
