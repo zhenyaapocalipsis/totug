@@ -427,8 +427,23 @@ func _profile_up(player_name: String, emblem: String, key: String) -> void:
 	var room := _room_of(peer)
 	if room == null or room.started or not room.seats.has(peer):
 		return
+	# Место освободится само, когда клиент по отказу закроет связь.
+	if not _name_free(peer, player_name, key):
+		return
 	_set_profile(room, String(room.seats[peer]), player_name, emblem, key)
 	_broadcast_lobby(room)
+
+
+## Имя на выделенном сервере у каждого своё (RatingBook.claim_name): занятое
+## другим игроком — отказ. Игра по IP (без книги рейтингов) имена не проверяет.
+func _name_free(peer: int, player_name: String, key: String) -> bool:
+	if ratings == null:
+		return true
+	var clean_name := PlayerProfile.clean_name(player_name)
+	if ratings.claim_name(RatingBook.account_of(key), clean_name):
+		return true
+	_refuse(peer, NAME_TAKEN % clean_name)
+	return false
 
 
 func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: String, key: String) -> void:
@@ -440,11 +455,6 @@ func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: Stri
 	# Рейтинг видят все за столом; сам ключ дальше сервера не уходит.
 	if ratings != null:
 		var account := RatingBook.account_of(key)
-		# Имя на сервере у каждого своё: занятое другим игроком — не пускаем.
-		# Место освободится само, когда клиент по отказу закроет связь.
-		if not ratings.claim_name(account, p["name"]):
-			_refuse(peer, NAME_TAKEN % p["name"])
-			return
 		room.accounts[pid] = account
 		if account != "":
 			p["rating"] = ratings.rating_of(account)
@@ -474,6 +484,8 @@ func _queue(version: int, player_count: int, player_name: String, emblem: String
 		return
 	var peer := multiplayer.get_remote_sender_id()
 	if not _check_newcomer(peer, version):
+		return
+	if not _name_free(peer, player_name, key):
 		return
 	var needed := clampi(player_count, GameRoom.MIN_PLAYERS, GameRoom.MAX_PLAYERS)
 	var line: Array = queues.get(needed, [])

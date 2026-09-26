@@ -230,9 +230,15 @@ func _process(delta: float) -> bool:
 					== seated[0].profile["name"], "[match] имя соперника дошло")
 				check(waiting.seat == "", "[match] третий ждёт дальше, за стол не сел")
 				waiting.close()
+				# Имена проверяются и в очереди: чужой ключ с именем первого — отказ.
+				_impostor = _session()
+				_track(_impostor)
+				_impostor.profile = {"name": String(players[0].profile["name"]).to_upper(), "emblem": ""}
+				_impostor.find_match("127.0.0.1", MATCH_PORT, 4)
 				_step = "match_leave"
 		"match_leave":
-			if server.queued.size() == 1 and (server.queues[2] as Array).is_empty():
+			if server.queued.size() == 1 and (server.queues[2] as Array).is_empty() and lost.has(_impostor):
+				check(String(lost[_impostor]).contains("is taken"), "[match] занятое имя в очереди — отказ: %s" % lost[_impostor])
 				check(server.queued.has(server.queues[3][0]), "[match] ушедший убран из очереди, ждущий троих остался")
 				return _finish()
 	return false
@@ -251,6 +257,10 @@ func _start_match() -> void:
 	# Недоигранная партия server4 лежит в журнале — новый сервер поднял бы её.
 	_clear_saves_dir()
 	server = _session()
+	# Своя книга рейтингов и имён, как у server4 (имена проверяются и в очереди).
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(MATCH_PORT, true) == OK, "[match] сервер открыл порт")
 	var ps: Array[NetSession] = []
