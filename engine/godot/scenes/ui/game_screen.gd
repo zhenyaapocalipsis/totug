@@ -611,33 +611,79 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 ## Чем громче событие на доске, тем сильнее её тряхнёт. Захват локации доска
 ## замечает сама (по смене владельца), а здесь — то, чего в расстановке войск
 ## не видно: убийство, вытеснение, возврат чужого войска или шпиона.
+##
+## Заодно здесь запускаются полёты фишек: из барака на доску (деплой,
+## шпион), с места на место (move) и с доски обратно в барак (return).
+## Фишки одного ответа сервера летят друг за другом (launched).
 func _react_to_events(events: Array) -> void:
 	var power := 0.0
 	var launched := 0
 	for e in events:
 		var evt: Dictionary = e
 		var pid := String(evt.get("player_id", ""))
+		var started := false
 		match String(evt.get("type", "")):
 			# "deploy" — действие за мечи (Power), "deploy_troop" — деплой картой.
 			"deploy", "deploy_troop":
 				# С "color" — войско взято из зала трофеев, а не из барака.
-				if not evt.has("color") and _launch_troop(pid, String(evt.get("slot_id", "")), launched):
-					launched += 1
+				started = not evt.has("color") \
+					and _launch_troop(pid, String(evt.get("slot_id", "")), launched)
 			"choose_starting_site":
 				var slot_id := _board_panel.troop_slot_of(String(evt.get("site_id", "")), pid)
-				if _launch_troop(pid, slot_id, launched):
-					launched += 1
+				started = _launch_troop(pid, slot_id, launched)
 			"place_spy":
-				if _launch_spy(pid, String(evt.get("site_id", "")), launched):
-					launched += 1
+				started = _launch_spy(pid, String(evt.get("site_id", "")), launched)
+			"move_troop":
+				started = _move_troop(String(evt.get("owner", "")), String(evt.get("from", "")),
+					String(evt.get("to", "")), launched)
 			"assassinate", "supplant":
 				power = maxf(power, SHAKE_KILL)
 				_board_panel.spark_at_slot(String(evt.get("slot_id", "")),
 					BoardPanel.KILL_COLOR)
-			"return_troop", "return_spy", "return_own_spy":
+			"return_troop":
 				power = maxf(power, SHAKE_NUDGE)
+				started = _return_troop(String(evt.get("owner", "")),
+					String(evt.get("slot_id", "")), launched)
+			"return_spy":
+				power = maxf(power, SHAKE_NUDGE)
+				started = _return_spy(String(evt.get("owner", "")),
+					String(evt.get("site_id", "")), launched)
+			"return_own_spy":
+				power = maxf(power, SHAKE_NUDGE)
+				started = _return_spy(pid, String(evt.get("site_id", "")), launched)
+		if started:
+			launched += 1
 	if power > 0.0:
 		_board_panel.shake(power)
+
+
+## Фишка войска owner — такая же, как на доске.
+func _troop_token(owner: String) -> FlyingToken:
+	var token := FlyingToken.new()
+	token.texture = _board_panel.troop_token(owner)
+	token.texture_zoom = _board_panel.token_zoom()
+	token.colour = BoardPanel.troop_colour(owner)
+	token.half = _board_panel.troop_radius()
+	return token
+
+
+func _spy_token(owner: String) -> FlyingToken:
+	var token := FlyingToken.new()
+	token.spy = true
+	token.colour = BoardPanel.troop_colour(owner)
+	token.half = _board_panel.spy_half()
+	return token
+
+
+## Середина прямоугольника барака pid в координатах экрана или null.
+func _barracks_at(pid: String) -> Variant:
+	var at: Variant = _barracks.box_global_centre(pid)
+	return (at as Vector2) - get_global_position() if at != null else null
+
+
+## Глобальная точка доски (или null) в координатах экрана.
+func _board_at(global: Variant) -> Variant:
+	return (global as Vector2) - get_global_position() if global != null else null
 
 
 ## Войско pid вылетает из его барака в место slot_id. Состояние уже
@@ -647,81 +693,138 @@ func _react_to_events(events: Array) -> void:
 func _launch_troop(pid: String, slot_id: String, order: int) -> bool:
 	if slot_id == "" or String((_view.get("troops", {}) as Dictionary).get(slot_id, "")) != pid:
 		return false
-	var to: Variant = _board_panel.slot_global(slot_id)
-	if to == null:
+	var from: Variant = _barracks_at(pid)
+	var to: Variant = _board_at(_board_panel.slot_global(slot_id))
+	if from == null or to == null:
 		return false
-	var token := FlyingToken.new()
-	token.texture = _board_panel.troop_token(pid)
-	token.texture_zoom = _board_panel.token_zoom()
-	token.colour = BoardPanel.troop_colour(pid)
-	token.half = _board_panel.troop_radius()
-	return _launch_token(pid, token, to, "troop|" + slot_id, order)
+	_fly_to_board(_troop_token(pid), from, to, "troop|" + slot_id, order,
+		func() -> void: _barracks.kick(pid))
+	return true
 
 
 ## Шпион pid вылетает из барака к локации site_id.
 func _launch_spy(pid: String, site_id: String, order: int) -> bool:
-	var to: Variant = _board_panel.spy_global(site_id, pid)
-	if to == null:
+	var from: Variant = _barracks_at(pid)
+	var to: Variant = _board_at(_board_panel.spy_global(site_id, pid))
+	if from == null or to == null:
 		return false
-	var token := FlyingToken.new()
-	token.spy = true
-	token.colour = BoardPanel.troop_colour(pid)
-	token.half = _board_panel.spy_half()
-	return _launch_token(pid, token, to, "spy|%s|%s" % [site_id, pid], order)
+	_fly_to_board(_spy_token(pid), from, to, "spy|%s|%s" % [site_id, pid], order,
+		func() -> void: _barracks.kick(pid))
+	return true
 
 
-## Полёт фишки от прямоугольника барака до места на доске. Фишки одного хода
-## вылетают друг за другом (order), и в момент вылета барак вспыхивает.
-## Позиция и масштаб — только целые, как всё на пиксельном экране.
-##
-## Три фазы: выскочить из барака в сторону цели (и сразу вырасти вдвое),
-## коротко зависнуть, полететь по дуге с разгоном — фишка не тормозит у места,
-## а врезается в него. Посадку объявляет доске сам полёт (land).
-func _launch_token(pid: String, token: FlyingToken, to_global: Vector2, key: String, order: int) -> bool:
-	var from: Variant = _barracks.box_global_centre(pid)
-	if from == null:
-		token.free()
+## Move: войско owner срывается с места from_slot (облачко пыли) и
+## врезается в to_slot так же, как при деплое.
+func _move_troop(owner: String, from_slot: String, to_slot: String, order: int) -> bool:
+	if owner == "" or String((_view.get("troops", {}) as Dictionary).get(to_slot, "")) != owner:
 		return false
-	var start: Vector2 = (from as Vector2) - get_global_position()
-	var finish: Vector2 = to_global - get_global_position()
-	var hop := start + (finish - start).normalized() * TOKEN_HOP
-	var delay := TOKEN_STAGGER * order
-	var total := delay + TOKEN_HOP_TIME + TOKEN_HANG_TIME + TOKEN_FLIGHT_TIME
+	var from: Variant = _board_at(_board_panel.slot_global(from_slot))
+	var to: Variant = _board_at(_board_panel.slot_global(to_slot))
+	if from == null or to == null:
+		return false
+	var colour := BoardPanel.troop_colour(owner)
+	_fly_to_board(_troop_token(owner), from, to, "troop|" + to_slot, order,
+		func() -> void: _board_panel.dust_at_slot(from_slot, colour))
+	return true
+
+
+## Return: войско срывается с места и улетает в барак хозяина, барак
+## вспыхивает, принимая его. У белых (нейтральных) войск барака нет — они
+## взлетают и тают на месте.
+func _return_troop(owner: String, slot_id: String, order: int) -> bool:
+	var from: Variant = _board_at(_board_panel.slot_global(slot_id))
+	if owner == "" or from == null:
+		return false
+	var colour := BoardPanel.troop_colour(owner)
+	_fly_to_barracks(_troop_token(owner), owner, from, order,
+		func() -> void: _board_panel.dust_at_slot(slot_id, colour))
+	return true
+
+
+## Шпион owner улетает от локации site_id обратно в барак.
+func _return_spy(owner: String, site_id: String, order: int) -> bool:
+	var from: Variant = _board_at(_board_panel.spy_departure_global(site_id))
+	if owner == "" or from == null:
+		return false
+	_fly_to_barracks(_spy_token(owner), owner, from, order, Callable())
+	return true
+
+
+## Полёт на доску: в конце доска ставит фишку key на место с ударом (land),
+## войско — ещё и со стоп-кадром. До того доска её прячет.
+func _fly_to_board(token: FlyingToken, from: Vector2, to: Vector2, key: String,
+		order: int, on_start: Callable) -> void:
 	# Запас на случай, если полёт оборвётся: доска поставит фишку сама.
-	_board_panel.hold_arrival(key, total + 0.5)
+	_board_panel.hold_arrival(key, _flight_duration(order) + 0.5)
+	var heavy := not token.spy
+	_fly(token, from, to, order, on_start,
+		func(t: float) -> void: _board_panel.set_arrival_progress(key, t),
+		func() -> void:
+			_board_panel.land(key, heavy)
+			if heavy:
+				_hitstop(TOKEN_HITSTOP))
 
-	token.position = start.round()
+
+## Полёт в барак owner: фишка уменьшается к концу и «ныряет» в прямоугольник,
+## тот вспыхивает. Барака нет (белое войско) — фишка взлетает и тает.
+func _fly_to_barracks(token: FlyingToken, owner: String, from: Vector2, order: int,
+		on_start: Callable) -> void:
+	var to: Variant = _barracks_at(owner)
+	if to == null:
+		_fly(token, from, from + Vector2(0, -TOKEN_ARC * 0.5), order, on_start,
+			func(t: float) -> void: token.modulate.a = 1.0 - t, Callable())
+		return
+	_fly(token, from, to, order, on_start, Callable(),
+		func() -> void: _barracks.kick(owner))
+
+
+func _flight_duration(order: int) -> float:
+	return TOKEN_STAGGER * order + TOKEN_HOP_TIME + TOKEN_HANG_TIME + TOKEN_FLIGHT_TIME
+
+
+## Общий полёт фишки из from в to (координаты экрана). Позиция и масштаб —
+## только целые, как всё на пиксельном экране.
+##
+## Три фазы: выскочить в сторону цели (и сразу вырасти вдвое — «поднялась к
+## камере»), коротко зависнуть, полететь по дуге с разгоном — фишка не
+## тормозит у цели, а врезается в неё. on_start — в момент вылета, on_step(t)
+## — на каждом шаге полёта, on_end — в момент прибытия.
+func _fly(token: FlyingToken, from: Vector2, to: Vector2, order: int,
+		on_start: Callable, on_step: Callable, on_end: Callable) -> void:
+	var hop := from + (to - from).normalized() * TOKEN_HOP
+	var delay := TOKEN_STAGGER * order
+
+	token.position = from.round()
 	token.visible = false
 	token.z_index = 6
 	add_child(token)
 
-	var mid := hop.lerp(finish, 0.5) + Vector2(0, -TOKEN_ARC)
+	var mid := hop.lerp(to, 0.5) + Vector2(0, -TOKEN_ARC)
 	# Барак у самого верха экрана: выше него дуга ушла бы за край. Тогда
 	# фишка летит почти горизонтально и потом падает на место.
-	mid.y = maxf(mid.y, hop.y - TOKEN_HOP)
-	var heavy := not token.spy
+	mid.y = maxf(mid.y, minf(hop.y, to.y) - TOKEN_HOP)
 	var tween := token.create_tween()
 	if delay > 0.0:
 		tween.tween_interval(delay)
 	tween.tween_callback(func() -> void:
 		token.visible = true
 		token.set_magnify(2)
-		_barracks.kick(pid))
+		if on_start.is_valid():
+			on_start.call())
 	tween.tween_method(func(t: float) -> void:
-			token.move_to(start.lerp(hop, t)),
+			token.move_to(from.lerp(hop, t)),
 		0.0, 1.0, TOKEN_HOP_TIME).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_interval(TOKEN_HANG_TIME)
 	tween.tween_method(func(t: float) -> void:
-			token.move_to(hop.lerp(mid, t).lerp(mid.lerp(finish, t), t))
+			token.move_to(hop.lerp(mid, t).lerp(mid.lerp(to, t), t))
 			token.set_magnify(2 if t < TOKEN_BIG_UNTIL else 1)
-			_board_panel.set_arrival_progress(key, t),
+			if on_step.is_valid():
+				on_step.call(t),
 		0.0, 1.0, TOKEN_FLIGHT_TIME).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_callback(func() -> void:
-		_board_panel.land(key, heavy)
-		if heavy:
-			_hitstop(TOKEN_HITSTOP)
+		if on_end.is_valid():
+			on_end.call()
 		token.queue_free())
-	return true
 
 
 ## Стоп-кадр: вся игра замирает на seconds секунд настоящего времени.

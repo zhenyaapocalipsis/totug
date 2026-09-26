@@ -403,6 +403,25 @@ func spy_global(site_id: String, owner: String) -> Variant:
 	return get_global_transform() * (spot as Vector2)
 
 
+## Откуда улетает только что снятый шпион у локации site_id (глобальные
+## координаты) или null. Его в виде уже нет, поэтому берём место, которое он
+## занял бы последним в ряду шпионов этой локации.
+func spy_departure_global(site_id: String) -> Variant:
+	if _zoom <= 0.0:
+		return null
+	var count := ((_view.get("spies", {}) as Dictionary).get(site_id, []) as Array).size()
+	var spot: Variant = _spy_spot(site_id, count, count + 1)
+	return get_global_transform() * (spot as Vector2) if spot != null else null
+
+
+## Фишка срывается с места slot_id (move, return) — облачко пыли там.
+func dust_at_slot(slot_id: String, colour: Color) -> void:
+	var at: Variant = _slot_world(slot_id)
+	if at != null:
+		_dust(_to_screen(at), colour)
+		set_process(true)
+
+
 ## Место локации site_id, где стоит войско owner (стартовая расстановка
 ## сообщает только локацию), или "".
 func troop_slot_of(site_id: String, owner: String) -> String:

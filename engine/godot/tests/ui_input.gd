@@ -38,6 +38,7 @@ var _turn_owner := ""
 var _refused_card: CardView = null
 var _played_view: CardView = null
 var _capture_site := ""
+var _move_to := ""
 
 
 func _initialize() -> void:
@@ -91,6 +92,8 @@ func _process(_delta: float) -> bool:
 		22: _step_check_deploy_flight()
 		23: _step_capture_by_flight()
 		24: _step_check_capture_waits()
+		25: _step_move_and_return()
+		26: _step_check_move_and_return()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -424,6 +427,49 @@ func _step_check_capture_waits() -> void:
 	for key: String in board._arriving.keys():
 		board.land(key)
 	check(board._captures.has(_capture_site), "войско приземлилось — захват вспыхнул")
+
+
+## Move и Return: войско перелетает с места на место (доска прячет его на
+## новом месте до посадки), вернутое войско улетает в барак.
+func _step_move_and_return() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	var mine := ""
+	var empty: Array[String] = []
+	for slot_id: String in state.graph.slots.keys():
+		var owner := String(state.troops.get(slot_id, ""))
+		if owner == me and mine == "":
+			mine = slot_id
+		elif owner == "":
+			empty.append(slot_id)
+	check(mine != "" and empty.size() >= 2, "есть своё войско и свободные места")
+	if mine == "" or empty.size() < 2:
+		return
+	_move_to = empty[0]
+	state.troops[mine] = ""
+	state.troops[_move_to] = me
+	var back := empty[1]   # это войско поставим и тут же вернём в барак
+	var before := _flying_tokens()
+	_screen.refresh(StateView.for_player_with_pending(
+		state, me, _screen.server.resolver.pending))
+	_screen._react_to_events([
+		{"type": "move_troop", "player_id": me, "from": mine, "to": _move_to, "owner": me},
+		{"type": "return_troop", "slot_id": back, "owner": me}])
+	check(_flying_tokens() - before == 2, "move и return запустили по полёту (%d)"
+		% (_flying_tokens() - before))
+
+
+func _step_check_move_and_return() -> void:
+	var board: BoardPanel = _screen._board_panel
+	check(board._arriving.has("troop|" + _move_to), "перемещённое войско ещё летит к новому месту")
+
+
+func _flying_tokens() -> int:
+	var n := 0
+	for child in _screen.get_children():
+		if child is FlyingToken and not child.is_queued_for_deletion():
+			n += 1
+	return n
 
 
 # --- вспомогательное ---------------------------------------------------------
