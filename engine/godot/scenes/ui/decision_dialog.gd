@@ -179,12 +179,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
 			_make_plain(skip)
 	elif choice_type == "target_player":
-		# Соперники — крупные надписи цвета игрока, без окна вокруг.
+		# Соперники — крупные надписи цвета игрока, без окна вокруг, слева
+		# фишка его войска с эмблемой (как на доске).
 		for value in options:
 			_add_button(_board_label(value, choice_type), value)
 			var b := _options_box.get_child(_options_box.get_child_count() - 1) as Button
 			_make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
 				else PixelTheme.TEXT, PixelTheme.SIZE_BIG)
+			if String(value) != "":
+				b.icon = _player_token(String(value))
 		cards_mode = true
 	elif String(pd.get("tag", "")) == "trophy_hall":
 		_add_trophy_tokens(pd)
@@ -438,6 +441,14 @@ func _add_trophy_tokens(pd: Dictionary) -> void:
 	if (pd.get("legal_options", []) as Array).has(-1):
 		_add_button("Skip", -1)
 		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+
+
+## Фишка войска игрока с эмблемой вдвое крупнее (рост крупного шрифта) — иконка
+## рядом с именем соперника.
+static func _player_token(pid: String) -> ImageTexture:
+	var img := SchematicPainter.token(BoardPanel.troop_colour(pid), PlayerProfile.emblem_of(pid))
+	img.resize(img.get_width() * 2, img.get_height() * 2, Image.INTERPOLATE_NEAREST)
+	return ImageTexture.create_from_image(img)
 
 
 ## Кнопка-фишка войска из трофейного зала: та же картинка, что на доске

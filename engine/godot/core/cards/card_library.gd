@@ -224,7 +224,7 @@ class _LichEffect extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Whose trophy hall? (their troop is at that site)"
+		pd.prompt = "Whose trophy hall?"
 		pd.choice_type = "target_player"
 		pd.legal_options = Array(_owners)
 		pd.target_effect = self
