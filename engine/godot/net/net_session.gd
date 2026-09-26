@@ -21,6 +21,8 @@ signal game_started(seat: String, board: Dictionary, view: Dictionary)
 signal result_received(err: int, events: Array, view: Dictionary)
 signal chat_received(seat: String, text: String)
 signal player_left(seat: String)
+## Кто-то, кто раньше отключился, вернулся под тем же профилем (этап 7).
+signal player_rejoined(seat: String)
 ## Сервер пересчитал рейтинг после партии: место -> {rating, delta}.
 signal rating_changed(result: Dictionary)
 ## Связь не установилась, оборвалась или сервер отказал (нет комнаты и т.п.).
@@ -61,12 +63,23 @@ var profiles: Dictionary = {}
 
 ## Рейтинги онлайн-партий — только у выделенного сервера (RatingBook).
 var ratings: RatingBook
+## Папка сохранений партий (GameJournal) — своя у сетевого теста, чтобы не
+## трогать настоящие сохранения владельца.
+var saves_dir := GameJournal.DIR
 var rooms: Dictionary = {}      # code -> GameRoom
 var peer_room: Dictionary = {}  # peer id -> code
 var _lan_code := ""
 ## Что отправить серверу, как только связь установится (вход или создание).
 var _on_connected: Callable
 var _rng := RandomNumberGenerator.new()
+
+## Этап 7: переподключение и сохранение партии.
+## Клиент: параметры последнего join()/enter_room(), чтобы reconnect() мог
+## повторить попытку тем же путём после обрыва связи.
+var _last_address := ""
+var _last_port := 0
+var _last_code := ""
+var _last_by_code := false
 
 
 ## Подписки на события связи — один раз: повторное подключение после ошибки
@@ -97,9 +110,28 @@ func serve(port: int, is_dedicated: bool = false) -> int:
 	multiplayer.multiplayer_peer = peer
 	is_host = true
 	dedicated = is_dedicated
-	if dedicated and ratings == null:
-		ratings = RatingBook.new()
+	if dedicated:
+		if ratings == null:
+			ratings = RatingBook.new()
+		_load_saved_rooms()
 	return OK
+
+
+## Выделенный сервер при старте (в т.ч. после перезапуска — systemctl restart
+## после каждого deploy.sh): поднять партии, прерванные перезапуском, из
+## GameJournal. Игроки возвращаются в них через claim() (_enter), как и при
+## обычном обрыве связи — самому серверу для этого рестарт не нужен.
+func _load_saved_rooms() -> void:
+	for code in GameJournal.list_codes(saves_dir):
+		var saved := GameJournal.load_game(code, saves_dir)
+		if saved.is_empty():
+			continue
+		var room := GameRoom.restore(saved["header"], saved["intents"])
+		if room.server.state.game_over:
+			GameJournal.erase(code, saves_dir)
+			continue
+		rooms[room.code] = room
+		_log("room %s restored: %d moves replayed" % [room.code, (saved["intents"] as Array).size()])
 
 
 ## Хост по IP: одна комната, хост сидит за первым цветом.
@@ -115,7 +147,10 @@ func host(port: int, player_count: int, mode: String) -> int:
 
 ## Клиент: к хосту по IP.
 func join(address: String, port: int) -> int:
-	return _connect(address, port, func(): _enter.rpc_id(1, PROTOCOL, ""))
+	_last_address = address
+	_last_port = port
+	_last_by_code = false
+	return _connect(address, port, func(): _enter.rpc_id(1, PROTOCOL, "", _client_key()))
 
 
 ## Клиент: на сервере завести новую комнату.
@@ -126,7 +161,29 @@ func create_room(address: String, port: int, player_count: int, mode: String) ->
 ## Клиент: на сервере войти в комнату по коду.
 func enter_room(address: String, port: int, code: String) -> int:
 	var clean := code.strip_edges().to_upper()
-	return _connect(address, port, func(): _enter.rpc_id(1, PROTOCOL, clean))
+	_last_address = address
+	_last_port = port
+	_last_code = clean
+	_last_by_code = true
+	return _connect(address, port, func(): _enter.rpc_id(1, PROTOCOL, clean, _client_key()))
+
+
+## Повторить последний join()/enter_room() тем же путём — после обрыва связи
+## (этап 7). Сервер узнает игрока по ключу профиля и вернёт на его место, если
+## партия ещё не закончилась (см. GameRoom.claim). ERR_UNCONFIGURED — ещё не
+## подключались, звать нечего.
+func reconnect() -> int:
+	if _last_address == "":
+		return ERR_UNCONFIGURED
+	if _last_by_code:
+		return enter_room(_last_address, _last_port, _last_code)
+	return join(_last_address, _last_port)
+
+
+## Ключ, по которому сервер узнаёт этого игрока при переподключении (и, на
+## выделенном сервере, для рейтинга) — тест даёт свой через rating_key.
+func _client_key() -> String:
+	return rating_key if rating_key != "" else PlayerProfile.key()
 
 
 func _connect(address: String, port: int, then: Callable) -> int:
@@ -141,7 +198,7 @@ func _connect(address: String, port: int, then: Callable) -> int:
 	_on_connected = func():
 		then.call()
 		var p := PlayerProfile.clean(profile)
-		_profile_up.rpc_id(1, p["name"], p["emblem"], rating_key if rating_key != "" else PlayerProfile.key())
+		_profile_up.rpc_id(1, p["name"], p["emblem"], _client_key())
 	return OK
 
 
@@ -333,6 +390,10 @@ func _profile_up(player_name: String, emblem: String, key: String) -> void:
 	if room == null or room.started or not room.seats.has(peer):
 		return
 	var pid := String(room.seats[peer])
+	# Ключ хранится всегда (не только на выделенном сервере): по нему находит
+	# своё место переподключившийся игрок, а host-по-IP тоже даёт переподключение,
+	# хоть рейтинг там и не считается.
+	room.keys[pid] = key
 	var p := PlayerProfile.clean({"name": player_name, "emblem": emblem})
 	# Рейтинг видят все за столом; сам ключ дальше сервера не уходит.
 	if ratings != null:
@@ -361,23 +422,43 @@ func _create(version: int, player_count: int, mode: String) -> void:
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _enter(version: int, code: String) -> void:
+func _enter(version: int, code: String, key: String) -> void:
 	if not is_host:
 		return
 	var peer := multiplayer.get_remote_sender_id()
 	if not _check_newcomer(peer, version):
 		return
-	var key := _lan_code if not dedicated else code
-	var room: GameRoom = rooms.get(key)
+	var room_key := _lan_code if not dedicated else code
+	var room: GameRoom = rooms.get(room_key)
 	if room == null:
 		_refuse(peer, "There is no room %s" % code)
-	elif room.started:
-		_refuse(peer, "This game has already started")
-	elif room.is_full():
+		return
+	if room.started:
+		var pid := room.claim(peer, key)
+		if pid == "":
+			_refuse(peer, "This game has already started")
+			return
+		peer_room[peer] = room.code
+		_deliver_reconnect(room, peer, pid)
+		_log("room %s: %s reconnected" % [room.code, pid])
+		return
+	if room.is_full():
 		_refuse(peer, "This game is full")
-	else:
-		_seat_peer(room, peer)
-		_log("room %s: %d of %d" % [room.code, room.seats.size(), room.needed])
+		return
+	_seat_peer(room, peer)
+	_log("room %s: %d of %d" % [room.code, room.seats.size(), room.needed])
+
+
+## Переподключение (этап 7): игрок уже сидел за pid, но потерял связь. Отдаём
+## ему тот же board_snapshot, что и при старте (кэширован в room.cached_board,
+## пересчитывать не нужно — геометрия доски за партию не меняется), и свежий
+## StateView с тем же pending, что видят остальные.
+func _deliver_reconnect(room: GameRoom, peer: int, pid: String) -> void:
+	var view := StateView.for_player_with_pending(room.server.state, pid, room.server.resolver.pending)
+	_send(peer, "_reconnected", [pid, room.cached_board, view, room.profiles])
+	for other: int in room.seats:
+		if other != peer:
+			_send(other, "_rejoined", [pid])
 
 
 func _check_newcomer(peer: int, version: int) -> bool:
@@ -405,16 +486,24 @@ func _on_peer_disconnected(id: int) -> void:
 		return
 	var gone := String(room.seats.get(id, ""))
 	room.remove(id)
-	if room.seats.is_empty() or (not dedicated and id == 1):
-		rooms.erase(room.code)
-		_log("room %s closed" % room.code)
-		return
 	if room.started:
-		# Место не освобождается: переподключение — следующий этап.
+		# Место не освобождается: игрок возвращается на него через claim()
+		# (см. _enter), даже если отвалились все — комнату и сохранение не
+		# трогаем. Убираем только партию, которая уже закончилась: досматривать
+		# нечего, а претендовать на место в ней больше некому.
 		for peer: int in room.seats:
 			_send(peer, "_left", [gone])
-	else:
-		_broadcast_lobby(room)
+		if room.seats.is_empty() and room.server.state.game_over:
+			rooms.erase(room.code)
+			GameJournal.erase(room.code, saves_dir)
+			_log("room %s closed (finished)" % room.code)
+		return
+	if room.seats.is_empty() or (not dedicated and id == 1):
+		rooms.erase(room.code)
+		GameJournal.erase(room.code, saves_dir)
+		_log("room %s closed" % room.code)
+		return
+	_broadcast_lobby(room)
 
 
 func _broadcast_lobby(room: GameRoom) -> void:
@@ -485,9 +574,26 @@ func _board_ready(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
 
 
 func _deliver(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
+	room.cached_board = board
+	_save_room(room)
 	for peer: int in room.seats:
 		_send(peer, "_start", [board, views[room.seats[peer]], room.profiles])
 	_log("room %s started" % room.code)
+
+
+## Записать журнал комнаты на диск (этап 7) — сразу после раздачи и после
+## каждого успешного хода. Файл маленький (сид + список Intent'ов), поэтому
+## целиком перезаписывается, как RatingBook.save().
+func _save_room(room: GameRoom) -> void:
+	GameJournal.save(room.code, {
+		"code": room.code,
+		"ids": room.ids,
+		"mode": room.mode,
+		"seed": room.game_seed,
+		"profiles": room.profiles,
+		"accounts": room.accounts,
+		"keys": room.keys,
+	}, room.log, saves_dir)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -495,6 +601,21 @@ func _start(board: Dictionary, view: Dictionary, seat_profiles: Dictionary) -> v
 	started = true
 	profiles = seat_profiles.duplicate(true)
 	game_started.emit(seat, board, view)
+
+
+## Переподключение приняли — тот же сигнал, что и настоящий старт: экран
+## партии всё равно надо собрать заново с нуля (см. game_scene._start_net_game).
+@rpc("authority", "call_remote", "reliable")
+func _reconnected(your_seat: String, board: Dictionary, view: Dictionary, seat_profiles: Dictionary) -> void:
+	seat = your_seat
+	started = true
+	profiles = seat_profiles.duplicate(true)
+	game_started.emit(seat, board, view)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _rejoined(who: String) -> void:
+	player_rejoined.emit(who)
 
 
 ## Отправить игроку: себе (хост по IP играет сам) — вызовом, другим — по сети.
@@ -535,8 +656,14 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 			continue
 		var own_err := err if peer == sender else GameServer.Error.OK
 		_send(peer, "_result", [own_err, result["events"], views[room.seats[peer]]])
-	if room.server.state.game_over and not room.rated:
-		_rate_room(room)
+	if err != GameServer.Error.OK:
+		return
+	if room.server.state.game_over:
+		GameJournal.erase(room.code, saves_dir)
+		if not room.rated:
+			_rate_room(room)
+	else:
+		_save_room(room)
 
 
 ## Партия в комнате окончена — пересчитать рейтинг (только выделенный сервер).

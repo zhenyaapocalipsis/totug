@@ -94,6 +94,9 @@ func _initialize() -> void:
 	test_player_profile()
 	test_how_to_play()
 
+	# этап 7: сохранение партии и восстановление после перезапуска
+	test_game_journal_replay()
+
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
 
@@ -2785,3 +2788,65 @@ func test_how_to_play() -> void:
 ## Цвет из картинки RGBA8 совпадает с заданным с точностью до округления в 8 бит.
 func _close_colour(a: Color, b: Color) -> bool:
 	return absf(a.r - b.r) < 0.01 and absf(a.g - b.g) < 0.01 and absf(a.b - b.b) < 0.01
+
+
+## GameState целиком не сериализуем (дерево GDScript-объектов, не Dictionary) —
+## сохранение партии (этап 7) хранит только сид + принятые Intent'ы и
+## восстанавливает состояние повторным розыгрышем (GameRoom.restore). Здесь —
+## без сети: то же самое напрямую через GameServer.apply_intent, проверяем,
+## что восстановленная партия бит-в-бит совпадает с исходной.
+func test_game_journal_replay() -> void:
+	section("сеть: журнал партии и восстановление после «перезапуска» (этап 7)")
+	var dir := "user://journal_test/"
+	var code := "TEST"
+	GameJournal.erase(code, dir)
+
+	var ids: Array[String] = ["red", "blue"]
+	var seed_value := 777
+	var state := GameSetup.new_game(ids, seed_value, [], false, true, true, GameSetup.MODE_STANDARD)
+	var live := GameServer.new(state)
+	var log: Array = []
+
+	# Стартовые сайты обоих (interactive_start=true) — те же MAKE_DECISION,
+	# что шлёт сеть, отвечаем первым допустимым вариантом.
+	while live.resolver.is_waiting():
+		var pending := live.resolver.pending
+		var intent := Intent.make_decision(pending.player_id, (pending.legal_options as Array)[0])
+		check_eq(int(live.apply_intent(intent)["error"]), GameServer.Error.OK, "стартовый выбор принят")
+		log.append(intent.to_dict())
+
+	# Одно настоящее действие — конец хода текущего игрока.
+	var end_intent := Intent.end_turn(state.current_player())
+	check_eq(int(live.apply_intent(end_intent)["error"]), GameServer.Error.OK, "конец хода принят")
+	log.append(end_intent.to_dict())
+
+	var header := {"code": code, "ids": ids, "mode": GameSetup.MODE_STANDARD, "seed": seed_value,
+		"profiles": {}, "accounts": {}, "keys": {}}
+	GameJournal.save(code, header, log, dir)
+	var loaded := GameJournal.load_game(code, dir)
+	check(not loaded.is_empty(), "журнал читается обратно")
+	check_eq((loaded["intents"] as Array).size(), log.size(), "в журнале все принятые ходы")
+
+	var restored := GameRoom.restore(loaded["header"], loaded["intents"])
+	check_eq(restored.server.state.current_player(), state.current_player(),
+		"восстановленная партия на том же ходе")
+	check_eq(Array(restored.server.state.players["red"].deck.hand), Array(state.players["red"].deck.hand),
+		"рука red совпадает после восстановления")
+	check_eq(Array(restored.server.state.players["blue"].deck.hand), Array(state.players["blue"].deck.hand),
+		"рука blue совпадает после восстановления")
+	check_eq(Array(restored.server.state.market.display), Array(state.market.display),
+		"рынок совпадает после восстановления")
+	check_eq(restored.server.state.troops, state.troops, "войска на доске совпадают после восстановления")
+	check(not (restored.cached_board.get("schematic", {}) as Dictionary).is_empty(),
+		"восстановленный снимок доски посчитан")
+
+	GameJournal.erase(code, dir)
+	check(GameJournal.load_game(code, dir).is_empty(), "erase убирает файл журнала")
+
+	# Переподключение: свободное место находится по ключу профиля, занятое — нет.
+	var room := GameRoom.new("ABCD", 2, GameSetup.MODE_STANDARD)
+	room.started = true
+	room.keys = {"red": "key-red", "blue": "key-blue"}
+	check_eq(room.claim(5, "key-red"), "red", "переподключение по верному ключу находит цвет")
+	check_eq(room.claim(6, "key-red"), "", "тот же ключ второй раз — место уже занято")
+	check_eq(room.claim(7, "nope"), "", "чужой ключ — отказ")

@@ -8,14 +8,19 @@ extends SceneTree
 ## Два сценария подряд:
 ##   lan    — хост по IP играет сам, клиент входит по адресу;
 ##   server — выделенный сервер, игрок A создаёт комнату, B входит по коду;
-##            чужой код и чужая версия игры получают отказ.
+##            чужой код и чужая версия игры получают отказ; дальше (этап 7) —
+##            B теряет связь и возвращается под тем же ключом профиля (а не
+##            новой раздачей), потом сервер «перезапускается» на том же порту
+##            и оба поднимаются из GameJournal.
 ##
 ##   godot --headless --path . --script res://tests/net_loopback.gd
 ## Последняя строка: "сеть: пройдено N, провалено 0".
 
 const LAN_PORT := 7790
 const SERVER_PORT := 7791
-const TIMEOUT := 20.0
+## "server" — самый длинный сценарий: раздача, чат, переподключение и
+## «перезапуск» сервера (этап 7) в одном TIMEOUT-окне без сброса _elapsed.
+const TIMEOUT := 30.0
 
 var passed := 0
 var failed := 0
@@ -31,6 +36,8 @@ var boards: Dictionary = {}
 var errors: Dictionary = {}
 var chats: Dictionary = {}
 var lost: Dictionary = {}
+## Кто получил player_rejoined и про какой цвет (этап 7).
+var rejoined: Dictionary = {}
 var server: NetSession
 var _answered_at := -1
 var _spoof_sent := false
@@ -39,6 +46,15 @@ var _stranger: NetSession
 var _old_version: NetSession
 var ratings: Dictionary = {}
 const RATINGS_PATH := "user://ratings_nettest.json"
+## Своя папка сохранений партий — не трогает настоящие user://saves/ владельца.
+const SAVES_DIR := "user://saves_nettest/"
+
+## Переподключение и восстановление после «перезапуска» сервера (этап 7).
+var _reconnect_code := ""
+var _reconnect_key := ""
+var _reconnect_seat := ""
+var _restart_seat0 := ""
+var _restart_seat1 := ""
 
 
 func _process(delta: float) -> bool:
@@ -60,7 +76,7 @@ func _process(delta: float) -> bool:
 				players[1].enter_room("127.0.0.1", SERVER_PORT, players[0].room_code.to_lower())
 				_stranger.enter_room("127.0.0.1", SERVER_PORT, "ZZZZ" if players[0].room_code != "ZZZZ" else "YYYY")
 				_old_version._connect("127.0.0.1", SERVER_PORT,
-					func(): _old_version._enter.rpc_id(1, NetSession.PROTOCOL + 99, players[0].room_code))
+					func(): _old_version._enter.rpc_id(1, NetSession.PROTOCOL + 99, players[0].room_code, ""))
 				_step = "server_wait_join"
 		"server_wait_join":
 			if players[1].seat != "" and lost.has(_stranger) and lost.has(_old_version):
@@ -90,7 +106,32 @@ func _process(delta: float) -> bool:
 				if _scenario == "lan":
 					_start_server()
 				else:
-					_end_game()
+					_start_reconnect_test()
+		"reconnect_disconnect_wait":
+			var room: GameRoom = server.rooms.get(_reconnect_code)
+			if room != null and not room.seats.values().has(_reconnect_seat):
+				var b2 := _session()
+				_track(b2)
+				b2.rating_key = _reconnect_key
+				b2.enter_room("127.0.0.1", SERVER_PORT, _reconnect_code)
+				players[1] = b2
+				_step = "reconnect_wait"
+		"reconnect_wait":
+			if not views[players[1]].is_empty():
+				check(players[1].seat == _reconnect_seat, "[server] переподключение вернуло тот же цвет")
+				check(views[players[1]]["current_player"] == views[players[0]]["current_player"],
+					"[server] переподключившийся видит тот же ход партии, а не новую раздачу")
+				check(rejoined.get(players[0], "") == _reconnect_seat,
+					"[server] первый игрок узнал, что второй вернулся")
+				check(server.rooms.size() == 1, "[server] после переподключения комната всё ещё одна")
+				_start_server_restart()
+		"restarted_wait":
+			if not views[players[0]].is_empty() and not views[players[1]].is_empty():
+				check(players[0].seat == _restart_seat0 and players[1].seat == _restart_seat1,
+					"[server] после «перезапуска» сервера оба вернулись на свои цвета")
+				check(views[players[0]]["current_player"] == views[players[1]]["current_player"],
+					"[server] восстановленная из журнала партия согласована у обоих")
+				_end_game()
 		"rated":
 			if ratings.has(players[0]) and ratings.has(players[1]):
 				var r: Dictionary = ratings[players[0]]
@@ -104,6 +145,49 @@ func _process(delta: float) -> bool:
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 				return _finish()
 	return false
+
+
+## Второй игрок теряет связь и возвращается под тем же ключом профиля
+## (PlayerProfile.key, здесь — NetSession.rating_key) — сервер должен посадить
+## его на то же место и прислать ТЕКУЩЕЕ состояние партии, а не новую раздачу
+## (этап 7, GameRoom.claim). Первый игрок должен узнать об этом.
+func _start_reconnect_test() -> void:
+	var b: NetSession = players[1]
+	_reconnect_code = b.room_code
+	_reconnect_key = b.rating_key
+	_reconnect_seat = b.seat
+	b.close()
+	_step = "reconnect_disconnect_wait"
+
+
+## «Перезапуск» сервера: закрываем ENet-порт и открываем заново на том же
+## порту новым NetSession — как systemd после deploy.sh. Партия должна
+## подняться из GameJournal (той же папки user://saves/), и оба игрока
+## возвращаются под своими ключами (этап 7).
+func _start_server_restart() -> void:
+	var code := players[0].room_code
+	_restart_seat0 = players[0].seat
+	_restart_seat1 = players[1].seat
+	var key0 := players[0].rating_key
+	var key1 := players[1].rating_key
+	server.close()
+	players[0].close()
+	players[1].close()
+	server = _session()
+	server.ratings = RatingBook.new(RATINGS_PATH)
+	server.saves_dir = SAVES_DIR
+	check(server.serve(SERVER_PORT, true) == OK, "[server] сервер «перезапущен» на том же порту")
+	check(server.rooms.has(code), "[server] партия восстановлена из сохранения после «перезапуска»")
+	var a2 := _session()
+	var b3 := _session()
+	_track(a2)
+	_track(b3)
+	a2.rating_key = key0
+	b3.rating_key = key1
+	a2.enter_room("127.0.0.1", SERVER_PORT, code)
+	b3.enter_room("127.0.0.1", SERVER_PORT, code)
+	players = [a2, b3]
+	_step = "restarted_wait"
 
 
 ## Конец партии: на сервере объявлен последний круг, который кончается на
@@ -143,6 +227,7 @@ func _start_server() -> void:
 	server = _session()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 	server.ratings = RatingBook.new(RATINGS_PATH)
+	server.saves_dir = SAVES_DIR
 	check(server.serve(SERVER_PORT, true) == OK, "[server] сервер открыл порт")
 	var a := _session()
 	var b := _session()
@@ -164,6 +249,7 @@ func _reset() -> void:
 	errors.clear()
 	chats.clear()
 	lost.clear()
+	rejoined.clear()
 
 
 func _session() -> NetSession:
@@ -193,6 +279,7 @@ func _track(p: NetSession) -> void:
 		views[p] = v)
 	p.chat_received.connect(func(w: String, t: String): chats[p].append([w, t]))
 	p.connection_lost.connect(func(reason: String): lost[p] = reason)
+	p.player_rejoined.connect(func(who: String): rejoined[p] = who)
 
 
 # --- общие шаги партии -------------------------------------------------------
@@ -261,9 +348,25 @@ func _finish() -> bool:
 		p.close()
 	if server != null:
 		server.close()
+	_clear_saves_dir()
 	print("сеть: пройдено %d, провалено %d" % [passed, failed])
 	quit(1 if failed > 0 else 0)
 	return true
+
+
+## Тестовые сохранения (SAVES_DIR) обычно и так пустеют сами: игра завершается
+## и GameJournal.erase() убирает файл. Здесь — на случай отказа/таймаута.
+func _clear_saves_dir() -> void:
+	var dir := DirAccess.open(SAVES_DIR)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var name := dir.get_next()
+	while name != "":
+		if not dir.current_is_dir():
+			dir.remove(name)
+		name = dir.get_next()
+	dir.list_dir_end()
 
 
 ## Герб-метка: один пиксель в центре, цвет зависит от номера игрока.

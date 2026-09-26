@@ -126,6 +126,9 @@ var _deploy_vp_button: Button
 var _preview: CardPreview
 var _pause_menu: PauseMenu
 var _game_over_panel: GameOverPanel
+## Связь оборвалась (только сетевая партия): кнопка вручную повторить попытку.
+var _reconnect_banner: PanelContainer
+var _reconnect_status: Label
 
 ## Таймер хода: сколько секунд осталось и чей ход сейчас отсчитываем — смена
 ## ходящего перезапускает отсчёт.
@@ -154,7 +157,12 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		net.chat_received.connect(func(who: String, text: String): _chat_panel.add_message(who, text))
 		net.player_left.connect(func(who: String):
 			_log_panel.add_note("%s has disconnected." % EventLogPanel.player_name(who)))
-		net.connection_lost.connect(func(reason: String): _log_panel.add_note(reason + "."))
+		net.player_rejoined.connect(func(who: String):
+			_log_panel.add_note("%s is back." % EventLogPanel.player_name(who)))
+		net.connection_lost.connect(func(reason: String):
+			_log_panel.add_note(reason + ".")
+			_reconnect_banner.visible = true
+			_reconnect_status.text = reason + ".")
 		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
 		_build_layout()
 		_chat_panel.set_online()
@@ -348,6 +356,31 @@ func _build_layout() -> void:
 	_pause_menu = PauseMenu.new()
 	_pause_menu.main_menu_requested.connect(func(): main_menu_requested.emit())
 	add_child(_pause_menu)
+
+	# Связь оборвалась (этап 7): заметная плашка сверху с кнопкой переподключения.
+	# Скрыта, пока не пришёл net.connection_lost; хотсит её не показывает вовсе.
+	_reconnect_banner = PanelContainer.new()
+	_reconnect_banner.add_theme_stylebox_override("panel", zone_style(4))
+	_reconnect_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_reconnect_banner.position.y = 30
+	_reconnect_banner.z_index = 1200
+	_reconnect_banner.visible = false
+	var reconnect_row := HBoxContainer.new()
+	reconnect_row.add_theme_constant_override("separation", 6)
+	_reconnect_banner.add_child(reconnect_row)
+	_reconnect_status = Label.new()
+	_reconnect_status.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	reconnect_row.add_child(_reconnect_status)
+	var reconnect_button := Button.new()
+	reconnect_button.text = "RECONNECT"
+	reconnect_button.custom_minimum_size = Vector2(90, 16)
+	SetupScreen._style_button(reconnect_button)
+	reconnect_button.pressed.connect(func():
+		_reconnect_status.text = "Reconnecting..."
+		if net.reconnect() != OK:
+			_reconnect_status.text = "Could not reconnect.")
+	reconnect_row.add_child(reconnect_button)
+	add_child(_reconnect_banner)
 
 	# Итоги партии — открываются сами после GAME OVER.
 	_game_over_panel = GameOverPanel.new()
