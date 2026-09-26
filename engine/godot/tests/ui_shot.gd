@@ -147,6 +147,14 @@ func _run_scenario() -> void:
 				_screen.send(Intent.make_decision(pd3.player_id, pd3.legal_options[0]))
 			var pid3: String = _screen.server.state.current_player()
 			_screen.server.state.players[pid3].deck.hand.append(card)
+			# --trophies: в залах у всех по два белых войска и по одному войску
+			# соседа — иначе "take from a trophy hall" (Orcus, Lich) не спросит.
+			if OS.get_cmdline_user_args().has("--trophies"):
+				var order: Array = _screen.server.state.turn_order
+				for i_t in order.size():
+					var hall: PlayerState = _screen.server.state.players[order[i_t]]
+					hall.trophies["white"] = 2
+					hall.trophies[order[(i_t + 1) % order.size()]] = 1
 			_screen.refresh(StateView.for_player_with_pending(
 				_screen.server.state, pid3, _screen.server.resolver.pending))
 			_screen.send(Intent.play_card(pid3, card))
