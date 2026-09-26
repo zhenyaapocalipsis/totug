@@ -94,6 +94,8 @@ func _process(_delta: float) -> bool:
 		24: _step_check_capture_waits()
 		25: _step_move_and_return()
 		26: _step_check_move_and_return()
+		27: _step_showcase()
+		28: _step_check_showcase()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -470,6 +472,30 @@ func _flying_tokens() -> int:
 		if child is FlyingToken and not child.is_queued_for_deletion():
 			n += 1
 	return n
+
+
+## Витрина: чужая покупка, промоут верхней карты и съеденная карта рынка
+## встают в очередь крупного показа; своя покупка щелчком — нет.
+func _step_showcase() -> void:
+	var me := _screen.viewer_id
+	var foe := ""
+	for pid in _screen.server.state.turn_order:
+		if pid != me:
+			foe = pid
+	var cid := _screen._market_panel.card_id_at(0)
+	_screen._react_to_events([
+		{"type": "recruit", "player_id": me, "market_index": 0, "card_id": cid},
+		{"type": "recruit", "player_id": foe, "market_index": 0, "card_id": cid},
+		{"type": "promote", "player_id": me, "card_id": cid, "from": "top_of_deck"},
+		{"type": "devour", "player_id": foe, "card_id": cid, "source": "market"}])
+
+
+func _step_check_showcase() -> void:
+	var showcase: CardShowcase = _screen._showcase
+	check(showcase.is_busy() and showcase.queued() == 3,
+		"витрина показывает чужую покупку, промоут и devour, свою покупку — нет (%d)" % showcase.queued())
+	showcase.skip()
+	check(showcase.queued() == 3, "промотка уводит карту, а не выкидывает её из очереди")
 
 
 # --- вспомогательное ---------------------------------------------------------

@@ -56,7 +56,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			if Supplies.redirect_outcast(state, player_id, top, resolver):
 				return
 			p.deck.inner_circle.append(top)
-			resolver.log_event("promote", {"player_id": player_id, "card_id": top})
+			resolver.log_event("promote", {"player_id": player_id, "card_id": top, "from": "top_of_deck"})
 			return
 
 	if is_answered():

@@ -43,7 +43,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			var card_id: String = state.market.recruit_at(int(index))
 			if card_id != "":
 				state.players[player_id].deck.discard_pile.append(card_id)
-				resolver.log_event("recruit_free", {"player_id": player_id, "card_id": card_id})
+				resolver.log_event("recruit_free", {"player_id": player_id, "card_id": card_id, "market_index": int(index)})
 				if state.market.is_deck_empty():
 					GameEnd.trigger(state, "market_empty")
 			remaining -= 1

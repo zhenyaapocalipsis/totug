@@ -99,6 +99,7 @@ var board_data: Dictionary = {}
 var _barracks: BarracksBar
 var _overlay: PlayersOverlay
 var _hand_panel: HandPanel
+var _showcase: CardShowcase
 var _market_panel: MarketPanel
 var _chat_panel: ChatPanel
 var _log_panel: EventLogPanel
@@ -343,6 +344,14 @@ func _build_layout() -> void:
 	# что все они дёргали сервер напрямую, минуя щелчки мышью.
 	_hand_panel.card_clicked.connect(_on_hand_card_clicked)
 	add_child(_hand_panel)
+
+	# Витрина: крупный показ чужих покупок, промоутов и съеденных карт — поверх
+	# доски и руки, но под диалогами (999+) и крупным просмотром карты.
+	_showcase = CardShowcase.new()
+	_showcase.board_area = _board_area
+	_showcase.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_showcase.z_index = 950
+	add_child(_showcase)
 
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
 	_pile_dialog = PileDialog.new()
@@ -651,10 +660,58 @@ func _react_to_events(events: Array) -> void:
 			"return_own_spy":
 				power = maxf(power, SHAKE_NUDGE)
 				started = _return_spy(pid, String(evt.get("site_id", "")), launched)
+			# Свою покупку щелчком игрок и так видит (карта летит в сброс),
+			# чужую — только витриной.
+			"recruit":
+				if pid != viewer_id:
+					_showcase_card(pid, String(evt.get("card_id", "")), "RECRUITS",
+						_market_panel.card_rect(int(evt.get("market_index", -1))), "barracks")
+			"recruit_supply":
+				if pid != viewer_id:
+					var cid := String(evt.get("card_id", ""))
+					_showcase_card(pid, cid, "RECRUITS", _market_panel.supply_rect(cid), "barracks")
+			"recruit_free":
+				_showcase_card(pid, String(evt.get("card_id", "")), "RECRUITS",
+					_market_panel.card_rect(int(evt.get("market_index", -1))), "discard")
+			"promote":
+				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
+					String(evt.get("from", "")) == "top_of_deck")
+			"devour":
+				# Свою карту из руки или из игры игрок съел сам и знает об этом.
+				if pid != viewer_id or String(evt.get("source", "")) == "market":
+					_showcase_card(pid, String(evt.get("card_id", "")), "DEVOURS", null, "")
 		if started:
 			launched += 1
 	if power > 0.0:
 		_board_panel.shake(power)
+
+
+## Крупный показ карты cid, которую взял pid (см. CardShowcase).
+##   from — прямоугольник, откуда карта прилетает (глобальный), или null;
+##   dest — куда улетает: "barracks" (к игроку), "discard", "inner" (для
+##          зрителя — в его стопку, для соперника — в его барак) или "" —
+##          рассыпается (съедена).
+func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest: String,
+		face_down: bool = false) -> void:
+	if cid == "":
+		return
+	var start: Variant = null
+	if from != null and (from as Rect2).size.x >= 1.0:
+		start = (from as Rect2).get_center() - get_global_position()
+	var to: Variant = null
+	if dest != "":
+		var pile: PileZone = null
+		if pid == viewer_id:
+			pile = _pile_discard if dest == "discard" else (_pile_inner if dest == "inner" else null)
+		if pile != null and pile.visible:
+			to = pile.get_global_rect().get_center() - get_global_position()
+		else:
+			to = _barracks_at(pid)
+			if to == null:
+				to = Vector2(size.x * 0.5, -CardView.MINI_SIZE.y)
+	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
+	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
+		colour, start, to, face_down)
 
 
 ## Фишка войска owner — такая же, как на доске.
