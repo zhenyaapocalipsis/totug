@@ -8,7 +8,8 @@ extends Control
 ##   главная    — профиль сверху и четыре большие кнопки: PLAY ON ONE SCREEN,
 ##                PLAY ONLINE, HOW TO PLAY, QUIT;
 ##   hotseat    — режим рынка, сколько игроков, START GAME;
-##   online     — новая партия (режим, игроки, CREATE ROOM / HOST BY IP)
+##   online     — поиск игры со случайными соперниками (FIND GAME),
+##                новая партия (режим, игроки, CREATE ROOM / HOST BY IP)
 ##                и вход в чужую (JOIN BY CODE / JOIN BY IP).
 ##
 ## Esc и BACK на вложенной странице возвращают на главную. Под кнопками
@@ -20,7 +21,8 @@ extends Control
 
 signal started(player_ids: Array[String], mode: String)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
-## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN).
+## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN),
+## "find" — поиск игры на сервере (режим всегда NetSession.MATCH_MODE).
 signal online_requested(kind: String, player_count: int, mode: String)
 ## Открыть профиль игрока (имя и герб, ProfileScreen).
 signal profile_requested
@@ -60,6 +62,8 @@ const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
 var _count: int = GameScreen.MIN_PLAYERS
+## На сколько человек искать стол (FIND GAME) — отдельно от своей комнаты.
+var _match_count: int = GameScreen.MIN_PLAYERS
 var _page := PAGE_MAIN
 ## Содержимое карточки меню — пересобирается при смене страницы.
 var _col: VBoxContainer
@@ -162,7 +166,26 @@ func _build_online() -> void:
 	_add_dim("Other players will see your name and emblem.")
 	_col.add_child(HSeparator.new())
 
-	_col.add_child(_heading("NEW GAME", PixelTheme.GOLD))
+	# Поиск игры: случайные соперники, режим всегда RANDOM 4 — выбрать можно
+	# только, на сколько человек стол.
+	_col.add_child(_heading("FIND A GAME  (%s)" % MODE_TITLES[NetSession.MATCH_MODE], PixelTheme.GOLD))
+	var counts: Array = []
+	var group := ButtonGroup.new()
+	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
+		var b := _toggle(str(count), group, count == _match_count, 24)
+		b.pressed.connect(func(): _match_count = count)
+		b.mouse_entered.connect(func(): _set_hint("Look for a table of %d players." % count))
+		b.mouse_exited.connect(func(): _set_hint(_hint_default))
+		counts.append(b)
+	var find := _button("FIND GAME", "Play with random people who are looking for a game too.",
+		func(): online_requested.emit("find", _match_count, NetSession.MATCH_MODE))
+	find.custom_minimum_size = Vector2(70, 16)
+	var players_label := _heading("PLAYERS")
+	players_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_col.add_child(_row([players_label] + counts + [find]))
+
+	_col.add_child(HSeparator.new())
+	_col.add_child(_heading("NEW GAME WITH FRIENDS", PixelTheme.GOLD))
 	_add_game_options()
 	_col.add_child(_pair(
 		_button("CREATE ROOM", "Get a room code on our server and send it to friends.",

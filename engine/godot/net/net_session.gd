@@ -6,7 +6,13 @@ extends Node
 ##   - хост по IP (host): держит одну комнату и сам в ней играет;
 ##   - выделенный сервер (serve с dedicated=true, запуск `-- --server`):
 ##     держит много комнат с кодами, сам не играет;
-##   - клиент (join / create_room / enter_room): только шлёт намерения.
+##   - клиент (join / create_room / enter_room / find_match): только шлёт
+##     намерения.
+##
+## Поиск игры (find_match): выделенный сервер держит очередь на каждое число
+## игроков (2, 3, 4). Кто первым встал — тот первым и сядет, без подбора по
+## рейтингу. Набралось сколько нужно — сервер сам заводит комнату RANDOM 4 и
+## сразу раздаёт, кнопки START нет.
 ##
 ## Партию держит только тот, у кого комнаты (GameRoom -> GameServer). Клиент
 ## шлёт Intent словарём и получает свой срез (StateView) — чужую руку он не
@@ -30,6 +36,8 @@ signal connection_lost(reason: String)
 ## Хост: чем кончилась попытка открыть порт на роутере (UPnP). address — внешний
 ## адрес для друзей, "" если не вышло; note — пояснение для лобби.
 signal upnp_finished(address: String, note: String)
+## Поиск игры: в очереди стоят waiting человек из needed.
+signal queue_changed(waiting: int, needed: int)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -40,7 +48,9 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 4
+const PROTOCOL := 5
+## Режим партий, собранных поиском игры.
+const MATCH_MODE := GameSetup.MODE_RANDOM_4
 const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
@@ -68,6 +78,10 @@ var ratings: RatingBook
 var saves_dir := GameJournal.DIR
 var rooms: Dictionary = {}      # code -> GameRoom
 var peer_room: Dictionary = {}  # peer id -> code
+## Поиск игры: число игроков -> очередь peer id (по порядку прихода) и кто
+## стоит в очереди: peer id -> {needed, name, emblem, key}.
+var queues: Dictionary = {}
+var queued: Dictionary = {}
 var _lan_code := ""
 ## Что отправить серверу, как только связь установится (вход или создание).
 var _on_connected: Callable
@@ -155,7 +169,26 @@ func join(address: String, port: int) -> int:
 
 ## Клиент: на сервере завести новую комнату.
 func create_room(address: String, port: int, player_count: int, mode: String) -> int:
+	_remember_server(address, port)
 	return _connect(address, port, func(): _create.rpc_id(1, PROTOCOL, player_count, mode))
+
+
+## Клиент: встать в очередь поиска игры на player_count человек. Профиль идёт
+## прямо с просьбой: комнаты ещё нет, и _profile_up её бы не нашёл.
+func find_match(address: String, port: int, player_count: int) -> int:
+	_remember_server(address, port)
+	return _connect(address, port, func():
+		var p := PlayerProfile.clean(profile)
+		_queue.rpc_id(1, PROTOCOL, player_count, p["name"], p["emblem"], _client_key()))
+
+
+## Комнату на сервере завели не по коду (CREATE ROOM, поиск игры) — её код
+## придёт с лобби (_lobby), по нему reconnect() и вернёт в партию.
+func _remember_server(address: String, port: int) -> void:
+	_last_address = address
+	_last_port = port
+	_last_code = ""
+	_last_by_code = true
 
 
 ## Клиент: на сервере войти в комнату по коду.
@@ -217,6 +250,8 @@ func close() -> void:
 			room.board_task = -1
 	rooms.clear()
 	peer_room.clear()
+	queues.clear()
+	queued.clear()
 	seat = ""
 	room_code = ""
 	started = false
@@ -389,7 +424,11 @@ func _profile_up(player_name: String, emblem: String, key: String) -> void:
 	var room := _room_of(peer)
 	if room == null or room.started or not room.seats.has(peer):
 		return
-	var pid := String(room.seats[peer])
+	_set_profile(room, String(room.seats[peer]), player_name, emblem, key)
+	_broadcast_lobby(room)
+
+
+func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: String, key: String) -> void:
 	# Ключ хранится всегда (не только на выделенном сервере): по нему находит
 	# своё место переподключившийся игрок, а host-по-IP тоже даёт переподключение,
 	# хоть рейтинг там и не считается.
@@ -402,7 +441,6 @@ func _profile_up(player_name: String, emblem: String, key: String) -> void:
 		if account != "":
 			p["rating"] = ratings.rating_of(account)
 	room.profiles[pid] = p
-	_broadcast_lobby(room)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -419,6 +457,61 @@ func _create(version: int, player_count: int, mode: String) -> void:
 	var room := _new_room(player_count, mode)
 	_seat_peer(room, peer)
 	_log("room %s created: %d players, %s" % [room.code, room.needed, room.mode])
+
+
+## Поиск игры: встать в очередь на player_count человек (только выделенный сервер).
+@rpc("any_peer", "call_remote", "reliable")
+func _queue(version: int, player_count: int, player_name: String, emblem: String, key: String) -> void:
+	if not dedicated:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	if not _check_newcomer(peer, version):
+		return
+	var needed := clampi(player_count, GameRoom.MIN_PLAYERS, GameRoom.MAX_PLAYERS)
+	var line: Array = queues.get(needed, [])
+	line.append(peer)
+	queues[needed] = line
+	queued[peer] = {"needed": needed, "name": player_name, "emblem": emblem, "key": key}
+	_log("queue %d: %d waiting" % [needed, line.size()])
+	# Сервер забит комнатами — стоят дальше; следующий пришедший проверит снова.
+	if line.size() >= needed and rooms.size() < MAX_ROOMS:
+		_match(needed)
+	_broadcast_queue(needed)
+
+
+## Первые needed из очереди садятся за новый стол, и партия сразу раздаётся.
+func _match(needed: int) -> void:
+	var line: Array = queues[needed]
+	var room := _new_room(needed, MATCH_MODE)
+	for peer: int in line.slice(0, needed):
+		var q: Dictionary = queued[peer]
+		queued.erase(peer)
+		var pid := room.add(peer)
+		peer_room[peer] = room.code
+		_set_profile(room, pid, String(q["name"]), String(q["emblem"]), String(q["key"]))
+	queues[needed] = line.slice(needed)
+	_log("room %s matched: %d players, %s" % [room.code, room.needed, room.mode])
+	_broadcast_lobby(room)
+	_start_room(room, _rng.randi())
+
+
+func _broadcast_queue(needed: int) -> void:
+	var line: Array = queues.get(needed, [])
+	for peer: int in line:
+		_send(peer, "_queue_status", [line.size(), needed])
+
+
+## Ушёл из очереди (закрыл поиск или пропала связь).
+func _leave_queue(peer: int) -> void:
+	var needed := int(queued[peer]["needed"])
+	queued.erase(peer)
+	(queues[needed] as Array).erase(peer)
+	_broadcast_queue(needed)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _queue_status(waiting: int, needed: int) -> void:
+	queue_changed.emit(waiting, needed)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -465,7 +558,7 @@ func _check_newcomer(peer: int, version: int) -> bool:
 	if version != PROTOCOL:
 		_refuse(peer, "Different game version (yours %d, server %d): update the game" % [version, PROTOCOL])
 		return false
-	return not peer_room.has(peer)
+	return not peer_room.has(peer) and not queued.has(peer)
 
 
 func _refuse(peer: int, reason: String) -> void:
@@ -480,6 +573,9 @@ func _refused(reason: String) -> void:
 
 
 func _on_peer_disconnected(id: int) -> void:
+	if queued.has(id):
+		_leave_queue(id)
+		return
 	var room := _room_of(id)
 	peer_room.erase(id)
 	if room == null:
@@ -517,6 +613,8 @@ func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_s
 		seat_profiles: Dictionary) -> void:
 	seat = your_seat
 	room_code = code
+	if _last_by_code:
+		_last_code = code
 	profiles = seat_profiles.duplicate(true)
 	var own: Dictionary = profiles.get(seat, {})
 	if own.has("rating"):

@@ -5,7 +5,9 @@ extends Control
 ##   "create"    — завести комнату на сервере, друзьям сказать её код;
 ##   "join_code" — войти в комнату на сервере по коду;
 ##   "host"      — открыть игру на своём компьютере (локальная сеть, Radmin);
-##   "join_ip"   — войти к такому хосту по его адресу.
+##   "join_ip"   — войти к такому хосту по его адресу;
+##   "find"      — поиск игры: встать в очередь на сервере, стол RANDOM 4
+##                 соберётся из случайных игроков и раздастся сам.
 ## Саму связь держит NetSession — экран только показывает её состояние.
 ##
 ## Вёрстка кодом по той же причине, что и в game_screen.gd.
@@ -30,6 +32,10 @@ var _start_button: Button
 ## Хост: внешний адрес (UPnP) и пояснение под ним.
 var _internet: Label
 var _internet_note: Label
+## Поиск игры: с какого момента ждём (Time.get_ticks_msec, -1 — не ждём) и
+## строка про очередь от сервера.
+var _searching_since := -1
+var _queue_text := ""
 
 
 func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = "") -> void:
@@ -52,7 +58,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	card.add_child(col)
 
 	var title := Label.new()
-	title.text = {"create": "CREATE A ROOM", "join_code": "JOIN BY CODE",
+	title.text = {"create": "CREATE A ROOM", "join_code": "JOIN BY CODE", "find": "FIND A GAME",
 		"host": "HOST A GAME", "join_ip": "JOIN BY ADDRESS"}.get(kind, "ONLINE")
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
@@ -61,7 +67,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	col.add_child(HSeparator.new())
 
 	match kind:
-		"create", "join_code":
+		"create", "join_code", "find":
 			_build_server_part(col)
 		"host":
 			_build_host_part(col)
@@ -87,15 +93,18 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	buttons.add_child(back)
 	_start_button = _button("START")
 	_start_button.disabled = true
-	_start_button.visible = kind != "join_ip" and kind != "join_code"
+	_start_button.visible = kind == "create" or kind == "host"
 	_start_button.pressed.connect(_on_start)
 	buttons.add_child(_start_button)
 
 	_net.lobby_changed.connect(_on_lobby_changed)
 	_net.connection_lost.connect(_on_connection_lost)
+	_net.queue_changed.connect(_on_queue_changed)
 	match kind:
 		"create":
 			_status.text = "Press CREATE ROOM."
+		"find":
+			_status.text = "Press FIND GAME."
 		"join_code":
 			_status.text = "Enter the room code your friend got."
 		"join_ip":
@@ -118,6 +127,9 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 func _build_server_part(col: VBoxContainer) -> void:
 	if _kind == "create":
 		col.add_child(_dim("%d players, mode %s" % [_count, SetupScreen.MODE_TITLES.get(_mode, _mode)]))
+	elif _kind == "find":
+		col.add_child(_dim("%d players, mode %s, random opponents" % [
+			_count, SetupScreen.MODE_TITLES[NetSession.MATCH_MODE]]))
 	var server_row := _row(col)
 	server_row.add_child(_dim("SERVER"))
 	_server_edit = LineEdit.new()
@@ -138,7 +150,7 @@ func _build_server_part(col: VBoxContainer) -> void:
 		_code_edit.text_submitted.connect(func(_t: String): _on_go())
 		code_row.add_child(_code_edit)
 
-	_go_button = _button("CREATE ROOM" if _kind == "create" else "JOIN")
+	_go_button = _button({"create": "CREATE ROOM", "find": "FIND GAME"}.get(_kind, "JOIN"))
 	_go_button.custom_minimum_size = Vector2(90, 16)
 	_go_button.pressed.connect(_on_go)
 	_row(col).add_child(_go_button)
@@ -201,6 +213,8 @@ func _on_go() -> void:
 			_save("server", server)
 			if _kind == "create":
 				err = _net.create_room(server, NetSession.SERVER_PORT, _count, _mode)
+			elif _kind == "find":
+				err = _net.find_match(server, NetSession.SERVER_PORT, _count)
 			else:
 				var code := _code_edit.text.strip_edges().to_upper()
 				if code.length() != NetSession.CODE_LENGTH:
@@ -233,7 +247,9 @@ func _set_editable(on: bool) -> void:
 func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: String) -> void:
 	if _go_button != null:
 		_go_button.visible = false
-	if _code_label != null:
+	_searching_since = -1
+	# Поиск игры: код комнаты никому диктовать не надо.
+	if _code_label != null and _kind != "find":
 		_code_label.visible = true
 		_code_label.text = "ROOM  %s" % code
 	for child in _seats.get_children():
@@ -248,6 +264,11 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 			name_label.text += "  %d" % int(seat_profile["rating"])
 		_seats.add_child(name_label)
 	var full := joined.size() >= needed
+	if _kind == "find":
+		# Стол собрал сервер, он же и раздаёт — START не нужен.
+		_start_button.visible = false
+		_status.text = "Game found! Dealing the cards, a few seconds..."
+		return
 	var i_start := owner_seat == _net.seat
 	_start_button.visible = i_start
 	_start_button.disabled = not full
@@ -259,7 +280,28 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		_status.text = "%sWaiting for players: %d of %d." % [share, joined.size(), needed]
 
 
+## Поиск игры: сколько уже ждут. Время ожидания тикает в _process.
+func _on_queue_changed(waiting: int, needed: int) -> void:
+	_queue_text = "Looking for players: %d of %d." % [waiting, needed]
+	if _go_button != null:
+		_go_button.visible = false
+	if _searching_since < 0:
+		_searching_since = Time.get_ticks_msec()
+	_show_search_time()
+
+
+func _process(_delta: float) -> void:
+	if _searching_since >= 0:
+		_show_search_time()
+
+
+func _show_search_time() -> void:
+	var seconds := (Time.get_ticks_msec() - _searching_since) / 1000
+	_status.text = "%s  %d:%02d" % [_queue_text, seconds / 60, seconds % 60]
+
+
 func _on_connection_lost(reason: String) -> void:
+	_searching_since = -1
 	_status.text = reason + "."
 	_set_editable(true)
 	if _go_button != null:

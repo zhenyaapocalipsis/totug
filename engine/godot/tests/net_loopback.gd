@@ -14,6 +14,8 @@ extends SceneTree
 ##             и оба поднимаются из GameJournal.
 ##   server4 — тот же выделенный сервер, но комната на четверых (этап 8):
 ##             рассадка, срезы рук и стартовые сайты не завязаны на «ровно 2».
+##   match   — поиск игры: очереди на 2 и на 3 игрока, стол RANDOM 4
+##             собирается и раздаётся сервером сам, ушедший из очереди убран.
 ##
 ##   godot --headless --path . --script res://tests/net_loopback.gd
 ## Последняя строка: "сеть: пройдено N, провалено 0".
@@ -23,6 +25,7 @@ const SERVER_PORT := 7791
 ## Отдельный порт для сценария на четверых (этап 8) — старый сервер к этому
 ## моменту уже закрыт «перезапуском», но проще не делить один порт.
 const SERVER4_PORT := 7792
+const MATCH_PORT := 7793
 ## "server" — самый длинный сценарий: раздача, чат, переподключение и
 ## «перезапуск» сервера (этап 7) в одном TIMEOUT-окне без сброса _elapsed.
 const TIMEOUT := 30.0
@@ -43,6 +46,8 @@ var chats: Dictionary = {}
 var lost: Dictionary = {}
 ## Кто получил player_rejoined и про какой цвет (этап 7).
 var rejoined: Dictionary = {}
+## Последнее «в очереди waiting из needed» у каждого (поиск игры).
+var queue_seen: Dictionary = {}
 var server: NetSession
 var _answered_at := -1
 var _spoof_sent := false
@@ -189,8 +194,64 @@ func _process(delta: float) -> bool:
 					current_seats += 1
 				check(views[p]["current_player"] == current, "[server4] все видят один и тот же текущий ход")
 			check(current_seats == 1, "[server4] ходящий — ровно один из четверых (получено %d)" % current_seats)
-			return _finish()
+			_start_match()
+		"match_wait":
+			# Кто из троих пришёл первым, заранее не известно — смотрим, кто сел.
+			var seated: Array[NetSession] = []
+			var waiting: NetSession = null
+			for i in 3:
+				if not views[players[i]].is_empty():
+					seated.append(players[i])
+				else:
+					waiting = players[i]
+			if seated.size() == 2 and queue_seen.get(waiting, []) == [1, 2] \
+					and queue_seen.get(players[3], []) == [1, 3]:
+				var room: GameRoom = server.rooms.values()[0]
+				check(server.rooms.size() == 1, "[match] из очереди собран ровно один стол")
+				check(room.mode == NetSession.MATCH_MODE and room.needed == 2,
+					"[match] стол на двоих, режим RANDOM 4 (получено %d, %s)" % [room.needed, room.mode])
+				check(seated[0].seat != seated[1].seat, "[match] у двоих разные цвета")
+				check(seated[0].room_code == room.code and seated[0]._last_code == room.code,
+					"[match] код стола запомнен для переподключения")
+				check(not (boards[seated[0]].get("schematic", {}) as Dictionary).is_empty(),
+					"[match] чертёж доски пришёл")
+				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("name", "")) \
+					== seated[0].profile["name"], "[match] имя соперника дошло")
+				check(waiting.seat == "", "[match] третий ждёт дальше, за стол не сел")
+				waiting.close()
+				_step = "match_leave"
+		"match_leave":
+			if server.queued.size() == 1 and (server.queues[2] as Array).is_empty():
+				check(server.queued.has(server.queues[3][0]), "[match] ушедший убран из очереди, ждущий троих остался")
+				return _finish()
 	return false
+
+
+## Поиск игры: трое ищут стол на двоих, один — на троих. Первые двое садятся
+## за стол RANDOM 4 и сразу получают раздачу, третий видит «1 из 2», четвёртый
+## — «1 из 3». Третий закрывает поиск — сервер убирает его из очереди.
+func _start_match() -> void:
+	for p in players:
+		p.close()
+	if server != null:
+		server.close()
+	_scenario = "match"
+	_reset()
+	# Недоигранная партия server4 лежит в журнале — новый сервер поднял бы её.
+	_clear_saves_dir()
+	server = _session()
+	server.saves_dir = SAVES_DIR
+	check(server.serve(MATCH_PORT, true) == OK, "[match] сервер открыл порт")
+	var ps: Array[NetSession] = []
+	for i in 4:
+		ps.append(_session())
+	players = ps
+	for p in players:
+		_track(p)
+	for i in 3:
+		players[i].find_match("127.0.0.1", MATCH_PORT, 2)
+	players[3].find_match("127.0.0.1", MATCH_PORT, 3)
+	_step = "match_wait"
 
 
 ## Второй игрок теряет связь и возвращается под тем же ключом профиля
@@ -334,6 +395,7 @@ func _reset() -> void:
 	chats.clear()
 	lost.clear()
 	rejoined.clear()
+	queue_seen.clear()
 
 
 func _session() -> NetSession:
@@ -364,6 +426,7 @@ func _track(p: NetSession) -> void:
 	p.chat_received.connect(func(w: String, t: String): chats[p].append([w, t]))
 	p.connection_lost.connect(func(reason: String): lost[p] = reason)
 	p.player_rejoined.connect(func(who: String): rejoined[p] = who)
+	p.queue_changed.connect(func(w: int, n: int): queue_seen[p] = [w, n])
 
 
 # --- общие шаги партии -------------------------------------------------------

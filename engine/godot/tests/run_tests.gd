@@ -2848,9 +2848,13 @@ func test_main_menu() -> void:
 
 	_find_button(menu, "PLAY ONLINE").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY ONLINE открывает сетевую страницу")
+	# Первая «4» на сетевой странице — стол для поиска игры.
 	_find_button(menu, "4").pressed.emit()
+	_find_button(menu, "FIND GAME").pressed.emit()
+	check_eq(got.get("online"), ["find", 4, NetSession.MATCH_MODE], "FIND GAME: поиск на 4 игроков, режим RANDOM 4")
 	_find_button(menu, "CREATE ROOM").pressed.emit()
-	check_eq(got.get("online"), ["create", 4, GameSetup.MODE_RANDOM_4], "CREATE ROOM: 4 игрока, выбор режима запомнен")
+	check_eq(got.get("online"), ["create", 3, GameSetup.MODE_RANDOM_4],
+		"CREATE ROOM: 3 игрока и режим запомнены, выбор стола для поиска их не трогает")
 	_find_button(menu, "JOIN BY CODE").pressed.emit()
 	check_eq(got.get("online")[0], "join_code", "JOIN BY CODE — вход по коду")
 	_find_button(menu, "JOIN BY IP").pressed.emit()
