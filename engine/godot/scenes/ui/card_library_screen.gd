@@ -3,12 +3,12 @@ extends Control
 ## CARDS: библиотека всех карт игры (меню LIBRARY → CARDS).
 ##
 ## Вкладки: STARTING (стартовая колода и стопки запаса) и шесть полуколод
-## рынка. Карты вкладки — мелкими лицами (как на полосах в партии) с числом
-## копий под каждой, по цене. Наведение показывает полную карту по центру,
-## Alt — крупнее: тот же CardPreview, что и в партии.
+## рынка. Карты вкладки — сразу в полном формате 176x254, 1:1, по пять в ряд,
+## с числом копий под каждой, по цене (решение владельца, 2026-09-26).
+## Полуколода в экран не влезает — список прокручивается колесом мыши.
 ##
-## Стрелки листают вкладки, Esc — назад в меню. Вёрстка кодом, как у
-## остальных экранов меню.
+## Стрелки влево/вправо листают вкладки, вверх/вниз — ряды карт, Esc — назад
+## в меню. Вёрстка кодом, как у остальных экранов меню.
 
 signal closed
 
@@ -19,16 +19,20 @@ const STARTING := "starting"
 const HALF_DECKS := ["drow", "dragons", "demons", "elementals", "aberrations", "undead"]
 const TAB_SIZE := Vector2(72, 16)
 const BUTTON_SIZE := Vector2(70, 16)
-const COLUMNS := 10
-## Размер мелкого лица карты (CardView.MINI_SIZE).
-const CARD := Vector2(80, 76)
-## Высота места под сеткой: две строки по 10 карт с подписями — полуколода
-## целиком, окно не прыгает при смене вкладки.
-const GRID_H := 2 * (76 + 12) + 4
+const COLUMNS := 5
+const GAP := 4
+## Полная карта в родном размере (CardView.PIXEL_SIZE).
+const CARD := Vector2(176, 254)
+## Высота подписи с числом копий под картой.
+const LABEL_H := 11
+## Шаг прокрутки стрелками — ровно один ряд карт.
+const ROW_STEP := 254 + 1 + LABEL_H + GAP
+const MARGIN := 6
 
 var _tab := 0
 var _tabs: Array[Button] = []
 var _note: Label
+var _scroll: ScrollContainer
 var _grid: GridContainer
 
 
@@ -37,27 +41,38 @@ func _init() -> void:
 	theme = PixelTheme.theme()
 	add_child(UnderdarkBg.make())
 
-	var centre := CenterContainer.new()
-	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(centre)
+	# Окно во весь экран: чем больше места, тем больше полных карт видно.
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, MARGIN)
+	add_child(margin)
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
-	centre.add_child(card)
+	margin.add_child(card)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 4)
 	card.add_child(col)
 
-	var head := Label.new()
-	head.text = "CARDS"
-	head.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
-	head.add_theme_color_override("font_color", PixelTheme.GOLD)
-	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(head)
-
+	# Верхняя строка: BACK слева, вкладки по центру оставшегося места.
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 4)
+	col.add_child(top)
+	var back := Button.new()
+	back.text = "BACK"
+	back.custom_minimum_size = BUTTON_SIZE
+	SetupScreen._style_button(back)
+	back.pressed.connect(func(): closed.emit())
+	top.add_child(back)
 	var tabs := HBoxContainer.new()
 	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tabs.add_theme_constant_override("separation", 4)
-	col.add_child(tabs)
+	top.add_child(tabs)
+	# Пустышка шириной с BACK — чтобы вкладки стояли ровно по центру окна.
+	var spacer := Control.new()
+	spacer.custom_minimum_size = BUTTON_SIZE
+	top.add_child(spacer)
 	var group := ButtonGroup.new()
 	for i in tab_count():
 		var b := Button.new()
@@ -76,32 +91,20 @@ func _init() -> void:
 	col.add_child(_note)
 	col.add_child(HSeparator.new())
 
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.scroll_vertical_custom_step = ROW_STEP / 3.0
+	# Полоса прокрутки темы без ширины невидима, а здесь она подсказывает,
+	# что карт больше, чем видно.
+	_scroll.get_v_scroll_bar().custom_minimum_size.x = 4
+	col.add_child(_scroll)
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS
-	_grid.add_theme_constant_override("h_separation", 4)
-	_grid.add_theme_constant_override("v_separation", 4)
-	_grid.custom_minimum_size.y = GRID_H
-	col.add_child(_grid)
-
-	col.add_child(HSeparator.new())
-	var back := Button.new()
-	back.text = "BACK"
-	back.custom_minimum_size = BUTTON_SIZE
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	SetupScreen._style_button(back)
-	back.pressed.connect(func(): closed.emit())
-	col.add_child(back)
-
-	var hint := Label.new()
-	hint.text = "Point at a card to see it in full, hold Alt for bigger. Arrows switch tabs."
-	hint.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(hint)
-
-	# Полная карта под курсором — поверх всего экрана, как в партии.
-	var preview := CardPreview.new()
-	preview.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(preview)
+	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER | Control.SIZE_EXPAND
+	_grid.add_theme_constant_override("h_separation", GAP)
+	_grid.add_theme_constant_override("v_separation", GAP)
+	_scroll.add_child(_grid)
 
 	show_tab(0)
 
@@ -151,10 +154,14 @@ func show_tab(index: int) -> void:
 			total += int(c["copies"])
 		_note.text = "%s: %d different cards, %d in all." % [
 			key.capitalize() + " Half-Deck", cards.size(), total]
+	_note.text += "   Mouse wheel scrolls, arrows switch tabs."
+	_scroll.scroll_vertical = 0
 	for c: Dictionary in cards:
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", 1)
-		var view := CardView.new(String(c["id"]), int(CARD.x), int(CARD.y), -1)
+		var view := CardView.new(String(c["id"]), int(CARD.x), int(CARD.y))
+		# Карта и так полная — копия под курсором не нужна.
+		view.hover_preview = false
 		cell.add_child(view)
 		var label := Label.new()
 		label.text = String(c["label"])
@@ -173,6 +180,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			show_tab((_tab + 1) % tab_count())
 		KEY_LEFT, KEY_A:
 			show_tab((_tab + tab_count() - 1) % tab_count())
+		KEY_DOWN, KEY_S:
+			_scroll.scroll_vertical += ROW_STEP
+		KEY_UP, KEY_W:
+			_scroll.scroll_vertical -= ROW_STEP
 		KEY_ESCAPE:
 			closed.emit()
 		_:
