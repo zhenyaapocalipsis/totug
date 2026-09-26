@@ -23,7 +23,7 @@ func _init() -> void:
 	visible = false
 
 	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.02, 0.03, 0.62)
+	dim.color = PixelTheme.DIM
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)

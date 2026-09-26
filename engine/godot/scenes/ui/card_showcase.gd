@@ -25,7 +25,6 @@ const FLASH_TIME := 0.14
 const EXIT_TIME := 0.36
 const CRUMBLE_TIME := 0.62
 const FLY_ARC := 40.0
-const DIM_ALPHA := 0.4
 const DIM_SPEED := 5.0
 ## Во сколько раз быстрее идёт показ за каждую карту, ждущую в очереди.
 const SPEED_PER_QUEUED := 0.6
@@ -173,7 +172,7 @@ func _draw() -> void:
 	if _dim > 0.0:
 		# Затемняем весь экран, а не только доску: вокруг доски стоят сводка,
 		# рука и рынок, и тёмный прямоугольник обрывался бы посреди экрана.
-		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, DIM_ALPHA * _dim))
+		draw_rect(Rect2(Vector2.ZERO, size), Color(PixelTheme.DIM, PixelTheme.DIM.a * _dim))
 	_banner.visible = false
 	_card_rect = Rect2()
 	if _item.is_empty():

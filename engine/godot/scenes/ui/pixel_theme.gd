@@ -31,6 +31,8 @@ const TEXT_DIM := Color("a89cc0")     # подписи и второстепен
 const TEXT_OFF := Color("6b5f85")     # недоступное
 const GOLD := Color("f2d23c")         # подсветка выбора, цена, VP
 const DANGER := Color("d0283e")
+## Единое затемнение экрана под окнами, меню и витриной карт.
+const DIM := Color(BG, 0.92)
 
 static var _theme: Theme = null
 

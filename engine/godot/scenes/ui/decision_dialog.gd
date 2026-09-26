@@ -79,7 +79,7 @@ func _init() -> void:
 	# мимо окна гасит _input.
 	_dim = ColorRect.new()
 	_dim.top_level = true
-	_dim.color = Color(0.02, 0.02, 0.03, 0.62)
+	_dim.color = PixelTheme.DIM
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dim.visible = false
 	# top_level не наследует z окна — задаём свой: над рукой, под окном.
