@@ -1,19 +1,20 @@
 class_name SetupScreen
 extends Control
 
-## Главное меню. Раньше все настройки стояли одной длинной колонкой (режим,
-## число игроков, четыре строки сетевых кнопок) — новичку было непонятно, с
-## чего начать. Теперь меню в три страницы:
+## Главное меню — дерево коротких страниц, на каждой две-три большие кнопки
+## (решение владельца, 2026-09-26):
 ##
-##   главная    — профиль сверху и четыре большие кнопки: PLAY ON ONE SCREEN,
-##                PLAY ONLINE, HOW TO PLAY, QUIT;
-##   hotseat    — режим рынка, сколько игроков, START GAME;
-##   online     — поиск игры со случайными соперниками (FIND GAME),
-##                новая партия (режим, игроки, CREATE ROOM / HOST BY IP)
-##                и вход в чужую (JOIN BY CODE / JOIN BY IP).
+##   главная      — профиль сверху, PLAY, LIBRARY, QUIT;
+##   play         — ONLINE, HOTSEAT;
+##   hotseat      — режим рынка, сколько игроков, START GAME;
+##   online       — MATCHMAKING, LOBBY;
+##   matchmaking  — на сколько человек стол, FIND GAME (случайные соперники);
+##   lobby        — своя партия для друзей (CREATE ROOM / HOST BY IP)
+##                  и вход в чужую (JOIN BY CODE / JOIN BY IP);
+##   library      — HOW TO PLAY, CARDS (все карты игры).
 ##
-## Esc и BACK на вложенной странице возвращают на главную. Под кнопками
-## строка-подсказка: что сделает кнопка под мышью.
+## Esc и BACK на вложенной странице возвращают на страницу выше
+## (PAGE_PARENTS). Под кнопками строка-подсказка: что сделает кнопка под мышью.
 ##
 ## GameScreen получает уже готовый список цветов — экран партии ничего не
 ## знает про меню. Вёрстка кодом по той же причине, что и в game_screen.gd:
@@ -28,6 +29,8 @@ signal online_requested(kind: String, player_count: int, mode: String)
 signal profile_requested
 ## Открыть обучение для новичков (how_to_play_screen.gd).
 signal how_to_play_requested
+## Открыть библиотеку карт (card_library_screen.gd).
+signal cards_requested
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -43,13 +46,30 @@ const MODE_NOTES := {
 }
 
 const PAGE_MAIN := "main"
+const PAGE_PLAY := "play"
 const PAGE_HOTSEAT := "hotseat"
 const PAGE_ONLINE := "online"
+const PAGE_MATCHMAKING := "matchmaking"
+const PAGE_LOBBY := "lobby"
+const PAGE_LIBRARY := "library"
+## Куда ведут BACK и Esc с каждой вложенной страницы.
+const PAGE_PARENTS := {
+	PAGE_PLAY: PAGE_MAIN,
+	PAGE_HOTSEAT: PAGE_PLAY,
+	PAGE_ONLINE: PAGE_PLAY,
+	PAGE_MATCHMAKING: PAGE_ONLINE,
+	PAGE_LOBBY: PAGE_ONLINE,
+	PAGE_LIBRARY: PAGE_MAIN,
+}
 ## Подсказка внизу страницы, пока мышь не над кнопкой.
 const PAGE_HINTS := {
 	PAGE_MAIN: "Point at a button to see what it does.",
+	PAGE_PLAY: "Point at a button to see what it does.",
 	PAGE_HOTSEAT: "The first player is drawn at random.",
-	PAGE_ONLINE: "Room code: through our server. IP: home network or Radmin VPN.",
+	PAGE_ONLINE: "Other players will see your name and emblem.",
+	PAGE_MATCHMAKING: "The game starts as soon as the table is full.",
+	PAGE_LOBBY: "Room code: through our server. IP: home network or Radmin VPN.",
+	PAGE_LIBRARY: "Point at a button to see what it does.",
 }
 
 const BIG_BUTTON := Vector2(170, 22)
@@ -76,7 +96,8 @@ var _mode_note: Label
 var _dots: HBoxContainer
 
 
-func _init() -> void:
+## page — с какой страницы открыть меню (возврат из обучения, лобби и т. п.).
+func _init(page: String = PAGE_MAIN) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 
@@ -99,7 +120,7 @@ func _init() -> void:
 	_col.add_theme_constant_override("separation", 4)
 	card.add_child(_col)
 
-	show_page(PAGE_MAIN)
+	show_page(page)
 
 
 func current_page() -> String:
@@ -114,19 +135,34 @@ func show_page(page: String) -> void:
 	_mode_note = null
 	_dots = null
 	match page:
+		PAGE_PLAY:
+			_build_play()
 		PAGE_HOTSEAT:
 			_build_hotseat()
 		PAGE_ONLINE:
 			_build_online()
+		PAGE_MATCHMAKING:
+			_build_matchmaking()
+		PAGE_LOBBY:
+			_build_lobby()
+		PAGE_LIBRARY:
+			_build_library()
 		_:
+			_page = PAGE_MAIN
 			_build_main()
+
+
+## Esc и BACK: на страницу выше.
+func go_back() -> void:
+	if PAGE_PARENTS.has(_page):
+		show_page(PAGE_PARENTS[_page])
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key != null and key.pressed and not key.echo and key.keycode == KEY_ESCAPE \
-			and _page != PAGE_MAIN:
-		show_page(PAGE_MAIN)
+			and PAGE_PARENTS.has(_page):
+		go_back()
 		get_viewport().set_input_as_handled()
 
 
@@ -137,23 +173,30 @@ func _build_main() -> void:
 	_col.add_child(_profile_row())
 	_col.add_child(HSeparator.new())
 
-	_col.add_child(_big_button("PLAY ON ONE SCREEN",
-		"2-4 players take turns at this computer.",
-		func(): show_page(PAGE_HOTSEAT)))
-	_col.add_child(_big_button("PLAY ONLINE",
-		"Create a room for friends or join theirs.",
-		func(): show_page(PAGE_ONLINE)))
-	_col.add_child(_big_button("HOW TO PLAY",
-		"Rules for beginners, page by page.",
-		func(): how_to_play_requested.emit()))
-	_col.add_child(_big_button("QUIT GAME", "Close the game.",
+	_col.add_child(_big_button("PLAY", "Start a game: online or at this computer.",
+		func(): show_page(PAGE_PLAY)))
+	_col.add_child(_big_button("LIBRARY", "How to play and every card of the game.",
+		func(): show_page(PAGE_LIBRARY)))
+	_col.add_child(_big_button("QUIT", "Close the game.",
 		func(): get_tree().quit()))
 
 	_add_hint(PAGE_HINTS[_page])
 
 
+func _build_play() -> void:
+	_add_title("PLAY")
+	_col.add_child(HSeparator.new())
+	_col.add_child(_big_button("ONLINE", "Play over the internet or a home network.",
+		func(): show_page(PAGE_ONLINE)))
+	_col.add_child(_big_button("HOTSEAT", "2-4 players take turns at this computer.",
+		func(): show_page(PAGE_HOTSEAT)))
+	_col.add_child(HSeparator.new())
+	_col.add_child(_back_button())
+	_add_hint(PAGE_HINTS[_page])
+
+
 func _build_hotseat() -> void:
-	_add_title("PLAY ON ONE SCREEN")
+	_add_title("HOTSEAT")
 	_add_dim("Players take turns at this computer.")
 	_col.add_child(HSeparator.new())
 	_add_game_options()
@@ -166,13 +209,23 @@ func _build_hotseat() -> void:
 
 
 func _build_online() -> void:
-	_add_title("PLAY ONLINE")
-	_add_dim("Other players will see your name and emblem.")
+	_add_title("ONLINE")
 	_col.add_child(HSeparator.new())
+	_col.add_child(_big_button("MATCHMAKING", "Play with random people who are looking for a game too.",
+		func(): show_page(PAGE_MATCHMAKING)))
+	_col.add_child(_big_button("LOBBY", "Create a room for friends or join theirs.",
+		func(): show_page(PAGE_LOBBY)))
+	_col.add_child(HSeparator.new())
+	_col.add_child(_back_button())
+	_add_hint(PAGE_HINTS[_page])
 
-	# Поиск игры: случайные соперники, режим всегда RANDOM 4 — выбрать можно
-	# только, на сколько человек стол.
-	_col.add_child(_heading("FIND A GAME  (%s)" % MODE_TITLES[NetSession.MATCH_MODE], PixelTheme.GOLD))
+
+## Поиск игры: случайные соперники, режим всегда RANDOM 4 — выбрать можно
+## только, на сколько человек стол.
+func _build_matchmaking() -> void:
+	_add_title("MATCHMAKING")
+	_add_dim("Random opponents. Market: %s." % MODE_TITLES[NetSession.MATCH_MODE])
+	_col.add_child(HSeparator.new())
 	var counts: Array = []
 	var group := ButtonGroup.new()
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
@@ -181,13 +234,18 @@ func _build_online() -> void:
 		b.mouse_entered.connect(func(): _set_hint("Look for a table of %d players." % count))
 		b.mouse_exited.connect(func(): _set_hint(_hint_default))
 		counts.append(b)
-	var find := _button("FIND GAME", "Play with random people who are looking for a game too.",
-		func(): online_requested.emit("find", _match_count, NetSession.MATCH_MODE))
-	find.custom_minimum_size = Vector2(70, 16)
-	var players_label := _heading("PLAYERS")
-	players_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_col.add_child(_row([players_label] + counts + [find]))
+	_col.add_child(_heading("PLAYERS"))
+	_col.add_child(_row(counts))
+	_col.add_child(HSeparator.new())
+	_col.add_child(_big_button("FIND GAME", "Wait in line until enough players are found.",
+		func(): online_requested.emit("find", _match_count, NetSession.MATCH_MODE)))
+	_col.add_child(_back_button())
+	_add_hint(PAGE_HINTS[_page])
 
+
+## Игра с друзьями: своя комната или вход в чужую.
+func _build_lobby() -> void:
+	_add_title("LOBBY")
 	_col.add_child(HSeparator.new())
 	_col.add_child(_heading("NEW GAME WITH FRIENDS", PixelTheme.GOLD))
 	_add_game_options()
@@ -205,6 +263,18 @@ func _build_online() -> void:
 		_button("JOIN BY IP", "Type the IP of the friend who pressed HOST BY IP.",
 			func(): online_requested.emit("join_ip", 0, _mode))))
 
+	_col.add_child(HSeparator.new())
+	_col.add_child(_back_button())
+	_add_hint(PAGE_HINTS[_page])
+
+
+func _build_library() -> void:
+	_add_title("LIBRARY")
+	_col.add_child(HSeparator.new())
+	_col.add_child(_big_button("HOW TO PLAY", "Rules for beginners, page by page.",
+		func(): how_to_play_requested.emit()))
+	_col.add_child(_big_button("CARDS", "Every card of the game, half-deck by half-deck.",
+		func(): cards_requested.emit()))
 	_col.add_child(HSeparator.new())
 	_col.add_child(_back_button())
 	_add_hint(PAGE_HINTS[_page])
@@ -340,7 +410,7 @@ func _big_button(text: String, hint: String, action: Callable) -> Control:
 
 
 func _back_button() -> Control:
-	var b := _button("BACK", "Back to the main menu (Esc).", func(): show_page(PAGE_MAIN))
+	var b := _button("BACK", "One step back (Esc).", go_back)
 	b.custom_minimum_size = Vector2(70, 16)
 	return b
 

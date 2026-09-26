@@ -2844,28 +2844,39 @@ func test_main_menu() -> void:
 	section("главное меню, первый профиль и вопрос про обучение")
 	var menu := SetupScreen.new()
 	check_eq(menu.current_page(), SetupScreen.PAGE_MAIN, "меню открывается на главной странице")
-	for text in ["PLAY ON ONE SCREEN", "PLAY ONLINE", "HOW TO PLAY", "QUIT GAME", "EDIT PROFILE"]:
+	for text in ["PLAY", "LIBRARY", "QUIT", "EDIT PROFILE"]:
 		check(_find_button(menu, text) != null, "на главной есть кнопка %s" % text)
-	check(_find_button(menu, "CREATE ROOM") == null, "сетевые кнопки убраны с главной")
+	check(_find_button(menu, "CREATE ROOM") == null and _find_button(menu, "HOTSEAT") == null,
+		"на главной только три кнопки и профиль")
 
 	var got := {}
 	menu.started.connect(func(ids: Array[String], m: String): got["start"] = [ids.size(), m])
 	menu.online_requested.connect(func(k: String, c: int, m: String): got["online"] = [k, c, m])
-	_find_button(menu, "PLAY ON ONE SCREEN").pressed.emit()
-	check_eq(menu.current_page(), SetupScreen.PAGE_HOTSEAT, "PLAY ON ONE SCREEN открывает страницу хотсита")
+	menu.how_to_play_requested.connect(func(): got["learn"] = true)
+	menu.cards_requested.connect(func(): got["cards"] = true)
+	_find_button(menu, "PLAY").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_PLAY, "PLAY открывает выбор ONLINE / HOTSEAT")
+	check(_find_button(menu, "ONLINE") != null, "на странице PLAY есть ONLINE")
+	_find_button(menu, "HOTSEAT").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_HOTSEAT, "HOTSEAT открывает страницу хотсита")
 	_find_button(menu, "3").pressed.emit()
 	_find_button(menu, "RANDOM 4").pressed.emit()
 	_find_button(menu, "START GAME").pressed.emit()
 	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4], "START GAME: 3 игрока, режим RANDOM 4")
 	_find_button(menu, "BACK").pressed.emit()
-	check_eq(menu.current_page(), SetupScreen.PAGE_MAIN, "BACK возвращает на главную")
+	check_eq(menu.current_page(), SetupScreen.PAGE_PLAY, "BACK с хотсита — на страницу PLAY")
 
-	_find_button(menu, "PLAY ONLINE").pressed.emit()
-	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY ONLINE открывает сетевую страницу")
-	# Первая «4» на сетевой странице — стол для поиска игры.
+	_find_button(menu, "ONLINE").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "ONLINE открывает MATCHMAKING / LOBBY")
+	_find_button(menu, "MATCHMAKING").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_MATCHMAKING, "MATCHMAKING открывает поиск игры")
 	_find_button(menu, "4").pressed.emit()
 	_find_button(menu, "FIND GAME").pressed.emit()
 	check_eq(got.get("online"), ["find", 4, NetSession.MATCH_MODE], "FIND GAME: поиск на 4 игроков, режим RANDOM 4")
+	menu.go_back()
+	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "назад с поиска — на страницу ONLINE")
+	_find_button(menu, "LOBBY").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_LOBBY, "LOBBY открывает игру с друзьями")
 	_find_button(menu, "CREATE ROOM").pressed.emit()
 	check_eq(got.get("online"), ["create", 3, GameSetup.MODE_RANDOM_4],
 		"CREATE ROOM: 3 игрока и режим запомнены, выбор стола для поиска их не трогает")
@@ -2873,7 +2884,32 @@ func test_main_menu() -> void:
 	check_eq(got.get("online")[0], "join_code", "JOIN BY CODE — вход по коду")
 	_find_button(menu, "JOIN BY IP").pressed.emit()
 	check_eq(got.get("online")[0], "join_ip", "JOIN BY IP — вход по IP")
+	for i in 3:
+		menu.go_back()
+	check_eq(menu.current_page(), SetupScreen.PAGE_MAIN, "назад по шагам: LOBBY → ONLINE → PLAY → главная")
+
+	_find_button(menu, "LIBRARY").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_LIBRARY, "LIBRARY открывает HOW TO PLAY / CARDS")
+	_find_button(menu, "HOW TO PLAY").pressed.emit()
+	_find_button(menu, "CARDS").pressed.emit()
+	check(got.get("learn", false) and got.get("cards", false), "HOW TO PLAY и CARDS открывают свои экраны")
 	menu.free()
+
+	var back := SetupScreen.new(SetupScreen.PAGE_LIBRARY)
+	check_eq(back.current_page(), SetupScreen.PAGE_LIBRARY, "меню можно открыть сразу на нужной странице")
+	back.free()
+
+	var cards: Control = load("res://scenes/ui/card_library_screen.gd").new()
+	var seen := {}
+	for i in cards.tab_count():
+		cards.show_tab(i)
+		for c: Dictionary in cards.tab_cards(cards.tab_key(i)):
+			seen[String(c["id"])] = true
+	check_eq(seen.size(), 126, "библиотека CARDS показывает все 126 карт")
+	check_eq(cards.tab_cards("drow").size(), 20, "во вкладке полуколоды 20 разных карт")
+	cards.show_tab(99)
+	check_eq(cards.current_tab(), cards.tab_count() - 1, "дальше последней вкладки не листается")
+	cards.free()
 
 	# Первый профиль: без имени не создаётся (файл при этом не пишется).
 	var first := ProfileScreen.new(true)
