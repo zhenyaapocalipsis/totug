@@ -12,6 +12,7 @@ const BOX_LIGHT := Color("e6e0f0")
 const BOX_DARK := Color("1c1830")
 const INK := Color("241c34")
 const MARKER := Color("f2d23c")
+const MARKER_FILL := Color("4a3a10")
 const TRACE_WIDTH := 2
 ## Скругление прямого угла: угол срезается на столько пикселей вдоль каждой
 ## стороны, а срез заполняется диагональю. Больше 3 на пиксельной схеме уже не
@@ -151,9 +152,14 @@ static func _site(img: Image, site: Dictionary) -> void:
 	var rect := Rect2i(roundi(r[0]), roundi(r[1]), roundi(r[2]), roundi(r[3]))
 	var dark := bool(site.get("starting", false))
 	var marker := bool(site.get("marker", false))
-	var fill := BOX_DARK if dark else BOX_LIGHT
-	var ink := BOX_LIGHT if dark else INK
+	var fill := MARKER_FILL if marker else (BOX_DARK if dark else BOX_LIGHT)
+	var ink := BOX_LIGHT if dark or marker else INK
 
+	# Город с маркером контроля (даёт Influence) — тёмно-золотая плашка в
+	# золотой рамке толщиной 2: второй пиксель рамки снаружи, чтобы не
+	# налезть на название и места под войска.
+	if marker:
+		img.fill_rect(rect.grow(1), MARKER)
 	img.fill_rect(rect, MARKER if marker else (BOX_LIGHT if dark else INK))
 	img.fill_rect(rect.grow(-1), fill)
 	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size())
