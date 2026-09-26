@@ -38,6 +38,8 @@ echo "== upload"
 scp -i $KEY -q "$BUILD_DIR/tyrants_server.pck" "$HOST:/opt/tyrants/tyrants_server.pck.new"
 scp -i $KEY -q "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$HOST:/opt/tyrants/www/game.pck.new"
 scp -i $KEY -q "$BUILD_DIR/version.txt" "$HOST:/opt/tyrants/www/version.txt.new"
+# Архив целиком — ссылка для новых игроков: http://129.101.123.70/tyrants/TyrantsOfTheUnderdark.zip
+scp -i $KEY -q "$OUT/TyrantsOfTheUnderdark.zip" "$HOST:/opt/tyrants/www/TyrantsOfTheUnderdark.zip.new"
 scp -i $KEY -q "$ROOT/server/tyrants.service" "$HOST:/etc/systemd/system/tyrants.service"
 scp -i $KEY -q "$ROOT/server/nginx-tyrants.conf" "$HOST:/etc/nginx/sites-available/tyrants"
 
@@ -49,6 +51,7 @@ mv tyrants_server.pck.new tyrants_server.pck
 # раньше, чем появится файл.
 mv www/game.pck.new www/game.pck
 mv www/version.txt.new www/version.txt
+mv www/TyrantsOfTheUnderdark.zip.new www/TyrantsOfTheUnderdark.zip
 chown -R tyrants:tyrants /opt/tyrants
 ufw allow 7780/udp >/dev/null
 ufw allow 80/tcp >/dev/null
