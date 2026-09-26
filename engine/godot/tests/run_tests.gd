@@ -2488,6 +2488,46 @@ func test_audit_card_fixes() -> void:
 	check_eq(blue.troops_in_barracks, blue_barracks, "бараки blue не изменились")
 	check_eq(red.trophy_hall_count, 1, "в зале red осталось одно (белое) войско")
 
+	section("Lich: несколько соперников на сайте — выбор, чей зал (этап 8)")
+	state = _build_rich_state()
+	red = state.players["red"]
+	blue = state.players["blue"]
+	green = state.players["green"]
+	var lich_site := ""
+	for sid: String in state.graph.sites.keys():
+		if state.graph.slots_of_site(sid).size() >= 2:
+			lich_site = sid
+			break
+	check(lich_site != "", "нашёлся сайт хотя бы с двумя слотами")
+	var lich_slots: PackedStringArray = state.graph.slots_of_site(lich_site)
+	state.troops[lich_slots[0]] = "blue"
+	state.troops[lich_slots[1]] = "green"
+	for i in range(2, lich_slots.size()):
+		state.troops.erase(lich_slots[i])
+	check_eq(CardLibrary._enemy_troop_owners_at_site(state, "red", lich_site), ["blue", "green"] as Array[String],
+		"оба соперника на сайте найдены (не только первый), в порядке хода")
+	blue.add_trophy("white")
+	green.add_trophy("white")
+	r = EffectResolver.new()
+	r.apply(CardLibrary._LichEffect.new(lich_site), "red", state)
+	check(r.is_waiting() and r.pending.choice_type == "target_player",
+		"с двумя соперниками на сайте — сперва выбор, чей зал")
+	check_eq(r.pending.legal_options, ["blue", "green"], "варианты выбора — оба соперника с сайта")
+	r.resume(state, "blue")
+	check(r.is_waiting() and r.pending.choice_type == "choose_option",
+		"после выбора blue — берём войско из его зала")
+	var only_from_blue := true
+	for label: String in (r.pending.option_labels as Array):
+		if not label.ends_with("Blue's trophy hall") and label != "Stop":
+			only_from_blue = false
+	check(only_from_blue, "варианты только из зала blue, зал green не предлагается")
+
+	state.troops.erase(lich_slots[1])  # остаётся один соперник (blue)
+	var r_single := EffectResolver.new()
+	r_single.apply(CardLibrary._LichEffect.new(lich_site), "red", state)
+	check(r_single.is_waiting() and r_single.pending.choice_type == "choose_option",
+		"с одним соперником на сайте — без выбора, сразу его зал (как было на двоих)")
+
 	section("аудит: Ghost и Insane Outcast")
 	state = _build_rich_state()
 	red = state.players["red"]

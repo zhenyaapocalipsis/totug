@@ -5,19 +5,24 @@ extends SceneTree
 ## поэтому относительный путь узла ("Net") у них совпадает — как у разных
 ## программ.
 ##
-## Два сценария подряд:
-##   lan    — хост по IP играет сам, клиент входит по адресу;
-##   server — выделенный сервер, игрок A создаёт комнату, B входит по коду;
-##            чужой код и чужая версия игры получают отказ; дальше (этап 7) —
-##            B теряет связь и возвращается под тем же ключом профиля (а не
-##            новой раздачей), потом сервер «перезапускается» на том же порту
-##            и оба поднимаются из GameJournal.
+## Сценарии подряд:
+##   lan     — хост по IP играет сам, клиент входит по адресу;
+##   server  — выделенный сервер, игрок A создаёт комнату, B входит по коду;
+##             чужой код и чужая версия игры получают отказ; дальше (этап 7) —
+##             B теряет связь и возвращается под тем же ключом профиля (а не
+##             новой раздачей), потом сервер «перезапускается» на том же порту
+##             и оба поднимаются из GameJournal.
+##   server4 — тот же выделенный сервер, но комната на четверых (этап 8):
+##             рассадка, срезы рук и стартовые сайты не завязаны на «ровно 2».
 ##
 ##   godot --headless --path . --script res://tests/net_loopback.gd
 ## Последняя строка: "сеть: пройдено N, провалено 0".
 
 const LAN_PORT := 7790
 const SERVER_PORT := 7791
+## Отдельный порт для сценария на четверых (этап 8) — старый сервер к этому
+## моменту уже закрыт «перезапуском», но проще не делить один порт.
+const SERVER4_PORT := 7792
 ## "server" — самый длинный сценарий: раздача, чат, переподключение и
 ## «перезапуск» сервера (этап 7) в одном TIMEOUT-окне без сброса _elapsed.
 const TIMEOUT := 30.0
@@ -143,7 +148,48 @@ func _process(delta: float) -> bool:
 				check(not (views[players[0]] as Dictionary).get("final_scores", {}).is_empty(),
 					"[server] итоги партии пришли в срезе")
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
-				return _finish()
+				_start_server_four()
+		"server4_wait_code":
+			if players[0].room_code != "":
+				check(players[0].room_code.length() == NetSession.CODE_LENGTH, "[server4] код комнаты из 4 знаков")
+				for i in range(1, players.size()):
+					players[i].enter_room("127.0.0.1", SERVER4_PORT, players[0].room_code)
+				_step = "server4_wait_join"
+		"server4_wait_join":
+			var all_seated := true
+			for p in players:
+				if p.seat == "":
+					all_seated = false
+			if all_seated:
+				var distinct_seats := {}
+				for p in players:
+					distinct_seats[p.seat] = true
+				check(distinct_seats.size() == 4, "[server4] все четверо получили разные цвета")
+				var room: GameRoom = server.rooms.values()[0]
+				check(room.needed == 4, "[server4] в комнате четверо")
+				players[0].start_game(0)
+				_step = "server4_started"
+		"server4_started":
+			var all_dealt := true
+			for p in players:
+				if views[p].is_empty():
+					all_dealt = false
+			if all_dealt:
+				check(not (boards[players[0]].get("schematic", {}) as Dictionary).is_empty(),
+					"[server4] чертёж доски на четверых пришёл")
+				_check_hidden_hands_n()
+				_step = "server4_setup"
+		"server4_setup":
+			_answer_setup("server4_ready")
+		"server4_ready":
+			var current := String(views[players[0]]["current_player"])
+			var current_seats := 0
+			for p in players:
+				if p.seat == current:
+					current_seats += 1
+				check(views[p]["current_player"] == current, "[server4] все видят один и тот же текущий ход")
+			check(current_seats == 1, "[server4] ходящий — ровно один из четверых (получено %d)" % current_seats)
+			return _finish()
 	return false
 
 
@@ -188,6 +234,44 @@ func _start_server_restart() -> void:
 	b3.enter_room("127.0.0.1", SERVER_PORT, code)
 	players = [a2, b3]
 	_step = "restarted_wait"
+
+
+## Этап 8: четверо на выделенном сервере — комната на 4 цвета, у каждого своя
+## рука, стартовые сайты по очереди хода на четверых (через _answer_setup,
+## которая уже написана без привязки к числу игроков). До реальных ходов и
+## рейтинга не доводим — это уже проверено на двоих, здесь смысл только в
+## том, что рассадка/раздача/срезы не завязаны на «ровно 2».
+func _start_server_four() -> void:
+	for p in players:
+		p.close()
+	if server != null:
+		server.close()
+	_scenario = "server4"
+	_reset()
+	server = _session()
+	server.saves_dir = SAVES_DIR
+	check(server.serve(SERVER4_PORT, true) == OK, "[server4] сервер открыл порт")
+	var ps: Array[NetSession] = []
+	for i in 4:
+		ps.append(_session())
+	players = ps
+	for p in players:
+		_track(p)
+	players[0].create_room("127.0.0.1", SERVER4_PORT, 4, GameSetup.MODE_STANDARD)
+	_step = "server4_wait_code"
+
+
+## Скрытая информация у ЛЮБОГО числа игроков: своя рука видна, чужие — только
+## размером (обобщение _check_hidden_hands на players.size() участников).
+func _check_hidden_hands_n() -> void:
+	for viewer in players:
+		var seen: Dictionary = views[viewer]["players"]
+		check((seen[viewer.seat]["hand"] as Array).size() == 5, "[%s] %s видит свои 5 карт" % [_scenario, viewer.seat])
+		for other in players:
+			if other == viewer:
+				continue
+			check(not (seen[other.seat] as Dictionary).has("hand"),
+				"[%s] %s не видит руку %s" % [_scenario, viewer.seat, other.seat])
 
 
 ## Конец партии: на сервере объявлен последний круг, который кончается на
@@ -296,11 +380,12 @@ func _check_hidden_hands() -> void:
 
 ## Стартовые локации: отвечает тот, кого спросили, первым вариантом. Один
 ## ответ на один вопрос — следующий, когда первый игрок увидел результат.
-func _answer_setup() -> void:
+## Не завязана на число игроков за столом — годится и на четверых (этап 8).
+func _answer_setup(next_step: String = "spoof") -> void:
 	var pd: Dictionary = views[players[0]].get("pending_decision", {})
 	if pd.is_empty():
 		_turn_player = String(views[players[0]]["current_player"])
-		_step = "spoof"
+		_step = next_step
 		return
 	var chooser := String(pd["player_id"])
 	for p in players:

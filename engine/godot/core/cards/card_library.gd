@@ -88,12 +88,17 @@ static func _site_has_enemy_spy(state: GameState, player_id: String, site_id: St
 	return false
 
 
-static func _enemy_troop_owner_at_site(state: GameState, player_id: String, site_id: String) -> String:
+## Все РАЗНЫЕ соперники с войском на сайте, в порядке очереди хода — не
+## только первый найденный (баг из audit.md, "поправим к этапу 4 игрока":
+## на двоих соперник всегда один, поэтому раньше это не проявлялось).
+static func _enemy_troop_owners_at_site(state: GameState, player_id: String, site_id: String) -> Array[String]:
+	var owners: Array[String] = []
 	for slot_id: String in state.graph.slots_of_site(site_id):
 		var owner: String = state.troops.get(slot_id, "")
-		if owner != "" and owner != player_id and owner != "white":
-			return owner
-	return ""
+		if owner != "" and owner != player_id and owner != "white" and not owners.has(owner):
+			owners.append(owner)
+	owners.sort_custom(func(a, b): return state.turn_order.find(a) < state.turn_order.find(b))
+	return owners
 
 
 ## ---- нестандартные one-off эффекты, у которых нет обобщённого примитива ----
@@ -197,14 +202,33 @@ class _QuaggothEffect extends CardEffect:
 
 
 class _LichEffect extends CardEffect:
+	## "Take up to 2 troops from THEIR trophy hall" — "their" — соперника с
+	## войском на сайте шпиона. С несколькими соперниками там (3-4 игрока)
+	## игрок сам выбирает, чей зал — раньше эффект молча брал первого
+	## найденного (audit.md, поправлено на этапе 4 игрока).
 	var site_id: String
+	var _owners: Array[String] = []
 	func _init(s: String) -> void:
 		site_id = s
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var owner: String = CardLibrary._enemy_troop_owner_at_site(state, player_id, site_id)
-		if owner == "":
+		if is_answered():
+			var chosen = answer()
+			if chosen != null and String(chosen) != "" and _owners.has(String(chosen)):
+				resolver.push(TakeFromTrophyHall.new(2, true, false, String(chosen), false), player_id)
 			return
-		resolver.push(TakeFromTrophyHall.new(2, true, false, owner, false), player_id)
+		_owners = CardLibrary._enemy_troop_owners_at_site(state, player_id, site_id)
+		if _owners.is_empty():
+			return
+		if _owners.size() == 1:
+			resolver.push(TakeFromTrophyHall.new(2, true, false, _owners[0], false), player_id)
+			return
+		var pd := PendingDecision.new()
+		pd.player_id = player_id
+		pd.prompt = "Whose trophy hall? (their troop is at that site)"
+		pd.choice_type = "target_player"
+		pd.legal_options = Array(_owners)
+		pd.target_effect = self
+		resolver.request_decision(pd)
 
 
 ## ---- главная таблица ----
