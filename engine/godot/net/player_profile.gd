@@ -134,9 +134,17 @@ static func clean(profile: Dictionary) -> Dictionary:
 	}
 
 
+## Тесты подменяют файл профиля своим: сетевой тест проходит через настоящий
+## NetSession, и тот записал бы рейтинг тестового сервера (1000) в профиль
+## игрока (так и случилось 2026-09-26 — у владельца в меню «обнулился» рейтинг).
+static var path_override := ""
+
+
 ## Файл профиля. `-- --profile=2` в строке запуска — отдельный профиль (и свой
 ## ключ рейтинга): так два окна на одном компьютере — два разных игрока.
 static func path() -> String:
+	if path_override != "":
+		return path_override
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--profile="):
 			return "user://profile_%s.cfg" % clean_name(arg.get_slice("=", 1)).replace(" ", "_")

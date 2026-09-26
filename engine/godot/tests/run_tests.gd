@@ -13,6 +13,8 @@ var _current := ""
 
 func _initialize() -> void:
 	print("\n=== тесты ядра ===\n")
+	# Свой файл профиля: тесты экрана профиля не должны трогать настоящий.
+	PlayerProfile.path_override = "user://profile_test.cfg"
 
 	test_rotation_math()
 	test_edge_rotation()

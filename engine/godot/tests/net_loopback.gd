@@ -73,6 +73,11 @@ var _restart_seat0 := ""
 var _restart_seat1 := ""
 
 
+func _initialize() -> void:
+	# Свой файл профиля: NetSession пишет в профиль рейтинг и ключ.
+	PlayerProfile.path_override = "user://profile_nettest.cfg"
+
+
 func _process(delta: float) -> bool:
 	_elapsed += delta
 	if _elapsed > TIMEOUT:
