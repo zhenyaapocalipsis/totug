@@ -57,8 +57,14 @@ const SPARK_COUNT := 9
 const SPARK_LIFE := 0.55
 const SPARK_SPEED := 85.0
 const SPARK_GRAVITY := 150.0
-## Фишка долетела из барака до своего места — брызги поменьше, чем от убийства.
-const LAND_SPARK_COUNT := 5
+## Фишка долетела из барака до своего места (см. land): сколько живёт удар,
+## сколько из него фишка белая, на сколько пикселей схемы расходится кольцо,
+## сколько пылинок и как дёргается доска.
+const IMPACT_TIME := 0.32
+const FLASH_TIME := 0.06
+const RING_GROW := 10.0
+const DUST_COUNT := 10
+const LAND_SHAKE := 2.0
 
 ## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
@@ -106,8 +112,11 @@ var _captures: Dictionary = {}
 var _sparks: Array[Dictionary] = []
 ## Фишки, которые ещё летят из барака (см. GameScreen._launch_token): в
 ## состоянии они уже стоят, но на месте их не рисуем, пока не долетят.
-## Ключ "troop|<slot_id>" или "spy|<site_id>|<owner>" -> сколько ещё лететь.
+## Ключ "troop|<slot_id>" или "spy|<site_id>|<owner>" ->
+## {"left": запас времени до посадки без land(), "t": близость к месту 0..1}.
 var _arriving: Dictionary = {}
+## Идущие удары приземлений: {key, pos (координаты панели), left, radius, colour}.
+var _impacts: Array[Dictionary] = []
 
 ## Мерцание подсказок (зелёные/жёлтые/оранжевые кружки): время пульса и флаг
 ## «на прошлом кадре была хоть одна подсказка» — пока он поднят, доска
@@ -203,14 +212,123 @@ func arriving_count() -> int:
 	return _arriving.size()
 
 
+## Для проверок: сколько ударных волн от приземлений сейчас расходится.
+func impact_count() -> int:
+	return _impacts.size()
+
+
 # --- фишки, летящие из барака --------------------------------------------------
 
-## Не рисовать фишку key ещё seconds секунд: она летит к своему месту.
-## Когда время выйдет, фишка появится на месте с брызгами в цвет владельца.
+## Не рисовать фишку key, пока она летит к своему месту: приземление
+## объявит land(). seconds — запас на случай, если land() так и не придёт
+## (полёт оборвался): тогда фишка встанет на место сама.
 func hold_arrival(key: String, seconds: float) -> void:
-	_arriving[key] = seconds
+	_arriving[key] = {"left": seconds, "t": 0.0}
 	set_process(true)
 	queue_redraw()
+
+
+## Насколько фишка key близка к месту (0..1) — по нему растёт тень.
+func set_arrival_progress(key: String, t: float) -> void:
+	if _arriving.has(key):
+		(_arriving[key] as Dictionary)["t"] = clampf(t, 0.0, 1.0)
+		queue_redraw()
+
+
+## Фишка key долетела: встаёт на место белой вспышкой, от неё расходится
+## кольцо и в стороны летит пыль. heavy — войско: ещё и доска вздрагивает;
+## шпион приземляется тихо.
+func land(key: String, heavy: bool = true) -> void:
+	_arriving.erase(key)
+	var at: Variant = _arrival_spot(key)
+	if at == null:
+		queue_redraw()
+		return
+	var colour := troop_colour(_arrival_owner(key))
+	_impacts.append({"key": key, "pos": at, "left": IMPACT_TIME,
+		"radius": _arrival_radius(key), "colour": colour})
+	_dust(at, colour)
+	if heavy:
+		shake(LAND_SHAKE)
+	set_process(true)
+	queue_redraw()
+
+
+## Где на панели встаёт фишка key или null.
+func _arrival_spot(key: String) -> Variant:
+	var parts := key.split("|")
+	if parts[0] == "troop":
+		var at: Variant = _slot_world(parts[1])
+		return _to_screen(at) if at != null else null
+	if parts.size() == 3:
+		var owners: Array = (_view.get("spies", {}) as Dictionary).get(parts[1], [])
+		return _spy_spot(parts[1], maxi(owners.find(parts[2]), 0), maxi(owners.size(), 1))
+	return null
+
+
+func _arrival_owner(key: String) -> String:
+	var parts := key.split("|")
+	if parts[0] == "troop":
+		return String((_view.get("troops", {}) as Dictionary).get(parts[1], ""))
+	return parts[2] if parts.size() == 3 else ""
+
+
+## Размер фишки key на экране (радиус): по нему тень, вспышка и кольцо.
+func _arrival_radius(key: String) -> float:
+	if key.begins_with("spy|"):
+		return spy_half()
+	return highlight_radius_world(false) * _zoom if _schematic_on() else troop_radius()
+
+
+## Точка на целых экранных пикселях — как и всё на схеме.
+func _snap(pos: Vector2) -> Vector2:
+	var scale := window_scale()
+	return (pos * scale).round() / scale
+
+
+## Тень под летящей фишкой: растёт и темнеет по мере приближения — глаз
+## заранее видит, куда она сядет.
+func _draw_arrivals() -> void:
+	for key: String in _arriving:
+		var at: Variant = _arrival_spot(key)
+		if at == null:
+			continue
+		var t: float = float((_arriving[key] as Dictionary)["t"])
+		if t <= 0.0:
+			continue
+		var r := roundf(lerpf(0.3, 1.0, t) * _arrival_radius(key))
+		if r >= 1.0:
+			draw_circle(_snap(at), r, Color(0, 0, 0, lerpf(0.2, 0.6, t)))
+
+
+## Приземление: первые мгновения фишка залита белым, кольцо в цвет
+## владельца расходится на RING_GROW пикселей схемы и гаснет.
+func _draw_impacts() -> void:
+	var unit: float = maxf(1.0, roundf(_zoom))
+	for imp in _impacts:
+		var at := _snap(imp["pos"] as Vector2)
+		var r: float = float(imp["radius"])
+		var p: float = 1.0 - float(imp["left"]) / IMPACT_TIME
+		if IMPACT_TIME * p < FLASH_TIME:
+			draw_circle(at, r + unit, Color(1, 1, 1, 0.95))
+		var ring := roundf(r + RING_GROW * unit * p)
+		draw_arc(at, ring, 0, TAU, 32, Color((imp["colour"] as Color).lightened(0.35), 1.0 - p), unit)
+
+
+## Пыль от приземления: низко над доской и в стороны, а не фонтаном вверх.
+func _dust(at: Vector2, colour: Color) -> void:
+	for i in range(DUST_COUNT):
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var angle := (PI if side < 0.0 else 0.0) - side * randf_range(0.1, 0.55)
+		var speed := SPARK_SPEED * randf_range(0.6, 1.2)
+		var life := SPARK_LIFE * randf_range(0.5, 0.8)
+		_sparks.append({
+			"pos": at + Vector2(side * 2.0, 0),
+			"vel": Vector2(cos(angle), sin(angle)) * speed,
+			"left": life,
+			"life": life,
+			"colour": colour.lerp(Color(0.85, 0.82, 0.75), 0.5),
+		})
 
 
 ## Центр места slot_id в глобальных координатах или null.
@@ -270,26 +388,6 @@ static func troop_colour(owner: String) -> Color:
 		else PLAYER_COLORS.get(owner, Color(0.6, 0.6, 0.6))
 
 
-## Фишка долетела: брызги в цвет владельца там, где она встала.
-func _land(key: String) -> void:
-	var parts := key.split("|")
-	var at: Variant = null
-	var owner := ""
-	if parts[0] == "troop":
-		at = _slot_world(parts[1])
-		if at != null:
-			at = _to_screen(at)
-		owner = String(_view.get("troops", {}).get(parts[1], ""))
-	elif parts.size() == 3:
-		owner = parts[2]
-		var owners: Array = (_view.get("spies", {}) as Dictionary).get(parts[1], [])
-		var spot: Variant = _spy_spot(parts[1], maxi(owners.find(owner), 0), maxi(owners.size(), 1))
-		if spot != null:
-			at = spot
-	if at != null:
-		_burst(at, troop_colour(owner), LAND_SPARK_COUNT)
-
-
 ## Для проверок: сколько локаций сейчас вспыхивает захватом.
 func capture_flashes() -> int:
 	return _captures.size()
@@ -317,12 +415,14 @@ func _process(delta: float) -> void:
 		else:
 			_captures[site_id] = left
 	for key: String in _arriving.keys():
-		var left: float = float(_arriving[key]) - delta
-		if left <= 0.0:
-			_arriving.erase(key)
-			_land(key)
-		else:
-			_arriving[key] = left
+		var arrival: Dictionary = _arriving[key]
+		arrival["left"] = float(arrival["left"]) - delta
+		if float(arrival["left"]) <= 0.0:
+			land(key, false)
+	for i in range(_impacts.size() - 1, -1, -1):
+		_impacts[i]["left"] = float(_impacts[i]["left"]) - delta
+		if float(_impacts[i]["left"]) <= 0.0:
+			_impacts.remove_at(i)
 	for i in range(_sparks.size() - 1, -1, -1):
 		var s: Dictionary = _sparks[i]
 		s["left"] = float(s["left"]) - delta
@@ -334,7 +434,7 @@ func _process(delta: float) -> void:
 		s["pos"] = (s["pos"] as Vector2) + vel * delta
 
 	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty() \
-			and _arriving.is_empty() and not _pulse_active:
+			and _arriving.is_empty() and _impacts.is_empty() and not _pulse_active:
 		set_process(false)
 	queue_redraw()
 
@@ -621,10 +721,12 @@ func _draw() -> void:
 		elif killable.has(slot_id):
 			_mark_slot(pos, KILL_COLOR, owner != "")
 
+	_draw_arrivals()
 	_draw_spies()
 	_draw_spy_targets()
 	_draw_decision_targets()
 	_draw_captures()
+	_draw_impacts()
 	_draw_sparks()
 
 

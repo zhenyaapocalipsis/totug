@@ -45,11 +45,20 @@ const GAP := 2.0
 ## дуга. По прямой полёт читается как рывок.
 const FLIGHT_TIME := 0.42
 const FLIGHT_ARC := 26.0
-## Войска и шпионы вылетают из барака на доску: время полёта, пауза между
-## фишками одного хода (карта может выставить сразу несколько) и высота дуги.
-const TOKEN_FLIGHT_TIME := 0.5
-const TOKEN_STAGGER := 0.12
-const TOKEN_ARC := 40.0
+## Войска и шпионы вылетают из барака на доску (см. _launch_token):
+## выскакивают из барака на TOKEN_HOP пикселей, зависают, потом летят по дуге
+## с разгоном и врезаются в место. TOKEN_STAGGER — пауза между фишками одного
+## хода (карта может выставить сразу несколько). На посадке войска игра
+## замирает на TOKEN_HITSTOP — «стоп-кадр» удара.
+const TOKEN_HOP := 8.0
+const TOKEN_HOP_TIME := 0.1
+const TOKEN_HANG_TIME := 0.07
+const TOKEN_FLIGHT_TIME := 0.36
+const TOKEN_STAGGER := 0.14
+const TOKEN_ARC := 56.0
+## До какой доли полёта фишка увеличена вдвое («поднята к камере»).
+const TOKEN_BIG_UNTIL := 0.65
+const TOKEN_HITSTOP := 0.055
 ## Насколько трясти доску: убийство и вытеснение — заметно, возврат войска или
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
@@ -661,9 +670,13 @@ func _launch_spy(pid: String, site_id: String, order: int) -> bool:
 	return _launch_token(pid, token, to, "spy|%s|%s" % [site_id, pid], order)
 
 
-## Полёт фишки от прямоугольника барака до места на доске по дуге. Фишки
-## одного хода вылетают друг за другом (order), и в момент вылета барак
-## вспыхивает. Позиция — только целые пиксели, как всё на пиксельном экране.
+## Полёт фишки от прямоугольника барака до места на доске. Фишки одного хода
+## вылетают друг за другом (order), и в момент вылета барак вспыхивает.
+## Позиция и масштаб — только целые, как всё на пиксельном экране.
+##
+## Три фазы: выскочить из барака в сторону цели (и сразу вырасти вдвое),
+## коротко зависнуть, полететь по дуге с разгоном — фишка не тормозит у места,
+## а врезается в него. Посадку объявляет доске сам полёт (land).
 func _launch_token(pid: String, token: FlyingToken, to_global: Vector2, key: String, order: int) -> bool:
 	var from: Variant = _barracks.box_global_centre(pid)
 	if from == null:
@@ -671,26 +684,58 @@ func _launch_token(pid: String, token: FlyingToken, to_global: Vector2, key: Str
 		return false
 	var start: Vector2 = (from as Vector2) - get_global_position()
 	var finish: Vector2 = to_global - get_global_position()
+	var hop := start + (finish - start).normalized() * TOKEN_HOP
 	var delay := TOKEN_STAGGER * order
-	_board_panel.hold_arrival(key, delay + TOKEN_FLIGHT_TIME)
+	var total := delay + TOKEN_HOP_TIME + TOKEN_HANG_TIME + TOKEN_FLIGHT_TIME
+	# Запас на случай, если полёт оборвётся: доска поставит фишку сама.
+	_board_panel.hold_arrival(key, total + 0.5)
 
 	token.position = start.round()
 	token.visible = false
 	token.z_index = 6
 	add_child(token)
 
-	var mid := start.lerp(finish, 0.5) + Vector2(0, -TOKEN_ARC)
+	var mid := hop.lerp(finish, 0.5) + Vector2(0, -TOKEN_ARC)
+	# Барак у самого верха экрана: выше него дуга ушла бы за край. Тогда
+	# фишка летит почти горизонтально и потом падает на место.
+	mid.y = maxf(mid.y, hop.y - TOKEN_HOP)
+	var heavy := not token.spy
 	var tween := token.create_tween()
 	if delay > 0.0:
 		tween.tween_interval(delay)
 	tween.tween_callback(func() -> void:
 		token.visible = true
+		token.set_magnify(2)
 		_barracks.kick(pid))
 	tween.tween_method(func(t: float) -> void:
-			token.position = start.lerp(mid, t).lerp(mid.lerp(finish, t), t).round(),
-		0.0, 1.0, TOKEN_FLIGHT_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_callback(token.queue_free)
+			token.move_to(start.lerp(hop, t)),
+		0.0, 1.0, TOKEN_HOP_TIME).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(TOKEN_HANG_TIME)
+	tween.tween_method(func(t: float) -> void:
+			token.move_to(hop.lerp(mid, t).lerp(mid.lerp(finish, t), t))
+			token.set_magnify(2 if t < TOKEN_BIG_UNTIL else 1)
+			_board_panel.set_arrival_progress(key, t),
+		0.0, 1.0, TOKEN_FLIGHT_TIME).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_callback(func() -> void:
+		_board_panel.land(key, heavy)
+		if heavy:
+			_hitstop(TOKEN_HITSTOP)
+		token.queue_free())
 	return true
+
+
+## Стоп-кадр: вся игра замирает на seconds секунд настоящего времени.
+## Таймер идёт мимо Engine.time_scale, иначе он замер бы вместе со всеми.
+## Сетевую логику не трогает: замирают только анимации и таймер хода.
+func _hitstop(seconds: float) -> void:
+	Engine.time_scale = 0.0
+	get_tree().create_timer(seconds, true, false, true).timeout.connect(
+		func() -> void: Engine.time_scale = 1.0)
+
+
+func _exit_tree() -> void:
+	# Экран закрыли посреди стоп-кадра — время не должно остаться стоящим.
+	Engine.time_scale = 1.0
 
 
 static func _error_name(err: int) -> String:

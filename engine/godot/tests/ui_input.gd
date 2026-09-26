@@ -384,6 +384,11 @@ func _step_check_deploy_flight() -> void:
 		if child is FlyingToken:
 			flying += 1
 	check(flying == 2, "над экраном летят две фишки из барака (%d)" % flying)
+	# Посадка: фишки встают на места со вспышкой и расходящимся кольцом.
+	for key: String in board._arriving.keys():
+		board.land(key, key.begins_with("troop|"))
+	check(board.arriving_count() == 0 and board.impact_count() == 2,
+		"на посадке от каждой фишки пошла ударная волна (%d)" % board.impact_count())
 
 
 # --- вспомогательное ---------------------------------------------------------
