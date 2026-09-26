@@ -114,6 +114,8 @@ class VictimDiscard extends CardEffect:
 		pd.player_id = player_id
 		pd.prompt = prompt
 		pd.choice_type = kind
+		if kind == "confirm":
+			pd.source_card = chosen_card  # Ambassador: окно показывает саму карту
 		pd.legal_options = options
 		pd.target_effect = self
 		resolver.request_decision(pd)

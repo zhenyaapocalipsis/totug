@@ -320,7 +320,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 		"48424":  # Kobold
 			return ChooseEffect.new([DeployTroop.new(1), AssassinateTroop.new(1, true)], ["Deploy a troop", "Assassinate a white troop"])
 		"48436":  # White Wyrmling
-			return SequenceEffect.new([DeployTroop.new(2), OptionalEffect.new(DevourCard.new("market"))])
+			return SequenceEffect.new([DeployTroop.new(2), OptionalEffect.new(DevourCard.new("market"), "You may devour a card in the market")])
 		"48439":  # Wyrmspeaker
 			return SequenceEffect.new([GainInfluence.new(1), AtEndOfTurn.new(PromoteCard.new("played_other", card_id))])
 		"48432":  # Watcher of Thay
@@ -328,7 +328,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 		"48413":  # Dragon Cultist
 			return ChooseEffect.new([GainPower.new(2), GainInfluence.new(2)], ["+2 Power", "+2 Influence"])
 		"48409":  # Cult Fanatic
-			return SequenceEffect.new([GainInfluence.new(2), OptionalEffect.new(DevourCard.new("market"))])
+			return SequenceEffect.new([GainInfluence.new(2), OptionalEffect.new(DevourCard.new("market"), "You may devour a card in the market")])
 		"48402":  # Black Wyrmling
 			return SequenceEffect.new([GainInfluence.new(1), AssassinateTroop.new(1, true)])
 		"48421":  # Green Wyrmling

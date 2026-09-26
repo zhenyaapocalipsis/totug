@@ -116,10 +116,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# показываем одной узкой полосой сверху: имя ходящего и вопрос в строку.
 	_who.text = "%s decides" % EventLogPanel.player_name(decider)
 	_who.modulate = EventLogPanel.player_color(decider)
-	_who.visible = not on_board
-	var prompt_text := String(pd.get("prompt", "Choose an option"))
-	_prompt.text = "%s: %s" % [EventLogPanel.player_name(decider), prompt_text] if on_board \
-		else prompt_text
+	_prompt.text = String(pd.get("prompt", "Choose an option"))
 
 	for child in _options_box.get_children():
 		_options_box.remove_child(child)
@@ -136,11 +133,19 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# Цели на доске выбираются кликом по самой доске — она подсвечивает
 		# их золотым (board_panel.gd::_draw_decision_targets). Кнопка остаётся
 		# только для "отказаться", если решение необязательное.
-		# Подсказку про золотую подсветку дописываем в ту же строку: каждая
-		# лишняя строка полосы закрывает ряд локаций на схеме.
-		_prompt.text += " — click a gold target on the board."
+		# Вопрос — крупный текст без рамки над доской (решение владельца,
+		# 2026-09-26), подсказка про подсветку — в мелкой строке над ним.
+		_who.text += " — click a gold target on the board"
 		if options.has(""):
 			_add_button("Skip", "")
+			_make_plain(_options_box.get_child(0) as Button)
+	elif choice_type == "confirm" and CardView.pixel_texture(String(pd.get("source_card", ""))) != null:
+		# "You may..." — как выбор карты для Promote: сама карта (щелчок —
+		# "да") и под ней Skip ("нет").
+		_add_card_grid([String(pd["source_card"])], true)
+		cards_mode = true
+		_add_button("Skip", false)
+		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 	elif choice_type == "target_card":
 		_add_card_grid(options)
 		cards_mode = true
@@ -171,7 +176,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
-	_set_cards_look(cards_mode, decider)
+	_set_cards_look(cards_mode or on_board, decider)
 	_set_dim(_options_box.get_child_count() > 0 and (cards_mode or choice_type == "target_card"))
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
@@ -228,8 +233,9 @@ func _add_note(text: String) -> void:
 ## Мелкие карты-кнопки. Одинаковые карты (два Soldier в руке) показываются
 ## каждая отдельно — ответ у них один и тот же id, серверу это безразлично.
 ## "inner:<id>" — карта из Внутреннего круга: лицо то же, в ответ уходит
-## исходная строка с префиксом.
-func _add_card_grid(options: Array) -> void:
+## исходная строка с префиксом. answer не null — любая карта отвечает им
+## (окно "You may..." отвечает true).
+func _add_card_grid(options: Array, answer: Variant = null) -> void:
 	var ids: Array = options.filter(func(o): return typeof(o) == TYPE_STRING and String(o) != "")
 	if ids.is_empty():
 		return
@@ -245,7 +251,8 @@ func _add_card_grid(options: Array) -> void:
 		card.highlight = false
 		card.set_clickable(true)
 		card.tooltip_text = _card_label(value)
-		card.pressed.connect(func(_id): option_chosen.emit(value))
+		var reply: Variant = value if answer == null else answer
+		card.pressed.connect(func(_id): option_chosen.emit(reply))
 		grid.add_child(card)
 	_options_box.add_child(grid)
 

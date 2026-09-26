@@ -59,6 +59,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			pd0.player_id = player_id
 			pd0.prompt = "Devour this card?"
 			pd0.choice_type = "confirm"
+			pd0.source_card = card_id
 			pd0.legal_options = [true, false]
 			pd0.target_effect = self
 			resolver.request_decision(pd0)

@@ -5,6 +5,8 @@ extends CardEffect
 
 var inner: CardEffect
 var prompt: String = "You may..."
+## Карта, которой принадлежит "you may" (окно показывает её как вариант "да").
+var source_card: String = CardLibrary.building_card
 
 
 func _init(effect: CardEffect, p: String = "You may...") -> void:
@@ -23,5 +25,6 @@ func apply(_state: GameState, player_id: String, resolver: EffectResolver) -> vo
 	pd.prompt = prompt
 	pd.choice_type = "confirm"
 	pd.legal_options = [true, false]
+	pd.source_card = source_card
 	pd.target_effect = self
 	resolver.request_decision(pd)
