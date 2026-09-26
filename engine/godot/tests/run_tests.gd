@@ -67,6 +67,7 @@ func _initialize() -> void:
 	test_game_modes()
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
+	test_auto_decision_answer()
 	test_recruit_from_supply()
 	test_insane_outcast_supply()
 	test_state_view_legal_and_supplies()
@@ -1750,6 +1751,15 @@ func test_game_setup_real_game() -> void:
 	var again := GameSetup.new_game(pids, 4242, ["drow", "demons"])
 	check_eq(again.market.display, state.market.display, "тот же сид даёт тот же дисплей маркета")
 	check_eq(again.players["red"].deck.hand, state.players["red"].deck.hand, "и ту же стартовую руку")
+
+
+## Время на ответ чужой карте вышло: берём отказ, если он есть, иначе первый вариант.
+func test_auto_decision_answer() -> void:
+	section("Автоответ по таймеру")
+	check_eq(GameScreen.auto_decision_answer(["c1", "c2"]), "c1", "сброс без отказа — первая карта")
+	check_eq(GameScreen.auto_decision_answer(["s1", ""]), "", "есть пустой вариант — отказ")
+	check_eq(GameScreen.auto_decision_answer([0, 2, -1]), -1, "есть -1 — отказ")
+	check_eq(GameScreen.auto_decision_answer([true, false]), false, "да/нет — нет")
 
 
 ## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный

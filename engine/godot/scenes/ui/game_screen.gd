@@ -82,6 +82,9 @@ const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
 ## Таймер хода: две минуты, по нулю ход завершается сам.
 const TURN_SECONDS := 120.0
+## Таймер ответа на чужую карту (сбросить карту и т. п.): по нулю ответ
+## выбирается сам.
+const DECISION_SECONDS := 30.0
 
 ## Хотсит: партия живёт прямо здесь. В сетевой партии null — партия у хоста
 ## в NetSession, а экран знает только свой срез.
@@ -151,6 +154,11 @@ var _reconnect_status: Label
 var _time_left := TURN_SECONDS
 var _timed_player := ""
 var _auto_ending := false
+## Таймер ответа: какой вопрос отсчитываем (смена вопроса перезапускает) и
+## сколько секунд на него осталось.
+var _decision_key := ""
+var _decision_left := DECISION_SECONDS
+var _auto_answered := false
 
 
 ## Какие цвета раздать на партию из count человек.
@@ -956,20 +964,6 @@ func _process(delta: float) -> void:
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
 		return
 	var current := String(_view["current_player"])
-	# Пока открыто меню паузы, таймер хода стоит.
-	if _pause_menu.visible and current == _timed_player:
-		return
-	# Пока на вопрос карты отвечает другой игрок (например, сбрасывает карту
-	# по эффекту), время ходящего не тратится.
-	var pending: Dictionary = _view.get("pending_decision", {})
-	if current == _timed_player and not pending.is_empty() \
-			and String(pending.get("player_id", "")) != current:
-		return
-	if current != _timed_player:
-		_timed_player = current
-		_time_left = TURN_SECONDS
-	_time_left = maxf(0.0, _time_left - delta)
-	var left := int(ceilf(_time_left))
 	# Под таймером — единственная оставшаяся пометка о состоянии партии:
 	# начался последний круг, дальше подсчёт очков. Отдельной строкой: рядом с
 	# таймером она в узкую колонку не помещается.
@@ -977,9 +971,20 @@ func _process(delta: float) -> void:
 	if _last_round_label.visible != last_round:
 		_last_round_label.visible = last_round
 		_layout()
-	_timer_label.text = "%d:%02d" % [left / 60, left % 60]
-	_timer_label.add_theme_color_override("font_color",
-		Color(0.95, 0.38, 0.32) if _time_left <= 20.0 else Color(0.78, 0.76, 0.86))
+	if current != _timed_player:
+		_timed_player = current
+		_time_left = TURN_SECONDS
+	# Пока на вопрос карты отвечает другой игрок (например, сбрасывает карту
+	# по эффекту), время ходящего не тратится — идёт таймер ответа.
+	var pending: Dictionary = _view.get("pending_decision", {})
+	if not pending.is_empty() and String(pending.get("player_id", "")) != current:
+		_tick_decision_timer(pending, delta)
+		return
+	_decision_key = ""
+	# Пока открыто меню паузы, таймер хода стоит.
+	if not _pause_menu.visible:
+		_time_left = maxf(0.0, _time_left - delta)
+	_show_time(_time_left)
 
 	if _time_left <= 0.0 and not _auto_ending and current == viewer_id \
 			and not _end_turn_button.disabled:
@@ -987,6 +992,52 @@ func _process(delta: float) -> void:
 		_log_panel.add_note("Time is up — the turn ends automatically.")
 		send(Intent.end_turn(current))
 		_auto_ending = false
+
+
+func _show_time(seconds: float) -> void:
+	var left := int(ceilf(seconds))
+	_timer_label.text = "%d:%02d" % [left / 60, left % 60]
+	_timer_label.add_theme_color_override("font_color",
+		Color(0.95, 0.38, 0.32) if seconds <= 20.0 else Color(0.78, 0.76, 0.86))
+
+
+## Таймер ответа на чужую карту: у всех на месте таймера хода идёт отсчёт
+## отвечающего; по нулю его собственный клиент сам выбирает ответ.
+func _tick_decision_timer(pending: Dictionary, delta: float) -> void:
+	var key := "%s|%s|%s|%s|%s" % [pending.get("player_id", ""), pending.get("prompt", ""),
+		pending.get("tag", ""), pending.get("source_card", ""), str(pending.get("legal_options", []))]
+	if key != _decision_key:
+		_decision_key = key
+		_decision_left = DECISION_SECONDS
+		_auto_answered = false
+	if not _pause_menu.visible:
+		_decision_left = maxf(0.0, _decision_left - delta)
+	_show_time(_decision_left)
+	if _decision_left > 0.0 or _auto_answered or String(pending["player_id"]) != viewer_id:
+		return
+	var options: Array = pending.get("legal_options", [])
+	if options.is_empty():
+		return
+	_auto_answered = true
+	_log_panel.add_note("Time is up — an answer was chosen automatically.")
+	_on_decision_answer(auto_decision_answer(options))
+
+
+## Ответ по истечении времени: отказ, если он разрешён ("" / -1 / false),
+## иначе первый допустимый вариант.
+static func auto_decision_answer(options: Array) -> Variant:
+	for o in options:
+		match typeof(o):
+			TYPE_STRING, TYPE_STRING_NAME:
+				if String(o) == "":
+					return o
+			TYPE_INT, TYPE_FLOAT:
+				if o == -1:
+					return o
+			TYPE_BOOL:
+				if not o:
+					return o
+	return options[0]
 
 
 func refresh(view: Dictionary) -> void:
