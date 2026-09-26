@@ -946,7 +946,8 @@ static func _error_name(err: int) -> String:
 ## Таймер хода. Отсчёт начинается заново на каждой смене ходящего; когда время
 ## вышло, интерфейс сам жмёт End turn — тем же намерением, что и щелчок мышью.
 ## Пока на экране висит вопрос карты, завершить ход нельзя, поэтому таймер ждёт
-## ответа и завершает ход сразу после него.
+## ответа и завершает ход сразу после него. Если же отвечает не ходящий, а
+## другой игрок, таймер ходящего стоит на паузе.
 func _process(delta: float) -> void:
 	if _timer_label == null or _view.is_empty():
 		return
@@ -957,6 +958,12 @@ func _process(delta: float) -> void:
 	var current := String(_view["current_player"])
 	# Пока открыто меню паузы, таймер хода стоит.
 	if _pause_menu.visible and current == _timed_player:
+		return
+	# Пока на вопрос карты отвечает другой игрок (например, сбрасывает карту
+	# по эффекту), время ходящего не тратится.
+	var pending: Dictionary = _view.get("pending_decision", {})
+	if current == _timed_player and not pending.is_empty() \
+			and String(pending.get("player_id", "")) != current:
 		return
 	if current != _timed_player:
 		_timed_player = current
