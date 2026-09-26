@@ -53,9 +53,13 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	# с лучшим счётом). Колоды здесь уже не тайна: подсчёт открытый.
 	if state.game_over:
 		var scores := {}
+		var decks := {}
 		for pid: String in state.turn_order:
 			scores[pid] = Scoring.breakdown(state, pid)
+			var d: Deck = state.players[pid].deck
+			decks[pid] = {"deck": Array(d.cards_outside_inner_circle()), "inner": Array(d.inner_circle)}
 		view["final_scores"] = scores
+		view["final_decks"] = decks
 		var vp := Scoring.library_card_vp(state)
 		view["winners"] = Array(Scoring.winners(state, vp[0], vp[1]))
 	# Сколько VP игрок получит в конце хода и за что. Игрок видел растущий

@@ -87,6 +87,13 @@ func _run_scenario() -> void:
 			# ходами, у второго игрока немного VP-жетонов для разницы в счёте.
 			var st := _screen.server.state
 			st.players[st.turn_order[1]].vp_tokens = 9
+			# Колоды как в конце настоящей партии: докупленные карты и круг.
+			for pid_go: String in st.turn_order:
+				var d_go: Deck = st.players[pid_go].deck
+				for n in 14:
+					d_go.discard_pile.append(st.market.deck.pop_back())
+				for n in 3:
+					d_go.inner_circle.append(st.market.deck.pop_back())
 			for guard in 40:
 				if st.game_over:
 					break
