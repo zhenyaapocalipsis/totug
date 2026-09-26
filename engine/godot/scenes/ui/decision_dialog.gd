@@ -187,7 +187,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
 				else PixelTheme.TEXT, PixelTheme.SIZE_BIG)
 			if String(value) != "":
-				b.icon = _player_token(String(value))
+				_put_token_before(b, String(value), value)
 		cards_mode = true
 	elif String(pd.get("tag", "")) == "trophy_hall":
 		_add_trophy_tokens(pd)
@@ -443,8 +443,33 @@ func _add_trophy_tokens(pd: Dictionary) -> void:
 		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 
 
-## Фишка войска игрока с эмблемой вдвое крупнее (рост крупного шрифта) — иконка
-## рядом с именем соперника.
+## Ставит фишку игрока слева от кнопки-имени b (тоже нажимается). Иконкой
+## кнопки её не сделать: кнопка центрует иконку по середине строки, а
+## заглавные пиксельного шрифта сидят выше середины (PixelTheme.CAPS_SHIFT, у
+## крупного шрифта — вдвое), и фишка выходила ниже имени.
+func _put_token_before(b: Button, pid: String, value: Variant) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 4)
+	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var texture := _player_token(pid)
+	var line_h: float = b.get_combined_minimum_size().y
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(texture.get_width(), line_h)
+	var token := TextureButton.new()
+	token.texture_normal = texture
+	token.position = Vector2(0, roundf((line_h - texture.get_height()) * 0.5) - PixelTheme.CAPS_SHIFT * 2)
+	token.pressed.connect(func(): option_chosen.emit(value))
+	holder.add_child(token)
+	var index := b.get_index()
+	_options_box.remove_child(b)
+	row.add_child(holder)
+	row.add_child(b)
+	_options_box.add_child(row)
+	_options_box.move_child(row, index)
+
+
+## Фишка войска игрока с эмблемой вдвое крупнее (рост крупного шрифта).
 static func _player_token(pid: String) -> ImageTexture:
 	var img := SchematicPainter.token(BoardPanel.troop_colour(pid), PlayerProfile.emblem_of(pid))
 	img.resize(img.get_width() * 2, img.get_height() * 2, Image.INTERPOLATE_NEAREST)
