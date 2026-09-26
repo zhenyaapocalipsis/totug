@@ -106,6 +106,11 @@ var _shake_power := 0.0          # амплитуда тряски в пиксе
 ## (site_id -> сколько ещё гореть).
 var _control: Dictionary = {}
 var _control_known := false
+## Сменившие хозяина в последнем виде — ещё не решено, вспыхнуть сразу или
+## после посадки войска (см. _flush_captures).
+var _taken_now: Array[String] = []
+## Захваченные локации, которые вспыхнут, когда в них приземлится войско.
+var _captures_on_land: Dictionary = {}
 var _captures: Dictionary = {}
 ## Летящие искры: pos и vel в координатах панели, не в мировых — живут они
 ## доли секунды, и доска за это время никуда не уедет.
@@ -157,19 +162,58 @@ func _note_captures(control: Dictionary) -> void:
 		_control = control.duplicate()
 		_control_known = true
 		return
-	var captured := false
-	var taken: Array[String] = []
+	var taken := false
 	for site_id: String in control:
 		if String(_control.get(site_id, "")) != String(control[site_id]):
-			_captures[site_id] = CAPTURE_TIME
-			taken.append(site_id)
-			captured = true
+			_taken_now.append(site_id)
+			taken = true
 	_control = control.duplicate()
-	for site_id in taken:
-		spark_at_site(site_id, PLAYER_COLORS.get(String(control[site_id]), Color(0.8, 0.8, 0.8)))
-	if captured:
-		shake(3.0)
-		set_process(true)
+	# Вспыхивать не сразу: если локацию взяло войско, которое ещё только
+	# вылетает из барака, захват покажем, когда оно приземлится. О полётах
+	# доска узнаёт после этого вида (GameScreen._react_to_events), поэтому
+	# решаем в конце кадра.
+	if taken:
+		_flush_captures.call_deferred()
+
+
+## Захваты из последнего вида: локация, куда ещё летит войско, ждёт его
+## посадки (land), остальные вспыхивают сразу.
+func _flush_captures() -> void:
+	var fire: Array[String] = []
+	for site_id in _taken_now:
+		if _troop_arriving_at(site_id):
+			_captures_on_land[site_id] = true
+		else:
+			fire.append(site_id)
+	_taken_now.clear()
+	_fire_captures(fire)
+
+
+func _fire_captures(sites: Array[String]) -> void:
+	if sites.is_empty():
+		return
+	for site_id in sites:
+		_captures[site_id] = CAPTURE_TIME
+		spark_at_site(site_id, PLAYER_COLORS.get(String(_control.get(site_id, "")), Color(0.8, 0.8, 0.8)))
+	shake(3.0)
+	set_process(true)
+
+
+## Летит ли сейчас войско в одно из мест локации site_id.
+func _troop_arriving_at(site_id: String) -> bool:
+	for key: String in _arriving:
+		if key.begins_with("troop|") and _site_of_slot(key.substr(6)) == site_id:
+			return true
+	return false
+
+
+## Локация, которой принадлежит место slot_id, или "" (место в туннеле).
+func _site_of_slot(slot_id: String) -> String:
+	var sites: Dictionary = _board.get("sites", {})
+	for site_id: String in sites:
+		if ((sites[site_id] as Dictionary).get("slots", []) as Array).has(slot_id):
+			return site_id
+	return ""
 
 
 ## Искры из места войска — туда, где его убили или вытеснили.
@@ -240,6 +284,14 @@ func set_arrival_progress(key: String, t: float) -> void:
 ## шпион приземляется тихо.
 func land(key: String, heavy: bool = true) -> void:
 	_arriving.erase(key)
+	# Это войско взяло локацию — теперь, когда оно на месте, захват и
+	# вспыхивает (если в ту же локацию не летит ещё одно).
+	if key.begins_with("troop|"):
+		var site_id := _site_of_slot(key.substr(6))
+		if _captures_on_land.has(site_id) and not _troop_arriving_at(site_id):
+			_captures_on_land.erase(site_id)
+			var one: Array[String] = [site_id]
+			_fire_captures(one)
 	var at: Variant = _arrival_spot(key)
 	if at == null:
 		queue_redraw()

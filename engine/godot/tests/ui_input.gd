@@ -37,6 +37,7 @@ var _discard_before := 0
 var _turn_owner := ""
 var _refused_card: CardView = null
 var _played_view: CardView = null
+var _capture_site := ""
 
 
 func _initialize() -> void:
@@ -88,6 +89,8 @@ func _process(_delta: float) -> bool:
 		20: _step_check_capture()
 		21: _step_deploy_flight()
 		22: _step_check_deploy_flight()
+		23: _step_capture_by_flight()
+		24: _step_check_capture_waits()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -389,6 +392,38 @@ func _step_check_deploy_flight() -> void:
 		board.land(key, key.begins_with("troop|"))
 	check(board.arriving_count() == 0 and board.impact_count() == 2,
 		"на посадке от каждой фишки пошла ударная волна (%d)" % board.impact_count())
+
+
+## Войско, которое берёт локацию, ещё летит — захват не должен вспыхнуть
+## раньше, чем оно приземлится.
+func _step_capture_by_flight() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	_capture_site = ""
+	for site_id: String in state.graph.sites.keys():
+		var empty := true
+		for slot_id in state.graph.slots_of_site(site_id):
+			if state.troops.get(slot_id, "") != "":
+				empty = false
+		if empty and state.control.controller_of(site_id, state.troops) == "":
+			_capture_site = site_id
+			break
+	check(_capture_site != "", "нашлась пустая ничья локация")
+	if _capture_site == "":
+		return
+	var slot := String(state.graph.slots_of_site(_capture_site)[0])
+	state.troops[slot] = me
+	_screen.refresh(StateView.for_player_with_pending(
+		state, me, _screen.server.resolver.pending))
+	_screen._react_to_events([{"type": "deploy", "player_id": me, "slot_id": slot}])
+
+
+func _step_check_capture_waits() -> void:
+	var board: BoardPanel = _screen._board_panel
+	check(not board._captures.has(_capture_site), "пока войско летит, захват не вспыхнул")
+	for key: String in board._arriving.keys():
+		board.land(key)
+	check(board._captures.has(_capture_site), "войско приземлилось — захват вспыхнул")
 
 
 # --- вспомогательное ---------------------------------------------------------
