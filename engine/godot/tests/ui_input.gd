@@ -39,6 +39,7 @@ var _refused_card: CardView = null
 var _played_view: CardView = null
 var _capture_site := ""
 var _move_to := ""
+var _feed_before := 0
 
 
 func _initialize() -> void:
@@ -98,6 +99,8 @@ func _process(_delta: float) -> bool:
 		28: _step_check_showcase()
 		29: _step_recap()
 		30: _step_check_recap()
+		31: _step_hover_feed()
+		32: _step_check_hover_feed()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -500,8 +503,8 @@ func _step_check_showcase() -> void:
 	check(showcase.queued() == 3, "промотка уводит карту, а не выкидывает её из очереди")
 
 
-## Сводка хода соперника: что он купил и съел, показывается, когда ход
-## пришёл к зрителю — после того как доиграет витрина.
+## Сводка ходов слева: каждая покупка, промоут и devour — любого игрока —
+## сразу встаёт картой в колонку; конец хода начинает новый блок.
 func _step_recap() -> void:
 	var me := _screen.viewer_id
 	var foe := ""
@@ -509,25 +512,39 @@ func _step_recap() -> void:
 		if pid != me:
 			foe = pid
 	var cid := _screen._market_panel.card_id_at(1)
-	# Сводку могли уже показать концы ходов в прошлых шагах — убираем.
-	_screen._recap.visible = false
-	_screen._recap.set_process(false)
-	_screen._recap_items.clear()
+	_feed_before = _screen._feed.card_count()
 	_screen._react_to_events([
 		{"type": "recruit", "player_id": foe, "market_index": 1, "card_id": cid},
 		{"type": "devour", "player_id": foe, "card_id": cid, "source": "market"},
-		{"type": "recruit", "player_id": me, "market_index": 1, "card_id": cid},
-		{"type": "turn_ended", "player_id": foe, "game_over": false}])
-	check(not _screen._recap.visible, "пока идёт витрина, сводка ждёт")
-	var showcase: CardShowcase = _screen._showcase
-	showcase._queue.clear()
-	showcase._next()
+		{"type": "turn_ended", "player_id": foe, "game_over": false},
+		{"type": "recruit", "player_id": me, "market_index": 1, "card_id": cid}])
 
 
 func _step_check_recap() -> void:
-	var recap: TurnRecap = _screen._recap
-	check(recap.visible and recap.card_count() == 2,
-		"сводка показала покупку и devour соперника, но не свою покупку (%d)" % recap.card_count())
+	var feed: TurnFeed = _screen._feed
+	check(feed.visible and feed.card_count() - _feed_before == 3,
+		"сводка слева пополнилась тремя картами (%d)" % (feed.card_count() - _feed_before))
+	check(feed.get_global_rect().end.x < _screen._board_area.get_global_rect().position.x,
+		"сводка стоит слева от доски и её не закрывает")
+
+
+## Наведение на карту сводки слева — полная карта по центру, без Alt.
+func _step_hover_feed() -> void:
+	var feed: TurnFeed = _screen._feed
+	var card: CardView = null
+	for cell in feed._cells:
+		var c: CardView = cell.get_child(0)
+		if c.is_visible_in_tree() and feed.get_global_rect().encloses(c.get_global_rect()):
+			card = c
+	check(card != null, "в сводке видна карта")
+	if card != null:
+		_move_mouse(card.get_global_rect().get_center())
+
+
+func _step_check_hover_feed() -> void:
+	check(not CardPreview.active.alt_held() and CardPreview.active.has_preview(),
+		"наведение на карту сводки показало её крупно без Alt")
+	_move_mouse(Vector2(480, 200))
 
 
 # --- вспомогательное ---------------------------------------------------------

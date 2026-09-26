@@ -65,6 +65,9 @@ var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
 var hover_preview: bool = true
+## Увеличенная копия появляется по одному наведению, без Alt (карты сводки
+## ходов — см. TurnFeed, CardPreview._sync).
+var preview_without_alt: bool = false
 ## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
 var highlight: bool = true
 var _pixel: Texture2D = null

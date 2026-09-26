@@ -90,7 +90,10 @@ func _set_alt(value: bool) -> void:
 
 
 func _sync() -> void:
-	if _alt and _hovered != null and is_instance_valid(_hovered):
+	# Карты сводки ходов показываются крупно и без Alt (решение владельца,
+	# 2026-09-26): они крошечные, и другого способа их прочитать нет.
+	var hovered := _hovered != null and is_instance_valid(_hovered)
+	if hovered and (_alt or _hovered.preview_without_alt):
 		if _source != _hovered:
 			_show(_hovered)
 	elif _card != null:
