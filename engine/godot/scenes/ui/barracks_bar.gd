@@ -17,6 +17,9 @@ extends Control
 ## ("40/5"): шрифт 5x7 с шагом 6 пикселей плюс рамка и отступ.
 const BOX := Vector2(30, 20)
 const GAP := 2.0
+## Вспышка прямоугольника, когда из барака вылетает фишка.
+const KICK_BRIGHT := 1.8
+const KICK_TIME := 0.25
 var _row: HBoxContainer
 var _boxes: Dictionary = {}   # player_id -> {"style": StyleBoxFlat, "value": Label, "panel": PanelContainer}
 ## Последний показанный расклад — чтобы переписать цифры, когда полоса
@@ -95,3 +98,26 @@ func _show_values() -> void:
 		(box["value"] as Label).text = ("%d\n%d" if compact else "%d/%d") % [troops, spies]
 		(box["panel"] as PanelContainer).tooltip_text = "%s\nTroops: %d, spies: %d" % [
 			EventLogPanel.player_name(pid), troops, spies]
+
+
+## Середина прямоугольника игрока pid в глобальных координатах — отсюда
+## вылетают его войска и шпионы (см. GameScreen._launch_token). null, если
+## такого игрока в полосе нет или полоса ещё не разложена.
+func box_global_centre(pid: String) -> Variant:
+	if not _boxes.has(pid):
+		return null
+	var panel: PanelContainer = _boxes[pid]["panel"]
+	if panel.size.x < 1.0:
+		return null
+	return panel.get_global_rect().get_center()
+
+
+## Из барака только что вылетела фишка: прямоугольник вспыхивает и гаснет.
+## Без сдвига и масштаба — их раскладывает полоса, да и пиксели «кипят».
+func kick(pid: String) -> void:
+	if not _boxes.has(pid):
+		return
+	var panel: PanelContainer = _boxes[pid]["panel"]
+	panel.modulate = Color(KICK_BRIGHT, KICK_BRIGHT, KICK_BRIGHT)
+	var tween := panel.create_tween()
+	tween.tween_property(panel, "modulate", Color.WHITE, KICK_TIME)

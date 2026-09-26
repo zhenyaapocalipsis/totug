@@ -57,6 +57,8 @@ const SPARK_COUNT := 9
 const SPARK_LIFE := 0.55
 const SPARK_SPEED := 85.0
 const SPARK_GRAVITY := 150.0
+## Фишка долетела из барака до своего места — брызги поменьше, чем от убийства.
+const LAND_SPARK_COUNT := 5
 
 ## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
@@ -102,6 +104,10 @@ var _captures: Dictionary = {}
 ## Летящие искры: pos и vel в координатах панели, не в мировых — живут они
 ## доли секунды, и доска за это время никуда не уедет.
 var _sparks: Array[Dictionary] = []
+## Фишки, которые ещё летят из барака (см. GameScreen._launch_token): в
+## состоянии они уже стоят, но на месте их не рисуем, пока не долетят.
+## Ключ "troop|<slot_id>" или "spy|<site_id>|<owner>" -> сколько ещё лететь.
+var _arriving: Dictionary = {}
 
 ## Мерцание подсказок (зелёные/жёлтые/оранжевые кружки): время пульса и флаг
 ## «на прошлом кадре была хоть одна подсказка» — пока он поднят, доска
@@ -171,9 +177,9 @@ func spark_at_site(site_id: String, colour: Color) -> void:
 		_burst(_to_screen(centre), colour)
 
 
-func _burst(at: Vector2, colour: Color) -> void:
-	for i in range(SPARK_COUNT):
-		var angle := TAU * i / SPARK_COUNT + randf() * 0.5
+func _burst(at: Vector2, colour: Color, count: int = SPARK_COUNT) -> void:
+	for i in range(count):
+		var angle := TAU * i / count + randf() * 0.5
 		var speed := SPARK_SPEED * (0.5 + randf() * 0.8)
 		var life := SPARK_LIFE * (0.7 + randf() * 0.5)
 		_sparks.append({
@@ -190,6 +196,98 @@ func _burst(at: Vector2, colour: Color) -> void:
 ## Для проверок: сколько искр сейчас в полёте.
 func spark_count() -> int:
 	return _sparks.size()
+
+
+## Для проверок: сколько фишек ещё летит из барака.
+func arriving_count() -> int:
+	return _arriving.size()
+
+
+# --- фишки, летящие из барака --------------------------------------------------
+
+## Не рисовать фишку key ещё seconds секунд: она летит к своему месту.
+## Когда время выйдет, фишка появится на месте с брызгами в цвет владельца.
+func hold_arrival(key: String, seconds: float) -> void:
+	_arriving[key] = seconds
+	set_process(true)
+	queue_redraw()
+
+
+## Центр места slot_id в глобальных координатах или null.
+func slot_global(slot_id: String) -> Variant:
+	var at: Variant = _slot_world(slot_id)
+	if at == null or _zoom <= 0.0:
+		return null
+	return get_global_transform() * _to_screen(at)
+
+
+## Центр ромбика шпиона owner у локации site_id в глобальных координатах или null.
+func spy_global(site_id: String, owner: String) -> Variant:
+	var owners: Array = (_view.get("spies", {}) as Dictionary).get(site_id, [])
+	var i := owners.find(owner)
+	if i < 0 or _zoom <= 0.0:
+		return null
+	var spot: Variant = _spy_spot(site_id, i, owners.size())
+	if spot == null:
+		return null
+	return get_global_transform() * (spot as Vector2)
+
+
+## Место локации site_id, где стоит войско owner (стартовая расстановка
+## сообщает только локацию), или "".
+func troop_slot_of(site_id: String, owner: String) -> String:
+	var troops: Dictionary = _view.get("troops", {})
+	var site: Dictionary = (_board.get("sites", {}) as Dictionary).get(site_id, {})
+	for slot_id in (site.get("slots", []) as Array):
+		if String(troops.get(String(slot_id), "")) == owner:
+			return String(slot_id)
+	return ""
+
+
+## Картинка фишки войска owner в том виде, как она нарисована на доске
+## (на схеме), и её размер на экране. Для вида гексов картинки нет — null.
+func troop_token(owner: String) -> Texture2D:
+	if not _schematic_on():
+		return null
+	return _token(troop_colour(owner), "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner))
+
+
+func token_zoom() -> float:
+	return _zoom
+
+
+func troop_radius() -> float:
+	return maxf(_slot_radius_world() * _zoom, 3.0)
+
+
+## Полуразмер ромбика шпиона на экране.
+func spy_half() -> float:
+	return maxf(4.0, _zoom * 4.0) if _schematic_on() else troop_radius() * 0.6
+
+
+static func troop_colour(owner: String) -> Color:
+	return NEUTRAL_TROOP_COLOR if owner == GameState.WHITE \
+		else PLAYER_COLORS.get(owner, Color(0.6, 0.6, 0.6))
+
+
+## Фишка долетела: брызги в цвет владельца там, где она встала.
+func _land(key: String) -> void:
+	var parts := key.split("|")
+	var at: Variant = null
+	var owner := ""
+	if parts[0] == "troop":
+		at = _slot_world(parts[1])
+		if at != null:
+			at = _to_screen(at)
+		owner = String(_view.get("troops", {}).get(parts[1], ""))
+	elif parts.size() == 3:
+		owner = parts[2]
+		var owners: Array = (_view.get("spies", {}) as Dictionary).get(parts[1], [])
+		var spot: Variant = _spy_spot(parts[1], maxi(owners.find(owner), 0), maxi(owners.size(), 1))
+		if spot != null:
+			at = spot
+	if at != null:
+		_burst(at, troop_colour(owner), LAND_SPARK_COUNT)
 
 
 ## Для проверок: сколько локаций сейчас вспыхивает захватом.
@@ -218,6 +316,13 @@ func _process(delta: float) -> void:
 			_captures.erase(site_id)
 		else:
 			_captures[site_id] = left
+	for key: String in _arriving.keys():
+		var left: float = float(_arriving[key]) - delta
+		if left <= 0.0:
+			_arriving.erase(key)
+			_land(key)
+		else:
+			_arriving[key] = left
 	for i in range(_sparks.size() - 1, -1, -1):
 		var s: Dictionary = _sparks[i]
 		s["left"] = float(s["left"]) - delta
@@ -228,7 +333,8 @@ func _process(delta: float) -> void:
 		s["vel"] = vel
 		s["pos"] = (s["pos"] as Vector2) + vel * delta
 
-	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty() and not _pulse_active:
+	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty() \
+			and _arriving.is_empty() and not _pulse_active:
 		set_process(false)
 	queue_redraw()
 
@@ -495,6 +601,9 @@ func _draw() -> void:
 		if pos.x < -radius or pos.y < -radius or pos.x > size.x + radius or pos.y > size.y + radius:
 			continue
 		var owner := String(troops.get(slot_id, ""))
+		# Войско ещё летит из барака — место пока выглядит пустым.
+		if _arriving.has("troop|" + slot_id):
+			owner = ""
 		# Пустое место ничем не рисуем: круги под войска уже есть на арте тайла
 		# и на схеме. Куда можно ставить — показывает зелёная подсветка ниже.
 		if owner != "":
@@ -624,26 +733,38 @@ func _draw_spies() -> void:
 	var spies: Dictionary = _view.get("spies", {})
 	if spies.is_empty():
 		return
-	var radius: float = maxf(_slot_radius_world() * _zoom, 3.0)
+	var d := spy_half()
 	for site_id: String in spies.keys():
 		var owners: Array = spies[site_id]
-		var centre: Variant = _site_centre(site_id)
-		if owners.is_empty() or centre == null:
-			continue
-		var pos := _to_screen(centre) - Vector2(0, radius * 2.2)
-		var d := radius * 0.6
-		var rect: Variant = _site_rect(site_id)
-		if rect != null:
-			# above the box, on the tunnel-free strip over its name
-			d = maxf(4.0, _zoom * 4.0)
-			pos = _to_screen(Vector2((rect as Rect2).get_center().x, (rect as Rect2).position.y)) - Vector2(0, d + 2.0)
 		for i in range(owners.size()):
+			# Ещё летит из барака — место за ним держим, но не рисуем.
+			if _arriving.has("spy|%s|%s" % [site_id, String(owners[i])]):
+				continue
+			var spot: Variant = _spy_spot(site_id, i, owners.size())
+			if spot == null:
+				continue
 			var colour: Color = PLAYER_COLORS.get(String(owners[i]), Color(0.7, 0.7, 0.7))
-			var at := pos + Vector2((i - (owners.size() - 1) * 0.5) * d * 2.4, 0)
+			var at: Vector2 = spot
 			var diamond := PackedVector2Array([
 				at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0)])
 			draw_colored_polygon(diamond, colour)
 			draw_polyline(diamond + PackedVector2Array([at + Vector2(0, -d)]), Color(0, 0, 0, 0.8), 1.5)
+
+
+## Центр i-го из count ромбиков шпионов у локации (координаты панели) или null.
+func _spy_spot(site_id: String, i: int, count: int) -> Variant:
+	var d := spy_half()
+	var pos: Vector2
+	var rect: Variant = _site_rect(site_id)
+	if rect != null:
+		# above the box, on the tunnel-free strip over its name
+		pos = _to_screen(Vector2((rect as Rect2).get_center().x, (rect as Rect2).position.y)) - Vector2(0, d + 2.0)
+	else:
+		var centre: Variant = _site_centre(site_id)
+		if centre == null:
+			return null
+		pos = _to_screen(centre) - Vector2(0, troop_radius() * 2.2)
+	return pos + Vector2((i - (count - 1) * 0.5) * d * 2.4, 0)
 
 
 ## Цели pending-решения (target_slot/target_site/target_return) подсвечиваются

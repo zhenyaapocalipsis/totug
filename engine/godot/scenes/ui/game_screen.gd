@@ -45,6 +45,11 @@ const GAP := 2.0
 ## дуга. По прямой полёт читается как рывок.
 const FLIGHT_TIME := 0.42
 const FLIGHT_ARC := 26.0
+## Войска и шпионы вылетают из барака на доску: время полёта, пауза между
+## фишками одного хода (карта может выставить сразу несколько) и высота дуги.
+const TOKEN_FLIGHT_TIME := 0.5
+const TOKEN_STAGGER := 0.12
+const TOKEN_ARC := 40.0
 ## Насколько трясти доску: убийство и вытеснение — заметно, возврат войска или
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
@@ -599,9 +604,22 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 ## не видно: убийство, вытеснение, возврат чужого войска или шпиона.
 func _react_to_events(events: Array) -> void:
 	var power := 0.0
+	var launched := 0
 	for e in events:
 		var evt: Dictionary = e
+		var pid := String(evt.get("player_id", ""))
 		match String(evt.get("type", "")):
+			"deploy_troop":
+				# С "color" — войско взято из зала трофеев, а не из барака.
+				if not evt.has("color") and _launch_troop(pid, String(evt.get("slot_id", "")), launched):
+					launched += 1
+			"choose_starting_site":
+				var slot_id := _board_panel.troop_slot_of(String(evt.get("site_id", "")), pid)
+				if _launch_troop(pid, slot_id, launched):
+					launched += 1
+			"place_spy":
+				if _launch_spy(pid, String(evt.get("site_id", "")), launched):
+					launched += 1
 			"assassinate", "supplant":
 				power = maxf(power, SHAKE_KILL)
 				_board_panel.spark_at_slot(String(evt.get("slot_id", "")),
@@ -610,6 +628,68 @@ func _react_to_events(events: Array) -> void:
 				power = maxf(power, SHAKE_NUDGE)
 	if power > 0.0:
 		_board_panel.shake(power)
+
+
+## Войско pid вылетает из его барака в место slot_id. Состояние уже
+## применено — войско на доске стоит, доска лишь прячет его до конца полёта.
+## Если к этому виду место уже занял кто-то другой (выставили и тут же
+## убили), не летим. Возвращает true, если полёт начался.
+func _launch_troop(pid: String, slot_id: String, order: int) -> bool:
+	if slot_id == "" or String((_view.get("troops", {}) as Dictionary).get(slot_id, "")) != pid:
+		return false
+	var to: Variant = _board_panel.slot_global(slot_id)
+	if to == null:
+		return false
+	var token := FlyingToken.new()
+	token.texture = _board_panel.troop_token(pid)
+	token.texture_zoom = _board_panel.token_zoom()
+	token.colour = BoardPanel.troop_colour(pid)
+	token.half = _board_panel.troop_radius()
+	return _launch_token(pid, token, to, "troop|" + slot_id, order)
+
+
+## Шпион pid вылетает из барака к локации site_id.
+func _launch_spy(pid: String, site_id: String, order: int) -> bool:
+	var to: Variant = _board_panel.spy_global(site_id, pid)
+	if to == null:
+		return false
+	var token := FlyingToken.new()
+	token.spy = true
+	token.colour = BoardPanel.troop_colour(pid)
+	token.half = _board_panel.spy_half()
+	return _launch_token(pid, token, to, "spy|%s|%s" % [site_id, pid], order)
+
+
+## Полёт фишки от прямоугольника барака до места на доске по дуге. Фишки
+## одного хода вылетают друг за другом (order), и в момент вылета барак
+## вспыхивает. Позиция — только целые пиксели, как всё на пиксельном экране.
+func _launch_token(pid: String, token: FlyingToken, to_global: Vector2, key: String, order: int) -> bool:
+	var from: Variant = _barracks.box_global_centre(pid)
+	if from == null:
+		token.free()
+		return false
+	var start: Vector2 = (from as Vector2) - get_global_position()
+	var finish: Vector2 = to_global - get_global_position()
+	var delay := TOKEN_STAGGER * order
+	_board_panel.hold_arrival(key, delay + TOKEN_FLIGHT_TIME)
+
+	token.position = start.round()
+	token.visible = false
+	token.z_index = 6
+	add_child(token)
+
+	var mid := start.lerp(finish, 0.5) + Vector2(0, -TOKEN_ARC)
+	var tween := token.create_tween()
+	if delay > 0.0:
+		tween.tween_interval(delay)
+	tween.tween_callback(func() -> void:
+		token.visible = true
+		_barracks.kick(pid))
+	tween.tween_method(func(t: float) -> void:
+			token.position = start.lerp(mid, t).lerp(mid.lerp(finish, t), t).round(),
+		0.0, 1.0, TOKEN_FLIGHT_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_callback(token.queue_free)
+	return true
 
 
 static func _error_name(err: int) -> String:

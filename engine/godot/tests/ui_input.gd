@@ -86,6 +86,8 @@ func _process(_delta: float) -> bool:
 		18: _step_check_timer()
 		19: _step_capture_site()
 		20: _step_check_capture()
+		21: _step_deploy_flight()
+		22: _step_check_deploy_flight()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -351,6 +353,37 @@ func _step_check_capture() -> void:
 	check(board.capture_flashes() > 0, "захваченная локация вспыхнула на доске")
 	check(board.is_shaking(), "доска дёрнулась на захвате")
 	check(board.spark_count() > 0, "из захваченной локации полетели искры")
+
+
+## Войско и шпион вылетают из барака: пока летят, доска их не рисует, над
+## экраном висят летящие фишки. Событие подаём сами — так же оно приходит и
+## из сети, и от своего хода.
+func _step_deploy_flight() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	var slot := ""
+	for slot_id: String in state.graph.slots.keys():
+		if state.troops.get(slot_id, "") == "":
+			slot = slot_id
+			break
+	var site: String = state.graph.sites.keys()[0]
+	state.troops[slot] = me
+	state.spies[site] = [me]
+	_screen.refresh(StateView.for_player_with_pending(
+		state, me, _screen.server.resolver.pending))
+	_screen._react_to_events([
+		{"type": "deploy_troop", "player_id": me, "slot_id": slot},
+		{"type": "place_spy", "player_id": me, "site_id": site}])
+
+
+func _step_check_deploy_flight() -> void:
+	var board: BoardPanel = _screen._board_panel
+	check(board.arriving_count() == 2, "войско и шпион ещё летят — доска их не рисует")
+	var flying := 0
+	for child in _screen.get_children():
+		if child is FlyingToken:
+			flying += 1
+	check(flying == 2, "над экраном летят две фишки из барака (%d)" % flying)
 
 
 # --- вспомогательное ---------------------------------------------------------
