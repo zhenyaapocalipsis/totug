@@ -36,6 +36,9 @@ var _elapsed := 0.0
 var _scenario := ""
 var _step := "init"
 var _branches := 0
+## Сколько игроков уже получили профиль: у каждого своё имя (на сервере имена
+## уникальны, RatingBook.claim_name).
+var _tracked := 0
 
 ## Кто играет (первый — создатель), их последние срезы, ошибки и чат.
 var players: Array[NetSession] = []
@@ -54,8 +57,11 @@ var _spoof_sent := false
 var _turn_player := ""
 var _stranger: NetSession
 var _old_version: NetSession
+## Чужой ключ, но имя как у первого игрока (другим регистром) — сервер не пускает.
+var _impostor: NetSession
 var ratings: Dictionary = {}
 const RATINGS_PATH := "user://ratings_nettest.json"
+const RATINGS_NAMES_PATH := "user://ratings_nettest_names.json"
 ## Своя папка сохранений партий — не трогает настоящие user://saves/ владельца.
 const SAVES_DIR := "user://saves_nettest/"
 
@@ -87,11 +93,15 @@ func _process(delta: float) -> bool:
 				_stranger.enter_room("127.0.0.1", SERVER_PORT, "ZZZZ" if players[0].room_code != "ZZZZ" else "YYYY")
 				_old_version._connect("127.0.0.1", SERVER_PORT,
 					func(): _old_version._enter.rpc_id(1, NetSession.PROTOCOL + 99, players[0].room_code, ""))
+				_impostor.profile = {"name": String(players[0].profile["name"]).to_upper(), "emblem": ""}
+				_impostor.create_room("127.0.0.1", SERVER_PORT, 2, GameSetup.MODE_STANDARD)
 				_step = "server_wait_join"
 		"server_wait_join":
-			if players[1].seat != "" and lost.has(_stranger) and lost.has(_old_version):
+			if players[1].seat != "" and lost.has(_stranger) and lost.has(_old_version) \
+					and lost.has(_impostor) and server.rooms.size() == 1:
 				check(String(lost[_stranger]).contains("no room"), "[server] чужой код — отказ: %s" % lost[_stranger])
 				check(String(lost[_old_version]).contains("version"), "[server] чужая версия — отказ: %s" % lost[_old_version])
+				check(String(lost[_impostor]).contains("is taken"), "[server] занятое имя — отказ: %s" % lost[_impostor])
 				check(server.rooms.size() == 1, "[server] на сервере одна комната")
 				# START может только создатель: просьба второго ничего не даёт.
 				players[1].start_game(0)
@@ -153,6 +163,7 @@ func _process(delta: float) -> bool:
 				check(not (views[players[0]] as Dictionary).get("final_scores", {}).is_empty(),
 					"[server] итоги партии пришли в срезе")
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
 				_start_server_four()
 		"server4_wait_code":
 			if players[0].room_code != "":
@@ -310,6 +321,11 @@ func _start_server_four() -> void:
 	_scenario = "server4"
 	_reset()
 	server = _session()
+	# Своя книга рейтингов и имён — не user://ratings.json владельца (сервер без
+	# книги завёл бы её там, и имена «Player N» копились бы между прогонами).
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(SERVER4_PORT, true) == OK, "[server4] сервер открыл порт")
 	var ps: Array[NetSession] = []
@@ -371,6 +387,7 @@ func _start_server() -> void:
 	_reset()
 	server = _session()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
 	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(SERVER_PORT, true) == OK, "[server] сервер открыл порт")
@@ -379,7 +396,8 @@ func _start_server() -> void:
 	players = [a, b]
 	_stranger = _session()
 	_old_version = _session()
-	for p in [a, b, _stranger, _old_version]:
+	_impostor = _session()
+	for p in [a, b, _stranger, _old_version, _impostor]:
 		_track(p)
 	a.create_room("127.0.0.1", SERVER_PORT, 2, GameSetup.MODE_STANDARD)
 	_step = "server_wait_code"
@@ -411,7 +429,8 @@ func _session() -> NetSession:
 
 
 func _track(p: NetSession) -> void:
-	p.profile = {"name": "Player %d" % _branches, "emblem": _emblem_for(_branches)}
+	_tracked += 1
+	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches)}
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	views[p] = {}

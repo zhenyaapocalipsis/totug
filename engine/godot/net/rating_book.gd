@@ -16,23 +16,58 @@ const PATH := "user://ratings.json"
 
 ## Учётная запись -> {name, rating, games, wins}.
 var accounts: Dictionary = {}
+## Занятые имена (решение владельца, 2026-09-26: имя в сети у каждого своё).
+## Имя в нижнем регистре -> учётная запись. Отдельный файл рядом с рейтингами
+## (ratings_names.json), чтобы не менять формат ratings.json.
+var names: Dictionary = {}
 var _path := PATH
+var _names_path := ""
 
 
 func _init(path: String = PATH) -> void:
 	_path = path
-	var f := FileAccess.open(_path, FileAccess.READ)
+	_names_path = path.get_basename() + "_names.json"
+	accounts = _read(_path)
+	names = _read(_names_path)
+
+
+static func _read(file_path: String) -> Dictionary:
+	var f := FileAccess.open(file_path, FileAccess.READ)
 	if f == null:
-		return
+		return {}
 	var parsed = JSON.parse_string(f.get_as_text())
-	if parsed is Dictionary:
-		accounts = parsed
+	return parsed if parsed is Dictionary else {}
 
 
 func save() -> void:
-	var f := FileAccess.open(_path, FileAccess.WRITE)
+	_write(_path, accounts)
+
+
+static func _write(file_path: String, data: Dictionary) -> void:
+	var f := FileAccess.open(file_path, FileAccess.WRITE)
 	if f != null:
-		f.store_string(JSON.stringify(accounts, "\t"))
+		f.store_string(JSON.stringify(data, "\t"))
+
+
+## Занять имя за учётной записью. false — имя уже занято другой записью.
+## Прежнее имя этой записи освобождается: сменил имя — старое снова свободно.
+## Регистр не важен (Vasya = VASYA). Пустое имя и игрок без ключа — не
+## занимают ничего.
+func claim_name(account: String, player_name: String) -> bool:
+	var id := player_name.strip_edges().to_lower()
+	if id == "" or account == "":
+		return true
+	var owner := String(names.get(id, ""))
+	if owner == account:
+		return true
+	if owner != "":
+		return false
+	for old: String in names.keys():
+		if names[old] == account:
+			names.erase(old)
+	names[id] = account
+	_write(_names_path, names)
+	return true
 
 
 ## Номер учётной записи по ключу игрока ("" — ключа нет или он негодный).
