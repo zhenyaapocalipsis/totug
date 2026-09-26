@@ -58,7 +58,12 @@ func _initialize() -> void:
 		ProjectSettings.get_setting("display/window/size/viewport_height", 360)) * _scale)
 	_screen = GameScreen.new(game_seed, [], GameScreen.player_ids_for(players))
 	root.add_child(_screen)
-	_run_scenario()
+	# Вопрос карты надо задавать, когда экран уже в дереве: вне дерева окно
+	# вопроса меряет свои варианты нулём и выходит пустым.
+	if _scenario == "decision":
+		_run_scenario.call_deferred()
+	else:
+		_run_scenario()
 
 
 ## Курсор — в пустой угол, иначе снимок зависит от того, где стоит системная
@@ -145,6 +150,13 @@ func _run_scenario() -> void:
 			_screen.refresh(StateView.for_player_with_pending(
 				_screen.server.state, pid3, _screen.server.resolver.pending))
 			_screen.send(Intent.play_card(pid3, card))
+			# --pick=N (можно несколько): ответить на очередной вопрос вариантом
+			# номер N, чтобы снять не первое окно карты, а следующее.
+			for arg4 in OS.get_cmdline_user_args():
+				if arg4.begins_with("--pick=") and _screen.server.resolver.is_waiting():
+					var pd4: PendingDecision = _screen.server.resolver.pending
+					_screen.send(Intent.make_decision(pd4.player_id,
+						pd4.legal_options[int(arg4.get_slice("=", 1))]))
 		"capture":
 			# Захват локации запускается не здесь, а на кадре (_run_capture):
 			# доска считает места искр по своему масштабу, а он подбирается
@@ -336,6 +348,12 @@ func _process(_delta: float) -> bool:
 	if _scenario == "capture" and _shot_at < 0:
 		_run_capture()
 		_shot_at = _frame + 6
+	# Окно вопроса проявляется с анимацией: --wait=N — снять через N кадров.
+	if _scenario == "decision" and _shot_at < 0:
+		_shot_at = _frame + 60
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--wait="):
+				_shot_at = _frame + int(arg.get_slice("=", 1))
 	if _shot_at >= 0 and _frame < _shot_at:
 		return false
 	var image: Image = root.get_texture().get_image()
@@ -354,3 +372,5 @@ func _process(_delta: float) -> bool:
 	print("снимок: %s (код %d), сцена %dx%d x%d, сценарий '%s'"
 		% [_out, err, image.get_width(), image.get_height(), _zoom, _scenario])
 	return true
+
+
