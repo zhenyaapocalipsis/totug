@@ -445,7 +445,7 @@ func _session() -> NetSession:
 
 func _track(p: NetSession) -> void:
 	_tracked += 1
-	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches)}
+	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches), "back": _back_for(_tracked)}
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	views[p] = {}
@@ -560,10 +560,20 @@ func _emblem_for(n: int) -> String:
 	return PlayerProfile.emblem_from_pixels(pixels)
 
 
-## Имя и герб каждого дошли до всех, и каждый у своего цвета.
+## Имя, герб и рубашка каждого дошли до всех, и каждый у своего цвета.
 func _check_profiles() -> void:
 	for owner_p in players:
 		for other in players:
 			var got: Dictionary = other.profiles.get(owner_p.seat, {})
-			check(got.get("name", "") == owner_p.profile["name"] and got.get("emblem", "") == owner_p.profile["emblem"],
+			check(got.get("name", "") == owner_p.profile["name"] and got.get("emblem", "") == owner_p.profile["emblem"]
+				and got.get("back", "") == owner_p.profile["back"],
 				"[%s] профиль %s дошёл до %s" % [_scenario, owner_p.seat, other.seat])
+
+
+## Рубашка-метка: один пиксель в углу рисунка, цвет зависит от номера игрока.
+func _back_for(n: int) -> String:
+	var pixels: Array[Color] = []
+	pixels.resize(PlayerProfile.BACK_SIZE * PlayerProfile.BACK_SIZE)
+	pixels.fill(Color(0, 0, 0, 0))
+	pixels[0] = Color8(n * 20, 10, 200)
+	return PlayerProfile.back_from_pixels(pixels)

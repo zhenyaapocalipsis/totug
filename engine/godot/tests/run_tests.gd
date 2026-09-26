@@ -95,6 +95,7 @@ func _initialize() -> void:
 	# сеть
 	test_public_address_check()
 	test_player_profile()
+	test_card_back()
 	test_how_to_play()
 	test_main_menu()
 
@@ -2825,6 +2826,62 @@ func test_player_profile() -> void:
 	PlayerProfile.seats = {"blue": {"name": "Vizeran", "emblem": emblem}}
 	check_eq(EventLogPanel.player_name("blue"), "Vizeran", "имя из профиля в журнале")
 	check_eq(EventLogPanel.player_name("red"), "Red", "без профиля — имя цвета")
+	PlayerProfile.seats = {}
+
+
+func test_card_back() -> void:
+	section("рубашка карт: рисунок игрока")
+	var n := PlayerProfile.BACK_SIZE
+	var blank: Array[Color] = []
+	blank.resize(n * n)
+	blank.fill(Color(0, 0, 0, 0))
+	check_eq(PlayerProfile.back_from_pixels(blank), "", "пустая рубашка — пустая строка")
+	check_eq(PlayerProfile.clean_back("zz"), "", "испорченная рубашка отбрасывается")
+	check_eq(PlayerProfile.clean_back(PlayerProfile.blank_emblem()), "", "строка чужой длины не рубашка")
+
+	var pixels := blank.duplicate()
+	pixels[0] = Color("ac3232")
+	var back := PlayerProfile.back_from_pixels(pixels)
+	check_eq(back.length(), PlayerProfile.BACK_LENGTH, "рубашка — строка %d знаков" % PlayerProfile.BACK_LENGTH)
+	check(PlayerProfile.back_pixels(back)[0].to_html(false) == "ac3232", "рубашка переживает кодирование")
+	check_eq(String(PlayerProfile.clean({"back": back})["back"]), back, "профиль хранит рубашку")
+
+	var img := CardBack.image(back)
+	check_eq(img.get_size(), Vector2i(CardView.PIXEL_SIZE), "рубашка во весь размер карты")
+	var origin := img.get_size() / 2 - Vector2i.ONE * n * CardBack.ZOOM / 2
+	check(img.get_pixel(origin.x, origin.y).to_html(false) == "ac3232"
+		and img.get_pixel(origin.x + CardBack.ZOOM - 1, origin.y + CardBack.ZOOM - 1).to_html(false) == "ac3232",
+		"пиксель рисунка — квадрат %dx%d в центре рубашки" % [CardBack.ZOOM, CardBack.ZOOM])
+	check(img.get_pixel(origin.x + CardBack.ZOOM, origin.y).is_equal_approx(CardBack.FIELD), "пустое место рисунка — поле рубашки")
+	var plain := CardBack.image("")
+	check(plain.get_pixel(plain.get_width() / 2, plain.get_height() / 2).is_equal_approx(PixelTheme.GOLD),
+		"без рисунка — обычная рубашка с золотой точкой")
+	check(CardBack.texture(back) == CardBack.texture(back), "текстура рубашки берётся из кэша")
+
+	var editor := CardBackScreen.new()
+	editor.paint(0, 0, Color(0, 0, 0, 0))
+	for i in n * n:
+		editor.paint(i % n, i / n, Color(0, 0, 0, 0))
+	check_eq(editor.back(), "", "стёртый рисунок — обычная рубашка")
+	editor.set_mirror(true)
+	editor.paint(1, 5, Color("ffffff"))
+	var got := PlayerProfile.back_pixels(editor.back())
+	check(got[5 * n + 1].a > 0.0 and got[5 * n + n - 2].a > 0.0, "MIRROR красит и зеркальную клетку")
+	editor.free()
+
+	var saved_path := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://test_card_back.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.save_local({"name": "Jarlaxle", "emblem": ""})
+	PlayerProfile.save_back(back)
+	PlayerProfile.save_local({"name": "Jarlaxle2", "emblem": ""})
+	check_eq(String(PlayerProfile.load_local()["back"]), back, "сохранение имени не стирает рубашку")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.path_override = saved_path
+
+	PlayerProfile.seats = {"blue": {"name": "Vizeran", "back": back}}
+	check_eq(PlayerProfile.back_of("blue"), back, "рубашка соперника по цвету места")
+	check_eq(PlayerProfile.back_of("red"), "", "без профиля — обычная рубашка")
 	PlayerProfile.seats = {}
 
 

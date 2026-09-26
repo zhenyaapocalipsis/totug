@@ -67,11 +67,12 @@ func _init() -> void:
 ##   colour    — цвет игрока для плашки;
 ##   from      — откуда прилетает (точка экрана) или null — вспышкой в центре;
 ##   to        — куда улетает (точка экрана) или null — рассыпается;
-##   face_down — взята вслепую: сначала рубашка, потом переворот.
+##   face_down — взята вслепую: сначала рубашка, потом переворот;
+##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
-		face_down: bool = false) -> void:
+		face_down: bool = false, back: String = "") -> void:
 	_queue.append({"cid": cid, "text": text, "colour": colour, "from": from, "to": to,
-		"face_down": face_down,
+		"face_down": face_down, "back": CardBack.texture(back),
 		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid)})
 	if _item.is_empty():
 		_next()
@@ -270,23 +271,9 @@ func _draw_crumble(rect: Rect2, face: Texture2D, t: float) -> void:
 		y += b
 
 
-## Рубашка карты: рисуется кодом, пиксельными прямоугольниками.
+## Рубашка карты (CardBack) — с рисунком владельца карты.
 func _draw_back(r: Rect2, a: float = 1.0) -> void:
-	draw_rect(r, Color(Color("1a1226"), a))
-	draw_rect(r.grow(-2), Color(Color("2b1d40"), a))
-	draw_rect(r.grow(-2), Color(PixelTheme.GOLD, a), false, 1.0)
-	draw_rect(r.grow(-6), Color(Color("6b4a9a"), a), false, 1.0)
-	var c := r.get_center().round()
-	var scale := minf(r.size.x / CardView.PIXEL_SIZE.x, 1.0)
-	for i in range(6):
-		var d := roundf((34.0 - i * 6.0) * scale)
-		if d < 1.0:
-			break
-		var dx := roundf(d * 0.7)
-		draw_colored_polygon(PackedVector2Array([
-			c + Vector2(0, -d), c + Vector2(dx, 0), c + Vector2(0, d), c + Vector2(-dx, 0)]),
-			Color(Color("3d2a5c") if i % 2 == 0 else Color("24183a"), a))
-	draw_rect(Rect2(c - Vector2(3, 3), Vector2(6, 6)), Color(PixelTheme.GOLD, a))
+	draw_texture_rect(_item["back"], r, false, Color(1, 1, 1, a))
 
 
 static func _ease_out(x: float) -> float:

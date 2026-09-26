@@ -73,6 +73,11 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_MAIN) -> void:
 		var profile := ProfileScreen.new()
 		profile.closed.connect(func(): _show_setup(game_seed))
 		add_child(profile))
+	setup.card_back_requested.connect(func():
+		_clear()
+		var back := CardBackScreen.new()
+		back.closed.connect(func(): _show_setup(game_seed))
+		add_child(back))
 	setup.how_to_play_requested.connect(func(): _show_how_to_play(game_seed, SetupScreen.PAGE_LIBRARY))
 	setup.cards_requested.connect(func():
 		_clear()

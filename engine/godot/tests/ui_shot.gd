@@ -242,6 +242,24 @@ func _run_scenario() -> void:
 				editor.paint(4, i, Color("fbf236"))
 				editor.paint(i, 4, Color("fbf236"))
 			editor.paint(4, 4, Color("000000"))
+		"menu":
+			# Главное меню поверх партии (строка профиля с кнопками).
+			root.add_child(SetupScreen.new())
+		"card_back":
+			# Рисовалка рубашки поверх партии: зеркальный череп-паук.
+			var back_editor := CardBackScreen.new()
+			root.add_child(back_editor)
+			back_editor.set_mirror(true)
+			for y in range(6, 26):
+				for x in range(6, 16):
+					var dx := 15.5 - x
+					var dy := y - 14.0
+					if dx * dx / 90.0 + dy * dy / 70.0 <= 1.0:
+						back_editor.paint(x, y, Color("cbdbfc"))
+			for x in range(9, 14):
+				back_editor.paint(x, 12, Color("ac3232"))
+			for i in range(8):
+				back_editor.paint(2 + i, 4 + i * 3, Color("fbf236"))
 		"emblems":
 			# Войска на доске с гербами: у красного крест, у синего точка.
 			var cross: Array[Color] = []

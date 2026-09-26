@@ -754,7 +754,7 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 				to = Vector2(size.x * 0.5, -CardView.MINI_SIZE.y)
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
-		colour, start, to, face_down)
+		colour, start, to, face_down, PlayerProfile.back_of(pid))
 
 
 ## Фишка войска owner — такая же, как на доске.

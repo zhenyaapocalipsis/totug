@@ -13,8 +13,14 @@ extends RefCounted
 ##
 ## Герб передаётся строкой: 81 пиксель по 4 байта RGBA в шестнадцатеричном
 ## виде (648 знаков), построчно сверху вниз. Прозрачный пиксель — 00000000.
+##
+## Рубашка карт (back) — рисунок BACK_SIZE x BACK_SIZE в центре рубашки
+## (CardBack), закодирован так же, как герб. Пустая рубашка — "" (обычный
+## ромб), чтобы не гонять по сети тысячи нулей.
 
 const SIZE := 9
+const BACK_SIZE := 32
+const BACK_LENGTH := BACK_SIZE * BACK_SIZE * 8
 const RADIUS := 4
 const NAME_MAX := 12
 const EMBLEM_LENGTH := SIZE * SIZE * 8
@@ -119,6 +125,57 @@ static func clean_emblem(emblem: String) -> String:
 	return bytes.hex_encode()
 
 
+## Пиксели рубашки (BACK_SIZE*BACK_SIZE цветов; прозрачный — Color(0,0,0,0)).
+static func back_pixels(back: String) -> Array[Color]:
+	var out: Array[Color] = []
+	out.resize(BACK_SIZE * BACK_SIZE)
+	out.fill(Color(0, 0, 0, 0))
+	var clean := clean_back(back)
+	if clean == "":
+		return out
+	var bytes := clean.hex_decode()
+	for i in BACK_SIZE * BACK_SIZE:
+		if bytes[i * 4 + 3] != 0:
+			out[i] = Color8(bytes[i * 4], bytes[i * 4 + 1], bytes[i * 4 + 2])
+	return out
+
+
+## Рубашка строкой; ничего не нарисовано — "".
+static func back_from_pixels(pixels: Array[Color]) -> String:
+	var bytes := PackedByteArray()
+	bytes.resize(BACK_SIZE * BACK_SIZE * 4)
+	var painted := false
+	for i in mini(pixels.size(), BACK_SIZE * BACK_SIZE):
+		var c := pixels[i]
+		if c.a > 0.5:
+			bytes[i * 4] = c.r8
+			bytes[i * 4 + 1] = c.g8
+			bytes[i * 4 + 2] = c.b8
+			bytes[i * 4 + 3] = 255
+			painted = true
+	return bytes.hex_encode() if painted else ""
+
+
+## Рубашка из чужих рук (файл, сеть): неверная или пустая — "", иначе
+## прозрачность только 0 или 255.
+static func clean_back(back: String) -> String:
+	if back.length() != BACK_LENGTH:
+		return ""
+	for ch in back:
+		if not "0123456789abcdefABCDEF".contains(ch):
+			return ""
+	var bytes := back.hex_decode()
+	var painted := false
+	for i in BACK_SIZE * BACK_SIZE:
+		if bytes[i * 4 + 3] == 0:
+			for k in 4:
+				bytes[i * 4 + k] = 0
+		else:
+			bytes[i * 4 + 3] = 255
+			painted = true
+	return bytes.hex_encode() if painted else ""
+
+
 static func clean_name(text: String) -> String:
 	var out := ""
 	for ch in text.strip_edges():
@@ -131,6 +188,7 @@ static func clean(profile: Dictionary) -> Dictionary:
 	return {
 		"name": clean_name(String(profile.get("name", ""))),
 		"emblem": clean_emblem(String(profile.get("emblem", ""))),
+		"back": clean_back(String(profile.get("back", ""))),
 	}
 
 
@@ -154,8 +212,9 @@ static func path() -> String:
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
-		return {"name": "", "emblem": ""}
-	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", "")})
+		return {"name": "", "emblem": "", "back": ""}
+	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", ""),
+		"back": cfg.get_value("profile", "back", "")})
 
 
 ## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга
@@ -164,13 +223,21 @@ static func has_local() -> bool:
 	return String(load_local()["name"]) != ""
 
 
-## Имя и герб; ключ рейтинга и запомненный рейтинг в файле не трогаются.
+## Имя и герб; ключ рейтинга, рубашка и запомненный рейтинг в файле не трогаются.
 static func save_local(profile: Dictionary) -> int:
 	var p := clean(profile)
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("profile", "name", p["name"])
 	cfg.set_value("profile", "emblem", p["emblem"])
+	return cfg.save(path())
+
+
+## Рубашку сохраняет свой экран (CardBackScreen), отдельно от имени и герба.
+static func save_back(back: String) -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	cfg.set_value("profile", "back", clean_back(back))
 	return cfg.save(path())
 
 
@@ -209,3 +276,7 @@ static func name_of(seat: String) -> String:
 
 static func emblem_of(seat: String) -> String:
 	return String((seats.get(seat, {}) as Dictionary).get("emblem", ""))
+
+
+static func back_of(seat: String) -> String:
+	return String((seats.get(seat, {}) as Dictionary).get("back", ""))

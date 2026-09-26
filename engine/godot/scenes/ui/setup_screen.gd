@@ -27,6 +27,8 @@ signal started(player_ids: Array[String], mode: String)
 signal online_requested(kind: String, player_count: int, mode: String)
 ## Открыть профиль игрока (имя и герб, ProfileScreen).
 signal profile_requested
+## Открыть рисовалку рубашки карт (CardBackScreen).
+signal card_back_requested
 ## Открыть обучение для новичков (how_to_play_screen.gd).
 signal how_to_play_requested
 ## Открыть библиотеку карт (card_library_screen.gd).
@@ -357,6 +359,10 @@ func _profile_row() -> Control:
 		func(): profile_requested.emit())
 	edit.custom_minimum_size = Vector2(70, 16)
 	parts.append(edit)
+	var back := _button("CARD BACK", "Draw the back of your cards.",
+		func(): card_back_requested.emit())
+	back.custom_minimum_size = Vector2(70, 16)
+	parts.append(back)
 	var row := _row(parts)
 	row.add_theme_constant_override("separation", 6)
 	return row
