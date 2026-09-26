@@ -11,7 +11,7 @@ Environment=HOME=/opt/tyrants
 ExecStart=/opt/tyrants/godot --headless --main-pack /opt/tyrants/tyrants_server.pck -- --server
 Restart=always
 RestartSec=3
-# Сервер ничего не пишет на диск, кроме своих логов движка.
+# Сервер пишет только в /opt/tyrants: логи движка и рейтинги (ratings.json).
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
