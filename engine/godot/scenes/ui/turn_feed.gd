@@ -178,6 +178,7 @@ func _trim() -> void:
 
 func _card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD.x), int(CARD.y))
+	card.hover_full = true   # полная карта по наведению, без Alt
 	card.set_clickable(false, false)
 	# PASS, а не STOP: колесо над картой должно листать колонку.
 	card.mouse_filter = Control.MOUSE_FILTER_PASS

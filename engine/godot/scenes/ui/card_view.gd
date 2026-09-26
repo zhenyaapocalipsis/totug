@@ -65,6 +65,9 @@ var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
 var hover_preview: bool = true
+## Полная карта по центру по одному наведению, без Alt — только у карт рынка
+## и сводки ходов (решение владельца, 2026-09-26). Остальным — только с Alt.
+var hover_full: bool = false
 ## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
 var highlight: bool = true
 var _pixel: Texture2D = null

@@ -103,6 +103,8 @@ func _process(_delta: float) -> bool:
 		30: _step_check_recap()
 		31: _step_hover_feed()
 		32: _step_check_hover_feed()
+		33: _step_hover_market()
+		34: _step_check_hover_market()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -128,8 +130,8 @@ func _step_hover_hand() -> void:
 func _step_check_hover() -> void:
 	var hand := _hand_panel()
 	check(hand != null and hand.hovered_index() >= 0, "карта под курсором выдвинулась из ряда")
-	check(CardPreview.active.has_preview() and CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
-		"без Alt по центру полная карта в родном размере (%s)" % CardPreview.active.preview_size())
+	check(not CardPreview.active.has_preview(),
+		"в руке без Alt полной карты нет — по наведению она только у рынка и сводки")
 
 
 func _step_alt_down() -> void:
@@ -138,7 +140,7 @@ func _step_alt_down() -> void:
 
 func _step_check_alt_preview() -> void:
 	check(CardPreview.active.preview_size().x > CardView.PIXEL_SIZE.x,
-		"с зажатым Alt полная карта увеличилась (%s)" % CardPreview.active.preview_size())
+		"с зажатым Alt карта руки показалась крупно (%s)" % CardPreview.active.preview_size())
 
 
 func _step_alt_up() -> void:
@@ -146,8 +148,7 @@ func _step_alt_up() -> void:
 
 
 func _step_check_alt_gone() -> void:
-	check(CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
-		"Alt отпущен — карта вернулась к родному размеру (%s)" % CardPreview.active.preview_size())
+	check(not CardPreview.active.has_preview(), "Alt отпущен — копия карты руки пропала")
 
 
 ## Стопки сброса и Внутреннего круга открывают список карт.
@@ -571,6 +572,19 @@ func _step_hover_feed() -> void:
 func _step_check_hover_feed() -> void:
 	check(not CardPreview.active.alt_held() and CardPreview.active.has_preview(),
 		"наведение на карту сводки показало её полную версию без Alt")
+	_move_mouse(Vector2(480, 200))
+
+
+## Наведение на карту рынка — полная карта по центру, без Alt.
+func _step_hover_market() -> void:
+	var rect: Rect2 = _screen._market_panel.card_rect(0)
+	check(rect.size.x > 0.0, "в рынке есть карта")
+	_move_mouse(rect.get_center())
+
+
+func _step_check_hover_market() -> void:
+	check(CardPreview.active.has_preview() and CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
+		"наведение на карту рынка показало полную карту без Alt (%s)" % CardPreview.active.preview_size())
 	_move_mouse(Vector2(480, 200))
 
 
