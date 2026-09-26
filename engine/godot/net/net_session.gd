@@ -40,7 +40,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 3
+const PROTOCOL := 4
 const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
