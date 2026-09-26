@@ -9,7 +9,7 @@ extends Control
 ## true — игрок новичок и хочет обучение.
 signal answered(wants_tutorial: bool)
 
-const YES_TEXT := "YES, I'M NEWBY"
+const YES_TEXT := "YES, I'M NEWBIE"
 const NO_TEXT := "NO, I'M ALREADY KIKORIKI"
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 

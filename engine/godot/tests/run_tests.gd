@@ -2875,7 +2875,7 @@ func test_main_menu() -> void:
 	var offer: Control = load("res://scenes/ui/tutorial_offer_screen.gd").new()
 	var answers: Array = []
 	offer.answered.connect(func(w: bool): answers.append(w))
-	_find_button(offer, "YES, I'M NEWBY").pressed.emit()
+	_find_button(offer, "YES, I'M NEWBIE").pressed.emit()
 	_find_button(offer, "NO, I'M ALREADY KIKORIKI").pressed.emit()
 	check_eq(answers, [true, false], "вопрос про обучение: YES — обучение, NO — меню")
 	offer.free()
