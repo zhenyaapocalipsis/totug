@@ -609,7 +609,8 @@ func _react_to_events(events: Array) -> void:
 		var evt: Dictionary = e
 		var pid := String(evt.get("player_id", ""))
 		match String(evt.get("type", "")):
-			"deploy_troop":
+			# "deploy" — действие за мечи (Power), "deploy_troop" — деплой картой.
+			"deploy", "deploy_troop":
 				# С "color" — войско взято из зала трофеев, а не из барака.
 				if not evt.has("color") and _launch_troop(pid, String(evt.get("slot_id", "")), launched):
 					launched += 1

@@ -372,7 +372,7 @@ func _step_deploy_flight() -> void:
 	_screen.refresh(StateView.for_player_with_pending(
 		state, me, _screen.server.resolver.pending))
 	_screen._react_to_events([
-		{"type": "deploy_troop", "player_id": me, "slot_id": slot},
+		{"type": "deploy", "player_id": me, "slot_id": slot},
 		{"type": "place_spy", "player_id": me, "site_id": site}])
 
 
