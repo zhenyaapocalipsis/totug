@@ -150,6 +150,12 @@ static func load_local() -> Dictionary:
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", "")})
 
 
+## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга
+## (key()) записывается в него и без имени.
+static func has_local() -> bool:
+	return String(load_local()["name"]) != ""
+
+
 ## Имя и герб; ключ рейтинга и запомненный рейтинг в файле не трогаются.
 static func save_local(profile: Dictionary) -> int:
 	var p := clean(profile)

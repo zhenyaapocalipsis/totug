@@ -11,6 +11,7 @@ extends Control
 
 ## Файлом, а не глобальным именем класса: так экран виден и без кэша редактора.
 const HowToPlayScreen := preload("res://scenes/ui/how_to_play_screen.gd")
+const TutorialOfferScreen := preload("res://scenes/ui/tutorial_offer_screen.gd")
 
 
 func _ready() -> void:
@@ -29,32 +30,61 @@ func _ready() -> void:
 		_start_game(GameScreen.player_ids_for(players), game_seed, mode)
 		return
 
+	# Первый запуск: профиля ещё нет — сначала создать его, потом спросить,
+	# нужно ли обучение, и только затем главное меню.
+	if not PlayerProfile.has_local():
+		_show_first_profile(game_seed)
+		return
+
 	_show_setup(game_seed)
 
 
-## Главное меню: выбор режима и числа игроков. Сюда же возвращает кнопка
-## MAIN MENU из меню по Esc; новая партия получает новый сид.
+func _show_first_profile(game_seed: int) -> void:
+	_clear()
+	var profile := ProfileScreen.new(true)
+	profile.closed.connect(func(): _show_tutorial_offer(game_seed))
+	add_child(profile)
+
+
+func _show_tutorial_offer(game_seed: int) -> void:
+	_clear()
+	var offer: Control = TutorialOfferScreen.new()
+	offer.answered.connect(func(wants: bool):
+		if wants:
+			_show_how_to_play(game_seed)
+		else:
+			_show_setup(game_seed))
+	add_child(offer)
+
+
+## Главное меню. Сюда же возвращает кнопка MAIN MENU из меню по Esc; новая
+## партия получает новый сид.
 func _show_setup(game_seed: int) -> void:
 	_close_net()
 	PlayerProfile.seats = {}
-	for child in get_children():
-		child.queue_free()
+	_clear()
 	var setup := SetupScreen.new()
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
 	setup.online_requested.connect(_show_lobby)
 	setup.profile_requested.connect(func():
-		for child in get_children():
-			child.queue_free()
+		_clear()
 		var profile := ProfileScreen.new()
 		profile.closed.connect(func(): _show_setup(game_seed))
 		add_child(profile))
-	setup.how_to_play_requested.connect(func():
-		for child in get_children():
-			child.queue_free()
-		var learn: Control = HowToPlayScreen.new()
-		learn.closed.connect(func(): _show_setup(game_seed))
-		add_child(learn))
+	setup.how_to_play_requested.connect(func(): _show_how_to_play(game_seed))
 	add_child(setup)
+
+
+func _show_how_to_play(game_seed: int) -> void:
+	_clear()
+	var learn: Control = HowToPlayScreen.new()
+	learn.closed.connect(func(): _show_setup(game_seed))
+	add_child(learn)
+
+
+func _clear() -> void:
+	for child in get_children():
+		child.queue_free()
 
 
 ## Сетевая игра: лобби хоста или входа по IP. Связь (NetSession) живёт в

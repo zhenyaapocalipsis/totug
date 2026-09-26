@@ -93,6 +93,7 @@ func _initialize() -> void:
 	test_public_address_check()
 	test_player_profile()
 	test_how_to_play()
+	test_main_menu()
 
 	# этап 7: сохранение партии и восстановление после перезапуска
 	test_game_journal_replay()
@@ -2823,6 +2824,71 @@ func test_how_to_play() -> void:
 		"на мини-доске красная фишка стоит в клетке")
 	check(_close_colour(img.get_pixel(2 + int(box["w"]) / 2, 5), BoardPanel.PLAYER_COLORS["blue"]),
 		"над местом нарисован синий шпион")
+
+
+func test_main_menu() -> void:
+	section("главное меню, первый профиль и вопрос про обучение")
+	var menu := SetupScreen.new()
+	check_eq(menu.current_page(), SetupScreen.PAGE_MAIN, "меню открывается на главной странице")
+	for text in ["PLAY ON ONE SCREEN", "PLAY ONLINE", "HOW TO PLAY", "QUIT GAME", "EDIT PROFILE"]:
+		check(_find_button(menu, text) != null, "на главной есть кнопка %s" % text)
+	check(_find_button(menu, "CREATE ROOM") == null, "сетевые кнопки убраны с главной")
+
+	var got := {}
+	menu.started.connect(func(ids: Array[String], m: String): got["start"] = [ids.size(), m])
+	menu.online_requested.connect(func(k: String, c: int, m: String): got["online"] = [k, c, m])
+	_find_button(menu, "PLAY ON ONE SCREEN").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_HOTSEAT, "PLAY ON ONE SCREEN открывает страницу хотсита")
+	_find_button(menu, "3").pressed.emit()
+	_find_button(menu, "RANDOM 4").pressed.emit()
+	_find_button(menu, "START GAME").pressed.emit()
+	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4], "START GAME: 3 игрока, режим RANDOM 4")
+	_find_button(menu, "BACK").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_MAIN, "BACK возвращает на главную")
+
+	_find_button(menu, "PLAY ONLINE").pressed.emit()
+	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY ONLINE открывает сетевую страницу")
+	_find_button(menu, "4").pressed.emit()
+	_find_button(menu, "CREATE ROOM").pressed.emit()
+	check_eq(got.get("online"), ["create", 4, GameSetup.MODE_RANDOM_4], "CREATE ROOM: 4 игрока, выбор режима запомнен")
+	_find_button(menu, "JOIN BY CODE").pressed.emit()
+	check_eq(got.get("online")[0], "join_code", "JOIN BY CODE — вход по коду")
+	_find_button(menu, "JOIN BY IP").pressed.emit()
+	check_eq(got.get("online")[0], "join_ip", "JOIN BY IP — вход по IP")
+	menu.free()
+
+	# Первый профиль: без имени не создаётся (файл при этом не пишется).
+	var first := ProfileScreen.new(true)
+	check(_find_button(first, "CREATE") != null and _find_button(first, "CANCEL") == null,
+		"первый профиль: кнопка CREATE, без CANCEL")
+	var closed := [false]
+	first.closed.connect(func(): closed[0] = true)
+	first._name_edit.text = ""
+	first._save()
+	check(not closed[0], "без имени профиль не создаётся")
+	first.free()
+	var usual := ProfileScreen.new()
+	check(_find_button(usual, "SAVE") != null and _find_button(usual, "CANCEL") != null,
+		"обычный профиль: SAVE и CANCEL")
+	usual.free()
+
+	var offer: Control = load("res://scenes/ui/tutorial_offer_screen.gd").new()
+	var answers: Array = []
+	offer.answered.connect(func(w: bool): answers.append(w))
+	_find_button(offer, "YES, I'M NEWBY").pressed.emit()
+	_find_button(offer, "NO, I'M ALREADY KIKORIKI").pressed.emit()
+	check_eq(answers, [true, false], "вопрос про обучение: YES — обучение, NO — меню")
+	offer.free()
+
+
+func _find_button(root: Node, text: String) -> Button:
+	for child in root.get_children():
+		if child is Button and (child as Button).text == text and not child.is_queued_for_deletion():
+			return child
+		var found := _find_button(child, text)
+		if found != null:
+			return found
+	return null
 
 
 ## Цвет из картинки RGBA8 совпадает с заданным с точностью до округления в 8 бит.

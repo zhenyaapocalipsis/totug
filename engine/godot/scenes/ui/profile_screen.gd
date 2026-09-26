@@ -36,9 +36,12 @@ var _previews: Array[TextureRect] = []
 var _saved_note: Label
 ## Сколько пикселей ещё можно закрасить (PlayerProfile.MIN_SEAT_PIXELS).
 var _counter: Label
+var _first_run := false
 
 
-func _init() -> void:
+## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
+func _init(first_run: bool = false) -> void:
+	_first_run = first_run
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 	add_child(UnderdarkBg.make())
@@ -57,11 +60,17 @@ func _init() -> void:
 	card.add_child(col)
 
 	var title := Label.new()
-	title.text = "PLAYER PROFILE"
+	title.text = "CREATE YOUR PROFILE" if _first_run else "PLAYER PROFILE"
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
+	if _first_run:
+		var welcome := Label.new()
+		welcome.text = "Welcome! Choose a name and draw your emblem."
+		welcome.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+		welcome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(welcome)
 
 	col.add_child(GameScreen.section_label("NAME"))
 	_name_edit = LineEdit.new()
@@ -69,6 +78,9 @@ func _init() -> void:
 	_name_edit.placeholder_text = "Your name"
 	_name_edit.text = String(local["name"])
 	_name_edit.custom_minimum_size = Vector2(160, 0)
+	_name_edit.text_submitted.connect(func(_t: String): _save())
+	if _first_run:
+		_name_edit.grab_focus.call_deferred()
 	_name_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_name_edit)
 
@@ -126,8 +138,9 @@ func _init() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 6)
 	col.add_child(buttons)
-	buttons.add_child(_button("SAVE", _save))
-	buttons.add_child(_button("CANCEL", func(): closed.emit()))
+	buttons.add_child(_button("CREATE" if _first_run else "SAVE", _save))
+	if not _first_run:
+		buttons.add_child(_button("CANCEL", func(): closed.emit()))
 	_saved_note = Label.new()
 	_saved_note.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_saved_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -282,6 +295,11 @@ func _refresh_previews() -> void:
 func _save() -> void:
 	var name_text := PlayerProfile.clean_name(_name_edit.text)
 	_name_edit.text = name_text
+	if _first_run and name_text == "":
+		_saved_note.text = "Enter a name (Latin letters and digits)."
+		if _name_edit.is_inside_tree():
+			_name_edit.grab_focus()
+		return
 	var err := PlayerProfile.save_local({"name": name_text, "emblem": emblem()})
 	if err == OK:
 		closed.emit()
