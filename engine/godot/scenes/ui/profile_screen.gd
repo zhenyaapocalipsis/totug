@@ -72,7 +72,7 @@ func _init(first_run: bool = false) -> void:
 		welcome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(welcome)
 
-	col.add_child(GameScreen.section_label("NAME"))
+	col.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
 	_name_edit = LineEdit.new()
 	_name_edit.max_length = PlayerProfile.NAME_MAX
 	_name_edit.placeholder_text = "Your name"

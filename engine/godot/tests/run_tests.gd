@@ -1003,6 +1003,18 @@ func test_rating() -> void:
 	var same := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": a, "name": "Ann"}},
 			{"red": 40, "blue": 30}, ["red"])
 	check(same.is_empty(), "один человек за двумя цветами — партия без рейтинга")
+
+	# Имена на сервере уникальны: имя закреплено за учётной записью (ключом).
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://ratings_test_names.json"))
+	book = RatingBook.new(path)
+	check(book.claim_name(a, "Ann"), "свободное имя занимается")
+	check(book.claim_name(a, "Ann"), "своё имя — снова можно")
+	check(not book.claim_name(b, "ANN "), "чужое имя (другой регистр, пробел) — нельзя")
+	check(not RatingBook.new(path).claim_name(b, "ann"), "занятое имя сохранено в файл")
+	check(book.claim_name(a, "Anna"), "смена имени")
+	check(book.claim_name(b, "Ann"), "после смены старое имя свободно")
+	check(book.claim_name(b, "") and book.claim_name("", "Anna") == true,
+		"пустое имя и игрок без ключа ничего не занимают")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 

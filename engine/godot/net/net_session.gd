@@ -45,6 +45,9 @@ const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
 const CODE_CHARS := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+## Отказ, если имя уже занято другим игроком (RatingBook.claim_name). Лобби
+## само ставит точку в конце.
+const NAME_TAKEN := "The name %s is taken by another player. Go BACK and change it in EDIT PROFILE"
 const CODE_LENGTH := 4
 
 ## У этой программы есть комнаты (хост по IP или сервер).
@@ -398,6 +401,11 @@ func _profile_up(player_name: String, emblem: String, key: String) -> void:
 	# Рейтинг видят все за столом; сам ключ дальше сервера не уходит.
 	if ratings != null:
 		var account := RatingBook.account_of(key)
+		# Имя на сервере у каждого своё: занятое другим игроком — не пускаем.
+		# Место освободится само, когда клиент по отказу закроет связь.
+		if not ratings.claim_name(account, p["name"]):
+			_refuse(peer, NAME_TAKEN % p["name"])
+			return
 		room.accounts[pid] = account
 		if account != "":
 			p["rating"] = ratings.rating_of(account)
