@@ -15,8 +15,8 @@ extends PanelContainer
 ## не отлистал колёсиком назад, читая историю. Полосы прокрутки нет: она
 ## съела бы ширину, а колесо работает и без неё.
 ##
-## Карты — обычные CardView, но крупно их видно по одному наведению, без Alt
-## (полная карта по центру экрана, как в CardPreview).
+## Карты — обычные CardView: по наведению полная карта по центру экрана,
+## с Alt — крупнее (CardPreview).
 
 const CARD := Vector2(80, 76)
 ## Поле колонки и поле блока внутри рамки (рамка — 1 пиксель из него).
@@ -179,7 +179,6 @@ func _trim() -> void:
 func _card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD.x), int(CARD.y))
 	card.set_clickable(false, false)
-	card.preview_without_alt = true
 	# PASS, а не STOP: колесо над картой должно листать колонку.
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	# Новая карта встаёт со вспышкой — глаз замечает, что сводка пополнилась.

@@ -128,8 +128,8 @@ func _step_hover_hand() -> void:
 func _step_check_hover() -> void:
 	var hand := _hand_panel()
 	check(hand != null and hand.hovered_index() >= 0, "карта под курсором выдвинулась из ряда")
-	check(not CardPreview.active.has_preview(),
-		"без Alt увеличенной копии нет — она больше не закрывает экран сама собой")
+	check(CardPreview.active.has_preview() and CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
+		"без Alt по центру полная карта в родном размере (%s)" % CardPreview.active.preview_size())
 
 
 func _step_alt_down() -> void:
@@ -137,7 +137,8 @@ func _step_alt_down() -> void:
 
 
 func _step_check_alt_preview() -> void:
-	check(CardPreview.active.has_preview(), "с зажатым Alt карта под курсором увеличилась")
+	check(CardPreview.active.preview_size().x > CardView.PIXEL_SIZE.x,
+		"с зажатым Alt полная карта увеличилась (%s)" % CardPreview.active.preview_size())
 
 
 func _step_alt_up() -> void:
@@ -145,7 +146,8 @@ func _step_alt_up() -> void:
 
 
 func _step_check_alt_gone() -> void:
-	check(not CardPreview.active.has_preview(), "Alt отпущен — увеличенная копия пропала")
+	check(CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
+		"Alt отпущен — карта вернулась к родному размеру (%s)" % CardPreview.active.preview_size())
 
 
 ## Стопки сброса и Внутреннего круга открывают список карт.
@@ -568,7 +570,7 @@ func _step_hover_feed() -> void:
 
 func _step_check_hover_feed() -> void:
 	check(not CardPreview.active.alt_held() and CardPreview.active.has_preview(),
-		"наведение на карту сводки показало её крупно без Alt")
+		"наведение на карту сводки показало её полную версию без Alt")
 	_move_mouse(Vector2(480, 200))
 
 
