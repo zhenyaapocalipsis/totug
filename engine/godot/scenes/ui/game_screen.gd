@@ -242,6 +242,7 @@ func _build_layout() -> void:
 	# надо щёлкнуть.
 	_players_panel = PlayersPanel.new()
 	_players_panel.player_chosen.connect(_on_decision_answer)
+	_players_panel.trophy_chosen.connect(_on_decision_answer)
 	add_child(_players_panel)
 	_setup_label = _players_panel.setup_label
 

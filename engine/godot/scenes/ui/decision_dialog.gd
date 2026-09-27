@@ -128,7 +128,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Inner Circle и сброс на время выбора встают в ряд руки справа (hand_panel.gd).
 	var on_board: bool = BOARD_CHOICES.has(choice_type) or in_hand \
 		or tag == "market" or HandPanel.ZONE_LABELS.has(tag) \
-		or choice_type == "target_player"   # игрок — в таблице игроков (players_panel.gd)
+		or choice_type == "target_player" or tag == "trophy_hall"   # в таблице игроков (players_panel.gd)
 	var options: Array = pd.get("legal_options", [])
 	visible = true
 	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
@@ -171,6 +171,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_who.text += " — click a gold card in your hand"
 		elif choice_type == "target_player":
 			_who.text += " — click a gold player in the players table"
+		elif tag == "trophy_hall":
+			_who.text += " — click a gold trophy number in the players table"
 		elif tag == "market":
 			_who.text += " — click a gold card in the market"
 		elif HandPanel.ZONE_LABELS.has(tag):
@@ -215,20 +217,6 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			# без окна вокруг кнопка во всю ширину — просто полоса; ставим по центру
 			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
 			make_plain(skip)
-	elif choice_type == "target_player":
-		# Соперники — крупные надписи цвета игрока, без окна вокруг, слева
-		# фишка его войска с эмблемой (как на доске).
-		for value in options:
-			_add_button(_board_label(value, choice_type), value)
-			var b := _options_box.get_child(_options_box.get_child_count() - 1) as Button
-			make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
-				else PixelTheme.TEXT, PixelTheme.SIZE_BIG)
-			if String(value) != "":
-				_put_token_before(b, String(value), value)
-		cards_mode = true
-	elif String(pd.get("tag", "")) == "trophy_hall":
-		_add_trophy_tokens(pd)
-		cards_mode = true
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
 		cards_mode = true
@@ -442,109 +430,6 @@ func _add_option_cards(pd: Dictionary) -> void:
 		card.pressed.connect(func(): option_chosen.emit(value))
 		row.add_child(card)
 	_options_box.add_child(row)
-
-
-## "Take a troop from a trophy hall" (Orcus, Mummy Lord, Lich): фишки войск в
-## ряд, сгруппированные по залам: над подписью "Green's hall" (цветом хозяина)
-## — фишки из этого зала, цвет фишки = цвет войска.
-## Отказ (-1) — Skip под рядом, как у выбора карты.
-func _add_trophy_tokens(pd: Dictionary) -> void:
-	var trophies: Array = (pd.get("data", {}) as Dictionary).get("trophies", [])
-	var labels: Array = pd.get("option_labels", [])
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 16)
-	var tokens_of := {}  # хозяин зала -> ряд его фишек
-	for value in pd.get("legal_options", []):
-		if int(value) < 0 or int(value) >= trophies.size():
-			continue
-		var parts := String(trophies[int(value)]).split("|")
-		var hall := parts[0]
-		if not tokens_of.has(hall):
-			var group := VBoxContainer.new()
-			group.add_theme_constant_override("separation", 0)
-			var tokens := HBoxContainer.new()
-			tokens.alignment = BoxContainer.ALIGNMENT_CENTER
-			tokens.add_theme_constant_override("separation", 2)
-			group.add_child(tokens)
-			var name_label := Label.new()
-			name_label.text = "%s's hall" % EventLogPanel.player_name(hall)
-			name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			name_label.add_theme_color_override("font_color", EventLogPanel.player_color(hall))
-			name_label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
-			name_label.add_theme_constant_override("shadow_offset_x", 1)
-			name_label.add_theme_constant_override("shadow_offset_y", 1)
-			group.add_child(name_label)
-			row.add_child(group)
-			tokens_of[hall] = tokens
-		var token := TrophyButton.new(parts[1])
-		if int(value) < labels.size():
-			token.tooltip_text = String(labels[int(value)])
-		var answer: Variant = value
-		token.pressed.connect(func(): option_chosen.emit(answer))
-		(tokens_of[hall] as HBoxContainer).add_child(token)
-	_options_box.add_child(row)
-	if (pd.get("legal_options", []) as Array).has(-1):
-		_add_button("Skip", -1)
-		make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
-
-
-## Ставит фишку игрока слева от кнопки-имени b (тоже нажимается). Иконкой
-## кнопки её не сделать: кнопка центрует иконку по середине строки, а
-## заглавные пиксельного шрифта сидят выше середины (PixelTheme.CAPS_SHIFT, у
-## крупного шрифта — вдвое), и фишка выходила ниже имени.
-func _put_token_before(b: Button, pid: String, value: Variant) -> void:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 4)
-	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var texture := _player_token(pid)
-	var line_h: float = b.get_combined_minimum_size().y
-	var holder := Control.new()
-	holder.custom_minimum_size = Vector2(texture.get_width(), line_h)
-	var token := TextureButton.new()
-	token.texture_normal = texture
-	token.position = Vector2(0, roundf((line_h - texture.get_height()) * 0.5) - PixelTheme.CAPS_SHIFT * 2)
-	token.pressed.connect(func(): option_chosen.emit(value))
-	holder.add_child(token)
-	var index := b.get_index()
-	_options_box.remove_child(b)
-	row.add_child(holder)
-	row.add_child(b)
-	_options_box.add_child(row)
-	_options_box.move_child(row, index)
-
-
-## Фишка войска игрока с эмблемой вдвое крупнее (рост крупного шрифта).
-static func _player_token(pid: String) -> ImageTexture:
-	var img := SchematicPainter.token(BoardPanel.troop_colour(pid), PlayerProfile.emblem_of(pid))
-	img.resize(img.get_width() * 2, img.get_height() * 2, Image.INTERPOLATE_NEAREST)
-	return ImageTexture.create_from_image(img)
-
-
-## Кнопка-фишка войска из трофейного зала: та же картинка, что на доске
-## (цвет войска и эмблема его хозяина, у белых эмблемы нет), втрое крупнее
-## целым числом — пиксели не плывут; под курсором — золотое кольцо.
-class TrophyButton extends Button:
-	const ZOOM := 3
-	var _texture: ImageTexture
-
-	func _init(owner: String) -> void:
-		var emblem := "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner)
-		_texture = ImageTexture.create_from_image(
-			SchematicPainter.token(BoardPanel.troop_colour(owner), emblem))
-		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		custom_minimum_size = _texture.get_size() * ZOOM + Vector2(6, 6)
-		for state in ["normal", "hover", "pressed", "focus", "disabled"]:
-			add_theme_stylebox_override(state, StyleBoxEmpty.new())
-		mouse_entered.connect(queue_redraw)
-		mouse_exited.connect(queue_redraw)
-
-	func _draw() -> void:
-		var s := _texture.get_size() * ZOOM
-		if is_hovered():
-			draw_circle(size * 0.5, s.x * 0.5 + 2.0, PixelTheme.GOLD)
-		draw_texture_rect(_texture, Rect2(((size - s) * 0.5).round(), s), false)
 
 
 func _add_button(text: String, value: Variant) -> void:

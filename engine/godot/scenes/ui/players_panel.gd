@@ -31,6 +31,8 @@ const NEUTRAL_COLOR := Color(0.6, 0.6, 0.6)
 
 ## Карта спросила "выбери игрока" (target_player): щелчок по строке игрока.
 signal player_chosen(player_id: String)
+## Карта спросила "возьми войско из трофейного зала": номер варианта.
+signal trophy_chosen(index: int)
 
 var _grid: GridContainer
 var _rows: Dictionary = {}   # player_id -> {"name": Label, "values": {key: Label}, "trophies": HBoxContainer}
@@ -41,6 +43,8 @@ var _overlay: Control
 var _choice_buttons: Dictionary = {}   # player_id -> Button
 var _choice: Array = []
 var _blink_time := 0.0
+## Рамки на цифрах трофеев: [Button, Label цифры].
+var _trophy_buttons: Array = []
 ## Вопрос стартовой расстановки — показывает game_screen.
 var setup_label: Label
 
@@ -125,11 +129,13 @@ static func _digit(text: String, colour: Color) -> Label:
 
 
 ## Цифры трофеев: сначала нейтральные, потом игроки в порядке хода.
-## Пустой зал — серый 0. В подсказке — то же словами.
-static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Array) -> void:
+## Пустой зал — серый 0. В подсказке — то же словами. Возвращает цифры по
+## цвету — по ним ставятся рамки выбора трофея (Orcus, Lich).
+static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Array) -> Dictionary:
 	for child in box.get_children():
 		box.remove_child(child)
 		child.queue_free()
+	var digits: Dictionary = {}
 	var parts: Array[String] = []
 	var colours: Array = ["white"]
 	colours.append_array(order)
@@ -138,12 +144,15 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 		if count <= 0:
 			continue
 		var white := String(colour_id) == "white"
-		box.add_child(_digit(str(count), NEUTRAL_COLOR if white \
-			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR)))
+		var digit := _digit(str(count), NEUTRAL_COLOR if white \
+			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR))
+		box.add_child(digit)
+		digits[String(colour_id)] = digit
 		parts.append("%s %d" % ["neutral" if white else EventLogPanel.player_name(String(colour_id)), count])
 	if parts.is_empty():
 		box.add_child(_digit("0", PixelTheme.TEXT_OFF))
 	box.tooltip_text = "Trophies: " + (", ".join(parts) if not parts.is_empty() else "none")
+	return digits
 
 
 func update_from_view(view: Dictionary) -> void:
@@ -166,11 +175,12 @@ func update_from_view(view: Dictionary) -> void:
 			var raw: Variant = p.get(key, 0)
 			var shown: int = (raw as Array).size() if raw is Array else int(raw)
 			(values[key] as Label).text = str(shown)
-		_fill_trophies(row["trophies"], p.get("trophies", {}), order)
+		row["digits"] = _fill_trophies(row["trophies"], p.get("trophies", {}), order)
 
 	# Вопрос "выбери игрока": варианты сервер присылает только решающему, так
 	# что у остальных кнопок нет. "" (отказ) — это Skip в строке вопроса.
 	var pd: Dictionary = view.get("pending_decision", {})
+	_update_trophy_choice(pd)
 	_choice = []
 	if String(pd.get("choice_type", "")) == "target_player":
 		for o in pd.get("legal_options", []):
@@ -184,31 +194,67 @@ func update_from_view(view: Dictionary) -> void:
 
 
 func _make_choice_button(pid: String) -> Button:
+	var b := _frame_button("Choose %s" % EventLogPanel.player_name(pid))
+	b.pressed.connect(func(): player_chosen.emit(pid))
+	b.visible = false
+	return b
+
+
+## Прозрачная кнопка в золотой рамке на слое выбора; под курсором — золотой
+## подсветкой.
+func _frame_button(hint: String) -> Button:
 	var b := Button.new()
 	b.focus_mode = Control.FOCUS_NONE
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.tooltip_text = "Choose %s" % EventLogPanel.player_name(pid)
+	b.tooltip_text = hint
 	var normal := PixelTheme.box(Color(PixelTheme.GOLD, 0.0), PixelTheme.GOLD, 1, 0, 0)
 	var hover := PixelTheme.box(Color(PixelTheme.GOLD, 0.25), PixelTheme.GOLD, 1, 0, 0)
 	b.add_theme_stylebox_override("normal", normal)
 	b.add_theme_stylebox_override("hover", hover)
 	b.add_theme_stylebox_override("pressed", hover)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.pressed.connect(func(): player_chosen.emit(pid))
-	b.visible = false
 	_overlay.add_child(b)
 	return b
+
+
+## Вопрос "возьми войско из трофейного зала" (Orcus, Lich): рамки прямо на
+## цифрах столбца TROPHY — щелчок по цифре берёт войско этого цвета из зала
+## этого игрока (решение владельца, 2026-09-27). Вариант i в data.trophies —
+## "зал|цвет", в ответ уходит его номер. Отказ (-1) — Skip в строке вопроса.
+func _update_trophy_choice(pd: Dictionary) -> void:
+	for pair: Array in _trophy_buttons:
+		_overlay.remove_child(pair[0])
+		(pair[0] as Button).queue_free()
+	_trophy_buttons = []
+	if String(pd.get("tag", "")) != "trophy_hall":
+		return
+	var options: Array = (pd.get("data", {}) as Dictionary).get("trophies", [])
+	for i in options.size():
+		var parts := String(options[i]).split("|")
+		if parts.size() != 2 or not _rows.has(parts[0]):
+			continue
+		var digit: Label = (_rows[parts[0]].get("digits", {}) as Dictionary).get(parts[1])
+		if digit == null:
+			continue
+		var colour_name := "neutral" if parts[1] == "white" else EventLogPanel.player_name(parts[1])
+		var b := _frame_button("Take a %s troop from %s's trophy hall"
+			% [colour_name, EventLogPanel.player_name(parts[0])])
+		var index := i
+		b.pressed.connect(func(): trophy_chosen.emit(index))
+		_trophy_buttons.append([b, digit])
 
 
 ## Рамки выбора мерцают, пока идёт выбор: таблица далеко от строки вопроса,
 ## и неподвижную рамку легко не заметить (решение владельца, 2026-09-27).
 func _process(delta: float) -> void:
-	if _choice.is_empty():
+	if _choice.is_empty() and _trophy_buttons.is_empty():
 		return
 	_blink_time += delta
 	var a := 0.35 + 0.65 * (0.5 + 0.5 * cos(_blink_time * TAU * 1.5))
 	for pid: String in _choice:
 		(_choice_buttons[pid] as Button).self_modulate.a = a
+	for pair: Array in _trophy_buttons:
+		(pair[0] as Button).self_modulate.a = a
 
 
 ## Кнопка выбора — во всю ширину таблицы по высоте строки игрока.
@@ -222,6 +268,12 @@ func _place_choice() -> void:
 		var name_rect := (_rows[pid]["name"] as Label).get_global_rect()
 		b.position = Vector2(grid_rect.position.x - 1, name_rect.position.y - 1) - origin
 		b.size = Vector2(grid_rect.size.x + 2, name_rect.size.y + 1)
+	# Рамка трофея — вокруг цифры, с запасом: цифра шириной в 5 пикселей, в
+	# такую трудно попасть.
+	for pair: Array in _trophy_buttons:
+		var r := (pair[1] as Label).get_global_rect().grow_individual(2, 0, 2, 0)
+		(pair[0] as Button).position = r.position - origin
+		(pair[0] as Button).size = r.size
 
 
 ## Столбец трофеев чуть отодвинут от IC: иначе первая цифра читается как

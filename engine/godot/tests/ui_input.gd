@@ -45,6 +45,7 @@ var _foe_tags: Array[String] = []
 var _foe_discard := ""
 var _market_before: Array = []
 var _ic_before := 0
+var _trophy_hall := ""
 
 
 func _initialize() -> void:
@@ -119,6 +120,9 @@ func _process(_delta: float) -> bool:
 		43: _step_choose_player()
 		44: _step_click_player()
 		45: _step_check_choose_player()
+		46: _step_trophy()
+		47: _step_click_trophy()
+		48: _step_check_trophy()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -775,6 +779,44 @@ func _step_check_choose_player() -> void:
 	var foe: PlayerState = _screen.server.state.players[_foe_discard]
 	check(foe.deck.discard_pile.size() == _discard_before + 1, "соперник получил Insane Outcast в сброс")
 	check(not _screen._players_panel._choice_buttons[_foe_discard].visible, "кнопки выбора убраны")
+
+
+## Lich: взять войско из трофейного зала — щелчком по цифре в столбце TROPHY
+## таблицы игроков, без окна и затемнения.
+func _step_trophy() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	for pid: String in state.turn_order:
+		state.players[pid].trophies["white"] = 2
+	state.players[me].deck.hand.append("48732")
+	_screen.send(Intent.play_card(me, "48732"))
+	var pending: PendingDecision = _screen.server.resolver.pending
+	if pending != null and pending.choice_type == "target_site":
+		# шпион — туда, где стоит войско соперника: только тогда Lich берёт трофей
+		for site in pending.legal_options:
+			if CardLibrary._site_has_enemy_troop(state, me, String(site)):
+				_screen.send(Intent.make_decision(me, site))
+				break
+	pending = _screen.server.resolver.pending
+	check(pending != null and pending.tag == "trophy_hall", "Lich спрашивает войско из трофейного зала")
+
+
+func _step_click_trophy() -> void:
+	var panel: PlayersPanel = _screen._players_panel
+	check(not panel._trophy_buttons.is_empty(), "на цифрах трофеев — рамки выбора (%d)" % panel._trophy_buttons.size())
+	check(not _screen._decision_dialog._dim.visible, "экран не затемнён")
+	_trophy_hall = ""
+	var pending: PendingDecision = _screen.server.resolver.pending
+	if pending != null and not panel._trophy_buttons.is_empty():
+		_trophy_hall = String(pending.data["trophies"][0]).get_slice("|", 0)
+		_discard_before = int(_screen.server.state.players[_trophy_hall].trophies.get("white", 0))
+		_click(panel._trophy_buttons[0][0])
+
+
+func _step_check_trophy() -> void:
+	var state := _screen.server.state
+	check(_trophy_hall != "" and int(state.players[_trophy_hall].trophies.get("white", 0)) == _discard_before - 1,
+		"щелчок по цифре забрал войско из зала")
 
 
 ## Карты ряда руки без улетающих.
