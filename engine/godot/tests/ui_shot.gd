@@ -36,6 +36,7 @@ var _scale := 1
 func _initialize() -> void:
 	var game_seed := 7
 	var players := 2
+	var decks: Array[String] = []
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			game_seed = int(arg.get_slice("=", 1))
@@ -47,6 +48,10 @@ func _initialize() -> void:
 			_zoom = maxi(1, int(arg.get_slice("=", 1)))
 		elif arg.begins_with("--scale="):
 			_scale = maxi(1, int(arg.get_slice("=", 1)))
+		elif arg.begins_with("--decks="):
+			# Полуколоды, например demons,undead (с Demons в запасе есть изгои).
+			for name in arg.get_slice("=", 1).split(","):
+				decks.append(name)
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
 
@@ -56,7 +61,7 @@ func _initialize() -> void:
 	DisplayServer.window_set_size(Vector2i(
 		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
 		ProjectSettings.get_setting("display/window/size/viewport_height", 360)) * _scale)
-	_screen = GameScreen.new(game_seed, [], GameScreen.player_ids_for(players))
+	_screen = GameScreen.new(game_seed, decks, GameScreen.player_ids_for(players))
 	root.add_child(_screen)
 	# Вопрос карты надо задавать, когда экран уже в дереве: вне дерева окно
 	# вопроса меряет свои варианты нулём и выходит пустым.

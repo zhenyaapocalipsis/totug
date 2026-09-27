@@ -748,6 +748,12 @@ func _react_to_events(events: Array) -> void:
 			"recruit_free":
 				_showcase_card(pid, String(evt.get("card_id", "")), "RECRUITS",
 					_market_panel.card_rect(int(evt.get("market_index", -1))), "discard")
+			# «... recruits an Insane Outcast»: изгоя навязали эффектом карты,
+			# получатель сам его не брал — показываем всем, включая его самого.
+			# Каждая карта — отдельным показом, в сброс получателя.
+			"give_insane_outcast":
+				for i in range(int(evt.get("count", 1))):
+					_showcase_card(pid, Supplies.INSANE_OUTCAST, "RECRUITS", null, "discard")
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
