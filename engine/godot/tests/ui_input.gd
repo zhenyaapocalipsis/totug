@@ -33,6 +33,7 @@ var _next_step_at := SETTLE
 # состояние, переносимое между шагами
 var _hand_before := 0
 var _resources_before := 0
+var _time_before := 0.0
 var _discard_before := 0
 var _turn_owner := ""
 var _refused_card: CardView = null
@@ -246,6 +247,7 @@ func _step_click_hand_card() -> void:
 		return
 	_hand_before = player.deck.hand.size()
 	_resources_before = player.power + player.influence
+	_time_before = _screen._time_left
 	_click(card)
 
 
@@ -257,6 +259,8 @@ func _step_check_hand_card() -> void:
 		"эффект карты применился: ресурсов стало больше (%d -> %d)"
 			% [_resources_before, player.power + player.influence])
 	check(_has_floating_text(), "над плашкой ресурсов всплыла цифра изменения")
+	check(_screen._time_left > _time_before + GameScreen.TURN_BONUS_SECONDS - 3.0,
+		"сыгранная карта добавила времени к ходу (%.1f -> %.1f)" % [_time_before, _screen._time_left])
 	check(_screen._res_power.is_animating() or _screen._res_influence.is_animating(),
 		"счётчик ресурсов накручивается и вспыхивает")
 	var hand := _hand_panel()

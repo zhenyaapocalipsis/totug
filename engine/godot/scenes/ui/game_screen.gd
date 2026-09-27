@@ -86,8 +86,13 @@ const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
-## Таймер хода: две минуты, по нулю ход завершается сам.
-const TURN_SECONDS := 120.0
+## Таймер хода: минута на старте, по нулю ход завершается сам. Поздние ходы
+## длиннее (колода сильнее, карт и вопросов больше), поэтому каждая сыгранная
+## карта и каждый вопрос карты ходящему добавляют TURN_BONUS_SECONDS — но не
+## выше TURN_MAX_SECONDS (решение владельца игры, «шахматная» добавка).
+const TURN_SECONDS := 60.0
+const TURN_BONUS_SECONDS := 10.0
+const TURN_MAX_SECONDS := 300.0
 ## Таймер ответа на чужую карту (сбросить карту и т. п.): по нулю ответ
 ## выбирается сам.
 const DECISION_SECONDS := 30.0
@@ -178,6 +183,10 @@ var _pause_resume: Button
 ## ходящего перезапускает отсчёт.
 var _time_left := TURN_SECONDS
 var _timed_player := ""
+## Для добавки времени: сколько карт ходящего уже учтено в played_pile и какой
+## его вопрос карты уже учтён.
+var _timed_played := 0
+var _timed_question := ""
 var _auto_ending := false
 ## Таймер ответа: какой вопрос отсчитываем (смена вопроса перезапускает) и
 ## сколько секунд на него осталось.
@@ -1277,13 +1286,16 @@ func _process(delta: float) -> void:
 	if _last_round_label.visible != last_round:
 		_last_round_label.visible = last_round
 		_layout()
+	var pending: Dictionary = _view.get("pending_decision", {})
 	if current != _timed_player:
 		_timed_player = current
 		_time_left = TURN_SECONDS
+		_timed_played = _played_count(current)
+		_timed_question = ""
 		_auto_answered = false
+	_add_turn_bonus(current, pending)
 	# Пока на вопрос карты отвечает другой игрок (например, сбрасывает карту
 	# по эффекту), время ходящего не тратится — идёт таймер ответа.
-	var pending: Dictionary = _view.get("pending_decision", {})
 	if not pending.is_empty() and String(pending.get("player_id", "")) != current:
 		_tick_decision_timer(pending, delta)
 		return
@@ -1322,6 +1334,32 @@ func _tick_space_hold(delta: float) -> void:
 	var part := _space_hold / SPACE_HOLD_SECONDS
 	_space_fill.position = _end_turn_button.position
 	_space_fill.size = Vector2(floorf(_end_turn_button.size.x * part), _end_turn_button.size.y)
+
+
+## Добавка ко времени хода: +TURN_BONUS_SECONDS за каждую новую карту в
+## played_pile ходящего и за каждый новый вопрос карты ему самому. Считается
+## только по открытому виду, поэтому у всех игроков сети совпадает.
+func _add_turn_bonus(current: String, pending: Dictionary) -> void:
+	var bonus := 0
+	var played := _played_count(current)
+	if played > _timed_played:
+		bonus += played - _timed_played
+	_timed_played = played
+	if not pending.is_empty() and String(pending.get("player_id", "")) == current:
+		var key := "%s|%s|%s" % [pending.get("prompt", ""), pending.get("tag", ""),
+			pending.get("source_card", "")]
+		if key != _timed_question:
+			_timed_question = key
+			bonus += 1
+	else:
+		_timed_question = ""
+	if bonus > 0:
+		_time_left = minf(TURN_MAX_SECONDS, _time_left + TURN_BONUS_SECONDS * bonus)
+
+
+func _played_count(player_id: String) -> int:
+	var p: Dictionary = (_view.get("players", {}) as Dictionary).get(player_id, {})
+	return (p.get("played_pile", []) as Array).size()
 
 
 func _show_time(seconds: float) -> void:
