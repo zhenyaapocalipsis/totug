@@ -50,6 +50,7 @@ func _update() -> void:
 
 func _activate() -> void:
 	var root := get_tree().root
+	print("SharpScale: on, window %s, scene %s" % [root.size, get_tree().current_scene])
 	_view = SubViewport.new()
 	_view.size_2d_override = Vector2i(_base())
 	_view.size_2d_override_stretch = true

@@ -69,6 +69,24 @@ func _ready() -> void:
 		finished.emit()
 
 
+## SharpScale переносит стартовую сцену в свой SubViewport, а HTTPRequest,
+## выйдя из дерева, молча отменяет запрос — сигнала не будет, и экран навсегда
+## застревал на CHECKING FOR UPDATES (2560x1440, сборка 1790521072).
+## Поэтому после возвращения в дерево прерванный запрос отправляем заново.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_ENTER_TREE and _http != null:
+		_resume.call_deferred()
+
+
+func _resume() -> void:
+	if _http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		return
+	if _http.request_completed.is_connected(_on_version):
+		_http.request(BASE_URL + "version.txt")
+	elif _http.request_completed.is_connected(_on_downloaded):
+		_http.request(BASE_URL + "game.pck")
+
+
 func _process(_delta: float) -> void:
 	if _http != null and _server_build > 0 and _http.get_http_client_status() == HTTPClient.STATUS_BODY:
 		var total := _http.get_body_size()
@@ -97,6 +115,7 @@ func _on_version(result: int, code: int, _headers: PackedStringArray, body: Pack
 
 
 func _on_downloaded(result: int, code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
+	_http.request_completed.disconnect(_on_downloaded)
 	var fresh := pck_path() + ".new"
 	if result != HTTPRequest.RESULT_SUCCESS or code != 200 \
 			or (_server_sha != "" and FileAccess.get_sha256(fresh) != _server_sha):
