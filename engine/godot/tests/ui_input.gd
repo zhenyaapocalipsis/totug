@@ -43,6 +43,7 @@ var _feed_before := 0
 var _feed_cells_before := 0
 var _foe_tags: Array[String] = []
 var _foe_discard := ""
+var _market_before: Array = []
 
 
 func _initialize() -> void:
@@ -108,6 +109,8 @@ func _process(_delta: float) -> bool:
 		34: _step_check_hover_market()
 		35: _step_forced_discard()
 		36: _step_check_forced_discard()
+		37: _step_market_devour()
+		38: _step_check_market_devour()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -614,7 +617,8 @@ func _step_forced_discard() -> void:
 	var dlg: DecisionDialog = _screen._decision_dialog
 	check(dlg.visible and not dlg._dim.visible and dlg.at_top,
 		"вопрос — полоса сверху, экран не затемнён")
-	check(dlg._prompt.text.contains("Cranium Rats"), "в вопросе сказано, чья карта заставила (%s)" % dlg._prompt.text)
+	check(dlg._prompt.text.begins_with(EventLogPanel.player_name(_foe_discard)) and dlg._blink,
+		"вопрос крупно и мерцая называет сбрасывающего (%s)" % dlg._prompt.text)
 	var victim: PlayerState = state.players[_foe_discard]
 	_hand_before = victim.deck.hand.size()
 	_discard_before = victim.deck.discard_pile.size()
@@ -632,6 +636,31 @@ func _step_check_forced_discard() -> void:
 	var victim: PlayerState = _screen.server.state.players[_foe_discard]
 	check(victim.deck.hand.size() == _hand_before - 1 and victim.deck.discard_pile.size() == _discard_before + 1,
 		"щелчок по карте в руке сбросил её")
+	check(not _screen.server.resolver.is_waiting(), "вопрос закрыт")
+
+
+## Devour с рынка (Cult Fanatic): карту выбирают прямо на рынке, без окна.
+func _step_market_devour() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	state.players[me].deck.hand.append("48409")
+	_screen.send(Intent.play_card(me, "48409"))
+	var pending: PendingDecision = _screen.server.resolver.pending
+	check(pending != null and pending.tag == "market", "Cult Fanatic спрашивает карту рынка")
+	check(not _screen._decision_dialog._dim.visible, "экран не затемнён — рынок виден")
+	_market_before = state.market.display.duplicate()
+	var card: CardView = null
+	for c: CardView in _all_cards():
+		if c.clickable and _in_market(c) and c.visible:
+			card = c
+			break
+	check(card != null, "карты рынка подсвечены и кликаются")
+	if card != null:
+		_click(card)
+
+
+func _step_check_market_devour() -> void:
+	check(_screen.server.state.market.display != _market_before, "щелчок по карте рынка её сожрал")
 	check(not _screen.server.resolver.is_waiting(), "вопрос закрыт")
 
 

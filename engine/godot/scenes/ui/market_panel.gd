@@ -17,6 +17,9 @@ extends PanelContainer
 
 signal market_card_clicked(index: int)
 signal supply_card_clicked(card_id: String)
+## Щелчок по карте, когда карта задала вопрос "выбери карту на рынке" —
+## это ответ на вопрос (номер карты), а не покупка.
+signal choice_clicked(index: int)
 
 ## Слот карты маркета — мелкое лицо карты целиком, пиксель в пиксель
 ## (решение владельца, 2026-09-22: карты рынка не обрезаются). Слоты не
@@ -43,6 +46,8 @@ var _empties: Array[Control] = []
 var _boxes: Array[Control] = []
 var _supply_cards: Array[CardView] = []
 var _supply_counts: Array[Label] = []
+## Сейчас на рынке отвечают на вопрос карты (см. choice_clicked).
+var _choosing := false
 
 
 func _init() -> void:
@@ -110,6 +115,13 @@ func update_from_view(view: Dictionary) -> void:
 	var display: Array = market["display"]
 	var legal: Dictionary = view.get("legal", {})
 	var affordable: Array = legal.get("recruit_market", [])
+	# Вопрос "выбери карту на рынке" (devour): кликаются и подсвечены золотом
+	# только карты-варианты (решение владельца, 2026-09-27). Варианты сервер
+	# присылает только решающему, так что у остальных рынок просто заперт.
+	var pd: Dictionary = view.get("pending_decision", {})
+	_choosing = String(pd.get("tag", "")) == "market" and not (pd.get("legal_options", []) as Array).is_empty()
+	if _choosing:
+		affordable = pd["legal_options"]
 	_deck_label.text = "DECK %d" % int(market["deck_size"])
 
 	for i in range(DISPLAY_SLOTS):
@@ -194,7 +206,11 @@ func _ensure_card(i: int, cid: String) -> CardView:
 		# молча ничего не сделать.
 		card.refused.connect(func(_cid: String): card.shake_refusal())
 		var index := i if i < DISPLAY_SLOTS else Market.DEVOURED_TOP_INDEX
-		card.pressed.connect(func(_cid: String): market_card_clicked.emit(index))
+		card.pressed.connect(func(_cid: String):
+			if _choosing:
+				choice_clicked.emit(index)
+			else:
+				market_card_clicked.emit(index))
 		_boxes[i].add_child(card)
 		_cards[i] = card
 		card.flash_arrival()

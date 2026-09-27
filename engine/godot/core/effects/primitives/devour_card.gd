@@ -98,6 +98,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		pd.player_id = player_id
 		pd.prompt = "You may devour a card in the market" if _is_optional() else "Devour a card in the market"
 		pd.choice_type = "target_market_index"
+		pd.tag = "market"  # выбор прямо на рынке справа
 		pd.legal_options = options
 		pd.target_effect = self
 		resolver.request_decision(pd)

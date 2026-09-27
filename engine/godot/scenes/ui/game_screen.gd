@@ -264,6 +264,7 @@ func _build_layout() -> void:
 	_market_panel = MarketPanel.new()
 	_market_panel.market_card_clicked.connect(_on_market_clicked)
 	_market_panel.supply_card_clicked.connect(_on_supply_clicked)
+	_market_panel.choice_clicked.connect(_on_decision_answer)
 	add_child(_market_panel)
 
 	# 3. Стопки кнопками одна под другой в левом нижнем углу: свой сброс,

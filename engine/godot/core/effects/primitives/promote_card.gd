@@ -130,6 +130,8 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	pd.player_id = player_id
 	pd.prompt = "Promote a card"
 	pd.choice_type = "target_card"
+	if source == "hand":
+		pd.tag = "hand"  # выбор прямо в руке внизу экрана
 	pd.legal_options = candidates
 	if up_to:
 		pd.legal_options.append("")

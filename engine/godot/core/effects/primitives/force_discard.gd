@@ -107,10 +107,9 @@ class VictimDiscard extends CardEffect:
 			return
 		if p.deck.hand.is_empty():
 			return
-		_ask(player_id, resolver, "Discard a card", "target_card", p.deck.hand.duplicate(), state)
+		_ask(player_id, resolver, "Discard a card", "target_card", p.deck.hand.duplicate())
 
-	func _ask(player_id: String, resolver: EffectResolver, prompt: String, kind: String, options: Array,
-			state: GameState = null) -> void:
+	func _ask(player_id: String, resolver: EffectResolver, prompt: String, kind: String, options: Array) -> void:
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
 		pd.prompt = prompt
@@ -118,12 +117,7 @@ class VictimDiscard extends CardEffect:
 		if kind == "confirm":
 			pd.source_card = chosen_card  # Ambassador: окно показывает саму карту
 		else:
-			# Выбор прямо в руке; интерфейс пишет, кто и какой картой заставил
-			# сбросить. Карта — последняя сыгранная виновником: сброс всегда
-			# идёт из эффекта только что сыгранной карты.
-			pd.tag = "hand"
-			var played: Array = state.players[causer_id].deck.played_pile if state != null else []
-			pd.data = {"causer": causer_id, "cause_card": String(played.back()) if not played.is_empty() else ""}
+			pd.tag = "hand"  # выбор прямо в руке внизу экрана
 		pd.legal_options = options
 		pd.target_effect = self
 		resolver.request_decision(pd)

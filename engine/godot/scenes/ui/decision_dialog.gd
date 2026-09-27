@@ -42,6 +42,9 @@ var at_top := false
 var _market_display: Array = []
 var _ghost_card := ""
 var _dim: ColorRect
+## Вопрос мерцает (сброс карты — видно, кто сейчас сбрасывает).
+var _blink := false
+var _blink_time := 0.0
 
 
 ## Подпись карты маркета по индексу: название и цена. Публичная — для тестов.
@@ -117,10 +120,12 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_ghost_card = String(view.get("ghost_market_card", ""))
 	var decider := String(pd.get("player_id", ""))
 	var choice_type := String(pd.get("choice_type", ""))
-	# Карту из руки выбирают в самой руке внизу (hand_panel.gd), поэтому
-	# вопрос — такая же полоса сверху, как у цели на доске.
-	var in_hand := String(pd.get("tag", "")) == "hand"
-	var on_board: bool = BOARD_CHOICES.has(choice_type) or in_hand
+	# Карту из руки выбирают в самой руке внизу (hand_panel.gd), с рынка — на
+	# самом рынке (market_panel.gd), поэтому вопрос — такая же полоса сверху,
+	# как у цели на доске.
+	var tag := String(pd.get("tag", ""))
+	var in_hand := tag == "hand"
+	var on_board: bool = BOARD_CHOICES.has(choice_type) or in_hand or tag == "market"
 	var options: Array = pd.get("legal_options", [])
 	visible = true
 	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
@@ -129,13 +134,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_who.text = "%s decides" % EventLogPanel.player_name(decider)
 	_who.modulate = EventLogPanel.player_color(decider)
 	_prompt.text = String(pd.get("prompt", "Choose an option"))
-	var data: Dictionary = pd.get("data", {})
-	if data.has("causer"):
-		# Сброс по чужой карте: кто и чем заставил (Cranium Rats и т.п.).
-		var who := EventLogPanel.player_name(String(data["causer"]))
-		var cause := String(data.get("cause_card", ""))
-		_prompt.text = "%s's %s: discard a card" % [who, _card_label(cause)] if cause != "" \
-			else "%s makes you discard a card" % who
+	# Сброс: крупно и мерцая, цветом игрока — кто сейчас сбрасывает (решение
+	# владельца, 2026-09-27; чья карта заставила — видно в журнале слева).
+	_blink = in_hand and _prompt.text.begins_with("Discard")
+	if _blink:
+		_prompt.text = "%s: discard a card" % EventLogPanel.player_name(decider)
+		_prompt.add_theme_color_override("font_color", EventLogPanel.player_color(decider))
+	else:
+		_prompt.remove_theme_color_override("font_color")
+		_prompt.modulate.a = 1.0
 
 	for child in _options_box.get_children():
 		_options_box.remove_child(child)
@@ -157,11 +164,19 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# только для "отказаться", если решение необязательное.
 		# Вопрос — крупный текст без рамки над доской (решение владельца,
 		# 2026-09-26), подсказка про подсветку — в мелкой строке над ним.
-		_who.text += " — click a gold card in your hand" if in_hand \
-			else " — click a gold target on the board"
-		if options.has(""):
-			_add_button("Skip", "")
-			make_plain(_options_box.get_child(0) as Button)
+		if in_hand:
+			_who.text += " — click a gold card in your hand"
+		elif tag == "market":
+			_who.text += " — click a gold card in the market"
+		else:
+			_who.text += " — click a gold target on the board"
+		# Отказ: "" у целей и карт руки, -1 у номера карты рынка. Перебором, а
+		# не has(): список карт руки типизирован строками, has(-1) там — ошибка.
+		for o in options:
+			if (typeof(o) == TYPE_STRING and o == "") or (typeof(o) == TYPE_INT and o == -1):
+				_add_button("Skip", o)
+				make_plain(_options_box.get_child(0) as Button)
+				break
 	elif choice_type == "confirm" and CardView.pixel_texture(String(pd.get("source_card", ""))) != null:
 		# "You may..." — как выбор карты для Promote: сама карта (щелчок —
 		# "да") и под ней Skip ("нет").
@@ -233,6 +248,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Вопрос с переносом слов знает свою высоту только после раскладки по новой
 	# ширине: до неё окно карт-вариантов выходило вдвое выше содержимого.
 	_place.call_deferred(on_board or decider != viewer_id)
+
+
+## Мерцание вопроса: плавно от полной яркости до трети, полтора раза в секунду.
+func _process(delta: float) -> void:
+	if not _blink or not visible:
+		return
+	_blink_time += delta
+	_prompt.modulate.a = 0.35 + 0.65 * (0.5 + 0.5 * cos(_blink_time * TAU * 1.5))
 
 
 ## Плашка у верхнего края (не закрывает доску) или окно по центру.
