@@ -23,6 +23,14 @@ static func trigger(state: GameState, reason: String) -> void:
 	state.final_round_ends_after_index = last_index
 
 
+## Не правило игры, а сетевой случай: игрок отключился и не вернулся —
+## партия кончается сразу, без последнего круга; счёт — текущий.
+static func abandon(state: GameState, player_id: String) -> void:
+	state.game_over = true
+	state.game_end_reason = "abandoned"
+	state.abandoned_by = player_id
+
+
 ## Вызывать сразу после того, как текущий игрок закончил ход (после
 ## TurnEngine.end_turn), ДО передачи хода следующему. Возвращает true, если
 ## партия на этом закончилась (следующего хода не будет).

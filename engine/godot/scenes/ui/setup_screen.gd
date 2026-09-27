@@ -23,7 +23,8 @@ extends Control
 signal started(player_ids: Array[String], mode: String)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
 ## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN),
-## "find" — поиск игры на сервере (режим всегда NetSession.MATCH_MODE).
+## "find" — поиск игры на сервере (режим всегда NetSession.MATCH_MODE),
+## "resume" — вернуться в незаконченную онлайн-партию (NetSession.saved_game).
 signal online_requested(kind: String, player_count: int, mode: String)
 ## Открыть профиль игрока (имя и герб, ProfileScreen).
 signal profile_requested
@@ -175,6 +176,10 @@ func _build_main() -> void:
 	_col.add_child(_profile_row())
 	_col.add_child(HSeparator.new())
 
+	# Незаконченная онлайн-партия (игру закрыли или она упала) — вернуться в неё.
+	if not NetSession.saved_game().is_empty():
+		_col.add_child(_big_button("RETURN TO GAME", "Your online game is not over yet: go back to your seat.",
+			func(): online_requested.emit("resume", 0, "")))
 	_col.add_child(_big_button("PLAY", "Start a game: online or at this computer.",
 		func(): show_page(PAGE_PLAY)))
 	_col.add_child(_big_button("LIBRARY", "How to play and every card of the game.",

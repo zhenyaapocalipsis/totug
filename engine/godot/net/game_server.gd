@@ -20,6 +20,7 @@ enum Error {
 	AWAITING_DECISION,     # резолвер ждёт decision — годится только MAKE_DECISION
 	NO_DECISION_PENDING,   # пришёл MAKE_DECISION, а решать сейчас нечего
 	INVALID_ACTION,        # правило отказало (нет ресурсов, не та цель, и т.п.)
+	PAUSED,                # сетевая партия на паузе (кто-то отключился или нажал паузу)
 }
 
 var state: GameState
@@ -85,6 +86,18 @@ func apply_intent(intent: Intent) -> Dictionary:
 		"events": resolver.events.duplicate(),
 		"views": _build_views(),
 	}
+
+
+## Сетевая партия: игрок player_id отключился и не вернулся вовремя — партия
+## кончается прямо сейчас, по текущему счёту (решение владельца, 2026-09-27).
+## Недорешённый вопрос карты и отложенный конец хода отбрасываются. Возвращает
+## то же, что apply_intent.
+func abandon(player_id: String) -> Dictionary:
+	resolver = EffectResolver.new()
+	_end_turn_pending_for = ""
+	GameEnd.abandon(state, player_id)
+	resolver.log_event("game_abandoned", {"player_id": player_id})
+	return {"error": Error.OK, "events": resolver.events.duplicate(), "views": _build_views()}
 
 
 func _build_views() -> Dictionary:

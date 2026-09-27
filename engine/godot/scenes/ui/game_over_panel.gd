@@ -27,6 +27,7 @@ const COLUMNS := [
 	["tokens", "VP"],
 ]
 
+var _head: Label
 var _title: Label
 var _grid: GridContainer
 var _decks: Control
@@ -66,11 +67,11 @@ func _init() -> void:
 	_decks.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_decks)
 
-	var head := Label.new()
-	head.text = "GAME OVER"
-	head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(head)
+	_head = Label.new()
+	_head.text = "GAME OVER"
+	_head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	_head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_head)
 
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
@@ -98,6 +99,10 @@ func update_from_view(view: Dictionary) -> void:
 	if not bool(view.get("game_over", false)) or not view.has("final_scores"):
 		return
 	_view = view
+	# Сетевая партия кончилась досрочно: кто-то отключился и не вернулся.
+	var gone := String(view.get("abandoned_by", ""))
+	_head.text = "GAME OVER" if gone == "" else \
+		"GAME OVER: %s DID NOT COME BACK. RATING DOES NOT CHANGE" % EventLogPanel.player_name(gone).to_upper()
 	var scores: Dictionary = view["final_scores"]
 	var winners: Array = view.get("winners", [])
 

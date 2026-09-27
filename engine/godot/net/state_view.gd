@@ -27,6 +27,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"game_over": state.game_over,
 		"game_end_triggered": state.game_end_triggered,
 		"game_end_reason": state.game_end_reason,
+		"abandoned_by": state.abandoned_by,
 		"troops": state.troops.duplicate(),
 		"site_control": _site_control(state),
 		"spies": _duplicate_spies(state.spies),

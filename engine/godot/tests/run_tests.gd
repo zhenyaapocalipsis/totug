@@ -15,6 +15,9 @@ func _initialize() -> void:
 	print("\n=== тесты ядра ===\n")
 	# Свой файл профиля: тесты экрана профиля не должны трогать настоящий.
 	PlayerProfile.path_override = "user://profile_test.cfg"
+	# Свой файл запомненной онлайн-партии — не трогать настоящий.
+	NetSession.resume_path = "user://online_game_test.cfg"
+	NetSession.forget_game()
 
 	test_rotation_math()
 	test_edge_rotation()
@@ -101,6 +104,8 @@ func _initialize() -> void:
 
 	# этап 7: сохранение партии и восстановление после перезапуска
 	test_game_journal_replay()
+	test_room_pause()
+	test_resume_saved_game()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -3088,3 +3093,107 @@ func test_game_journal_replay() -> void:
 	check_eq(room.claim(5, "key-red"), "red", "переподключение по верному ключу находит цвет")
 	check_eq(room.claim(6, "key-red"), "", "тот же ключ второй раз — место уже занято")
 	check_eq(room.claim(7, "nope"), "", "чужой ключ — отказ")
+
+
+## Пауза сетевой партии (решение владельца, 2026-09-27): отключился — партия
+## стоит; вернулся — идёт дальше; не вернулся за отведённое время — конец
+## партии по текущему счёту без рейтинга. Общая пауза кнопкой: снять может
+## только поставивший, сама снимается по времени. Без сети — прямо на GameRoom.
+func test_room_pause() -> void:
+	section("сеть: пауза при отключении и общая пауза")
+	var room := GameRoom.new("PAUS", 2, GameSetup.MODE_STANDARD)
+	room.add(10)
+	room.add(11)
+	room.keys = {"red": "key-red", "blue": "key-blue"}
+	room.deal(5)
+	check(not room.is_paused(), "партия только началась — паузы нет")
+
+	room.seats.erase(11)
+	room.mark_absent("blue")
+	check(room.is_paused(), "blue отключился — партия на паузе")
+	check_eq(room.pause_status(300.0, 300.0)["absent"], {"blue": 300.0}, "в паузе: кого ждём и сколько")
+	check(room.tick_pause(100.0, 300.0, 300.0).is_empty(), "100 с из 300 — ещё ждём")
+	check_eq(room.pause_status(300.0, 300.0)["absent"], {"blue": 200.0}, "время ожидания убывает")
+	check_eq(room.claim(12, "key-blue"), "blue", "blue вернулся на своё место")
+	check(not room.is_paused(), "вернулся — пауза снята")
+
+	check(room.set_manual_pause("red", true), "red ставит общую паузу")
+	check(room.is_paused(), "общая пауза — партия стоит")
+	check(not room.set_manual_pause("blue", false), "чужую паузу снять нельзя")
+	check(not room.set_manual_pause("blue", true), "вторую паузу поверх первой не поставить")
+	check_eq(room.pause_status(300.0, 300.0)["by"], "red", "в паузе видно, кто её поставил")
+	check_eq(room.tick_pause(300.0, 300.0, 300.0), {"resumed": true}, "через 5 минут пауза снимается сама")
+	check(not room.is_paused(), "после конца общей паузы партия идёт")
+	check(room.set_manual_pause("red", true) and room.set_manual_pause("red", false),
+		"поставивший снимает свою паузу сам")
+
+	# Экран партии: плашка паузы и кнопка RESUME только у поставившего.
+	var net := NetSession.new()
+	var view := StateView.for_player_with_pending(room.server.state, "red", room.server.resolver.pending)
+	var screen := GameScreen.new(0, [], [], GameSetup.MODE_STANDARD,
+		{"session": net, "seat": "red", "board": StateView.board_snapshot(room.server.state), "view": view})
+	screen._on_pause_changed({"absent": {"blue": 120.0}, "by": "", "left": 0.0})
+	check(screen.is_paused() and screen._pause_overlay.visible, "экран: отключился соперник — плашка паузы")
+	check(not screen._pause_resume.visible, "экран: пока ждём отключившегося, RESUME нет")
+	screen._on_pause_changed({"absent": {}, "by": "red", "left": 300.0})
+	check(screen._pause_resume.visible, "экран: своя общая пауза — есть RESUME")
+	screen._on_pause_changed({"absent": {}, "by": "", "left": 0.0})
+	check(not screen.is_paused() and not screen._pause_overlay.visible, "экран: пауза снята — плашки нет")
+	screen.free()
+	net.free()
+
+	var empty := GameRoom.new("NONE", 2, GameSetup.MODE_STANDARD)
+	empty.add(20)
+	empty.add(21)
+	empty.deal(6)
+	empty.seats.clear()
+	empty.mark_absent("red")
+	empty.mark_absent("blue")
+	check(empty.tick_pause(1000.0, 300.0, 300.0).is_empty(), "за столом никого — время ожидания не идёт")
+
+	room.seats.erase(12)
+	room.mark_absent("blue")
+	check(room.tick_pause(299.0, 300.0, 300.0).is_empty(), "299 с — ещё ждём")
+	check_eq(room.tick_pause(2.0, 300.0, 300.0), {"abandon": "blue"}, "5 минут без blue — конец партии")
+	var result := room.abandon("blue")
+	var red_view: Dictionary = result["views"]["red"]
+	check(room.server.state.game_over and bool(red_view["game_over"]), "партия окончена")
+	check_eq(red_view["abandoned_by"], "blue", "в срезе видно, кто не вернулся")
+	check(red_view.has("final_scores") and red_view.has("winners"), "очки посчитаны по текущему состоянию")
+	check(room.rated, "рейтинг за такую партию не считается")
+	check(not room.is_paused(), "после конца партии паузы нет")
+	check_eq(String((result["events"] as Array)[0]["type"]), "game_abandoned", "событие о конце партии")
+	var panel := GameOverPanel.new()
+	panel.update_from_view(red_view)
+	check(panel._head.text.contains("DID NOT COME BACK"), "итоги: написано, что игрок не вернулся")
+	panel.free()
+
+
+## RETURN TO GAME в главном меню — только когда есть запомненная партия.
+func test_resume_saved_game() -> void:
+	section("сеть: возврат в незаконченную партию из меню")
+	NetSession.forget_game()
+	check(NetSession.saved_game().is_empty(), "запомненной партии нет")
+	var menu := SetupScreen.new()
+	check(_find_button(menu, "RETURN TO GAME") == null, "без партии кнопки RETURN TO GAME нет")
+	menu.free()
+
+	var net := NetSession.new()
+	net._remember_server("127.0.0.1", NetSession.SERVER_PORT)
+	net.room_code = "WXYZ"
+	net._remember_game()
+	check_eq(NetSession.saved_game(), {"address": "127.0.0.1", "port": NetSession.SERVER_PORT,
+		"code": "WXYZ", "by_code": true}, "партия запомнена: сервер и код комнаты")
+	menu = SetupScreen.new()
+	var got := []
+	menu.online_requested.connect(func(k: String, _c: int, _m: String): got.append(k))
+	var button := _find_button(menu, "RETURN TO GAME")
+	check(button != null, "есть партия — на главной кнопка RETURN TO GAME")
+	if button != null:
+		button.pressed.emit()
+	check_eq(got, ["resume"], "RETURN TO GAME открывает возврат в партию")
+	menu.free()
+
+	net._forget_if_over({"game_over": true})
+	check(NetSession.saved_game().is_empty(), "партия кончилась — запись стёрта")
+	net.free()

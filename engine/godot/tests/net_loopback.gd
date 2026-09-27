@@ -16,6 +16,8 @@ extends SceneTree
 ##             рассадка, срезы рук и стартовые сайты не завязаны на «ровно 2».
 ##   match   — поиск игры: очереди на 2 и на 3 игрока, стол RANDOM 4
 ##             собирается и раздаётся сервером сам, ушедший из очереди убран.
+##   pause   — общая пауза кнопкой, отказ в ходе на паузе; отключившийся не
+##             вернулся — партия кончается по текущему счёту без рейтинга.
 ##
 ##   godot --headless --path . --script res://tests/net_loopback.gd
 ## Последняя строка: "сеть: пройдено N, провалено 0".
@@ -26,6 +28,7 @@ const SERVER_PORT := 7791
 ## моменту уже закрыт «перезапуском», но проще не делить один порт.
 const SERVER4_PORT := 7792
 const MATCH_PORT := 7793
+const PAUSE_PORT := 7794
 ## "server" — самый длинный сценарий: раздача, чат, переподключение и
 ## «перезапуск» сервера (этап 7) в одном TIMEOUT-окне без сброса _elapsed.
 const TIMEOUT := 30.0
@@ -51,6 +54,8 @@ var lost: Dictionary = {}
 var rejoined: Dictionary = {}
 ## Последнее «в очереди waiting из needed» у каждого (поиск игры).
 var queue_seen: Dictionary = {}
+## Последняя пауза от сервера у каждого (NetSession.pause_changed).
+var pause_seen: Dictionary = {}
 var server: NetSession
 var _answered_at := -1
 var _spoof_sent := false
@@ -71,11 +76,16 @@ var _reconnect_key := ""
 var _reconnect_seat := ""
 var _restart_seat0 := ""
 var _restart_seat1 := ""
+## Сценарий pause: кто отключился и не вернулся.
+var _absent_seat := ""
 
 
 func _initialize() -> void:
 	# Свой файл профиля: NetSession пишет в профиль рейтинг и ключ.
 	PlayerProfile.path_override = "user://profile_nettest.cfg"
+	# И свой файл запомненной партии (RETURN TO GAME).
+	NetSession.resume_path = "user://online_game_nettest.cfg"
+	NetSession.forget_game()
 
 
 func _process(delta: float) -> bool:
@@ -245,6 +255,61 @@ func _process(delta: float) -> bool:
 			if server.queued.size() == 1 and (server.queues[2] as Array).is_empty() and lost.has(_impostor):
 				check(String(lost[_impostor]).contains("is taken"), "[match] занятое имя в очереди — отказ: %s" % lost[_impostor])
 				check(server.queued.has(server.queues[3][0]), "[match] ушедший убран из очереди, ждущий троих остался")
+				_start_pause()
+		"pause_wait_code":
+			if players[0].room_code != "":
+				players[1].enter_room("127.0.0.1", PAUSE_PORT, players[0].room_code)
+				_step = "pause_wait_join"
+		"pause_wait_join":
+			if players[1].seat != "":
+				players[0].start_game(0)
+				_step = "pause_dealt"
+		"pause_dealt":
+			if not views[players[0]].is_empty() and not views[players[1]].is_empty():
+				_step = "pause_setup"
+		"pause_setup":
+			_answer_setup("pause_manual")
+		"pause_manual":
+			check_eq_str(String(NetSession.saved_game().get("code", "")), players[0].room_code,
+				"[pause] партия запомнена для RETURN TO GAME")
+			players[0].request_pause(true)
+			_step = "pause_manual_wait"
+		"pause_manual_wait":
+			if String((pause_seen.get(players[1], {}) as Dictionary).get("by", "")) == players[0].seat:
+				check(server.rooms.values()[0].is_paused(), "[pause] общая пауза поставлена, второй о ней узнал")
+				players[1].request_pause(false)
+				errors[_current_session()].clear()
+				_current_session().send_intent(Intent.end_turn(_turn_player))
+				_step = "pause_refused"
+		"pause_refused":
+			if not errors[_current_session()].is_empty():
+				check(int(errors[_current_session()][-1]) == GameServer.Error.PAUSED,
+					"[pause] на паузе ход не принимается: %d" % int(errors[_current_session()][-1]))
+				check(server.rooms.values()[0].paused_by == players[0].seat, "[pause] чужую паузу снять нельзя")
+				players[0].request_pause(false)
+				_step = "pause_resume_wait"
+		"pause_resume_wait":
+			if (pause_seen.get(players[1], {}) as Dictionary).get("by", "?") == "":
+				check(not server.rooms.values()[0].is_paused(), "[pause] поставивший снял паузу")
+				_absent_seat = players[1].seat
+				players[1].close()
+				_step = "pause_absent_wait"
+		"pause_absent_wait":
+			if ((pause_seen.get(players[0], {}) as Dictionary).get("absent", {}) as Dictionary).has(_absent_seat):
+				check(server.rooms.values()[0].is_paused(), "[pause] второй отключился — партия встала, первый знает")
+				_step = "pause_abandon_wait"
+		"pause_abandon_wait":
+			if bool(views[players[0]].get("game_over", false)):
+				var room: GameRoom = server.rooms.values()[0]
+				check_eq_str(String(views[players[0]].get("abandoned_by", "")), _absent_seat,
+					"[pause] не вернулся — партия окончена, виновник назван")
+				check(views[players[0]].has("final_scores"), "[pause] очки посчитаны")
+				check(room.rated and server.ratings.accounts.is_empty() and not ratings.has(players[0]),
+					"[pause] рейтинг не менялся")
+				check(GameJournal.load_game(room.code, SAVES_DIR).is_empty(), "[pause] сохранение партии стёрто")
+				check(NetSession.saved_game().is_empty(), "[pause] запомненная партия забыта")
+				check(((pause_seen[players[0]] as Dictionary)["absent"] as Dictionary).is_empty(),
+					"[pause] после конца партии паузы нет")
 				return _finish()
 	return false
 
@@ -278,6 +343,43 @@ func _start_match() -> void:
 		players[i].find_match("127.0.0.1", MATCH_PORT, 2)
 	players[3].find_match("127.0.0.1", MATCH_PORT, 3)
 	_step = "match_wait"
+
+
+## Пауза (решение владельца, 2026-09-27): первый ставит общую паузу — ход не
+## принимается, второй её снять не может; первый снимает. Потом второй
+## отключается — партия встаёт, а когда он не возвращается (здесь 1.5 с вместо
+## 5 минут), партия кончается по текущему счёту без рейтинга.
+func _start_pause() -> void:
+	for p in players:
+		p.close()
+	if server != null:
+		server.close()
+	_scenario = "pause"
+	_reset()
+	_clear_saves_dir()
+	server = _session()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	server.ratings = RatingBook.new(RATINGS_PATH)
+	server.saves_dir = SAVES_DIR
+	server.abandon_seconds = 1.5
+	check(server.serve(PAUSE_PORT, true) == OK, "[pause] сервер открыл порт")
+	var a := _session()
+	var b := _session()
+	players = [a, b]
+	for p in players:
+		_track(p)
+	a.create_room("127.0.0.1", PAUSE_PORT, 2, GameSetup.MODE_STANDARD)
+	_step = "pause_wait_code"
+
+
+## Чей сейчас ход (по _turn_player, его ставит _answer_setup).
+func _current_session() -> NetSession:
+	return players[0] if players[0].seat == _turn_player else players[1]
+
+
+func check_eq_str(got: String, expected: String, description: String) -> void:
+	check(got == expected, "%s (получено «%s», ждали «%s»)" % [description, got, expected])
 
 
 ## Второй игрок теряет связь и возвращается под тем же ключом профиля
@@ -429,6 +531,7 @@ func _reset() -> void:
 	lost.clear()
 	rejoined.clear()
 	queue_seen.clear()
+	pause_seen.clear()
 
 
 func _session() -> NetSession:
@@ -461,6 +564,7 @@ func _track(p: NetSession) -> void:
 	p.connection_lost.connect(func(reason: String): lost[p] = reason)
 	p.player_rejoined.connect(func(who: String): rejoined[p] = who)
 	p.queue_changed.connect(func(w: int, n: int): queue_seen[p] = [w, n])
+	p.pause_changed.connect(func(s: Dictionary): pause_seen[p] = s)
 
 
 # --- общие шаги партии -------------------------------------------------------

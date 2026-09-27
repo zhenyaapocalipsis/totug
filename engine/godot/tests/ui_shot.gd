@@ -121,6 +121,11 @@ func _run_scenario() -> void:
 				for i_r in st.turn_order.size():
 					fake[st.turn_order[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r}
 				_screen._game_over_panel.set_ratings(fake)
+		"paused":
+			# Плашка паузы сетевой партии: один отключился, другой поставил
+			# общую паузу. Связь не нужна — экрану хватает того, что она есть.
+			_screen.net = NetSession.new()
+			_screen._on_pause_changed({"absent": {"blue": 272.0}, "by": "red", "left": 131.0})
 		"play_card":
 			# Разыграть первую карту руки текущего игрока.
 			var pid: String = _screen.server.state.current_player()

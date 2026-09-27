@@ -163,6 +163,14 @@ var _game_over_panel: GameOverPanel
 ## Связь оборвалась (только сетевая партия): кнопка вручную повторить попытку.
 var _reconnect_banner: PanelContainer
 var _reconnect_status: Label
+## Пауза сетевой партии: последняя пауза от сервера (NetSession.pause_changed),
+## сколько секунд прошло с её прихода, и плашка с затемнением.
+var _pause: Dictionary = {}
+var _pause_elapsed := 0.0
+var _pause_overlay: Control
+var _pause_lines: VBoxContainer
+var _pause_hint: Label
+var _pause_resume: Button
 
 ## Таймер хода: сколько секунд осталось и чей ход сейчас отсчитываем — смена
 ## ходящего перезапускает отсчёт.
@@ -202,8 +210,10 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 			_reconnect_banner.visible = true
 			_reconnect_status.text = reason + ".")
 		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
+		net.pause_changed.connect(_on_pause_changed)
 		_build_layout()
 		refresh(online["view"])
+		_on_pause_changed(net.pause_status)
 		_note("Online game started. You play %s." % EventLogPanel.player_name(viewer_id))
 		return
 	if ids.size() >= MIN_PLAYERS:
@@ -404,9 +414,18 @@ func _build_layout() -> void:
 	_preview.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_preview)
 
-	# Меню по Esc: главное меню или выход из игры.
+	# Пауза сетевой партии: затемнение (щелчки до игры не доходят) и плашка —
+	# кого ждём и сколько. Раньше меню по Esc в дереве: оно должно оставаться
+	# доступным и во время паузы.
+	_build_pause_overlay()
+
+	# Меню по Esc: главное меню или выход из игры; в сети — ещё и общая пауза.
 	_pause_menu = PauseMenu.new()
 	_pause_menu.main_menu_requested.connect(func(): main_menu_requested.emit())
+	if net != null:
+		_pause_menu.add_button("PAUSE FOR ALL", func():
+			_pause_menu.visible = false
+			net.request_pause(true))
 	add_child(_pause_menu)
 
 	# Связь оборвалась (этап 7): заметная плашка сверху с кнопкой переподключения.
@@ -440,6 +459,124 @@ func _build_layout() -> void:
 	add_child(_game_over_panel)
 
 	_layout()
+
+
+func _build_pause_overlay() -> void:
+	_pause_overlay = Control.new()
+	_pause_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Над картами, баннером хода и подсказками, под итогами и меню по Esc.
+	_pause_overlay.z_index = 1040
+	_pause_overlay.visible = false
+	var dim := ColorRect.new()
+	dim.color = PixelTheme.DIM
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_overlay.add_child(dim)
+	var centre := CenterContainer.new()
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_overlay.add_child(centre)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", zone_style(6))
+	centre.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	card.add_child(col)
+	var title := Label.new()
+	title.text = "GAME PAUSED"
+	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	title.add_theme_color_override("font_color", PixelTheme.GOLD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
+	_pause_lines = VBoxContainer.new()
+	_pause_lines.add_theme_constant_override("separation", 2)
+	col.add_child(_pause_lines)
+	_pause_hint = Label.new()
+	_pause_hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	_pause_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_pause_hint)
+	_pause_resume = Button.new()
+	_pause_resume.text = "RESUME"
+	_pause_resume.custom_minimum_size = Vector2(90, 16)
+	_pause_resume.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	SetupScreen._style_button(_pause_resume)
+	_pause_resume.pressed.connect(func(): net.request_pause(false))
+	col.add_child(_pause_resume)
+	add_child(_pause_overlay)
+
+
+## Новая пауза от сервера (NetSession.pause_changed): кто отключился, кто
+## поставил общую паузу. Отсчёт дальше тикает здесь же, в _tick_pause.
+func _on_pause_changed(status: Dictionary) -> void:
+	var was_paused := is_paused()
+	_pause = status.duplicate(true)
+	_pause_elapsed = 0.0
+	var paused := is_paused()
+	if paused and not was_paused and is_inside_tree():
+		_request_attention()
+	elif was_paused and not paused and not bool(_view.get("game_over", false)):
+		_note("The game goes on.")
+	_rebuild_pause_lines()
+	_tick_pause(0.0)
+
+
+## Сетевая партия стоит: кто-то отключился или поставил общую паузу.
+func is_paused() -> bool:
+	if net == null or _pause.is_empty() or bool(_view.get("game_over", false)):
+		return false
+	return not (_pause.get("absent", {}) as Dictionary).is_empty() or String(_pause.get("by", "")) != ""
+
+
+## Строки плашки: по одной на отключившегося и на общую паузу. Счёт времени
+## в них обновляет _tick_pause.
+func _rebuild_pause_lines() -> void:
+	for child in _pause_lines.get_children():
+		_pause_lines.remove_child(child)
+		child.queue_free()
+	var absent: Dictionary = _pause.get("absent", {})
+	for pid: String in absent:
+		_pause_lines.add_child(_pause_line(pid, "%s DISCONNECTED" % EventLogPanel.player_name(pid).to_upper()))
+	var by := String(_pause.get("by", ""))
+	if by != "":
+		var who := "YOU" if by == viewer_id else EventLogPanel.player_name(by).to_upper()
+		_pause_lines.add_child(_pause_line(by, "PAUSED BY %s" % who))
+	_pause_hint.text = "If they do not return in time, the game ends with the current score.\nRating does not change." \
+		if not absent.is_empty() else "The game goes on by itself when the time is up."
+	_pause_resume.visible = by == viewer_id and absent.is_empty()
+
+
+func _pause_line(pid: String, text: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	var name_label := Label.new()
+	name_label.text = text
+	name_label.add_theme_color_override("font_color", EventLogPanel.player_color(pid))
+	row.add_child(name_label)
+	var time_label := Label.new()
+	time_label.add_theme_color_override("font_color", PixelTheme.TEXT)
+	row.add_child(time_label)
+	return row
+
+
+## Плашка паузы видна, пока партия стоит; время в строках убывает.
+func _tick_pause(delta: float) -> void:
+	var paused := is_paused()
+	_pause_overlay.visible = paused
+	if not paused:
+		return
+	_pause_elapsed += delta
+	var lefts: Array[float] = []
+	var absent: Dictionary = _pause.get("absent", {})
+	for pid: String in absent:
+		lefts.append(float(absent[pid]))
+	if String(_pause.get("by", "")) != "":
+		lefts.append(float(_pause.get("left", 0.0)))
+	var rows := _pause_lines.get_children()
+	for i in mini(rows.size(), lefts.size()):
+		var left := int(ceilf(maxf(0.0, lefts[i] - _pause_elapsed)))
+		((rows[i] as HBoxContainer).get_child(1) as Label).text = "%d:%02d" % [left / 60, left % 60]
 
 
 func _square_button() -> Button:
@@ -1074,6 +1211,7 @@ static func _error_name(err: int) -> String:
 		GameServer.Error.NO_DECISION_PENDING: return "there is no question to answer"
 		GameServer.Error.INVALID_ACTION: return "this action is not legal right now"
 		GameServer.Error.GAME_OVER: return "the game is over"
+		GameServer.Error.PAUSED: return "the game is paused"
 		_: return "error %d" % err
 
 
@@ -1087,6 +1225,7 @@ func _process(delta: float) -> void:
 		return
 	_pulse_end_turn(delta)
 	_tick_space_hold(delta)
+	_tick_pause(delta)
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
@@ -1110,8 +1249,8 @@ func _process(delta: float) -> void:
 		_tick_decision_timer(pending, delta)
 		return
 	_decision_key = ""
-	# Пока открыто меню паузы, таймер хода стоит.
-	if not _pause_menu.visible:
+	# Пока открыто меню паузы или сетевая партия на паузе, таймер хода стоит.
+	if not _clock_stopped():
 		_time_left = maxf(0.0, _time_left - delta)
 	_show_time(_time_left)
 
@@ -1162,7 +1301,7 @@ func _tick_decision_timer(pending: Dictionary, delta: float) -> void:
 		_decision_key = key
 		_decision_left = DECISION_SECONDS
 		_auto_answered = false
-	if not _pause_menu.visible:
+	if not _clock_stopped():
 		_decision_left = maxf(0.0, _decision_left - delta)
 	_show_time(_decision_left)
 	if _decision_left > 0.0 or _auto_answered or String(pending["player_id"]) != viewer_id:
@@ -1173,6 +1312,10 @@ func _tick_decision_timer(pending: Dictionary, delta: float) -> void:
 	_auto_answered = true
 	_note("Time is up — an answer was chosen automatically.")
 	_on_decision_answer(auto_decision_answer(options))
+
+
+func _clock_stopped() -> bool:
+	return _pause_menu.visible or is_paused()
 
 
 ## Ответ по истечении времени: отказ, если он разрешён ("" / -1 / false),

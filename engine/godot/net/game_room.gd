@@ -48,6 +48,15 @@ var cached_board: Dictionary = {}
 ## GameJournal.save() и для restore() после перезапуска сервера.
 var log: Array = []
 
+## Пауза: партия стоит, ходы не принимаются (NetSession._room_apply). Две
+## причины. absent — кто отключился посреди партии: цвет -> сколько секунд
+## его уже нет (не вернулся за NetSession.abandon_seconds — партия кончается).
+## paused_by — кто поставил общую паузу кнопкой, pause_time — сколько она
+## уже длится (через NetSession.pause_seconds снимается сама).
+var absent: Dictionary = {}
+var paused_by := ""
+var pause_time := 0.0
+
 
 func _init(room_code: String, player_count: int, game_mode: String) -> void:
 	code = room_code
@@ -90,6 +99,79 @@ func remove(peer: int) -> void:
 	seats.erase(peer)
 	if owner_peer == peer:
 		owner_peer = int(seats.keys()[0]) if not seats.is_empty() else 0
+
+
+## Партия идёт (раздана и не окончена) — только в ней бывает пауза.
+func in_play() -> bool:
+	return started and server != null and not server.state.game_over
+
+
+func is_paused() -> bool:
+	return in_play() and (not absent.is_empty() or paused_by != "")
+
+
+## Отключился посреди партии: партия встаёт, пока он не вернётся. Его общая
+## пауза, если была, снимается — теперь партию держит его отсутствие.
+func mark_absent(pid: String) -> void:
+	if not in_play() or pid == "":
+		return
+	absent[pid] = 0.0
+	if paused_by == pid:
+		paused_by = ""
+
+
+## Пауза для игроков: {absent: {цвет: секунд до конца партии}, by: кто
+## поставил общую паузу ("" — никто), left: секунд до её конца}.
+func pause_status(abandon_seconds: float, pause_seconds: float) -> Dictionary:
+	var gone := {}
+	if in_play():
+		for pid: String in absent:
+			gone[pid] = maxf(0.0, abandon_seconds - float(absent[pid]))
+	var by := paused_by if in_play() else ""
+	return {"absent": gone, "by": by, "left": maxf(0.0, pause_seconds - pause_time) if by != "" else 0.0}
+
+
+## Время паузы идёт. Считаем, только пока за столом кто-то есть: после
+## перезапуска сервера отсутствуют все, и ждать им некого. Возвращает, что
+## случилось: {abandon: цвет} — кто-то не вернулся вовремя, партию пора
+## кончать; {resumed: true} — общая пауза кончилась сама; {} — ничего.
+func tick_pause(delta: float, abandon_seconds: float, pause_seconds: float) -> Dictionary:
+	if not is_paused() or seats.is_empty():
+		return {}
+	for pid: String in absent.keys():
+		absent[pid] = float(absent[pid]) + delta
+		if float(absent[pid]) >= abandon_seconds:
+			return {"abandon": pid}
+	if paused_by != "":
+		pause_time += delta
+		if pause_time >= pause_seconds:
+			paused_by = ""
+			return {"resumed": true}
+	return {}
+
+
+## Общая пауза кнопкой: поставить может любой (если её ещё нет), снять —
+## только тот, кто поставил. Возвращает true, если пауза изменилась.
+func set_manual_pause(pid: String, on: bool) -> bool:
+	if not in_play() or pid == "":
+		return false
+	if on and paused_by == "":
+		paused_by = pid
+		pause_time = 0.0
+		return true
+	if not on and paused_by == pid:
+		paused_by = ""
+		return true
+	return false
+
+
+## Партия кончилась досрочно: отсутствующий не вернулся. Рейтинг не меняется
+## (rated — будто уже посчитан). Возвращает то же, что GameServer.apply_intent.
+func abandon(pid: String) -> Dictionary:
+	absent.clear()
+	paused_by = ""
+	rated = true
+	return server.abandon(pid)
 
 
 func owner_seat() -> String:
@@ -142,6 +224,7 @@ func claim(peer: int, key: String) -> String:
 	for pid: String in keys.keys():
 		if String(keys[pid]) == key and not seats.values().has(pid):
 			seats[peer] = pid
+			absent.erase(pid)
 			if owner_peer == 0:
 				owner_peer = peer
 			return pid
@@ -169,4 +252,8 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 		room.server.apply_intent(Intent.from_dict(d as Dictionary))
 		room.log.append(d)
 	room.cached_board = StateView.board_snapshot(state)
+	# Никто ещё не вернулся: партия стоит, пока не соберутся все (время
+	# отсутствия пойдёт, когда за столом появится первый — tick_pause).
+	for pid: String in room.ids:
+		room.mark_absent(pid)
 	return room

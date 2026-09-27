@@ -34,9 +34,12 @@ var vp_bank: VPBank
 var rng: RandomNumberGenerator
 
 var game_end_triggered: bool = false
-var game_end_reason: String = ""  # "last_troop" | "market_empty"
+var game_end_reason: String = ""  # "last_troop" | "market_empty" | "abandoned"
 var final_round_ends_after_index: int = -1
 var game_over: bool = false
+## Сетевая партия кончилась досрочно: этот игрок отключился и не вернулся
+## (GameEnd.abandon). Пусто — партия кончилась по правилам.
+var abandoned_by: String = ""
 
 ## Этап 5: аспекты карт, сыгранных (или сожранных) в этот ход — используется
 ## FocusEffect ("<Aspect> Focus ► ..."). Сбрасывается в TurnEngine.start_turn().

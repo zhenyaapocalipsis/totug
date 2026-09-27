@@ -18,6 +18,14 @@ extends Node
 ## шлёт Intent словарём и получает свой срез (StateView) — чужую руку он не
 ## получает вовсе.
 ##
+## Пауза (решение владельца, 2026-09-27): кто-то отключился посреди партии —
+## партия встаёт у всех (ходы не принимаются, таймеры стоят), пока он не
+## вернётся; не вернулся за abandon_seconds — партия кончается по текущему
+## счёту, рейтинг не меняется. Общую паузу может поставить и любой игрок
+## кнопкой; снять её может только он, а через pause_seconds она снимается сама.
+## Клиент запоминает партию на диске (resume_path) — после перезапуска игры в
+## главном меню есть RETURN TO GAME.
+##
 ## Узел должен лежать по одному и тому же пути у всех (RPC адресуются путём
 ## узла) — /root/Net. Скрипт тоже должен совпадать: сервер со старой версией
 ## игры отвечает «обновите игру» (PROTOCOL).
@@ -38,6 +46,9 @@ signal connection_lost(reason: String)
 signal upnp_finished(address: String, note: String)
 ## Поиск игры: в очереди стоят waiting человек из needed.
 signal queue_changed(waiting: int, needed: int)
+## Пауза партии изменилась: {absent: {цвет: секунд до конца партии}, by: кто
+## поставил общую паузу, left: секунд до её конца} (GameRoom.pause_status).
+signal pause_changed(status: Dictionary)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -48,7 +59,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 6
+const PROTOCOL := 7
 ## Режим партий, собранных поиском игры.
 const MATCH_MODE := GameSetup.MODE_RANDOM_4
 const MAX_ROOMS := 64
@@ -98,12 +109,31 @@ var _last_port := 0
 var _last_code := ""
 var _last_by_code := false
 
+## Пауза (сервер): сколько ждать отключившегося, пока партия не кончится, и
+## сколько длится общая пауза кнопкой. Тест ставит поменьше.
+var abandon_seconds := 300.0
+var pause_seconds := 300.0
+## Клиент: последняя пауза от сервера (см. pause_changed) — экран партии,
+## собранный после переподключения, берёт её отсюда.
+var pause_status: Dictionary = {}
+## Файл, где клиент помнит свою незаконченную онлайн-партию (RETURN TO GAME).
+## Тест даёт свой, чтобы не трогать файл владельца.
+static var resume_path := "user://online_game.cfg"
+## Сейчас идёт возврат в запомненную партию (resume_saved): отказ сервера
+## значит, что её уже нет, — запись стирается.
+var _resuming := false
+## Сервер: сколько ждать подтверждения пакетов, прежде чем счесть игрока
+## отключившимся (мс; по умолчанию ENet ждёт до 30 с — пауза вставала поздно).
+const PEER_TIMEOUT_MIN := 5000
+const PEER_TIMEOUT_MAX := 15000
+
 
 ## Подписки на события связи — один раз: повторное подключение после ошибки
 ## не должно их удваивать.
 func _ready() -> void:
 	_rng.randomize()
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.connected_to_server.connect(func():
 		if _on_connected.is_valid():
 			_on_connected.call())
@@ -114,6 +144,31 @@ func _ready() -> void:
 func _lost(reason: String) -> void:
 	multiplayer.multiplayer_peer = null
 	connection_lost.emit(reason)
+
+
+## Сервер: пропавшего игрока (завис, закрыли игру) замечаем за 5-15 с, а не
+## за 30 — столько партия шла бы дальше без паузы.
+func _on_peer_connected(id: int) -> void:
+	if not is_host:
+		return
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if enet == null:
+		return
+	var peer := enet.get_peer(id)
+	if peer != null:
+		peer.set_timeout(0, PEER_TIMEOUT_MIN, PEER_TIMEOUT_MAX)
+
+
+## Сервер: время пауз во всех комнатах.
+func _process(delta: float) -> void:
+	if not is_host:
+		return
+	for room: GameRoom in rooms.values():
+		var what := room.tick_pause(delta, abandon_seconds, pause_seconds)
+		if what.has("abandon"):
+			_abandon_room(room, String(what["abandon"]))
+		elif what.has("resumed"):
+			_broadcast_pause(room)
 
 
 ## Принимать подключения. dedicated — выделенный сервер: комнаты заводят
@@ -216,6 +271,52 @@ func reconnect() -> int:
 	return join(_last_address, _last_port)
 
 
+## Клиент: запомнить на диске, куда вернуться в эту партию (RETURN TO GAME в
+## главном меню) — на случай, если игру закроют или она упадёт. Хост по IP не
+## пишет: его партия живёт в самой программе и с ней же пропадает.
+func _remember_game() -> void:
+	if is_host or _last_address == "":
+		return
+	var cfg := ConfigFile.new()
+	cfg.set_value("game", "address", _last_address)
+	cfg.set_value("game", "port", _last_port)
+	cfg.set_value("game", "code", room_code)
+	cfg.set_value("game", "by_code", _last_by_code)
+	cfg.save(resume_path)
+
+
+## Незаконченная онлайн-партия, в которую можно вернуться: {address, port,
+## code, by_code}; {} — такой нет.
+static func saved_game() -> Dictionary:
+	var cfg := ConfigFile.new()
+	if cfg.load(resume_path) != OK:
+		return {}
+	var address := String(cfg.get_value("game", "address", ""))
+	var code := String(cfg.get_value("game", "code", ""))
+	var by_code := bool(cfg.get_value("game", "by_code", false))
+	if address == "" or (by_code and code == ""):
+		return {}
+	return {"address": address, "port": int(cfg.get_value("game", "port", 0)), "code": code,
+		"by_code": by_code}
+
+
+static func forget_game() -> void:
+	if FileAccess.file_exists(resume_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(resume_path))
+
+
+## RETURN TO GAME: войти в запомненную партию тем же путём, что и в первый раз.
+## Сервер узнает игрока по ключу профиля (GameRoom.claim).
+func resume_saved() -> int:
+	var game := saved_game()
+	if game.is_empty():
+		return ERR_UNCONFIGURED
+	_resuming = true
+	if bool(game["by_code"]):
+		return enter_room(String(game["address"]), int(game["port"]), String(game["code"]))
+	return join(String(game["address"]), int(game["port"]))
+
+
 ## Ключ, по которому сервер узнаёт этого игрока при переподключении (и, на
 ## выделенном сервере, для рейтинга) — тест даёт свой через rating_key.
 func _client_key() -> String:
@@ -259,6 +360,7 @@ func close() -> void:
 	room_code = ""
 	started = false
 	profiles = {}
+	pause_status = {}
 
 
 ## Своя комната полна (для лобби хоста по IP).
@@ -556,6 +658,8 @@ func _enter(version: int, code: String, key: String) -> void:
 			return
 		peer_room[peer] = room.code
 		_deliver_reconnect(room, peer, pid)
+		# Вернулся — пауза снята (или стоит дальше, если ждут ещё кого-то).
+		_broadcast_pause(room)
 		_log("room %s: %s reconnected" % [room.code, pid])
 		return
 	if room.is_full():
@@ -590,6 +694,10 @@ func _refuse(peer: int, reason: String) -> void:
 
 @rpc("authority", "call_remote", "reliable")
 func _refused(reason: String) -> void:
+	# Запомненной партии на сервере больше нет (или место в ней не наше).
+	if _resuming:
+		_resuming = false
+		forget_game()
 	# Связь рвём не сразу: закрывать её прямо внутри приёма пакета нельзя.
 	close.call_deferred()
 	connection_lost.emit(reason)
@@ -610,8 +718,10 @@ func _on_peer_disconnected(id: int) -> void:
 		# (см. _enter), даже если отвалились все — комнату и сохранение не
 		# трогаем. Убираем только партию, которая уже закончилась: досматривать
 		# нечего, а претендовать на место в ней больше некому.
+		room.mark_absent(gone)
 		for peer: int in room.seats:
 			_send(peer, "_left", [gone])
+		_broadcast_pause(room)
 		if room.seats.is_empty() and room.server.state.game_over:
 			rooms.erase(room.code)
 			GameJournal.erase(room.code, saves_dir)
@@ -721,6 +831,8 @@ func _save_room(room: GameRoom) -> void:
 func _start(board: Dictionary, view: Dictionary, seat_profiles: Dictionary) -> void:
 	started = true
 	profiles = seat_profiles.duplicate(true)
+	pause_status = {}
+	_remember_game()
 	game_started.emit(seat, board, view)
 
 
@@ -731,7 +843,19 @@ func _reconnected(your_seat: String, board: Dictionary, view: Dictionary, seat_p
 	seat = your_seat
 	started = true
 	profiles = seat_profiles.duplicate(true)
+	_resuming = false
+	# Код комнаты с лобби при возврате не приходит — берём тот, по которому вошли.
+	if room_code == "":
+		room_code = _last_code
+	_remember_game()
+	_forget_if_over(view)
 	game_started.emit(seat, board, view)
+
+
+## Партия кончилась — возвращаться больше некуда.
+func _forget_if_over(view: Dictionary) -> void:
+	if not is_host and bool(view.get("game_over", false)):
+		forget_game()
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -768,6 +892,11 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 	var room := _room_of(sender)
 	if room == null or not room.started or room.board_task >= 0:
 		return
+	if room.is_paused():
+		var pid := String(room.seats[sender])
+		_send(sender, "_result", [GameServer.Error.PAUSED, [],
+			StateView.for_player_with_pending(room.server.state, pid, room.server.resolver.pending)])
+		return
 	var result: Dictionary = room.apply(sender, d)
 	var err := int(result["error"])
 	var views: Dictionary = result["views"]
@@ -785,6 +914,52 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 			_rate_room(room)
 	else:
 		_save_room(room)
+
+
+## Отсутствующий не вернулся вовремя: партия кончается по текущему счёту,
+## рейтинг не меняется (решение владельца, 2026-09-27).
+func _abandon_room(room: GameRoom, pid: String) -> void:
+	var result := room.abandon(pid)
+	GameJournal.erase(room.code, saves_dir)
+	var views: Dictionary = result["views"]
+	for peer: int in room.seats:
+		_send(peer, "_result", [GameServer.Error.OK, result["events"], views[room.seats[peer]]])
+	_broadcast_pause(room)
+	_log("room %s: %s did not return, game over (not rated)" % [room.code, pid])
+
+
+func _broadcast_pause(room: GameRoom) -> void:
+	var status := room.pause_status(abandon_seconds, pause_seconds)
+	for peer: int in room.seats:
+		_send(peer, "_pause", [status])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _pause(status: Dictionary) -> void:
+	pause_status = status
+	pause_changed.emit(status)
+
+
+## Общая пауза кнопкой (on) или её снятие (снять может только поставивший).
+func request_pause(on: bool) -> void:
+	if is_host:
+		_room_pause(1, on)
+	else:
+		_pause_up.rpc_id(1, on)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _pause_up(on: bool) -> void:
+	if is_host:
+		_room_pause(multiplayer.get_remote_sender_id(), on)
+
+
+func _room_pause(sender: int, on: bool) -> void:
+	var room := _room_of(sender)
+	if room == null or not room.set_manual_pause(String(room.seats.get(sender, "")), on):
+		return
+	_broadcast_pause(room)
+	_log("room %s: pause %s by %s" % [room.code, "on" if on else "off", room.seats[sender]])
 
 
 ## Партия в комнате окончена — пересчитать рейтинг (только выделенный сервер).
@@ -818,6 +993,7 @@ func _rating(result: Dictionary) -> void:
 
 @rpc("authority", "call_remote", "reliable")
 func _result(err: int, events: Array, view: Dictionary) -> void:
+	_forget_if_over(view)
 	result_received.emit(err, events, view)
 
 

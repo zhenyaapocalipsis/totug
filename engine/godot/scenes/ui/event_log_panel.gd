@@ -250,6 +250,8 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s promotes %s to the Inner Circle" % [who, card]
 		"devour":
 			return "%s devours %s" % [who, card]
+		"game_abandoned":
+			return "%s did not come back — GAME OVER, rating does not change" % who
 		"give_insane_outcast":
 			return "%s receives Insane Outcast ×%s" % [who, e.get("count", 1)]
 		_:

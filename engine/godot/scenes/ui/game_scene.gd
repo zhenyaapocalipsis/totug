@@ -111,8 +111,9 @@ func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STA
 	get_tree().root.add_child(net)
 	net.game_started.connect(_start_net_game)
 	var lobby := LobbyScreen.new(net, kind, count, mode)
-	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system()),
-		SetupScreen.PAGE_MATCHMAKING if kind == "find" else SetupScreen.PAGE_LOBBY))
+	var back_page: String = {"find": SetupScreen.PAGE_MATCHMAKING, "resume": SetupScreen.PAGE_MAIN}.get(
+		kind, SetupScreen.PAGE_LOBBY)
+	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system()), back_page))
 	add_child(lobby)
 
 

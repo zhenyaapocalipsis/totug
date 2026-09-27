@@ -59,7 +59,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 
 	var title := Label.new()
 	title.text = {"create": "CREATE A ROOM", "join_code": "JOIN BY CODE", "find": "FIND A GAME",
-		"host": "HOST A GAME", "join_ip": "JOIN BY ADDRESS"}.get(kind, "ONLINE")
+		"host": "HOST A GAME", "join_ip": "JOIN BY ADDRESS", "resume": "RETURN TO GAME"}.get(kind, "ONLINE")
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -71,6 +71,12 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 			_build_server_part(col)
 		"host":
 			_build_host_part(col)
+		"resume":
+			_go_button = _button("TRY AGAIN")
+			_go_button.custom_minimum_size = Vector2(90, 16)
+			_go_button.visible = false
+			_go_button.pressed.connect(_on_go)
+			_row(col).add_child(_go_button)
 		_:
 			_build_join_ip_part(col)
 
@@ -109,6 +115,8 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 			_status.text = "Enter the room code your friend got."
 		"join_ip":
 			_status.text = "Enter the host's address."
+		"resume":
+			_on_go()
 		"host":
 			_status.text = "Waiting for players..."
 			var err := _net.host(NetSession.DEFAULT_PORT, player_count, mode)
@@ -198,6 +206,15 @@ func _build_join_ip_part(col: VBoxContainer) -> void:
 func _on_go() -> void:
 	var err := OK
 	match _kind:
+		"resume":
+			# Партия могла кончиться, пока нас не было: сервер отказал, и запись
+			# стёрта (NetSession._refused) — возвращаться больше некуда.
+			if NetSession.saved_game().is_empty():
+				_status.text = "That game is over."
+				_go_button.visible = false
+				return
+			err = _net.resume_saved()
+			_go_button.visible = false
 		"join_ip":
 			var address := _ip_edit.text.strip_edges()
 			if address == "":

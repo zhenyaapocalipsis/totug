@@ -9,6 +9,8 @@ signal main_menu_requested
 
 const BUTTON_SIZE := Vector2(110, 16)
 
+var _col: VBoxContainer
+
 
 func _init() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -45,6 +47,14 @@ func _init() -> void:
 	col.add_child(_button("RESUME", func(): visible = false))
 	col.add_child(_button("MAIN MENU", func(): main_menu_requested.emit()))
 	col.add_child(_button("QUIT GAME", func(): get_tree().quit()))
+	_col = col
+
+
+## Ещё одна кнопка — сразу под RESUME (сетевая партия: PAUSE FOR ALL).
+func add_button(text: String, action: Callable) -> void:
+	var button := _button(text, action)
+	_col.add_child(button)
+	_col.move_child(button, 2)
 
 
 func _button(text: String, action: Callable) -> Button:
