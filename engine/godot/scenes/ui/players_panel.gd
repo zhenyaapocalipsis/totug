@@ -5,28 +5,32 @@ extends PanelContainer
 ## 2026-09-27: переехал сюда из меню по Tab на место зоны сыгранных карт —
 ## сыгранные карты и так видны в сводке ходов слева).
 ##
-## Таблица: строка на игрока в порядке хода, у ходящего перед именем «>».
-## Скрытых сведений нет: рука и сброс противника — только числом карт (так их
-## и отдаёт StateView). Под таблицей — кто ходил первым, а во время стартовой
-## расстановки ещё и сам вопрос «выбери стартовую локацию».
+## Таблица: строка на игрока в порядке хода (первая строка — первый
+## игрок), у ходящего перед именем «>». Скрытых сведений нет: рука и сброс
+## противника — только числом карт (так их и отдаёт StateView). Зал трофеев —
+## по цифре на каждый цвет убитых фишек, цифра того же цвета. Во время
+## стартовой расстановки под таблицей стоит сам вопрос «выбери стартовую
+## локацию».
 
-## Столбцы: ключ в срезе игрока, заголовок, подсказка к заголовку.
+## Числовые столбцы: ключ в срезе игрока, заголовок, подсказка к заголовку.
 const COLUMNS: Array[Array] = [
 	["vp_tokens", "VP", "Victory point tokens"],
-	["hand_size", "HND", "Cards in hand"],
-	["deck_size", "DCK", "Cards in deck"],
-	["discard_size", "DIS", "Cards in discard pile"],
-	["inner_circle", "INN", "Cards in Inner Circle"],
-	["trophies", "TRO", "Trophies (killed troops)"],
+	["hand_size", "HD", "Cards in hand"],
+	["deck_size", "DK", "Cards in deck"],
+	["discard_size", "DS", "Cards in discard pile"],
+	["inner_circle", "IC", "Cards in Inner Circle"],
 ]
-## Ширина столбца имени (6 знаков шрифта по 6 пикселей) и числового (3 знака).
+## Ширина столбца имени (6 знаков шрифта по 6 пикселей) и числового (2 знака).
+## Трофеям — всё, что осталось справа.
 const NAME_W := 36.0
-const NUM_W := 18.0
-const COL_GAP := 2
+const NUM_W := 12.0
+const COL_GAP := 3
+const TROPHY_INDENT := 4
+## Нейтральные (белые) убитые войска — серой цифрой.
+const NEUTRAL_COLOR := Color(0.6, 0.6, 0.6)
 
 var _grid: GridContainer
-var _rows: Dictionary = {}   # player_id -> {"name": Label, "values": {key: Label}}
-var _first_label: Label
+var _rows: Dictionary = {}   # player_id -> {"name": Label, "values": {key: Label}, "trophies": HBoxContainer}
 ## Вопрос стартовой расстановки — показывает game_screen.
 var setup_label: Label
 
@@ -38,20 +42,18 @@ func _init() -> void:
 	add_child(col)
 
 	_grid = GridContainer.new()
-	_grid.columns = COLUMNS.size() + 1
+	_grid.columns = COLUMNS.size() + 2
 	_grid.add_theme_constant_override("h_separation", COL_GAP)
 	_grid.add_theme_constant_override("v_separation", 0)
 	col.add_child(_grid)
 	_grid.add_child(_cell("", NAME_W, PixelTheme.TEXT_DIM, HORIZONTAL_ALIGNMENT_LEFT))
 	for column: Array in COLUMNS:
-		var head := _cell(String(column[1]), NUM_W, PixelTheme.TEXT_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
-		head.tooltip_text = String(column[2])
-		head.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
-		_grid.add_child(head)
-
-	_first_label = Label.new()
-	_first_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	col.add_child(_first_label)
+		_grid.add_child(_head(String(column[1]), String(column[2]), NUM_W,
+			HORIZONTAL_ALIGNMENT_RIGHT))
+	var trophy_head := _head("TROPHY", "Trophy hall: killed troops, a number per colour",
+		0.0, HORIZONTAL_ALIGNMENT_LEFT)
+	trophy_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_grid.add_child(_indented(trophy_head))
 
 	setup_label = Label.new()
 	setup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -72,6 +74,13 @@ static func _cell(text: String, width: float, colour: Color,
 	return label
 
 
+static func _head(text: String, hint: String, width: float, align: HorizontalAlignment) -> Label:
+	var head := _cell(text, width, PixelTheme.TEXT_DIM, align)
+	head.tooltip_text = hint
+	head.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
+	return head
+
+
 func _add_row(pid: String) -> void:
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT)
 	var name_label := _cell("", NAME_W, colour, HORIZONTAL_ALIGNMENT_LEFT)
@@ -82,22 +91,42 @@ func _add_row(pid: String) -> void:
 		var value := _cell("0", NUM_W, PixelTheme.TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
 		_grid.add_child(value)
 		values[String(column[0])] = value
-	# У трофеев подсказка — сколько чьих войск убито.
-	(values["trophies"] as Label).mouse_filter = Control.MOUSE_FILTER_STOP
-	_rows[pid] = {"name": name_label, "values": values}
+	var trophies := HBoxContainer.new()
+	trophies.add_theme_constant_override("separation", 4)
+	trophies.clip_contents = true
+	trophies.mouse_filter = Control.MOUSE_FILTER_STOP
+	_grid.add_child(_indented(trophies))
+	_rows[pid] = {"name": name_label, "values": values, "trophies": trophies}
 
 
-## Трофеи по цветам одной строкой для подсказки: «white 2, blue 1».
-static func _trophy_breakdown(trophies: Dictionary, order: Array) -> String:
+## Цифра трофея: без обрезки — с clip_text ширина Label схлопывается в ноль.
+static func _digit(text: String, colour: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_color_override("font_color", colour)
+	return label
+
+
+## Цифры трофеев: сначала нейтральные, потом игроки в порядке хода.
+## Пустой зал — серый 0. В подсказке — то же словами.
+static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Array) -> void:
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
 	var parts: Array[String] = []
 	var colours: Array = ["white"]
 	colours.append_array(order)
 	for colour_id in colours:
 		var count := int(trophies.get(String(colour_id), 0))
-		if count > 0:
-			var who := "neutral" if colour_id == "white" else EventLogPanel.player_name(String(colour_id))
-			parts.append("%s %d" % [who, count])
-	return "Trophies: " + (", ".join(parts) if not parts.is_empty() else "none")
+		if count <= 0:
+			continue
+		var white := String(colour_id) == "white"
+		box.add_child(_digit(str(count), NEUTRAL_COLOR if white \
+			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR)))
+		parts.append("%s %d" % ["neutral" if white else EventLogPanel.player_name(String(colour_id)), count])
+	if parts.is_empty():
+		box.add_child(_digit("0", PixelTheme.TEXT_OFF))
+	box.tooltip_text = "Trophies: " + (", ".join(parts) if not parts.is_empty() else "none")
 
 
 func update_from_view(view: Dictionary) -> void:
@@ -106,8 +135,6 @@ func update_from_view(view: Dictionary) -> void:
 	if _rows.is_empty():
 		for pid in order:
 			_add_row(String(pid))
-		if not order.is_empty():
-			_first_label.text = "First: %s" % EventLogPanel.player_name(String(order[0]))
 	for pid: String in _rows:
 		var p: Dictionary = (view["players"] as Dictionary).get(pid, {})
 		if p.is_empty():
@@ -120,14 +147,17 @@ func update_from_view(view: Dictionary) -> void:
 		for column: Array in COLUMNS:
 			var key := String(column[0])
 			var raw: Variant = p.get(key, 0)
-			var shown := 0
-			if raw is Array:
-				shown = (raw as Array).size()
-			elif raw is Dictionary:
-				for count in (raw as Dictionary).values():
-					shown += int(count)
-			else:
-				shown = int(raw)
+			var shown: int = (raw as Array).size() if raw is Array else int(raw)
 			(values[key] as Label).text = str(shown)
-		(values["trophies"] as Label).tooltip_text = \
-			_trophy_breakdown(p.get("trophies", {}), order)
+		_fill_trophies(row["trophies"], p.get("trophies", {}), order)
+
+
+## Столбец трофеев чуть отодвинут от IC: иначе первая цифра читается как
+## вторая цифра соседнего числа.
+static func _indented(control: Control) -> MarginContainer:
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", TROPHY_INDENT)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(control)
+	return margin

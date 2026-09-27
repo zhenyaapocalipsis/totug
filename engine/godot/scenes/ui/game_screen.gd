@@ -323,21 +323,26 @@ func _build_layout() -> void:
 	# 2026-09-27). Рамка прозрачная и лежит поверх низа доски, чтобы доску не
 	# пришлось ужимать. Под поднятой картой руки: та рисуется выше.
 	_res_zone = HBoxContainer.new()
-	_res_zone.add_theme_constant_override("separation", 6)
+	_res_zone.add_theme_constant_override("separation", 12)
 	_res_zone.tooltip_text = "Power and Influence of the player to move"
 	_res_zone.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	_res_frame = PanelContainer.new()
 	_res_frame.add_theme_stylebox_override("panel",
-		PixelTheme.box(Color(0, 0, 0, 0), PixelTheme.BORDER, 1, 3, 0))
+		PixelTheme.box(Color(0, 0, 0, 0), PixelTheme.BORDER_HI, 1, 6, 1))
 	_res_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_res_frame.add_child(_res_zone)
 	add_child(_res_frame)
 	_res_title = Label.new()
 	_res_zone.add_child(_res_title)
-	_res_power = CounterLabel.make("P %d", POWER_COLOR)
+	_res_power = CounterLabel.make("POWER %d", POWER_COLOR)
 	_res_zone.add_child(_res_power)
-	_res_influence = CounterLabel.make("I %d", INFLUENCE_COLOR)
+	_res_influence = CounterLabel.make("INFLUENCE %d", INFLUENCE_COLOR)
 	_res_zone.add_child(_res_influence)
+	# Крупно — вдвое, целым масштабом шрифта; обводка — чтобы читалось на доске.
+	for label: Label in [_res_title, _res_power, _res_influence]:
+		label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+		label.add_theme_color_override("font_outline_color", PixelTheme.BG)
+		label.add_theme_constant_override("outline_size", 2)
 
 	# Витрина: крупный показ чужих покупок, промоутов и съеденных карт — поверх
 	# доски и руки, но под диалогами (999+) и крупным просмотром карты.
@@ -552,9 +557,7 @@ func _layout() -> void:
 	var hand_x := a_x + CHAT_W + GAP
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, hand_x, hand_top, d_x - GAP - hand_x, h - MARGIN - hand_top)
-	# Счётчики ходящего — над левым краем руки, поверх низа доски.
-	var res_size := _res_frame.get_combined_minimum_size()
-	_place(_res_frame, hand_x, bottom_y - res_size.y, res_size.x, res_size.y)
+	_place_res_frame()
 
 	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
 	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
@@ -578,6 +581,14 @@ func _layout() -> void:
 	_timer_label.size = Vector2(ew, TIMER_H)
 	_last_round_label.position = Vector2(0, deploy_block + button_h + TIMER_H)
 	_last_round_label.size = Vector2(ew, PixelTheme.LINE_H)
+
+
+## Счётчики ходящего — по центру над рукой, поверх низа доски. Низ плашки —
+## на верхнем краю зоны руки: выше него поднятая карта уже не достаёт.
+func _place_res_frame() -> void:
+	var res_size := _res_frame.get_combined_minimum_size()
+	var x := _hand_panel.position.x + floorf((_hand_panel.size.x - res_size.x) * 0.5)
+	_place(_res_frame, x, _hand_panel.position.y - res_size.y, res_size.x, res_size.y)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -1092,7 +1103,7 @@ func _refresh_played(view: Dictionary) -> void:
 	_res_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
 	_res_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	# Имя другой длины — плашка ужимается или растёт под него.
-	_res_frame.size = Vector2.ZERO
+	_place_res_frame()
 	var power := int(p.get("power", 0))
 	var influence := int(p.get("influence", 0))
 	# Накручиваем только в пределах одного хода: когда ход перешёл к другому,
