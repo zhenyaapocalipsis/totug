@@ -20,9 +20,10 @@ const COLUMNS: Array[Array] = [
 	["discard_size", "DS", "Cards in discard pile"],
 	["inner_circle", "IC", "Cards in Inner Circle"],
 ]
-## Ширина столбца имени (6 знаков шрифта по 6 пикселей) и числового (2 знака).
+## Ширина столбца имени (13 знаков шрифта по 6 пикселей: ник до
+## PlayerProfile.NAME_MAX = 12 знаков и значок хода) и числового (2 знака).
 ## Трофеям — всё, что осталось справа.
-const NAME_W := 36.0
+const NAME_W := 78.0
 const NUM_W := 12.0
 const COL_GAP := 3
 const TROPHY_INDENT := 4
