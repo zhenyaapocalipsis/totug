@@ -40,6 +40,7 @@ var _rows: Dictionary = {}   # player_id -> {"name": Label, "values": {key: Labe
 var _overlay: Control
 var _choice_buttons: Dictionary = {}   # player_id -> Button
 var _choice: Array = []
+var _blink_time := 0.0
 ## Вопрос стартовой расстановки — показывает game_screen.
 var setup_label: Label
 
@@ -197,6 +198,17 @@ func _make_choice_button(pid: String) -> Button:
 	b.visible = false
 	_overlay.add_child(b)
 	return b
+
+
+## Рамки выбора мерцают, пока идёт выбор: таблица далеко от строки вопроса,
+## и неподвижную рамку легко не заметить (решение владельца, 2026-09-27).
+func _process(delta: float) -> void:
+	if _choice.is_empty():
+		return
+	_blink_time += delta
+	var a := 0.35 + 0.65 * (0.5 + 0.5 * cos(_blink_time * TAU * 1.5))
+	for pid: String in _choice:
+		(_choice_buttons[pid] as Button).self_modulate.a = a
 
 
 ## Кнопка выбора — во всю ширину таблицы по высоте строки игрока.
