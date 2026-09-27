@@ -120,6 +120,12 @@ var _attention_key := ""
 ## Цвет кнопки End turn и фаза её пульсации, пока ход свой.
 var _end_turn_colour := Color(0.6, 0.6, 0.6)
 var _pulse_time := 0.0
+## Ход заканчивается удержанием пробела SPACE_HOLD_SECONDS секунд; пока пробел
+## зажат, кнопку End turn слева направо заливает полоса _space_fill.
+const SPACE_HOLD_SECONDS := 3.0
+var _space_held := false
+var _space_hold := 0.0
+var _space_fill: ColorRect
 var _feed: TurnFeed
 var _market_panel: MarketPanel
 var _chat_panel: ChatPanel
@@ -299,7 +305,15 @@ func _build_layout() -> void:
 	add_child(_end_turn_area)
 	_end_turn_button = _square_button()
 	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
+	# Без фокуса: иначе после щелчка пробел жал бы кнопку сразу, мимо удержания.
+	_end_turn_button.focus_mode = Control.FOCUS_NONE
+	_end_turn_button.tooltip_text = "Click, or hold Space for 3 seconds, to end the turn"
 	_end_turn_area.add_child(_end_turn_button)
+	_space_fill = ColorRect.new()
+	_space_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_space_fill.color = Color(1.0, 0.95, 0.7, 0.35)
+	_space_fill.size = Vector2.ZERO
+	_end_turn_area.add_child(_space_fill)
 	# Подписи лежат ПОВЕРХ кнопки и не ловят мышь, поэтому щелчок по любой из
 	# них — это щелчок по кнопке.
 	_turn_label = Label.new()
@@ -513,6 +527,9 @@ func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null:
 		return
+	# Отпускание пробела сбрасывает удержание при любом состоянии экрана.
+	if key.keycode == KEY_SPACE and not key.pressed:
+		_space_held = false
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if _pause_menu.visible:
 		# Под меню паузы клавиши до игры не доходят; Esc его закрывает.
@@ -525,6 +542,12 @@ func _input(event: InputEvent) -> void:
 		if key.keycode == KEY_ESCAPE and key.pressed:
 			get_viewport().gui_get_focus_owner().release_focus()
 			get_viewport().set_input_as_handled()
+	elif key.keycode == KEY_SPACE:
+		# Пробел глотаем целиком, чтобы он не жал кнопку в фокусе; сам конец
+		# хода — в _tick_space_hold, после 3 секунд удержания.
+		if key.pressed and not key.echo:
+			_space_held = true
+		get_viewport().set_input_as_handled()
 	elif key.keycode == KEY_B and key.pressed and not key.echo:
 		# Stage 0 фонового арта гексов (PixelLab) — временная клавиша, пока
 		# владелец не решил, входит ли это в игру насовсем.
@@ -1008,6 +1031,7 @@ func _process(delta: float) -> void:
 	if _timer_label == null or _view.is_empty():
 		return
 	_pulse_end_turn(delta)
+	_tick_space_hold(delta)
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
@@ -1041,6 +1065,23 @@ func _process(delta: float) -> void:
 		_log_panel.add_note("Time is up — the turn ends automatically.")
 		send(Intent.end_turn(current))
 		_auto_ending = false
+
+
+## Удержание пробела: копится, пока пробел зажат и End turn доступна; через
+## SPACE_HOLD_SECONDS ход заканчивается, как от щелчка. Чтобы закончить и
+## следующий ход, пробел надо отпустить и зажать снова.
+func _tick_space_hold(delta: float) -> void:
+	if _space_held and not _end_turn_button.disabled and not _pause_menu.visible:
+		_space_hold += delta
+	else:
+		_space_hold = 0.0
+	if _space_hold >= SPACE_HOLD_SECONDS:
+		_space_held = false
+		_space_hold = 0.0
+		_on_action_requested("end_turn")
+	var part := _space_hold / SPACE_HOLD_SECONDS
+	_space_fill.position = _end_turn_button.position
+	_space_fill.size = Vector2(floorf(_end_turn_button.size.x * part), _end_turn_button.size.y)
 
 
 func _show_time(seconds: float) -> void:
