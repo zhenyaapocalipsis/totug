@@ -8,7 +8,7 @@ extends PanelContainer
 ##
 ## Каждый ход — отдельный блок в почти прозрачной рамке цвета игрока, сверху
 ## имя («RED'S TURN»). Внутри блока карты разложены по группам всегда в одном
-## порядке — PLAYED, PROMOTED, BOUGHT, DEVOURED, DISCARDED (решение владельца:
+## порядке — PLAYED, PROMOTED, BOUGHT, OUTCAST, DEVOURED, DISCARDED (решение владельца:
 ## группы не перемешивать), — и каждая группа лежит лесенкой (Ladder) с
 ## подписью. Под картами — строки действий хода из бывшего журнала (решение
 ## владельца, 2026-09-27: чат и журнал убраны): DEPLOY 3, KILL 2 с квадратиками
@@ -32,7 +32,8 @@ const BLOCK_PAD := 2
 ## от доски.
 const WIDTH := CARD.x + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
-const ORDER: Array[String] = ["PLAYED", "PROMOTED", "BOUGHT", "DEVOURED", "DISCARDED"]
+const ORDER: Array[String] = [
+	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "DISCARDED"]
 ## Строки действий хода: ключ -> подпись; порядок строк — порядок ключей.
 const STATS := {
 	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",
@@ -105,12 +106,19 @@ func add_played(pid: String, cid: String) -> void:
 ## pid сбросил карту cid. Во время чужого хода (его заставили) карта ложится
 ## в блок ходящего своей группой с подписью цвета pid.
 func add_discard(pid: String, cid: String) -> void:
+	add_to_turn(pid, cid, "DISCARDED")
+
+
+## Карта cid досталась pid в ход того, кто сейчас ходит (сброс, изгой от
+## чужой карты): ложится в блок ходящего. Если pid — не ходящий, группа
+## своя, с подписью цвета pid.
+func add_to_turn(pid: String, cid: String, tag: String) -> void:
 	var follow := _at_bottom()
 	var block := _current_block(pid)
 	if block.pid == pid:
-		block.add_card("DISCARDED", _card(cid))
+		block.add_card(tag, _card(cid))
 	else:
-		block.add_card("DISCARDED:" + pid, _card(cid))
+		block.add_card(tag + ":" + pid, _card(cid))
 	_after_add(follow)
 
 

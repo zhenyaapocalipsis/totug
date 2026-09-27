@@ -784,6 +784,11 @@ func _note_recap(events: Array) -> void:
 			_feed.add_played(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
 		elif type == "discard" or type == "force_discard":
 			_feed.add_discard(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
+		elif type == "give_insane_outcast":
+			# «... recruits an Insane Outcast»: карта изгоя столько раз,
+			# сколько выдано, в блок ходящего; подпись цвета получившего.
+			for i in range(int(evt.get("count", 1))):
+				_feed.add_to_turn(String(evt.get("player_id", "")), Supplies.INSANE_OUTCAST, "OUTCAST")
 		elif type == "turn_ended":
 			_feed.end_turn()
 		elif RECAP_STATS.has(type):

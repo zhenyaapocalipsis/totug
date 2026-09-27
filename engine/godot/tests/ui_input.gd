@@ -554,6 +554,7 @@ func _step_recap() -> void:
 	# не нужно.
 	_screen._note_recap([
 		{"type": "force_discard", "player_id": me, "card_id": played},
+		{"type": "give_insane_outcast", "player_id": me, "count": 1},
 		{"type": "assassinate", "player_id": foe, "slot_id": "x", "victim": GameState.WHITE},
 		{"type": "assassinate", "player_id": foe, "slot_id": "y", "victim": me},
 		{"type": "gain_vp", "player_id": foe, "amount": 1},
@@ -568,12 +569,13 @@ func _step_recap() -> void:
 
 func _step_check_recap() -> void:
 	var feed: TurnFeed = _screen._feed
-	check(feed.visible and feed.card_count() - _feed_before == 6,
-		"сводка слева пополнилась шестью картами (%d)" % (feed.card_count() - _feed_before))
-	check(feed.group_count() - _feed_cells_before == 5,
+	check(feed.visible and feed.card_count() - _feed_before == 7,
+		"сводка слева пополнилась семью картами (%d)" % (feed.card_count() - _feed_before))
+	check(feed.group_count() - _feed_cells_before == 6,
 		"сыгранные за ход карты легли одной группой (%d групп)" % (feed.group_count() - _feed_cells_before))
-	check(_foe_tags == (["PLAYED", "BOUGHT", "DEVOURED", "DISCARDED:" + _screen.viewer_id] as Array[String]),
-		"группы хода не перемешаны, чужой сброс — в блоке ходящего: %s" % [_foe_tags])
+	var me_id := _screen.viewer_id
+	check(_foe_tags == (["PLAYED", "BOUGHT", "OUTCAST:" + me_id, "DEVOURED", "DISCARDED:" + me_id] as Array[String]),
+		"группы хода не перемешаны, чужие сброс и изгой — в блоке ходящего: %s" % [_foe_tags])
 	check(_foe_kills == 2 and _foe_vp == 3,
 		"строки действий: KILL %d, +%d VP" % [_foe_kills, _foe_vp])
 	check(feed.get_global_rect().end.y >= _screen.size.y - GameScreen.MARGIN - 1.0,

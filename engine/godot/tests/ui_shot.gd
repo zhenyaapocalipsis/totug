@@ -236,6 +236,33 @@ func _run_scenario() -> void:
 					_screen.send(Intent.deploy(pid5, String(slot5)))
 					break
 				_screen.send(Intent.end_turn(pid5))
+		"feed":
+			# Сводка слева с полным ходом: сыгранное, покупка, изгои
+			# сопернику, чужой сброс, действия и VP. События подаём прямо в
+			# сводку — розыгрыш таких карт честной игрой занял бы десятки ходов.
+			while _screen.server.resolver.is_waiting():
+				var pd9: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd9.player_id, pd9.legal_options[0]))
+			var st9 := _screen.server.state
+			var mover: String = st9.current_player()
+			var other := ""
+			for pid9: String in st9.turn_order:
+				if pid9 != mover:
+					other = pid9
+			var hand9: Array = st9.players[mover].deck.hand
+			var other_hand: Array = st9.players[other].deck.hand
+			_screen._note_recap([
+				{"type": "play_card", "player_id": mover, "card_id": String(hand9[0])},
+				{"type": "play_card", "player_id": mover, "card_id": String(hand9[1])},
+				{"type": "recruit", "player_id": mover, "card_id": _screen._market_panel.card_id_at(0)},
+				{"type": "give_insane_outcast", "player_id": other, "count": 2},
+				{"type": "force_discard", "player_id": other, "card_id": String(other_hand[0])},
+				{"type": "deploy", "player_id": mover, "slot_id": "x"},
+				{"type": "deploy", "player_id": mover, "slot_id": "y"},
+				{"type": "assassinate", "player_id": mover, "slot_id": "z", "victim": GameState.WHITE},
+				{"type": "assassinate", "player_id": mover, "slot_id": "w", "victim": other},
+				{"type": "place_spy", "player_id": mover, "site_id": "s"},
+				{"type": "vp_income", "player_id": mover, "granted": 2, "total_vp": 2}])
 		"refuse":
 			# Щёлкаем по слоту, до которого игроку не дотянуться, — проверяем,
 			# что интерфейс объясняет ПРИЧИНУ, а не просто "сюда нельзя".
