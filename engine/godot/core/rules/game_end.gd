@@ -8,8 +8,9 @@ extends RefCounted
 ##     развёртыванием — не путать с "барак уже был пуст", это отдельный
 ##     случай, дающий 1 VP вместо развёртывания, см. core/rules/actions.gd);
 ##   • колода маркета опустела.
-## После триггера "play proceeds until the end of the round" — доигрывается
-## круг до игрока перед тем, кто вызвал триггер.
+## После триггера "play proceeds until the end of the round" — круг
+## заканчивается ходом последнего игрока в порядке хода (партия всегда
+## начинается с индекса 0), кто бы ни вызвал триггер.
 
 
 static func trigger(state: GameState, reason: String) -> void:
@@ -17,10 +18,7 @@ static func trigger(state: GameState, reason: String) -> void:
 		return
 	state.game_end_triggered = true
 	state.game_end_reason = reason
-	var last_index: int = state.current_player_index - 1
-	if last_index < 0:
-		last_index = state.turn_order.size() - 1
-	state.final_round_ends_after_index = last_index
+	state.final_round_ends_after_index = state.turn_order.size() - 1
 
 
 ## Не правило игры, а сетевой случай: игрок отключился и не вернулся —

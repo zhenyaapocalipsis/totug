@@ -895,7 +895,7 @@ func test_game_end() -> void:
 	state.current_player_index = 1  # p2 запускает триггер прямо сейчас
 
 	GameEnd.trigger(state, "market_empty")
-	check_eq(state.final_round_ends_after_index, 0, "круг доигрывается до p1 (индекс перед p2)")
+	check_eq(state.final_round_ends_after_index, 2, "круг доигрывается до p3 (последний в порядке хода)")
 
 	GameEnd.trigger(state, "last_troop")
 	check_eq(state.game_end_reason, "market_empty", "повторный триггер не переписывает причину")
@@ -904,11 +904,24 @@ func test_game_end() -> void:
 	check(not GameEnd.advance_turn(state), "после p2 партия ещё не закончена")
 	check_eq(state.current_player_index, 2, "ход переходит к p3")
 
-	check(not GameEnd.advance_turn(state), "после p3 партия ещё не закончена")
-	check_eq(state.current_player_index, 0, "ход переходит к p1")
-
-	check(GameEnd.advance_turn(state), "после p1 партия заканчивается")
+	check(GameEnd.advance_turn(state), "после p3 партия заканчивается")
 	check(state.game_over, "game_over выставлен")
+
+	# 1 на 1: второй игрок вызвал конец — его ход последний
+	var duel := GameState.new(_build_ab_graph(), 1)
+	duel.add_player("p1", [])
+	duel.add_player("p2", [])
+	duel.current_player_index = 1
+	GameEnd.trigger(duel, "last_troop")
+	check(GameEnd.advance_turn(duel), "1v1: после хода p2 партия заканчивается")
+
+	# 1 на 1: первый игрок вызвал конец — второй ещё ходит
+	var duel2 := GameState.new(_build_ab_graph(), 1)
+	duel2.add_player("p1", [])
+	duel2.add_player("p2", [])
+	GameEnd.trigger(duel2, "last_troop")
+	check(not GameEnd.advance_turn(duel2), "1v1: после хода p1 ходит p2")
+	check(GameEnd.advance_turn(duel2), "1v1: после хода p2 партия заканчивается")
 
 
 func test_scoring() -> void:
