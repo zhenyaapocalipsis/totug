@@ -19,10 +19,13 @@ const COLUMNS: Array[Array] = [
 	["discard_size", "DS", "Cards in discard pile"],
 	["inner_circle", "IC", "Cards in Inner Circle"],
 ]
-## Ширина столбца имени (13 знаков шрифта по 6 пикселей: ник до
-## PlayerProfile.NAME_MAX = 12 знаков и значок хода) и числового (2 знака).
-## Трофеям — всё, что осталось справа.
-const NAME_W := 78.0
+## Ширина столбца имени: значок хода (1 знак шрифта, 6 пикселей), фишка войска
+## с эмблемой (9 пикселей и 2 отступа) и ник до PlayerProfile.NAME_MAX = 12
+## знаков по 6 пикселей. Числовой столбец — 2 знака. Трофеям — всё, что
+## осталось справа.
+const MARKER_W := 6.0
+const TOKEN_W := 11.0
+const NAME_W := MARKER_W + TOKEN_W + 72.0
 const NUM_W := 12.0
 const COL_GAP := 3
 const TROPHY_INDENT := 4
@@ -99,9 +102,26 @@ static func _head(text: String, hint: String, width: float, align: HorizontalAli
 
 func _add_row(pid: String) -> void:
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT)
-	var name_label := _cell("", NAME_W, colour, HORIZONTAL_ALIGNMENT_LEFT)
+	# Ячейка имени: значок хода «>», фишка войска с эмблемой игрока (как на
+	# доске, решение владельца 2026-09-27) и ник.
+	var name_cell := HBoxContainer.new()
+	name_cell.custom_minimum_size = Vector2(NAME_W, 0)
+	name_cell.add_theme_constant_override("separation", 0)
+	_grid.add_child(name_cell)
+	var marker := _cell("", MARKER_W, colour, HORIZONTAL_ALIGNMENT_LEFT)
+	name_cell.add_child(marker)
+	var token := TextureRect.new()
+	token.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	# Заглавные пиксельного шрифта сидят выше середины строки — фишку
+	# прижимаем к верху (высота 10 вместо строки 11), она поднимается на пиксель.
+	token.custom_minimum_size = Vector2(TOKEN_W, 10)
+	token.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	token.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	name_cell.add_child(token)
+	var name_label := _cell("", 0.0, colour, HORIZONTAL_ALIGNMENT_LEFT)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.mouse_filter = Control.MOUSE_FILTER_STOP  # подсказка — полное имя
-	_grid.add_child(name_label)
+	name_cell.add_child(name_label)
 	var values: Dictionary = {}
 	for column: Array in COLUMNS:
 		var value := _cell("0", NUM_W, PixelTheme.TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -112,7 +132,8 @@ func _add_row(pid: String) -> void:
 	trophies.clip_contents = true
 	trophies.mouse_filter = Control.MOUSE_FILTER_STOP
 	_grid.add_child(_indented(trophies))
-	_rows[pid] = {"name": name_label, "values": values, "trophies": trophies}
+	_rows[pid] = {"name": name_label, "marker": marker, "token": token, "token_key": null,
+		"values": values, "trophies": trophies}
 
 
 ## Цифра трофея: без обрезки — с clip_text ширина Label схлопывается в ноль.
@@ -192,8 +213,15 @@ func update_from_view(view: Dictionary) -> void:
 		if p.is_empty():
 			continue
 		var row: Dictionary = _rows[pid]
-		var name_text := EventLogPanel.player_name(pid).to_upper()
-		(row["name"] as Label).text = (">" + name_text) if pid == current else name_text
+		(row["marker"] as Label).text = ">" if pid == current else ""
+		(row["name"] as Label).text = EventLogPanel.player_name(pid).to_upper()
+		# Эмблема может смениться (игрок по сети прислал профиль) — фишку
+		# перерисовываем только тогда.
+		var emblem := PlayerProfile.emblem_of(pid)
+		if row["token_key"] == null or String(row["token_key"]) != emblem:
+			row["token_key"] = emblem
+			(row["token"] as TextureRect).texture = ImageTexture.create_from_image(
+				SchematicPainter.token(BoardPanel.troop_colour(pid), emblem))
 		(row["name"] as Label).tooltip_text = EventLogPanel.player_name(pid)
 		var values: Dictionary = row["values"]
 		for column: Array in COLUMNS:
