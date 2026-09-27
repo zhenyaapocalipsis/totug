@@ -11,6 +11,9 @@ extends Control
 ## (барак соперника, своя стопка Inner Circle), а съеденная рассыпается на
 ## пиксельные квадратики.
 ##
+## Одна карта сразу нескольким игрокам (изгои от Ghoul, Demogorgon) — рядом
+## крупных копий, над каждой плашка получателя; каждая улетает к своему.
+##
 ## Показы идут очередью: соперник может сделать пять дел за ход. Чем длиннее
 ## очередь, тем быстрее идёт каждый показ; щелчок по карте проматывает её.
 ## Игру витрина не держит: состояние уже применено, она лишь догоняет его.
@@ -48,20 +51,15 @@ var _dim := 0.0
 ## Шлейфы летящих мелких карт: по одному на каждую точку назначения.
 var _trails: Array = []
 var _card_rect := Rect2()
-var _banner: PanelContainer
-var _banner_label: Label
+## Плашки над картами: по одной на каждую карту ряда (обычно одна).
+var _banners: Array[PanelContainer] = []
+## Промежуток между картами ряда.
+const ROW_GAP := 8.0
 
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_banner = PanelContainer.new()
-	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_banner_label = Label.new()
-	_banner_label.add_theme_color_override("font_color", PixelTheme.TEXT)
-	_banner.add_child(_banner_label)
-	_banner.visible = false
-	add_child(_banner)
 	set_process(false)
 
 
@@ -69,18 +67,33 @@ func _init() -> void:
 ##   text      — плашка над картой («RED RECRUITS»);
 ##   colour    — цвет игрока для плашки;
 ##   from      — откуда прилетает (точка экрана) или null — вспышкой в центре;
-##   to        — куда улетает (точка экрана), массив точек — копии
-##               разлетаются во все сразу, null — рассыпается;
+##   to        — куда улетает (точка экрана) или null — рассыпается;
 ##   face_down — взята вслепую: сначала рубашка, потом переворот;
 ##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
 		face_down: bool = false, back: String = "") -> void:
-	_queue.append({"cid": cid, "text": text, "colour": colour, "from": from, "to": to,
+	_enqueue(cid, [{"text": text, "colour": colour, "to": to}], from, face_down, back)
+
+
+## Одна карта сразу нескольким игрокам (изгои от Ghoul, Demogorgon): ряд
+## крупных копий, над каждой своя плашка, и каждая улетает в свою точку.
+## slots — [{text, colour, to}], to — точка экрана (не null).
+func show_row(cid: String, slots: Array[Dictionary]) -> void:
+	_enqueue(cid, slots, null, false, "")
+
+
+func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: String) -> void:
+	_queue.append({"cid": cid, "slots": slots, "from": from,
 		"face_down": face_down, "back": CardBack.texture(back),
 		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid)})
 	if _item.is_empty():
 		_next()
 	set_process(true)
+
+
+## Карта рассыпается (съедена): у неё нет точки, куда улетать.
+func _crumbles() -> bool:
+	return (_item["slots"] as Array).size() == 1 and _item["slots"][0]["to"] == null
 
 
 ## Для проверок и чтобы не показывать лишнего: идёт ли сейчас показ.
@@ -104,17 +117,30 @@ func _next() -> void:
 	if _queue.is_empty():
 		_item = {}
 		_phase = ""
-		_banner.visible = false
+		for banner in _banners:
+			banner.visible = false
 		finished.emit()
 		return
 	_item = _queue.pop_front()
 	_set_phase("enter")
 	_flash = 0.0 if _item["from"] != null else FLASH_TIME
-	_banner_label.text = String(_item["text"])
-	var colour: Color = _item["colour"]
-	_banner.add_theme_stylebox_override("panel",
-		PixelTheme.box(colour.darkened(0.55), colour, 1, 6, 2))
-	_banner.reset_size()
+	var slots: Array = _item["slots"]
+	while _banners.size() < slots.size():
+		var banner := PanelContainer.new()
+		banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var label := Label.new()
+		label.add_theme_color_override("font_color", PixelTheme.TEXT)
+		banner.add_child(label)
+		banner.visible = false
+		add_child(banner)
+		_banners.append(banner)
+	for i in slots.size():
+		var banner := _banners[i]
+		(banner.get_child(0) as Label).text = String(slots[i]["text"])
+		var colour: Color = slots[i]["colour"]
+		banner.add_theme_stylebox_override("panel",
+			PixelTheme.box(colour.darkened(0.55), colour, 1, 6, 2))
+		banner.reset_size()
 
 
 func _set_phase(phase: String) -> void:
@@ -145,7 +171,7 @@ func _process(delta: float) -> void:
 			if _t >= HOLD_TIME:
 				_set_phase("exit")
 		"exit":
-			if _t >= (CRUMBLE_TIME if _item["to"] == null else EXIT_TIME):
+			if _t >= (CRUMBLE_TIME if _crumbles() else EXIT_TIME):
 				_next()
 
 	if _item.is_empty() and _dim <= 0.0:
@@ -179,59 +205,79 @@ func _draw() -> void:
 		# Затемняем весь экран, а не только доску: вокруг доски стоят сводка,
 		# рука и рынок, и тёмный прямоугольник обрывался бы посреди экрана.
 		draw_rect(Rect2(Vector2.ZERO, size), Color(PixelTheme.DIM, PixelTheme.DIM.a * _dim))
-	_banner.visible = false
+	for banner in _banners:
+		banner.visible = false
 	_card_rect = Rect2()
 	if _item.is_empty():
 		return
 
 	var centre := area.get_center().round()
-	var big := CardView.PIXEL_SIZE
-	var big_rect := Rect2((centre - big * 0.5).round(), big)
+	var rects := _row_rects(area)
 	var face: Texture2D = _item["face"]
+	var slots: Array = _item["slots"]
 
 	match _phase:
 		"enter":
 			if _item["from"] == null:
-				_draw_big(big_rect, face, bool(_item["face_down"]))
+				_draw_row(rects, face, bool(_item["face_down"]))
 			else:
 				var p := _ease_out(_t / ENTER_TIME)
 				_draw_small_at((_item["from"] as Vector2).lerp(centre, p))
 		"back":
-			_draw_big(big_rect, face, true)
+			_draw_row(rects, face, true)
 		"hold":
-			_draw_big(big_rect, face, false)
+			_draw_row(rects, face, false)
 		"exit":
-			if _item["to"] == null:
-				_draw_crumble(big_rect, face, _t / CRUMBLE_TIME)
-				_show_banner(big_rect)
+			if _crumbles():
+				_draw_crumble(rects[0], face, _t / CRUMBLE_TIME)
+				_show_banner(0, rects[0])
 			else:
-				# Несколько точек — копии разлетаются одновременно (изгои
-				# каждому сопернику одним показом).
-				var targets: Array = _item["to"] if _item["to"] is Array else [_item["to"]]
+				# Каждая копия улетает из своего места ряда в свою точку.
 				var p := _ease_in(_t / EXIT_TIME)
-				for i in targets.size():
-					var to: Vector2 = targets[i]
-					var mid := centre.lerp(to, 0.5) + Vector2(0, -FLY_ARC)
-					_draw_small_at(centre.lerp(mid, p).lerp(mid.lerp(to, p), p), i)
+				for i in slots.size():
+					var from: Vector2 = (rects[i] as Rect2).get_center().round()
+					var to: Vector2 = slots[i]["to"]
+					var mid := from.lerp(to, 0.5) + Vector2(0, -FLY_ARC)
+					_draw_small_at(from.lerp(mid, p).lerp(mid.lerp(to, p), p), i)
 
 
-## Карта крупно: лицом или рубашкой, в первые мгновения — белая вспышка.
-func _draw_big(rect: Rect2, face: Texture2D, down: bool) -> void:
-	_card_rect = rect
-	if down or face == null:
-		_draw_back(rect)
-	else:
-		draw_texture_rect(face, rect, false)
-	if _flash > 0.0:
-		draw_rect(rect, Color(1, 1, 1, 0.8 * _flash / FLASH_TIME))
-	_show_banner(rect)
+## Места крупных карт: одна — по центру зоны, несколько — рядом в ряд по
+## центру. Если ряд не влезает в зону, карты заходят друг на друга.
+func _row_rects(area: Rect2) -> Array[Rect2]:
+	var big := CardView.PIXEL_SIZE
+	var n: int = (_item["slots"] as Array).size()
+	var step := big.x + ROW_GAP
+	if n > 1:
+		step = minf(step, floorf((area.size.x - big.x) / float(n - 1)))
+	var width := big.x + step * float(n - 1)
+	var left := area.get_center().x - width * 0.5
+	var top := area.get_center().y - big.y * 0.5
+	var rects: Array[Rect2] = []
+	for i in n:
+		rects.append(Rect2(Vector2(left + step * float(i), top).round(), big))
+	return rects
 
 
-func _show_banner(card: Rect2) -> void:
-	_banner.visible = true
-	var s := _banner.get_combined_minimum_size()
-	_banner.size = s
-	_banner.position = Vector2(roundf(card.get_center().x - s.x * 0.5), card.position.y - s.y - 3)
+## Ряд крупных карт: лицом или рубашкой, в первые мгновения — белая вспышка.
+func _draw_row(rects: Array[Rect2], face: Texture2D, down: bool) -> void:
+	for i in rects.size():
+		var rect := rects[i]
+		_card_rect = rect if i == 0 else _card_rect.merge(rect)
+		if down or face == null:
+			_draw_back(rect)
+		else:
+			draw_texture_rect(face, rect, false)
+		if _flash > 0.0:
+			draw_rect(rect, Color(1, 1, 1, 0.8 * _flash / FLASH_TIME))
+		_show_banner(i, rect)
+
+
+func _show_banner(index: int, card: Rect2) -> void:
+	var banner := _banners[index]
+	banner.visible = true
+	var s := banner.get_combined_minimum_size()
+	banner.size = s
+	banner.position = Vector2(roundf(card.get_center().x - s.x * 0.5), card.position.y - s.y - 3)
 
 
 ## Карта в полёте — мелкой картинкой 1:1 со шлейфом из прошлых позиций.

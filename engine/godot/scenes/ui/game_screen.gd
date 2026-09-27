@@ -702,15 +702,14 @@ func _show_decision(view: Dictionary) -> void:
 func _react_to_events(events: Array) -> void:
 	var power := 0.0
 	var launched := 0
-	# Изгои, выданные подряд одной картой, и кто её разыграл.
+	# Изгои, выданные подряд одной картой: один показ на всех.
 	var outcasts: Array[Dictionary] = []
-	var mover := String(_view.get("current_player", ""))
 	for e in events:
 		var evt: Dictionary = e
 		var pid := String(evt.get("player_id", ""))
 		var started := false
 		if String(evt.get("type", "")) != "give_insane_outcast" and not outcasts.is_empty():
-			_showcase_outcasts(mover, outcasts)
+			_showcase_outcasts(outcasts)
 			outcasts = []
 		match String(evt.get("type", "")):
 			# "deploy" — действие за мечи (Power), "deploy_troop" — деплой картой.
@@ -759,8 +758,6 @@ func _react_to_events(events: Array) -> void:
 			# Выдачи одной карты (идут подряд) собираются в один показ.
 			"give_insane_outcast":
 				outcasts.append(evt)
-			"play_card":
-				mover = pid
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
@@ -771,43 +768,31 @@ func _react_to_events(events: Array) -> void:
 		if started:
 			launched += 1
 	if not outcasts.is_empty():
-		_showcase_outcasts(mover, outcasts)
+		_showcase_outcasts(outcasts)
 	if power > 0.0:
 		_board_panel.shake(power)
 	_note_recap(events)
 
 
-## Один показ на все изгои одной карты: крупно с плашкой «EACH OPPONENT
-## RECRUITS ×2» (или «RED RECRUITS», если получатель один), потом копии
-## разлетаются по получателям одновременно (решение владельца, 2026-09-27:
-## девять одинаковых показов подряд после Ghoul и Demogorgon — затянуто).
-func _showcase_outcasts(mover: String, gives: Array[Dictionary]) -> void:
-	var receivers: Array[String] = []
-	var counts: Array[int] = []
+## Один показ на все изгои одной карты (решение владельца, 2026-09-27:
+## девять одинаковых показов подряд после Ghoul и Demogorgon — затянуто):
+## ряд крупных изгоев, по одному на получателя, над каждым плашка его цвета
+## «RED RECRUITS ×2», потом каждая копия улетает к своему получателю. Ряд
+## идёт в порядке бараков слева направо, чтобы копии не летели крест-накрест.
+func _showcase_outcasts(gives: Array[Dictionary]) -> void:
+	var slots: Array[Dictionary] = []
 	for evt in gives:
-		receivers.append(String(evt.get("player_id", "")))
-		counts.append(int(evt.get("count", 1)))
-	var same: bool = counts.min() == counts.max()
-	var times := (" ×%d" % counts[0]) if same and counts[0] > 1 else ""
-	var who := ""
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(mover, PixelTheme.GOLD)
-	var everyone_else := receivers.size() > 1 and not receivers.has(mover) \
-		and receivers.size() == (_view.get("turn_order", []) as Array).size() - 1
-	if receivers.size() == 1:
-		who = EventLogPanel.player_name(receivers[0]).to_upper() + " RECRUITS"
-		colour = BoardPanel.PLAYER_COLORS.get(receivers[0], PixelTheme.GOLD)
-	elif everyone_else:
-		who = "EACH OPPONENT RECRUITS"
-	else:
-		var names: PackedStringArray = []
-		for r in receivers:
-			names.append(EventLogPanel.player_name(r).to_upper())
-		who = ", ".join(names) + " RECRUIT"
-	var targets: Array = []
-	for r in receivers:
-		targets.append(_showcase_target(r, "discard"))
-	_showcase.show_card(Supplies.INSANE_OUTCAST, who + times, colour, null,
-		targets[0] if targets.size() == 1 else targets)
+		var pid := String(evt.get("player_id", ""))
+		var count := int(evt.get("count", 1))
+		slots.append({
+			"text": EventLogPanel.player_name(pid).to_upper() + " RECRUITS" \
+				+ (" ×%d" % count if count > 1 else ""),
+			"colour": BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD),
+			"to": _showcase_target(pid, "discard"),
+		})
+	slots.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return (a["to"] as Vector2).x < (b["to"] as Vector2).x)
+	_showcase.show_row(Supplies.INSANE_OUTCAST, slots)
 
 
 ## Подписи сводки хода для событий, которые в неё попадают.
