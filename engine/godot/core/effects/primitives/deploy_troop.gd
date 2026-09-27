@@ -2,10 +2,10 @@ class_name DeployTroop
 extends CardEffect
 
 ## "Deploy N troop(s)" как эффект карты — в отличие от базового действия
-## Actions.deploy(), НЕ стоит 1 Power и не даёт 1 VP взамен при пустом бараке
-## (в тексте карт эта оговорка никогда не встречается — она специфична для
-## базового действия, рулбук стр. 12). Если барак пуст, просто ничего не
-## разворачивается за этот пункт (мягкий отказ, партия не блокируется).
+## Actions.deploy(), НЕ стоит 1 Power. Решение владельца (2026-09-28): как и
+## базовое действие, при пустом бараке каждое неразмещённое войско карты даёт
+## 1 VP взамен (Neogi с пустым бараком = 4 VP). Если войска в бараке есть, но
+## ставить некуда — ничего (мягкий отказ, партия не блокируется).
 ##
 ## remaining — сколько войск ещё нужно развернуть в этой цепочке вызовов;
 ## каждый вызов apply() либо запрашивает один слот, либо (remaining <= 0 /
@@ -36,6 +36,9 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		return
 	var p: PlayerState = state.players[player_id]
 	if p.troops_in_barracks <= 0:
+		var granted: int = state.vp_bank.grant(remaining)
+		p.vp_tokens += granted
+		resolver.log_event("gain_vp", {"player_id": player_id, "amount": granted})
 		return
 	var legal: PackedStringArray = state.presence.deployable_slots(player_id, state.troops, state.spies)
 	if legal.is_empty():

@@ -1364,6 +1364,25 @@ func test_deploy_and_assassinate_effects() -> void:
 	check_eq(deployed, 2, "DeployTroop(2) запросил ровно 2 решения")
 	check_eq(red.troops_in_barracks, barracks_before - 2, "барак уменьшился на 2")
 
+	# Решение владельца: при пустом бараке каждое неразмещённое войско карты = 1 VP
+	var vs := _build_rich_state()
+	var vred: PlayerState = vs.players["red"]
+	vred.troops_in_barracks = 0
+	var vp0 := vred.vp_tokens
+	var vres := EffectResolver.new()
+	vres.apply(DeployTroop.new(4), "red", vs)
+	check(not vres.is_waiting(), "пустой барак: Deploy 4 не спрашивает слот")
+	check_eq(vred.vp_tokens, vp0 + 4, "пустой барак: Deploy 4 дал 4 VP")
+	# Последнее войско кончилось посреди эффекта: остаток превращается в VP
+	vred.troops_in_barracks = 1
+	vp0 = vred.vp_tokens
+	var vres2 := EffectResolver.new()
+	vres2.apply(DeployTroop.new(3), "red", vs)
+	vres2.resume(vs, vres2.pending.legal_options[0])
+	check(not vres2.is_waiting(), "после последнего войска слот больше не спрашивают")
+	check_eq(vred.troops_in_barracks, 0, "последнее войско размещено")
+	check_eq(vred.vp_tokens, vp0 + 2, "два неразмещённых войска дали 2 VP")
+
 	var trophy_before := red.trophy_hall_count
 	var resolver2 := EffectResolver.new()
 	resolver2.apply(AssassinateTroop.new(1), "red", state)
