@@ -79,8 +79,6 @@ const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
 ## Той же высоты кнопки стопок слева и End turn справа.
 const BOTTOM_H := 80.0
-## Ширина чата в левом нижнем углу (высота — BOTTOM_H, как у руки).
-const CHAT_W := 176.0
 const TIMER_H := 11.0
 const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
@@ -109,7 +107,6 @@ var board_data: Dictionary = {}
 
 var _barracks: BarracksBar
 var _players_panel: PlayersPanel
-var _chat_frame: Control
 var _hand_panel: HandPanel
 var _showcase: CardShowcase
 var _turn_banner: TurnBanner
@@ -128,8 +125,7 @@ var _space_hold := 0.0
 var _space_fill: ColorRect
 var _feed: TurnFeed
 var _market_panel: MarketPanel
-var _chat_panel: ChatPanel
-var _log_panel: EventLogPanel
+var _note_toast: NoteToast
 var _board_panel: BoardPanel
 var _board_area: Control
 var _decision_dialog: DecisionDialog
@@ -197,20 +193,18 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		viewer_id = String(online["seat"])
 		board_data = online["board"]
 		net.result_received.connect(_on_result)
-		net.chat_received.connect(func(who: String, text: String): _chat_panel.add_message(who, text))
 		net.player_left.connect(func(who: String):
-			_log_panel.add_note("%s has disconnected." % EventLogPanel.player_name(who)))
+			_note("%s has disconnected." % EventLogPanel.player_name(who)))
 		net.player_rejoined.connect(func(who: String):
-			_log_panel.add_note("%s is back." % EventLogPanel.player_name(who)))
+			_note("%s is back." % EventLogPanel.player_name(who)))
 		net.connection_lost.connect(func(reason: String):
-			_log_panel.add_note(reason + ".")
+			_note(reason + ".")
 			_reconnect_banner.visible = true
 			_reconnect_status.text = reason + ".")
 		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
 		_build_layout()
-		_chat_panel.set_online()
 		refresh(online["view"])
-		_log_panel.add_note("Online game started. You play %s." % EventLogPanel.player_name(viewer_id))
+		_note("Online game started. You play %s." % EventLogPanel.player_name(viewer_id))
 		return
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
@@ -220,7 +214,6 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 	viewer_id = server.resolver.pending.player_id if server.resolver.is_waiting() else state.current_player()
 	_build_layout()
 	refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
-	_log_panel.add_note("Game started. Each player drew 5 cards and now chooses a starting site.")
 
 
 ## Общий вид зон экрана: рамка в один пиксель, без скруглений.
@@ -398,23 +391,13 @@ func _build_layout() -> void:
 	_pile_dialog = PileDialog.new()
 	add_child(_pile_dialog)
 
-	# Чат и журнал событий — в левом нижнем углу, слева от руки (решение
-	# владельца, 2026-09-27: переехали сюда из меню по Tab).
-	# Чат лежит в простой рамке своего размера: Control не берёт минимальный
-	# размер у детей, и длинная строка журнала не растянет зону.
-	_chat_frame = Control.new()
-	_chat_frame.clip_contents = true
-	add_child(_chat_frame)
-	_chat_panel = ChatPanel.new()
-	_chat_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_chat_panel.message_sent.connect(func(text: String):
-		if net != null:
-			net.send_chat(text)
-		else:
-			_chat_panel.add_message(viewer_id, text))
-	_chat_frame.add_child(_chat_panel)
-	_log_panel = _chat_panel.log_panel
-	_log_panel.board = board_data
+	# Чата и журнала больше нет (решение владельца, 2026-09-27): ход виден в
+	# сводке слева, а подсказки и отказы («не та цель», «время вышло») —
+	# всплывающей строкой над счётчиками Power/Influence.
+	_note_toast = NoteToast.new()
+	_note_toast.area = _board_area
+	_note_toast.above = _res_frame
+	add_child(_note_toast)
 
 	# Увеличенная копия карты под курсором (с зажатым Alt) — над всем экраном.
 	_preview = CardPreview.new()
@@ -603,19 +586,18 @@ func _layout() -> void:
 	var ew := COL - PILES_W - GAP
 	_place(_end_turn_area, d_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
 
-	# Слева — сводка ходов во всю высоту доски; доска — всё между ней и
+	# Слева — сводка ходов во всю высоту экрана (решение владельца,
+	# 2026-09-27: чат убран, сводка — до низа); доска — всё между ней и
 	# правой колонкой, от верха экрана до руки. Ширины сводки доске не жалко:
 	# масштаб схемы от неё не падает ни на двоих, ни на четверых.
 	var board_h := bottom_y - GAP - top_y
-	_place(_feed, a_x, top_y, TurnFeed.WIDTH, board_h)
+	_place(_feed, a_x, top_y, TurnFeed.WIDTH, h - MARGIN - top_y)
 	var board_x := a_x + TurnFeed.WIDTH + GAP
 	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
 
-	# Левый нижний угол — чат высотой с руку; рука — справа от него, под
-	# доской, без подложки; запас сверху нужен карте под курсором — она
-	# выдвигается выше края ряда.
-	_place(_chat_frame, a_x, bottom_y, CHAT_W, BOTTOM_H)
-	var hand_x := a_x + CHAT_W + GAP
+	# Рука — под доской, без подложки; запас сверху нужен карте под
+	# курсором — она выдвигается выше края ряда.
+	var hand_x := board_x
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, hand_x, hand_top, d_x - GAP - hand_x, h - MARGIN - hand_top)
 	_place_res_frame()
@@ -684,11 +666,15 @@ func send(intent: Intent) -> void:
 	_on_result(int(result["error"]), result["events"], view)
 
 
-## Ответ сервера — свой или пришедший по сети: журнал, перерисовка, тряска.
+## Подсказка или отказ — всплывающей строкой над счётчиками Power/Influence.
+func _note(text: String) -> void:
+	_note_toast.show_note(text)
+
+
+## Ответ сервера — свой или пришедший по сети: перерисовка, сводка, тряска.
 func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	if err != GameServer.Error.OK:
-		_log_panel.add_note("Not allowed: %s" % _error_name(err))
-	_log_panel.add_events(events)
+		_note("Not allowed: %s" % _error_name(err))
 	refresh(view)
 	_react_to_events(events)
 	# Витрина (крупный показ повышенной, купленной, съеденной карты) запускается
@@ -796,8 +782,34 @@ func _note_recap(events: Array) -> void:
 				_feed.add(pid, cid, RECAP_TAGS[type])
 		elif type == "play_card":
 			_feed.add_played(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
+		elif type == "discard" or type == "force_discard":
+			_feed.add_discard(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
 		elif type == "turn_ended":
 			_feed.end_turn()
+		elif RECAP_STATS.has(type):
+			var stat: Array = RECAP_STATS[type]
+			var amount := 1
+			if stat[0] == "vp":
+				amount = int(evt.get("granted", evt.get("amount", 0)))
+				if type == "gain_per_n" and String(evt.get("resource", "")) != "vp":
+					continue
+			# Возврат шпиона эффектом карты пишет хозяина в "owner".
+			var mark := String(evt.get(stat[1], evt.get("owner", ""))) if stat[1] != "" else ""
+			_feed.add_stat(String(evt.get("player_id", "")), stat[0], amount, mark)
+
+
+## Строки действий сводки: тип события -> [ключ TurnFeed.STATS, поле события
+## с цветом квадратика ("" — без квадратика)].
+const RECAP_STATS := {
+	"deploy": ["deploy", ""], "deploy_troop": ["deploy", ""],
+	"move_troop": ["move", ""],
+	"assassinate": ["kill", "victim"], "supplant": ["supplant", "victim"],
+	"return_troop": ["return", "owner"],
+	"place_spy": ["spy", ""],
+	"return_spy": ["spy_back", "spy_owner"], "return_own_spy": ["spy_back", "player_id"],
+	"take_trophy": ["trophy", ""],
+	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""], "vp_income": ["vp", ""],
+}
 
 
 ## Крупный показ карты cid, которую взял pid (см. CardShowcase).
@@ -1062,7 +1074,7 @@ func _process(delta: float) -> void:
 	if _time_left <= 0.0 and not _auto_ending and current == viewer_id \
 			and not _end_turn_button.disabled:
 		_auto_ending = true
-		_log_panel.add_note("Time is up — the turn ends automatically.")
+		_note("Time is up — the turn ends automatically.")
 		send(Intent.end_turn(current))
 		_auto_ending = false
 
@@ -1109,7 +1121,7 @@ func _tick_decision_timer(pending: Dictionary, delta: float) -> void:
 	if options.is_empty():
 		return
 	_auto_answered = true
-	_log_panel.add_note("Time is up — an answer was chosen automatically.")
+	_note("Time is up — an answer was chosen automatically.")
 	_on_decision_answer(auto_decision_answer(options))
 
 
@@ -1377,7 +1389,7 @@ func _on_slot_clicked(slot_id: String) -> void:
 		if _try_resolve_board_decision(pending, slot_id, _site_of_slot(slot_id)):
 			return
 		if _is_board_choice(String(pending["choice_type"])):
-			_log_panel.add_note("That is not a valid target — valid targets have gold rings.")
+			_note("That is not a valid target — valid targets have gold rings.")
 			return
 
 	var view := _view
@@ -1387,7 +1399,7 @@ func _on_slot_clicked(slot_id: String) -> void:
 	elif (legal.get("deploy_slots", []) as Array).has(slot_id):
 		send(Intent.deploy(viewer_id, slot_id))
 	else:
-		_log_panel.add_note(_explain_slot_refusal(slot_id, view, legal))
+		_note(_explain_slot_refusal(slot_id, view, legal))
 
 
 func _is_board_choice(choice_type: String) -> bool:
@@ -1476,14 +1488,14 @@ func _on_site_clicked(site_id: String) -> void:
 		if _try_resolve_board_decision(pending, "", site_id):
 			return
 		if _is_board_choice(String(pending["choice_type"])):
-			_log_panel.add_note("That is not a valid target — valid targets have gold rings.")
+			_note("That is not a valid target — valid targets have gold rings.")
 			return
 
 	for target in ((_view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
 		if String((target as Dictionary)["site_id"]) == site_id:
-			_log_panel.add_note("Click the spy itself to return it")
+			_note("Click the spy itself to return it")
 			return
-	_log_panel.add_note("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
+	_note("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
 
 
 ## Клик прямо по ромбику шпиона: возвращаем именно его, без меню. Если этого

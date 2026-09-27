@@ -41,6 +41,8 @@ var _capture_site := ""
 var _move_to := ""
 var _feed_before := 0
 var _feed_cells_before := 0
+var _foe_kills := 0
+var _foe_vp := 0
 var _foe_tags: Array[String] = []
 var _foe_discard := ""
 var _market_before: Array = []
@@ -548,7 +550,17 @@ func _step_recap() -> void:
 		{"type": "play_card", "player_id": foe, "card_id": played},
 		{"type": "devour", "player_id": foe, "card_id": cid, "source": "market"},
 		{"type": "play_card", "player_id": foe, "card_id": played}])
+	# Сброс, убийства и VP — только в сводку: анимаций для выдуманных слотов
+	# не нужно.
+	_screen._note_recap([
+		{"type": "force_discard", "player_id": me, "card_id": played},
+		{"type": "assassinate", "player_id": foe, "slot_id": "x", "victim": GameState.WHITE},
+		{"type": "assassinate", "player_id": foe, "slot_id": "y", "victim": me},
+		{"type": "gain_vp", "player_id": foe, "amount": 1},
+		{"type": "vp_income", "player_id": foe, "granted": 2, "total_vp": 3}])
 	_foe_tags = _screen._feed.last_block_tags()
+	_foe_kills = _screen._feed.last_stat("kill")
+	_foe_vp = _screen._feed.last_stat("vp")
 	_screen._react_to_events([
 		{"type": "turn_ended", "player_id": foe, "game_over": false},
 		{"type": "recruit", "player_id": me, "market_index": 1, "card_id": cid}])
@@ -556,12 +568,16 @@ func _step_recap() -> void:
 
 func _step_check_recap() -> void:
 	var feed: TurnFeed = _screen._feed
-	check(feed.visible and feed.card_count() - _feed_before == 5,
-		"сводка слева пополнилась пятью картами (%d)" % (feed.card_count() - _feed_before))
-	check(feed.group_count() - _feed_cells_before == 4,
+	check(feed.visible and feed.card_count() - _feed_before == 6,
+		"сводка слева пополнилась шестью картами (%d)" % (feed.card_count() - _feed_before))
+	check(feed.group_count() - _feed_cells_before == 5,
 		"сыгранные за ход карты легли одной группой (%d групп)" % (feed.group_count() - _feed_cells_before))
-	check(_foe_tags == (["PLAYED", "BOUGHT", "DEVOURED"] as Array[String]),
-		"группы хода не перемешаны: %s" % [_foe_tags])
+	check(_foe_tags == (["PLAYED", "BOUGHT", "DEVOURED", "DISCARDED:" + _screen.viewer_id] as Array[String]),
+		"группы хода не перемешаны, чужой сброс — в блоке ходящего: %s" % [_foe_tags])
+	check(_foe_kills == 2 and _foe_vp == 3,
+		"строки действий: KILL %d, +%d VP" % [_foe_kills, _foe_vp])
+	check(feed.get_global_rect().end.y >= _screen.size.y - GameScreen.MARGIN - 1.0,
+		"сводка слева идёт до низа экрана")
 	var fits := true
 	for block in feed._blocks:
 		var label: Label = block.title

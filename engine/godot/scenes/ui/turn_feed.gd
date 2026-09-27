@@ -8,8 +8,14 @@ extends PanelContainer
 ##
 ## Каждый ход — отдельный блок в почти прозрачной рамке цвета игрока, сверху
 ## имя («RED'S TURN»). Внутри блока карты разложены по группам всегда в одном
-## порядке — PLAYED, PROMOTED, BOUGHT, DEVOURED (решение владельца: группы не
-## перемешивать), — и каждая группа лежит лесенкой (Ladder) с подписью.
+## порядке — PLAYED, PROMOTED, BOUGHT, DEVOURED, DISCARDED (решение владельца:
+## группы не перемешивать), — и каждая группа лежит лесенкой (Ladder) с
+## подписью. Под картами — строки действий хода из бывшего журнала (решение
+## владельца, 2026-09-27: чат и журнал убраны): DEPLOY 3, KILL 2 с квадратиками
+## цвета убитых, SPY 1, +2 VP и т. д. — счётчики за ход, всегда в одном порядке.
+##
+## Сброс чужой карты во время хода (force discard) ложится в блок ходящего
+## отдельной группой DISCARDED с подписью цвета сбросившего.
 ##
 ## Новая карта встаёт со вспышкой, и колонка сама листается вниз — если игрок
 ## не отлистал колёсиком назад, читая историю. Полосы прокрутки нет: она
@@ -26,7 +32,13 @@ const BLOCK_PAD := 2
 ## от доски.
 const WIDTH := CARD.x + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
-const ORDER: Array[String] = ["PLAYED", "PROMOTED", "BOUGHT", "DEVOURED"]
+const ORDER: Array[String] = ["PLAYED", "PROMOTED", "BOUGHT", "DEVOURED", "DISCARDED"]
+## Строки действий хода: ключ -> подпись; порядок строк — порядок ключей.
+const STATS := {
+	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",
+	"return": "RETURN", "spy": "SPY", "spy_back": "SPY BACK", "trophy": "TROPHY",
+	"vp": "VP",
+}
 ## Больше ходов не держим — самые старые уходят (сотни узлов ни к чему).
 const MAX_BLOCKS := 60
 ## Насколько близко к низу надо быть, чтобы колонка продолжала листаться
@@ -82,15 +94,60 @@ func add(pid: String, cid: String, tag: String) -> void:
 	if block == null or block.pid != pid or _turn_closed:
 		block = _open_block(pid)
 	block.add_card(tag, _card(cid))
-	_trim()
-	if follow:
-		_pin_frames = 2
-		set_process(true)
+	_after_add(follow)
 
 
 ## pid сыграл карту cid.
 func add_played(pid: String, cid: String) -> void:
 	add(pid, cid, "PLAYED")
+
+
+## pid сбросил карту cid. Во время чужого хода (его заставили) карта ложится
+## в блок ходящего своей группой с подписью цвета pid.
+func add_discard(pid: String, cid: String) -> void:
+	var follow := _at_bottom()
+	var block := _current_block(pid)
+	if block.pid == pid:
+		block.add_card("DISCARDED", _card(cid))
+	else:
+		block.add_card("DISCARDED:" + pid, _card(cid))
+	_after_add(follow)
+
+
+## Действие хода: key из STATS, amount — сколько добавить к счётчику,
+## mark — чей цвет поставить квадратиком (убитый, вытесненный, хозяин шпиона).
+## pid — кто действовал; пустой — тот, чей ход сейчас.
+func add_stat(pid: String, key: String, amount: int = 1, mark: String = "") -> void:
+	if amount <= 0 or not STATS.has(key):
+		return
+	var follow := _at_bottom()
+	_current_block(pid).add_stat(key, amount, mark)
+	_after_add(follow)
+
+
+## Для проверок: число в строке действия key последнего хода (0 — строки нет).
+func last_stat(key: String) -> int:
+	if _blocks.is_empty():
+		return 0
+	return int(_blocks.back().stats.get(key, 0))
+
+
+## Открытый блок текущего хода, а если его нет — новый блок pid.
+func _current_block(pid: String) -> Block:
+	if _placeholder != null:
+		_placeholder.queue_free()
+		_placeholder = null
+	var block: Block = _blocks.back() if not _blocks.is_empty() else null
+	if block == null or _turn_closed:
+		block = _open_block(pid if pid != "" else "?")
+	return block
+
+
+func _after_add(follow: bool) -> void:
+	_trim()
+	if follow:
+		_pin_frames = 2
+		set_process(true)
 
 
 ## Ход закончился: следующая карта, даже того же игрока, начнёт новый блок.
@@ -193,8 +250,17 @@ class Block extends PanelContainer:
 	var title: Label
 	## tag -> Ladder
 	var groups: Dictionary = {}
+	## Строки действий: key -> счётчик.
+	var stats: Dictionary = {}
+	## Квадратик цвета в строке действия и сколько их влезает в ширину карты.
+	const MARK := 5
+	const MAX_MARKS := 6
 	var _order: Array[String] = []
 	var _col: VBoxContainer
+	var _cells: Dictionary = {}
+	## key -> [Label, HBoxContainer квадратиков]
+	var _rows: Dictionary = {}
+	var _stats_box: VBoxContainer
 
 	func _init(player_id: String, order: Array[String]) -> void:
 		pid = player_id
@@ -222,34 +288,100 @@ class Block extends PanelContainer:
 	## Группы сверху вниз.
 	func tags() -> Array[String]:
 		var result: Array[String] = []
-		for tag in _order:
-			if groups.has(tag):
-				result.append(tag)
+		for tag: String in groups:
+			result.append(tag)
+		result.sort_custom(func(a: String, b: String) -> bool:
+			return _cells[a].get_index() < _cells[b].get_index())
 		return result
 
+	## Строка действия: счётчик растёт, квадратик цвета mark добавляется.
+	func add_stat(key: String, amount: int, mark: String) -> void:
+		if not _rows.has(key):
+			_add_row(key)
+		stats[key] = int(stats.get(key, 0)) + amount
+		var row: Array = _rows[key]
+		var label: Label = row[0]
+		label.text = ("+%d VP" % stats[key]) if key == "vp" \
+			else "%s %d" % [TurnFeed.STATS[key], stats[key]]
+		var marks: HBoxContainer = row[1]
+		# Квадратики — пока влезают в ширину карты рядом с подписью: иначе
+		# строка раздвинула бы колонку.
+		var font := label.get_theme_font("font")
+		var text_w := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			label.get_theme_font_size("font_size")).x
+		var room := int((TurnFeed.CARD.x - text_w - 2) / (MARK + 1))
+		while marks.get_child_count() > maxi(room, 0):
+			var extra := marks.get_child(marks.get_child_count() - 1)
+			marks.remove_child(extra)
+			extra.queue_free()
+		if mark != "" and marks.get_child_count() < mini(room, MAX_MARKS):
+			var dot := ColorRect.new()
+			dot.color = BoardPanel.troop_colour(mark)
+			dot.custom_minimum_size = Vector2(MARK, MARK)
+			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			marks.add_child(dot)
+
+	## Строки действий лежат под всеми группами карт, по порядку STATS.
+	func _add_row(key: String) -> void:
+		if _stats_box == null:
+			_stats_box = VBoxContainer.new()
+			_stats_box.add_theme_constant_override("separation", 0)
+			_stats_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_col.add_child(_stats_box)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 2)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var label := Label.new()
+		var colour := PixelTheme.TEXT_DIM
+		if key == "vp":
+			colour = PixelTheme.GOLD
+		elif key == "kill":
+			colour = PixelTheme.DANGER
+		label.add_theme_color_override("font_color", colour)
+		row.add_child(label)
+		var marks := HBoxContainer.new()
+		marks.add_theme_constant_override("separation", 1)
+		marks.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(marks)
+		var before := 0
+		for other: String in TurnFeed.STATS:
+			if other == key:
+				break
+			if _rows.has(other):
+				before += 1
+		_stats_box.add_child(row)
+		_stats_box.move_child(row, before)
+		_rows[key] = [label, marks]
+
 	## Новая группа встаёт на своё место по порядку: после заголовка и всех
-	## групп, которые в порядке идут раньше неё.
+	## групп, которые в порядке идут раньше неё или вместе с ней. Чужой сброс
+	## ("DISCARDED:blue") стоит рядом со своим, подпись — цвета сбросившего.
 	func _add_group(tag: String) -> void:
+		var base := tag.get_slice(":", 0)
+		var owner := tag.get_slice(":", 1) if tag.contains(":") else ""
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", 0)
 		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var ladder := Ladder.new()
 		cell.add_child(ladder)
 		var label := Label.new()
-		label.text = tag
+		label.text = base
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.add_theme_color_override("font_color",
-			PixelTheme.DANGER if tag == "DEVOURED" else PixelTheme.TEXT_DIM)
+		var colour := PixelTheme.DANGER if base == "DEVOURED" else PixelTheme.TEXT_DIM
+		if owner != "":
+			colour = EventLogPanel.player_color(owner)
+		label.add_theme_color_override("font_color", colour)
 		cell.add_child(label)
+		var rank := _order.find(base)
 		var before := 0
-		for other in _order:
-			if other == tag:
-				break
-			if groups.has(other):
+		for other: String in groups:
+			if _order.find(other.get_slice(":", 0)) <= rank:
 				before += 1
 		_col.add_child(cell)
 		_col.move_child(cell, 1 + before)
 		groups[tag] = ladder
+		_cells[tag] = cell
 
 
 ## Карты одной группы — лесенкой сверху вниз, как стопка на столе: каждая

@@ -132,8 +132,15 @@ func _apply(intent: Intent) -> int:
 			return Error.OK
 
 		Intent.Type.ACTION_DEPLOY:
+			var vp_before: int = state.players[intent.player_id].vp_tokens
+			var empty_barracks: bool = state.players[intent.player_id].troops_in_barracks <= 0
 			if not Actions.deploy(state, intent.player_id, intent.slot_id):
 				return Error.INVALID_ACTION
+			if empty_barracks:
+				# Пустой барак: действие дало VP вместо войска (рулбук стр. 12).
+				resolver.log_event("gain_vp", {"player_id": intent.player_id,
+					"amount": state.players[intent.player_id].vp_tokens - vp_before})
+				return Error.OK
 			resolver.log_event("deploy", {"player_id": intent.player_id, "slot_id": intent.slot_id})
 			return Error.OK
 
