@@ -72,17 +72,39 @@ const LAND_SHAKE := 2.0
 
 ## Убийство и вытеснение (решение владельца, 2026-09-28: игроки не видели,
 ## где это случилось). В виде убитой фишки уже нет, поэтому панель ещё
-## рисует её «призрак»: над ним мигает и сходится прицел, локация мигает
-## рамкой, затем удар — белая вспышка, осколки цвета жертвы, доска дёргается.
-## Несколько убийств одного ответа сервера идут друг за другом через KILL_STEP.
+## рисует её «призрак»: к нему с двух сторон по диагонали въезжают два меча
+## и скрещиваются над ним, локация мигает рамкой, затем удар — белая
+## вспышка, осколки цвета жертвы, доска дёргается (владелец, 2026-09-28:
+## мечи вместо прицела). Несколько убийств одного ответа сервера идут друг
+## за другом через KILL_STEP.
 const KILL_AIM := 0.45
 const KILL_STEP := 0.5
 const KILL_SHAKE := 4.0
 const KILL_SHARDS := 14
-## С какого расстояния (в пикселях схемы от края фишки) прицел начинает сходиться.
-const AIM_FAR := 12.0
-## Прицел мигает оранжевым и тёмно-красным: белый терялся на светлых плашках локаций.
-const AIM_DARK := Color(0.7, 0.12, 0.08)
+## С какого расстояния (в пикселях схемы, по каждой оси) въезжают мечи.
+const SWORD_FAR := 12.0
+## Меч острием вправо-вверх, 11x11 пикселей схемы; второй — его зеркало.
+## Клинки обоих проходят через середину (5, 5) — над центром фишки.
+## B — клинок, G — гарда, H — рукоять, P — навершие.
+const SWORD := [
+	"..........B",
+	".........B.",
+	"........B..",
+	".......B...",
+	"......B....",
+	".....B.....",
+	"..G.B......",
+	"...G.......",
+	"..H.G......",
+	".H.........",
+	"P..........",
+]
+const SWORD_COLORS := {
+	"B": Color(0.88, 0.9, 0.95),
+	"G": Color(1.0, 0.72, 0.2),
+	"H": Color(0.5, 0.28, 0.14),
+	"P": Color(1.0, 0.72, 0.2),
+}
 
 ## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
@@ -285,40 +307,53 @@ func _strike(k: Dictionary) -> void:
 	kill_struck.emit(slot_id, String(k["victim"]), String(k["killer"]), bool(k["supplant"]))
 
 
-## Убитые фишки до удара и прицелы над ними. Прицел — четыре уголка, которые
-## сходятся к фишке и мигают; локация вокруг мигает рамкой того же цвета.
+## Убитые фишки до удара и мечи над ними: въезжают снизу слева и снизу справа
+## (каждый вдоль своего клинка) и к удару сходятся крестом. Локация вокруг
+## мигает рамкой.
 func _draw_kills() -> void:
 	var unit: float = maxf(1.0, roundf(_zoom))
-	var r := _arrival_radius("troop|")
 	for k in _kills:
 		var at: Variant = _slot_world(String(k["slot"]))
 		if at == null:
 			continue
 		var pos := _snap(_to_screen(at))
-		_draw_troop(pos, String(k["victim"]))
 		if float(k["wait"]) > 0.0:
+			_draw_troop(pos, String(k["victim"]))
 			continue
 		var p: float = 1.0 - float(k["left"]) / KILL_AIM
 		var lit := int(p * 9.0) % 2 == 0
-		var colour := KILL_COLOR if lit else AIM_DARK
 		var site_id := _site_of_slot(String(k["slot"]))
 		if site_id != "":
 			_outline_site(site_id, Color(KILL_COLOR, 0.9 if lit else 0.35))
-		var d := roundf(r / unit + 1.0 + AIM_FAR * (1.0 - p) * (1.0 - p)) * unit
-		var arm := 4.0 * unit
-		for sx in [-1.0, 1.0]:
-			for sy in [-1.0, 1.0]:
-				var c := pos + Vector2(sx * d, sy * d)
-				var across := Rect2(Vector2(c.x - (arm if sx > 0.0 else 0.0),
-					c.y - (unit if sy > 0.0 else 0.0)), Vector2(arm, unit))
-				var down := Rect2(Vector2(c.x - (unit if sx > 0.0 else 0.0),
-					c.y - (arm if sy > 0.0 else 0.0)), Vector2(unit, arm))
-				# Тёмная тень на пиксель ниже и правее — прицел читается и на светлом.
-				var shadow := Vector2(unit, unit)
-				draw_rect(Rect2(across.position + shadow, across.size), Color(0, 0, 0, 0.8))
-				draw_rect(Rect2(down.position + shadow, down.size), Color(0, 0, 0, 0.8))
-				draw_rect(across, colour)
-				draw_rect(down, colour)
+		# Разгон к концу: мечи влетают и сходятся с размаху.
+		var off := roundf(SWORD_FAR * (1.0 - p) * (1.0 - p)) * unit
+		var origin := pos - Vector2(5.5, 5.5) * unit
+		var left := origin + Vector2(-off, off)
+		var right := origin + Vector2(off, off)
+		# Обводка мечей — под фишкой, клинки — над ней: иначе скрещённые мечи
+		# с обводкой сливаются в тёмное пятно и закрывают саму фишку.
+		_draw_sword(left, false, unit, true)
+		_draw_sword(right, true, unit, true)
+		_draw_troop(pos, String(k["victim"]))
+		_draw_sword(left, false, unit, false)
+		_draw_sword(right, true, unit, false)
+
+
+## Меч по рисунку SWORD с левым верхним углом в origin; mirrored — острием
+## влево-вверх. outline — только тёмная обводка в пиксель вокруг него: тонкий
+## клинок с ней читается и на светлой плашке локации.
+func _draw_sword(origin: Vector2, mirrored: bool, unit: float, outline: bool) -> void:
+	for y in SWORD.size():
+		var row: String = SWORD[y]
+		for x in row.length():
+			if row[x] == ".":
+				continue
+			var cell := Rect2(origin + Vector2((row.length() - 1 - x) if mirrored else x, y) * unit,
+				Vector2(unit, unit))
+			if outline:
+				draw_rect(cell.grow(unit), Color(0, 0, 0, 0.85))
+			else:
+				draw_rect(cell, SWORD_COLORS[row[x]])
 
 
 ## Локация, которой принадлежит место slot_id, или "" (место в туннеле).
