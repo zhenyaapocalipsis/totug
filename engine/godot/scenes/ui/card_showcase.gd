@@ -45,7 +45,8 @@ var _phase := ""
 var _t := 0.0
 var _flash := 0.0
 var _dim := 0.0
-var _trail: Array[Vector2] = []
+## Шлейфы летящих мелких карт: по одному на каждую точку назначения.
+var _trails: Array = []
 var _card_rect := Rect2()
 var _banner: PanelContainer
 var _banner_label: Label
@@ -68,7 +69,8 @@ func _init() -> void:
 ##   text      — плашка над картой («RED RECRUITS»);
 ##   colour    — цвет игрока для плашки;
 ##   from      — откуда прилетает (точка экрана) или null — вспышкой в центре;
-##   to        — куда улетает (точка экрана) или null — рассыпается;
+##   to        — куда улетает (точка экрана), массив точек — копии
+##               разлетаются во все сразу, null — рассыпается;
 ##   face_down — взята вслепую: сначала рубашка, потом переворот;
 ##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
@@ -98,7 +100,7 @@ func skip() -> void:
 
 
 func _next() -> void:
-	_trail.clear()
+	_trails.clear()
 	if _queue.is_empty():
 		_item = {}
 		_phase = ""
@@ -118,7 +120,7 @@ func _next() -> void:
 func _set_phase(phase: String) -> void:
 	_phase = phase
 	_t = 0.0
-	_trail.clear()
+	_trails.clear()
 
 
 func _process(delta: float) -> void:
@@ -203,10 +205,14 @@ func _draw() -> void:
 				_draw_crumble(big_rect, face, _t / CRUMBLE_TIME)
 				_show_banner(big_rect)
 			else:
-				var to: Vector2 = _item["to"]
+				# Несколько точек — копии разлетаются одновременно (изгои
+				# каждому сопернику одним показом).
+				var targets: Array = _item["to"] if _item["to"] is Array else [_item["to"]]
 				var p := _ease_in(_t / EXIT_TIME)
-				var mid := centre.lerp(to, 0.5) + Vector2(0, -FLY_ARC)
-				_draw_small_at(centre.lerp(mid, p).lerp(mid.lerp(to, p), p))
+				for i in targets.size():
+					var to: Vector2 = targets[i]
+					var mid := centre.lerp(to, 0.5) + Vector2(0, -FLY_ARC)
+					_draw_small_at(centre.lerp(mid, p).lerp(mid.lerp(to, p), p), i)
 
 
 ## Карта крупно: лицом или рубашкой, в первые мгновения — белая вспышка.
@@ -229,20 +235,24 @@ func _show_banner(card: Rect2) -> void:
 
 
 ## Карта в полёте — мелкой картинкой 1:1 со шлейфом из прошлых позиций.
-func _draw_small_at(pos: Vector2) -> void:
+## trail — номер шлейфа: копии, летящие в разные места, тянут каждая свой.
+func _draw_small_at(pos: Vector2, trail: int = 0) -> void:
 	pos = pos.round()
-	if _trail.is_empty() or _trail.back() != pos:
-		_trail.append(pos)
-		if _trail.size() > TRAIL + 1:
-			_trail.pop_front()
+	while _trails.size() <= trail:
+		_trails.append([])
+	var points: Array = _trails[trail]
+	if points.is_empty() or points.back() != pos:
+		points.append(pos)
+		if points.size() > TRAIL + 1:
+			points.pop_front()
 	var tex: Texture2D = _item["mini"]
 	var s: Vector2 = CardView.MINI_SIZE if tex != null else CardView.PIXEL_SIZE * 0.5
 	if tex == null:
 		tex = _item["face"]
-	for i in range(_trail.size()):
-		var last := i == _trail.size() - 1
-		var a := 1.0 if last else 0.35 * float(i + 1) / _trail.size()
-		var r := Rect2((_trail[i] - s * 0.5).round(), s)
+	for i in range(points.size()):
+		var last := i == points.size() - 1
+		var a := 1.0 if last else 0.35 * float(i + 1) / points.size()
+		var r := Rect2((points[i] - s * 0.5).round(), s)
 		if tex != null:
 			draw_texture_rect(tex, r, false, Color(1, 1, 1, a))
 		else:

@@ -702,10 +702,16 @@ func _show_decision(view: Dictionary) -> void:
 func _react_to_events(events: Array) -> void:
 	var power := 0.0
 	var launched := 0
+	# Изгои, выданные подряд одной картой, и кто её разыграл.
+	var outcasts: Array[Dictionary] = []
+	var mover := String(_view.get("current_player", ""))
 	for e in events:
 		var evt: Dictionary = e
 		var pid := String(evt.get("player_id", ""))
 		var started := false
+		if String(evt.get("type", "")) != "give_insane_outcast" and not outcasts.is_empty():
+			_showcase_outcasts(mover, outcasts)
+			outcasts = []
 		match String(evt.get("type", "")):
 			# "deploy" — действие за мечи (Power), "deploy_troop" — деплой картой.
 			"deploy", "deploy_troop":
@@ -750,10 +756,11 @@ func _react_to_events(events: Array) -> void:
 					_market_panel.card_rect(int(evt.get("market_index", -1))), "discard")
 			# «... recruits an Insane Outcast»: изгоя навязали эффектом карты,
 			# получатель сам его не брал — показываем всем, включая его самого.
-			# Каждая карта — отдельным показом, в сброс получателя.
+			# Выдачи одной карты (идут подряд) собираются в один показ.
 			"give_insane_outcast":
-				for i in range(int(evt.get("count", 1))):
-					_showcase_card(pid, Supplies.INSANE_OUTCAST, "RECRUITS", null, "discard")
+				outcasts.append(evt)
+			"play_card":
+				mover = pid
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
@@ -763,9 +770,44 @@ func _react_to_events(events: Array) -> void:
 					_showcase_card(pid, String(evt.get("card_id", "")), "DEVOURS", null, "")
 		if started:
 			launched += 1
+	if not outcasts.is_empty():
+		_showcase_outcasts(mover, outcasts)
 	if power > 0.0:
 		_board_panel.shake(power)
 	_note_recap(events)
+
+
+## Один показ на все изгои одной карты: крупно с плашкой «EACH OPPONENT
+## RECRUITS ×2» (или «RED RECRUITS», если получатель один), потом копии
+## разлетаются по получателям одновременно (решение владельца, 2026-09-27:
+## девять одинаковых показов подряд после Ghoul и Demogorgon — затянуто).
+func _showcase_outcasts(mover: String, gives: Array[Dictionary]) -> void:
+	var receivers: Array[String] = []
+	var counts: Array[int] = []
+	for evt in gives:
+		receivers.append(String(evt.get("player_id", "")))
+		counts.append(int(evt.get("count", 1)))
+	var same: bool = counts.min() == counts.max()
+	var times := (" ×%d" % counts[0]) if same and counts[0] > 1 else ""
+	var who := ""
+	var colour: Color = BoardPanel.PLAYER_COLORS.get(mover, PixelTheme.GOLD)
+	var everyone_else := receivers.size() > 1 and not receivers.has(mover) \
+		and receivers.size() == (_view.get("turn_order", []) as Array).size() - 1
+	if receivers.size() == 1:
+		who = EventLogPanel.player_name(receivers[0]).to_upper() + " RECRUITS"
+		colour = BoardPanel.PLAYER_COLORS.get(receivers[0], PixelTheme.GOLD)
+	elif everyone_else:
+		who = "EACH OPPONENT RECRUITS"
+	else:
+		var names: PackedStringArray = []
+		for r in receivers:
+			names.append(EventLogPanel.player_name(r).to_upper())
+		who = ", ".join(names) + " RECRUIT"
+	var targets: Array = []
+	for r in receivers:
+		targets.append(_showcase_target(r, "discard"))
+	_showcase.show_card(Supplies.INSANE_OUTCAST, who + times, colour, null,
+		targets[0] if targets.size() == 1 else targets)
 
 
 ## Подписи сводки хода для событий, которые в неё попадают.
@@ -838,20 +880,22 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 	var start: Variant = null
 	if from != null and (from as Rect2).size.x >= 1.0:
 		start = (from as Rect2).get_center() - get_global_position()
-	var to: Variant = null
-	if dest != "":
-		var pile: PileZone = null
-		if pid == viewer_id:
-			pile = _pile_discard if dest == "discard" else (_pile_inner if dest == "inner" else null)
-		if pile != null and pile.visible:
-			to = pile.get_global_rect().get_center() - get_global_position()
-		else:
-			to = _barracks_at(pid)
-			if to == null:
-				to = Vector2(size.x * 0.5, -CardView.MINI_SIZE.y)
+	var to: Variant = _showcase_target(pid, dest) if dest != "" else null
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
 		colour, start, to, face_down, PlayerProfile.back_of(pid))
+
+
+## Куда улетает карта витрины, взятая pid: для зрителя — в его стопку
+## ("discard" / "inner"), для соперника — в его барак.
+func _showcase_target(pid: String, dest: String) -> Vector2:
+	var pile: PileZone = null
+	if pid == viewer_id:
+		pile = _pile_discard if dest == "discard" else (_pile_inner if dest == "inner" else null)
+	if pile != null and pile.visible:
+		return pile.get_global_rect().get_center() - get_global_position()
+	var at: Variant = _barracks_at(pid)
+	return at if at != null else Vector2(size.x * 0.5, -CardView.MINI_SIZE.y)
 
 
 ## Фишка войска owner — такая же, как на доске.

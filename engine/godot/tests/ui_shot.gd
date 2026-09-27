@@ -247,7 +247,10 @@ func _run_scenario() -> void:
 			# Раздача изгоев: ходящий разыгрывает Ghoul (каждому сопернику по
 			# изгою), затем Demogorgon (съесть карту руки, вытеснить, каждому
 			# сопернику по два). Нужна полуколода Demons: --decks=demons,undead.
-			# Вопросы ходящего отвечаются первым вариантом.
+			# Вопросы ходящего отвечаются первым вариантом. Ждём два кадра: бараки
+			# должны разложиться, иначе все копии изгоя летят в одну точку.
+			await process_frame
+			await process_frame
 			while _screen.server.resolver.is_waiting():
 				var pd10: PendingDecision = _screen.server.resolver.pending
 				_screen.send(Intent.make_decision(pd10.player_id, pd10.legal_options[0]))
