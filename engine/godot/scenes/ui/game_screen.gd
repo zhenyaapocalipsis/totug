@@ -28,6 +28,7 @@ const MAX_PLAYERS := 4
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
+const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
 
 # Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по макету владельца
@@ -85,6 +86,8 @@ const TURN_SECONDS := 120.0
 ## Таймер ответа на чужую карту (сбросить карту и т. п.): по нулю ответ
 ## выбирается сам.
 const DECISION_SECONDS := 30.0
+## Период пульсации кнопки End turn в свой ход, секунд.
+const PULSE_PERIOD := 1.6
 
 ## Хотсит: партия живёт прямо здесь. В сетевой партии null — партия у хоста
 ## в NetSession, а экран знает только свой срез.
@@ -104,6 +107,14 @@ var _players_panel: PlayersPanel
 var _chat_frame: Control
 var _hand_panel: HandPanel
 var _showcase: CardShowcase
+var _turn_banner: TurnBanner
+## Для кого баннер хода уже показан и на какой вопрос уже мигали в панели
+## задач — чтобы не повторять на каждом обновлении среза.
+var _banner_player := ""
+var _attention_key := ""
+## Цвет кнопки End turn и фаза её пульсации, пока ход свой.
+var _end_turn_colour := Color(0.6, 0.6, 0.6)
+var _pulse_time := 0.0
 var _feed: TurnFeed
 var _market_panel: MarketPanel
 var _chat_panel: ChatPanel
@@ -327,8 +338,9 @@ func _build_layout() -> void:
 	_res_zone.tooltip_text = "Power and Influence of the player to move"
 	_res_zone.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	_res_frame = PanelContainer.new()
-	_res_frame.add_theme_stylebox_override("panel",
-		PixelTheme.box(Color(0, 0, 0, 0), PixelTheme.BORDER_HI, 1, 6, 1))
+	var no_frame := StyleBoxEmpty.new()
+	no_frame.set_content_margin_all(1)
+	_res_frame.add_theme_stylebox_override("panel", no_frame)
 	_res_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_res_frame.add_child(_res_zone)
 	add_child(_res_frame)
@@ -351,6 +363,8 @@ func _build_layout() -> void:
 	_showcase.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_showcase.z_index = 950
 	add_child(_showcase)
+	_turn_banner = TurnBanner.new()
+	add_child(_turn_banner)
 
 	# Сводка ходов — постоянная колонка у левого края, слева от доски.
 	_feed = TurnFeed.new()
@@ -461,6 +475,20 @@ func _style_end_turn(colour: Color) -> void:
 	disabled.bg_color = Color(0.14, 0.135, 0.17)
 	disabled.border_color = Color(0.28, 0.27, 0.33)
 	disabled.shadow_color = Color(0, 0, 0, 0.3)
+
+
+## Пока End turn доступна (ход свой), кнопка мягко пульсирует в цвет игрока:
+## фон и рамка светлеют и темнеют четырьмя ступенями — по-пиксельному, без
+## плавного перелива. Недоступная кнопка серая и не пульсирует.
+func _pulse_end_turn(delta: float) -> void:
+	if _end_turn_button.disabled:
+		_pulse_time = 0.0
+		return
+	_pulse_time += delta
+	var wave := (sin(_pulse_time * TAU / PULSE_PERIOD) + 1.0) * 0.5
+	var step := floorf(wave * 3.99) / 3.0
+	_end_turn_style.bg_color = _end_turn_colour.darkened(0.45 - 0.25 * step)
+	_end_turn_style.border_color = Color(0.92, 0.75, 0.35).lerp(Color(1.0, 0.95, 0.7), step)
 
 
 func _notification(what: int) -> void:
@@ -956,6 +984,7 @@ static func _error_name(err: int) -> String:
 func _process(delta: float) -> void:
 	if _timer_label == null or _view.is_empty():
 		return
+	_pulse_end_turn(delta)
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
@@ -1070,10 +1099,19 @@ func _refresh_turn(view: Dictionary) -> void:
 		_turn_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 		_end_label.text = ""
 		return
+	_announce_turn(view)
+	var who := EventLogPanel.player_name(current).to_upper()
+	# Сетевая партия, ход чужой: на кнопке — кого ждём (решение владельца,
+	# 2026-09-27), сама кнопка серая.
+	if net != null and current != viewer_id:
+		_turn_label.text = "WAITING:"
+		_turn_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+		_end_label.text = who
+		_end_label.add_theme_color_override("font_color", EventLogPanel.player_color(current))
+		return
 	# Длинное имя из профиля не влезает в кнопку вместе с "'S TURN" —
 	# тогда пишем одно имя: цвет надписи и так говорит, чей ход.
-	var who := EventLogPanel.player_name(current).to_upper()
-	var text := "%s'S TURN" % who
+	var text := "YOUR TURN" if net != null else "%s'S TURN" % who
 	var font := _turn_label.get_theme_font("font")
 	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			_turn_label.get_theme_font_size("font_size")).x > _turn_label.size.x:
@@ -1081,6 +1119,42 @@ func _refresh_turn(view: Dictionary) -> void:
 	_turn_label.text = text
 	_turn_label.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	_end_label.text = "END TURN"
+	_end_label.remove_theme_color_override("font_color")
+
+
+## Ход перешёл к другому игроку — баннер по центру доски: в хотсите
+## «BLUE'S TURN» (за экран садится другой человек), в сети «YOUR TURN» только
+## своему. Стартовая расстановка баннера не даёт: там вопрос и так написан
+## под таблицей игроков.
+##
+## В сети, если окно игры не в фокусе, иконка в панели задач мигает — и на
+## свой ход, и на вопрос чужой карты, на который надо ответить.
+func _announce_turn(view: Dictionary) -> void:
+	var current := String(view["current_player"])
+	if not _is_starting_pick(view) and current != _banner_player:
+		_banner_player = current
+		if net == null or current == viewer_id:
+			var text := "YOUR TURN" if net != null \
+				else "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
+			# Отложенно: в самом первом срезе экран ещё не разложен, и центра
+			# доски пока нет.
+			_show_banner.call_deferred(text, EventLogPanel.player_color(current))
+			_request_attention()
+	var pending: Dictionary = view.get("pending_decision", {})
+	var key := "%s|%s" % [String(pending.get("player_id", "")), String(pending.get("prompt", ""))]
+	if not pending.is_empty() and String(pending.get("player_id", "")) == viewer_id \
+			and current != viewer_id and key != _attention_key:
+		_request_attention()
+	_attention_key = key
+
+
+func _show_banner(text: String, colour: Color) -> void:
+	_turn_banner.show_turn(text, colour, Rect2(_board_area.position, _board_area.size))
+
+
+func _request_attention() -> void:
+	if net != null and not get_window().has_focus():
+		get_window().request_attention()
 
 
 ## Таблица игроков: вопрос стартовой расстановки — под ней. Power/Influence
@@ -1173,7 +1247,8 @@ func _open_pile(which: String) -> void:
 func _refresh_actions(view: Dictionary) -> void:
 	var legal: Dictionary = view.get("legal", {})
 	_end_turn_button.disabled = not bool(legal.get("end_turn", false))
-	_style_end_turn(BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6)))
+	_end_turn_colour = BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6))
+	_style_end_turn(_end_turn_colour)
 	var show_deploy := bool(legal.get("deploy_for_vp", false))
 	if _deploy_vp_button.visible != show_deploy:
 		_deploy_vp_button.visible = show_deploy
