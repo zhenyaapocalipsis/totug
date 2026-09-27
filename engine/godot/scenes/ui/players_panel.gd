@@ -204,7 +204,7 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 
 func update_from_view(view: Dictionary) -> void:
 	var order: Array = view.get("turn_order", [])
-	var current := String(view["current_player"])
+	var current := GameScreen.acting_player(view)
 	if _rows.is_empty():
 		for pid in order:
 			_add_row(String(pid))

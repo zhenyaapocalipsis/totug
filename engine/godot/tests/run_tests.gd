@@ -1761,6 +1761,11 @@ func test_auto_decision_answer() -> void:
 	check_eq(GameScreen.auto_decision_answer(["s1", ""]), "", "есть пустой вариант — отказ")
 	check_eq(GameScreen.auto_decision_answer([0, 2, -1]), -1, "есть -1 — отказ")
 	check_eq(GameScreen.auto_decision_answer([true, false]), false, "да/нет — нет")
+	# Стартовая расстановка: таймер и «>» у выбирающего, а не у первого ходящего.
+	var pick := {"current_player": "red", "pending_decision": {"player_id": "blue", "tag": "starting_site"}}
+	check_eq(GameScreen.acting_player(pick), "blue", "расстановка: действует выбирающий")
+	var card := {"current_player": "red", "pending_decision": {"player_id": "blue", "tag": "hand"}}
+	check_eq(GameScreen.acting_player(card), "red", "вопрос карты: действует ходящий")
 
 
 ## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный

@@ -1091,7 +1091,7 @@ func _process(delta: float) -> void:
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
 		return
-	var current := String(_view["current_player"])
+	var current := acting_player(_view)
 	# Под таймером — единственная оставшаяся пометка о состоянии партии:
 	# начался последний круг, дальше подсчёт очков. Отдельной строкой: рядом с
 	# таймером она в узкую колонку не помещается.
@@ -1102,6 +1102,7 @@ func _process(delta: float) -> void:
 	if current != _timed_player:
 		_timed_player = current
 		_time_left = TURN_SECONDS
+		_auto_answered = false
 	# Пока на вопрос карты отвечает другой игрок (например, сбрасывает карту
 	# по эффекту), время ходящего не тратится — идёт таймер ответа.
 	var pending: Dictionary = _view.get("pending_decision", {})
@@ -1114,6 +1115,12 @@ func _process(delta: float) -> void:
 		_time_left = maxf(0.0, _time_left - delta)
 	_show_time(_time_left)
 
+	# Стартовая расстановка: End turn недоступна, по нулю локация выбирается сама.
+	if _time_left <= 0.0 and _is_starting_pick(_view) and current == viewer_id \
+			and not _auto_answered and not (pending.get("legal_options", []) as Array).is_empty():
+		_auto_answered = true
+		_note("Time is up — a starting site was chosen automatically.")
+		_on_decision_answer(auto_decision_answer(pending["legal_options"]))
 	if _time_left <= 0.0 and not _auto_ending and current == viewer_id \
 			and not _end_turn_button.disabled:
 		_auto_ending = true
@@ -1205,7 +1212,7 @@ func refresh(view: Dictionary) -> void:
 
 ## Чей сейчас ход — на самой кнопке End turn (решение владельца, 2026-09-19).
 func _refresh_turn(view: Dictionary) -> void:
-	var current := String(view["current_player"])
+	var current := acting_player(view)
 	if bool(view["game_over"]):
 		_turn_label.text = "GAME OVER"
 		_turn_label.add_theme_color_override("font_color", PixelTheme.GOLD)
@@ -1301,6 +1308,16 @@ func _refresh_played(view: Dictionary) -> void:
 static func _is_starting_pick(view: Dictionary) -> bool:
 	var pd: Dictionary = view.get("pending_decision", {})
 	return String(pd.get("tag", "")) == "starting_site"
+
+
+## Кто сейчас действует — ему принадлежат таймер, надпись над ним и «>» в
+## таблице игроков. Обычно это ходящий; но на стартовой расстановке сервер
+## держит ходящим первого игрока, пока остальные по очереди выбирают локации,
+## — тогда действует выбирающий.
+static func acting_player(view: Dictionary) -> String:
+	if _is_starting_pick(view):
+		return String((view["pending_decision"] as Dictionary).get("player_id", ""))
+	return String(view["current_player"])
 
 
 ## Изменилось Power или Influence — над плашкой всплывает «+2» или «-1».
