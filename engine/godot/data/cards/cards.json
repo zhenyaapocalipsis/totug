@@ -1137,7 +1137,7 @@
     "type": "UNDEAD",
     "deck_vp": 1,
     "inner_circle_vp": 2,
-    "ability_text": "+1 Influence\nAssassinate a white troop."
+    "ability_text": "+1 Power\nAssassinate a white troop."
   },
   {
     "card_id": 48724,
@@ -1147,7 +1147,7 @@
     "type": "UNDEAD",
     "deck_vp": 1,
     "inner_circle_vp": 3,
-    "ability_text": "Choose one:\n• +2 Influence\n• Devour a card in your hand ► Supplant a\ntroop."
+    "ability_text": "Choose one:\n• +2 Power\n• Devour a card in your hand ► Supplant a\ntroop."
   },
   {
     "card_id": 48723,

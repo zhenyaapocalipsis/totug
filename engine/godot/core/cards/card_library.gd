@@ -550,10 +550,10 @@ static func _build_effect(card_id: String) -> CardEffect:
 		"48736":  # Flesh Golem
 			return SequenceEffect.new([GainPower.new(2), DevourCard.new("this", "48736", AssassinateTroop.new(1))])
 		"48726":  # Ravenous Zombies
-			return SequenceEffect.new([GainInfluence.new(1), AssassinateTroop.new(1, true)])
+			return SequenceEffect.new([GainPower.new(1), AssassinateTroop.new(1, true)])
 		"48724":  # Wight
-			return ChooseEffect.new([GainInfluence.new(2), DevourCard.new("hand", "", SupplantTroop.new(1), false)],
-				["+2 Influence", "Devour a card in your hand -> Supplant a troop"])
+			return ChooseEffect.new([GainPower.new(2), DevourCard.new("hand", "", SupplantTroop.new(1), false)],
+				["+2 Power", "Devour a card in your hand -> Supplant a troop"])
 		"48723":  # Ghost -- см. _GhostDevouredPileEffect: упрощение относительно RAW
 			return ChooseEffect.new([PlaceSpy.new(1), ReturnOwnSpy.new(_GhostDevouredPileEffect.new())],
 				["Place a spy", "Return one of your spies -> treat the top devoured card as if it was in the market this turn"])

@@ -13,6 +13,7 @@ extends CardEffect
 ## начисляется сразу при каждом успешном убийстве, а не отдельным подсчётом.
 
 var remaining: int
+var total: int  ## исходное N — для подсказки "(N left)"
 var white_only: bool
 var up_to: bool
 var single_site: bool
@@ -26,6 +27,7 @@ func _init(count: int = 1, is_white_only: bool = false, allow_fewer: bool = fals
 		restrict_single_site: bool = false, inf_per_removed: int = 0, pow_per_removed: int = 0,
 		preset_site: String = "") -> void:
 	remaining = count
+	total = count
 	white_only = is_white_only
 	up_to = allow_fewer
 	single_site = restrict_single_site or preset_site != ""
@@ -73,13 +75,18 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		return
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
-	pd.prompt = "Assassinate a troop"
+	pd.prompt = "Assassinate a white troop" if white_only else "Assassinate a troop"
+	# Сколько ещё можно убить — видно, пока эффект убивает больше одного
+	# (Quaggoth: по войску за каждый контролируемый сайт).
+	if total > 1:
+		pd.prompt += " (%d left)" % remaining
 	pd.choice_type = "target_slot"
 	pd.legal_options = legal
 	if up_to:
 		pd.legal_options.append("")
 	var next := AssassinateTroop.new(remaining - 1, white_only, up_to, single_site,
 		gain_influence_per_removed, gain_power_per_removed)
+	next.total = total
 	next.locked_site = locked_site
 	next.site_given_by_card = site_given_by_card
 	pd.target_effect = next
