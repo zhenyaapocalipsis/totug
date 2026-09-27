@@ -15,6 +15,10 @@ extends PanelContainer
 ## владельца, 2026-09-27: чат и журнал убраны): DEPLOY 3, KILL 2 с квадратиками
 ## цвета убитых, SPY 1, +2 VP и т. д. — счётчики за ход, всегда в одном порядке.
 ##
+## Строка действия помнит, где на доске это было: наведение мыши подсвечивает
+## строку и шлёт places_hovered — доска зажигает эти места (решение владельца,
+## 2026-09-28: игроки не видели, где убили или вытеснили).
+##
 ## Сброс чужой карты во время хода (force discard) ложится в блок ходящего
 ## отдельной группой DISCARDED с подписью цвета сбросившего.
 ##
@@ -50,6 +54,10 @@ const FOLLOW_SLACK := 8
 const FRAME_ALPHA := 0.35
 const FILL_ALPHA := 0.06
 
+## Мышь над строкой действия — места на доске, где это было (см. add_stat);
+## ушла со строки — пустой список.
+signal places_hovered(places: Array)
+
 var _scroll: ScrollContainer
 var _list: VBoxContainer
 var _placeholder: Label
@@ -58,6 +66,7 @@ var _turn_closed := true
 ## Сколько кадров ещё дотягивать прокрутку до низа: размер списка после
 ## добавления карты станет известен только на следующем кадре.
 var _pin_frames := 0
+var _hovered: Array = []   # [Block, key] строки под мышью или пусто
 
 
 func _init() -> void:
@@ -125,13 +134,50 @@ func add_to_turn(pid: String, cid: String, tag: String) -> void:
 
 ## Действие хода: key из STATS, amount — сколько добавить к счётчику,
 ## mark — чей цвет поставить квадратиком (убитый, вытесненный, хозяин шпиона).
-## pid — кто действовал; пустой — тот, чей ход сейчас.
-func add_stat(pid: String, key: String, amount: int = 1, mark: String = "") -> void:
+## pid — кто действовал; пустой — тот, чей ход сейчас. places — где на доске
+## это было: "slot:<id>", "site:<id>" или "kill:<slot_id>" (см.
+## BoardPanel.show_places).
+func add_stat(pid: String, key: String, amount: int = 1, mark: String = "",
+		places: Array = []) -> void:
 	if amount <= 0 or not STATS.has(key):
 		return
 	var follow := _at_bottom()
-	_current_block(pid).add_stat(key, amount, mark)
+	var block := _current_block(pid)
+	var fresh := not block.has_row(key)
+	block.add_stat(key, amount, mark, places)
+	if fresh:
+		var row := block.row(key)
+		row.mouse_entered.connect(_hover_row.bind(block, key, true))
+		row.mouse_exited.connect(_hover_row.bind(block, key, false))
+		# Строку убрали из-под мыши (старый ход ушёл) — mouse_exited не придёт.
+		row.tree_exiting.connect(_hover_row.bind(block, key, false))
 	_after_add(follow)
+
+
+## Для проверок: места строки действия key последнего хода.
+func last_places(key: String) -> Array:
+	if _blocks.is_empty():
+		return []
+	return _blocks.back().places.get(key, [])
+
+
+## Для проверок и экрана: строка действия key последнего хода или null.
+func last_row(key: String) -> Control:
+	if _blocks.is_empty() or not _blocks.back().has_row(key):
+		return null
+	return _blocks.back().row(key)
+
+
+## Строка под мышью подсвечена, места — на доске; ушла мышь — гаснет.
+func _hover_row(block: Block, key: String, inside: bool) -> void:
+	if inside:
+		_hovered = [block, key]
+	elif _hovered.is_empty() or _hovered[0] != block or _hovered[1] != key:
+		return
+	else:
+		_hovered = []
+	block.light_row(key, inside)
+	places_hovered.emit((block.places.get(key, []) as Array).duplicate() if inside else [])
 
 
 ## Для проверок: число в строке действия key последнего хода (0 — строки нет).
@@ -261,6 +307,8 @@ class Block extends PanelContainer:
 	var groups: Dictionary = {}
 	## Строки действий: key -> счётчик.
 	var stats: Dictionary = {}
+	## Строки действий: key -> места на доске (см. TurnFeed.add_stat).
+	var places: Dictionary = {}
 	## Квадратик цвета в строке действия и сколько их влезает в ширину карты.
 	const MARK := 5
 	const MAX_MARKS := 6
@@ -303,11 +351,28 @@ class Block extends PanelContainer:
 			return _cells[a].get_index() < _cells[b].get_index())
 		return result
 
-	## Строка действия: счётчик растёт, квадратик цвета mark добавляется.
-	func add_stat(key: String, amount: int, mark: String) -> void:
+	func has_row(key: String) -> bool:
+		return _rows.has(key)
+
+	## Вся строка действия (подпись и квадратики) — по ней ловится наведение.
+	func row(key: String) -> Control:
+		return (_rows[key][0] as Control).get_parent()
+
+	## Строка под мышью светлеет. Только у строк с местами на доске — у
+	## остальных наводить не на что.
+	func light_row(key: String, on: bool) -> void:
+		if _rows.has(key) and not (places.get(key, []) as Array).is_empty():
+			row(key).modulate = Color(1.6, 1.6, 1.6) if on else Color.WHITE
+
+	## Строка действия: счётчик растёт, квадратик цвета mark добавляется,
+	## места на доске копятся.
+	func add_stat(key: String, amount: int, mark: String, where: Array = []) -> void:
 		if not _rows.has(key):
 			_add_row(key)
 		stats[key] = int(stats.get(key, 0)) + amount
+		if not places.has(key):
+			places[key] = []
+		(places[key] as Array).append_array(where)
 		var row: Array = _rows[key]
 		var label: Label = row[0]
 		label.text = ("+%d VP" % stats[key]) if key == "vp" \
@@ -340,7 +405,8 @@ class Block extends PanelContainer:
 			_col.add_child(_stats_box)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 2)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# PASS: наведение строка ловит, а колесо уходит дальше — листать колонку.
+		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		var label := Label.new()
 		var colour := PixelTheme.TEXT_DIM
 		if key == "vp":

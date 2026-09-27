@@ -401,6 +401,8 @@ func _build_layout() -> void:
 
 	# Сводка ходов — постоянная колонка у левого края, слева от доски.
 	_feed = TurnFeed.new()
+	# Наведение на строку действия сводки — доска зажигает, где это было.
+	_feed.places_hovered.connect(func(places: Array) -> void: _board_panel.show_places(places))
 	add_child(_feed)
 
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
@@ -989,7 +991,25 @@ func _note_recap(events: Array) -> void:
 					continue
 			# Возврат шпиона эффектом карты пишет хозяина в "owner".
 			var mark := String(evt.get(stat[1], evt.get("owner", ""))) if stat[1] != "" else ""
-			_feed.add_stat(String(evt.get("player_id", "")), stat[0], amount, mark)
+			_feed.add_stat(String(evt.get("player_id", "")), stat[0], amount, mark,
+				_event_places(evt))
+
+
+## Где на доске было действие evt — для подсветки при наведении на строку
+## сводки (см. BoardPanel.show_places).
+static func _event_places(evt: Dictionary) -> Array:
+	var places: Array = []
+	match String(evt.get("type", "")):
+		"deploy", "deploy_troop", "return_troop":
+			places.append("slot:" + String(evt.get("slot_id", "")))
+		"assassinate", "supplant":
+			places.append("kill:" + String(evt.get("slot_id", "")))
+		"move_troop":
+			places.append("slot:" + String(evt.get("from", "")))
+			places.append("slot:" + String(evt.get("to", "")))
+		"place_spy", "return_spy", "return_own_spy":
+			places.append("site:" + String(evt.get("site_id", "")))
+	return places.filter(func(p: String) -> bool: return not p.ends_with(":"))
 
 
 ## Строки действий сводки: тип события -> [ключ TurnFeed.STATS, поле события

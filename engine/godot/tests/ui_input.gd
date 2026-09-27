@@ -40,6 +40,7 @@ var _played_view: CardView = null
 var _capture_site := ""
 var _move_to := ""
 var _supplant_slot := ""
+var _kill_slot := ""
 ## Фишки, летевшие до убийств: трофеи — только новые.
 var _flights_before: Array = []
 var _feed_before := 0
@@ -130,6 +131,9 @@ func _process(_delta: float) -> bool:
 		48: _step_check_trophy()
 		49: _step_kills()
 		50: _step_check_kills()
+		51: _step_hover_kill_row()
+		52: _step_check_kill_row()
+		53: _step_check_row_left()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -867,6 +871,7 @@ func _step_kills() -> void:
 	_screen._react_to_events([
 		{"type": "supplant", "player_id": me, "slot_id": _supplant_slot, "victim": GameState.WHITE},
 		{"type": "assassinate", "player_id": me, "slot_id": empty[1], "victim": foe}])
+	_kill_slot = empty[1]
 	var board: BoardPanel = _screen._board_panel
 	check(board.kill_count() == 2, "оба убийства ждут удара (%d)" % board.kill_count())
 	check(board._arriving.has("troop|" + _supplant_slot), "вытеснивший до удара спрятан")
@@ -885,6 +890,29 @@ func _step_check_kills() -> void:
 			trophies += 1
 	check(trophies == 2, "оба трофея летят в зал (%d)" % trophies)
 	check(board._arriving.has("troop|" + _supplant_slot), "вытеснивший ещё не сел — сядет после удара")
+
+
+## Наведение на строку KILL в сводке зажигает на доске место убийства,
+## уход мыши со строки гасит.
+func _step_hover_kill_row() -> void:
+	var feed: TurnFeed = _screen._feed
+	check(feed.last_places("kill") == ["kill:" + _kill_slot],
+		"строка KILL помнит место убийства (%s)" % [feed.last_places("kill")])
+	check(feed.last_places("supplant") == ["kill:" + _supplant_slot],
+		"строка SUPPLANT помнит место вытеснения")
+	var row := feed.last_row("kill")
+	check(row != null and row.is_visible_in_tree(), "строка KILL видна в сводке")
+	if row != null:
+		_move_mouse(row.get_global_rect().get_center())
+
+
+func _step_check_kill_row() -> void:
+	check(_screen._board_panel.focus_count() == 1, "под мышью строка KILL — место на доске подсвечено")
+	_move_mouse(Vector2(480, 200))
+
+
+func _step_check_row_left() -> void:
+	check(_screen._board_panel.focus_count() == 0, "мышь ушла со строки — подсветка погасла")
 
 
 ## Карты ряда руки без улетающих.

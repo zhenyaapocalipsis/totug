@@ -201,7 +201,7 @@ func _run_scenario() -> void:
 								ans4 = opt4
 								break
 					_screen.send(Intent.make_decision(pd4.player_id, ans4))
-		"kill":
+		"kill", "kill_hover":
 			return  # вытеснение запускается на кадре (_run_kill), как и захват
 		"capture":
 			# Захват локации запускается не здесь, а на кадре (_run_capture):
@@ -455,6 +455,19 @@ func _run_kill() -> void:
 			return
 
 
+## Зритель ставит войско в первое свободное место.
+func _run_deploy() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	for slot_id: String in state.graph.slots.keys():
+		if String(state.troops.get(slot_id, "")) == "":
+			state.troops[slot_id] = me
+			_screen.refresh(StateView.for_player_with_pending(
+				state, me, _screen.server.resolver.pending))
+			_screen._react_to_events([{"type": "deploy", "player_id": me, "slot_id": slot_id}])
+			return
+
+
 ## Доехал ли ряд карт руки до своих мест.
 func _hand_settled() -> bool:
 	for child in _screen.get_children():
@@ -479,6 +492,18 @@ func _process(_delta: float) -> bool:
 		_shot_at = _frame + 6
 	# Убийство: прицел сходится над убитой фишкой — снимаем на середине
 	# (--wait=N кадров, по умолчанию 16).
+	# kill_hover: вытеснение и деплой уже отыграны, мышь над строкой сводки
+	# (--row=supplant или deploy) — на доске подсвечено, где это было.
+	if _scenario == "kill_hover" and _shot_at < 0:
+		_run_kill()
+		_run_deploy()
+		_shot_at = _frame + 90
+	if _scenario == "kill_hover" and _frame == _shot_at - 2:
+		var row := "supplant"
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--row="):
+				row = arg.get_slice("=", 1)
+		_screen._feed._hover_row(_screen._feed._blocks.back(), row, true)
 	if _scenario == "kill" and _shot_at < 0:
 		_run_kill()
 		_shot_at = _frame + 16

@@ -46,6 +46,9 @@ const KILL_COLOR := Color(1.0, 0.55, 0.15)
 ## return/place spy и т.п.) — выбор цели делается кликом по доске, а не
 ## кнопкой в диалоге (см. decision_dialog.gd, game_screen.gd).
 const DECISION_COLOR := Color(0.95, 0.75, 0.15)
+## Места со строки сводки под мышью (см. show_places) — голубым: этот цвет
+## не занят ни подсказками, ни игроками.
+const FOCUS_COLOR := Color(0.35, 0.85, 1.0)
 
 ## Доска дёргается, когда на ней что-то случилось: убили войско, вытеснили
 ## чужое, захватили локацию. Дёргается ОТРИСОВКА (вся картинка целиком), а не
@@ -167,6 +170,8 @@ var _impacts: Array[Dictionary] = []
 ## Идущие убийства: {slot, victim, killer, supplant, wait (до начала прицела),
 ## left (до удара)}.
 var _kills: Array[Dictionary] = []
+## Места, подсвеченные со строки сводки под мышью (см. show_places).
+var _focus: Array = []
 
 ## Мерцание подсказок (зелёные/жёлтые/оранжевые кружки): время пульса и флаг
 ## «на прошлом кадре была хоть одна подсказка» — пока он поднят, доска
@@ -327,16 +332,66 @@ func _draw_kills() -> void:
 			_outline_site(site_id, Color(KILL_COLOR, 0.9 if lit else 0.35))
 		# Разгон к концу: мечи влетают и сходятся с размаху.
 		var off := roundf(SWORD_FAR * (1.0 - p) * (1.0 - p)) * unit
-		var origin := pos - Vector2(5.5, 5.5) * unit
-		var left := origin + Vector2(-off, off)
-		var right := origin + Vector2(off, off)
-		# Обводка мечей — под фишкой, клинки — над ней: иначе скрещённые мечи
-		# с обводкой сливаются в тёмное пятно и закрывают саму фишку.
-		_draw_sword(left, false, unit, true)
-		_draw_sword(right, true, unit, true)
-		_draw_troop(pos, String(k["victim"]))
-		_draw_sword(left, false, unit, false)
-		_draw_sword(right, true, unit, false)
+		_draw_crossed_swords(pos, off, String(k["victim"]))
+
+
+## Два меча над фишкой owner в pos ("" — фишки нет), разведённые на off
+## пикселей по каждой оси (0 — скрещены). Обводка мечей — под фишкой,
+## клинки — над ней: иначе скрещённые мечи с обводкой сливаются в тёмное
+## пятно и закрывают саму фишку.
+func _draw_crossed_swords(pos: Vector2, off: float, owner: String) -> void:
+	var unit: float = maxf(1.0, roundf(_zoom))
+	var origin := pos - Vector2(5.5, 5.5) * unit
+	var left := origin + Vector2(-off, off)
+	var right := origin + Vector2(off, off)
+	_draw_sword(left, false, unit, true)
+	_draw_sword(right, true, unit, true)
+	if owner != "":
+		_draw_troop(pos, owner)
+	_draw_sword(left, false, unit, false)
+	_draw_sword(right, true, unit, false)
+
+
+# --- подсветка мест со строки сводки -----------------------------------------
+
+## Зажечь места places (строка действия в сводке под мышью, см.
+## TurnFeed.places_hovered); пустой список гасит. Место — "slot:<id>" (кольцо
+## вокруг места и рамка его локации), "kill:<slot_id>" (скрещённые мечи, как
+## в анимации убийства) или "site:<id>" (рамка локации).
+func show_places(places: Array) -> void:
+	_focus = places.duplicate()
+	queue_redraw()
+
+
+## Для проверок: сколько мест сейчас подсвечено со сводки.
+func focus_count() -> int:
+	return _focus.size()
+
+
+func _draw_focus() -> void:
+	if _focus.is_empty():
+		return
+	var k := _pulse()
+	var colour := FOCUS_COLOR.lerp(Color.WHITE, 0.5 * k)
+	var troops: Dictionary = _view.get("troops", {})
+	for place in _focus:
+		var kind := String(place).get_slice(":", 0)
+		var id := String(place).substr(kind.length() + 1)
+		if kind == "site":
+			_outline_site(id, colour)
+			continue
+		var at: Variant = _slot_world(id)
+		if at == null:
+			continue
+		var site_id := _site_of_slot(id)
+		if site_id != "":
+			_outline_site(site_id, colour)
+		var pos := _snap(_to_screen(at))
+		var owner := String(troops.get(id, ""))
+		if kind == "kill":
+			_draw_crossed_swords(pos, 0.0, owner)
+		else:
+			_mark_slot(pos, colour, owner != "")
 
 
 ## Меч по рисунку SWORD с левым верхним углом в origin; mirrored — острием
@@ -940,6 +995,7 @@ func _draw() -> void:
 			_mark_slot(pos, KILL_COLOR, owner != "")
 
 	_draw_kills()
+	_draw_focus()
 	_draw_arrivals()
 	_draw_spies()
 	_draw_spy_targets()
