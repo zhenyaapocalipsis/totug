@@ -69,7 +69,7 @@ func _init() -> void:
 	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", 2)
 	_grid.add_theme_constant_override("v_separation", 2)
-	_grid.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER  # колонка шире рынка — по центру
 	col.add_child(_grid)
 
 	for i in range(DISPLAY_SLOTS + 1):
@@ -88,7 +88,7 @@ func _init() -> void:
 	_supply_row.columns = COLUMNS
 	_supply_row.add_theme_constant_override("h_separation", 2)
 	_supply_row.add_theme_constant_override("v_separation", 2)
-	_supply_row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_supply_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_supply_row)
 
 	# Карты общих стопок не меняются всю партию — их слоты наполняются сразу.

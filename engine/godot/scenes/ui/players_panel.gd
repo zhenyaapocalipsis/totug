@@ -116,7 +116,7 @@ func _add_row(pid: String) -> void:
 		_grid.add_child(value)
 		values[String(column[0])] = value
 	var trophies := HBoxContainer.new()
-	trophies.add_theme_constant_override("separation", 4)
+	trophies.add_theme_constant_override("separation", 3)
 	trophies.clip_contents = true
 	trophies.mouse_filter = Control.MOUSE_FILTER_STOP
 	_grid.add_child(_indented(trophies))
@@ -124,8 +124,8 @@ func _add_row(pid: String) -> void:
 
 
 ## Цифра трофея: без обрезки — с clip_text ширина Label схлопывается в ноль.
-## small — мелкий шрифт 3x5 (как VP на доске): на четверых в зале до четырёх
-## двузначных чисел, обычным шрифтом они в столбец не влезают.
+## small — мелкий шрифт 3x5 (как VP на доске), запасной: столбец рассчитан
+## на четыре двузначных числа обычным шрифтом, мелкий — если вдруг не влезут.
 static func _digit(text: String, colour: Color, small: bool = false) -> Control:
 	if small:
 		return SmallNumber.new(text, colour)
@@ -166,7 +166,9 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 	for child in box.get_children():
 		box.remove_child(child)
 		child.queue_free()
-	box.add_theme_constant_override("separation", 3 if small else 4)
+	# Через 3 пикселя: четыре двузначных числа занимают 57 — ровно столбец
+	# (колонка расширена под это, GameScreen.COL); рамки выбора не слипаются.
+	box.add_theme_constant_override("separation", 3)
 	var digits: Dictionary = {}
 	var parts: Array[String] = []
 	var colours: Array = ["white"]
