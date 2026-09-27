@@ -19,6 +19,8 @@ var _view: SubViewport
 
 
 func _ready() -> void:
+	if DisplayServer.get_name() == "headless":
+		return  # сервер и тесты без окна: рисовать некуда
 	get_tree().root.size_changed.connect(_update)
 	get_tree().scene_changed.connect(_adopt_scene)
 	_update.call_deferred()
