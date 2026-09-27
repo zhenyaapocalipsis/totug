@@ -1203,6 +1203,8 @@ func _export(state: GameState) -> Dictionary:
 				"vp": site["vp"],
 				"starting": starting.has(String(site["name"])),
 				"marker": marked.has(_key[n]),
+				# VP за полный контроль города с маркером — для вкладки с короной.
+				"marker_vp": int(ControlMarkers.marker_for(state, _key[n]).get("total_control_vp", 0)),
 				"slots": site_slots,
 			}
 	var traces: Array = []
