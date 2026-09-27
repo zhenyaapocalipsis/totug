@@ -30,6 +30,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"abandoned_by": state.abandoned_by,
 		"troops": state.troops.duplicate(),
 		"site_control": _site_control(state),
+		"site_total_control": _site_total_control(state),
 		"spies": _duplicate_spies(state.spies),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
@@ -212,6 +213,17 @@ static func _site_control(state: GameState) -> Dictionary:
 		var owner := state.control.controller_of(site_id, state.troops)
 		if owner != "":
 			out[site_id] = owner
+	return out
+
+
+## Локации под полным контролем: список site_id (хозяин — тот же, что в
+## site_control).
+static func _site_total_control(state: GameState) -> Array:
+	var out: Array = []
+	for site_id: String in state.graph.sites.keys():
+		var owner := state.control.controller_of(site_id, state.troops)
+		if owner != "" and state.control.has_total_control(owner, site_id, state.troops, state.spies):
+			out.append(site_id)
 	return out
 
 

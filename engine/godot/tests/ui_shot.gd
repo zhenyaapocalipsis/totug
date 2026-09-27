@@ -336,6 +336,35 @@ func _run_scenario() -> void:
 			_screen.server.state.players[pid8].power = 5
 			_screen.refresh(StateView.for_player_with_pending(
 				_screen.server.state, pid8, _screen.server.resolver.pending))
+		"control":
+			# Заливка контроля: у каждого игрока одна локация под полным
+			# контролем и одна — просто под контролем (войска подложены).
+			while _screen.server.resolver.is_waiting():
+				var pd9: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd9.player_id, pd9.legal_options[0]))
+			var st9 := _screen.server.state
+			var free9: Array = []
+			for site9: String in st9.graph.sites.keys():
+				var empty9 := true
+				for slot9 in st9.graph.slots_of_site(site9):
+					if not String(st9.troops.get(slot9, "")) in ["", GameState.WHITE]:
+						empty9 = false
+				if empty9 and st9.graph.slots_of_site(site9).size() >= 2:
+					free9.append(site9)
+			for i9 in st9.turn_order.size():
+				var pid9: String = st9.turn_order[i9]
+				if free9.size() < 2:
+					break
+				var full9: String = free9.pop_front()
+				var part9: String = free9.pop_front()
+				for slot9 in st9.graph.slots_of_site(full9):
+					st9.troops[slot9] = pid9
+				for slot9 in st9.graph.slots_of_site(part9):
+					st9.troops.erase(slot9)
+				st9.troops[st9.graph.slots_of_site(part9)[0]] = pid9
+			_screen.refresh(StateView.for_player_with_pending(
+				st9, st9.current_player(), _screen.server.resolver.pending))
+			_screen._turn_banner.hide()
 		"end_turn":
 			_screen.send(Intent.end_turn(_screen.server.state.current_player()))
 		"profile":
@@ -436,6 +465,11 @@ func _process(_delta: float) -> bool:
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--wait="):
 				_shot_at = _frame + int(arg.get_slice("=", 1))
+	# Баннер хода закрывает середину доски, а она тут и нужна.
+	if _scenario == "control":
+		_screen._turn_banner.hide()
+		if _shot_at < 0:
+			_shot_at = _frame + 3
 	if _shot_at >= 0 and _frame < _shot_at:
 		return false
 	var image: Image = root.get_texture().get_image()

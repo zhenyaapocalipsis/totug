@@ -71,6 +71,9 @@ const LAND_SHAKE := 2.0
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
 ## расстановки войск, поэтому панель сравнивает site_control с прошлым видом.
 const CAPTURE_TIME := 1.2
+## Прозрачность заливки локации цветом хозяина: контроль / полный контроль.
+const CONTROL_FILL := 0.3
+const CONTROL_FILL_TOTAL := 0.6
 
 ## Радиус кружка войска в МИРОВЫХ пикселях (печатные круги на арте примерно
 ## такого размера, шаг между слотами внутри локации ~47 px).
@@ -748,6 +751,8 @@ func _draw() -> void:
 			draw_texture(texture, -Vector2(float(tile["tex_centre_x"]), float(tile["tex_centre_y"])))
 		draw_set_transform(shake, 0.0, Vector2.ONE)
 
+	_draw_control_fills()
+
 	var slots := _slots()
 	var troops: Dictionary = _view.get("troops", {})
 	var legal: Dictionary = _view.get("legal", {})
@@ -800,6 +805,25 @@ func _draw_sparks() -> void:
 		var side: float = unit * (2.0 if k > 0.45 else 1.0)
 		draw_rect(Rect2((s["pos"] as Vector2).round(), Vector2(side, side)),
 			Color((s["colour"] as Color).lightened(0.2), k))
+
+
+## Контролируемые локации заливаются цветом хозяина поверх схемы, под
+## войсками: контроль — 30%, полный контроль — 60%. Только на схеме: в виде
+## гексов у локации нет коробки.
+func _draw_control_fills() -> void:
+	var control: Dictionary = _view.get("site_control", {})
+	var total: Array = _view.get("site_total_control", [])
+	var scale := window_scale()
+	for site_id: String in control:
+		var rect: Variant = _site_rect(site_id)
+		if rect == null:
+			continue
+		var colour: Color = PLAYER_COLORS.get(String(control[site_id]), Color(0.8, 0.8, 0.8))
+		var alpha: float = CONTROL_FILL_TOTAL if total.has(site_id) else CONTROL_FILL
+		var r := rect as Rect2
+		var top_left := (_to_screen(r.position) * scale).round() / scale
+		var bottom_right := (_to_screen(r.end) * scale).round() / scale
+		draw_rect(Rect2(top_left, bottom_right - top_left), Color(colour, alpha))
 
 
 ## Только что захваченные локации: обводка в цвет нового хозяина, гаснущая
