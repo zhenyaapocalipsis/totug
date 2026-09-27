@@ -1376,12 +1376,37 @@ func _try_resolve_board_decision(pending: Dictionary, slot_id: String, site_id: 
 					send(Intent.make_decision(viewer_id, composite))
 					return true
 			if site_id != "":
+				var owners: Array = []
+				var prefix := "spy|" + site_id + "|"
 				for opt in options:
 					var raw := String(opt)
-					if raw.begins_with("spy|" + site_id + "|"):
-						send(Intent.make_decision(viewer_id, raw))
-						return true
+					if raw.begins_with(prefix):
+						owners.append(raw.substr(prefix.length()))
+				if not owners.is_empty():
+					_pick_spy_owner(site_id, owners, func(owner: String) -> void:
+						send(Intent.make_decision(viewer_id, "spy|%s|%s" % [site_id, owner])))
+					return true
 	return false
+
+
+## На локации может стоять несколько чужих шпионов — тогда игрок сам выбирает,
+## чьего вернуть (всплывающее меню у курсора). Один шпион — без вопросов.
+func _pick_spy_owner(site_id: String, owners: Array, on_pick: Callable) -> void:
+	var unique: Array = []
+	for o in owners:
+		if not unique.has(String(o)):
+			unique.append(String(o))
+	if unique.size() == 1:
+		on_pick.call(unique[0])
+		return
+	var menu := PopupMenu.new()
+	menu.add_separator("Return whose spy? (%s)" % EventLogPanel.site_name(site_id, board_data))
+	for i in unique.size():
+		menu.add_item("%s's spy" % EventLogPanel.player_name(unique[i]), i)
+	menu.id_pressed.connect(func(id: int) -> void: on_pick.call(unique[id]))
+	menu.popup_hide.connect(menu.queue_free)
+	add_child(menu)
+	menu.popup(Rect2i(Vector2i(get_viewport().get_mouse_position()), Vector2i.ZERO))
 
 
 func _site_of_slot(slot_id: String) -> String:
@@ -1441,11 +1466,15 @@ func _on_site_clicked(site_id: String) -> void:
 			return
 
 	var view := _view
+	var owners: Array = []
 	for target in ((view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
 		var t: Dictionary = target
 		if String(t["site_id"]) == site_id:
-			send(Intent.return_spy(viewer_id, site_id, String(t["spy_owner"])))
-			return
+			owners.append(String(t["spy_owner"]))
+	if not owners.is_empty():
+		_pick_spy_owner(site_id, owners, func(owner: String) -> void:
+			send(Intent.return_spy(viewer_id, site_id, owner)))
+		return
 	_log_panel.add_note("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
 
 
