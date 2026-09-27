@@ -365,6 +365,9 @@ func _build_layout() -> void:
 	_showcase.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_showcase.z_index = 950
 	add_child(_showcase)
+	_showcase.finished.connect(func():
+		if not _view.is_empty():
+			_show_decision(_view))
 	_turn_banner = TurnBanner.new()
 	add_child(_turn_banner)
 
@@ -660,6 +663,21 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	_log_panel.add_events(events)
 	refresh(view)
 	_react_to_events(events)
+	# Витрина (крупный показ повышенной, купленной, съеденной карты) запускается
+	# событиями — уже после refresh. Вопрос ждёт конца показа: иначе два
+	# затемнения складываются в чёрный экран, а карту витрины закрывает окно.
+	if _showcase.is_busy():
+		_decision_dialog.visible = false
+
+
+## Окно вопроса по виду (или скрыть его). Пока идёт витрина — скрыто, его
+## покажет сигнал CardShowcase.finished.
+func _show_decision(view: Dictionary) -> void:
+	_decision_dialog.update_from_view(view, viewer_id)
+	# Вопрос стартовой расстановки показывает не плашка над доской, а сама
+	# зона сыгранных карт — плашке тут делать нечего.
+	if _is_starting_pick(view) or _showcase.is_busy():
+		_decision_dialog.visible = false
 
 
 ## Чем громче событие на доске, тем сильнее её тряхнёт. Захват локации доска
@@ -1076,11 +1094,7 @@ func refresh(view: Dictionary) -> void:
 	_hand_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
-	_decision_dialog.update_from_view(view, viewer_id)
-	# Вопрос стартовой расстановки показывает не плашка над доской, а сама
-	# зона сыгранных карт — плашке тут делать нечего.
-	if _is_starting_pick(view):
-		_decision_dialog.visible = false
+	_show_decision(view)
 	_refresh_played(view)
 	_refresh_piles(view)
 	_refresh_actions(view)

@@ -617,6 +617,12 @@ func _step_forced_discard() -> void:
 		return
 	_foe_discard = pending.player_id
 	var dlg: DecisionDialog = _screen._decision_dialog
+	# Пока крупно показывается карта (витрина), вопрос ждёт — два затемнения
+	# не складываются. Проматываем витрину до конца.
+	if _screen._showcase.is_busy():
+		check(not dlg.visible, "пока идёт показ карты, вопрос ждёт")
+		_screen._showcase._queue.clear()
+		_screen._showcase._next()
 	check(dlg.visible and not dlg._dim.visible and dlg.at_top,
 		"вопрос — полоса сверху, экран не затемнён")
 	check(dlg._prompt.text.begins_with(EventLogPanel.player_name(_foe_discard)) and dlg._blink,

@@ -18,6 +18,9 @@ extends Control
 ## Пиксельное правило: карта крупно — всегда в масштабе 1:1 (PIXEL_SIZE), в
 ## полёте — мелкой картинкой (mini) тоже 1:1. Промежуточных масштабов нет.
 
+## Очередь показов кончилась — окно выбора, ждавшее витрину, можно показать.
+signal finished
+
 const ENTER_TIME := 0.24
 const BACK_TIME := 0.4
 const HOLD_TIME := 0.8
@@ -100,6 +103,7 @@ func _next() -> void:
 		_item = {}
 		_phase = ""
 		_banner.visible = false
+		finished.emit()
 		return
 	_item = _queue.pop_front()
 	_set_phase("enter")
