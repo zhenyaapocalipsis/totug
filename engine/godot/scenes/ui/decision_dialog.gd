@@ -171,7 +171,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		elif tag == "market":
 			_who.text += " — click a gold card in the market"
 		elif tag == "inner_circle":
-			_who.text += " — your Inner Circle is shown below, click a gold card"
+			_who.text += " — click a gold card in your Inner Circle above the hand"
 		else:
 			_who.text += " — click a gold target on the board"
 		# Отказ: "" у целей и карт руки, -1 у номера карты рынка. Перебором, а

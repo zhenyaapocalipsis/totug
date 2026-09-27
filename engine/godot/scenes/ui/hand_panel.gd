@@ -74,9 +74,11 @@ var _hovered_card: CardView = null
 var _played_card: CardView = null
 ## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
 var _choosing := false
-## В ряду сейчас не рука, а карты Inner Circle (выбор "play a card from your
-## inner circle").
-var _zone_shown := false
+## Пусто — это рука игрока. "inner_circle" — второй ряд над рукой: карты
+## Inner Circle на время вопроса про них (Elder Brain), чтобы видеть их и руку
+## сразу, без окна и затемнения (решение владельца, 2026-09-27).
+var zone := ""
+var _label: Label
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
 ## посчитанным по нулевой ширине и уезжает за нижний край.
@@ -93,6 +95,16 @@ func _init() -> void:
 	# Подложки под картами нет (макет владельца, 2026-09-24): зона руки
 	# прозрачная, видны только сами карты.
 
+	# Подпись ряда зоны ("INNER CIRCLE") над картами; у руки её нет.
+	_label = Label.new()
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+	_label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+	_label.add_theme_constant_override("shadow_offset_x", 1)
+	_label.add_theme_constant_override("shadow_offset_y", 1)
+	_label.visible = false
+	add_child(_label)
+
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
@@ -102,17 +114,16 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# карты-варианты (решение владельца, 2026-09-27).
 	var pd: Dictionary = view.get("pending_decision", {})
 	var mine := String(pd.get("player_id", "")) == viewer_id
-	_choosing = mine and String(pd.get("tag", "")) in ["hand", "inner_circle"]
+	_choosing = mine and String(pd.get("tag", "")) == ("hand" if zone == "" else zone)
 	if _choosing:
 		playable = pd.get("legal_options", [])
-	# Выбор из Inner Circle: его карты на время выбора встают на место руки —
-	# без окна и затемнения доска и рынок видны (решение владельца, 2026-09-27).
-	var zone := mine and String(pd.get("tag", "")) == "inner_circle"
-	if zone:
-		hand = playable
-	if zone != _zone_shown:
-		_zone_shown = zone
-		_drop_row()
+	if zone != "":
+		# Ряд зоны (Inner Circle) над рукой: только на время вопроса про неё.
+		hand = playable if _choosing else []
+		_label.text = zone.replace("_", " ").to_upper()
+		_label.visible = _choosing
+		if not _choosing:
+			_drop_row()
 
 	var old_cards := _cards
 	var old_pos := _pos
@@ -161,11 +172,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_layout()
 
 
-## Ряд сменился целиком (рука <-> Inner Circle): прежние карты убираем сразу,
-## без анимации ухода — улетающая вверх карта выглядела бы сыгранной. Новый ряд
-## выедет снизу, как при раздаче.
+## Вопрос про зону закрыт: ряд зоны пустеет. Выбранная карта улетает вверх,
+## как сыгранная, остальные исчезают сразу — улетающие вверх выглядели бы
+## тоже сыгранными.
 func _drop_row() -> void:
 	for card in _cards:
+		if card == _played_card:
+			_start_leaving(card)
+			continue
 		CardPreview.clear_hovered(card)
 		remove_child(card)
 		card.queue_free()
@@ -246,6 +260,8 @@ func _layout() -> void:
 		_row_step = maxf(floorf((size.x - CARD_SIZE.x) / (n - 1)), 6.0)
 	var total := CARD_SIZE.x + _row_step * maxi(n - 1, 0)
 	_row_x0 = floorf((size.x - total) * 0.5)
+	_label.position = Vector2(0, _row_y - PixelTheme.LINE_H - 1)
+	_label.size = Vector2(size.x, PixelTheme.LINE_H)
 
 	# До первого настоящего размера ряд считался по нулевой ширине; ехать
 	# оттуда пружиной незачем — ставим карты сразу на места.

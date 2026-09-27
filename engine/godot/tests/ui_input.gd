@@ -682,14 +682,17 @@ func _step_inner_circle() -> void:
 	_screen.send(Intent.play_card(me, "48700"))
 	var pending: PendingDecision = _screen.server.resolver.pending
 	check(pending != null and pending.tag == "inner_circle", "Elder Brain спрашивает карту Inner Circle")
-	var ids: Array = []
+	var zone: HandPanel = _screen._zone_panel
 	var card: CardView = null
-	for c: CardView in _hand_panel().get_children().filter(func(n): return n is CardView and not _hand_panel().leaving_cards().has(n)):
-		ids.append(c.card_id)
-		if c.clickable and card == null:
+	var ids := _row_ids(zone)
+	for c in zone.get_children():
+		if c is CardView and (c as CardView).clickable and card == null:
 			card = c
 	check(pending != null and ids.size() == pending.legal_options.size(),
-		"в ряду руки — карты Inner Circle (%s)" % str(ids))
+		"над рукой — ряд Inner Circle (%s)" % str(ids))
+	check(_row_ids(_hand_panel()).size() == deck.hand.size(), "рука при этом на месте")
+	check(zone.position.y + zone.size.y <= _hand_panel().position.y + _hand_panel().size.y - HandPanel.CARD_SIZE.y,
+		"ряд Inner Circle выше руки и её не закрывает")
 	check(not _screen._decision_dialog._dim.visible, "экран не затемнён")
 	if card != null:
 		_click(card)
@@ -698,12 +701,16 @@ func _step_inner_circle() -> void:
 func _step_check_inner_circle() -> void:
 	var pending: PendingDecision = _screen.server.resolver.pending
 	check(pending == null or pending.tag != "inner_circle", "щелчок по карте ответил на вопрос")
+	check(_row_ids(_screen._zone_panel).is_empty(), "ряд Inner Circle убран")
+
+
+## id карт ряда без улетающих.
+func _row_ids(row: HandPanel) -> Array:
 	var ids: Array = []
-	for c in _hand_panel().get_children():
-		if c is CardView and not _hand_panel().leaving_cards().has(c):
-			ids.append(c.card_id)
-	var hand: Array = _current_player().deck.hand
-	check(ids.size() == hand.size(), "после выбора в ряду снова рука (%d из %d)" % [ids.size(), hand.size()])
+	for c in row.get_children():
+		if c is CardView and not row.leaving_cards().has(c):
+			ids.append((c as CardView).card_id)
+	return ids
 
 
 # --- вспомогательное ---------------------------------------------------------
