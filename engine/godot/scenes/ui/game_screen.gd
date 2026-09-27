@@ -1376,38 +1376,9 @@ func _try_resolve_board_decision(pending: Dictionary, slot_id: String, site_id: 
 				if options.has(composite):
 					send(Intent.make_decision(viewer_id, composite))
 					return true
-			if site_id != "":
-				var owners: Array = []
-				var prefix := "spy|" + site_id + "|"
-				for opt in options:
-					var raw := String(opt)
-					if raw.begins_with(prefix):
-						owners.append(raw.substr(prefix.length()))
-				if not owners.is_empty():
-					_pick_spy_owner(site_id, owners, func(owner: String) -> void:
-						send(Intent.make_decision(viewer_id, "spy|%s|%s" % [site_id, owner])))
-					return true
+			# Шпиона-цель выбирают кликом по самому ромбику (_on_spy_clicked),
+			# не по локации: на ней их может стоять несколько.
 	return false
-
-
-## На локации может стоять несколько чужих шпионов — тогда игрок сам выбирает,
-## чьего вернуть (всплывающее меню у курсора). Один шпион — без вопросов.
-func _pick_spy_owner(site_id: String, owners: Array, on_pick: Callable) -> void:
-	var unique: Array = []
-	for o in owners:
-		if not unique.has(String(o)):
-			unique.append(String(o))
-	if unique.size() == 1:
-		on_pick.call(unique[0])
-		return
-	var menu := PopupMenu.new()
-	menu.add_separator("Return whose spy? (%s)" % EventLogPanel.site_name(site_id, board_data))
-	for i in unique.size():
-		menu.add_item("%s's spy" % EventLogPanel.player_name(unique[i]), i)
-	menu.id_pressed.connect(func(id: int) -> void: on_pick.call(unique[id]))
-	menu.popup_hide.connect(menu.queue_free)
-	add_child(menu)
-	menu.popup(Rect2i(Vector2i(get_viewport().get_mouse_position()), Vector2i.ZERO))
 
 
 func _site_of_slot(slot_id: String) -> String:
@@ -1456,7 +1427,8 @@ func _slot_name(slot_id: String) -> String:
 	return "%s, space %d" % [(sites[site_id] as Dictionary)["name"], members.find(slot_id) + 1]
 
 
-## Клик по названию локации — возврат вражеского шпиона оттуда (3 Power).
+## Клик по названию локации — ответ на решение с целью-локацией. Вражеского
+## шпиона так не вернуть: только кликом по его ромбику (_on_spy_clicked).
 func _on_site_clicked(site_id: String) -> void:
 	var pending: Dictionary = _view.get("pending_decision", {})
 	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
@@ -1466,16 +1438,10 @@ func _on_site_clicked(site_id: String) -> void:
 			_log_panel.add_note("That is not a valid target — valid targets have gold rings.")
 			return
 
-	var view := _view
-	var owners: Array = []
-	for target in ((view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
-		var t: Dictionary = target
-		if String(t["site_id"]) == site_id:
-			owners.append(String(t["spy_owner"]))
-	if not owners.is_empty():
-		_pick_spy_owner(site_id, owners, func(owner: String) -> void:
-			send(Intent.return_spy(viewer_id, site_id, owner)))
-		return
+	for target in ((_view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
+		if String((target as Dictionary)["site_id"]) == site_id:
+			_log_panel.add_note("Click the spy itself to return it")
+			return
 	_log_panel.add_note("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
 
 

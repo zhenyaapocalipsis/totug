@@ -957,7 +957,6 @@ func _draw_decision_targets() -> void:
 		elif raw.begins_with("spy|"):
 			var rest: PackedStringArray = raw.substr(4).rsplit("|", true, 1)
 			if rest.size() == 2:
-				site_targets[rest[0]] = true
 				spy_targets.append(rest)
 
 	var troops: Dictionary = _view.get("troops", {})
@@ -972,11 +971,10 @@ func _draw_decision_targets() -> void:
 
 
 ## Вражеские шпионы, которых можно вернуть за 3 Power, — оранжевой рамкой
-## вокруг локации (раньше их ничем не выделяли, и действие было не найти).
+## вокруг самого ромбика (не всей локации: выбирают кликом по шпиону).
 func _draw_spy_targets() -> void:
 	var targets: Array = (_view.get("legal", {}) as Dictionary).get("return_spy", [])
 	for t in targets:
-		_outline_site(String((t as Dictionary)["site_id"]), KILL_COLOR)
 		_ring_spy(String((t as Dictionary)["site_id"]), String((t as Dictionary)["spy_owner"]), KILL_COLOR)
 
 
@@ -1023,8 +1021,8 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
-## Попадание по ближайшему слоту, а если рядом слота нет — по локации
-## (клик по локации нужен, чтобы вернуть вражеского шпиона).
+## Попадание по шпиону, затем по ближайшему слоту, а если рядом слота нет —
+## по локации (для решений, где цель — сама локация).
 func _click_at(screen_point: Vector2) -> void:
 	# Ромбик шпиона — самая мелкая цель, проверяем его первым, иначе клик
 	# уходил в ближайший слот или во всю локацию и нельзя было выбрать,
