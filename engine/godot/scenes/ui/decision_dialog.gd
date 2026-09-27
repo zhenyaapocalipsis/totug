@@ -117,7 +117,10 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_ghost_card = String(view.get("ghost_market_card", ""))
 	var decider := String(pd.get("player_id", ""))
 	var choice_type := String(pd.get("choice_type", ""))
-	var on_board: bool = BOARD_CHOICES.has(choice_type)
+	# Карту из руки выбирают в самой руке внизу (hand_panel.gd), поэтому
+	# вопрос — такая же полоса сверху, как у цели на доске.
+	var in_hand := String(pd.get("tag", "")) == "hand"
+	var on_board: bool = BOARD_CHOICES.has(choice_type) or in_hand
 	var options: Array = pd.get("legal_options", [])
 	visible = true
 	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
@@ -126,6 +129,13 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_who.text = "%s decides" % EventLogPanel.player_name(decider)
 	_who.modulate = EventLogPanel.player_color(decider)
 	_prompt.text = String(pd.get("prompt", "Choose an option"))
+	var data: Dictionary = pd.get("data", {})
+	if data.has("causer"):
+		# Сброс по чужой карте: кто и чем заставил (Cranium Rats и т.п.).
+		var who := EventLogPanel.player_name(String(data["causer"]))
+		var cause := String(data.get("cause_card", ""))
+		_prompt.text = "%s's %s: discard a card" % [who, _card_label(cause)] if cause != "" \
+			else "%s makes you discard a card" % who
 
 	for child in _options_box.get_children():
 		_options_box.remove_child(child)
@@ -147,7 +157,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# только для "отказаться", если решение необязательное.
 		# Вопрос — крупный текст без рамки над доской (решение владельца,
 		# 2026-09-26), подсказка про подсветку — в мелкой строке над ним.
-		_who.text += " — click a gold target on the board"
+		_who.text += " — click a gold card in your hand" if in_hand \
+			else " — click a gold target on the board"
 		if options.has(""):
 			_add_button("Skip", "")
 			make_plain(_options_box.get_child(0) as Button)
@@ -210,7 +221,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
 	_set_cards_look(cards_mode or on_board or waiting, decider)
-	_set_dim(not waiting and _options_box.get_child_count() > 0 \
+	_set_dim(not waiting and not on_board and _options_box.get_child_count() > 0 \
 		and (cards_mode or choice_type == "target_card"))
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT

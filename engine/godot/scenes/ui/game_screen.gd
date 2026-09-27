@@ -328,6 +328,7 @@ func _build_layout() -> void:
 	# отправлялся, но его никто не слушал. Ни один тест этого не видел, потому
 	# что все они дёргали сервер напрямую, минуя щелчки мышью.
 	_hand_panel.card_clicked.connect(_on_hand_card_clicked)
+	_hand_panel.choice_clicked.connect(_on_decision_answer)
 	add_child(_hand_panel)
 
 	# 1b. Над рукой — чей ход и его Power/Influence (решение владельца,

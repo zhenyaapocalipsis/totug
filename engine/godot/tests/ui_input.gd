@@ -42,6 +42,7 @@ var _move_to := ""
 var _feed_before := 0
 var _feed_cells_before := 0
 var _foe_tags: Array[String] = []
+var _foe_discard := ""
 
 
 func _initialize() -> void:
@@ -105,6 +106,8 @@ func _process(_delta: float) -> bool:
 		32: _step_check_hover_feed()
 		33: _step_hover_market()
 		34: _step_check_hover_market()
+		35: _step_forced_discard()
+		36: _step_check_forced_discard()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -586,6 +589,50 @@ func _step_check_hover_market() -> void:
 	check(CardPreview.active.has_preview() and CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
 		"наведение на карту рынка показало полную карту без Alt (%s)" % CardPreview.active.preview_size())
 	_move_mouse(Vector2(480, 200))
+
+
+## Соперник заставил сбросить карту (Cranium Rats): карту выбирают прямо в
+## руке — без окна и затемнения, варианты подсвечены (решение владельца,
+## 2026-09-27).
+func _step_forced_discard() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	state.players[me].deck.hand.append("48714")
+	_screen.send(Intent.play_card(me, "48714"))
+	var guard := 0
+	while _screen.server.resolver.is_waiting() and guard < 10 \
+			and _screen.server.resolver.pending.player_id == me:
+		guard += 1
+		var pd: PendingDecision = _screen.server.resolver.pending
+		_screen.send(Intent.make_decision(me, pd.legal_options[0]))
+	var pending: PendingDecision = _screen.server.resolver.pending
+	check(pending != null and pending.player_id != me and pending.tag == "hand",
+		"соперник решает, какую карту сбросить, — выбор в руке")
+	if pending == null:
+		return
+	_foe_discard = pending.player_id
+	var dlg: DecisionDialog = _screen._decision_dialog
+	check(dlg.visible and not dlg._dim.visible and dlg.at_top,
+		"вопрос — полоса сверху, экран не затемнён")
+	check(dlg._prompt.text.contains("Cranium Rats"), "в вопросе сказано, чья карта заставила (%s)" % dlg._prompt.text)
+	var victim: PlayerState = state.players[_foe_discard]
+	_hand_before = victim.deck.hand.size()
+	_discard_before = victim.deck.discard_pile.size()
+	var card: CardView = null
+	for c: CardView in _all_cards():
+		if c.clickable and c.get_parent() is HandPanel:
+			card = c
+			break
+	check(card != null, "карты руки сбрасывающего кликаются")
+	if card != null:
+		_click(card)
+
+
+func _step_check_forced_discard() -> void:
+	var victim: PlayerState = _screen.server.state.players[_foe_discard]
+	check(victim.deck.hand.size() == _hand_before - 1 and victim.deck.discard_pile.size() == _discard_before + 1,
+		"щелчок по карте в руке сбросил её")
+	check(not _screen.server.resolver.is_waiting(), "вопрос закрыт")
 
 
 # --- вспомогательное ---------------------------------------------------------

@@ -22,6 +22,9 @@ extends Control
 ## мылится на дробных координатах.
 
 signal card_clicked(card_id: String)
+## Щелчок по карте, когда карта задала вопрос "выбери карту в руке" (сбросить,
+## сожрать): это ответ на вопрос, а не розыгрыш.
+signal choice_clicked(card_id: String)
 
 ## Мелкое лицо карты пиксель в пиксель. Зона руки ужата (решение владельца,
 ## 2026-09-20): карты лежат внахлёст, а освободившаяся ширина отдана чату —
@@ -69,6 +72,8 @@ var _hovered_card: CardView = null
 ## одноимённая карта ряда — в руке три Noble, и при розыгрыше самого левого
 ## «сыгранной» выглядела бы самая правая.
 var _played_card: CardView = null
+## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
+var _choosing := false
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
 ## посчитанным по нулевой ширине и уезжает за нижний край.
@@ -90,6 +95,12 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	var hand: Array = p.get("hand", [])
 	var playable: Array = (view.get("legal", {}) as Dictionary).get("play_card", [])
+	# Вопрос "выбери карту в руке": кликаются и подсвечены золотом только
+	# карты-варианты (решение владельца, 2026-09-27).
+	var pd: Dictionary = view.get("pending_decision", {})
+	_choosing = String(pd.get("tag", "")) == "hand" and String(pd.get("player_id", "")) == viewer_id
+	if _choosing:
+		playable = pd.get("legal_options", [])
 
 	var old_cards := _cards
 	var old_pos := _pos
@@ -153,7 +164,10 @@ func _make_card(cid: String) -> CardView:
 		# Запомнить до отправки: сервер ответит новой рукой синхронно, прямо
 		# внутри card_clicked, и к тому моменту пометка уже нужна.
 		_played_card = card
-		card_clicked.emit(clicked))
+		if _choosing:
+			choice_clicked.emit(clicked)
+		else:
+			card_clicked.emit(clicked))
 	# Ткнули в карту, которую сейчас играть нельзя — она дёргается и краснеет,
 	# вместо того чтобы молча ничего не сделать.
 	card.refused.connect(func(_clicked: String): card.shake_refusal())
