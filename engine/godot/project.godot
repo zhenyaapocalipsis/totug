@@ -22,6 +22,8 @@ gdscript/warnings/untyped_declaration=1
 ; (решение владельца, 2026-09-22: было 640x360 втрое, но экрану не хватало
 ; места), поэтому игра стартует во весь экран (mode=3), а F11 возвращает окно.
 ; Окно — в расчётный размер: вдвое больше него на 1080p в окно уже не влезет.
+; Если масштаб не целый (2560x1440 = x2.67), автозагрузка SharpScale рисует игру
+; в ближайший целый масштаб сверху и плавно уменьшает — без чёрных полос.
 window/size/viewport_width=960
 window/size/viewport_height=540
 window/size/mode=3
@@ -37,3 +39,4 @@ textures/canvas_textures/default_texture_filter=0
 [autoload]
 
 WindowKeys="*res://scenes/window_keys.gd"
+SharpScale="*res://scenes/sharp_scale.gd"
