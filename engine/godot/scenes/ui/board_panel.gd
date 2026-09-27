@@ -116,8 +116,7 @@ const CAPTURE_TIME := 1.2
 ## Прозрачность заливки локации цветом хозяина: контроль / полный контроль.
 const CONTROL_FILL := 0.3
 const CONTROL_FILL_TOTAL := 0.6
-## Вкладки города с маркером контроля: размер в пикселях схемы и значки 5x5.
-const MARKER_TAB := Vector2(12, 9)
+## Значки 5x5 на вкладках города с маркером контроля.
 const MARKER_DIAMOND := ["00100", "01110", "11111", "01110", "00100"]
 const MARKER_CROWN := ["10101", "10101", "11111", "11011", "11111"]
 const MARKER_VP_COLOR := Color("ffd84a")
@@ -1231,17 +1230,13 @@ func _marker_sites() -> Array[String]:
 	return result
 
 
-## Две вкладки по бокам коробки города (мировые координаты): [слева, справа].
-## Вкладка сдвинута на пиксель наружу — за золотую рамку в два пикселя.
+## Две вкладки города (мировые координаты): [Influence, VP]. Место выбрано
+## при построении схемы (BoardSchematic.place_marker_tabs) так, чтобы не
+## налезать на соседей и туннели.
 func _marker_tab_rects(site_id: String) -> Array[Rect2]:
 	var result: Array[Rect2] = []
-	var rect: Variant = _site_rect(site_id)
-	if rect == null:
-		return result
-	var r := rect as Rect2
-	var y := r.position.y + floorf((r.size.y - MARKER_TAB.y) / 2.0)
-	result.append(Rect2(Vector2(r.position.x - 1.0 - MARKER_TAB.x, y), MARKER_TAB))
-	result.append(Rect2(Vector2(r.end.x + 1.0, y), MARKER_TAB))
+	for t: Array in (_schematic_site(site_id).get("marker_tabs", []) as Array):
+		result.append(Rect2(float(t[0]), float(t[1]), float(t[2]), float(t[3])))
 	return result
 
 
