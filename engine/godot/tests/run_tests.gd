@@ -923,6 +923,19 @@ func test_game_end() -> void:
 	check(not GameEnd.advance_turn(duel2), "1v1: после хода p1 ходит p2")
 	check(GameEnd.advance_turn(duel2), "1v1: после хода p2 партия заканчивается")
 
+	# 4 игрока: кто бы ни вызвал конец, последний ход — у p4
+	for trigger_seat in 4:
+		var four := GameState.new(_build_ab_graph(), 1)
+		for n in 4:
+			four.add_player("p%d" % (n + 1), [])
+		four.current_player_index = trigger_seat
+		GameEnd.trigger(four, "last_troop")
+		var turns_left := 0
+		while not GameEnd.advance_turn(four):
+			turns_left += 1
+		check_eq(turns_left, 3 - trigger_seat, "4p: триггер у p%d — ещё ходов до конца" % (trigger_seat + 1))
+		check_eq(four.current_player_index, 3, "4p: триггер у p%d — последним ходит p4" % (trigger_seat + 1))
+
 
 func test_scoring() -> void:
 	section("финальный подсчёт")
