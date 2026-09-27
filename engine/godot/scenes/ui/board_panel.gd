@@ -98,7 +98,6 @@ var _tokens: Dictionary = {}     # colour html -> ImageTexture
 
 var _zoom := 0.0                 # 0 = ещё не подобран, подберётся под размер панели
 var _pan := Vector2.ZERO         # центр обзора в мировых координатах
-var top_inset := 0.0
 
 var _shake_left := 0.0
 var _shake_power := 0.0          # амплитуда тряски в пикселях панели
@@ -686,30 +685,16 @@ func _ensure_view() -> void:
 		_pan = _board_centre().round()
 
 
-## Центр видимой части: сверху её может занимать плашка решения (top_inset).
-## Если схема и так помещается целиком, сдвигать её под плашку не нужно —
-## иначе нижний край уезжает за пределы зоны.
+## Центр видимой части. Окна решений доску не сдвигают: вопрос рисуется
+## поверх неё (решение владельца, 2026-09-27).
 func _view_centre() -> Vector2:
-	var span_y := _board_rect().size.y * _zoom
-	var centre := Vector2(size.x * 0.5, (size.y + top_inset) * 0.5)
-	if span_y <= size.y:
-		# Схема влезает целиком: сдвигаем её вниз из-под плашки ровно
-		# настолько, насколько есть запас, и ни пикселем больше.
-		centre.y = clampf(centre.y, span_y * 0.5, size.y - span_y * 0.5)
+	var centre := size * 0.5
 	# Центр кладём на сетку ЭКРАННЫХ пикселей: иначе схема съезжает на треть
 	# пикселя и nearest рисует соседние ряды разной толщины.
 	var scale := window_scale()
 	return (centre * scale).round() / scale
 
 
-## Сколько пикселей сверху закрыто плашкой решения. Масштаб от этого не
-## меняется (доска зафиксирована) — она лишь сдвигается вниз на свободное
-## место, если оно есть.
-func set_top_inset(value: float) -> void:
-	if is_equal_approx(value, top_inset):
-		return
-	top_inset = value
-	queue_redraw()
 
 
 func _to_screen(world: Vector2) -> Vector2:

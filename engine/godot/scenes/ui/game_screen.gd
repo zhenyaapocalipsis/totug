@@ -1086,9 +1086,6 @@ func refresh(view: Dictionary) -> void:
 	# раскладываем заново.
 	if not is_equal_approx(_market_panel.get_combined_minimum_size().y, _market_panel.size.y):
 		_layout()
-	# Плашка выбора цели закрывает верх доски — доска вписывается ниже неё.
-	var covered: bool = _decision_dialog.visible and _decision_dialog.at_top
-	_board_panel.set_top_inset(_decision_dialog.get_combined_minimum_size().y + 4.0 if covered else 0.0)
 
 
 ## Чей сейчас ход — на самой кнопке End turn (решение владельца, 2026-09-19).

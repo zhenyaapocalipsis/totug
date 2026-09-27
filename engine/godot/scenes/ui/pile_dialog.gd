@@ -33,24 +33,23 @@ func _init() -> void:
 	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 
+	# Без фона и рамки — как окна выбора карт: заголовок по центру крупным
+	# шрифтом с тенью, под картами надпись Close (решение владельца, 2026-09-27).
 	_body = PanelContainer.new()
-	_body.add_theme_stylebox_override("panel",
-		PixelTheme.box(PixelTheme.PANEL, PixelTheme.BORDER_HI, 1, 3, 2))
+	_body.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_center.add_child(_body)
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
 	_body.add_child(col)
 
-	var head := HBoxContainer.new()
-	col.add_child(head)
 	_title = Label.new()
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(_title)
-	var close := Button.new()
-	close.text = "Close"
-	close.pressed.connect(close_pile)
-	head.add_child(close)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	_title.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
+	_title.add_theme_constant_override("shadow_offset_x", 1)
+	_title.add_theme_constant_override("shadow_offset_y", 1)
+	col.add_child(_title)
 
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -62,6 +61,12 @@ func _init() -> void:
 	_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_grid)
 
+	var close := Button.new()
+	close.text = "Close"
+	close.pressed.connect(close_pile)
+	DecisionDialog.make_plain(close)
+	col.add_child(close)
+
 
 func open_pile(title: String, ids: Array) -> void:
 	_title.text = "%s — %d card%s" % [title, ids.size(), "" if ids.size() == 1 else "s"]
@@ -71,13 +76,15 @@ func open_pile(title: String, ids: Array) -> void:
 
 	var area: Vector2 = get_viewport_rect().size
 	var panel: Vector2 = PANEL_MAX.min(area - Vector2(16, 24))
-	var columns: int = maxi(1, int((panel.x - 8.0) / (CARD_SIZE.x + 2.0)))
+	# Колонок не больше, чем карт: без рамки короткий ряд иначе прижат влево.
+	var columns: int = clampi(int((panel.x - 8.0) / (CARD_SIZE.x + 2.0)), 1, maxi(ids.size(), 1))
 	_grid.columns = columns
 	var rows: int = ceili(float(maxi(ids.size(), 1)) / float(columns))
 	var grid_h: float = float(rows) * (CARD_SIZE.y + 2.0)
+	# 44 — крупный заголовок сверху и Close снизу
 	_scroll.custom_minimum_size = Vector2(
 		float(columns) * (CARD_SIZE.x + 2.0),
-		minf(grid_h, panel.y - 20.0))
+		minf(grid_h, panel.y - 44.0))
 
 	for cid in ids:
 		var card := CardView.new(String(cid), int(CARD_SIZE.x), int(CARD_SIZE.y))

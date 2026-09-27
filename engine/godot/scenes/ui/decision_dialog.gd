@@ -131,11 +131,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_options_box.remove_child(child)
 		child.queue_free()
 	var cards_mode := false
+	var waiting := decider != viewer_id
 
-	if decider != viewer_id:
+	if waiting:
 		# Не наш вопрос: сам факт показываем (чтобы было видно, чего ждём),
-		# но вариантов у нас нет — сервер их и не прислал.
+		# но вариантов у нас нет — сервер их и не прислал. Без рамки, по
+		# центру и без затемнения (решение владельца, 2026-09-27).
 		_add_note("Waiting for %s." % EventLogPanel.player_name(decider))
+		(_options_box.get_child(0) as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	elif options.is_empty():
 		_add_note("No options.")
 	elif on_board:
@@ -147,14 +150,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_who.text += " — click a gold target on the board"
 		if options.has(""):
 			_add_button("Skip", "")
-			_make_plain(_options_box.get_child(0) as Button)
+			make_plain(_options_box.get_child(0) as Button)
 	elif choice_type == "confirm" and CardView.pixel_texture(String(pd.get("source_card", ""))) != null:
 		# "You may..." — как выбор карты для Promote: сама карта (щелчок —
 		# "да") и под ней Skip ("нет").
 		_add_card_grid([String(pd["source_card"])], [true])
 		cards_mode = true
 		_add_button("Skip", false)
-		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+		make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 	elif choice_type == "target_market_index":
 		# Карты рынка — такой же сеткой, как выбор для Promote; в ответ уходит
 		# номер карты на рынке. -1 — отказ ("You may devour..."), это Skip.
@@ -169,7 +172,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		cards_mode = true
 		if options.has(-1):
 			_add_button("Skip", -1)
-			_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+			make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 	elif choice_type == "target_card":
 		_add_card_grid(options)
 		cards_mode = true
@@ -177,14 +180,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_add_button("Skip", "")
 			# без окна вокруг кнопка во всю ширину — просто полоса; ставим по центру
 			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
-			_make_plain(skip)
+			make_plain(skip)
 	elif choice_type == "target_player":
 		# Соперники — крупные надписи цвета игрока, без окна вокруг, слева
 		# фишка его войска с эмблемой (как на доске).
 		for value in options:
 			_add_button(_board_label(value, choice_type), value)
 			var b := _options_box.get_child(_options_box.get_child_count() - 1) as Button
-			_make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
+			make_plain(b, EventLogPanel.player_color(String(value)) if String(value) != "" \
 				else PixelTheme.TEXT, PixelTheme.SIZE_BIG)
 			if String(value) != "":
 				_put_token_before(b, String(value), value)
@@ -206,8 +209,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
-	_set_cards_look(cards_mode or on_board, decider)
-	_set_dim(_options_box.get_child_count() > 0 and (cards_mode or choice_type == "target_card"))
+	_set_cards_look(cards_mode or on_board or waiting, decider)
+	_set_dim(not waiting and _options_box.get_child_count() > 0 \
+		and (cards_mode or choice_type == "target_card"))
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
 	if _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
@@ -290,7 +294,7 @@ func _add_card_grid(options: Array, answers: Array = []) -> void:
 
 ## Кнопка — одна надпись по центру: без фона и рамки, с тенью; под курсором
 ## светлее (Skip — золотая).
-func _make_plain(b: Button, color: Color = PixelTheme.TEXT, font_size: int = 0) -> void:
+static func make_plain(b: Button, color: Color = PixelTheme.TEXT, font_size: int = 0) -> void:
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
@@ -440,7 +444,7 @@ func _add_trophy_tokens(pd: Dictionary) -> void:
 	_options_box.add_child(row)
 	if (pd.get("legal_options", []) as Array).has(-1):
 		_add_button("Skip", -1)
-		_make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+		make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 
 
 ## Ставит фишку игрока слева от кнопки-имени b (тоже нажимается). Иконкой
