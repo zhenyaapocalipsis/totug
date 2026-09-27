@@ -29,8 +29,17 @@ const TROPHY_INDENT := 4
 ## Нейтральные (белые) убитые войска — серой цифрой.
 const NEUTRAL_COLOR := Color(0.6, 0.6, 0.6)
 
+## Карта спросила "выбери игрока" (target_player): щелчок по строке игрока.
+signal player_chosen(player_id: String)
+
 var _grid: GridContainer
 var _rows: Dictionary = {}   # player_id -> {"name": Label, "values": {key: Label}, "trophies": HBoxContainer}
+## Выбор игрока прямо в таблице (решение владельца, 2026-09-27): поверх строк,
+## которые можно выбрать, — прозрачные кнопки в золотой рамке. Строка таблицы —
+## это несколько ячеек сетки, поэтому кнопка отдельная и кладётся по их месту.
+var _overlay: Control
+var _choice_buttons: Dictionary = {}   # player_id -> Button
+var _choice: Array = []
 ## Вопрос стартовой расстановки — показывает game_screen.
 var setup_label: Label
 
@@ -61,6 +70,13 @@ func _init() -> void:
 	setup_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	setup_label.visible = false
 	col.add_child(setup_label)
+
+	# Слой кнопок выбора: PanelContainer растягивает его на всю панель, кнопки
+	# внутри стоят по месту строк (_place_choice).
+	_overlay = Control.new()
+	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_overlay)
+	resized.connect(func(): _place_choice.call_deferred())
 
 
 static func _cell(text: String, width: float, colour: Color,
@@ -150,6 +166,50 @@ func update_from_view(view: Dictionary) -> void:
 			var shown: int = (raw as Array).size() if raw is Array else int(raw)
 			(values[key] as Label).text = str(shown)
 		_fill_trophies(row["trophies"], p.get("trophies", {}), order)
+
+	# Вопрос "выбери игрока": варианты сервер присылает только решающему, так
+	# что у остальных кнопок нет. "" (отказ) — это Skip в строке вопроса.
+	var pd: Dictionary = view.get("pending_decision", {})
+	_choice = []
+	if String(pd.get("choice_type", "")) == "target_player":
+		for o in pd.get("legal_options", []):
+			if _rows.has(String(o)):
+				_choice.append(String(o))
+	for pid: String in _rows:
+		if not _choice_buttons.has(pid):
+			_choice_buttons[pid] = _make_choice_button(pid)
+		(_choice_buttons[pid] as Button).visible = _choice.has(pid)
+	_place_choice.call_deferred()
+
+
+func _make_choice_button(pid: String) -> Button:
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.tooltip_text = "Choose %s" % EventLogPanel.player_name(pid)
+	var normal := PixelTheme.box(Color(PixelTheme.GOLD, 0.0), PixelTheme.GOLD, 1, 0, 0)
+	var hover := PixelTheme.box(Color(PixelTheme.GOLD, 0.25), PixelTheme.GOLD, 1, 0, 0)
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("hover", hover)
+	b.add_theme_stylebox_override("pressed", hover)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.pressed.connect(func(): player_chosen.emit(pid))
+	b.visible = false
+	_overlay.add_child(b)
+	return b
+
+
+## Кнопка выбора — во всю ширину таблицы по высоте строки игрока.
+func _place_choice() -> void:
+	var origin := _overlay.get_global_position()
+	var grid_rect := _grid.get_global_rect()
+	for pid: String in _choice_buttons:
+		var b: Button = _choice_buttons[pid]
+		if not b.visible:
+			continue
+		var name_rect := (_rows[pid]["name"] as Label).get_global_rect()
+		b.position = Vector2(grid_rect.position.x - 1, name_rect.position.y - 1) - origin
+		b.size = Vector2(grid_rect.size.x + 2, name_rect.size.y + 1)
 
 
 ## Столбец трофеев чуть отодвинут от IC: иначе первая цифра читается как

@@ -127,7 +127,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var in_hand := tag == "hand"
 	# Inner Circle и сброс на время выбора встают в ряд руки справа (hand_panel.gd).
 	var on_board: bool = BOARD_CHOICES.has(choice_type) or in_hand \
-		or tag == "market" or HandPanel.ZONE_LABELS.has(tag)
+		or tag == "market" or HandPanel.ZONE_LABELS.has(tag) \
+		or choice_type == "target_player"   # игрок — в таблице игроков (players_panel.gd)
 	var options: Array = pd.get("legal_options", [])
 	visible = true
 	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
@@ -168,6 +169,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# 2026-09-26), подсказка про подсветку — в мелкой строке над ним.
 		if in_hand:
 			_who.text += " — click a gold card in your hand"
+		elif choice_type == "target_player":
+			_who.text += " — click a gold player in the players table"
 		elif tag == "market":
 			_who.text += " — click a gold card in the market"
 		elif HandPanel.ZONE_LABELS.has(tag):

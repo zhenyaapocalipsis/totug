@@ -116,6 +116,9 @@ func _process(_delta: float) -> bool:
 		40: _step_check_inner_circle()
 		41: _step_promote_discard()
 		42: _step_check_promote_discard()
+		43: _step_choose_player()
+		44: _step_click_player()
+		45: _step_check_choose_player()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -736,6 +739,42 @@ func _step_check_promote_discard() -> void:
 	var deck = _current_player().deck
 	check(deck.inner_circle.size() == _ic_before + 1, "щелчок повысил карту из сброса")
 	check(_row_cards().filter(func(c): return HandPanel._is_zone(c)).is_empty(), "карты сброса из ряда убраны")
+
+
+## Выбор соперника (Myconid Adult): щелчок по строке игрока в таблице игроков,
+## без окна и затемнения.
+func _step_choose_player() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	state.supplies.counts[Supplies.INSANE_OUTCAST] = 5  # в этой партии стопки Outcast нет
+	state.players[me].deck.hand.append("48527")
+	_screen.send(Intent.play_card(me, "48527"))
+	var pending: PendingDecision = _screen.server.resolver.pending
+	check(pending != null and pending.choice_type == "target_player", "Myconid Adult спрашивает соперника")
+	if pending == null:
+		return
+	_foe_discard = String(pending.legal_options[0])
+	_discard_before = state.players[_foe_discard].deck.discard_pile.size()
+
+
+## Кнопки таблицы встают по месту строк на следующем кадре — щёлкаем тогда.
+func _step_click_player() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	var panel: PlayersPanel = _screen._players_panel
+	var b: Button = panel._choice_buttons.get(_foe_discard)
+	check(b != null and b.is_visible_in_tree(), "строка соперника в таблице игроков — кнопка выбора")
+	check(not panel._choice_buttons[me].visible, "свою строку выбрать нельзя")
+	check(not _screen._decision_dialog._dim.visible, "экран не затемнён")
+	if b != null:
+		_click(b)
+
+
+func _step_check_choose_player() -> void:
+	check(not _screen.server.resolver.is_waiting(), "щелчок по строке выбрал соперника")
+	var foe: PlayerState = _screen.server.state.players[_foe_discard]
+	check(foe.deck.discard_pile.size() == _discard_before + 1, "соперник получил Insane Outcast в сброс")
+	check(not _screen._players_panel._choice_buttons[_foe_discard].visible, "кнопки выбора убраны")
 
 
 ## Карты ряда руки без улетающих.
