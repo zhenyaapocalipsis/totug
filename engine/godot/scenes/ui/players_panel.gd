@@ -202,6 +202,34 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 	return digits
 
 
+## Куда в зале трофеев pid прилетает убитое войско цвета colour_id (глобальные
+## координаты): на его цифру, а нет её — в начало зала. null — таблица ещё не
+## разложена.
+func trophy_global(pid: String, colour_id: String) -> Variant:
+	if not _rows.has(pid):
+		return null
+	var box: HBoxContainer = _rows[pid]["trophies"]
+	if box.size.x < 1.0:
+		return null
+	var digit: Control = (_rows[pid].get("digits", {}) as Dictionary).get(colour_id)
+	if digit != null and is_instance_valid(digit) and digit.size.x >= 1.0:
+		return digit.get_global_rect().get_center()
+	var rect := box.get_global_rect()
+	return Vector2(rect.position.x + 4.0, rect.get_center().y)
+
+
+## Трофей долетел: его цифра вспыхивает и гаснет, как барак, принявший фишку.
+func flash_trophy(pid: String, colour_id: String) -> void:
+	if not _rows.has(pid):
+		return
+	var digit: Control = (_rows[pid].get("digits", {}) as Dictionary).get(colour_id)
+	var target: Control = digit if digit != null and is_instance_valid(digit) \
+		else _rows[pid]["trophies"]
+	var bright := BarracksBar.KICK_BRIGHT
+	target.modulate = Color(bright, bright, bright)
+	target.create_tween().tween_property(target, "modulate", Color.WHITE, BarracksBar.KICK_TIME)
+
+
 func update_from_view(view: Dictionary) -> void:
 	var order: Array = view.get("turn_order", [])
 	var current := GameScreen.acting_player(view)

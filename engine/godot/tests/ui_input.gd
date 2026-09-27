@@ -39,6 +39,9 @@ var _refused_card: CardView = null
 var _played_view: CardView = null
 var _capture_site := ""
 var _move_to := ""
+var _supplant_slot := ""
+## Фишки, летевшие до убийств: трофеи — только новые.
+var _flights_before: Array = []
 var _feed_before := 0
 var _feed_cells_before := 0
 var _foe_kills := 0
@@ -125,6 +128,8 @@ func _process(_delta: float) -> bool:
 		46: _step_trophy()
 		47: _step_click_trophy()
 		48: _step_check_trophy()
+		49: _step_kills()
+		50: _step_check_kills()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -836,6 +841,50 @@ func _step_check_trophy() -> void:
 	var state := _screen.server.state
 	check(_trophy_hall != "" and int(state.players[_trophy_hall].trophies.get("white", 0)) == _discard_before - 1,
 		"щелчок по цифре забрал войско из зала")
+
+
+## Убийство и вытеснение: убитая фишка остаётся на доске под прицелом, пока
+## не ударит; вытеснившего доска до удара прячет. Два убийства — по очереди.
+func _step_kills() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	var foe := ""
+	for pid: String in state.turn_order:
+		if pid != me:
+			foe = pid
+	var empty: Array[String] = []
+	for slot_id: String in state.graph.slots.keys():
+		if String(state.troops.get(slot_id, "")) == "":
+			empty.append(slot_id)
+	check(empty.size() >= 2, "есть два свободных места")
+	if empty.size() < 2:
+		return
+	_supplant_slot = empty[0]
+	state.troops[_supplant_slot] = me     # вытеснили белое войско
+	_flights_before = _screen.get_children().filter(func(n): return n is FlyingToken)
+	_screen.refresh(StateView.for_player_with_pending(
+		state, me, _screen.server.resolver.pending))
+	_screen._react_to_events([
+		{"type": "supplant", "player_id": me, "slot_id": _supplant_slot, "victim": GameState.WHITE},
+		{"type": "assassinate", "player_id": me, "slot_id": empty[1], "victim": foe}])
+	var board: BoardPanel = _screen._board_panel
+	check(board.kill_count() == 2, "оба убийства ждут удара (%d)" % board.kill_count())
+	check(board._arriving.has("troop|" + _supplant_slot), "вытеснивший до удара спрятан")
+	board._process(BoardPanel.KILL_AIM + 0.01)
+	check(board.kill_count() == 1, "первый удар — второе убийство ещё ждёт своей очереди")
+
+
+func _step_check_kills() -> void:
+	var board: BoardPanel = _screen._board_panel
+	board._process(BoardPanel.KILL_STEP)
+	check(board.kill_count() == 0, "второй удар прошёл")
+	check(board.spark_count() > 0 and board.is_shaking(), "на ударе осколки и тряска")
+	var trophies := 0
+	for child in _screen.get_children():
+		if child is FlyingToken and not _flights_before.has(child):
+			trophies += 1
+	check(trophies == 2, "оба трофея летят в зал (%d)" % trophies)
+	check(board._arriving.has("troop|" + _supplant_slot), "вытеснивший ещё не сел — сядет после удара")
 
 
 ## Карты ряда руки без улетающих.

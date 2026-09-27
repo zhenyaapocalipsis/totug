@@ -28,6 +28,9 @@ extends PanelContainer
 signal slot_clicked(slot_id: String)
 signal site_clicked(site_id: String)
 signal spy_clicked(site_id: String, owner: String)
+## Прицел над убитым (вытесненным) войском сошёлся — удар. Экран по нему
+## пускает трофей в зал убийцы и сажает войско вытеснившего.
+signal kill_struck(slot_id: String, victim: String, killer: String, supplant: bool)
 
 const PLAYER_COLORS := {
 	"red": Color(0.85, 0.22, 0.22),
@@ -66,6 +69,20 @@ const FLASH_TIME := 0.06
 const RING_GROW := 10.0
 const DUST_COUNT := 10
 const LAND_SHAKE := 2.0
+
+## Убийство и вытеснение (решение владельца, 2026-09-28: игроки не видели,
+## где это случилось). В виде убитой фишки уже нет, поэтому панель ещё
+## рисует её «призрак»: над ним мигает и сходится прицел, локация мигает
+## рамкой, затем удар — белая вспышка, осколки цвета жертвы, доска дёргается.
+## Несколько убийств одного ответа сервера идут друг за другом через KILL_STEP.
+const KILL_AIM := 0.45
+const KILL_STEP := 0.5
+const KILL_SHAKE := 4.0
+const KILL_SHARDS := 14
+## С какого расстояния (в пикселях схемы от края фишки) прицел начинает сходиться.
+const AIM_FAR := 12.0
+## Прицел мигает оранжевым и тёмно-красным: белый терялся на светлых плашках локаций.
+const AIM_DARK := Color(0.7, 0.12, 0.08)
 
 ## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
@@ -125,6 +142,9 @@ var _sparks: Array[Dictionary] = []
 var _arriving: Dictionary = {}
 ## Идущие удары приземлений: {key, pos (координаты панели), left, radius, colour}.
 var _impacts: Array[Dictionary] = []
+## Идущие убийства: {slot, victim, killer, supplant, wait (до начала прицела),
+## left (до удара)}.
+var _kills: Array[Dictionary] = []
 
 ## Мерцание подсказок (зелёные/жёлтые/оранжевые кружки): время пульса и флаг
 ## «на прошлом кадре была хоть одна подсказка» — пока он поднят, доска
@@ -184,7 +204,7 @@ func _note_captures(control: Dictionary) -> void:
 func _flush_captures() -> void:
 	var fire: Array[String] = []
 	for site_id in _taken_now:
-		if _troop_arriving_at(site_id):
+		if _troop_arriving_at(site_id) or _kill_pending_at(site_id):
 			_captures_on_land[site_id] = true
 		else:
 			fire.append(site_id)
@@ -208,6 +228,97 @@ func _troop_arriving_at(site_id: String) -> bool:
 		if key.begins_with("troop|") and _site_of_slot(key.substr(6)) == site_id:
 			return true
 	return false
+
+
+## Ждёт ли удара убийство в одном из мест локации site_id.
+func _kill_pending_at(site_id: String) -> bool:
+	for k in _kills:
+		if _site_of_slot(String(k["slot"])) == site_id:
+			return true
+	return false
+
+
+## Захват локации site_id, отложенный до посадки войска или до удара,
+## вспыхивает, когда там больше ничего не летит и не целится.
+func _fire_capture_if_settled(site_id: String) -> void:
+	if _captures_on_land.has(site_id) and not _troop_arriving_at(site_id) \
+			and not _kill_pending_at(site_id):
+		_captures_on_land.erase(site_id)
+		var one: Array[String] = [site_id]
+		_fire_captures(one)
+
+
+# --- убийство и вытеснение ----------------------------------------------------
+
+## Войско victim на месте slot_id убил (supplant — вытеснил) killer. Через
+## delay секунд над ним начинает сходиться прицел, ещё через KILL_AIM — удар и
+## сигнал kill_struck. До удара на месте рисуется убитая фишка. false — места
+## на доске нет, показывать нечего.
+func kill_at(slot_id: String, victim: String, killer: String, supplant: bool,
+		delay: float = 0.0) -> bool:
+	if victim == "" or _slot_world(slot_id) == null:
+		return false
+	_kills.append({"slot": slot_id, "victim": victim, "killer": killer,
+		"supplant": supplant, "wait": delay, "left": KILL_AIM})
+	set_process(true)
+	queue_redraw()
+	return true
+
+
+## Для проверок: сколько убийств ещё не ударило.
+func kill_count() -> int:
+	return _kills.size()
+
+
+## Удар: вспышка с кольцом, осколки цвета жертвы и искры, доска дёргается.
+func _strike(k: Dictionary) -> void:
+	var slot_id := String(k["slot"])
+	var at: Variant = _slot_world(slot_id)
+	if at != null:
+		var pos: Vector2 = _to_screen(at)
+		_impacts.append({"key": "kill|" + slot_id, "pos": pos, "left": IMPACT_TIME,
+			"radius": _arrival_radius("troop|" + slot_id), "colour": KILL_COLOR})
+		_burst(pos, troop_colour(String(k["victim"])), KILL_SHARDS)
+		_burst(pos, KILL_COLOR, SPARK_COUNT / 2)
+	shake(KILL_SHAKE)
+	_fire_capture_if_settled(_site_of_slot(slot_id))
+	kill_struck.emit(slot_id, String(k["victim"]), String(k["killer"]), bool(k["supplant"]))
+
+
+## Убитые фишки до удара и прицелы над ними. Прицел — четыре уголка, которые
+## сходятся к фишке и мигают; локация вокруг мигает рамкой того же цвета.
+func _draw_kills() -> void:
+	var unit: float = maxf(1.0, roundf(_zoom))
+	var r := _arrival_radius("troop|")
+	for k in _kills:
+		var at: Variant = _slot_world(String(k["slot"]))
+		if at == null:
+			continue
+		var pos := _snap(_to_screen(at))
+		_draw_troop(pos, String(k["victim"]))
+		if float(k["wait"]) > 0.0:
+			continue
+		var p: float = 1.0 - float(k["left"]) / KILL_AIM
+		var lit := int(p * 9.0) % 2 == 0
+		var colour := KILL_COLOR if lit else AIM_DARK
+		var site_id := _site_of_slot(String(k["slot"]))
+		if site_id != "":
+			_outline_site(site_id, Color(KILL_COLOR, 0.9 if lit else 0.35))
+		var d := roundf(r / unit + 1.0 + AIM_FAR * (1.0 - p) * (1.0 - p)) * unit
+		var arm := 4.0 * unit
+		for sx in [-1.0, 1.0]:
+			for sy in [-1.0, 1.0]:
+				var c := pos + Vector2(sx * d, sy * d)
+				var across := Rect2(Vector2(c.x - (arm if sx > 0.0 else 0.0),
+					c.y - (unit if sy > 0.0 else 0.0)), Vector2(arm, unit))
+				var down := Rect2(Vector2(c.x - (unit if sx > 0.0 else 0.0),
+					c.y - (arm if sy > 0.0 else 0.0)), Vector2(unit, arm))
+				# Тёмная тень на пиксель ниже и правее — прицел читается и на светлом.
+				var shadow := Vector2(unit, unit)
+				draw_rect(Rect2(across.position + shadow, across.size), Color(0, 0, 0, 0.8))
+				draw_rect(Rect2(down.position + shadow, down.size), Color(0, 0, 0, 0.8))
+				draw_rect(across, colour)
+				draw_rect(down, colour)
 
 
 ## Локация, которой принадлежит место slot_id, или "" (место в туннеле).
@@ -291,10 +402,7 @@ func land(key: String, heavy: bool = true) -> void:
 	# вспыхивает (если в ту же локацию не летит ещё одно).
 	if key.begins_with("troop|"):
 		var site_id := _site_of_slot(key.substr(6))
-		if _captures_on_land.has(site_id) and not _troop_arriving_at(site_id):
-			_captures_on_land.erase(site_id)
-			var one: Array[String] = [site_id]
-			_fire_captures(one)
+		_fire_capture_if_settled(site_id)
 	var at: Variant = _arrival_spot(key)
 	if at == null:
 		queue_redraw()
@@ -493,6 +601,23 @@ func _process(delta: float) -> void:
 		arrival["left"] = float(arrival["left"]) - delta
 		if float(arrival["left"]) <= 0.0:
 			land(key, false)
+	# Удары — после прохода по списку: сигнал удара может добавить новые.
+	var struck: Array[Dictionary] = []
+	for i in range(_kills.size() - 1, -1, -1):
+		var k: Dictionary = _kills[i]
+		var step := delta
+		if float(k["wait"]) > 0.0:
+			k["wait"] = float(k["wait"]) - delta
+			if float(k["wait"]) > 0.0:
+				continue
+			# Очередь подошла посреди кадра — остаток кадра уже идёт на прицел.
+			step = -float(k["wait"])
+		k["left"] = float(k["left"]) - step
+		if float(k["left"]) <= 0.0:
+			_kills.remove_at(i)
+			struck.push_front(k)
+	for k in struck:
+		_strike(k)
 	for i in range(_impacts.size() - 1, -1, -1):
 		_impacts[i]["left"] = float(_impacts[i]["left"]) - delta
 		if float(_impacts[i]["left"]) <= 0.0:
@@ -508,7 +633,8 @@ func _process(delta: float) -> void:
 		s["pos"] = (s["pos"] as Vector2) + vel * delta
 
 	if _shake_left <= 0.0 and _captures.is_empty() and _sparks.is_empty() \
-			and _arriving.is_empty() and _impacts.is_empty() and not _pulse_active:
+			and _arriving.is_empty() and _impacts.is_empty() and _kills.is_empty() \
+			and not _pulse_active:
 		set_process(false)
 	queue_redraw()
 
@@ -771,20 +897,14 @@ func _draw() -> void:
 		# Пустое место ничем не рисуем: круги под войска уже есть на арте тайла
 		# и на схеме. Куда можно ставить — показывает зелёная подсветка ниже.
 		if owner != "":
-			var colour: Color = NEUTRAL_TROOP_COLOR if owner == GameState.WHITE \
-				else PLAYER_COLORS.get(owner, Color(0.6, 0.6, 0.6))
-			if _schematic_on():
-				var token := _token(colour, "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner))
-				draw_texture_rect(token, Rect2(pos - token.get_size() * 0.5 * _zoom, token.get_size() * _zoom), false)
-			else:
-				draw_circle(pos, radius, Color(0, 0, 0, 0.75))
-				draw_circle(pos, radius * 0.82, colour)
+			_draw_troop(pos, owner)
 
 		if deployable.has(slot_id):
 			_mark_slot(pos, DEPLOY_COLOR, owner != "")
 		elif killable.has(slot_id):
 			_mark_slot(pos, KILL_COLOR, owner != "")
 
+	_draw_kills()
 	_draw_arrivals()
 	_draw_spies()
 	_draw_spy_targets()
@@ -792,6 +912,18 @@ func _draw() -> void:
 	_draw_captures()
 	_draw_impacts()
 	_draw_sparks()
+
+
+## Фишка войска owner с центром в pos (координаты панели).
+func _draw_troop(pos: Vector2, owner: String) -> void:
+	var colour := troop_colour(owner)
+	if _schematic_on():
+		var token := _token(colour, "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner))
+		draw_texture_rect(token, Rect2(pos - token.get_size() * 0.5 * _zoom, token.get_size() * _zoom), false)
+	else:
+		var radius: float = maxf(_slot_radius_world() * _zoom, 3.0)
+		draw_circle(pos, radius, Color(0, 0, 0, 0.75))
+		draw_circle(pos, radius * 0.82, colour)
 
 
 ## Искры рисуются последними — поверх войск и подсветок. Пока искра молодая,

@@ -201,6 +201,8 @@ func _run_scenario() -> void:
 								ans4 = opt4
 								break
 					_screen.send(Intent.make_decision(pd4.player_id, ans4))
+		"kill":
+			return  # вытеснение запускается на кадре (_run_kill), как и захват
 		"capture":
 			# Захват локации запускается не здесь, а на кадре (_run_capture):
 			# доска считает места искр по своему масштабу, а он подбирается
@@ -437,6 +439,22 @@ func _run_capture() -> void:
 		state, me, _screen.server.resolver.pending))
 
 
+## Зритель вытесняет первое найденное войско на доске — так же, как это
+## приходит из сети: вид уже новый, событие следом.
+func _run_kill() -> void:
+	var state := _screen.server.state
+	var me := _screen.viewer_id
+	for slot_id: String in state.troops.keys():
+		var victim := String(state.troops[slot_id])
+		if victim != "" and victim != me:
+			state.troops[slot_id] = me
+			_screen.refresh(StateView.for_player_with_pending(
+				state, me, _screen.server.resolver.pending))
+			_screen._react_to_events([{"type": "supplant", "player_id": me,
+				"slot_id": slot_id, "victim": victim}])
+			return
+
+
 ## Доехал ли ряд карт руки до своих мест.
 func _hand_settled() -> bool:
 	for child in _screen.get_children():
@@ -459,6 +477,14 @@ func _process(_delta: float) -> bool:
 	if _scenario == "capture" and _shot_at < 0:
 		_run_capture()
 		_shot_at = _frame + 6
+	# Убийство: прицел сходится над убитой фишкой — снимаем на середине
+	# (--wait=N кадров, по умолчанию 16).
+	if _scenario == "kill" and _shot_at < 0:
+		_run_kill()
+		_shot_at = _frame + 16
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--wait="):
+				_shot_at = _frame + int(arg.get_slice("=", 1))
 	# Окно вопроса проявляется с анимацией: --wait=N — снять через N кадров.
 	if (_scenario == "decision" or _scenario == "outcasts") and _shot_at < 0:
 		_shot_at = _frame + 60
