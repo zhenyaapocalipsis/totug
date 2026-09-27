@@ -65,7 +65,7 @@ func _initialize() -> void:
 	root.add_child(_screen)
 	# Вопрос карты надо задавать, когда экран уже в дереве: вне дерева окно
 	# вопроса меряет свои варианты нулём и выходит пустым.
-	if _scenario == "decision":
+	if _scenario == "decision" or _scenario == "outcasts":
 		_run_scenario.call_deferred()
 	else:
 		_run_scenario()
@@ -75,7 +75,9 @@ func _initialize() -> void:
 ## мышь: рука выезжает, карта под ней увеличивается. --hover=x,y — навести.
 ## Подаётся на каждом кадре: системный курсор при появлении окна шлёт своё.
 func _fake_hover() -> void:
-	var hover := Vector2(4, 4)
+	# Левый нижний угол доски: верхний левый угол экрана занят сводкой ходов,
+	# и наведение на её карту показало бы карту крупно.
+	var hover := Vector2(94, 536)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--hover="):
 			var xy := arg.get_slice("=", 1).split(",")
@@ -241,6 +243,28 @@ func _run_scenario() -> void:
 					_screen.send(Intent.deploy(pid5, String(slot5)))
 					break
 				_screen.send(Intent.end_turn(pid5))
+		"outcasts":
+			# Раздача изгоев: ходящий разыгрывает Ghoul (каждому сопернику по
+			# изгою), затем Demogorgon (съесть карту руки, вытеснить, каждому
+			# сопернику по два). Нужна полуколода Demons: --decks=demons,undead.
+			# Вопросы ходящего отвечаются первым вариантом.
+			while _screen.server.resolver.is_waiting():
+				var pd10: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd10.player_id, pd10.legal_options[0]))
+			var st10 := _screen.server.state
+			var mover10: String = st10.current_player()
+			for cid10 in ["48509", "48501"]:
+				st10.players[mover10].deck.hand.append(cid10)
+				_screen.send(Intent.play_card(mover10, cid10))
+				var guard10 := 0
+				while _screen.server.resolver.is_waiting() and guard10 < 20:
+					guard10 += 1
+					var pd11: PendingDecision = _screen.server.resolver.pending
+					var ans11: Variant = pd11.legal_options[0] if not pd11.legal_options.is_empty() else null
+					_screen.send(Intent.make_decision(pd11.player_id, ans11))
+			# Баннер хода в начале партии закрыл бы витрину — в игре карта не
+			# разыгрывается в первую же секунду хода.
+			_screen._turn_banner.hide()
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
 			# сопернику, чужой сброс, действия и VP. События подаём прямо в
@@ -399,7 +423,7 @@ func _process(_delta: float) -> bool:
 		_run_capture()
 		_shot_at = _frame + 6
 	# Окно вопроса проявляется с анимацией: --wait=N — снять через N кадров.
-	if _scenario == "decision" and _shot_at < 0:
+	if (_scenario == "decision" or _scenario == "outcasts") and _shot_at < 0:
 		_shot_at = _frame + 60
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--wait="):
