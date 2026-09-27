@@ -8,9 +8,8 @@ extends PanelContainer
 ## Таблица: строка на игрока в порядке хода (первая строка — первый
 ## игрок), у ходящего перед именем «>». Скрытых сведений нет: рука и сброс
 ## противника — только числом карт (так их и отдаёт StateView). Зал трофеев —
-## по цифре на каждый цвет убитых фишек, цифра того же цвета. Во время
-## стартовой расстановки под таблицей стоит сам вопрос «выбери стартовую
-## локацию».
+## по цифре на каждый цвет убитых фишек, цифра того же цвета. Вопрос
+## стартовой расстановки — строкой над доской (DecisionDialog), не здесь.
 
 ## Числовые столбцы: ключ в срезе игрока, заголовок, подсказка к заголовку.
 const COLUMNS: Array[Array] = [
@@ -49,8 +48,6 @@ var _choice: Array = []
 var _blink_time := 0.0
 ## Рамки на цифрах трофеев: [Button, цифра (Label или SmallNumber)].
 var _trophy_buttons: Array = []
-## Вопрос стартовой расстановки — показывает game_screen.
-var setup_label: Label
 
 
 func _init() -> void:
@@ -73,12 +70,6 @@ func _init() -> void:
 	trophy_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_grid.add_child(_indented(trophy_head))
 
-	setup_label = Label.new()
-	setup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	setup_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	setup_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	setup_label.visible = false
-	col.add_child(setup_label)
 
 	# Слой кнопок выбора: PanelContainer растягивает его на всю панель, кнопки
 	# внутри стоят по месту строк (_place_choice).

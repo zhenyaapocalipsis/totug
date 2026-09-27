@@ -139,9 +139,14 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_prompt.text = String(pd.get("prompt", "Choose an option"))
 	# Сброс: крупно и мерцая, цветом игрока — кто сейчас сбрасывает (решение
 	# владельца, 2026-09-27; чья карта заставила — видно в журнале слева).
-	_blink = in_hand and _prompt.text.begins_with("Discard")
+	# Так же — выбор стартовой локации: он был строкой под таблицей игроков и
+	# терялся (решение владельца, 2026-09-27).
+	var discard := in_hand and _prompt.text.begins_with("Discard")
+	var starting := tag == "starting_site"
+	_blink = discard or starting
 	if _blink:
-		_prompt.text = "%s: discard a card" % EventLogPanel.player_name(decider)
+		_prompt.text = "%s: %s" % [EventLogPanel.player_name(decider),
+			"discard a card" if discard else "choose your starting site"]
 		_prompt.add_theme_color_override("font_color", EventLogPanel.player_color(decider))
 	else:
 		_prompt.remove_theme_color_override("font_color")
@@ -179,7 +184,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_who.text += " — click a gold card in your %s, right of the hand" \
 				% ("Inner Circle" if tag == "inner_circle" else "discard pile")
 		else:
-			_who.text += " — click a gold target on the board"
+			_who.text += " — click a gold site on the board" if tag == "starting_site" \
+				else " — click a gold target on the board"
 		# Отказ: "" у целей и карт руки, -1 у номера карты рынка. Перебором, а
 		# не has(): список карт руки типизирован строками, has(-1) там — ошибка.
 		for o in options:

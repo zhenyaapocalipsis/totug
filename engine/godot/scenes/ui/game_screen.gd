@@ -136,8 +136,6 @@ var _res_influence: CounterLabel
 var _res_player := ""
 var _res_power_shown := 0
 var _res_influence_shown := 0
-## Надпись под таблицей игроков, пока идёт стартовая расстановка.
-var _setup_label: Label
 var _piles_column: VBoxContainer
 var _pile_inner: PileZone
 var _pile_discard: PileZone
@@ -248,7 +246,6 @@ func _build_layout() -> void:
 	_players_panel.player_chosen.connect(_on_decision_answer)
 	_players_panel.trophy_chosen.connect(_on_decision_answer)
 	add_child(_players_panel)
-	_setup_label = _players_panel.setup_label
 
 	# 4. Доска лежит в простом Control, чтобы поверх неё (а не поверх маркета)
 	# можно было повесить диалог решения и подсказку.
@@ -680,9 +677,7 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 ## покажет сигнал CardShowcase.finished.
 func _show_decision(view: Dictionary) -> void:
 	_decision_dialog.update_from_view(view, viewer_id)
-	# Вопрос стартовой расстановки показывает не плашка над доской, а сама
-	# зона сыгранных карт — плашке тут делать нечего.
-	if _is_starting_pick(view) or _showcase.is_busy():
+	if _showcase.is_busy():
 		_decision_dialog.visible = false
 
 
@@ -1176,19 +1171,14 @@ func _request_attention() -> void:
 		get_window().request_attention()
 
 
-## Таблица игроков: вопрос стартовой расстановки — под ней. Power/Influence
-## ходящего — на прозрачной плашке над рукой: тратит их тот, чей ход.
+## Таблица игроков. Power/Influence ходящего — на прозрачной плашке над рукой:
+## тратит их тот, чей ход. Во время стартовой расстановки плашки нет, а вопрос
+## «выбери стартовую локацию» — строкой над доской, мерцая (DecisionDialog).
 func _refresh_played(view: Dictionary) -> void:
 	_players_panel.update_from_view(view)
 	var setup_pick := _is_starting_pick(view)
-	_setup_label.visible = setup_pick
 	_res_frame.visible = not setup_pick
 	if setup_pick:
-		var pd: Dictionary = view["pending_decision"]
-		var who := String(pd.get("player_id", ""))
-		_setup_label.text = "%s: %s — click a gold site on the board" % [
-			EventLogPanel.player_name(who).to_upper(), String(pd.get("prompt", ""))]
-		_setup_label.add_theme_color_override("font_color", EventLogPanel.player_color(who))
 		return
 
 	var current := String(view["current_player"])
