@@ -125,9 +125,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# как у цели на доске.
 	var tag := String(pd.get("tag", ""))
 	var in_hand := tag == "hand"
-	# Inner Circle на время выбора встаёт на место руки (hand_panel.gd).
+	# Inner Circle и сброс на время выбора встают в ряд руки справа (hand_panel.gd).
 	var on_board: bool = BOARD_CHOICES.has(choice_type) or in_hand \
-		or tag in ["market", "inner_circle"]
+		or tag == "market" or HandPanel.ZONE_LABELS.has(tag)
 	var options: Array = pd.get("legal_options", [])
 	visible = true
 	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
@@ -170,8 +170,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_who.text += " — click a gold card in your hand"
 		elif tag == "market":
 			_who.text += " — click a gold card in the market"
-		elif tag == "inner_circle":
-			_who.text += " — click a gold card in your Inner Circle, right of the hand"
+		elif HandPanel.ZONE_LABELS.has(tag):
+			_who.text += " — click a gold card in your %s, right of the hand" \
+				% ("Inner Circle" if tag == "inner_circle" else "discard pile")
 		else:
 			_who.text += " — click a gold target on the board"
 		# Отказ: "" у целей и карт руки, -1 у номера карты рынка. Перебором, а

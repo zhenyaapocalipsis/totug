@@ -37,6 +37,8 @@ const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края
 const GAP := 2.0
 ## Промежуток между рукой и картами Inner Circle в одном ряду (с чертой).
 const ZONE_GAP := 9.0
+## Вопросы, чьи карты встают в ряд руки справа от неё: метка вопроса -> подпись.
+const ZONE_LABELS := {"inner_circle": "INNER CIRCLE", "discard": "DISCARD"}
 
 ## Жёсткость и затухание пружины. Затухание примерно вдвое меньше критического
 ## (2*sqrt(жёсткость) ≈ 41) — карта заметно проскакивает место и качнётся
@@ -118,14 +120,17 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var pd: Dictionary = view.get("pending_decision", {})
 	var mine := String(pd.get("player_id", "")) == viewer_id
 	var tag := String(pd.get("tag", ""))
-	_choosing = mine and tag in ["hand", "inner_circle"]
+	_choosing = mine and (tag == "hand" or ZONE_LABELS.has(tag))
 	var options: Array = pd.get("legal_options", []) if _choosing else []
 	if _choosing:
 		playable = options if tag == "hand" else []
-	# Выбор из Inner Circle: его карты встают в тот же ряд справа от руки, за
-	# промежутком с подписью. Рука видна, но тусклая и не кликается — без окна и
-	# затемнения видны и она, и доска с рынком (решение владельца, 2026-09-27).
-	var zone_ids: Array = options if tag == "inner_circle" else []
+	# Выбор из Inner Circle или сброса: их карты встают в тот же ряд справа от
+	# руки, за промежутком с подписью. Рука видна, но тусклая и не кликается —
+	# без окна и затемнения видны и она, и доска с рынком (решение владельца,
+	# 2026-09-27). "" в вариантах — отказ, это Skip в строке вопроса.
+	var zone_ids: Array = options.filter(func(o): return String(o) != "") \
+		if ZONE_LABELS.has(tag) else []
+	_label.text = ZONE_LABELS.get(tag, "")
 	var entries: Array = []   # [card_id, карта из Inner Circle]
 	for cid in hand:
 		entries.append([String(cid), false])

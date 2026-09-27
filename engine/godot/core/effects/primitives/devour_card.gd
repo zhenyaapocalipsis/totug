@@ -128,8 +128,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	pd2.player_id = player_id
 	pd2.prompt = "Devour a card (or skip)" if _is_optional() else "Devour a card"
 	pd2.choice_type = "target_card"
-	if source == "hand":
-		pd2.tag = "hand"
+	# Рука, Inner Circle — выбор в ряду руки внизу экрана (hand_panel.gd).
+	if source == "hand" or source == "inner_circle":
+		pd2.tag = source
 	pd2.legal_options = pool
 	pd2.target_effect = self
 	resolver.request_decision(pd2)

@@ -44,6 +44,7 @@ var _feed_cells_before := 0
 var _foe_tags: Array[String] = []
 var _foe_discard := ""
 var _market_before: Array = []
+var _ic_before := 0
 
 
 func _initialize() -> void:
@@ -113,6 +114,8 @@ func _process(_delta: float) -> bool:
 		38: _step_check_market_devour()
 		39: _step_inner_circle()
 		40: _step_check_inner_circle()
+		41: _step_promote_discard()
+		42: _step_check_promote_discard()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -708,6 +711,31 @@ func _step_check_inner_circle() -> void:
 	check(pending == null or pending.tag != "inner_circle", "щелчок по карте ответил на вопрос")
 	var zone_left := _row_cards().filter(func(c): return HandPanel._is_zone(c)).size()
 	check(zone_left == 0 and not _hand_panel()._label.visible, "карты Inner Circle из ряда убраны")
+
+
+## Matron Mother: колода уходит в сброс, promote из сброса — карты сброса в
+## ряду руки справа, с подписью DISCARD.
+func _step_promote_discard() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	var deck = state.players[me].deck
+	deck.hand.append("48329")
+	_screen.send(Intent.play_card(me, "48329"))
+	var pending: PendingDecision = _screen.server.resolver.pending
+	check(pending != null and pending.tag == "discard", "Matron Mother спрашивает карту сброса")
+	var zone := _row_cards().filter(func(c): return HandPanel._is_zone(c))
+	check(pending != null and zone.size() == pending.legal_options.filter(func(o): return o != "").size(),
+		"карты сброса в ряду руки (%d)" % zone.size())
+	check(_hand_panel()._label.visible and _hand_panel()._label.text == "DISCARD", "над ними подпись DISCARD")
+	_ic_before = deck.inner_circle.size()
+	if not zone.is_empty():
+		_click(zone[0])
+
+
+func _step_check_promote_discard() -> void:
+	var deck = _current_player().deck
+	check(deck.inner_circle.size() == _ic_before + 1, "щелчок повысил карту из сброса")
+	check(_row_cards().filter(func(c): return HandPanel._is_zone(c)).is_empty(), "карты сброса из ряда убраны")
 
 
 ## Карты ряда руки без улетающих.
