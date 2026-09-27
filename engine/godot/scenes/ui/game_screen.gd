@@ -789,6 +789,9 @@ func _note_recap(events: Array) -> void:
 			# сколько выдано, в блок ходящего; подпись цвета получившего.
 			for i in range(int(evt.get("count", 1))):
 				_feed.add_to_turn(String(evt.get("player_id", "")), Supplies.INSANE_OUTCAST, "OUTCAST")
+		elif type == "removed_to_supply":
+			# Изгой вместо devour/promote вернулся в запас — своя группа.
+			_feed.add_to_turn(String(evt.get("player_id", "")), String(evt.get("card_id", "")), "TO SUPPLY")
 		elif type == "turn_ended":
 			_feed.end_turn()
 		elif RECAP_STATS.has(type):

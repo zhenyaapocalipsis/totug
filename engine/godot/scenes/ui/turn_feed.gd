@@ -8,7 +8,8 @@ extends PanelContainer
 ##
 ## Каждый ход — отдельный блок в почти прозрачной рамке цвета игрока, сверху
 ## имя («RED'S TURN»). Внутри блока карты разложены по группам всегда в одном
-## порядке — PLAYED, PROMOTED, BOUGHT, OUTCAST, DEVOURED, DISCARDED (решение владельца:
+## порядке — PLAYED, PROMOTED, BOUGHT, OUTCAST, DEVOURED, TO SUPPLY (изгой
+## вернулся в запас вместо devour/promote), DISCARDED (решение владельца:
 ## группы не перемешивать), — и каждая группа лежит лесенкой (Ladder) с
 ## подписью. Под картами — строки действий хода из бывшего журнала (решение
 ## владельца, 2026-09-27: чат и журнал убраны): DEPLOY 3, KILL 2 с квадратиками
@@ -33,7 +34,7 @@ const BLOCK_PAD := 2
 const WIDTH := CARD.x + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
 const ORDER: Array[String] = [
-	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "DISCARDED"]
+	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED"]
 ## Строки действий хода: ключ -> подпись; порядок строк — порядок ключей.
 const STATS := {
 	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",

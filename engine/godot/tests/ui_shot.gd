@@ -256,6 +256,7 @@ func _run_scenario() -> void:
 				{"type": "play_card", "player_id": mover, "card_id": String(hand9[1])},
 				{"type": "recruit", "player_id": mover, "card_id": _screen._market_panel.card_id_at(0)},
 				{"type": "give_insane_outcast", "player_id": other, "count": 2},
+				{"type": "removed_to_supply", "player_id": mover, "card_id": Supplies.INSANE_OUTCAST},
 				{"type": "force_discard", "player_id": other, "card_id": String(other_hand[0])},
 				{"type": "deploy", "player_id": mover, "slot_id": "x"},
 				{"type": "deploy", "player_id": mover, "slot_id": "y"},
