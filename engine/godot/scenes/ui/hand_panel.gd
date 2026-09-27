@@ -74,6 +74,9 @@ var _hovered_card: CardView = null
 var _played_card: CardView = null
 ## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
 var _choosing := false
+## В ряду сейчас не рука, а карты Inner Circle (выбор "play a card from your
+## inner circle").
+var _zone_shown := false
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
 ## посчитанным по нулевой ширине и уезжает за нижний край.
@@ -98,9 +101,18 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Вопрос "выбери карту в руке": кликаются и подсвечены золотом только
 	# карты-варианты (решение владельца, 2026-09-27).
 	var pd: Dictionary = view.get("pending_decision", {})
-	_choosing = String(pd.get("tag", "")) == "hand" and String(pd.get("player_id", "")) == viewer_id
+	var mine := String(pd.get("player_id", "")) == viewer_id
+	_choosing = mine and String(pd.get("tag", "")) in ["hand", "inner_circle"]
 	if _choosing:
 		playable = pd.get("legal_options", [])
+	# Выбор из Inner Circle: его карты на время выбора встают на место руки —
+	# без окна и затемнения доска и рынок видны (решение владельца, 2026-09-27).
+	var zone := mine and String(pd.get("tag", "")) == "inner_circle"
+	if zone:
+		hand = playable
+	if zone != _zone_shown:
+		_zone_shown = zone
+		_drop_row()
 
 	var old_cards := _cards
 	var old_pos := _pos
@@ -147,6 +159,22 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_start_leaving(old_cards[j])
 
 	_layout()
+
+
+## Ряд сменился целиком (рука <-> Inner Circle): прежние карты убираем сразу,
+## без анимации ухода — улетающая вверх карта выглядела бы сыгранной. Новый ряд
+## выедет снизу, как при раздаче.
+func _drop_row() -> void:
+	for card in _cards:
+		CardPreview.clear_hovered(card)
+		remove_child(card)
+		card.queue_free()
+	_cards = []
+	_pos = []
+	_vel = []
+	_delay = []
+	_hovered_card = null
+	_played_card = null
 
 
 ## Сколько карт с таким card_id лежит в ряду.

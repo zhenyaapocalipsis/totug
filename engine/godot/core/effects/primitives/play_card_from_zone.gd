@@ -54,6 +54,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
 		pd.prompt = "Play a card from the market"
+		pd.tag = "market"  # выбор прямо на рынке справа
 		pd.choice_type = "target_market_index"
 		pd.legal_options = options
 		pd.target_effect = self
@@ -65,6 +66,8 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		var pd2 := PendingDecision.new()
 		pd2.player_id = player_id
 		pd2.prompt = "Play a card from your inner circle"
+		# карты Inner Circle встают на время выбора на место руки внизу
+		pd2.tag = "inner_circle"
 		pd2.choice_type = "target_card"
 		pd2.legal_options = ic.duplicate()
 		pd2.target_effect = self

@@ -111,6 +111,8 @@ func _process(_delta: float) -> bool:
 		36: _step_check_forced_discard()
 		37: _step_market_devour()
 		38: _step_check_market_devour()
+		39: _step_inner_circle()
+		40: _step_check_inner_circle()
 		_:
 			print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 			quit(1 if _failed > 0 else 0)
@@ -662,6 +664,40 @@ func _step_market_devour() -> void:
 func _step_check_market_devour() -> void:
 	check(_screen.server.state.market.display != _market_before, "щелчок по карте рынка её сожрал")
 	check(not _screen.server.resolver.is_waiting(), "вопрос закрыт")
+
+
+## Elder Brain: карты Inner Circle на время выбора встают на место руки.
+func _step_inner_circle() -> void:
+	var state := _screen.server.state
+	var me: String = state.current_player()
+	var deck = state.players[me].deck
+	deck.inner_circle.append_array(["48312", "48340"])  # Bounty Hunter, House Guard — без вопросов
+	deck.hand.append("48700")
+	_screen.send(Intent.play_card(me, "48700"))
+	var pending: PendingDecision = _screen.server.resolver.pending
+	check(pending != null and pending.tag == "inner_circle", "Elder Brain спрашивает карту Inner Circle")
+	var ids: Array = []
+	var card: CardView = null
+	for c: CardView in _hand_panel().get_children().filter(func(n): return n is CardView and not _hand_panel().leaving_cards().has(n)):
+		ids.append(c.card_id)
+		if c.clickable and card == null:
+			card = c
+	check(pending != null and ids.size() == pending.legal_options.size(),
+		"в ряду руки — карты Inner Circle (%s)" % str(ids))
+	check(not _screen._decision_dialog._dim.visible, "экран не затемнён")
+	if card != null:
+		_click(card)
+
+
+func _step_check_inner_circle() -> void:
+	var pending: PendingDecision = _screen.server.resolver.pending
+	check(pending == null or pending.tag != "inner_circle", "щелчок по карте ответил на вопрос")
+	var ids: Array = []
+	for c in _hand_panel().get_children():
+		if c is CardView and not _hand_panel().leaving_cards().has(c):
+			ids.append(c.card_id)
+	var hand: Array = _current_player().deck.hand
+	check(ids.size() == hand.size(), "после выбора в ряду снова рука (%d из %d)" % [ids.size(), hand.size()])
 
 
 # --- вспомогательное ---------------------------------------------------------

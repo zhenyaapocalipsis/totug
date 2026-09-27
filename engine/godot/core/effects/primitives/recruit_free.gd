@@ -63,6 +63,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
 	pd.prompt = "Recruit a card without paying its cost"
+	pd.tag = "market"  # выбор прямо на рынке справа
 	pd.choice_type = "target_market_index"
 	pd.legal_options = options
 	if up_to:
