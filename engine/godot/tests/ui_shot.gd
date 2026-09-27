@@ -252,11 +252,6 @@ func _run_scenario() -> void:
 					if _screen.server.state.troops[slot_id7] == pid6:
 						_screen._on_slot_clicked(slot_id7)
 						break
-		"tab":
-			# Полный расклад по игрокам: в игре он виден, пока зажат Tab.
-			var overlay := _find_overlay(_screen)
-			if overlay != null:
-				overlay.visible = true
 		"deploy":
 			# Подсветка мест для Deploy в САМОЙ БОЛЬШОЙ локации (Wells of
 			# Darkness, восемь мест): именно там кольца подсветки раньше
@@ -322,16 +317,6 @@ func _run_scenario() -> void:
 				_screen.send(Intent.make_decision(pd9.player_id, pd9.legal_options[0]))
 		_:
 			push_error("неизвестный сценарий: " + _scenario)
-
-
-func _find_overlay(node: Node) -> PlayersOverlay:
-	if node is PlayersOverlay:
-		return node
-	for child in node.get_children():
-		var found := _find_overlay(child)
-		if found != null:
-			return found
-	return null
 
 
 func _find_board(node: Node) -> BoardPanel:
