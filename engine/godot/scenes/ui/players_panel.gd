@@ -26,6 +26,9 @@ const NAME_W := 36.0
 const NUM_W := 12.0
 const COL_GAP := 3
 const TROPHY_INDENT := 4
+## Сколько пикселей от правого края панели до конца видимой части таблицы
+## (рамка и отступ зоны).
+const TROPHY_RIGHT_PAD := 2.0
 ## Нейтральные (белые) убитые войска — серой цифрой.
 const NEUTRAL_COLOR := Color(0.6, 0.6, 0.6)
 
@@ -43,7 +46,7 @@ var _overlay: Control
 var _choice_buttons: Dictionary = {}   # player_id -> Button
 var _choice: Array = []
 var _blink_time := 0.0
-## Рамки на цифрах трофеев: [Button, Label цифры].
+## Рамки на цифрах трофеев: [Button, цифра (Label или SmallNumber)].
 var _trophy_buttons: Array = []
 ## Вопрос стартовой расстановки — показывает game_screen.
 var setup_label: Label
@@ -121,20 +124,49 @@ func _add_row(pid: String) -> void:
 
 
 ## Цифра трофея: без обрезки — с clip_text ширина Label схлопывается в ноль.
-static func _digit(text: String, colour: Color) -> Label:
+## small — мелкий шрифт 3x5 (как VP на доске): на четверых в зале до четырёх
+## двузначных чисел, обычным шрифтом они в столбец не влезают.
+static func _digit(text: String, colour: Color, small: bool = false) -> Control:
+	if small:
+		return SmallNumber.new(text, colour)
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", colour)
 	return label
 
 
+## Число мелким пиксельным шрифтом 3x5, по высоте строки таблицы.
+class SmallNumber extends Control:
+	var text: String
+	var colour: Color
+
+	func _init(t: String, c: Color) -> void:
+		text = t
+		colour = c
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		custom_minimum_size = Vector2(PixelFontSmall.text_width(t), PixelTheme.LINE_H)
+
+	func _draw() -> void:
+		# Низ цифр — на уровне низа обычных цифр строки.
+		var y0 := int(size.y) - PixelFontSmall.HEIGHT - 4
+		for i in text.length():
+			var rows: Array = PixelFontSmall.glyph(text[i])
+			for ry in rows.size():
+				var row: String = rows[ry]
+				for rx in row.length():
+					if row[rx] == "1":
+						draw_rect(Rect2(i * PixelFontSmall.ADVANCE + rx, y0 + ry, 1, 1), colour)
+
+
 ## Цифры трофеев: сначала нейтральные, потом игроки в порядке хода.
 ## Пустой зал — серый 0. В подсказке — то же словами. Возвращает цифры по
 ## цвету — по ним ставятся рамки выбора трофея (Orcus, Lich).
-static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Array) -> Dictionary:
+static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Array,
+		small: bool = false) -> Dictionary:
 	for child in box.get_children():
 		box.remove_child(child)
 		child.queue_free()
+	box.add_theme_constant_override("separation", 3 if small else 4)
 	var digits: Dictionary = {}
 	var parts: Array[String] = []
 	var colours: Array = ["white"]
@@ -145,12 +177,12 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 			continue
 		var white := String(colour_id) == "white"
 		var digit := _digit(str(count), NEUTRAL_COLOR if white \
-			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR))
+			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR), small)
 		box.add_child(digit)
 		digits[String(colour_id)] = digit
 		parts.append("%s %d" % ["neutral" if white else EventLogPanel.player_name(String(colour_id)), count])
 	if parts.is_empty():
-		box.add_child(_digit("0", PixelTheme.TEXT_OFF))
+		box.add_child(_digit("0", PixelTheme.TEXT_OFF, small))
 	box.tooltip_text = "Trophies: " + (", ".join(parts) if not parts.is_empty() else "none")
 	return digits
 
@@ -176,6 +208,22 @@ func update_from_view(view: Dictionary) -> void:
 			var shown: int = (raw as Array).size() if raw is Array else int(raw)
 			(values[key] as Label).text = str(shown)
 		row["digits"] = _fill_trophies(row["trophies"], p.get("trophies", {}), order)
+	# Не влезают числа хотя бы одного зала — все залы мелким шрифтом, чтобы
+	# столбец был одинаковым. Место под столбец считаем по постоянным ширинам
+	# колонок: сетка сама раздвигается под числа и уходит за край панели (там
+	# её обрезает), а раскладки на момент обновления ещё может не быть.
+	var small := false
+	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - (NAME_W + NUM_W * COLUMNS.size() \
+		+ COL_GAP * (COLUMNS.size() + 1) + TROPHY_INDENT)
+	for pid: String in _rows:
+		var box: HBoxContainer = _rows[pid]["trophies"]
+		if size.x > 0.0 and box.get_combined_minimum_size().x > room:
+			small = true
+	if small:
+		for pid: String in _rows:
+			var p2: Dictionary = (view["players"] as Dictionary).get(pid, {})
+			if not p2.is_empty():
+				_rows[pid]["digits"] = _fill_trophies(_rows[pid]["trophies"], p2.get("trophies", {}), order, true)
 
 	# Вопрос "выбери игрока": варианты сервер присылает только решающему, так
 	# что у остальных кнопок нет. "" (отказ) — это Skip в строке вопроса.
@@ -233,7 +281,7 @@ func _update_trophy_choice(pd: Dictionary) -> void:
 		var parts := String(options[i]).split("|")
 		if parts.size() != 2 or not _rows.has(parts[0]):
 			continue
-		var digit: Label = (_rows[parts[0]].get("digits", {}) as Dictionary).get(parts[1])
+		var digit: Control = (_rows[parts[0]].get("digits", {}) as Dictionary).get(parts[1])
 		if digit == null:
 			continue
 		var colour_name := "neutral" if parts[1] == "white" else EventLogPanel.player_name(parts[1])
@@ -268,10 +316,10 @@ func _place_choice() -> void:
 		var name_rect := (_rows[pid]["name"] as Label).get_global_rect()
 		b.position = Vector2(grid_rect.position.x - 1, name_rect.position.y - 1) - origin
 		b.size = Vector2(grid_rect.size.x + 2, name_rect.size.y + 1)
-	# Рамка трофея — вокруг цифры, с запасом: цифра шириной в 5 пикселей, в
-	# такую трудно попасть.
+	# Рамка трофея — вокруг числа с пикселем запаса: соседние числа стоят через
+	# 3-4 пикселя, и рамки с большим запасом наезжали друг на друга.
 	for pair: Array in _trophy_buttons:
-		var r := (pair[1] as Label).get_global_rect().grow_individual(2, 0, 2, 0)
+		var r := (pair[1] as Control).get_global_rect().grow_individual(1, 0, 1, 0)
 		(pair[0] as Button).position = r.position - origin
 		(pair[0] as Button).size = r.size
 
