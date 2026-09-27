@@ -106,7 +106,6 @@ var _barracks: BarracksBar
 var _players_panel: PlayersPanel
 var _chat_frame: Control
 var _hand_panel: HandPanel
-var _zone_panel: HandPanel
 var _showcase: CardShowcase
 var _turn_banner: TurnBanner
 ## Для кого баннер хода уже показан и на какой вопрос уже мигали в панели
@@ -332,12 +331,6 @@ func _build_layout() -> void:
 	_hand_panel.card_clicked.connect(_on_hand_card_clicked)
 	_hand_panel.choice_clicked.connect(_on_decision_answer)
 	add_child(_hand_panel)
-	# Второй ряд над рукой — карты Inner Circle на время вопроса про них
-	# (Elder Brain): видны и они, и рука (решение владельца, 2026-09-27).
-	_zone_panel = HandPanel.new()
-	_zone_panel.zone = "inner_circle"
-	_zone_panel.choice_clicked.connect(_on_decision_answer)
-	add_child(_zone_panel)
 
 	# 1b. Над рукой — чей ход и его Power/Influence (решение владельца,
 	# 2026-09-27). Рамка прозрачная и лежит поверх низа доски, чтобы доску не
@@ -598,12 +591,6 @@ func _layout() -> void:
 	var hand_top := bottom_y - HandPanel.HOVER_LIFT - 2.0
 	_place(_hand_panel, hand_x, hand_top, d_x - GAP - hand_x, h - MARGIN - hand_top)
 	_place_res_frame()
-	# Ряд Inner Circle — над рукой, выше её поднятой карты, чтобы они не
-	# накладывались; сверху место под подпись и под свою поднятую карту.
-	var hand_row_top := hand_top + _hand_panel.size.y - HandPanel.BOTTOM_MARGIN - HandPanel.CARD_SIZE.y
-	var zone_bottom := hand_row_top - HandPanel.HOVER_LIFT - GAP
-	var zone_h := HandPanel.CARD_SIZE.y + HandPanel.BOTTOM_MARGIN + HandPanel.HOVER_LIFT + PixelTheme.LINE_H + 2.0
-	_place(_zone_panel, hand_x, zone_bottom - zone_h, d_x - GAP - hand_x, zone_h)
 
 	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
 	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
@@ -1105,7 +1092,6 @@ func refresh(view: Dictionary) -> void:
 	_barracks.update_from_view(view)
 	_game_over_panel.update_from_view(view)
 	_hand_panel.update_from_view(view, viewer_id)
-	_zone_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
 	_show_decision(view)

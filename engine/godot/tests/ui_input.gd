@@ -672,7 +672,8 @@ func _step_check_market_devour() -> void:
 	check(not _screen.server.resolver.is_waiting(), "вопрос закрыт")
 
 
-## Elder Brain: карты Inner Circle на время выбора встают на место руки.
+## Elder Brain: карты Inner Circle встают в ряд руки справа, за чертой; рука
+## остаётся видна, но не кликается.
 func _step_inner_circle() -> void:
 	var state := _screen.server.state
 	var me: String = state.current_player()
@@ -682,17 +683,21 @@ func _step_inner_circle() -> void:
 	_screen.send(Intent.play_card(me, "48700"))
 	var pending: PendingDecision = _screen.server.resolver.pending
 	check(pending != null and pending.tag == "inner_circle", "Elder Brain спрашивает карту Inner Circle")
-	var zone: HandPanel = _screen._zone_panel
+	var hand_cards := 0
+	var zone_cards := 0
 	var card: CardView = null
-	var ids := _row_ids(zone)
-	for c in zone.get_children():
-		if c is CardView and (c as CardView).clickable and card == null:
-			card = c
-	check(pending != null and ids.size() == pending.legal_options.size(),
-		"над рукой — ряд Inner Circle (%s)" % str(ids))
-	check(_row_ids(_hand_panel()).size() == deck.hand.size(), "рука при этом на месте")
-	check(zone.position.y + zone.size.y <= _hand_panel().position.y + _hand_panel().size.y - HandPanel.CARD_SIZE.y,
-		"ряд Inner Circle выше руки и её не закрывает")
+	for c in _row_cards():
+		if HandPanel._is_zone(c):
+			zone_cards += 1
+			if c.clickable and card == null:
+				card = c
+		else:
+			hand_cards += 1
+			if c.clickable:
+				check(false, "карта руки %s не должна кликаться" % c.card_id)
+	check(pending != null and zone_cards == pending.legal_options.size() and hand_cards == deck.hand.size(),
+		"в ряду рука (%d) и справа Inner Circle (%d)" % [hand_cards, zone_cards])
+	check(_hand_panel()._label.visible, "над Inner Circle подпись")
 	check(not _screen._decision_dialog._dim.visible, "экран не затемнён")
 	if card != null:
 		_click(card)
@@ -701,16 +706,14 @@ func _step_inner_circle() -> void:
 func _step_check_inner_circle() -> void:
 	var pending: PendingDecision = _screen.server.resolver.pending
 	check(pending == null or pending.tag != "inner_circle", "щелчок по карте ответил на вопрос")
-	check(_row_ids(_screen._zone_panel).is_empty(), "ряд Inner Circle убран")
+	var zone_left := _row_cards().filter(func(c): return HandPanel._is_zone(c)).size()
+	check(zone_left == 0 and not _hand_panel()._label.visible, "карты Inner Circle из ряда убраны")
 
 
-## id карт ряда без улетающих.
-func _row_ids(row: HandPanel) -> Array:
-	var ids: Array = []
-	for c in row.get_children():
-		if c is CardView and not row.leaving_cards().has(c):
-			ids.append((c as CardView).card_id)
-	return ids
+## Карты ряда руки без улетающих.
+func _row_cards() -> Array:
+	var row := _hand_panel()
+	return row.get_children().filter(func(n): return n is CardView and not row.leaving_cards().has(n))
 
 
 # --- вспомогательное ---------------------------------------------------------

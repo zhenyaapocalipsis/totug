@@ -35,6 +35,8 @@ const CARD_SIZE := Vector2(80, 76)   # = CardView.MINI_SIZE, пиксель в �
 const HOVER_LIFT := 12.0
 const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края зоны
 const GAP := 2.0
+## Промежуток между рукой и картами Inner Circle в одном ряду (с чертой).
+const ZONE_GAP := 9.0
 
 ## Жёсткость и затухание пружины. Затухание примерно вдвое меньше критического
 ## (2*sqrt(жёсткость) ≈ 41) — карта заметно проскакивает место и качнётся
@@ -74,10 +76,10 @@ var _hovered_card: CardView = null
 var _played_card: CardView = null
 ## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
 var _choosing := false
-## Пусто — это рука игрока. "inner_circle" — второй ряд над рукой: карты
-## Inner Circle на время вопроса про них (Elder Brain), чтобы видеть их и руку
-## сразу, без окна и затемнения (решение владельца, 2026-09-27).
-var zone := ""
+## С какого места ряда идут карты Inner Circle (выбор "play a card from your
+## inner circle"); -1 — их в ряду нет. Перед ними промежуток с чертой и
+## подпись INNER CIRCLE.
+var _split := -1
 var _label: Label
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
@@ -95,8 +97,9 @@ func _init() -> void:
 	# Подложки под картами нет (макет владельца, 2026-09-24): зона руки
 	# прозрачная, видны только сами карты.
 
-	# Подпись ряда зоны ("INNER CIRCLE") над картами; у руки её нет.
+	# Подпись над картами Inner Circle, когда они стоят в ряду справа от руки.
 	_label = Label.new()
+	_label.text = "INNER CIRCLE"
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
@@ -114,16 +117,22 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# карты-варианты (решение владельца, 2026-09-27).
 	var pd: Dictionary = view.get("pending_decision", {})
 	var mine := String(pd.get("player_id", "")) == viewer_id
-	_choosing = mine and String(pd.get("tag", "")) == ("hand" if zone == "" else zone)
+	var tag := String(pd.get("tag", ""))
+	_choosing = mine and tag in ["hand", "inner_circle"]
+	var options: Array = pd.get("legal_options", []) if _choosing else []
 	if _choosing:
-		playable = pd.get("legal_options", [])
-	if zone != "":
-		# Ряд зоны (Inner Circle) над рукой: только на время вопроса про неё.
-		hand = playable if _choosing else []
-		_label.text = zone.replace("_", " ").to_upper()
-		_label.visible = _choosing
-		if not _choosing:
-			_drop_row()
+		playable = options if tag == "hand" else []
+	# Выбор из Inner Circle: его карты встают в тот же ряд справа от руки, за
+	# промежутком с подписью. Рука видна, но тусклая и не кликается — без окна и
+	# затемнения видны и она, и доска с рынком (решение владельца, 2026-09-27).
+	var zone_ids: Array = options if tag == "inner_circle" else []
+	var entries: Array = []   # [card_id, карта из Inner Circle]
+	for cid in hand:
+		entries.append([String(cid), false])
+	for cid in zone_ids:
+		entries.append([String(cid), true])
+	_split = hand.size() if not zone_ids.is_empty() and not hand.is_empty() else -1
+	_label.visible = not zone_ids.is_empty()
 
 	var old_cards := _cards
 	var old_pos := _pos
@@ -140,15 +149,21 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var played := -1
 	if _played_card != null and is_instance_valid(_played_card):
 		var played_id := _played_card.card_id
-		if hand.count(played_id) < _count_of(old_cards, played_id):
+		var played_zone := _is_zone(_played_card)
+		var now := entries.filter(func(e): return e[0] == played_id and e[1] == played_zone).size()
+		var before := old_cards.filter(func(c): return c.card_id == played_id and _is_zone(c) == played_zone).size()
+		if now < before:
 			played = old_cards.find(_played_card)
 	_played_card = null
 
 	var fresh := 0
-	for cid: String in hand:
+	for entry: Array in entries:
+		var cid: String = entry[0]
+		var from_zone: bool = entry[1]
 		var found := -1
 		for j in range(old_cards.size()):
-			if j != played and not reused.has(j) and old_cards[j].card_id == cid:
+			if j != played and not reused.has(j) and old_cards[j].card_id == cid \
+					and _is_zone(old_cards[j]) == from_zone:
 				found = j
 				break
 		if found >= 0:
@@ -158,37 +173,35 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_vel.append(old_vel[found])
 			_delay.append(old_delay[found])
 		else:
-			_cards.append(_make_card(cid))
+			var made := _make_card(cid)
+			made.set_meta("zone", from_zone)
+			_cards.append(made)
 			_pos.append(Vector2.ZERO)
 			_vel.append(Vector2.ZERO)
 			_delay.append(ENTER_STAGGER * fresh)
 			fresh += 1
-		_cards[_cards.size() - 1].set_clickable(playable.has(cid))
+		_cards[_cards.size() - 1].set_clickable(
+			zone_ids.has(cid) if from_zone else playable.has(cid))
 
 	for j in range(old_cards.size()):
-		if not reused.has(j):
+		if reused.has(j):
+			continue
+		# Карты Inner Circle, которые не выбрали, в Inner Circle и остаются:
+		# улетающая вверх выглядела бы сыгранной, поэтому убираем сразу.
+		if _is_zone(old_cards[j]) and j != played:
+			CardPreview.clear_hovered(old_cards[j])
+			_clear_hovered(old_cards[j])
+			remove_child(old_cards[j])
+			old_cards[j].queue_free()
+		else:
 			_start_leaving(old_cards[j])
 
 	_layout()
+	queue_redraw()
 
 
-## Вопрос про зону закрыт: ряд зоны пустеет. Выбранная карта улетает вверх,
-## как сыгранная, остальные исчезают сразу — улетающие вверх выглядели бы
-## тоже сыгранными.
-func _drop_row() -> void:
-	for card in _cards:
-		if card == _played_card:
-			_start_leaving(card)
-			continue
-		CardPreview.clear_hovered(card)
-		remove_child(card)
-		card.queue_free()
-	_cards = []
-	_pos = []
-	_vel = []
-	_delay = []
-	_hovered_card = null
-	_played_card = null
+static func _is_zone(card: CardView) -> bool:
+	return bool(card.get_meta("zone", false))
 
 
 ## Сколько карт с таким card_id лежит в ряду.
@@ -255,13 +268,23 @@ func _layout() -> void:
 	_row_y = size.y - BOTTOM_MARGIN - CARD_SIZE.y
 	var n := _cards.size()
 	# Шаг только целый: на дробном пиксели карты разъезжаются и лицо мылится.
+	# Промежуток перед Inner Circle не внахлёст: первая его карта стоит
+	# целиком правее последней карты руки (см. _split_extra).
+	var divider := CARD_SIZE.x + ZONE_GAP if _split > 0 else 0.0
+	var steps := n - 1 - (1 if _split > 0 else 0)
 	_row_step = CARD_SIZE.x + GAP
-	if n > 1 and CARD_SIZE.x + _row_step * (n - 1) > size.x:
-		_row_step = maxf(floorf((size.x - CARD_SIZE.x) / (n - 1)), 6.0)
-	var total := CARD_SIZE.x + _row_step * maxi(n - 1, 0)
+	if steps > 0 and CARD_SIZE.x + divider + _row_step * steps > size.x:
+		_row_step = maxf(floorf((size.x - CARD_SIZE.x - divider) / steps), 6.0)
+	var total := CARD_SIZE.x + divider + _row_step * maxi(steps, 0)
 	_row_x0 = floorf((size.x - total) * 0.5)
-	_label.position = Vector2(0, _row_y - PixelTheme.LINE_H - 1)
-	_label.size = Vector2(size.x, PixelTheme.LINE_H)
+	if _split >= 0 or _label.visible:
+		# Подпись по центру над картами Inner Circle, в полосе над рядом.
+		var first := maxi(_split, 0)
+		var x0 := _row_x0 + _row_step * first + _split_extra(first)
+		var x1 := _row_x0 + _row_step * (n - 1) + _split_extra(n - 1) + CARD_SIZE.x
+		_label.position = Vector2(x0, _row_y - PixelTheme.LINE_H - 1)
+		_label.size = Vector2(x1 - x0, PixelTheme.LINE_H)
+	queue_redraw()
 
 	# До первого настоящего размера ряд считался по нулевой ширине; ехать
 	# оттуда пружиной незачем — ставим карты сразу на места.
@@ -286,7 +309,23 @@ func _z_of(index: int, lifted: bool) -> int:
 ## друга: карта выползала вверх по пикселю за кадр, то есть ступеньками.
 func _target_of(i: int) -> Vector2:
 	var lifted := HOVER_LIFT if _cards[i] == _hovered_card else 0.0
-	return Vector2(_row_x0 + _row_step * i, _row_y - lifted)
+	return Vector2(_row_x0 + _row_step * i + _split_extra(i), _row_y - lifted)
+
+
+## Сдвиг карт Inner Circle вправо: первая встаёт на ZONE_GAP правее конца
+## последней карты руки, дальше — обычным шагом.
+func _split_extra(i: int) -> float:
+	if _split <= 0 or i < _split:
+		return 0.0
+	return CARD_SIZE.x + ZONE_GAP - _row_step
+
+
+## Черта посередине промежутка между рукой и Inner Circle.
+func _draw() -> void:
+	if _split <= 0 or _split >= _cards.size():
+		return
+	var x := floorf(_row_x0 + _row_step * (_split - 1) + CARD_SIZE.x + ZONE_GAP * 0.5)
+	draw_line(Vector2(x, _row_y), Vector2(x, _row_y + CARD_SIZE.y), PixelTheme.GOLD, 1.0)
 
 
 func _process(delta: float) -> void:
