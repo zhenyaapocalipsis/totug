@@ -873,23 +873,26 @@ func _step_kills() -> void:
 		{"type": "assassinate", "player_id": me, "slot_id": empty[1], "victim": foe}])
 	_kill_slot = empty[1]
 	var board: BoardPanel = _screen._board_panel
-	check(board.kill_count() == 2, "оба убийства ждут удара (%d)" % board.kill_count())
-	check(board._arriving.has("troop|" + _supplant_slot), "вытеснивший до удара спрятан")
-	board._process(BoardPanel.KILL_AIM + 0.01)
-	check(board.kill_count() == 1, "первый удар — второе убийство ещё ждёт своей очереди")
+	check(board.kill_count() == 2 and board.struck_count() == 0, "оба убийства анимируются, удара ещё не было")
+	check(not board._arriving.has("troop|" + _supplant_slot),
+		"вытеснивший не летит из барака — всплывёт из лужи на месте")
+	board._process(BoardPanel.SUPPLANT_STRIKE + 0.01)
+	check(board.struck_count() == 1, "первый удар — второе убийство ещё ждёт своей очереди")
 
 
 func _step_check_kills() -> void:
 	var board: BoardPanel = _screen._board_panel
 	board._process(BoardPanel.KILL_STEP)
-	check(board.kill_count() == 0, "второй удар прошёл")
+	check(board.kill_count() == 1 and board.struck_count() == 1,
+		"вытеснение доиграло, второй удар прошёл (%d, %d)" % [board.kill_count(), board.struck_count()])
 	check(board.spark_count() > 0 and board.is_shaking(), "на ударе осколки и тряска")
-	var trophies := 0
+	var flying := 0
 	for child in _screen.get_children():
 		if child is FlyingToken and not _flights_before.has(child):
-			trophies += 1
-	check(trophies == 2, "оба трофея летят в зал (%d)" % trophies)
-	check(board._arriving.has("troop|" + _supplant_slot), "вытеснивший ещё не сел — сядет после удара")
+			flying += 1
+	check(flying == 0, "трофеи ничем не летят — засчитываются в зал (%d)" % flying)
+	board._process(BoardPanel.KILL_END)
+	check(board.kill_count() == 0, "обе анимации закончились")
 
 
 ## Наведение на строку KILL в сводке зажигает на доске место убийства,
@@ -898,7 +901,7 @@ func _step_hover_kill_row() -> void:
 	var feed: TurnFeed = _screen._feed
 	check(feed.last_places("kill") == ["kill:" + _kill_slot],
 		"строка KILL помнит место убийства (%s)" % [feed.last_places("kill")])
-	check(feed.last_places("supplant") == ["kill:" + _supplant_slot],
+	check(feed.last_places("supplant") == ["supplant:" + _supplant_slot],
 		"строка SUPPLANT помнит место вытеснения")
 	var row := feed.last_row("kill")
 	check(row != null and row.is_visible_in_tree(), "строка KILL видна в сводке")

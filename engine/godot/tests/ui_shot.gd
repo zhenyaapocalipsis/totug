@@ -440,17 +440,18 @@ func _run_capture() -> void:
 
 
 ## Зритель вытесняет первое найденное войско на доске — так же, как это
-## приходит из сети: вид уже новый, событие следом.
+## приходит из сети: вид уже новый, событие следом. С --assassinate — убивает.
 func _run_kill() -> void:
 	var state := _screen.server.state
 	var me := _screen.viewer_id
+	var kill := OS.get_cmdline_user_args().has("--assassinate")
 	for slot_id: String in state.troops.keys():
 		var victim := String(state.troops[slot_id])
 		if victim != "" and victim != me:
-			state.troops[slot_id] = me
+			state.troops[slot_id] = "" if kill else me
 			_screen.refresh(StateView.for_player_with_pending(
 				state, me, _screen.server.resolver.pending))
-			_screen._react_to_events([{"type": "supplant", "player_id": me,
+			_screen._react_to_events([{"type": "assassinate" if kill else "supplant", "player_id": me,
 				"slot_id": slot_id, "victim": victim}])
 			return
 

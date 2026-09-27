@@ -73,41 +73,41 @@ const RING_GROW := 10.0
 const DUST_COUNT := 10
 const LAND_SHAKE := 2.0
 
-## Убийство и вытеснение (решение владельца, 2026-09-28: игроки не видели,
-## где это случилось). В виде убитой фишки уже нет, поэтому панель ещё
-## рисует её «призрак»: к нему с двух сторон по диагонали въезжают два меча
-## и скрещиваются над ним, локация мигает рамкой, затем удар — белая
-## вспышка, осколки цвета жертвы, доска дёргается (владелец, 2026-09-28:
-## мечи вместо прицела). Несколько убийств одного ответа сервера идут друг
-## за другом через KILL_STEP.
-const KILL_AIM := 0.45
+## Убийство и вытеснение (решения владельца, 2026-09-28: игроки не видели,
+## где это случилось; вид — по раскадровке B и C2). В виде убитой фишки уже
+## нет, поэтому до конца анимации место рисует панель сама.
+##
+## Assassinate (B): фишку метит красное кольцо, она краснеет, вспыхивает и
+## трескается, на KILL_STRIKE — удар: раскалывается пополам, половинки
+## разъезжаются и падают, летят осколки, над местом всплывает и тает череп.
+## Supplant (C2): под фишкой растекается лужа тени, фишка тонет, на
+## SUPPLANT_STRIKE — удар (утонула), из той же лужи всплывает войско
+## вытеснившего, лужа стягивается. Трофей ничем не летит — цифра зала
+## убийцы вспыхивает в момент удара (решение владельца).
+## Несколько убийств одного ответа сервера идут друг за другом через KILL_STEP.
+## Метка и покраснение до KILL_CRACK, дальше вспышка с трещиной до удара.
+const KILL_CRACK := 0.16
+const KILL_STRIKE := 0.2
+const SUPPLANT_STRIKE := 0.24
+## Когда войско вытеснившего целиком всплыло из лужи.
+const SUPPLANT_SURFACE := 0.48
+const KILL_END := 0.6
 const KILL_STEP := 0.5
 const KILL_SHAKE := 4.0
 const KILL_SHARDS := 14
-## С какого расстояния (в пикселях схемы, по каждой оси) въезжают мечи.
-const SWORD_FAR := 12.0
-## Меч острием вправо-вверх, 11x11 пикселей схемы; второй — его зеркало.
-## Клинки обоих проходят через середину (5, 5) — над центром фишки.
-## B — клинок, G — гарда, H — рукоять, P — навершие.
-const SWORD := [
-	"..........B",
-	".........B.",
-	"........B..",
-	".......B...",
-	"......B....",
-	".....B.....",
-	"..G.B......",
-	"...G.......",
-	"..H.G......",
-	".H.........",
-	"P..........",
+const MARK_COLOR := Color(1.0, 0.2, 0.15)
+const CRACK_COLOR := Color(0.08, 0.04, 0.06)
+const POOL_COLOR := Color(0.06, 0.02, 0.1, 0.92)
+const POOL_RIM := Color(0.3, 0.12, 0.42, 0.9)
+## Череп над местом убийства, 5x5 пикселей схемы.
+const SKULL := [
+	".###.",
+	"#####",
+	"#.#.#",
+	"#####",
+	".#.#.",
 ]
-const SWORD_COLORS := {
-	"B": Color(0.88, 0.9, 0.95),
-	"G": Color(1.0, 0.72, 0.2),
-	"H": Color(0.5, 0.28, 0.14),
-	"P": Color(1.0, 0.72, 0.2),
-}
+const SKULL_COLOR := Color(0.95, 0.93, 0.85)
 
 ## Локация сменила хозяина — её обводка коротко вспыхивает в цвет захватчика.
 ## Отдельного события «захват» движок не шлёт: контроль пересчитывается из
@@ -167,8 +167,8 @@ var _sparks: Array[Dictionary] = []
 var _arriving: Dictionary = {}
 ## Идущие удары приземлений: {key, pos (координаты панели), left, radius, colour}.
 var _impacts: Array[Dictionary] = []
-## Идущие убийства: {slot, victim, killer, supplant, wait (до начала прицела),
-## left (до удара)}.
+## Идущие убийства: {slot, victim, killer, supplant, wait (до начала анимации),
+## t (сколько идёт), struck (удар был), surfaced (вытеснивший всплыл)}.
 var _kills: Array[Dictionary] = []
 ## Места, подсвеченные со строки сводки под мышью (см. show_places).
 var _focus: Array = []
@@ -278,86 +278,254 @@ func _fire_capture_if_settled(site_id: String) -> void:
 # --- убийство и вытеснение ----------------------------------------------------
 
 ## Войско victim на месте slot_id убил (supplant — вытеснил) killer. Через
-## delay секунд над ним начинает сходиться прицел, ещё через KILL_AIM — удар и
-## сигнал kill_struck. До удара на месте рисуется убитая фишка. false — места
-## на доске нет, показывать нечего.
+## delay секунд начинается анимация (см. KILL_STRIKE), на ударе — сигнал
+## kill_struck. Пока она идёт, место рисует панель сама. false — места на
+## доске нет, показывать нечего.
 func kill_at(slot_id: String, victim: String, killer: String, supplant: bool,
 		delay: float = 0.0) -> bool:
 	if victim == "" or _slot_world(slot_id) == null:
 		return false
 	_kills.append({"slot": slot_id, "victim": victim, "killer": killer,
-		"supplant": supplant, "wait": delay, "left": KILL_AIM})
+		"supplant": supplant, "wait": delay, "t": 0.0, "struck": false, "surfaced": false})
 	set_process(true)
 	queue_redraw()
 	return true
 
 
-## Для проверок: сколько убийств ещё не ударило.
+## Для проверок: сколько убийств ещё анимируется.
 func kill_count() -> int:
 	return _kills.size()
 
 
-## Удар: вспышка с кольцом, осколки цвета жертвы и искры, доска дёргается.
+## Для проверок: сколько из них уже ударило.
+func struck_count() -> int:
+	return _kills.filter(func(k: Dictionary) -> bool: return bool(k["struck"])).size()
+
+
+## Шаг анимаций убийства на delta секунд. Удары и конец — после прохода по
+## списку: сигнал удара может добавить новые.
+func _step_kills(delta: float) -> void:
+	var struck: Array[Dictionary] = []
+	var done: Array[Dictionary] = []
+	for k in _kills:
+		var step := delta
+		if float(k["wait"]) > 0.0:
+			k["wait"] = float(k["wait"]) - delta
+			if float(k["wait"]) > 0.0:
+				continue
+			# Очередь подошла посреди кадра — остаток кадра уже идёт на анимацию.
+			step = -float(k["wait"])
+		var t: float = float(k["t"]) + step
+		k["t"] = t
+		var supplant := bool(k["supplant"])
+		if not bool(k["struck"]) and t >= (SUPPLANT_STRIKE if supplant else KILL_STRIKE):
+			k["struck"] = true
+			struck.append(k)
+		if supplant and not bool(k["surfaced"]) and t >= SUPPLANT_SURFACE:
+			k["surfaced"] = true
+			_surface(k)
+		if t >= KILL_END:
+			done.append(k)
+	for k in done:
+		_kills.erase(k)
+		_fire_capture_if_settled(_site_of_slot(String(k["slot"])))
+	for k in struck:
+		_strike(k)
+
+
+## Удар. Assassinate: фишка раскалывается — вспышка с кольцом, осколки цвета
+## жертвы, доска дёргается. Supplant: фишка утонула — из лужи брызги.
 func _strike(k: Dictionary) -> void:
 	var slot_id := String(k["slot"])
 	var at: Variant = _slot_world(slot_id)
 	if at != null:
 		var pos: Vector2 = _to_screen(at)
-		_impacts.append({"key": "kill|" + slot_id, "pos": pos, "left": IMPACT_TIME,
-			"radius": _arrival_radius("troop|" + slot_id), "colour": KILL_COLOR})
-		_burst(pos, troop_colour(String(k["victim"])), KILL_SHARDS)
-		_burst(pos, KILL_COLOR, SPARK_COUNT / 2)
-	shake(KILL_SHAKE)
-	_fire_capture_if_settled(_site_of_slot(slot_id))
+		if bool(k["supplant"]):
+			_burst(pos + Vector2(0, 4.0 * _zoom), POOL_RIM.lightened(0.3), SPARK_COUNT / 2)
+		else:
+			_impacts.append({"key": "kill|" + slot_id, "pos": pos, "left": IMPACT_TIME,
+				"radius": _arrival_radius("troop|" + slot_id), "colour": MARK_COLOR})
+			_burst(pos, troop_colour(String(k["victim"])), KILL_SHARDS)
+			_burst(pos, KILL_COLOR, SPARK_COUNT / 2)
+	shake(LAND_SHAKE if bool(k["supplant"]) else KILL_SHAKE)
 	kill_struck.emit(slot_id, String(k["victim"]), String(k["killer"]), bool(k["supplant"]))
 
 
-## Убитые фишки до удара и мечи над ними: въезжают снизу слева и снизу справа
-## (каждый вдоль своего клинка) и к удару сходятся крестом. Локация вокруг
-## мигает рамкой.
+## Войско вытеснившего всплыло из лужи — кольцо в его цвет, как у посадки.
+func _surface(k: Dictionary) -> void:
+	var at: Variant = _slot_world(String(k["slot"]))
+	if at == null:
+		return
+	var pos: Vector2 = _to_screen(at)
+	_impacts.append({"key": "troop|" + String(k["slot"]), "pos": pos, "left": IMPACT_TIME,
+		"radius": _arrival_radius("troop|"), "colour": troop_colour(String(k["killer"]))})
+	shake(LAND_SHAKE)
+
+
+## Места, где сейчас идёт убийство: там фишку рисует _draw_kills, а не
+## обычная расстановка.
+func _kill_slots() -> Dictionary:
+	var busy := {}
+	for k in _kills:
+		busy[String(k["slot"])] = true
+	return busy
+
+
 func _draw_kills() -> void:
-	var unit: float = maxf(1.0, roundf(_zoom))
 	for k in _kills:
 		var at: Variant = _slot_world(String(k["slot"]))
 		if at == null:
 			continue
-		var pos := _snap(_to_screen(at))
+		var pos: Vector2 = _to_screen(at)
+		var victim := String(k["victim"])
 		if float(k["wait"]) > 0.0:
-			_draw_troop(pos, String(k["victim"]))
-			continue
-		var p: float = 1.0 - float(k["left"]) / KILL_AIM
-		var lit := int(p * 9.0) % 2 == 0
-		var site_id := _site_of_slot(String(k["slot"]))
+			_draw_troop(pos, victim)
+		elif bool(k["supplant"]):
+			_draw_supplant(pos, victim, String(k["killer"]), float(k["t"]))
+		else:
+			_draw_assassinate(pos, victim, float(k["t"]), _site_of_slot(String(k["slot"])))
+
+
+## Assassinate по времени t (см. KILL_STRIKE): метка и покраснение, вспышка с
+## трещиной, после удара — половинки разъезжаются и падают, всплывает череп.
+func _draw_assassinate(pos: Vector2, victim: String, t: float, site_id: String) -> void:
+	var z := _zoom
+	var tl := _token_corner(pos)
+	var r := float(BoardSchematic.SLOT_R)
+	if t < KILL_STRIKE:
 		if site_id != "":
-			_outline_site(site_id, Color(KILL_COLOR, 0.9 if lit else 0.35))
-		# Разгон к концу: мечи влетают и сходятся с размаху.
-		var off := roundf(SWORD_FAR * (1.0 - p) * (1.0 - p)) * unit
-		_draw_crossed_swords(pos, off, String(k["victim"]))
+			_outline_site(site_id, Color(MARK_COLOR, 0.9 if int(t / 0.05) % 2 == 0 else 0.4))
+		_draw_troop(pos, victim)
+		var centre := tl + Vector2(r + 0.5, r + 0.5) * z
+		if t < KILL_CRACK:
+			draw_arc(centre, (r + 2.0) * z, 0, TAU, 24, MARK_COLOR, maxf(1.0, roundf(z)))
+			var red := clampf((t - 0.04) / 0.1, 0.0, 1.0) * 0.55
+			if red > 0.0:
+				draw_circle(centre, r * z, Color(MARK_COLOR, red))
+		else:
+			draw_circle(centre, r * z, Color(1, 1, 1, 0.6))
+			for i in range(-2, 3):
+				draw_rect(Rect2(tl + Vector2(r + i, r + i) * z, Vector2(z, z)), CRACK_COLOR)
+		return
+	var e := t - KILL_STRIKE
+	var fade := 1.0 - clampf((e - 0.1) / 0.3, 0.0, 1.0)
+	# Сразу после раскола щель тёмная: иначе в ней просвечивает светлая
+	# плашка локации и выходит белая черта.
+	if e < 0.1:
+		var sil := _token(Color(CRACK_COLOR, 1.0))
+		draw_texture_rect(sil, Rect2(tl, sil.get_size() * z), false, Color(1, 1, 1, 1.0 - e / 0.1))
+	if fade > 0.0:
+		var dx := 1.0 + 18.0 * e
+		_draw_half(tl + Vector2(roundf(dx), roundf(-1.0 - 12.0 * e + 90.0 * e * e)) * z, victim, true, fade)
+		_draw_half(tl + Vector2(roundf(-dx), roundf(1.0 + 12.0 * e + 90.0 * e * e)) * z, victim, false, fade)
+	if e >= 0.1:
+		var skull_alpha := 1.0 - clampf((e - 0.28) / 0.12, 0.0, 1.0)
+		_draw_skull(tl, 6.0 + roundf(12.0 * (e - 0.1)), skull_alpha)
 
 
-## Два меча над фишкой owner в pos ("" — фишки нет), разведённые на off
-## пикселей по каждой оси (0 — скрещены). Обводка мечей — под фишкой,
-## клинки — над ней: иначе скрещённые мечи с обводкой сливаются в тёмное
-## пятно и закрывают саму фишку.
-func _draw_crossed_swords(pos: Vector2, off: float, owner: String) -> void:
-	var unit: float = maxf(1.0, roundf(_zoom))
-	var origin := pos - Vector2(5.5, 5.5) * unit
-	var left := origin + Vector2(-off, off)
-	var right := origin + Vector2(off, off)
-	_draw_sword(left, false, unit, true)
-	_draw_sword(right, true, unit, true)
-	if owner != "":
-		_draw_troop(pos, owner)
-	_draw_sword(left, false, unit, false)
-	_draw_sword(right, true, unit, false)
+## Supplant по времени t: лужа тени растекается, старая фишка тонет, после
+## удара из лужи всплывает войско вытеснившего, лужа стягивается.
+func _draw_supplant(pos: Vector2, victim: String, killer: String, t: float) -> void:
+	var tl := _token_corner(pos)
+	var rx := 0.0
+	if t < 0.1:
+		rx = 4.0 + 40.0 * t
+	elif t < 0.44:
+		rx = 8.0
+	else:
+		rx = 8.0 * (1.0 - (t - 0.44) / (KILL_END - 0.44))
+	if rx >= 1.0:
+		_draw_pool(tl, int(roundf(rx)))
+	var h := BoardSchematic.SLOT_R * 2 + 1
+	if t < SUPPLANT_STRIKE:
+		_draw_sunk(tl, victim, int(roundf(clampf((t - 0.04) / 0.2, 0.0, 1.0) * h)))
+	elif t < 0.3:
+		# Утонула — по луже бегут пузыри.
+		var z := _zoom
+		for b in [Vector2(-2, 2), Vector2(3, 1), Vector2(0, -1)]:
+			draw_rect(Rect2(tl + (Vector2(4, 8) + b) * z, Vector2(z, z)), POOL_RIM.lightened(0.3))
+	else:
+		_draw_sunk(tl, killer, int(roundf(clampf(1.0 - (t - 0.3) / (SUPPLANT_SURFACE - 0.3), 0.0, 1.0) * h)))
+
+
+## Левый верхний угол картинки фишки с центром в pos — как её ставит _draw_troop.
+func _token_corner(pos: Vector2) -> Vector2:
+	var side := float(BoardSchematic.SLOT_R * 2 + 1)
+	return pos - Vector2(side, side) * 0.5 * _zoom
+
+
+## Фишка owner, опущенная на sunk пикселей схемы: всё, что ниже её обычного
+## низа, — в луже и не рисуется.
+func _draw_sunk(tl: Vector2, owner: String, sunk: int) -> void:
+	var tex := _token(troop_colour(owner), "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner))
+	var side := int(tex.get_size().x)
+	if sunk >= side:
+		return
+	draw_texture_rect_region(tex, Rect2(tl + Vector2(0, sunk) * _zoom, Vector2(side, side - sunk) * _zoom),
+		Rect2(0, 0, side, side - sunk))
+
+
+## Лужа тени полушириной rx пикселей схемы; её средняя строка — у низа фишки.
+## Строками целых пикселей: овал из примитивов на пиксельной схеме мылится.
+func _draw_pool(tl: Vector2, rx: int) -> void:
+	var z := _zoom
+	var r := BoardSchematic.SLOT_R
+	var ry := maxi(1, int(roundf(rx / 2.5)))
+	for pass_i in 2:
+		var ax := rx - pass_i
+		var ay := ry - pass_i
+		if ax < 1 or ay < 0:
+			continue
+		for y in range(-ay, ay + 1):
+			var w := int(floorf(ax * sqrt(maxf(0.0, 1.0 - pow(y / (ay + 0.5), 2.0)))))
+			draw_rect(Rect2(tl + Vector2(r - w, r * 2 + y) * z, Vector2(w * 2 + 1, 1) * z),
+				POOL_RIM if pass_i == 0 else POOL_COLOR)
+
+
+## Половина фишки owner по линии раскола «\»: upper — верхняя правая.
+func _draw_half(tl: Vector2, owner: String, upper: bool, alpha: float) -> void:
+	var emblem := "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner)
+	var key := "%s%s|half|%s" % [troop_colour(owner).to_html(), emblem, upper]
+	if not _tokens.has(key):
+		var img := SchematicPainter.token(troop_colour(owner), emblem)
+		var h := img.get_width() / 2
+		for y in img.get_height():
+			for x in img.get_width():
+				var d := (x - h) - (y - h)
+				if d == 0 or (d > 0) != upper:
+					img.set_pixel(x, y, Color(0, 0, 0, 0))
+		_tokens[key] = ImageTexture.create_from_image(img)
+	var tex: ImageTexture = _tokens[key]
+	draw_texture_rect(tex, Rect2(tl, tex.get_size() * _zoom), false, Color(1, 1, 1, alpha))
+
+
+## Череп над фишкой с углом tl, поднятый на lift пикселей схемы над её верхом.
+## Сначала тёмная обводка, потом сам череп — читается и на светлой плашке.
+func _draw_skull(tl: Vector2, lift: float, alpha: float) -> void:
+	if alpha <= 0.0:
+		return
+	var z := _zoom
+	var origin := tl + Vector2(BoardSchematic.SLOT_R - 2, -lift - 2) * z
+	for outline in [true, false]:
+		for y in SKULL.size():
+			var row: String = SKULL[y]
+			for x in row.length():
+				if row[x] != "#":
+					continue
+				var cell := Rect2(origin + Vector2(x, y) * z, Vector2(z, z))
+				if outline:
+					draw_rect(cell.grow(z), Color(0.05, 0.03, 0.08, 0.8 * alpha))
+				else:
+					draw_rect(cell, Color(SKULL_COLOR, alpha))
 
 
 # --- подсветка мест со строки сводки -----------------------------------------
 
 ## Зажечь места places (строка действия в сводке под мышью, см.
 ## TurnFeed.places_hovered); пустой список гасит. Место — "slot:<id>" (кольцо
-## вокруг места и рамка его локации), "kill:<slot_id>" (скрещённые мечи, как
-## в анимации убийства) или "site:<id>" (рамка локации).
+## вокруг места и рамка его локации), "kill:<slot_id>" (кольцо и череп над
+## местом), "supplant:<slot_id>" (кольцо и лужа тени под фишкой) или
+## "site:<id>" (рамка локации).
 func show_places(places: Array) -> void:
 	_focus = places.duplicate()
 	queue_redraw()
@@ -386,29 +554,16 @@ func _draw_focus() -> void:
 		var site_id := _site_of_slot(id)
 		if site_id != "":
 			_outline_site(site_id, colour)
-		var pos := _snap(_to_screen(at))
+		var pos: Vector2 = _to_screen(at)
 		var owner := String(troops.get(id, ""))
+		if kind == "supplant":
+			_draw_pool(_token_corner(pos), 6)
+			if owner != "":
+				_draw_troop(pos, owner)
+		_mark_slot(_snap(pos), colour, owner != "")
 		if kind == "kill":
-			_draw_crossed_swords(pos, 0.0, owner)
-		else:
-			_mark_slot(pos, colour, owner != "")
+			_draw_skull(_token_corner(pos), 6.0, 1.0)
 
-
-## Меч по рисунку SWORD с левым верхним углом в origin; mirrored — острием
-## влево-вверх. outline — только тёмная обводка в пиксель вокруг него: тонкий
-## клинок с ней читается и на светлой плашке локации.
-func _draw_sword(origin: Vector2, mirrored: bool, unit: float, outline: bool) -> void:
-	for y in SWORD.size():
-		var row: String = SWORD[y]
-		for x in row.length():
-			if row[x] == ".":
-				continue
-			var cell := Rect2(origin + Vector2((row.length() - 1 - x) if mirrored else x, y) * unit,
-				Vector2(unit, unit))
-			if outline:
-				draw_rect(cell.grow(unit), Color(0, 0, 0, 0.85))
-			else:
-				draw_rect(cell, SWORD_COLORS[row[x]])
 
 
 ## Локация, которой принадлежит место slot_id, или "" (место в туннеле).
@@ -691,23 +846,7 @@ func _process(delta: float) -> void:
 		arrival["left"] = float(arrival["left"]) - delta
 		if float(arrival["left"]) <= 0.0:
 			land(key, false)
-	# Удары — после прохода по списку: сигнал удара может добавить новые.
-	var struck: Array[Dictionary] = []
-	for i in range(_kills.size() - 1, -1, -1):
-		var k: Dictionary = _kills[i]
-		var step := delta
-		if float(k["wait"]) > 0.0:
-			k["wait"] = float(k["wait"]) - delta
-			if float(k["wait"]) > 0.0:
-				continue
-			# Очередь подошла посреди кадра — остаток кадра уже идёт на прицел.
-			step = -float(k["wait"])
-		k["left"] = float(k["left"]) - step
-		if float(k["left"]) <= 0.0:
-			_kills.remove_at(i)
-			struck.push_front(k)
-	for k in struck:
-		_strike(k)
+	_step_kills(delta)
 	for i in range(_impacts.size() - 1, -1, -1):
 		_impacts[i]["left"] = float(_impacts[i]["left"]) - delta
 		if float(_impacts[i]["left"]) <= 0.0:
@@ -975,14 +1114,16 @@ func _draw() -> void:
 	var deployable: Array = legal.get("deploy_slots", [])
 	var killable: Array = legal.get("assassinate_slots", [])
 	var radius: float = maxf(_slot_radius_world() * _zoom, 3.0)
+	var busy := _kill_slots()
 
 	for slot_id: String in slots.keys():
 		var pos := _to_screen(Vector2(float(slots[slot_id]["x"]), float(slots[slot_id]["y"])))
 		if pos.x < -radius or pos.y < -radius or pos.x > size.x + radius or pos.y > size.y + radius:
 			continue
 		var owner := String(troops.get(slot_id, ""))
-		# Войско ещё летит из барака — место пока выглядит пустым.
-		if _arriving.has("troop|" + slot_id):
+		# Войско ещё летит из барака или на месте идёт убийство (его фишки
+		# рисует _draw_kills) — место пока выглядит пустым.
+		if _arriving.has("troop|" + slot_id) or busy.has(slot_id):
 			owner = ""
 		# Пустое место ничем не рисуем: круги под войска уже есть на арте тайла
 		# и на схеме. Куда можно ставить — показывает зелёная подсветка ниже.

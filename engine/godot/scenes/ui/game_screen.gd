@@ -64,11 +64,8 @@ const TOKEN_HITSTOP := 0.055
 ## шпиона — чуть.
 const SHAKE_KILL := 4.0
 const SHAKE_NUDGE := 2.0
-## Удар по убитому войску: стоп-кадр чуть длиннее посадки. Вытеснивший
-## вылетает из барака через KILL_LAND_DELAY после удара — трофей успевает
-## сорваться с места первым.
+## Удар по убитому войску: стоп-кадр чуть длиннее посадки.
 const KILL_HITSTOP := 0.08
-const KILL_LAND_DELAY := 0.2
 ## Ширина правой колонки — ширина рынка в две мелкие карты; все зоны колонки
 ## той же ширины (макет владельца, 2026-09-24). Плюс 68 пикселей (решения
 ## владельца, 2026-09-27): 15 — столбцу TROPHY таблицы игроков (на четверых
@@ -871,17 +868,13 @@ func _react_to_events(events: Array) -> void:
 			"move_troop":
 				started = _move_troop(String(evt.get("owner", "")), String(evt.get("from", "")),
 					String(evt.get("to", "")), launched)
-			# Прицел, удар, трофей в зал убийцы; вытеснивший садится на место
-			# после удара, а до тех пор доска его прячет. Убийства — по очереди.
+			# Раскол (assassinate) или омут (supplant) прямо на месте — всё
+			# рисует доска, см. BoardPanel.kill_at. Убийства — по очереди.
 			"assassinate", "supplant":
-				var slot_id := String(evt.get("slot_id", ""))
 				var supplant := String(evt.get("type", "")) == "supplant"
-				var delay := BoardPanel.KILL_STEP * kills
-				if _board_panel.kill_at(slot_id, String(evt.get("victim", "")), pid, supplant, delay):
+				if _board_panel.kill_at(String(evt.get("slot_id", "")), String(evt.get("victim", "")),
+						pid, supplant, BoardPanel.KILL_STEP * kills):
 					kills += 1
-					if supplant and String((_view.get("troops", {}) as Dictionary).get(slot_id, "")) == pid:
-						_board_panel.hold_arrival("troop|" + slot_id,
-							delay + BoardPanel.KILL_AIM + KILL_LAND_DELAY + _flight_duration(0) + 0.5)
 				else:
 					power = maxf(power, SHAKE_KILL)
 			"return_troop":
@@ -1002,8 +995,10 @@ static func _event_places(evt: Dictionary) -> Array:
 	match String(evt.get("type", "")):
 		"deploy", "deploy_troop", "return_troop":
 			places.append("slot:" + String(evt.get("slot_id", "")))
-		"assassinate", "supplant":
+		"assassinate":
 			places.append("kill:" + String(evt.get("slot_id", "")))
+		"supplant":
+			places.append("supplant:" + String(evt.get("slot_id", "")))
 		"move_troop":
 			places.append("slot:" + String(evt.get("from", "")))
 			places.append("slot:" + String(evt.get("to", "")))
@@ -1101,19 +1096,12 @@ func _launch_troop(pid: String, slot_id: String, order: int) -> bool:
 	return true
 
 
-## Удар по войску victim на месте slot_id (см. BoardPanel.kill_at): стоп-кадр,
-## убитая фишка улетает трофеем в зал killer, при вытеснении из барака killer
-## на место вылетает его войско.
-func _on_kill_struck(slot_id: String, victim: String, killer: String, supplant: bool) -> void:
+## Удар по войску victim (см. BoardPanel.kill_at): стоп-кадр, цифра зала
+## трофеев killer вспыхивает. Ничего не летит (решение владельца, 2026-09-28):
+## трофей просто засчитывается.
+func _on_kill_struck(_slot_id: String, victim: String, killer: String, _supplant: bool) -> void:
 	_hitstop(KILL_HITSTOP)
-	var from: Variant = _board_at(_board_panel.slot_global(slot_id))
-	var to: Variant = _board_at(_players_panel.trophy_global(killer, victim))
-	if from != null and to != null:
-		_fly(_troop_token(victim), from, to, 0, Callable(), Callable(),
-			func() -> void: _players_panel.flash_trophy(killer, victim))
-	if supplant:
-		create_tween().tween_callback(
-			func() -> void: _launch_troop(killer, slot_id, 0)).set_delay(KILL_LAND_DELAY)
+	_players_panel.flash_trophy(killer, victim)
 
 
 ## Шпион pid вылетает из барака к локации site_id.
