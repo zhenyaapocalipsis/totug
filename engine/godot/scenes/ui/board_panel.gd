@@ -27,6 +27,7 @@ extends PanelContainer
 
 signal slot_clicked(slot_id: String)
 signal site_clicked(site_id: String)
+signal spy_clicked(site_id: String, owner: String)
 
 const PLAYER_COLORS := {
 	"red": Color(0.85, 0.22, 0.22),
@@ -942,6 +943,7 @@ func _draw_decision_targets() -> void:
 
 	var slot_targets: Dictionary = {}
 	var site_targets: Dictionary = {}
+	var spy_targets: Array = []
 	for opt in (pending.get("legal_options", []) as Array):
 		var raw := String(opt)
 		if raw == "":
@@ -956,6 +958,7 @@ func _draw_decision_targets() -> void:
 			var rest: PackedStringArray = raw.substr(4).rsplit("|", true, 1)
 			if rest.size() == 2:
 				site_targets[rest[0]] = true
+				spy_targets.append(rest)
 
 	var troops: Dictionary = _view.get("troops", {})
 	for slot_id: String in slot_targets.keys():
@@ -964,6 +967,8 @@ func _draw_decision_targets() -> void:
 			_mark_slot(_to_screen(at), DECISION_COLOR, String(troops.get(slot_id, "")) != "")
 	for site_id: String in site_targets.keys():
 		_outline_site(site_id, DECISION_COLOR)
+	for pair in spy_targets:
+		_ring_spy(String(pair[0]), String(pair[1]), DECISION_COLOR)
 
 
 ## Вражеские шпионы, которых можно вернуть за 3 Power, — оранжевой рамкой
@@ -972,6 +977,23 @@ func _draw_spy_targets() -> void:
 	var targets: Array = (_view.get("legal", {}) as Dictionary).get("return_spy", [])
 	for t in targets:
 		_outline_site(String((t as Dictionary)["site_id"]), KILL_COLOR)
+		_ring_spy(String((t as Dictionary)["site_id"]), String((t as Dictionary)["spy_owner"]), KILL_COLOR)
+
+
+## Рамка вокруг ромбика конкретного шпиона — его можно выбрать кликом.
+func _ring_spy(site_id: String, owner: String, colour: Color) -> void:
+	var owners: Array = (_view.get("spies", {}) as Dictionary).get(site_id, [])
+	var i := owners.find(owner)
+	if i == -1:
+		return
+	var spot: Variant = _spy_spot(site_id, i, owners.size())
+	if spot == null:
+		return
+	var at: Vector2 = spot
+	var d := spy_half() + 2.0
+	var ring := PackedVector2Array([
+		at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0), at + Vector2(0, -d)])
+	draw_polyline(ring, colour, 1.0)
 
 
 ## Навести обзор на точку доски с заданным масштабом. Нужно интерфейсу
@@ -1004,6 +1026,19 @@ func _gui_input(event: InputEvent) -> void:
 ## Попадание по ближайшему слоту, а если рядом слота нет — по локации
 ## (клик по локации нужен, чтобы вернуть вражеского шпиона).
 func _click_at(screen_point: Vector2) -> void:
+	# Ромбик шпиона — самая мелкая цель, проверяем его первым, иначе клик
+	# уходил в ближайший слот или во всю локацию и нельзя было выбрать,
+	# ЧЕЙ шпион нужен.
+	var spy_reach: float = maxf(spy_half() * 1.3, 5.0)
+	var spies: Dictionary = _view.get("spies", {})
+	for site_id: String in spies.keys():
+		var owners: Array = spies[site_id]
+		for i in range(owners.size()):
+			var spot: Variant = _spy_spot(site_id, i, owners.size())
+			if spot != null and screen_point.distance_to(spot) <= spy_reach:
+				spy_clicked.emit(site_id, String(owners[i]))
+				return
+
 	var slots := _slots()
 	var reach: float = maxf(_slot_radius_world() * _zoom * 1.4, 10.0)
 	var best := ""

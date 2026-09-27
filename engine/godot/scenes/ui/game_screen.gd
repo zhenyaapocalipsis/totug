@@ -257,6 +257,7 @@ func _build_layout() -> void:
 	_board_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_board_panel.slot_clicked.connect(_on_slot_clicked)
 	_board_panel.site_clicked.connect(_on_site_clicked)
+	_board_panel.spy_clicked.connect(_on_spy_clicked)
 	_board_area.add_child(_board_panel)
 
 	_decision_dialog = DecisionDialog.new()
@@ -1476,6 +1477,26 @@ func _on_site_clicked(site_id: String) -> void:
 			send(Intent.return_spy(viewer_id, site_id, owner)))
 		return
 	_log_panel.add_note("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
+
+
+## Клик прямо по ромбику шпиона: возвращаем именно его, без меню. Если этого
+## шпиона вернуть нельзя (свой, нет Присутствия...), клик считается кликом по
+## локации — там работают "вернуть своего шпиона" и прочие цели-локации.
+func _on_spy_clicked(site_id: String, owner: String) -> void:
+	var pending: Dictionary = _view.get("pending_decision", {})
+	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
+		var composite := "spy|%s|%s" % [site_id, owner]
+		if String(pending["choice_type"]) == "target_return" \
+				and (pending.get("legal_options", []) as Array).has(composite):
+			send(Intent.make_decision(viewer_id, composite))
+			return
+	else:
+		for target in ((_view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
+			var t: Dictionary = target
+			if String(t["site_id"]) == site_id and String(t["spy_owner"]) == owner:
+				send(Intent.return_spy(viewer_id, site_id, owner))
+				return
+	_on_site_clicked(site_id)
 
 
 func _on_decision_answer(answer: Variant) -> void:
