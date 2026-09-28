@@ -162,7 +162,7 @@ static func _site(img: Image, site: Dictionary) -> void:
 		img.fill_rect(rect.grow(1), MARKER_EDGE)
 	img.fill_rect(rect, MARKER_EDGE if marker else (BOX_LIGHT if dark else INK))
 	img.fill_rect(rect.grow(-1), fill)
-	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size())
+	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size(), marker)
 	var name_at: Vector2 = box["name_at"]
 	PixelFont.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
 		BoardSchematic.short_name(String(site["name"])), ink)

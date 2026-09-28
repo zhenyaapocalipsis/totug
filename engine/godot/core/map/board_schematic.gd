@@ -322,33 +322,48 @@ static func short_name(full: String) -> String:
 
 
 ## Size of a site box and its troop spaces relative to the box's top-left corner.
-static func site_box(site_name: String, slot_count: int) -> Dictionary:
+## marker: город с маркером контроля — слева от мест столбик из двух значков
+## (MARKER_ICONS_W x MARKER_ICONS_H): «◆1» над «корона N».
+static func site_box(site_name: String, slot_count: int, marker := false) -> Dictionary:
 	var name_w := PixelFont.text_width(short_name(site_name))
 	var cols := mini(maxi(slot_count, 1), SLOT_COLS)
 	var rows := int(ceil(slot_count / float(SLOT_COLS)))
 	var slots_w := cols * SLOT_PITCH - 2
+	var icons_w := MARKER_ICONS_W + 2 if marker else 0
 	# Ширина цифры очков со свободным пикселем справа: без него цифра упиралась
 	# в рамку, а входящая в этом же ряду трасса читалась как перечёркивание.
 	var vp_w := PixelFont.ADVANCE * VP_SCALE
-	var body_w := slots_w + 4 + vp_w
+	var body_w := icons_w + slots_w + 4 + vp_w
 	var inner_w := maxi(name_w, body_w)
 	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFont.HEIGHT * VP_SCALE)
+	if marker:
+		body_h = maxi(body_h, MARKER_ICONS_H)
 	var w := 2 + 2 * BOX_PAD + inner_w
 	var h := 2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
-	var top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - (rows * SLOT_PITCH - 2)) / 2
+	var body_top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP
+	var top := body_top + (body_h - (rows * SLOT_PITCH - 2)) / 2
 	var slots: Array[Vector2] = []
 	for i in slot_count:
 		var row := i / SLOT_COLS
 		var in_row := mini(SLOT_COLS, slot_count - row * SLOT_COLS)
 		var shift := (cols - in_row) * SLOT_PITCH / 2
-		slots.append(Vector2(left + shift + (i % SLOT_COLS) * SLOT_PITCH + SLOT_R,
+		slots.append(Vector2(left + icons_w + shift + (i % SLOT_COLS) * SLOT_PITCH + SLOT_R,
 			top + row * SLOT_PITCH + SLOT_R))
-	return {
+	var result := {
 		"w": w, "h": h, "slots": slots,
 		"name_at": Vector2(1 + BOX_PAD + (inner_w - name_w) / 2, 1 + BOX_PAD),
-		"vp_at": Vector2(left + slots_w + 4, 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP + (body_h - PixelFont.HEIGHT * VP_SCALE) / 2),
+		"vp_at": Vector2(left + icons_w + slots_w + 4, body_top + (body_h - PixelFont.HEIGHT * VP_SCALE) / 2),
 	}
+	if marker:
+		result["icons_at"] = Vector2(left, body_top + (body_h - MARKER_ICONS_H) / 2)
+	return result
+
+
+## Столбик значков города с маркером: значок 5x5 и цифра 3x5 через пиксель,
+## два ряда через пиксель.
+const MARKER_ICONS_W := 9
+const MARKER_ICONS_H := 11
 
 
 # --- graph -> nodes and tunnels ---------------------------------------------------
@@ -395,7 +410,7 @@ func _collect(graph: MapGraph, layout: Dictionary, hex_by_slot: Dictionary) -> v
 			var p: Vector2 = graph.slots[slot_id]["pos"]
 			sum += Vector2(p.x, -p.y)
 		var hex := site_id.get_slice(":", 0)
-		var box := site_box(String(site["name"]), members.size())
+		var box := site_box(String(site["name"]), members.size(), ControlMarkers.is_marked(String(site["hex"]), String(site["name"])))
 		var home: Vector2 = _centre[hex] + to_schematic(sum / maxi(members.size(), 1))
 		_add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
 	for slot_id: String in graph.slots.keys():
@@ -1190,7 +1205,7 @@ func _export(state: GameState) -> Dictionary:
 		elif _kind[n] == Kind.SITE:
 			var site: Dictionary = state.graph.sites[_key[n]]
 			var members := state.graph.slots_of_site(_key[n])
-			var box := site_box(String(site["name"]), members.size())
+			var box := site_box(String(site["name"]), members.size(), marked.has(_key[n]))
 			var corner := at - _half[n]
 			var site_slots := {}
 			for i in members.size():
@@ -1203,6 +1218,9 @@ func _export(state: GameState) -> Dictionary:
 				"vp": site["vp"],
 				"starting": starting.has(String(site["name"])),
 				"marker": marked.has(_key[n]),
+				# VP за полный контроль и где в коробке столбик значков маркера.
+				"marker_vp": int(ControlMarkers.marker_for(state, _key[n]).get("total_control_vp", 0)),
+				"icons_at": [corner.x + (box.get("icons_at", Vector2.ZERO) as Vector2).x, corner.y + (box.get("icons_at", Vector2.ZERO) as Vector2).y],
 				"slots": site_slots,
 			}
 	var traces: Array = []

@@ -491,7 +491,7 @@ static func mini_board(sites: Dictionary, rings: Array, traces: Array, size: Arr
 	var rects := {}
 	for id: String in sites:
 		var s: Dictionary = sites[id]
-		var box := BoardSchematic.site_box(String(s["name"]), int(s["slots"]))
+		var box := BoardSchematic.site_box(String(s["name"]), int(s["slots"]), bool(s.get("marker", false)))
 		var at := Vector2i(int(s["at"][0]), int(s["at"][1]))
 		var slots := {}
 		for k in (box["slots"] as Array).size():

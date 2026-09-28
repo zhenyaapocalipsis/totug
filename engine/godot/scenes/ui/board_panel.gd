@@ -116,6 +116,9 @@ const CAPTURE_TIME := 1.2
 ## Прозрачность заливки локации цветом хозяина: контроль / полный контроль.
 const CONTROL_FILL := 0.3
 const CONTROL_FILL_TOTAL := 0.6
+## Значки 5x5 столбика города с маркером контроля.
+const MARKER_DIAMOND := ["00100", "01110", "11111", "01110", "00100"]
+const MARKER_CROWN := ["10101", "10101", "11111", "11011", "11111"]
 
 ## Радиус кружка войска в МИРОВЫХ пикселях (печатные круги на арте примерно
 ## такого размера, шаг между слотами внутри локации ~47 px).
@@ -1107,6 +1110,7 @@ func _draw() -> void:
 		draw_set_transform(shake, 0.0, Vector2.ONE)
 
 	_draw_control_fills()
+	_draw_marker_icons()
 
 	var slots := _slots()
 	var troops: Dictionary = _view.get("troops", {})
@@ -1188,6 +1192,70 @@ func _draw_control_fills() -> void:
 		var top_left := (_to_screen(r.position) * scale).round() / scale
 		var bottom_right := (_to_screen(r.end) * scale).round() / scale
 		draw_rect(Rect2(top_left, bottom_right - top_left), Color(colour, alpha))
+
+
+## Столбик значков города с маркером контроля, слева от мест (решение
+## владельца, 2026-09-28): «◆1» — Influence за контроль, «корона N» — VP за
+## полный контроль. Пока награды нет, значок чёрный, как текст коробки;
+## когда есть — в цвет хозяина.
+func _draw_marker_icons() -> void:
+	if not _schematic_on():
+		return
+	var control: Dictionary = _view.get("site_control", {})
+	var total: Array = _view.get("site_total_control", [])
+	var sites: Dictionary = (_board["schematic"] as Dictionary).get("sites", {})
+	var scale := window_scale()
+	var px := _zoom
+	for site_id: String in sites:
+		var site: Dictionary = sites[site_id]
+		if not bool(site.get("marker", false)) or not site.has("icons_at"):
+			continue
+		var at: Array = site["icons_at"]
+		var tl := (_to_screen(Vector2(float(at[0]), float(at[1]))) * scale).round() / scale
+		var owner := String(control.get(site_id, ""))
+		var lit: Color = PLAYER_COLORS.get(owner, SchematicPainter.INK)
+		var inf: Color = lit if owner != "" else SchematicPainter.INK
+		var vp: Color = lit if total.has(site_id) else SchematicPainter.INK
+		_draw_bits(tl, MARKER_DIAMOND, inf, px)
+		_draw_bits(tl + Vector2(6, 0) * px, PixelFontSmall.glyph("1"), inf, px)
+		_draw_bits(tl + Vector2(0, 6) * px, MARKER_CROWN, vp, px)
+		_draw_bits(tl + Vector2(6, 6) * px, PixelFontSmall.glyph(str(site.get("marker_vp", 0))), vp, px)
+
+
+## Подсказка над городом с маркером: что он даёт и кому.
+func _get_tooltip(at_position: Vector2) -> String:
+	if not _schematic_on():
+		return ""
+	var world := _to_world(at_position)
+	var sites: Dictionary = (_board["schematic"] as Dictionary).get("sites", {})
+	for site_id: String in sites:
+		var site: Dictionary = sites[site_id]
+		if bool(site.get("marker", false)) and (_site_rect(site_id) as Rect2).grow(1.0).has_point(world):
+			return _marker_hint(site_id, site)
+	return ""
+
+
+func _marker_hint(site_id: String, site: Dictionary) -> String:
+	var lines: Array[String] = [String(site.get("name", "")).to_upper(),
+		"Control: +1 Influence each turn",
+		"Total control: +%d VP at the end of your turn" % int(site.get("marker_vp", 0))]
+	var owner := String((_view.get("site_control", {}) as Dictionary).get(site_id, ""))
+	if owner == "":
+		lines.append("Nobody controls it")
+	elif (_view.get("site_total_control", []) as Array).has(site_id):
+		lines.append("%s: total control" % EventLogPanel.player_name(owner))
+	else:
+		lines.append("%s: control" % EventLogPanel.player_name(owner))
+	return "\n".join(lines)
+
+
+## Рисунок из строк "0/1" пикселями схемы размера px.
+func _draw_bits(tl: Vector2, rows: Array, colour: Color, px: float) -> void:
+	for ry in rows.size():
+		var row: String = rows[ry]
+		for rx in row.length():
+			if row[rx] == "1":
+				draw_rect(Rect2(tl + Vector2(rx, ry) * px, Vector2(px, px)), colour)
 
 
 ## Только что захваченные локации: обводка в цвет нового хозяина, гаснущая
