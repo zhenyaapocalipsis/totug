@@ -36,11 +36,13 @@ func _init() -> void:
 		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=0 xadvance=%d page=0 chnl=15"
 			% [ch.unicode_at(0), cx, cy, CELL_W, CELL_H, CELL_W])
 
-	# Замены из PixelFont.CHAR_MAP (типографское тире, кавычка и прочее) — это
+	# Замены из PixelFont.CHAR_MAP (типографское тире, кавычка и прочее) и
+	# кириллица, которая пишется как латиница (CYRILLIC_SAME), — это
 	# те же клетки атласа под другим кодом. Без них Label рисует пустой квадрат
 	# на каждом таком знаке: подмену CHAR_MAP знает только наш рисовальщик.
-	for alias: String in PixelFont.CHAR_MAP:
-		var target: String = PixelFont.CHAR_MAP[alias]
+	var aliases := PixelFont.CHAR_MAP.merged(PixelFont.CYRILLIC_SAME)
+	for alias: String in aliases:
+		var target: String = aliases[alias]
 		if not cell_of.has(target):
 			target = target.to_upper()
 		if not cell_of.has(target):
@@ -81,7 +83,7 @@ func _charset() -> Array[String]:
 	var out: Array[String] = []
 	for ch: String in PixelFont.FONT.keys():
 		out.append(ch)
-	for ch: String in PixelFont.LOWER.keys():
+	for ch: String in PixelFont.LOWER.keys() + PixelFont.CYRILLIC.keys():
 		if not out.has(ch):
 			out.append(ch)
 	out.sort_custom(func(a: String, b: String) -> bool: return a.unicode_at(0) < b.unicode_at(0))

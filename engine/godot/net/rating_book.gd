@@ -54,7 +54,7 @@ static func _write(file_path: String, data: Dictionary) -> void:
 ## Регистр не важен (Vasya = VASYA). Пустое имя и игрок без ключа — не
 ## занимают ничего.
 func claim_name(account: String, player_name: String) -> bool:
-	var id := player_name.strip_edges().to_lower()
+	var id := name_id(player_name)
 	if id == "" or account == "":
 		return true
 	var owner := String(names.get(id, ""))
@@ -68,6 +68,20 @@ func claim_name(account: String, player_name: String) -> bool:
 	names[id] = account
 	_write(_names_path, names)
 	return true
+
+
+## Кириллические буквы, которые выглядят как латинские (после to_lower).
+const LOOKALIKES := {"а": "a", "в": "b", "е": "e", "ё": "e", "к": "k", "м": "m", "н": "h", "о": "o",
+	"р": "p", "с": "c", "т": "t", "у": "y", "х": "x"}
+
+
+## Ключ имени для занятости: без регистра, а русские буквы-двойники считаются
+## латинскими — иначе «Вов» кириллицей выдавал бы себя за чужого «Bob».
+static func name_id(player_name: String) -> String:
+	var id := ""
+	for ch in player_name.strip_edges().to_lower():
+		id += String(LOOKALIKES.get(ch, ch))
+	return id
 
 
 ## Номер учётной записи по ключу игрока ("" — ключа нет или он негодный).

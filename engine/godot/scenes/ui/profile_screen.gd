@@ -388,7 +388,7 @@ func _save() -> void:
 	var name_text := PlayerProfile.clean_name(_name_edit.text)
 	_name_edit.text = name_text
 	if _first_run and name_text == "":
-		_saved_note.text = "Enter a name (Latin letters and digits)."
+		_saved_note.text = "Enter a name (letters and digits)."
 		if _name_edit.is_inside_tree():
 			_name_edit.grab_focus()
 		return

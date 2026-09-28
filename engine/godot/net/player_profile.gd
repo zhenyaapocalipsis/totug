@@ -27,8 +27,10 @@ const EMBLEM_LENGTH := SIZE * SIZE * 8
 const PATH := "user://profile.cfg"
 ## Сколько пикселей кружка (из 37) должны остаться цветом места.
 const MIN_SEAT_PIXELS := 12
+## Русские буквы (владелец, 2026-09-29): для имён и фраз чата, в шрифте есть все.
+const CYRILLIC_LETTERS := "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 ## Имя рисуется пиксельным шрифтом: только знаки, которые в нём есть.
-const NAME_CHARS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -_.'"
+const NAME_CHARS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -_.'" + CYRILLIC_LETTERS
 
 ## Профили за столом: цвет места -> {name, emblem}. Их читают экраны
 ## (EventLogPanel.player_name, фишки на доске); ставит game_scene/лобби.
@@ -266,12 +268,13 @@ const PHRASE_MAX := 30
 const DEFAULT_PHRASES: Array[String] = ["Well played!", "Thinking...", "Oops!", "Good luck, have fun!"]
 
 
-## Только знаки пиксельного шрифта (ASCII без ^ ` {), не длиннее PHRASE_MAX.
+## Только знаки пиксельного шрифта (ASCII без ^ ` { и кириллица), не длиннее
+## PHRASE_MAX.
 static func clean_phrase(text: String) -> String:
 	var out := ""
 	for ch in text:
 		var c := ch.unicode_at(0)
-		if c >= 32 and c <= 124 and c != 94 and c != 96 and c != 123:
+		if (c >= 32 and c <= 124 and c != 94 and c != 96 and c != 123) or CYRILLIC_LETTERS.contains(ch):
 			out += ch
 	return out.strip_edges().left(PHRASE_MAX).strip_edges()
 

@@ -3020,7 +3020,7 @@ func test_player_profile() -> void:
 	check_eq(PlayerProfile.SIZE, BoardSchematic.SLOT_R * 2 + 1, "холст герба = размер фишки войска")
 	check(PlayerProfile.paintable(4, 4) and PlayerProfile.paintable(1, 4), "центр и край кружка красятся")
 	check(not PlayerProfile.paintable(0, 4) and not PlayerProfile.paintable(0, 0), "ободок и угол не красятся")
-	check_eq(PlayerProfile.clean_name("  Dr0w Лорд <b>King of all  "), "Dr0w bKing o", "имя: только знаки шрифта, до 12")
+	check_eq(PlayerProfile.clean_name("  Dr0w Лорд <b>King of all  "), "Dr0w Лорд bK", "имя: только знаки шрифта, до 12")
 	check_eq(PlayerProfile.clean_emblem("zz"), "", "испорченный герб отбрасывается")
 
 	var pixels: Array[Color] = []
@@ -3066,6 +3066,19 @@ func test_chat_wheel_and_ping() -> void:
 	section("колесо чата и пинг (Tab)")
 	check_eq(PlayerProfile.clean_phrase("  Hi^ the`re{}~  "), "Hi there", "фраза: только знаки шрифта")
 	check_eq(PlayerProfile.clean_phrase("x".repeat(50)).length(), PlayerProfile.PHRASE_MAX, "фраза не длиннее 30")
+	check_eq(PlayerProfile.clean_phrase("Привет, Ёжик!"), "Привет, Ёжик!", "фраза: кириллица остаётся")
+	check_eq(PlayerProfile.clean_name("Вася Пупкин"), "Вася Пупкин", "имя: кириллица остаётся")
+	check_eq(RatingBook.name_id("ВОВ"), RatingBook.name_id("bob"), "имя: русская «ВОВ» — то же, что латинская «BOB»")
+	check(RatingBook.name_id("Вася") != RatingBook.name_id("Петя"), "имя: разные буквы — разные имена")
+	var font: Font = load(PixelTheme.FONT_PATH)
+	var missing := ""
+	for ch in PlayerProfile.CYRILLIC_LETTERS:
+		if not font.has_char(ch.unicode_at(0)):
+			missing += ch
+	check_eq(missing, "", "в шрифте есть все русские буквы")
+	var shot := Image.create(12, 9, false, Image.FORMAT_RGBA8)
+	PixelFont.draw_text(shot, 0, 0, "Жа", Color.WHITE)
+	check(shot.get_pixel(0, 0).a > 0.0 and shot.get_pixel(7, 2).a > 0.0, "рисовальщик доски рисует кириллицу")
 	check_eq(PlayerProfile.save_phrases(["Go!", "", "Nice   one"]), OK, "фразы сохраняются")
 	check_eq(PlayerProfile.load_phrases(),
 		["Go!", PlayerProfile.DEFAULT_PHRASES[1], "Nice   one", PlayerProfile.DEFAULT_PHRASES[3]] as Array[String],
