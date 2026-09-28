@@ -121,6 +121,8 @@ func _add_row(pid: String) -> void:
 	var name_label := _cell("", 0.0, colour, HORIZONTAL_ALIGNMENT_LEFT)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.mouse_filter = Control.MOUSE_FILTER_STOP  # подсказка — полное имя
+	# Щелчок по имени — карточка игрока (звание, рейтинг, партии).
+	ProfileCard.attach(name_label, pid, func(): return (PlayerProfile.seats.get(pid, {}) as Dictionary))
 	name_cell.add_child(name_label)
 	var values: Dictionary = {}
 	for column: Array in COLUMNS:

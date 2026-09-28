@@ -32,6 +32,10 @@ const PREVIEW_ZOOM := 3
 const RIM := Color(0.04, 0.03, 0.06)
 const BUTTON_SIZE := Vector2(70, 16)
 const PLACES := ["1ST", "2ND", "3RD", "4TH"]
+## Подписи статей VP (PlayerProfile.VP_PARTS) и ширина полоски доли.
+const VP_PART_NAMES := {"sites": "SITES", "total_control": "TOTAL CONTROL", "trophies": "TROPHIES",
+	"deck": "DECK", "inner_circle": "INNER CIRCLE", "tokens": "VP TOKENS"}
+const BAR_W := 60
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 var _pixels: Array[Color] = []
@@ -405,8 +409,10 @@ func _open_background() -> void:
 
 
 func _show_tab(stats: bool) -> void:
-	# Окно не прыгает: страница STATS не ниже редактора.
-	_stats.custom_minimum_size = _look.get_combined_minimum_size()
+	# Окно не прыгает: обе страницы одного размера — большего из двух.
+	var need := _look.get_combined_minimum_size().max(_stats.get_combined_minimum_size())
+	_look.custom_minimum_size = need
+	_stats.custom_minimum_size = need
 	_look.visible = not stats
 	_stats.visible = stats
 	for b: Button in _tab_buttons:
@@ -469,21 +475,26 @@ func _stats_page() -> Control:
 		box.add_child(caption)
 
 	page.add_child(HSeparator.new())
-	page.add_child(GameScreen.section_label("LAST ONLINE GAMES"))
+	# Ниже две колонки: слева — статистика по самой игре, справа — история.
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	page.add_child(body)
+	body.add_child(_game_stats())
+	body.add_child(VSeparator.new())
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 4)
+	body.add_child(right)
+	right.add_child(GameScreen.section_label("LAST ONLINE GAMES"))
 	var list := PlayerProfile.history()
 	if list.is_empty():
-		var none := Label.new()
-		none.text = "No games recorded yet."
-		none.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-		none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		page.add_child(none)
+		right.add_child(_cell("No games recorded yet.", PixelTheme.TEXT_DIM))
 		return page
 	var grid := GridContainer.new()
 	grid.columns = 5
-	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 2)
-	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	page.add_child(grid)
+	right.add_child(grid)
 	for header in ["DATE", "PLAYERS", "PLACE", "VP", "RATING"]:
 		grid.add_child(_cell(header, PixelTheme.TEXT_DIM))
 	for game: Dictionary in list:
@@ -501,6 +512,75 @@ func _stats_page() -> Control:
 			else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
 		grid.add_child(rating_row)
 	return page
+
+
+## Статистика по самой игре (PlayerProfile.totals): средние VP по статьям с
+## полосками, полуколоды с процентом побед, рекорды.
+func _game_stats() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	var t := PlayerProfile.totals()
+	var games := int(t["games"])
+	col.add_child(GameScreen.section_label("AVERAGE PER GAME"))
+	if games == 0:
+		col.add_child(_cell("Play an online game\nto collect statistics.", PixelTheme.TEXT_DIM))
+		return col
+
+	var avg := float(t["vp"]) / games
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 2)
+	col.add_child(grid)
+	grid.add_child(_cell("VP", PixelTheme.GOLD))
+	grid.add_child(_cell("%.1f" % avg, PixelTheme.GOLD))
+	grid.add_child(Control.new())
+	for key: String in PlayerProfile.VP_PARTS:
+		var value := float(t["parts"].get(key, 0)) / games
+		grid.add_child(_cell(String(VP_PART_NAMES[key]), PixelTheme.TEXT_DIM))
+		grid.add_child(_cell("%.1f" % value, PixelTheme.TEXT))
+		grid.add_child(_bar(value / maxf(avg, 1.0), PixelTheme.GOLD))
+
+	col.add_child(GameScreen.section_label("HALF-DECKS"))
+	var decks: Dictionary = t["decks"]
+	var names: Array = decks.keys()
+	names.sort_custom(func(a, b) -> bool: return int(decks[a]["games"]) > int(decks[b]["games"]))
+	var deck_grid := GridContainer.new()
+	deck_grid.columns = 3
+	deck_grid.add_theme_constant_override("h_separation", 6)
+	deck_grid.add_theme_constant_override("v_separation", 2)
+	col.add_child(deck_grid)
+	for deck: String in names:
+		var d: Dictionary = decks[deck]
+		var played := int(d["games"])
+		var colour: Color = UnderdarkBg.DECK_COLOURS.get(deck, PixelTheme.TEXT).lightened(0.35)
+		deck_grid.add_child(_cell(deck.to_upper(), colour))
+		deck_grid.add_child(_cell("%d games" % played, PixelTheme.TEXT_DIM))
+		deck_grid.add_child(_cell("%d%% wins" % roundi(100.0 * int(d["wins"]) / played), PixelTheme.TEXT))
+
+	col.add_child(GameScreen.section_label("RECORDS"))
+	for pair in [["BEST VP", t["best_vp"]], ["MOST TROPHIES", t["most_trophies"]],
+			["MOST INNER CIRCLE", t["most_ic"]]]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.add_child(_cell(String(pair[0]), PixelTheme.TEXT_DIM))
+		row.add_child(_cell(str(int(pair[1])), PixelTheme.GOLD))
+		col.add_child(row)
+	return col
+
+
+
+## Полоска доли (0..1) шириной до BAR_W — сплошная, пиксель-арт.
+func _bar(share: float, colour: Color) -> Control:
+	var back := ColorRect.new()
+	back.color = PixelTheme.PANEL_LO
+	back.custom_minimum_size = Vector2(BAR_W, 5)
+	back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var fill := ColorRect.new()
+	fill.color = colour
+	fill.size = Vector2(roundf(BAR_W * clampf(share, 0.0, 1.0)), 5)
+	back.add_child(fill)
+	return back
 
 
 func _cell(text: String, colour: Color) -> Label:

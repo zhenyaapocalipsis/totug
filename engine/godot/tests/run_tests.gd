@@ -1067,6 +1067,37 @@ func test_rating() -> void:
 	PlayerProfile.cache_stats({"rating": 1016, "games": 3, "wins": 2})
 	PlayerProfile.cache_stats({"rating": 1020})
 	check_eq(PlayerProfile.cached_stats(), {"rating": 1020, "games": 3, "wins": 2}, "статистика запомнена в профиле")
+
+	# Статистика по самой игре: суммы по статьям VP, полуколоды, рекорды.
+	check_eq(int(PlayerProfile.totals()["games"]), 0, "без партий с разбивкой — пусто")
+	PlayerProfile.add_totals(entry)
+	check_eq(int(PlayerProfile.totals()["games"]), 0, "партия без разбивки (старый сервер) не в счёт")
+	var parts := {"sites": 10, "total_control": 2, "trophies": 7, "deck": 12, "inner_circle": 6, "tokens": 3, "total": 40}
+	var game_a := {"red": {"rating": 1016, "delta": 16, "vp": 40, "won": true, "breakdown": parts,
+		"half_decks": ["drow", "dragons"], "ic_cards": 5}, "blue": {"rating": 984, "delta": -16, "vp": 30, "won": false}}
+	var entry_a := PlayerProfile.history_entry("red", game_a, profs)
+	check_eq(entry_a["breakdown"]["trophies"], 7, "в истории — разбивка VP")
+	PlayerProfile.add_totals(entry_a)
+	var parts_b := {"sites": 6, "total_control": 0, "trophies": 3, "deck": 10, "inner_circle": 8, "tokens": 1, "total": 28}
+	PlayerProfile.add_totals({"vp": 28, "won": false, "breakdown": parts_b, "half_decks": ["drow", "undead"],
+		"ic_cards": 7})
+	var tot := PlayerProfile.totals()
+	check_eq(int(tot["games"]), 2, "две партии с разбивкой")
+	check_eq(int(tot["vp"]), 68, "сумма VP")
+	check_eq(int(tot["parts"]["trophies"]), 10, "сумма трофеев")
+	check_eq(tot["decks"]["drow"], {"games": 2, "wins": 1}, "полуколода: партии и победы")
+	check_eq(tot["decks"]["undead"], {"games": 1, "wins": 0}, "вторая полуколода")
+	check(int(tot["best_vp"]) == 40 and int(tot["most_trophies"]) == 7 and int(tot["most_ic"]) == 7, "рекорды")
+
+	# Карточка игрока по щелчку на имя.
+	var card := ProfileCard.new("blue", {"name": "Bob", "emblem": "", "rating": 1160, "games": 10, "wins": 4})
+	var card_text := _all_text(card)
+	check(card_text.contains("Bob") and card_text.contains("MATRON") and card_text.contains("RATING 1160")
+		and card_text.contains("WIN RATE 40%"), "карточка: имя, звание, рейтинг, процент побед")
+	card.free()
+	var local_card := ProfileCard.new("red", {"name": "Ann", "emblem": ""})
+	check(_all_text(local_card).contains("No online rating"), "за одним экраном — без рейтинга")
+	local_card.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path
 	var same := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": a, "name": "Ann"}},
@@ -3210,6 +3241,16 @@ func test_main_menu() -> void:
 	_find_button(offer, "NO, I'M ALREADY KIKORIKI").pressed.emit()
 	check_eq(answers, [true, false], "вопрос про обучение: YES — обучение, NO — меню")
 	offer.free()
+
+
+## Все надписи (Label) под узлом одной строкой — для проверки содержимого окон.
+func _all_text(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label:
+			out += (child as Label).text + "\n"
+		out += _all_text(child)
+	return out
 
 
 func _find_button(root: Node, text: String) -> Button:

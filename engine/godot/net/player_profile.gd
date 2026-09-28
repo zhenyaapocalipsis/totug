@@ -404,7 +404,55 @@ static func history_entry(own_seat: String, result: Dictionary, profiles: Dictio
 		return a["won"] and not b["won"] or (a["won"] == b["won"] and a["vp"] > b["vp"]))
 	return {"time": int(Time.get_unix_time_from_system()), "seat": own_seat, "place": place,
 		"vp": int(mine.get("vp", 0)), "won": bool(mine.get("won", false)), "rating": int(mine["rating"]),
-		"delta": int(mine.get("delta", 0)), "players": players}
+		"delta": int(mine.get("delta", 0)), "players": players,
+		"breakdown": (mine.get("breakdown", {}) as Dictionary).duplicate(),
+		"half_decks": (mine.get("half_decks", []) as Array).duplicate(), "ic_cards": int(mine.get("ic_cards", 0))}
+
+
+# --- статистика по самой игре -------------------------------------------------
+
+## Статьи VP (Scoring.breakdown) в порядке показа.
+const VP_PARTS := ["sites", "total_control", "trophies", "deck", "inner_circle", "tokens"]
+
+
+## Накопленное за все онлайн-партии с разбивкой VP (пункт 3, 2026-09-28):
+## {games, vp, parts: статья -> сумма, decks: полуколода -> {games, wins},
+##  best_vp, most_trophies, most_ic}. Средние считает экран: сумма / games.
+static func totals() -> Dictionary:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	var t = cfg.get_value("totals", "all", {})
+	var out: Dictionary = t if t is Dictionary else {}
+	for key in ["games", "vp", "best_vp", "most_trophies", "most_ic"]:
+		out[key] = int(out.get(key, 0))
+	for key in ["parts", "decks"]:
+		if not out.get(key) is Dictionary:
+			out[key] = {}
+	return out
+
+
+## Добавить партию к накопленному. Партия без разбивки (старый сервер) не в счёт.
+static func add_totals(entry: Dictionary) -> void:
+	var parts: Dictionary = entry.get("breakdown", {})
+	if parts.is_empty():
+		return
+	var t := totals()
+	t["games"] += 1
+	t["vp"] += int(entry.get("vp", 0))
+	for key: String in VP_PARTS:
+		t["parts"][key] = int(t["parts"].get(key, 0)) + int(parts.get(key, 0))
+	for deck in entry.get("half_decks", []):
+		var d: Dictionary = t["decks"].get(String(deck), {"games": 0, "wins": 0})
+		d["games"] = int(d["games"]) + 1
+		d["wins"] = int(d["wins"]) + (1 if entry.get("won", false) else 0)
+		t["decks"][String(deck)] = d
+	t["best_vp"] = maxi(t["best_vp"], int(entry.get("vp", 0)))
+	t["most_trophies"] = maxi(t["most_trophies"], int(parts.get("trophies", 0)))
+	t["most_ic"] = maxi(t["most_ic"], int(entry.get("ic_cards", 0)))
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	cfg.set_value("totals", "all", t)
+	cfg.save(path())
 
 
 static func name_of(seat: String) -> String:

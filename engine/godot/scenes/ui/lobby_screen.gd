@@ -277,6 +277,8 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		var name_label := Label.new()
 		name_label.text = EventLogPanel.player_name(String(pid)) + (" (you)" if String(pid) == _net.seat else "")
 		var seat_profile: Dictionary = _net.profiles.get(pid, {})
+		# Щелчок по имени — карточка игрока (звание, рейтинг, партии).
+		ProfileCard.attach(name_label, String(pid), func(): return seat_profile)
 		_seats.add_child(name_label)
 		# Звание камнем и рейтинг (подсказка — звание, партии и победы).
 		if seat_profile.has("rating"):

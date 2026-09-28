@@ -144,6 +144,12 @@ func _run_scenario() -> void:
 					if Vector2(x - 125, y - 19).length() < 5.0:
 						painter.paint_at(x, y)
 			painter._changed()
+		"profile_card":
+			# Карточка соперника поверх партии (щелчок по имени в таблице игроков).
+			PlayerProfile.seats = {"blue": {"name": "Zinda", "emblem": "", "rating": 1163, "games": 22, "wins": 12}}
+			var card := ProfileCard.new("blue", PlayerProfile.seats["blue"])
+			root.add_child(card)
+			card._place.call_deferred(Vector2(760, 40))
 		"esc_menu":
 			# Меню по Esc поверх партии (там же выбор фона).
 			_screen._pause_menu.visible = true
@@ -422,10 +428,16 @@ func _run_scenario() -> void:
 					profs[pid] = {"name": names[s], "emblem": ""}
 				var entry := PlayerProfile.history_entry("red", res, profs)
 				entry["time"] = 1790000000 - n * 90000
+				entry["breakdown"] = {"sites": 8 + n % 5, "total_control": 2 * (n % 2), "trophies": 4 + n % 6,
+					"deck": 11 + n % 4, "inner_circle": 5 + n % 7, "tokens": n % 4}
+				entry["half_decks"] = [["drow", "dragons"], ["undead", "drow"], ["demons", "aberrations"]][n % 3]
+				entry["ic_cards"] = 3 + n % 5
 				PlayerProfile.add_history(entry)
+				PlayerProfile.add_totals(entry)
 			var stats_screen := ProfileScreen.new()
 			root.add_child(stats_screen)
-			stats_screen._show_tab(true)
+			# Как щелчок по вкладке: когда экран уже в сцене и размеры по шрифту темы.
+			stats_screen._show_tab.call_deferred(true)
 		"menu":
 			# Главное меню поверх партии (строка профиля с кнопками).
 			root.add_child(SetupScreen.new())

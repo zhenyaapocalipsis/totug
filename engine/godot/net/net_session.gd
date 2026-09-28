@@ -979,20 +979,26 @@ func _rate_room(room: GameRoom) -> void:
 	var state := room.server.state
 	var players := {}
 	var scores := {}
+	var breakdowns := {}
 	for pid: String in state.turn_order:
 		players[pid] = {"account": String(room.accounts.get(pid, "")),
 			"name": String((room.profiles.get(pid, {}) as Dictionary).get("name", ""))}
-		scores[pid] = int(Scoring.breakdown(state, pid)["total"])
+		breakdowns[pid] = Scoring.breakdown(state, pid)
+		scores[pid] = int(breakdowns[pid]["total"])
 	var vp := Scoring.library_card_vp(state)
 	var winners := Array(Scoring.winners(state, vp[0], vp[1]))
 	var result := ratings.record(players, scores, winners)
 	if result.is_empty():
 		_log("room %s: game over, not rated" % room.code)
 		return
-	# VP и победа — для истории партий в профиле у каждого игрока.
+	# VP, победа, разбивка VP, полуколоды и Inner Circle — для истории и
+	# статистики в профиле у каждого игрока (PlayerProfile.add_totals).
 	for pid: String in result:
 		result[pid]["vp"] = scores[pid]
 		result[pid]["won"] = winners.has(pid)
+		result[pid]["breakdown"] = breakdowns[pid]
+		result[pid]["half_decks"] = Array(state.half_decks)
+		result[pid]["ic_cards"] = (state.players[pid] as PlayerState).deck.inner_circle.size()
 	_log("room %s: rated %s" % [room.code, JSON.stringify(result)])
 	for peer: int in room.seats:
 		_send(peer, "_rating", [result])
@@ -1002,7 +1008,9 @@ func _rate_room(room: GameRoom) -> void:
 func _rating(result: Dictionary) -> void:
 	if result.has(seat):
 		PlayerProfile.cache_stats(result[seat])
-		PlayerProfile.add_history(PlayerProfile.history_entry(seat, result, profiles))
+		var entry := PlayerProfile.history_entry(seat, result, profiles)
+		PlayerProfile.add_history(entry)
+		PlayerProfile.add_totals(entry)
 	rating_changed.emit(result)
 
 
