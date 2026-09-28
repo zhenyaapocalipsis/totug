@@ -802,12 +802,16 @@ func _step_click_player() -> void:
 	check(b != null and b.is_visible_in_tree(), "строка соперника в таблице игроков — кнопка выбора")
 	check(not panel._choice_buttons[me].visible, "свою строку выбрать нельзя")
 	check(not _screen._decision_dialog._dim.visible, "экран не затемнён")
+	# Щелчок прямо по имени: при выборе цели рамка строки лежит поверх имени,
+	# и щелчок выбирает соперника, а не открывает его карточку (ProfileCard).
 	if b != null:
-		_click(b)
+		_click(panel._rows[_foe_discard]["name"])
 
 
 func _step_check_choose_player() -> void:
-	check(not _screen.server.resolver.is_waiting(), "щелчок по строке выбрал соперника")
+	check(not _screen.server.resolver.is_waiting(), "щелчок по имени в строке выбрал соперника")
+	check(not root.get_children().any(func(n: Node) -> bool: return n is ProfileCard),
+		"карточка игрока при выборе цели не открылась")
 	var foe: PlayerState = _screen.server.state.players[_foe_discard]
 	check(foe.deck.discard_pile.size() == _discard_before + 1, "соперник получил Insane Outcast в сброс")
 	check(not _screen._players_panel._choice_buttons[_foe_discard].visible, "кнопки выбора убраны")
