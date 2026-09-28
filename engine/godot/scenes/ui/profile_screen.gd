@@ -105,11 +105,12 @@ func _init(first_run: bool = false) -> void:
 		tabs.add_theme_constant_override("separation", 6)
 		col.add_child(tabs)
 		var group := ButtonGroup.new()
-		for tab: String in ["EMBLEM", "STATS"]:
+		# STATS первой и открыта сразу (решение владельца, 2026-09-28).
+		for tab: String in ["STATS", "EMBLEM"]:
 			var b := _button(tab, _show_tab.bind(tab == "STATS"))
 			b.toggle_mode = true
 			b.button_group = group
-			b.button_pressed = tab == "EMBLEM"
+			b.button_pressed = tab == "STATS"
 			tabs.add_child(b)
 			_tab_buttons.append(b)
 		# Рубашка карт — свой экран (CardBackScreen), закрывается обратно в профиль.
@@ -121,8 +122,8 @@ func _init(first_run: bool = false) -> void:
 		bg.tooltip_text = "Choose or draw the background of the game."
 		tabs.add_child(bg)
 		_stats = _stats_page()
-		_stats.visible = false
 		col.add_child(_stats)
+		_look.visible = false
 	col.add_child(_look)
 
 	_look.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
@@ -408,10 +409,18 @@ func _open_background() -> void:
 	background_requested.emit()
 
 
+## Размеры страниц выравниваются, только когда экран уже в сцене и надписи
+## перемерены пиксельным шрифтом темы — поэтому на кадр позже.
+func _ready() -> void:
+	if _stats != null:
+		_show_tab.call_deferred(_stats.visible)
+
+
 func _show_tab(stats: bool) -> void:
 	# Окно не прыгает: обе страницы одного размера — большего из двух.
-	var need := _look.get_combined_minimum_size().max(_stats.get_combined_minimum_size())
-	_look.custom_minimum_size = need
+	_look.custom_minimum_size = Vector2.ZERO
+	_stats.custom_minimum_size = Vector2.ZERO
+	var need := _look.get_combined_minimum_size().max(_stats.get_combined_minimum_size())	_look.custom_minimum_size = need
 	_stats.custom_minimum_size = need
 	_look.visible = not stats
 	_stats.visible = stats

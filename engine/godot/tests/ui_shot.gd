@@ -410,6 +410,8 @@ func _run_scenario() -> void:
 				editor.paint(i, 4, Color("fbf236"))
 			editor.paint(4, 4, Color("000000"))
 			editor.choose_colour("blue")
+			# Как щелчок по EMBLEM (после выравнивания страниц в _ready).
+			(func(): editor._show_tab.call_deferred(false)).call_deferred()
 		"profile_stats":
 			# Вкладка STATS: звание, рейтинг и выдуманная история партий. Профиль —
 			# отдельный файл, настоящий у владельца не трогается.
@@ -436,8 +438,6 @@ func _run_scenario() -> void:
 				PlayerProfile.add_totals(entry)
 			var stats_screen := ProfileScreen.new()
 			root.add_child(stats_screen)
-			# Как щелчок по вкладке: когда экран уже в сцене и размеры по шрифту темы.
-			stats_screen._show_tab.call_deferred(true)
 		"menu":
 			# Главное меню поверх партии (строка профиля с кнопками).
 			root.add_child(SetupScreen.new())
