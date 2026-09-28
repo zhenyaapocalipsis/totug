@@ -44,6 +44,10 @@ const STATS := {
 	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",
 	"return": "RETURN", "spy": "SPY", "spy_back": "SPY BACK", "trophy": "TROPHY",
 	"vp": "VP",
+	# доход с маркеров контроля и бонуса гекса A2 (решение владельца,
+	# 2026-09-28: игроки его не замечали)
+	"mark_influence": "MARK INF", "mark_vp": "MARK VP",
+	"a2_power": "A2 POWER", "a2_influence": "A2 INF", "a2_vp": "A2 VP",
 }
 ## Больше ходов не держим — самые старые уходят (сотни узлов ни к чему).
 const MAX_BLOCKS := 60
@@ -375,8 +379,17 @@ class Block extends PanelContainer:
 		(places[key] as Array).append_array(where)
 		var row: Array = _rows[key]
 		var label: Label = row[0]
-		label.text = ("+%d VP" % stats[key]) if key == "vp" \
-			else "%s %d" % [TurnFeed.STATS[key], stats[key]]
+		match key:
+			"vp":
+				label.text = "+%d VP" % stats[key]
+			"a2_vp":
+				label.text = "A2 +%d VP" % stats[key]
+			"mark_vp":
+				label.text = "MARK +%d VP" % stats[key]
+			"a2_power", "a2_influence", "mark_influence":
+				label.text = "%s +%d" % [TurnFeed.STATS[key], stats[key]]
+			_:
+				label.text = "%s %d" % [TurnFeed.STATS[key], stats[key]]
 		var marks: HBoxContainer = row[1]
 		# Квадратики — пока влезают в ширину карты рядом с подписью: иначе
 		# строка раздвинула бы колонку.
@@ -409,8 +422,12 @@ class Block extends PanelContainer:
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		var label := Label.new()
 		var colour := PixelTheme.TEXT_DIM
-		if key == "vp":
+		if key == "vp" or key == "a2_vp" or key == "mark_vp":
 			colour = PixelTheme.GOLD
+		elif key == "a2_power":
+			colour = GameScreen.POWER_COLOR
+		elif key == "a2_influence" or key == "mark_influence":
+			colour = GameScreen.INFLUENCE_COLOR
 		elif key == "kill":
 			colour = PixelTheme.DANGER
 		label.add_theme_color_override("font_color", colour)

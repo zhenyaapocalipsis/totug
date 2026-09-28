@@ -78,9 +78,10 @@ func _start_setup_if_needed() -> void:
 func apply_intent(intent: Intent) -> Dictionary:
 	resolver.events.clear()
 	var err: int = _apply(intent)
-	# Контроль над локацией с маркером мог появиться только что — Influence сразу.
+	# Контроль над локацией с маркером или ярус A2 мог появиться только что —
+	# Influence/Power сразу.
 	if err == Error.OK and _first_turn_started and not state.game_over:
-		TurnEngine.grant_marker_influence(state, state.current_player(), resolver)
+		TurnEngine.grant_control_income(state, state.current_player(), resolver)
 	return {
 		"error": err,
 		"events": resolver.events.duplicate(),

@@ -47,6 +47,10 @@ var played_aspects_this_turn: Array[String] = []
 ## Локации с маркером контроля, за которые текущий игрок уже получил Influence
 ## в этом ходу (TurnEngine.grant_marker_influence). Сбрасывается в start_turn.
 var marker_influence_paid: Array[String] = []
+## Power/Influence бонуса A2, уже выданные текущему игроку в этом ходу
+## (TurnEngine.grant_control_income): ярус вырос посреди хода — доплачивается
+## только разница. Сбрасывается в start_turn.
+var a2_paid := {"power": 0, "influence": 0}
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.

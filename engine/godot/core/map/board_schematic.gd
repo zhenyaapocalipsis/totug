@@ -105,7 +105,12 @@ const DIRS: Array[Vector2] = [
 ## Два поворота на 90° от направления: -1 и +1 по индексу DIRS.
 const SIGNS: Array[int] = [-1, 1]
 
-enum Kind { SITE, RING, PORT }
+enum Kind { SITE, RING, PORT, LEGEND }
+
+## Табличка ярусов бонуса A2 (BoardPanel рисует в ней три строки значков):
+## размер в пикселях схемы и имя узла внутри гекса.
+const A2_LEGEND := Vector2(42, 26)
+const A2_LEGEND_KEY := "a2_legend"
 
 const W_BEND := 12.0
 const W_LEN := 0.01
@@ -413,6 +418,23 @@ func _collect(graph: MapGraph, layout: Dictionary, hex_by_slot: Dictionary) -> v
 		var box := site_box(String(site["name"]), members.size(), ControlMarkers.is_marked(String(site["hex"]), String(site["name"])))
 		var home: Vector2 = _centre[hex] + to_schematic(sum / maxi(members.size(), 1))
 		_add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
+	# Табличка ярусов бонуса A2 — узел без туннелей рядом с его тремя
+	# городами: раскладка сама найдёт ей место, соседи и туннели её обходят.
+	var a2_homes := {}
+	for site_id: String in graph.sites.keys():
+		if ClusterBonus.SITE_NAMES.has(String(graph.sites[site_id]["name"])):
+			var hex_a2 := site_id.get_slice(":", 0)
+			if not a2_homes.has(hex_a2):
+				a2_homes[hex_a2] = []
+			(a2_homes[hex_a2] as Array).append(_home[_index[site_id]])
+	for hex_a2: String in a2_homes:
+		var homes: Array = a2_homes[hex_a2]
+		if homes.size() != ClusterBonus.SITE_NAMES.size():
+			continue
+		var centre := Vector2.ZERO
+		for h: Vector2 in homes:
+			centre += h
+		_add_node(hex_a2 + ":" + A2_LEGEND_KEY, Kind.LEGEND, hex_a2, centre / homes.size(), A2_LEGEND / 2.0)
 	for slot_id: String in graph.slots.keys():
 		if not graph.is_route_slot(slot_id):
 			continue
@@ -527,7 +549,7 @@ func _near_end(p: Vector2, n: int) -> bool:
 ## pass runs a few times.
 func _repair() -> void:
 	for _round in REPAIR_ROUNDS:
-		for kind in [Kind.RING, Kind.SITE]:
+		for kind in [Kind.RING, Kind.LEGEND, Kind.SITE]:
 			for n in _key.size():
 				if _kind[n] == kind and _crowded(n):
 					_step_aside(n)
@@ -1197,11 +1219,15 @@ func _export(state: GameState) -> Dictionary:
 	var sites := {}
 	var slots := {}
 	var rings := {}
+	var a2_legend: Array = []
 	for n in _key.size():
 		var at := _pos[n] + shift
 		if _kind[n] == Kind.RING:
 			rings[_key[n]] = [at.x, at.y]
 			slots[_key[n]] = {"x": at.x, "y": at.y}
+		elif _kind[n] == Kind.LEGEND:
+			var corner_l := at - _half[n]
+			a2_legend = [corner_l.x, corner_l.y, _half[n].x * 2.0, _half[n].y * 2.0]
 		elif _kind[n] == Kind.SITE:
 			var site: Dictionary = state.graph.sites[_key[n]]
 			var members := state.graph.slots_of_site(_key[n])
@@ -1258,4 +1284,6 @@ func _export(state: GameState) -> Dictionary:
 		# for checks and debugging: which nodes each trace joins, edge midpoints, hex centres
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres, "hexes": hexes,
 		"fallback_routes": _fallback_routes,
+		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет
+		"a2_legend": a2_legend,
 	}

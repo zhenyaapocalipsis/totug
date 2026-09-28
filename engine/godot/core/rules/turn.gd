@@ -33,39 +33,55 @@ const HAND_SIZE := 5
 static func start_turn(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
 	state.played_aspects_this_turn.clear()
 	state.ghost_market_player = ""
-	var p: PlayerState = state.players[player_id]
-	var bonus: ClusterBonus.Reward = ClusterBonus.evaluate(state, player_id)
-	p.power += bonus.power
-	p.influence += bonus.influence
 	# Маркеры контроля (A1, A3, B1-B6): +1 Influence за каждую контролируемую
-	# локацию с маркером. Тоже в начале хода — иначе сгорит, не успев пригодиться.
+	# локацию с маркером; бонус A2 — Power/Influence своего яруса. Тоже в начале
+	# хода — иначе сгорит, не успев пригодиться.
 	state.marker_influence_paid.clear()
-	var marker_influence: int = _pay_marker_influence(state, player_id)
-	if resolver != null and (bonus.power + bonus.influence + marker_influence) > 0:
-		resolver.log_event("turn_income", {
-			"player_id": player_id,
-			"a2_power": bonus.power,
-			"a2_influence": bonus.influence,
-			"marker_influence": marker_influence,
-		})
+	state.a2_paid = {"power": 0, "influence": 0}
+	_grant_income(state, player_id, resolver, true)
 
 
 ## Правило владельца игры (2026-09-24): Influence за локацию с маркером
 ## выдаётся СРАЗУ, как только игрок взял её под контроль посреди хода, а не
 ## только в начале следующего. Не чаще раза за ход на локацию
-## (state.marker_influence_paid). Зовётся после каждого действия игрока.
-static func grant_marker_influence(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
-	var gained: int = _pay_marker_influence(state, player_id)
-	if resolver != null and gained > 0:
+## (state.marker_influence_paid). То же для Power/Influence бонуса A2
+## (2026-09-28): ярус достигнут или вырос посреди хода — доплачивается
+## разница с уже выданным в этом ходу (state.a2_paid); ярус упал — ничего не
+## отнимается. Зовётся после каждого действия игрока.
+static func grant_control_income(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
+	_grant_income(state, player_id, resolver, false)
+
+
+static func _grant_income(state: GameState, player_id: String, resolver: EffectResolver, turn_start: bool) -> void:
+	var a2: Array[int] = _pay_a2(state, player_id)
+	var marker_sites: Array[String] = []
+	var marker_influence: int = _pay_marker_influence(state, player_id, marker_sites)
+	if resolver != null and (a2[0] + a2[1] + marker_influence) > 0:
 		resolver.log_event("turn_income", {
 			"player_id": player_id,
-			"a2_power": 0,
-			"a2_influence": 0,
-			"marker_influence": gained,
+			"turn_start": turn_start,
+			"a2_power": a2[0],
+			"a2_influence": a2[1],
+			"marker_influence": marker_influence,
+			"marker_site_ids": marker_sites,
 		})
 
 
-static func _pay_marker_influence(state: GameState, player_id: String) -> int:
+## Доплата бонуса A2 до уровня текущего яруса: [Power, Influence].
+static func _pay_a2(state: GameState, player_id: String) -> Array[int]:
+	var bonus: ClusterBonus.Reward = ClusterBonus.evaluate(state, player_id)
+	var power := maxi(0, bonus.power - int(state.a2_paid["power"]))
+	var influence := maxi(0, bonus.influence - int(state.a2_paid["influence"]))
+	state.a2_paid["power"] = int(state.a2_paid["power"]) + power
+	state.a2_paid["influence"] = int(state.a2_paid["influence"]) + influence
+	var p: PlayerState = state.players[player_id]
+	p.power += power
+	p.influence += influence
+	return [power, influence]
+
+
+## paid_sites — сюда дописываются локации, за которые заплачено сейчас.
+static func _pay_marker_influence(state: GameState, player_id: String, paid_sites: Array[String] = []) -> int:
 	var gained := 0
 	for site_id: String in ControlMarkers.marked_sites(state):
 		if state.marker_influence_paid.has(site_id):
@@ -73,6 +89,7 @@ static func _pay_marker_influence(state: GameState, player_id: String) -> int:
 		if state.control.controller_of(site_id, state.troops) != player_id:
 			continue
 		state.marker_influence_paid.append(site_id)
+		paid_sites.append(site_id)
 		gained += int(ControlMarkers.marker_for(state, site_id).get("control_influence", 0))
 	state.players[player_id].influence += gained
 	return gained
@@ -161,6 +178,7 @@ static func finish_end_of_turn(state: GameState, player_id: String, resolver: Ef
 			"player_id": player_id,
 			"markers": marker_reward.vp,
 			"marker_sites": marker_reward.total_control_sites,
+			"marker_site_ids": marker_reward.total_control_ids,
 			"cluster_bonus": bonus_vp,
 			"granted": granted,
 			"total_vp": p.vp_tokens,

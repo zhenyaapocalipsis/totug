@@ -984,6 +984,22 @@ func _note_recap(events: Array) -> void:
 			_feed.add_to_turn(String(evt.get("player_id", "")), String(evt.get("card_id", "")), "TO SUPPLY")
 		elif type == "turn_ended":
 			_feed.end_turn()
+		elif type == "turn_income":
+			var who := String(evt.get("player_id", ""))
+			_feed.add_stat(who, "mark_influence", int(evt.get("marker_influence", 0)), "",
+				_site_places(evt.get("marker_site_ids", [])))
+			_feed.add_stat(who, "a2_power", int(evt.get("a2_power", 0)), "", _a2_places())
+			_feed.add_stat(who, "a2_influence", int(evt.get("a2_influence", 0)), "", _a2_places())
+		elif type == "vp_income":
+			# VP бонуса A2 и маркеров — своими строками. Банк VP мог выдать
+			# меньше просимого: тогда сперва A2, потом маркеры.
+			var who_vp := String(evt.get("player_id", ""))
+			var granted := int(evt.get("granted", 0))
+			var a2_vp := mini(int(evt.get("cluster_bonus", 0)), granted)
+			var mark_vp := mini(int(evt.get("markers", 0)), granted - a2_vp)
+			_feed.add_stat(who_vp, "a2_vp", a2_vp, "", _a2_places())
+			_feed.add_stat(who_vp, "mark_vp", mark_vp, "", _site_places(evt.get("marker_site_ids", [])))
+			_feed.add_stat(who_vp, "vp", granted - a2_vp - mark_vp)
 		elif RECAP_STATS.has(type):
 			var stat: Array = RECAP_STATS[type]
 			var amount := 1
@@ -995,6 +1011,25 @@ func _note_recap(events: Array) -> void:
 			var mark := String(evt.get(stat[1], evt.get("owner", ""))) if stat[1] != "" else ""
 			_feed.add_stat(String(evt.get("player_id", "")), stat[0], amount, mark,
 				_event_places(evt))
+
+
+## Три города бонуса A2 как места доски ("site:<id>") — строки A2 в сводке
+## подсвечивают их. Пусто, если гекса A2 нет.
+func _a2_places() -> Array:
+	var places: Array = []
+	var sites: Dictionary = board_data.get("sites", {})
+	for site_id: String in sites:
+		if ClusterBonus.SITE_NAMES.has(String((sites[site_id] as Dictionary).get("name", ""))):
+			places.append("site:" + site_id)
+	return places
+
+
+## Локации по id как места доски ("site:<id>").
+static func _site_places(site_ids: Array) -> Array:
+	var places: Array = []
+	for site_id in site_ids:
+		places.append("site:" + String(site_id))
+	return places
 
 
 ## Где на доске было действие evt — для подсветки при наведении на строку
@@ -1026,7 +1061,7 @@ const RECAP_STATS := {
 	"place_spy": ["spy", ""],
 	"return_spy": ["spy_back", "spy_owner"], "return_own_spy": ["spy_back", "player_id"],
 	"take_trophy": ["trophy", ""],
-	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""], "vp_income": ["vp", ""],
+	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""],
 }
 
 

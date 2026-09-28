@@ -63,6 +63,7 @@ func _initialize() -> void:
 	test_game_server_two_end_of_turn_promotes()
 	test_game_server_end_of_game()
 	test_game_server_grants_a2_bonus()
+	test_a2_bonus_mid_turn()
 
 
 	# этап 7: настоящая партия и общие стопки
@@ -1695,6 +1696,45 @@ func test_game_server_grants_a2_bonus() -> void:
 			"%s: на следующем ходу бонус начислен снова (не накопился)" % tier[0])
 
 
+## Правило владельца (2026-09-28): ярус A2 достигнут посреди хода — Power и
+## Influence сразу, доплачивается только разница с уже выданным в этом ходу.
+func test_a2_bonus_mid_turn() -> void:
+	section("Бонус A2 посреди хода")
+	var state := GameState.new(_build_a2_graph(), 5)
+	state.add_player("red", [])
+	state.add_player("blue", [])
+	var server := GameServer.new(state)
+	var red: PlayerState = state.players["red"]
+	check_eq([red.power, red.influence], [0, 0], "в начале хода A2 пуст — ничего")
+	var steps := [
+		["troops", [0, 1], "войска во всех трёх: +1 Influence сразу"],
+		["control", [1, 1], "контроль всех трёх: доплата +1 Power (Influence уже выдан)"],
+		["total", [2, 2], "полный контроль: доплата до +2 Power, +2 Influence"],
+		["total", [2, 2], "тот же ярус повторно в этом ходу не платится"],
+		["none", [2, 2], "ярус потерян — выданное не отнимается"],
+	]
+	for step in steps:
+		for prefix in ["fogtown", "gallenghast", "darkflame"]:
+			for i in range(3):
+				state.troops.erase("%s_%d" % [prefix, i])
+			match step[0]:
+				"troops":
+					state.troops[prefix + "_0"] = "red"
+					state.troops[prefix + "_1"] = "blue"
+				"control":
+					state.troops[prefix + "_0"] = "red"
+					state.troops[prefix + "_1"] = "red"
+					state.troops[prefix + "_2"] = "blue"
+				"total":
+					for i in range(3):
+						state.troops["%s_%d" % [prefix, i]] = "red"
+		TurnEngine.grant_control_income(state, "red", server.resolver)
+		check_eq([red.power, red.influence], step[1], step[2])
+	server._apply(Intent.end_turn("red"))
+	server._apply(Intent.end_turn("blue"))
+	check_eq([red.power, red.influence], [0, 0], "следующий ход: выплаты хода сброшены, яруса нет — ничего")
+
+
 func test_game_server_end_of_game() -> void:
 	section("GameServer: конец партии по цепочке intent'ов")
 	var state := _build_rich_state(303)
@@ -2376,15 +2416,15 @@ func test_control_markers() -> void:
 	# Контроль взят посреди хода -> Influence сразу, но не больше раза за ход.
 	var site2: String = marked[1]
 	var before2: int = state.players["red"].influence
-	TurnEngine.grant_marker_influence(state, "red")
+	TurnEngine.grant_control_income(state, "red")
 	check_eq(state.players["red"].influence, before2, "без нового контроля Influence не растёт")
 	for slot_id in state.graph.slots_of_site(site2):
 		state.troops[String(slot_id)] = "red"
-	TurnEngine.grant_marker_influence(state, "red")
+	TurnEngine.grant_control_income(state, "red")
 	check_eq(state.players["red"].influence - before2,
 		int(ControlMarkers.marker_for(state, site2)["control_influence"]),
 		"новый контроль посреди хода сразу даёт Influence")
-	TurnEngine.grant_marker_influence(state, "red")
+	TurnEngine.grant_control_income(state, "red")
 	check_eq(state.players["red"].influence - before2,
 		int(ControlMarkers.marker_for(state, site2)["control_influence"]),
 		"повторно в тот же ход за ту же локацию не платится")

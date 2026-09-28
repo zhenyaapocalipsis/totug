@@ -117,7 +117,8 @@ const CAPTURE_TIME := 1.2
 const CONTROL_FILL := 0.3
 const CONTROL_FILL_TOTAL := 0.6
 ## Значки 5x5 столбика города с маркером контроля.
-const MARKER_DIAMOND := ["00100", "01110", "11111", "01110", "00100"]
+## Паутина — значок Influence на доске (города с маркером, табличка A2).
+const INFLUENCE_WEB := ["10101", "01110", "11011", "01110", "10101"]
 const MARKER_CROWN := ["10101", "10101", "11111", "11011", "11111"]
 
 ## Радиус кружка войска в МИРОВЫХ пикселях (печатные круги на арте примерно
@@ -1111,6 +1112,8 @@ func _draw() -> void:
 
 	_draw_control_fills()
 	_draw_marker_icons()
+	_draw_a2_frame()
+	_draw_a2_plate()
 
 	var slots := _slots()
 	var troops: Dictionary = _view.get("troops", {})
@@ -1216,7 +1219,7 @@ func _draw_marker_icons() -> void:
 		var lit: Color = PLAYER_COLORS.get(owner, SchematicPainter.INK)
 		var inf: Color = lit if owner != "" else SchematicPainter.INK
 		var vp: Color = lit if total.has(site_id) else SchematicPainter.INK
-		_draw_bits(tl, MARKER_DIAMOND, inf, px)
+		_draw_bits(tl, INFLUENCE_WEB, inf, px)
 		_draw_bits(tl + Vector2(6, 0) * px, PixelFontSmall.glyph("1"), inf, px)
 		_draw_bits(tl + Vector2(0, 6) * px, MARKER_CROWN, vp, px)
 		_draw_bits(tl + Vector2(6, 6) * px, PixelFontSmall.glyph(str(site.get("marker_vp", 0))), vp, px)
@@ -1232,7 +1235,184 @@ func _get_tooltip(at_position: Vector2) -> String:
 		var site: Dictionary = sites[site_id]
 		if bool(site.get("marker", false)) and (_site_rect(site_id) as Rect2).grow(1.0).has_point(world):
 			return _marker_hint(site_id, site)
+	var a2 := _a2_rect()
+	if a2.has_area() and a2.has_point(world):
+		return _a2_hint()
 	return ""
+
+
+# --- бонус гекса A2 -------------------------------------------------------------
+# Решение владельца (2026-09-28): пунктирная рамка вокруг трёх городов и
+# таблички ярусов, в цвет того, кто контролирует все три; подсказка при
+# наведении.
+
+## Три города бонуса A2: [site_id], пусто, если гекса нет на доске.
+func _a2_sites() -> Array[String]:
+	var result: Array[String] = []
+	if not _schematic_on():
+		return result
+	var sites: Dictionary = (_board["schematic"] as Dictionary).get("sites", {})
+	for site_id: String in sites:
+		if ClusterBonus.SITE_NAMES.has(String((sites[site_id] as Dictionary).get("name", ""))):
+			result.append(site_id)
+	return result if result.size() == ClusterBonus.SITE_NAMES.size() else ([] as Array[String])
+
+
+## Рамка вокруг трёх городов A2 и таблички ярусов, в мировых координатах.
+func _a2_rect() -> Rect2:
+	var ids := _a2_sites()
+	if ids.is_empty():
+		return Rect2()
+	var r := _site_rect(ids[0]) as Rect2
+	for site_id in ids:
+		r = r.merge(_site_rect(site_id) as Rect2)
+	var plate := _a2_plate()
+	if plate.has_area():
+		r = r.merge(plate)
+	return r.grow(3.0)
+
+
+## Табличка ярусов A2: 3 строки «уровень + награды».
+const A2_BARS := [
+	["00000", "00000", "00000", "10000", "10000"],
+	["00000", "00000", "00100", "10100", "10100"],
+	["00001", "00001", "00101", "10101", "10101"],
+]
+const A2_SWORD := ["00100", "00100", "00100", "01110", "00100"]
+## Награды ярусов: [значок, число].
+const A2_ROWS := [
+	[["influence", 1]],
+	[["influence", 1], ["power", 1], ["vp", 1]],
+	[["influence", 2], ["power", 2], ["vp", 4]],
+]
+
+
+## Место таблички — узел раскладки схемы (BoardSchematic.A2_LEGEND): соседи
+## и туннели её уже обходят. Пусто, если гекса A2 нет.
+func _a2_plate() -> Rect2:
+	if not _schematic_on():
+		return Rect2()
+	var r: Array = (_board["schematic"] as Dictionary).get("a2_legend", [])
+	if r.size() != 4:
+		return Rect2()
+	return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
+
+
+## Табличка без подложки и рамки: значки и цифры белые, строка яруса,
+## который сейчас у кого-то есть, — в цвет этого игрока.
+func _draw_a2_plate() -> void:
+	var plate := _a2_plate()
+	if not plate.has_area():
+		return
+	var tier := _a2_tier()
+	var holder := String((tier[1] as Array)[0]) if not (tier[1] as Array).is_empty() else ""
+	var px := _zoom
+	var scale := window_scale()
+	var tl := (_to_screen(plate.position) * scale).round() / scale
+	for row in 3:
+		var lit := int(tier[0]) == row + 1 and holder != ""
+		var ink: Color = PLAYER_COLORS.get(holder, Color.WHITE) if lit else Color.WHITE
+		var at := tl + Vector2(3, 3 + row * 7) * px
+		_draw_bits(at, A2_BARS[row], ink, px)
+		var x := 7
+		for reward: Array in (A2_ROWS[row] as Array):
+			var icon: Array = INFLUENCE_WEB
+			if reward[0] == "power":
+				icon = A2_SWORD
+			elif reward[0] == "vp":
+				icon = MARKER_CROWN
+			_draw_bits(at + Vector2(x, 0) * px, icon, ink, px)
+			_draw_bits(at + Vector2(x + 6, 0) * px, PixelFontSmall.glyph(str(reward[1])), ink, px)
+			x += 10
+
+
+## Кто сейчас держит ярус A2: [ярус, игроки]. Ярус: 3 полный контроль,
+## 2 контроль всех трёх, 1 войска во всех трёх, 0 никто.
+func _a2_tier() -> Array:
+	var ids := _a2_sites()
+	var control: Dictionary = _view.get("site_control", {})
+	var total: Array = _view.get("site_total_control", [])
+	var owner := String(control.get(ids[0], ""))
+	var all_same := owner != ""
+	var all_total := true
+	for site_id in ids:
+		if String(control.get(site_id, "")) != owner:
+			all_same = false
+		if not total.has(site_id):
+			all_total = false
+	if all_same:
+		return [3 if all_total else 2, [owner]]
+	var troops: Dictionary = _view.get("troops", {})
+	var present := {}
+	var sites: Dictionary = (_board["schematic"] as Dictionary)["sites"]
+	var everywhere: Array = []
+	for i in ids.size():
+		var here := {}
+		for slot_id: String in ((sites[ids[i]] as Dictionary)["slots"] as Dictionary):
+			var who := String(troops.get(slot_id, ""))
+			if who != "" and who != GameState.WHITE:
+				here[who] = true
+		for who: String in here:
+			present[who] = int(present.get(who, 0)) + 1
+	for who: String in present:
+		if int(present[who]) == ids.size():
+			everywhere.append(who)
+	return [1 if not everywhere.is_empty() else 0, everywhere]
+
+
+## Пунктирная рамка: золотая, у держателя яруса «контроль» и выше — в его цвет.
+func _draw_a2_frame() -> void:
+	var r := _a2_rect()
+	if not r.has_area():
+		return
+	var tier := _a2_tier()
+	var colour: Color = SchematicPainter.MARKER_EDGE
+	if int(tier[0]) >= 2:
+		colour = PLAYER_COLORS.get(String((tier[1] as Array)[0]), colour)
+	var px := _zoom
+	var scale := window_scale()
+	var tl := (_to_screen(r.position) * scale).round() / scale
+	var w := int(r.size.x)
+	var h := int(r.size.y)
+	# Чужой город у края рамки: пунктир под его коробкой не рисуется.
+	var foreign: Array[Rect2] = []
+	var ids := _a2_sites()
+	for site_id: String in ((_board["schematic"] as Dictionary).get("sites", {}) as Dictionary):
+		var box := (_site_rect(site_id) as Rect2).grow(1.0)
+		if not ids.has(site_id) and box.intersects(r):
+			foreign.append(box)
+	var dots: Array[Vector2] = []
+	for x in w:
+		if (x / 3) % 2 == 0:
+			dots.append(Vector2(x, 0))
+			dots.append(Vector2(x, h - 1))
+	for y in h:
+		if (y / 3) % 2 == 0:
+			dots.append(Vector2(0, y))
+			dots.append(Vector2(w - 1, y))
+	for d in dots:
+		var world := r.position + d + Vector2(0.5, 0.5)
+		if foreign.any(func(b: Rect2) -> bool: return b.has_point(world)):
+			continue
+		draw_rect(Rect2(tl + d * px, Vector2(px, px)), colour)
+
+
+func _a2_hint() -> String:
+	var tier := _a2_tier()
+	var names: Array = []
+	for who in (tier[1] as Array):
+		names.append(EventLogPanel.player_name(String(who)))
+	var now := "nobody"
+	match int(tier[0]):
+		3: now = "%s — total control of all 3" % names[0]
+		2: now = "%s — control of all 3" % names[0]
+		1: now = "%s — troops in all 3" % ", ".join(names)
+	return "\n".join(["A2 BONUS: FOGTOWN, GALLENGHAST, DARKFLAME",
+		"Troops in all 3: +1 Influence",
+		"Control all 3: +1 Influence, +1 Power, +1 VP",
+		"Total control of all 3: +2 Influence, +2 Power, +4 VP",
+		"Influence and Power at the start of your turn, VP at its end",
+		"Now: " + now])
 
 
 func _marker_hint(site_id: String, site: Dictionary) -> String:

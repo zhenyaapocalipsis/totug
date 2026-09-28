@@ -34,6 +34,9 @@ class Reward:
 	var sites: Array[String] = []
 	## Из них — под тотальным контролем.
 	var total_control_sites: Array[String] = []
+	## Те же локации тотального контроля, но id — ленте ходов, чтобы
+	## подсвечивать их на доске.
+	var total_control_ids: Array[String] = []
 
 
 static func _load() -> Array:
@@ -80,6 +83,7 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 		if state.control.has_total_control(player_id, site_id, state.troops, state.spies):
 			reward.vp += int(marker.get("total_control_vp", 0))
 			reward.total_control_sites.append(site_name)
+			reward.total_control_ids.append(site_id)
 	return reward
 
 
