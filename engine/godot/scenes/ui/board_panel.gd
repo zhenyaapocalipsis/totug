@@ -1272,11 +1272,12 @@ func _a2_rect() -> Rect2:
 	return r.grow(3.0)
 
 
-## Табличка ярусов A2: 3 строки «уровень + награды».
-const A2_BARS := [
-	["00000", "00000", "00000", "10000", "10000"],
-	["00000", "00000", "00100", "10100", "10100"],
-	["00001", "00001", "00101", "10101", "10101"],
+## Табличка ярусов A2: 3 строки «уровень + награды». Уровень — 1, 2 или 3
+## точки 2x2 (решение владельца, 2026-09-28).
+const A2_DOTS := [
+	["00000000", "11000000", "11000000", "00000000", "00000000"],
+	["00000000", "11011000", "11011000", "00000000", "00000000"],
+	["00000000", "11011011", "11011011", "00000000", "00000000"],
 ]
 const A2_SWORD := ["00100", "00100", "00100", "01110", "00100"]
 ## Награды ярусов: [значок, число].
@@ -1298,23 +1299,28 @@ func _a2_plate() -> Rect2:
 	return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
 
 
-## Табличка без подложки и рамки: значки и цифры белые, строка яруса,
-## который сейчас у кого-то есть, — в цвет этого игрока.
+## Табличка без подложки и рамки: значки и цифры белые. Строки 2 и 3
+## (контроль, полный контроль) — в цвет того, кто их держит. Строка 1
+## (войска во всех трёх) бывает у нескольких игроков сразу: у одного —
+## в его цвет, у нескольких — белая, а справа квадратики их цветов.
 func _draw_a2_plate() -> void:
 	var plate := _a2_plate()
 	if not plate.has_area():
 		return
-	var tier := _a2_tier()
-	var holder := String((tier[1] as Array)[0]) if not (tier[1] as Array).is_empty() else ""
+	var state := _a2_state()
+	var troopers: Array = state["troopers"]
 	var px := _zoom
 	var scale := window_scale()
 	var tl := (_to_screen(plate.position) * scale).round() / scale
 	for row in 3:
-		var lit := int(tier[0]) == row + 1 and holder != ""
-		var ink: Color = PLAYER_COLORS.get(holder, Color.WHITE) if lit else Color.WHITE
+		var ink := Color.WHITE
+		if row == 0 and troopers.size() == 1:
+			ink = PLAYER_COLORS.get(String(troopers[0]), ink)
+		elif row > 0 and int(state["tier"]) == row + 1:
+			ink = PLAYER_COLORS.get(String(state["holder"]), ink)
 		var at := tl + Vector2(3, 3 + row * 7) * px
-		_draw_bits(at, A2_BARS[row], ink, px)
-		var x := 7
+		_draw_bits(at, A2_DOTS[row], ink, px)
+		var x := 10
 		for reward: Array in (A2_ROWS[row] as Array):
 			var icon: Array = INFLUENCE_WEB
 			if reward[0] == "power":
@@ -1324,11 +1330,18 @@ func _draw_a2_plate() -> void:
 			_draw_bits(at + Vector2(x, 0) * px, icon, ink, px)
 			_draw_bits(at + Vector2(x + 6, 0) * px, PixelFontSmall.glyph(str(reward[1])), ink, px)
 			x += 10
+		if row == 0 and troopers.size() > 1:
+			for i in troopers.size():
+				draw_rect(Rect2(at + Vector2(x + 1 + i * 4, 1) * px, Vector2(3, 3) * px),
+					PLAYER_COLORS.get(String(troopers[i]), Color.WHITE))
 
 
-## Кто сейчас держит ярус A2: [ярус, игроки]. Ярус: 3 полный контроль,
-## 2 контроль всех трёх, 1 войска во всех трёх, 0 никто.
-func _a2_tier() -> Array:
+## Кто сейчас что получает с A2:
+##   tier   — 3 полный контроль, 2 контроль всех трёх, 0 ни то ни другое;
+##   holder — чей это контроль (один игрок или "");
+##   troopers — у кого войска во всех трёх, кроме holder (он получает свой,
+##              старший ярус): им ярус 1, их может быть несколько.
+func _a2_state() -> Dictionary:
 	var ids := _a2_sites()
 	var control: Dictionary = _view.get("site_control", {})
 	var total: Array = _view.get("site_total_control", [])
@@ -1340,35 +1353,35 @@ func _a2_tier() -> Array:
 			all_same = false
 		if not total.has(site_id):
 			all_total = false
-	if all_same:
-		return [3 if all_total else 2, [owner]]
+	var holder := owner if all_same else ""
 	var troops: Dictionary = _view.get("troops", {})
 	var present := {}
 	var sites: Dictionary = (_board["schematic"] as Dictionary)["sites"]
-	var everywhere: Array = []
-	for i in ids.size():
+	for site_id in ids:
 		var here := {}
-		for slot_id: String in ((sites[ids[i]] as Dictionary)["slots"] as Dictionary):
+		for slot_id: String in ((sites[site_id] as Dictionary)["slots"] as Dictionary):
 			var who := String(troops.get(slot_id, ""))
 			if who != "" and who != GameState.WHITE:
 				here[who] = true
 		for who: String in here:
 			present[who] = int(present.get(who, 0)) + 1
+	var troopers: Array = []
 	for who: String in present:
-		if int(present[who]) == ids.size():
-			everywhere.append(who)
-	return [1 if not everywhere.is_empty() else 0, everywhere]
+		if int(present[who]) == ids.size() and who != holder:
+			troopers.append(who)
+	troopers.sort()
+	return {"tier": (3 if all_total else 2) if all_same else 0, "holder": holder, "troopers": troopers}
 
 
-## Пунктирная рамка: золотая, у держателя яруса «контроль» и выше — в его цвет.
+## Пунктирная рамка: золотая, у держателя контроля всех трёх — в его цвет.
 func _draw_a2_frame() -> void:
 	var r := _a2_rect()
 	if not r.has_area():
 		return
-	var tier := _a2_tier()
+	var state := _a2_state()
 	var colour: Color = SchematicPainter.MARKER_EDGE
-	if int(tier[0]) >= 2:
-		colour = PLAYER_COLORS.get(String((tier[1] as Array)[0]), colour)
+	if int(state["tier"]) >= 2:
+		colour = PLAYER_COLORS.get(String(state["holder"]), colour)
 	var px := _zoom
 	var scale := window_scale()
 	var tl := (_to_screen(r.position) * scale).round() / scale
@@ -1398,21 +1411,24 @@ func _draw_a2_frame() -> void:
 
 
 func _a2_hint() -> String:
-	var tier := _a2_tier()
-	var names: Array = []
-	for who in (tier[1] as Array):
+	var state := _a2_state()
+	var now: Array[String] = []
+	match int(state["tier"]):
+		3: now.append("%s — total control of all 3" % EventLogPanel.player_name(String(state["holder"])))
+		2: now.append("%s — control of all 3" % EventLogPanel.player_name(String(state["holder"])))
+	var names: Array[String] = []
+	for who in (state["troopers"] as Array):
 		names.append(EventLogPanel.player_name(String(who)))
-	var now := "nobody"
-	match int(tier[0]):
-		3: now = "%s — total control of all 3" % names[0]
-		2: now = "%s — control of all 3" % names[0]
-		1: now = "%s — troops in all 3" % ", ".join(names)
+	if not names.is_empty():
+		now.append("%s — troops in all 3" % ", ".join(names))
+	if now.is_empty():
+		now.append("nobody")
 	return "\n".join(["A2 BONUS: FOGTOWN, GALLENGHAST, DARKFLAME",
 		"Troops in all 3: +1 Influence",
 		"Control all 3: +1 Influence, +1 Power, +1 VP",
 		"Total control of all 3: +2 Influence, +2 Power, +4 VP",
-		"Influence and Power at the start of your turn, VP at its end",
-		"Now: " + now])
+		"Paid as soon as reached: Influence and Power at once, VP at the end of the turn",
+		"Now: " + "; ".join(now)])
 
 
 func _marker_hint(site_id: String, site: Dictionary) -> String:
