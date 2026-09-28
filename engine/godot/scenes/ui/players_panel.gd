@@ -6,9 +6,10 @@ extends PanelContainer
 ## сыгранные карты и так видны в сводке ходов слева).
 ##
 ## Таблица: по две строки на игрока в порядке хода (первый блок — первый
-## игрок). Первая строка — фишка с эмблемой, ник и числа, вторая — зал трофеев
-## под ником: колонка шириной в рынок (две мелкие карты), и трофеи в одну
-## строку с числами не влезают. Ходящий — блок на светлой подложке. Скрытых
+## игрок). Первая строка — фишка с эмблемой и ник, вторая — все цифры игрока
+## в одну линию (владелец, 2026-09-28): числа по столбцам шапки и за ними зал
+## трофеев. Колонка шириной в рынок (две мелкие карты), и ник с цифрами в одну
+## строку не влезает. Ходящий — блок на светлой подложке. Скрытых
 ## сведений нет: рука и сброс противника — только числом карт (так их и
 ## отдаёт StateView). Зал трофеев — по цифре на каждый цвет убитых фишек, цифра
 ## того же цвета. Вопрос стартовой расстановки — строкой над доской
@@ -22,16 +23,15 @@ const COLUMNS: Array[Array] = [
 	["discard_size", "DS", "Cards in discard pile"],
 	["inner_circle", "IC", "Cards in Inner Circle"],
 ]
-## Фишка войска с эмблемой (9 пикселей и 2 отступа); нику — всё, что левее
-## чисел (при ширине рынка 74 пикселя, ник PlayerProfile.NAME_MAX = 12 знаков
-## по 6). Числовой столбец — 2 знака.
+## Фишка войска с эмблемой (9 пикселей и 2 отступа); строка цифр начинается
+## от левого края ника. Числовой столбец — 2 знака.
 const TOKEN_W := 11.0
 const NUM_W := 12.0
 const COL_GAP := 3
-## Подпись «HALL» перед цифрами зала: 4 знака по 6 пикселей и промежуток
-## в 3 пикселя, как между цифрами (владелец, 2026-09-28).
-const HALL_LABEL_W := 27.0
-## Строка трофеев наезжает на пустой низ строки чисел: глиф 7 пикселей в
+## Лишний зазор перед залом трофеев: иначе последняя цифра IC читается как
+## первая цифра зала.
+const HALL_GAP := 3.0
+## Строка цифр наезжает на пустой низ строки ника: глиф 7 пикселей в
 ## строке 11, так четыре блока с шапкой влезают над рынком.
 const LINE_OVERLAP := 2
 ## Сколько пикселей от правого края панели до конца видимой части таблицы
@@ -68,16 +68,17 @@ func _init() -> void:
 	_list.add_theme_constant_override("separation", 0)
 	add_child(_list)
 
-	# Шапка — над числами первой строки блока: та же ширина столбцов справа.
-	var head_row := HBoxContainer.new()
-	head_row.add_theme_constant_override("separation", COL_GAP)
+	# Шапка — над строкой чисел: те же отступ и ширины столбцов.
+	var head_row := _numbers_row()
 	_list.add_child(head_row)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head_row.add_child(spacer)
 	for column: Array in COLUMNS:
 		head_row.add_child(_head(String(column[1]), String(column[2]), NUM_W,
 			HORIZONTAL_ALIGNMENT_RIGHT))
+	var hall_head := _head("HALL", "Trophy hall: killed troops, a number per colour",
+		0.0, HORIZONTAL_ALIGNMENT_LEFT)
+	hall_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head_row.add_child(_hall_gap())
+	head_row.add_child(hall_head)
 
 	# Слой кнопок выбора: PanelContainer растягивает его на всю панель, кнопки
 	# внутри стоят по месту строк (_place_choice).
@@ -114,15 +115,11 @@ func _add_row(pid: String) -> void:
 	var lines := VBoxContainer.new()
 	lines.add_theme_constant_override("separation", -LINE_OVERLAP)
 	block.add_child(lines)
-	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", COL_GAP)
-	lines.add_child(line)
-	# Ячейка имени: фишка войска с эмблемой игрока (как на доске, решение
+	# Первая строка: фишка войска с эмблемой игрока (как на доске, решение
 	# владельца 2026-09-27) и ник.
 	var name_cell := HBoxContainer.new()
-	name_cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_cell.add_theme_constant_override("separation", 0)
-	line.add_child(name_cell)
+	lines.add_child(name_cell)
 	var token := TextureRect.new()
 	token.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 	# Заглавные пиксельного шрифта сидят выше середины строки — фишку
@@ -139,29 +136,36 @@ func _add_row(pid: String) -> void:
 	# Щелчок по имени — карточка игрока (звание, рейтинг, партии).
 	ProfileCard.attach(name_label, pid, func(): return (PlayerProfile.seats.get(pid, {}) as Dictionary))
 	name_cell.add_child(name_label)
+	# Вторая строка — все цифры игрока в одну линию: числа по столбцам шапки,
+	# за ними зал трофеев (владелец, 2026-09-28).
+	var numbers := _numbers_row()
+	lines.add_child(numbers)
 	var values: Dictionary = {}
 	for column: Array in COLUMNS:
 		var value := _cell("0", NUM_W, PixelTheme.TEXT, HORIZONTAL_ALIGNMENT_RIGHT)
-		line.add_child(value)
+		numbers.add_child(value)
 		values[String(column[0])] = value
-	# Вторая строка — зал трофеев, от левого края ника.
-	var trophy_line := HBoxContainer.new()
-	trophy_line.add_theme_constant_override("separation", 0)
-	lines.add_child(trophy_line)
-	var indent := Control.new()
-	indent.custom_minimum_size = Vector2(TOKEN_W, 0)
-	indent.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	trophy_line.add_child(indent)
-	trophy_line.add_child(_head("HALL", "Trophy hall: killed troops, a number per colour",
-		HALL_LABEL_W, HORIZONTAL_ALIGNMENT_LEFT))
 	var trophies := HBoxContainer.new()
 	trophies.add_theme_constant_override("separation", 3)
 	trophies.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	trophies.clip_contents = true
 	trophies.mouse_filter = Control.MOUSE_FILTER_STOP
-	trophy_line.add_child(trophies)
+	numbers.add_child(_hall_gap())
+	numbers.add_child(trophies)
 	_rows[pid] = {"block": block, "name": name_label, "token": token, "token_key": null,
 		"values": values, "trophies": trophies}
+
+
+## Строка столбцов (шапка или цифры игрока): от левого края ника, столбцы
+## через COL_GAP. Отступ меньше фишки на промежуток — его добавляет ряд.
+static func _numbers_row() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", COL_GAP)
+	var indent := Control.new()
+	indent.custom_minimum_size = Vector2(TOKEN_W - COL_GAP, 0)
+	indent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(indent)
+	return row
 
 
 ## Цифра трофея: без обрезки — с clip_text ширина Label схлопывается в ноль.
@@ -275,7 +279,8 @@ func update_from_view(view: Dictionary) -> void:
 	# раздвигается под числа и уходит за край панели (там её обрезает), а
 	# раскладки на момент обновления ещё может не быть.
 	var small := false
-	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - TOKEN_W - HALL_LABEL_W
+	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - TOKEN_W - (NUM_W + COL_GAP) * COLUMNS.size() \
+		- HALL_GAP - COL_GAP
 	for pid: String in _rows:
 		var box: HBoxContainer = _rows[pid]["trophies"]
 		if size.x > 0.0 and box.get_combined_minimum_size().x > room:
@@ -383,3 +388,11 @@ func _place_choice() -> void:
 		(pair[0] as Button).position = r.position - origin
 		(pair[0] as Button).size = r.size
 
+
+
+## Промежуток перед залом трофеев в строке столбцов (HALL_GAP плюс COL_GAP ряда).
+static func _hall_gap() -> Control:
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(HALL_GAP, 0)
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return gap
