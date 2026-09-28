@@ -2,7 +2,7 @@ class_name PingLayer
 extends Control
 
 ## Метки пингов (короткое нажатие Tab, решение владельца, 2026-09-29): под
-## курсором трижды расходится кольцо цвета игрока, в центре — точка. Слой
+## курсором трижды расходится кольцо цвета игрока, в центре — кружок. Слой
 ## поверх экрана, мышь не ловит.
 
 const LIFE := 1.8
@@ -51,5 +51,6 @@ func _draw() -> void:
 		draw_arc(pos, r, 0.0, TAU, 32, Color(PixelTheme.BG, 0.8 * (1.0 - k)), 3.0, false)
 		draw_arc(pos, r, 0.0, TAU, 32, Color(colour, 1.0 - k), 1.0, false)
 		var fade := clampf((LIFE - t) / 0.3, 0.0, 1.0)
-		draw_rect(Rect2(pos - Vector2.ONE * (DOT + 1.0), Vector2.ONE * (DOT * 2.0 + 2.0)), Color(PixelTheme.BG, fade))
-		draw_rect(Rect2(pos - Vector2.ONE * DOT, Vector2.ONE * DOT * 2.0), Color(colour, fade))
+		# Центр — кружок в тёмной обводке (владелец, 2026-09-29: пинг круглый).
+		draw_circle(pos, DOT + 1.0, Color(PixelTheme.BG, fade), true, -1.0, false)
+		draw_circle(pos, DOT, Color(colour, fade), true, -1.0, false)
