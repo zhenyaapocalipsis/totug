@@ -54,6 +54,9 @@ func _initialize() -> void:
 				decks.append(name)
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
+		elif arg.begins_with("--bg="):
+			# Фон только для снимка: в профиль игрока не записывается.
+			(load("res://scenes/ui/underdark_bg.gd") as GDScript).set("_style", arg.get_slice("=", 1))
 
 	# Окно ровно в расчётный размер: тогда сцена рисуется пиксель в пиксель
 	# и снимок не приходится пересчитывать. С --scale=N окно во столько же раз
@@ -121,6 +124,9 @@ func _run_scenario() -> void:
 				for i_r in st.turn_order.size():
 					fake[st.turn_order[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r}
 				_screen._game_over_panel.set_ratings(fake)
+		"esc_menu":
+			# Меню по Esc поверх партии (там же выбор фона).
+			_screen._pause_menu.visible = true
 		"paused":
 			# Плашка паузы сетевой партии: один отключился, другой поставил
 			# общую паузу. Связь не нужна — экрану хватает того, что она есть.

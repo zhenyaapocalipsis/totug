@@ -1,13 +1,15 @@
 class_name PauseMenu
 extends Control
 
-## Меню по Esc во время партии: вернуться в главное меню или выйти из игры.
+## Меню по Esc во время партии: вернуться в главное меню, сменить фон или
+## выйти из игры.
 ## Повторный Esc (или RESUME) закрывает. Пока меню открыто, щелчки до игры под
 ## ним не доходят, а таймер хода стоит (GameScreen._process).
 
 signal main_menu_requested
 
 const BUTTON_SIZE := Vector2(110, 16)
+const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 var _col: VBoxContainer
 
@@ -46,6 +48,12 @@ func _init() -> void:
 
 	col.add_child(_button("RESUME", func(): visible = false))
 	col.add_child(_button("MAIN MENU", func(): main_menu_requested.emit()))
+	# Фон по кругу — тот же выбор, что в главном меню (UnderdarkBg.set_style).
+	var bg := _button(UnderdarkBg.button_text(), func(): pass)
+	bg.pressed.connect(func():
+		UnderdarkBg.set_style(UnderdarkBg.next_style())
+		bg.text = UnderdarkBg.button_text())
+	col.add_child(bg)
 	col.add_child(_button("QUIT GAME", func(): get_tree().quit()))
 	_col = col
 

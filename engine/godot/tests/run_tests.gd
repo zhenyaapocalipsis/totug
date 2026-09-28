@@ -2879,6 +2879,36 @@ func test_background_palette() -> void:
 		check_eq(colours.size(), 2, "%s: две краски" % [bad])
 		check(colours[0] != colours[1], "%s: краски разные" % [bad])
 
+	# Выбор фона (решение владельца, 2026-09-28): хранится в профиле,
+	# кнопка листает по кругу, сменили — перекрашены задники на экране.
+	var old_path := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://profile_bg_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	Bg._style = ""
+	check_eq(Bg.style(), "classic", "по умолчанию — CLASSIC")
+	check_eq(Bg.button_text(), "BACKGROUND: CLASSIC", "надпись кнопки")
+	# Дерево сцены в тестах не запущено, так что перекраску группы set_style
+	# здесь не увидеть: проверяем, что задник в группе, и красим его напрямую.
+	var rect: ColorRect = Bg.make(Bg.GAME_FADE)
+	check(rect.is_in_group(Bg.GROUP), "задник записан в группу для перекраски")
+	Bg.set_style(Bg.next_style())
+	check_eq(Bg.style(), "black", "кнопка: следующий — BLACK")
+	Bg._paint(rect)
+	check_eq(rect.color, Color(0, 0, 0), "BLACK — чёрная заливка")
+	Bg.set_style("orange")
+	Bg._paint(rect)
+	check_eq(rect.color, Color("df7126"), "ORANGE IS NEW BLACK — оранжевый, и в партии не гаснет")
+	Bg._style = ""
+	check_eq(Bg.style(), "orange", "выбор сохранён в профиле")
+	Bg.set_style("xp")
+	check_eq(Bg.next_style(), "classic", "после WINDOWS XP — снова CLASSIC")
+	Bg.set_style("nonsense")
+	check_eq(Bg.style(), "classic", "неизвестный фон — CLASSIC")
+	rect.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.path_override = old_path
+	Bg._style = ""
+
 	# Режимы: сколько полуколод — столько красок; DOUBLE — два оттенка одной.
 	for mode: String in ["random4", "random6"]:
 		var st := GameSetup.new_game(["red", "blue"], 3, [], false, false, false, mode)
