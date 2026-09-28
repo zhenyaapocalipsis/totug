@@ -258,6 +258,48 @@ static func save_local(profile: Dictionary) -> int:
 	return cfg.save(path())
 
 
+## Колесо чата (Tab зажат): фразы по сторонам — вверх, вправо, вниз, влево
+## (решение владельца, 2026-09-29: 4 фразы до 30 знаков). Правятся в профиле,
+## хранятся только у игрока; в партию уходит сам текст выбранной фразы.
+const PHRASE_COUNT := 4
+const PHRASE_MAX := 30
+const DEFAULT_PHRASES: Array[String] = ["Well played!", "Thinking...", "Oops!", "Good luck, have fun!"]
+
+
+## Только знаки пиксельного шрифта (ASCII без ^ ` {), не длиннее PHRASE_MAX.
+static func clean_phrase(text: String) -> String:
+	var out := ""
+	for ch in text:
+		var c := ch.unicode_at(0)
+		if c >= 32 and c <= 124 and c != 94 and c != 96 and c != 123:
+			out += ch
+	return out.strip_edges().left(PHRASE_MAX).strip_edges()
+
+
+## Свои фразы колеса; пустая — фраза по умолчанию на её месте.
+static func load_phrases() -> Array[String]:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	var saved: Variant = cfg.get_value("chat", "phrases", [])
+	var out: Array[String] = []
+	for i in PHRASE_COUNT:
+		var text := ""
+		if saved is Array and i < (saved as Array).size():
+			text = clean_phrase(str((saved as Array)[i]))
+		out.append(text if text != "" else DEFAULT_PHRASES[i])
+	return out
+
+
+static func save_phrases(phrases: Array) -> int:
+	var clean_list: Array[String] = []
+	for i in PHRASE_COUNT:
+		clean_list.append(clean_phrase(str(phrases[i])) if i < phrases.size() else "")
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	cfg.set_value("chat", "phrases", clean_list)
+	return cfg.save(path())
+
+
 ## Рубашку сохраняет свой экран (CardBackScreen), отдельно от имени и герба.
 static func save_back(back: String) -> int:
 	var cfg := ConfigFile.new()

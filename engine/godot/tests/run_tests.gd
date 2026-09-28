@@ -99,6 +99,7 @@ func _initialize() -> void:
 	# сеть
 	test_public_address_check()
 	test_player_profile()
+	test_chat_wheel_and_ping()
 	test_card_back()
 	test_how_to_play()
 	test_main_menu()
@@ -3059,6 +3060,75 @@ func test_player_profile() -> void:
 	check_eq(EventLogPanel.player_name("blue"), "Vizeran", "имя из профиля в журнале")
 	check_eq(EventLogPanel.player_name("red"), "Red", "без профиля — имя цвета")
 	PlayerProfile.seats = {}
+
+
+func test_chat_wheel_and_ping() -> void:
+	section("колесо чата и пинг (Tab)")
+	check_eq(PlayerProfile.clean_phrase("  Hi^ the`re{}~  "), "Hi there", "фраза: только знаки шрифта")
+	check_eq(PlayerProfile.clean_phrase("x".repeat(50)).length(), PlayerProfile.PHRASE_MAX, "фраза не длиннее 30")
+	check_eq(PlayerProfile.save_phrases(["Go!", "", "Nice   one"]), OK, "фразы сохраняются")
+	check_eq(PlayerProfile.load_phrases(),
+		["Go!", PlayerProfile.DEFAULT_PHRASES[1], "Nice   one", PlayerProfile.DEFAULT_PHRASES[3]] as Array[String],
+		"пустая или недостающая фраза — фраза по умолчанию")
+
+	var times: Array = []
+	check(NetSession.rate_ok(times, 0) and NetSession.rate_ok(times, 1000) and NetSession.rate_ok(times, 2000),
+		"три пинга подряд можно")
+	check(not NetSession.rate_ok(times, 4999), "четвёртый за 5 с — нельзя")
+	check(NetSession.rate_ok(times, 5000), "через 5 с после первого — снова можно")
+
+	check_eq(ChatWheel.side_of(Vector2(0, -20)), 0, "колесо: вверх")
+	check_eq(ChatWheel.side_of(Vector2(20, 5)), 1, "колесо: вправо")
+	check_eq(ChatWheel.side_of(Vector2(-3, 20)), 2, "колесо: вниз")
+	check_eq(ChatWheel.side_of(Vector2(-20, -5)), 3, "колесо: влево")
+	check_eq(ChatWheel.side_of(Vector2(3, 3)), -1, "колесо: у центра ничего")
+
+	var profile := ProfileScreen.new()
+	check(_find_button(profile, "CHAT") != null, "в профиле есть вкладка CHAT")
+	check_eq(profile.phrases(), ["Go!", PlayerProfile.DEFAULT_PHRASES[1], "Nice   one",
+		PlayerProfile.DEFAULT_PHRASES[3]] as Array[String], "редактор показывает свои фразы")
+	profile._phrase_edits[1].text = "Your move^"
+	check_eq(profile.phrases()[1], "Your move", "редактор чистит фразу")
+	profile.free()
+	PlayerProfile.save_phrases([])
+
+	# Экран партии за одним компьютером: пинг, облачко фразы, колесо по Tab.
+	var screen := GameScreen.new(5, [], ["red", "blue"])
+	screen.size = Vector2(960, 540)
+	screen._layout()
+	var board_point := screen._board_area.get_global_rect().get_center()
+	check(screen.ping_at(board_point) and screen.ping_count() == 1, "пинг на доске")
+	var hand_point := screen._hand_panel.get_global_rect().end - Vector2(4, 4)
+	check(not screen.ping_at(hand_point), "в руке пинга нет — рука у каждого своя")
+	var market_point := screen._market_panel.get_global_rect().get_center()
+	check(screen.ping_at(market_point) and screen.ping_count() == 2, "пинг на рынке")
+	check(screen.ping_at(board_point), "третий пинг проходит")
+	check(not screen.ping_at(board_point), "четвёртый пинг за 5 с не проходит")
+	screen._said_times.clear()
+	var world := screen._board_panel.world_at(Vector2(40, 30))
+	check(screen._board_panel.local_of_world(world).is_equal_approx(Vector2(40, 30)),
+		"точка доски переводится в схему и обратно")
+	screen.show_ping("blue", "board", world)
+	check_eq(screen.ping_count(), 4, "пришедший пинг рисуется")
+	check(screen.say("Well played!^"), "фраза уходит")
+	check_eq(screen.bubble_text(screen.viewer_id), "Well played!", "облачко у строки ходящего")
+	screen._said_times.clear()
+
+	screen.tab_key(true, board_point)
+	screen._tick_tab(0.1)
+	screen.tab_key(false, board_point)
+	check(not screen._wheel.visible and screen.ping_count() == 5, "короткое нажатие Tab — пинг, колеса нет")
+	screen.tab_key(true, board_point)
+	screen._tick_tab(0.1)
+	screen._tick_tab(0.2)
+	check(screen._wheel.visible, "Tab держат — колесо открылось")
+	screen._wheel.point_at(screen._wheel.centre() + Vector2(0, 30))
+	check_eq(screen._wheel.selected(), 2, "мышь вниз — нижняя фраза")
+	screen.tab_key(false, board_point)
+	check(not screen._wheel.visible and not screen._tab_down, "Tab отпустили — колесо закрылось")
+	check_eq(screen.bubble_text(screen.viewer_id), PlayerProfile.DEFAULT_PHRASES[2], "фраза колеса — в облачке")
+	check_eq(screen.ping_count(), 5, "после колеса пинга нет")
+	screen.free()
 
 
 func test_card_back() -> void:

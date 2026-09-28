@@ -49,6 +49,7 @@ var views: Dictionary = {}
 var boards: Dictionary = {}
 var errors: Dictionary = {}
 var chats: Dictionary = {}
+var pings: Dictionary = {}
 var lost: Dictionary = {}
 ## Кто получил player_rejoined и про какой цвет (этап 7).
 var rejoined: Dictionary = {}
@@ -135,10 +136,14 @@ func _process(delta: float) -> bool:
 		"spoof":
 			_spoof()
 		"chat":
-			if not chats[players[0]].is_empty() and not chats[players[1]].is_empty():
+			if not chats[players[0]].is_empty() and not chats[players[1]].is_empty() \
+					and not pings[players[0]].is_empty():
 				var line: Array = [players[1].seat, "hello from %s" % _scenario]
 				check(chats[players[0]][0] == line, "[%s] создатель получил чат второго" % _scenario)
 				check(chats[players[1]][0] == line, "[%s] второй получил свой чат обратно" % _scenario)
+				check(pings[players[0]][0] == [players[1].seat, "board", Vector2(12, -34)],
+					"[%s] создатель увидел пинг второго" % _scenario)
+				check(pings[players[1]].is_empty(), "[%s] свой пинг автору не возвращается" % _scenario)
 				if _scenario == "lan":
 					_start_server()
 				else:
@@ -535,6 +540,7 @@ func _reset() -> void:
 	boards.clear()
 	errors.clear()
 	chats.clear()
+	pings.clear()
 	lost.clear()
 	rejoined.clear()
 	queue_seen.clear()
@@ -563,6 +569,7 @@ func _track(p: NetSession) -> void:
 	views[p] = {}
 	errors[p] = []
 	chats[p] = []
+	pings[p] = []
 	p.game_started.connect(func(_s: String, b: Dictionary, v: Dictionary):
 		boards[p] = b
 		views[p] = v)
@@ -570,6 +577,7 @@ func _track(p: NetSession) -> void:
 		errors[p].append(e)
 		views[p] = v)
 	p.chat_received.connect(func(w: String, t: String): chats[p].append([w, t]))
+	p.ping_received.connect(func(w: String, z: String, at: Vector2): pings[p].append([w, z, at]))
 	p.connection_lost.connect(func(reason: String): lost[p] = reason)
 	p.player_rejoined.connect(func(who: String): rejoined[p] = who)
 	p.queue_changed.connect(func(w: int, n: int): queue_seen[p] = [w, n])
@@ -627,6 +635,7 @@ func _spoof() -> void:
 		check(int(errors[b][-1]) == GameServer.Error.NOT_YOUR_TURN,
 			"[%s] за чужой цвет ходить нельзя: %d" % [_scenario, int(errors[b][-1])])
 	b.send_chat("hello from %s" % _scenario)
+	b.send_ping("board", Vector2(12, -34))
 	_step = "chat"
 
 

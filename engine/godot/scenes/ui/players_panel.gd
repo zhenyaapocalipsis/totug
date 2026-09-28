@@ -245,6 +245,13 @@ func flash_trophy(pid: String, colour_id: String) -> void:
 	target.create_tween().tween_property(target, "modulate", Color.WHITE, BarracksBar.KICK_TIME)
 
 
+## Блок игрока на экране (для облачка фразы чата); null — строки нет.
+func row_rect(pid: String) -> Variant:
+	if not _rows.has(pid):
+		return null
+	return ((_rows[pid] as Dictionary)["block"] as Control).get_global_rect()
+
+
 func update_from_view(view: Dictionary) -> void:
 	var order: Array = view.get("turn_order", [])
 	var current := GameScreen.acting_player(view)

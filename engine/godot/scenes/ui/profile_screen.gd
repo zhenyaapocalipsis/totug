@@ -53,6 +53,10 @@ var _first_run := false
 var _look: VBoxContainer
 var _stats: Control
 var _tab_buttons: Array[Button] = []
+## Вкладка CHAT: поля фраз колеса чата (PlayerProfile.load_phrases).
+var _chat: Control
+var _phrase_edits: Array[LineEdit] = []
+var _page := "STATS"
 ## Любимый цвет места ("" — любой, PlayerProfile.clean_colour) и рамки его выбора.
 var _colour := ""
 var _frames: Dictionary = {}
@@ -106,8 +110,8 @@ func _init(first_run: bool = false) -> void:
 		col.add_child(tabs)
 		var group := ButtonGroup.new()
 		# STATS первой и открыта сразу (решение владельца, 2026-09-28).
-		for tab: String in ["STATS", "EMBLEM"]:
-			var b := _button(tab, _show_tab.bind(tab == "STATS"))
+		for tab: String in ["STATS", "EMBLEM", "CHAT"]:
+			var b := _button(tab, _show_tab.bind(tab))
 			b.toggle_mode = true
 			b.button_group = group
 			b.button_pressed = tab == "STATS"
@@ -123,6 +127,9 @@ func _init(first_run: bool = false) -> void:
 		tabs.add_child(bg)
 		_stats = _stats_page()
 		col.add_child(_stats)
+		_chat = _chat_page()
+		col.add_child(_chat)
+		_chat.visible = false
 		_look.visible = false
 	col.add_child(_look)
 
@@ -386,6 +393,8 @@ func _save() -> void:
 			_name_edit.grab_focus()
 		return
 	var err := PlayerProfile.save_local({"name": name_text, "emblem": emblem(), "colour": _colour})
+	if err == OK and not _phrase_edits.is_empty():
+		err = PlayerProfile.save_phrases(phrases())
 	if err == OK:
 		closed.emit()
 	else:
@@ -397,6 +406,8 @@ func _save() -> void:
 func _keep_edits() -> void:
 	if PlayerProfile.clean_name(_name_edit.text) != "":
 		PlayerProfile.save_local({"name": _name_edit.text, "emblem": emblem(), "colour": _colour})
+		if not _phrase_edits.is_empty():
+			PlayerProfile.save_phrases(phrases())
 
 
 func _open_card_back() -> void:
@@ -413,20 +424,66 @@ func _open_background() -> void:
 ## перемерены пиксельным шрифтом темы — поэтому на кадр позже.
 func _ready() -> void:
 	if _stats != null:
-		_show_tab.call_deferred(_stats.visible)
+		_show_tab.call_deferred(_page)
 
 
-func _show_tab(stats: bool) -> void:
-	# Окно не прыгает: обе страницы одного размера — большего из двух.
-	_look.custom_minimum_size = Vector2.ZERO
-	_stats.custom_minimum_size = Vector2.ZERO
-	var need := _look.get_combined_minimum_size().max(_stats.get_combined_minimum_size())
-	_look.custom_minimum_size = need
-	_stats.custom_minimum_size = need
-	_look.visible = not stats
-	_stats.visible = stats
+## page — STATS, EMBLEM или CHAT.
+func _show_tab(page: String) -> void:
+	_page = page
+	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat}
+	# Окно не прыгает: все страницы одного размера — большей из них.
+	var need := Vector2.ZERO
+	for p: Control in pages.values():
+		p.custom_minimum_size = Vector2.ZERO
+	for p: Control in pages.values():
+		need = need.max(p.get_combined_minimum_size())
+	for key: String in pages:
+		(pages[key] as Control).custom_minimum_size = need
+		(pages[key] as Control).visible = key == page
 	for b: Button in _tab_buttons:
-		b.set_pressed_no_signal((b.text == "STATS") == stats)
+		b.set_pressed_no_signal(b.text == page)
+
+
+## Вкладка CHAT: фразы колеса чата (Tab зажат в партии), по одной на сторону.
+## Пустая строка — фраза по умолчанию (она же видна подсказкой в поле).
+func _chat_page() -> Control:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 4)
+	page.add_child(GameScreen.section_label("CHAT WHEEL: HOLD TAB IN A GAME, MOVE THE MOUSE, RELEASE"))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 4)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	page.add_child(grid)
+	var phrases := PlayerProfile.load_phrases()
+	for i in PlayerProfile.PHRASE_COUNT:
+		var side := Label.new()
+		side.text = ["UP", "RIGHT", "DOWN", "LEFT"][i]
+		side.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+		grid.add_child(side)
+		var edit := LineEdit.new()
+		edit.max_length = PlayerProfile.PHRASE_MAX
+		edit.placeholder_text = PlayerProfile.DEFAULT_PHRASES[i]
+		edit.text = phrases[i]
+		edit.custom_minimum_size = Vector2(6 * PlayerProfile.PHRASE_MAX + 8, 0)
+		edit.text_submitted.connect(func(_t: String): _save())
+		grid.add_child(edit)
+		_phrase_edits.append(edit)
+	var hint := Label.new()
+	hint.text = "Up to %d characters. An empty line gets the default phrase.\nTap TAB in a game to ping the spot under the mouse." \
+		% PlayerProfile.PHRASE_MAX
+	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	page.add_child(hint)
+	return page
+
+
+func phrases() -> Array[String]:
+	var out: Array[String] = []
+	for edit in _phrase_edits:
+		out.append(PlayerProfile.clean_phrase(edit.text))
+	return out
 
 
 ## Вкладка STATS: звание, рейтинг, партии/победы и последние онлайн-партии.

@@ -104,6 +104,18 @@ const PULSE_PERIOD := 1.6
 var server: GameServer
 ## Сетевая партия: через неё уходят намерения и чат. null — хотсит.
 var net: NetSession
+
+## Tab (решение владельца, 2026-09-29): короткое нажатие — пинг под курсором,
+## зажатие дольше WHEEL_HOLD — колесо чата с фразами из профиля.
+const WHEEL_HOLD := 0.25
+var _tab_down := false
+var _tab_time := 0.0
+var _tab_at := Vector2.ZERO
+var _pings: PingLayer
+var _wheel: ChatWheel
+var _bubbles: ChatBubbles
+## Свои пинги и фразы за последние секунды (NetSession.rate_ok).
+var _said_times: Array = []
 ## Последний полученный срез — всё, что экран знает о партии.
 var _view: Dictionary = {}
 ## Кто сидит за экраном, в порядке рассадки. Очередь хода — отдельно: её
@@ -223,6 +235,8 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 			_reconnect_status.text = reason + ".")
 		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
 		net.pause_changed.connect(_on_pause_changed)
+		net.ping_received.connect(show_ping)
+		net.chat_received.connect(show_phrase)
 		_build_layout()
 		refresh(online["view"])
 		_on_pause_changed(net.pause_status)
@@ -423,6 +437,17 @@ func _build_layout() -> void:
 	_note_toast.area = _board_area
 	_note_toast.above = _res_frame
 	add_child(_note_toast)
+
+	# Пинги, облачка фраз и колесо чата (Tab) — поверх игры, под меню и паузой.
+	_pings = PingLayer.new()
+	_pings.z_index = 1000
+	add_child(_pings)
+	_bubbles = ChatBubbles.new()
+	_bubbles.z_index = 1000
+	add_child(_bubbles)
+	_wheel = ChatWheel.new()
+	_wheel.z_index = 1001
+	add_child(_wheel)
 
 	# Увеличенная копия карты под курсором (с зажатым Alt) — над всем экраном.
 	_preview = CardPreview.new()
@@ -653,10 +678,128 @@ func _pulse_end_turn(delta: float) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _board_area != null:
 		_layout()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT and _wheel != null:
+		# Отпускание Tab в чужом окне сюда не придёт — колесо не должно зависнуть.
+		_cancel_tab()
 
 
-## Esc из строки чата снимает с неё фокус. Tab глотаем целиком: иначе он
-## уводит фокус по кнопкам интерфейса. Пока печатают в чат, буквенные
+# --- Tab: пинг и колесо чата -------------------------------------------------
+
+## Tab нажали (at — где мышь) или отпустили.
+func tab_key(pressed: bool, at: Vector2) -> void:
+	if pressed:
+		_tab_down = true
+		_tab_time = 0.0
+		_tab_at = at
+	else:
+		_release_tab()
+
+
+func _tick_tab(delta: float) -> void:
+	if not _tab_down or _wheel.visible:
+		return
+	_tab_time += delta
+	if _tab_time >= WHEEL_HOLD:
+		_wheel.open(_tab_at, PlayerProfile.load_phrases(), _speaker_colour())
+
+
+## Отпустили Tab: из колеса — фраза, после короткого нажатия — пинг.
+func _release_tab() -> void:
+	if _wheel.visible:
+		var text := _wheel.close()
+		if text != "":
+			say(text)
+	elif _tab_down:
+		ping_at(_tab_at)
+	_tab_down = false
+
+
+func _cancel_tab() -> void:
+	_tab_down = false
+	_wheel.close()
+
+
+## Кто говорит с этого экрана: свой цвет в сети, ходящий — за одним экраном.
+func _speaker() -> String:
+	return viewer_id
+
+
+func _speaker_colour() -> Color:
+	return BoardPanel.PLAYER_COLORS.get(_speaker(), PixelTheme.TEXT)
+
+
+## Общие для всех игроков зоны, где можно пинговать: рука, колода и сводка у
+## каждого свои, там пинг ничего бы не значил. Доска — в координатах схемы.
+func _ping_zones() -> Dictionary:
+	return {"market": _market_panel, "players": _players_panel, "barracks": _barracks, "board": _board_area}
+
+
+## Пинг в точке экрана. false — там нет общей зоны или пингов слишком много.
+func ping_at(pos: Vector2) -> bool:
+	var global := get_global_transform() * pos
+	var zones := _ping_zones()
+	for zone: String in zones:
+		var area: Control = zones[zone]
+		if not area.get_global_rect().has_point(global):
+			continue
+		if not NetSession.rate_ok(_said_times, Time.get_ticks_msec()):
+			return false
+		var local: Vector2 = area.get_global_transform().affine_inverse() * global
+		if zone == "board":
+			local = _board_panel.world_at(_board_panel.get_global_transform().affine_inverse() * global)
+		show_ping(_speaker(), zone, local)
+		if net != null:
+			net.send_ping(zone, local)
+		return true
+	return false
+
+
+## Нарисовать пинг игрока pid (свой или пришедший по сети).
+func show_ping(pid: String, zone: String, pos: Vector2) -> void:
+	var zones := _ping_zones()
+	if not zones.has(zone):
+		return
+	var global: Vector2
+	if zone == "board":
+		global = _board_panel.get_global_transform() * _board_panel.local_of_world(pos)
+	else:
+		global = (zones[zone] as Control).get_global_transform() * pos
+	_pings.ping(_pings.get_global_transform().affine_inverse() * global,
+		BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
+
+
+## Фраза из колеса: в сети — всем через чат (своё облачко придёт эхом),
+## за одним экраном — сразу облачком ходящего.
+func say(text: String) -> bool:
+	var clean := PlayerProfile.clean_phrase(text)
+	if clean == "" or not NetSession.rate_ok(_said_times, Time.get_ticks_msec()):
+		return false
+	if net != null:
+		net.send_chat(clean)
+	else:
+		show_phrase(_speaker(), clean)
+	return true
+
+
+func show_phrase(pid: String, text: String) -> void:
+	var clean := PlayerProfile.clean_phrase(text)
+	var row: Variant = _players_panel.row_rect(pid)
+	if clean == "" or row == null:
+		return
+	var anchor: Rect2 = _bubbles.get_global_transform().affine_inverse() * (row as Rect2)
+	_bubbles.say(pid, clean, anchor, BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
+
+
+func bubble_text(pid: String) -> String:
+	return _bubbles.text_of(pid)
+
+
+func ping_count() -> int:
+	return _pings.count()
+
+
+## Esc из строки чата снимает с неё фокус. Tab глотаем целиком (иначе он
+## уводит фокус по кнопкам) и ведём сами: пинг или колесо чата. Пока печатают, буквенные
 ## клавиши игры не срабатывают.
 func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
@@ -670,9 +813,14 @@ func _input(event: InputEvent) -> void:
 		# Под меню паузы клавиши до игры не доходят; Esc его закрывает.
 		if key.keycode == KEY_ESCAPE and key.pressed and not key.echo:
 			_pause_menu.visible = false
+		_cancel_tab()
 		get_viewport().set_input_as_handled()
 	elif key.keycode == KEY_TAB:
 		get_viewport().set_input_as_handled()
+		if key.echo:
+			return
+		if not (key.pressed and typing):
+			tab_key(key.pressed, get_local_mouse_position())
 	elif typing:
 		if key.keycode == KEY_ESCAPE and key.pressed:
 			get_viewport().gui_get_focus_owner().release_focus()
@@ -1313,6 +1461,7 @@ func _process(delta: float) -> void:
 		return
 	_pulse_end_turn(delta)
 	_tick_space_hold(delta)
+	_tick_tab(delta)
 	_tick_pause(delta)
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"

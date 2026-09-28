@@ -1070,6 +1070,18 @@ func _to_world(screen: Vector2) -> Vector2:
 	return (screen - _view_centre()) / _zoom + _pan
 
 
+## Для пингов (Tab): точка доски в координатах схемы и обратно — так метка
+## ложится на то же место доски у любого игрока.
+func world_at(local: Vector2) -> Vector2:
+	_ensure_view()
+	return _to_world(local)
+
+
+func local_of_world(world: Vector2) -> Vector2:
+	_ensure_view()
+	return _to_screen(world)
+
+
 # --- отрисовка ----------------------------------------------------------------
 
 func _draw() -> void:

@@ -34,6 +34,8 @@ signal lobby_changed(joined: Array, needed: int, code: String, owner_seat: Strin
 signal game_started(seat: String, board: Dictionary, view: Dictionary)
 signal result_received(err: int, events: Array, view: Dictionary)
 signal chat_received(seat: String, text: String)
+## Пинг игрока (Tab): зона экрана и точка в ней (PING_ZONES).
+signal ping_received(seat: String, zone: String, pos: Vector2)
 signal player_left(seat: String)
 ## Кто-то, кто раньше отключился, вернулся под тем же профилем (этап 7).
 signal player_rejoined(seat: String)
@@ -59,7 +61,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 9
+const PROTOCOL := 10
 ## Режим партий, собранных поиском игры.
 const MATCH_MODE := GameSetup.MODE_RANDOM_4
 const MAX_ROOMS := 64
@@ -70,6 +72,13 @@ const CODE_CHARS := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 ## само ставит точку в конце.
 const NAME_TAKEN := "The name %s is taken by another player. Go BACK and click your name to change it"
 const CODE_LENGTH := 4
+## Пинги и фразы чата: не больше RATE_COUNT за RATE_WINDOW_MS (решение
+## владельца, 2026-09-29). Сервер считает окно чуть короче, чем игрок: так
+## задержка сети не режет то, что игрок у себя уже пропустил.
+const RATE_COUNT := 3
+const RATE_WINDOW_MS := 5000
+const SERVER_RATE_WINDOW_MS := 4500
+const PING_ZONES := ["board", "market", "players", "barracks"]
 
 ## У этой программы есть комнаты (хост по IP или сервер).
 var is_host := false
@@ -96,6 +105,8 @@ var peer_room: Dictionary = {}  # peer id -> code
 ## стоит в очереди: peer id -> {needed, name, emblem, key}.
 var queues: Dictionary = {}
 var queued: Dictionary = {}
+## Когда игрок последний раз пинговал или писал: peer id -> [мс, ...] (rate_ok).
+var _said: Dictionary = {}
 var _lan_code := ""
 ## Что отправить серверу, как только связь установится (вход или создание).
 var _on_connected: Callable
@@ -713,6 +724,7 @@ func _refused(reason: String) -> void:
 
 
 func _on_peer_disconnected(id: int) -> void:
+	_said.erase(id)
 	if queued.has(id):
 		_leave_queue(id)
 		return
@@ -1042,7 +1054,7 @@ func _chat_up(text: String) -> void:
 
 func _room_chat(sender: int, text: String) -> void:
 	var room := _room_of(sender)
-	if room == null:
+	if room == null or not _may_speak(sender):
 		return
 	var who := String(room.seats[sender])
 	var clean := text.strip_edges().left(300)
@@ -1053,6 +1065,56 @@ func _room_chat(sender: int, text: String) -> void:
 @rpc("authority", "call_remote", "reliable")
 func _chat_down(who: String, text: String) -> void:
 	chat_received.emit(who, text)
+
+
+## Пинг уходит всем за столом, кроме автора: у себя он рисуется сразу.
+func send_ping(zone: String, pos: Vector2) -> void:
+	if is_host:
+		_room_ping(1, zone, pos)
+	else:
+		_ping_up.rpc_id(1, zone, pos)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _ping_up(zone: String, pos: Vector2) -> void:
+	if is_host:
+		_room_ping(multiplayer.get_remote_sender_id(), zone, pos)
+
+
+func _room_ping(sender: int, zone: String, pos: Vector2) -> void:
+	var room := _room_of(sender)
+	if room == null or not room.seats.has(sender) or not zone in PING_ZONES:
+		return
+	if not pos.is_finite() or absf(pos.x) > 10000.0 or absf(pos.y) > 10000.0:
+		return
+	if not _may_speak(sender):
+		return
+	var who := String(room.seats[sender])
+	for peer: int in room.seats:
+		if peer != sender:
+			_send(peer, "_ping_down", [who, zone, pos])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _ping_down(who: String, zone: String, pos: Vector2) -> void:
+	ping_received.emit(who, zone, pos)
+
+
+func _may_speak(sender: int) -> bool:
+	if not _said.has(sender):
+		_said[sender] = []
+	return rate_ok(_said[sender], Time.get_ticks_msec(), SERVER_RATE_WINDOW_MS)
+
+
+## Можно ли ещё раз пингнуть/сказать: в times — моменты прошлых раз (мс),
+## старше окна выкидываются. Да — момент now записывается.
+static func rate_ok(times: Array, now: int, window: int = RATE_WINDOW_MS) -> bool:
+	while not times.is_empty() and now - int(times[0]) >= window:
+		times.pop_front()
+	if times.size() >= RATE_COUNT:
+		return false
+	times.append(now)
+	return true
 
 
 func _log(text: String) -> void:

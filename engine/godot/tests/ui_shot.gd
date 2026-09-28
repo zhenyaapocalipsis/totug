@@ -428,6 +428,21 @@ func _run_scenario() -> void:
 			_screen._turn_banner.hide()
 		"end_turn":
 			_screen.send(Intent.end_turn(_screen.server.state.current_player()))
+		"chat_wheel":
+			# Колесо чата (Tab зажат) с выбранной нижней фразой, пинги на доске
+			# и рынке и облачко фразы соперника у таблицы игроков.
+			(func():
+				var at := _screen._board_area.get_global_rect().get_center()
+				_screen.ping_at(at + Vector2(-120, -60))
+				_screen.show_ping("blue", "market", Vector2(40, 40))
+				_screen.show_phrase("blue", "Good luck, have fun!")
+				_screen._wheel.open(at, PlayerProfile.load_phrases(), BoardPanel.PLAYER_COLORS["red"])
+				_screen._wheel.set_process(false)
+				_screen._wheel.point_at(_screen._wheel.centre() + Vector2(0, 30))).call_deferred()
+		"profile_chat":
+			var chat_editor := ProfileScreen.new()
+			root.add_child(chat_editor)
+			(func(): chat_editor._show_tab.call_deferred("CHAT")).call_deferred()
 		"profile":
 			# Редактор герба поверх партии, с нарисованным крестом.
 			var editor := ProfileScreen.new()
@@ -438,7 +453,7 @@ func _run_scenario() -> void:
 			editor.paint(4, 4, Color("000000"))
 			editor.choose_colour("blue")
 			# Как щелчок по EMBLEM (после выравнивания страниц в _ready).
-			(func(): editor._show_tab.call_deferred(false)).call_deferred()
+			(func(): editor._show_tab.call_deferred("EMBLEM")).call_deferred()
 		"profile_stats":
 			# Вкладка STATS: звание, рейтинг и выдуманная история партий. Профиль —
 			# отдельный файл, настоящий у владельца не трогается.
