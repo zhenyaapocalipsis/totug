@@ -6,7 +6,7 @@ extends PanelContainer
 ## всё, что игроки сыграли, промоутили, купили и съели, маленькими картами —
 ## журнал никто не читает, а картинки видно.
 ##
-## Каждый ход — отдельный блок в почти прозрачной рамке цвета игрока, сверху
+## Каждый ход — отдельный блок в рамке цвета игрока, сверху
 ## имя («RED'S TURN»). Внутри блока карты разложены по группам всегда в одном
 ## порядке — PLAYED, PROMOTED, BOUGHT, OUTCAST, DEVOURED, TO SUPPLY (изгой
 ## вернулся в запас вместо devour/promote), DISCARDED (решение владельца:
@@ -33,9 +33,9 @@ const CARD := Vector2(80, 76)
 ## Поле колонки и поле блока внутри рамки (рамка — 1 пиксель из него).
 const PAD := 1
 const BLOCK_PAD := 2
-## Ширина колонки: карта, поля блока и колонки. GameScreen отдаёт её слева
-## от доски.
-const WIDTH := CARD.x + (BLOCK_PAD + PAD) * 2
+## Ширина колонки: корешок и зазор за ним, карта, поля блока и колонки.
+## GameScreen отдаёт её слева от доски.
+const WIDTH := SpineLabel.WIDTH + PAD + CARD.x + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
 const ORDER: Array[String] = [
 	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED"]
@@ -54,9 +54,9 @@ const MAX_BLOCKS := 60
 ## Насколько близко к низу надо быть, чтобы колонка продолжала листаться
 ## за новыми картами.
 const FOLLOW_SLACK := 8
-## Рамка и подложка блока: цвет игрока, почти прозрачный.
-const FRAME_ALPHA := 0.35
-const FILL_ALPHA := 0.06
+## Рамка и подложка блока: цвет игрока без прозрачности (владелец,
+## 2026-09-28) — рамка чистым цветом, подложка — подложка зоны с долей цвета.
+const FILL_TINT := 0.12
 
 ## Мышь над строкой действия — места на доске, где это было (см. add_stat);
 ## ушла со строки — пустой список.
@@ -64,7 +64,6 @@ signal places_hovered(places: Array)
 
 var _scroll: ScrollContainer
 var _list: VBoxContainer
-var _placeholder: Label
 var _blocks: Array[Block] = []
 var _turn_closed := true
 ## Сколько кадров ещё дотягивать прокрутку до низа: размер списка после
@@ -75,35 +74,29 @@ var _hovered: Array = []   # [Block, key] строки под мышью или 
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	# Без подложки и рамки у самой колонки: рамки — у блоков ходов.
-	var style := StyleBoxEmpty.new()
-	style.content_margin_left = PAD
-	style.content_margin_right = PAD
-	style.content_margin_top = PAD
-	style.content_margin_bottom = PAD
-	add_theme_stylebox_override("panel", style)
+	# Подложка и рамка зоны, как у дектрекера (владелец, 2026-09-28); слева
+	# корешок с надписью MOVES.
+	add_theme_stylebox_override("panel", GameScreen.zone_style(PAD))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", PAD)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(row)
+	row.add_child(SpineLabel.new("MOVES"))
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	add_child(_scroll)
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(_scroll)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 3)
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_scroll.add_child(_list)
-	_placeholder = Label.new()
-	_placeholder.text = "MOVES"
-	_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_placeholder.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
-	_list.add_child(_placeholder)
 	set_process(false)
 
 
 ## pid взял карту cid; tag — группа: PLAYED / PROMOTED / BOUGHT / DEVOURED.
 func add(pid: String, cid: String, tag: String) -> void:
-	if _placeholder != null:
-		_placeholder.queue_free()
-		_placeholder = null
 	var follow := _at_bottom()
 	var block: Block = _blocks.back() if not _blocks.is_empty() else null
 	if block == null or block.pid != pid or _turn_closed:
@@ -193,9 +186,6 @@ func last_stat(key: String) -> int:
 
 ## Открытый блок текущего хода, а если его нет — новый блок pid.
 func _current_block(pid: String) -> Block:
-	if _placeholder != null:
-		_placeholder.queue_free()
-		_placeholder = null
 	var block: Block = _blocks.back() if not _blocks.is_empty() else null
 	if block == null or _turn_closed:
 		block = _open_block(pid if pid != "" else "?")
@@ -240,8 +230,8 @@ func last_block_tags() -> Array[String]:
 func _open_block(pid: String) -> Block:
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(colour, FILL_ALPHA)
-	style.border_color = Color(colour, FRAME_ALPHA)
+	style.bg_color = PixelTheme.PANEL.lerp(colour, FILL_TINT)
+	style.border_color = colour
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(0)
 	style.content_margin_left = BLOCK_PAD

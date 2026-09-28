@@ -20,6 +20,11 @@ const MAX_STEP := CARD.y + 2
 const MIN_STEP := 3
 ## Разделитель: пиксель отступа, линия, пиксель отступа.
 const DIVIDER_H := 3
+## Слева — корешок с надписью DECKTRACKER (владелец, 2026-09-28); всё
+## остальное начинается за ним и зазором.
+const LEFT := PAD + SpineLabel.WIDTH + PAD
+## Ширина полосы: корешок, мелкая карта и поля.
+const WIDTH := LEFT + CARD.x + PAD
 
 var _style: StyleBoxFlat
 var _deck_label: Label
@@ -31,12 +36,15 @@ var _deck: Array = []
 var _discard: Array = []
 ## Где начинается часть сброса (верх разделителя), в своих координатах.
 var _discard_top := 0.0
+var _spine: SpineLabel
 
 
 func _init() -> void:
 	_style = GameScreen.zone_style(PAD)
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_spine = SpineLabel.new("DECKTRACKER")
+	add_child(_spine)
 	_deck_label = GameScreen.section_label("DECK 0")
 	add_child(_deck_label)
 	_divider = ColorRect.new()
@@ -111,19 +119,21 @@ func ladder_step() -> int:
 
 func _arrange() -> void:
 	var line := float(PixelTheme.LINE_H)
-	var inner_w := size.x - PAD * 2
+	var inner_w := size.x - LEFT - PAD
 	var step := ladder_step()
-	var x := PAD + floorf((inner_w - CARD.x) * 0.5)
+	var x := LEFT + floorf((inner_w - CARD.x) * 0.5)
 	var y := float(PAD)
-	_deck_label.position = Vector2(PAD, y)
+	_spine.position = Vector2(PAD, PAD)
+	_spine.size = Vector2(SpineLabel.WIDTH, size.y - PAD * 2)
+	_deck_label.position = Vector2(LEFT, y)
 	_deck_label.size = Vector2(inner_w, line)
 	y += line
 	y = _lay(0, _deck.size(), x, y, step)
 	_discard_top = y
-	_divider.position = Vector2(PAD, y + 1)
+	_divider.position = Vector2(LEFT, y + 1)
 	_divider.size = Vector2(inner_w, 1)
 	y += DIVIDER_H
-	_discard_label.position = Vector2(PAD, y)
+	_discard_label.position = Vector2(LEFT, y)
 	_discard_label.size = Vector2(inner_w, line)
 	y += line
 	_lay(_deck.size(), _discard.size(), x, y, step)
