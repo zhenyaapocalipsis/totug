@@ -26,10 +26,8 @@ signal started(player_ids: Array[String], mode: String)
 ## "find" — поиск игры на сервере (режим всегда NetSession.MATCH_MODE),
 ## "resume" — вернуться в незаконченную онлайн-партию (NetSession.saved_game).
 signal online_requested(kind: String, player_count: int, mode: String)
-## Открыть профиль игрока (имя и герб, ProfileScreen).
+## Открыть профиль игрока (имя, герб, рубашка, статистика — ProfileScreen).
 signal profile_requested
-## Открыть рисовалку рубашки карт (CardBackScreen).
-signal card_back_requested
 ## Открыть обучение для новичков (how_to_play_screen.gd).
 signal how_to_play_requested
 ## Открыть библиотеку карт (card_library_screen.gd).
@@ -345,30 +343,27 @@ func _refresh_dots() -> void:
 		_dots.add_child(dot)
 
 
-## Своя фишка с гербом, имя, рейтинг и кнопка EDIT PROFILE.
+## Своя фишка с гербом, имя (щелчок — профиль) и камень звания. Звание,
+## рейтинг и рубашка карт — внутри профиля (решение владельца, 2026-09-28).
 func _profile_row() -> Control:
 	var local := PlayerProfile.load_local()
 	var icon := ProfileScreen.token_icon("red", String(local["emblem"]))
-	var name_label := Label.new()
-	name_label.text = String(local["name"]) if String(local["name"]) != "" else "No name yet"
-	name_label.add_theme_color_override("font_color", PixelTheme.TEXT)
-	var parts: Array[Control] = [icon, name_label]
-	# Рейтинг онлайн-партий — каким его сервер сообщил в последний раз.
+	var name_button := Button.new()
+	name_button.text = String(local["name"]) if String(local["name"]) != "" else "No name yet"
+	name_button.flat = true
+	name_button.focus_mode = Control.FOCUS_NONE
+	name_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	name_button.add_theme_color_override("font_color", PixelTheme.TEXT)
+	name_button.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
+	name_button.add_theme_color_override("font_pressed_color", PixelTheme.GOLD)
+	name_button.pressed.connect(func(): profile_requested.emit())
+	name_button.mouse_entered.connect(func(): _set_hint("Your profile: name, emblem, card back, rank and last games."))
+	name_button.mouse_exited.connect(func(): _set_hint(_hint_default))
+	var parts: Array[Control] = [icon, name_button]
+	# Звание онлайн-партий — каким его сервер сообщил в последний раз.
 	var rating := PlayerProfile.cached_rating()
 	if rating >= 0:
 		parts.append(ProfileScreen.rank_badge(rating))
-		var rating_label := Label.new()
-		rating_label.text = "%s %d" % [PlayerProfile.rank_title(rating), rating]
-		rating_label.add_theme_color_override("font_color", PlayerProfile.rank_colour(rating))
-		parts.append(rating_label)
-	var edit := _button("EDIT PROFILE", "Your name and emblem (drawn on your troops).",
-		func(): profile_requested.emit())
-	edit.custom_minimum_size = Vector2(70, 16)
-	parts.append(edit)
-	var back := _button("CARD BACK", "Draw the back of your cards.",
-		func(): card_back_requested.emit())
-	back.custom_minimum_size = Vector2(70, 16)
-	parts.append(back)
 	var row := _row(parts)
 	row.add_theme_constant_override("separation", 6)
 	return row

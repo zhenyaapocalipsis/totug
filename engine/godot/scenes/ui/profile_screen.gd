@@ -13,6 +13,8 @@ extends Control
 ## (PlayerProfile.cached_stats / history).
 
 signal closed
+## Открыть рисовалку рубашки (CardBackScreen); её закрытие вернёт в профиль.
+signal card_back_requested
 
 ## Палитра DawnBringer 32 — классический набор для пиксель-арта; любой другой
 ## цвет — щелчком по образцу кисти (ColorPickerButton).
@@ -97,6 +99,10 @@ func _init(first_run: bool = false) -> void:
 			b.button_pressed = tab == "EMBLEM"
 			tabs.add_child(b)
 			_tab_buttons.append(b)
+		# Рубашка карт — свой экран (CardBackScreen), закрывается обратно в профиль.
+		var back := _button("CARD BACK", _open_card_back)
+		back.tooltip_text = "Draw the back of your cards."
+		tabs.add_child(back)
 		_stats = _stats_page()
 		_stats.visible = false
 		col.add_child(_stats)
@@ -335,6 +341,14 @@ func _save() -> void:
 		closed.emit()
 	else:
 		_saved_note.text = "Could not save the profile (error %d)." % err
+
+
+## Уходя к рубашке, имя и герб сохраняются — профиль откроется заново с ними.
+## Пустое имя не сохраняем: иначе игра сочтёт профиль несозданным.
+func _open_card_back() -> void:
+	if PlayerProfile.clean_name(_name_edit.text) != "":
+		PlayerProfile.save_local({"name": _name_edit.text, "emblem": emblem()})
+	card_back_requested.emit()
 
 
 func _show_tab(stats: bool) -> void:

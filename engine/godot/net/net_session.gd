@@ -68,7 +68,7 @@ const MAX_SERVER_PEERS := 128
 const CODE_CHARS := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 ## Отказ, если имя уже занято другим игроком (RatingBook.claim_name). Лобби
 ## само ставит точку в конце.
-const NAME_TAKEN := "The name %s is taken by another player. Go BACK and change it in EDIT PROFILE"
+const NAME_TAKEN := "The name %s is taken by another player. Go BACK and click your name to change it"
 const CODE_LENGTH := 4
 
 ## У этой программы есть комнаты (хост по IP или сервер).

@@ -68,16 +68,7 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_MAIN) -> void:
 	var setup := SetupScreen.new(page)
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
 	setup.online_requested.connect(_show_lobby)
-	setup.profile_requested.connect(func():
-		_clear()
-		var profile := ProfileScreen.new()
-		profile.closed.connect(func(): _show_setup(game_seed))
-		add_child(profile))
-	setup.card_back_requested.connect(func():
-		_clear()
-		var back := CardBackScreen.new()
-		back.closed.connect(func(): _show_setup(game_seed))
-		add_child(back))
+	setup.profile_requested.connect(func(): _show_profile(game_seed))
 	setup.how_to_play_requested.connect(func(): _show_how_to_play(game_seed, SetupScreen.PAGE_LIBRARY))
 	setup.cards_requested.connect(func():
 		_clear()
@@ -85,6 +76,20 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_MAIN) -> void:
 		cards.closed.connect(func(): _show_setup(game_seed, SetupScreen.PAGE_LIBRARY))
 		add_child(cards))
 	add_child(setup)
+
+
+## Профиль из главного меню. Рисовалка рубашки открывается из него и
+## возвращает обратно в профиль.
+func _show_profile(game_seed: int) -> void:
+	_clear()
+	var profile := ProfileScreen.new()
+	profile.closed.connect(func(): _show_setup(game_seed))
+	profile.card_back_requested.connect(func():
+		_clear()
+		var back := CardBackScreen.new()
+		back.closed.connect(func(): _show_profile(game_seed))
+		add_child(back))
+	add_child(profile)
 
 
 func _show_how_to_play(game_seed: int, back_page: String = SetupScreen.PAGE_MAIN) -> void:

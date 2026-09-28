@@ -3044,10 +3044,26 @@ func test_main_menu() -> void:
 	section("главное меню, первый профиль и вопрос про обучение")
 	var menu := SetupScreen.new()
 	check_eq(menu.current_page(), SetupScreen.PAGE_MAIN, "меню открывается на главной странице")
-	for text in ["PLAY", "LIBRARY", "QUIT", "EDIT PROFILE"]:
+	for text in ["PLAY", "LIBRARY", "QUIT"]:
 		check(_find_button(menu, text) != null, "на главной есть кнопка %s" % text)
 	check(_find_button(menu, "CREATE ROOM") == null and _find_button(menu, "HOTSEAT") == null,
 		"на главной только три кнопки и профиль")
+	check(_find_button(menu, "EDIT PROFILE") == null and _find_button(menu, "CARD BACK") == null,
+		"кнопок профиля и рубашки в меню нет — всё внутри профиля")
+	var own_name := String(PlayerProfile.load_local()["name"])
+	var name_button := _find_button(menu, own_name if own_name != "" else "No name yet")
+	var opened := {}
+	menu.profile_requested.connect(func(): opened["profile"] = true)
+	if name_button != null:
+		name_button.pressed.emit()
+	check(opened.has("profile"), "щелчок по имени открывает профиль")
+	var profile := ProfileScreen.new()
+	check(_find_button(profile, "CARD BACK") != null and _find_button(profile, "STATS") != null,
+		"в профиле есть вкладка STATS и кнопка CARD BACK")
+	profile.free()
+	var first_profile := ProfileScreen.new(true)
+	check(_find_button(first_profile, "CARD BACK") == null, "при первом запуске — только имя и герб")
+	first_profile.free()
 
 	var got := {}
 	menu.started.connect(func(ids: Array[String], m: String): got["start"] = [ids.size(), m])
