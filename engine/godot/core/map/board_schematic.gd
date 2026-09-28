@@ -69,6 +69,9 @@ const SLOT_PITCH := 9
 const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
+## Свободные пиксели между низом кругов мест и нижней рамкой коробки (решение
+## владельца, 2026-09-29): без них нижний пиксель круга ложился прямо на рамку.
+const SLOT_BOTTOM_GAP := 1
 ## Сколько знаков помещается в рамку локации.
 const NAME_MAX := 7
 
@@ -348,6 +351,9 @@ static func site_box(site_name: String, slot_count: int, marker := false) -> Dic
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
 	var body_top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP
 	var top := body_top + (body_h - (rows * SLOT_PITCH - 2)) / 2
+	# Нижний пиксель последнего ряда кругов, под ним зазор и рамка.
+	if slot_count > 0:
+		h = maxi(h, top + rows * SLOT_PITCH - 1 + SLOT_BOTTOM_GAP + 2)
 	var slots: Array[Vector2] = []
 	for i in slot_count:
 		var row := i / SLOT_COLS
