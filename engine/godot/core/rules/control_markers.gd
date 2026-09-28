@@ -83,15 +83,6 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 	return reward
 
 
-## Есть ли маркер у локации site_name на плитке tile ("B1") — для раскладки
-## схемы, которая видит граф, но не состояние партии.
-static func is_marked(tile: String, site_name: String) -> bool:
-	for marker in _load():
-		if String(marker["hex"]) == tile and String(marker["site_name"]) == site_name:
-			return true
-	return false
-
-
 ## Все локации с маркерами на собранной доске — интерфейсу, чтобы их отмечать.
 static func marked_sites(state: GameState) -> Array[String]:
 	var result: Array[String] = []

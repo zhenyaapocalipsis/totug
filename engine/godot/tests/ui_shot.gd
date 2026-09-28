@@ -522,11 +522,6 @@ func _process(_delta: float) -> bool:
 		_screen._turn_banner.hide()
 		if _shot_at < 0:
 			_shot_at = _frame + 3
-			# --wait=N: снять позже, например чтобы успела всплыть подсказка
-			# над городом (--hover=x,y).
-			for arg in OS.get_cmdline_user_args():
-				if arg.begins_with("--wait="):
-					_shot_at = _frame + int(arg.get_slice("=", 1))
 	if _shot_at >= 0 and _frame < _shot_at:
 		return false
 	var image: Image = root.get_texture().get_image()

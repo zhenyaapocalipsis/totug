@@ -137,10 +137,6 @@ var _hex: Array[String] = []
 var _pos: Array[Vector2] = []
 var _home: Array[Vector2] = []
 var _half: Array[Vector2] = []
-## Запас по бокам коробки под вкладки маркера контроля (0 у остальных):
-## учитывается, когда узлы расталкиваются и трассы обходят чужие коробки,
-## но не там, где трасса входит в свою коробку.
-var _clear: Array[Vector2] = []
 var _index: Dictionary = {}          # key -> node index
 var _centre: Dictionary = {}         # layout slot -> Vector2
 var _incident: Array = []            # node -> Array[int] of edges
@@ -365,7 +361,6 @@ func _add_node(key: String, kind: int, hex: String, home: Vector2, half: Vector2
 	_home.append(home)
 	_pos.append(home if kind == Kind.PORT else _snap(home))
 	_half.append(half)
-	_clear.append(Vector2.ZERO)
 	_incident.append([])
 	_index[key] = i
 	return i
@@ -402,9 +397,7 @@ func _collect(graph: MapGraph, layout: Dictionary, hex_by_slot: Dictionary) -> v
 		var hex := site_id.get_slice(":", 0)
 		var box := site_box(String(site["name"]), members.size())
 		var home: Vector2 = _centre[hex] + to_schematic(sum / maxi(members.size(), 1))
-		var site_node := _add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
-		if ControlMarkers.is_marked(String(site["hex"]), String(site["name"])):
-			_clear[site_node] = Vector2(MARKER_TAB.x + 1.0, 0.0)
+		_add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
 	for slot_id: String in graph.slots.keys():
 		if not graph.is_route_slot(slot_id):
 			continue
@@ -545,7 +538,7 @@ func _push_apart() -> void:
 			for m: int in _near[_hex[n]]:
 				if m <= n or _kind[m] == Kind.PORT:
 					continue
-				var over := _zone_rect(n).intersection(_zone_rect(m))
+				var over := _node_rect(n).intersection(_node_rect(m))
 				if over.size.x <= 0.0 or over.size.y <= 0.0:
 					continue
 				# Двигаем один узел на целое число шагов сетки: половина
@@ -555,7 +548,7 @@ func _push_apart() -> void:
 				var steps := ceilf((by + 1.0) / float(GRID)) * float(GRID)
 				var axis := Vector2(1.0, 0.0) if over.size.x <= over.size.y else Vector2(0.0, 1.0)
 				# Уступает меньший: кольцу подвинуться проще, чем рамке локации.
-				var small := m if _zone_rect(m).get_area() <= _zone_rect(n).get_area() else n
+				var small := m if _node_rect(m).get_area() <= _node_rect(n).get_area() else n
 				var other := n if small == m else m
 				var away: float = (_pos[small] - _pos[other]).dot(axis)
 				_pos[small] = _snap(_pos[small] + axis * steps * (1.0 if away >= 0.0 else -1.0))
@@ -566,14 +559,14 @@ func _push_apart() -> void:
 
 ## A node of another hex closer than NODE_GAP, or one of its own hex touching.
 func _crowded(n: int) -> bool:
-	var grown := _zone_rect(n, NODE_GAP)
-	var rect := _zone_rect(n)
+	var grown := _node_rect(n, NODE_GAP)
+	var rect := _node_rect(n)
 	for m: int in _near[_hex[n]]:
 		if m == n:
 			continue
-		if _hex[m] != _hex[n] and grown.intersects(_zone_rect(m)):
+		if _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
 			return true
-		if _hex[m] == _hex[n] and rect.intersects(_zone_rect(m)):
+		if _hex[m] == _hex[n] and rect.intersects(_node_rect(m)):
 			return true
 	return false
 
@@ -589,9 +582,9 @@ func _step_aside(n: int) -> void:
 
 ## The node's box or ring actually overlaps another one (gaps not counted).
 func _touches_any(n: int) -> bool:
-	var rect := _zone_rect(n)
+	var rect := _node_rect(n)
 	for m: int in _near[_hex[n]]:
-		if m != n and rect.intersects(_zone_rect(m)):
+		if m != n and rect.intersects(_node_rect(m)):
 			return true
 	return false
 
@@ -806,13 +799,6 @@ func _node_rect(n: int, grow: float = 0.0) -> Rect2:
 	return Rect2(_pos[n] - _half[n] - Vector2(grow, grow), _half[n] * 2.0 + Vector2(grow, grow) * 2.0)
 
 
-## Коробка вместе с запасом под вкладки маркера (_clear) — место, которое
-## узел занимает для соседей.
-func _zone_rect(n: int, grow: float = 0.0) -> Rect2:
-	var g := Vector2(grow, grow) + _clear[n]
-	return Rect2(_pos[n] - _half[n] - g, _half[n] * 2.0 + g * 2.0)
-
-
 ## Segments of the route outside its two end boxes, as point pairs.
 func _clip(e: int, points: PackedVector2Array) -> PackedVector2Array:
 	var out := PackedVector2Array()
@@ -873,7 +859,7 @@ func _obstacles(e: int) -> Array[Rect2]:
 	var out: Array[Rect2] = []
 	for n: int in _near[_hex[_edge_b[e]]]:
 		if n != _edge_a[e] and n != _edge_b[e]:
-			out.append(_zone_rect(n, 2.0))
+			out.append(_node_rect(n, 2.0))
 	return out
 
 
@@ -1002,15 +988,15 @@ func _node_cost(n: int) -> float:
 	# независимо друг от друга, и две рамки, прижатые к общему ребру с разных
 	# сторон, налезали бы друг на друга уже на собранной доске.
 	var poly: PackedVector2Array = _poly_nodes[_hex[n]]
-	var rect := _zone_rect(n)
+	var rect := _node_rect(n)
 	for corner in [rect.position, rect.end, Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y)]:
 		if not Geometry2D.is_point_in_polygon(corner, poly):
 			cost += W_OUT + _outside_by(corner, poly) * W_OUT_PX
-	var grown := _zone_rect(n, NODE_GAP)
+	var grown := _node_rect(n, NODE_GAP)
 	for m: int in _near[_hex[n]]:
 		if m == n:
 			continue
-		var other := _zone_rect(m)
+		var other := _node_rect(m)
 		if grown.intersects(other):
 			cost += W_NODE_OVERLAP + grown.intersection(other).get_area() * 0.5
 	return cost
@@ -1074,7 +1060,7 @@ func _cost_around(n: int, limit: float = INF) -> float:
 	# n's own routes, so they are counted first (for the cut) and added last
 	# (so the sum is the same number, bit for bit, as before the cut).
 	var hits := 0
-	var rect := _zone_rect(n, 2.0)
+	var rect := _node_rect(n, 2.0)
 	for f in _routes.size():
 		if skip.has(f) or _edge_a[f] == n or _edge_b[f] == n or not rect.intersects(_bbox[f]):
 			continue
@@ -1182,8 +1168,8 @@ func _export(state: GameState) -> Dictionary:
 	for n in _key.size():
 		if _kind[n] == Kind.PORT:
 			continue
-		lo = lo.min(_pos[n] - _half[n] - _clear[n])
-		hi = hi.max(_pos[n] + _half[n] + _clear[n])
+		lo = lo.min(_pos[n] - _half[n])
+		hi = hi.max(_pos[n] + _half[n])
 	for points in _routes:
 		for p in points:
 			lo = lo.min(p)
@@ -1217,8 +1203,6 @@ func _export(state: GameState) -> Dictionary:
 				"vp": site["vp"],
 				"starting": starting.has(String(site["name"])),
 				"marker": marked.has(_key[n]),
-				# VP за полный контроль города с маркером — для вкладки с короной.
-				"marker_vp": int(ControlMarkers.marker_for(state, _key[n]).get("total_control_vp", 0)),
 				"slots": site_slots,
 			}
 	var traces: Array = []
@@ -1251,124 +1235,9 @@ func _export(state: GameState) -> Dictionary:
 			"x": (_centre[hex] as Vector2).x + shift.x,
 			"y": (_centre[hex] as Vector2).y + shift.y,
 		}
-	var result := {
+	return {
 		"size": [size.x, size.y], "traces": traces, "rings": rings, "sites": sites, "slots": slots,
 		# for checks and debugging: which nodes each trace joins, edge midpoints, hex centres
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres, "hexes": hexes,
 		"fallback_routes": _fallback_routes,
 	}
-	place_marker_tabs(result)
-	return result
-
-
-# --- вкладки маркеров контроля -----------------------------------------------------
-
-## Вкладка «◆1» / «корона N» у города с маркером, в пикселях схемы.
-const MARKER_TAB := Vector2(12, 9)
-
-
-## Для каждого города с маркером выбирает место двух вкладок (решение
-## владельца, 2026-09-28): пара всегда зеркальна относительно коробки —
-## слева Influence, справа VP. Сначала по бокам посередине, потом по бокам
-## выше/ниже, под углами, над углами; берётся первое место, где вкладки не
-## задевают чужие города, туннели, кружки мест и край доски. Если чистого
-## места нет — наименее плохое. Пишет site["marker_tabs"] = [[x,y,w,h], [...]].
-static func place_marker_tabs(schematic: Dictionary) -> void:
-	var sites: Dictionary = schematic.get("sites", {})
-	var placed: Array[Rect2] = []
-	var ids: Array = sites.keys()
-	ids.sort()
-	for site_id: String in ids:
-		var site: Dictionary = sites[site_id]
-		if not bool(site.get("marker", false)):
-			continue
-		var best: Array = []
-		var best_cost := INF
-		var order := 0
-		for pair in _marker_tab_candidates(_rect_of(site)):
-			var cost: float = _marker_tab_cost(schematic, site_id, pair, placed) + order * 0.001
-			order += 1
-			if cost < best_cost:
-				best_cost = cost
-				best = pair
-			if cost < 1.0:
-				break
-		placed.append(best[0])
-		placed.append(best[1])
-		site["marker_tabs"] = [[best[0].position.x, best[0].position.y, MARKER_TAB.x, MARKER_TAB.y],
-			[best[1].position.x, best[1].position.y, MARKER_TAB.x, MARKER_TAB.y]]
-
-
-static func _rect_of(site: Dictionary) -> Rect2:
-	var r: Array = site["rect"]
-	return Rect2(roundf(r[0]), roundf(r[1]), roundf(r[2]), roundf(r[3]))
-
-
-## Зеркальные пары [левая, правая] в порядке предпочтения. У города с
-## маркером золотая рамка на пиксель шире коробки — вкладки стоят за ней.
-static func _marker_tab_candidates(r: Rect2) -> Array:
-	var w := MARKER_TAB.x
-	var h := MARKER_TAB.y
-	var result: Array = []
-	# 1. По бокам: посередине, затем всё дальше вверх/вниз, пока вкладка
-	#    касается коробки хотя бы тремя пикселями.
-	var mid := r.position.y + floorf((r.size.y - h) / 2.0)
-	var offsets: Array[float] = [0.0]
-	for d in range(1, int(r.size.y + h)):
-		offsets.append(-float(d))
-		offsets.append(float(d))
-	for d: float in offsets:
-		var y := mid + d
-		if y + h < r.position.y + 3.0 or y > r.end.y - 3.0:
-			continue
-		result.append([Rect2(r.position.x - 1.0 - w, y, w, h), Rect2(r.end.x + 1.0, y, w, h)])
-	# 2. Под коробкой и 3. над ней: от углов внутрь, затем чуть наружу.
-	var shifts: Array[float] = []
-	for k in range(0, int(r.size.x / 2.0 - w) + 1):
-		shifts.append(float(k))
-	for k in range(1, int(w) - 2):
-		shifts.append(-float(k))
-	for y: float in [r.end.y + 1.0, r.position.y - 1.0 - h]:
-		for k: float in shifts:
-			result.append([Rect2(r.position.x + k, y, w, h), Rect2(r.end.x - w - k, y, w, h)])
-	return result
-
-
-static func _marker_tab_cost(schematic: Dictionary, site_id: String, pair: Array, placed: Array[Rect2]) -> float:
-	var size: Array = schematic.get("size", [0, 0])
-	var board := Rect2(0, 0, float(size[0]), float(size[1]))
-	var sites: Dictionary = schematic.get("sites", {})
-	var cost := 0.0
-	for tab: Rect2 in pair:
-		if not board.encloses(tab):
-			cost += 1000.0
-		var near := tab.grow(1.0)
-		for other_id: String in sites:
-			if other_id == site_id:
-				continue
-			var other: Dictionary = sites[other_id]
-			var o := _rect_of(other).grow(2.0 if bool(other.get("marker", false)) else 1.0)
-			var hit := o.intersection(near)
-			cost += hit.get_area() * 100.0
-		for other_tab: Rect2 in placed:
-			cost += other_tab.intersection(near).get_area() * 100.0
-		for at: Array in (schematic.get("rings", {}) as Dictionary).values():
-			var c := Vector2(float(at[0]), float(at[1]))
-			var closest := c.clamp(tab.position, tab.end)
-			if closest.distance_to(c) < float(RING_R) + 1.5:
-				cost += 200.0
-		# Туннель толщиной 2: считаем точки осевой линии через полпикселя,
-		# попавшие во вкладку с запасом в полтора пикселя.
-		var zone := tab.grow(1.5)
-		for flat: Array in schematic.get("traces", []):
-			for i in range(0, flat.size() - 2, 2):
-				var a := Vector2(float(flat[i]), float(flat[i + 1]))
-				var b := Vector2(float(flat[i + 2]), float(flat[i + 3]))
-				var seg_box := Rect2(a, Vector2.ZERO).expand(b)
-				if not seg_box.grow(0.5).intersects(zone):
-					continue
-				var steps := maxi(1, ceili(a.distance_to(b) * 2.0))
-				for s in steps + 1:
-					if zone.has_point(a.lerp(b, float(s) / steps)):
-						cost += 10.0
-	return cost
