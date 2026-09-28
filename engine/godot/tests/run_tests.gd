@@ -2879,20 +2879,18 @@ func test_background_palette() -> void:
 		check_eq(colours.size(), 2, "%s: две краски" % [bad])
 		check(colours[0] != colours[1], "%s: краски разные" % [bad])
 
-	# Выбор фона (решение владельца, 2026-09-28): хранится в профиле,
-	# кнопка листает по кругу, сменили — перекрашены задники на экране.
+	# Выбор фона (решение владельца, 2026-09-28): в профиле, экран BackgroundScreen.
 	var old_path := PlayerProfile.path_override
 	PlayerProfile.path_override = "user://profile_bg_test.cfg"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
-	Bg._style = ""
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Bg.picture_path()))
+	Bg.forget_cache()
 	check_eq(Bg.style(), "classic", "по умолчанию — CLASSIC")
-	check_eq(Bg.button_text(), "BACKGROUND: CLASSIC", "надпись кнопки")
 	# Дерево сцены в тестах не запущено, так что перекраску группы set_style
 	# здесь не увидеть: проверяем, что задник в группе, и красим его напрямую.
 	var rect: ColorRect = Bg.make(Bg.GAME_FADE)
 	check(rect.is_in_group(Bg.GROUP), "задник записан в группу для перекраски")
-	Bg.set_style(Bg.next_style())
-	check_eq(Bg.style(), "black", "кнопка: следующий — BLACK")
+	Bg.set_style("black")
 	Bg._paint(rect)
 	check_eq(rect.color, Color(0, 0, 0), "BLACK — чёрная заливка")
 	Bg.set_style("orange")
@@ -2900,14 +2898,45 @@ func test_background_palette() -> void:
 	check_eq(rect.color, Color("df7126"), "ORANGE IS NEW BLACK — оранжевый, и в партии не гаснет")
 	Bg._style = ""
 	check_eq(Bg.style(), "orange", "выбор сохранён в профиле")
-	Bg.set_style("xp")
-	check_eq(Bg.next_style(), "classic", "после WINDOWS XP — снова CLASSIC")
 	Bg.set_style("nonsense")
 	check_eq(Bg.style(), "classic", "неизвестный фон — CLASSIC")
+	check(Bg.picture() == null, "своего рисунка ещё нет")
+
+	# Рисовалка фона.
+	var painter := BackgroundScreen.new()
+	painter.set_brush(Color("ac3232"))
+	painter.paint_at(0, 0)
+	check_eq(painter.pixel(0, 0), Color("ac3232"), "кисть 1 красит клетку")
+	check_eq(painter.pixel(1, 0), PixelTheme.BG, "соседняя клетка не тронута")
+	painter.set_brush_size(4)
+	painter.paint_at(10, 10)
+	check(painter.pixel(8, 8) == Color("ac3232") and painter.pixel(11, 11) == Color("ac3232")
+		and painter.pixel(12, 12) == PixelTheme.BG, "кисть 4 — квадрат 4x4 вокруг клетки")
+	painter.paint_at(159, 89)
+	check_eq(painter.pixel(159, 89), Color("ac3232"), "кисть у края холста обрезается, не падает")
+	painter._push_undo()
+	painter.set_brush(Color("639bff"))
+	painter.fill_at(50, 50)
+	check_eq(painter.pixel(100, 5), Color("639bff"), "заливка разошлась по всему пустому полю")
+	check_eq(painter.pixel(10, 10), Color("ac3232"), "заливка не заходит в чужой цвет")
+	painter.undo()
+	check_eq(painter.pixel(100, 5), PixelTheme.BG, "UNDO отменил заливку")
+	painter._save()
+	check_eq(Bg.style(), Bg.STYLE_CUSTOM, "SAVE DRAWING ставит рисунок фоном")
+	Bg.forget_cache()
+	var saved := Bg.picture()
+	check(saved != null and saved.get_size() == Bg.PICTURE_SIZE, "рисунок сохранён в PNG нужного размера")
+	check(saved != null and saved.get_pixel(0, 0).is_equal_approx(Color("ac3232")), "в PNG — то, что нарисовано")
+	painter.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Bg.picture_path()))
+	Bg.forget_cache()
+	Bg._paint(rect)
+	check_eq(Bg.style(), Bg.STYLE_CUSTOM, "выбран свой рисунок")
+	check_eq(rect.color, PixelTheme.BG, "файла рисунка нет — фон как CLASSIC, без ошибок")
 	rect.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path
-	Bg._style = ""
+	Bg.forget_cache()
 
 	# Режимы: сколько полуколод — столько красок; DOUBLE — два оттенка одной.
 	for mode: String in ["random4", "random6"]:
@@ -3089,8 +3118,9 @@ func test_main_menu() -> void:
 		name_button.pressed.emit()
 	check(opened.has("profile"), "щелчок по имени открывает профиль")
 	var profile := ProfileScreen.new()
-	check(_find_button(profile, "CARD BACK") != null and _find_button(profile, "STATS") != null,
-		"в профиле есть вкладка STATS и кнопка CARD BACK")
+	check(_find_button(profile, "CARD BACK") != null and _find_button(profile, "STATS") != null
+		and _find_button(profile, "BACKGROUND") != null, "в профиле есть вкладка STATS, CARD BACK и BACKGROUND")
+	check(_find_button(menu, "BACKGROUND: CLASSIC") == null, "выбора фона в главном меню нет — он в профиле")
 	profile.free()
 	var first_profile := ProfileScreen.new(true)
 	check(_find_button(first_profile, "CARD BACK") == null, "при первом запуске — только имя и герб")

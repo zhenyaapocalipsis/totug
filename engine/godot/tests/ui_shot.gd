@@ -124,6 +124,26 @@ func _run_scenario() -> void:
 				for i_r in st.turn_order.size():
 					fake[st.turn_order[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r}
 				_screen._game_over_panel.set_ratings(fake)
+		"background":
+			# Экран фона с рисунком: ночь, луна, горы. Отдельный файл профиля.
+			PlayerProfile.path_override = "user://profile_shot.cfg"
+			var painter := BackgroundScreen.new()
+			root.add_child(painter)
+			painter.set_brush(Color("222034"))
+			painter._push_undo()
+			painter._image.fill(Color("222034"))
+			painter.set_brush(Color("3f3f74"))
+			painter.set_brush_size(4)
+			for x in range(0, 160, 2):
+				var top := 60 - int(18.0 * absf(sin(x * 0.05)))
+				for y in range(top, 90, 3):
+					painter.paint_at(x, y)
+			painter.set_brush(Color("cbdbfc"))
+			for y in range(14, 24, 2):
+				for x in range(120, 130, 2):
+					if Vector2(x - 125, y - 19).length() < 5.0:
+						painter.paint_at(x, y)
+			painter._changed()
 		"esc_menu":
 			# Меню по Esc поверх партии (там же выбор фона).
 			_screen._pause_menu.visible = true

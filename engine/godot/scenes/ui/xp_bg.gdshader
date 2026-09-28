@@ -19,7 +19,7 @@ uniform float design_height = 540.0;
 /// Скорость облаков.
 uniform float speed = 0.004;
 
-// Палитра: небо сверху вниз, облака, трава от света к тени, земля.
+// Палитра: небо сверху вниз, облака, трава от света к тени, дальний гребень.
 const vec3 SKY_0 = vec3(0.075, 0.290, 0.780);
 const vec3 SKY_1 = vec3(0.140, 0.420, 0.870);
 const vec3 SKY_2 = vec3(0.250, 0.560, 0.930);
@@ -35,11 +35,14 @@ const vec3 GRASS_1 = vec3(0.200, 0.560, 0.090);
 const vec3 GRASS_2 = vec3(0.130, 0.430, 0.070);
 const vec3 GRASS_3 = vec3(0.080, 0.310, 0.050);
 const vec3 RIDGE = vec3(0.180, 0.360, 0.150);
-const vec3 SOIL = vec3(0.420, 0.300, 0.200);
 
 
+/// Случайное число клетки шума. Без sin(): у видеокарт sin от больших чисел
+/// считается грубо, и шум рвался — облака получали прямые обрубленные края.
 float hash(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+	p3 += dot(p3, p3.yzx + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
 }
 
 
@@ -126,12 +129,10 @@ void fragment() {
 		if (depth < 0.035 + d * 0.02 && uv.x < 0.75) {
 			col = GRASS_LIT;
 		}
-		// Тропинка у нижнего поля слева и тёмная полоса ближнего поля.
-		float path = 0.84 + 0.02 * uv.x;
-		if (abs(uv.y - path) < 0.006 && uv.x < 0.30 + d * 0.04) {
-			col = SOIL;
-		} else if (uv.y > path + 0.004) {
-			col = ramp(0.55 + 0.4 * (uv.y - path) / (1.0 - path) + 0.1 * vnoise(vec2(uv.x * 60.0, uv.y * 8.0)),
+		// Ближнее поле внизу — чуть темнее, с мелкой рябью травы.
+		float near = 0.84 + 0.02 * uv.x;
+		if (uv.y > near) {
+			col = ramp(0.55 + 0.4 * (uv.y - near) / (1.0 - near) + 0.1 * vnoise(vec2(uv.x * 60.0, uv.y * 8.0)),
 				d, GRASS_0, GRASS_1, GRASS_2, GRASS_3);
 		}
 	}

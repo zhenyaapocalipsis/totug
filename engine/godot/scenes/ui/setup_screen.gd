@@ -182,13 +182,6 @@ func _build_main() -> void:
 		func(): show_page(PAGE_PLAY)))
 	_col.add_child(_big_button("LIBRARY", "How to play and every card of the game.",
 		func(): show_page(PAGE_LIBRARY)))
-	# Фон по кругу: CLASSIC -> BLACK -> ORANGE IS NEW BLACK -> WINDOWS XP.
-	var bg := _big_button(UnderdarkBg.button_text(),
-		"Change the background (menu and game). Click again for the next one.", func(): pass) as Button
-	bg.pressed.connect(func():
-		UnderdarkBg.set_style(UnderdarkBg.next_style())
-		bg.text = UnderdarkBg.button_text())
-	_col.add_child(bg)
 	_col.add_child(_big_button("QUIT", "Close the game.",
 		func(): get_tree().quit()))
 
