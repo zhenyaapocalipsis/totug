@@ -71,10 +71,13 @@ const KILL_HITSTOP := 0.08
 ## владельца, 2026-09-27): 15 — столбцу TROPHY таблицы игроков (на четверых
 ## четыре двузначных числа обычным шрифтом), 53 — столбцу имени (значок хода,
 ## фишка с эмблемой и ник в 12 знаков). Доска от этого не мельчает: самая
-## широкая 4p-схема — 596 пикселей (100 раскладок) при зоне 636. Рынок стоит
-## по центру.
-const COL := float(MarketPanel.WIDTH) + 68.0
-## Ширина столбика кнопок стопок в зоне кнопок; остальное — End turn.
+## широкая 4p-схема — 596 пикселей (100 раскладок) при зоне 636.
+## Ещё плюс 16 (владелец, 2026-09-28): рынок прижат вправо, слева от него
+## дектрекер в мелкую карту шириной. Зона доски — 620, схема всё так же 1:1.
+const COL := float(MarketPanel.WIDTH) + 84.0
+## Дектрекер — всё, что в колонке левее рынка.
+const TRACKER_W := COL - MarketPanel.WIDTH - GAP
+## Ширина столбика кнопок стопок под рынком; остальное — End turn.
 const PILES_W := 80.0
 ## Высота зоны бараков.
 const TOP_H := 22.0
@@ -148,7 +151,8 @@ var _res_power_shown := 0
 var _res_influence_shown := 0
 var _piles_column: VBoxContainer
 var _pile_inner: PileZone
-var _pile_discard: PileZone
+## Колода и сброс зрителя лесенкой по цене (вместо кнопки DISCARD).
+var _deck_tracker: DeckTracker
 ## Общая для всех стопка сожранных карт — кнопкой рядом со своими стопками.
 var _pile_devour: PileZone
 var _pile_dialog: PileDialog
@@ -293,16 +297,16 @@ func _build_layout() -> void:
 	_market_panel.choice_clicked.connect(_on_decision_answer)
 	add_child(_market_panel)
 
-	# 3. Стопки кнопками одна под другой в левом нижнем углу: свой сброс,
-	# свой Внутренний круг и общая для всех стопка сожранных карт (из неё же
-	# берётся «призрак», Ghost). По щелчку — весь список карт стопки.
+	# Колода и сброс — дектрекер слева от рынка.
+	_deck_tracker = DeckTracker.new()
+	add_child(_deck_tracker)
+
+	# 3. Стопки кнопками одна под другой под рынком: свой Внутренний круг и
+	# общая для всех стопка сожранных карт (из неё же берётся «призрак»,
+	# Ghost). По щелчку — весь список карт стопки.
 	_piles_column = VBoxContainer.new()
 	_piles_column.add_theme_constant_override("separation", int(GAP))
 	add_child(_piles_column)
-	_pile_discard = PileZone.new("DISCARD")
-	_pile_discard.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_pile_discard.clicked.connect(func(): _open_pile("discard"))
-	_piles_column.add_child(_pile_discard)
 	_pile_inner = PileZone.new("INNER")
 	_pile_inner.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_inner.clicked.connect(func(): _open_pile("inner"))
@@ -725,17 +729,20 @@ func _layout() -> void:
 	var top_y := MARGIN
 	var bottom_y := h - MARGIN - BOTTOM_H
 
-	# Правая колонка: бараки, сыгранные карты, рынок, внизу кнопки. Рынок
-	# ровно своего размера (карты целиком), сыгранным — всё, что осталось.
+	# Правая колонка: бараки, таблица игроков, под ней слева дектрекер до
+	# низа экрана, справа рынок, под рынком кнопки. Рынок ровно своего
+	# размера (карты целиком), таблице — всё, что осталось.
 	_place(_barracks, d_x, top_y, COL, TOP_H)
 	var market_h := _market_panel.get_combined_minimum_size().y
 	var market_y := bottom_y - GAP - market_h
-	_place(_market_panel, d_x, market_y, COL, market_h)
+	var market_x := d_x + TRACKER_W + GAP
+	_place(_market_panel, market_x, market_y, MarketPanel.WIDTH, market_h)
+	_place(_deck_tracker, d_x, market_y, TRACKER_W, h - MARGIN - market_y)
 	var players_y := top_y + TOP_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
-	_place(_piles_column, d_x, bottom_y, PILES_W, BOTTOM_H)
-	var ew := COL - PILES_W - GAP
-	_place(_end_turn_area, d_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
+	_place(_piles_column, market_x, bottom_y, PILES_W, BOTTOM_H)
+	var ew := MarketPanel.WIDTH - PILES_W - GAP
+	_place(_end_turn_area, market_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
 	# 2026-09-27: чат убран, сводка — до низа); доска — всё между ней и
@@ -1086,11 +1093,10 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 ## Куда улетает карта витрины, взятая pid: для зрителя — в его стопку
 ## ("discard" / "inner"), для соперника — в его барак.
 func _showcase_target(pid: String, dest: String) -> Vector2:
-	var pile: PileZone = null
-	if pid == viewer_id:
-		pile = _pile_discard if dest == "discard" else (_pile_inner if dest == "inner" else null)
-	if pile != null and pile.visible:
-		return pile.get_global_rect().get_center() - get_global_position()
+	if pid == viewer_id and dest == "discard":
+		return _deck_tracker.discard_rect().get_center() - get_global_position()
+	if pid == viewer_id and dest == "inner" and _pile_inner.visible:
+		return _pile_inner.get_global_rect().get_center() - get_global_position()
 	var at: Variant = _barracks_at(pid)
 	return at if at != null else Vector2(size.x * 0.5, -CardView.MINI_SIZE.y)
 
@@ -1599,12 +1605,13 @@ static func _signed(delta: int) -> String:
 	return ("+%d" % delta) if delta > 0 else str(delta)
 
 
-## Стопки зрителя. Сброс виден только своему игроку (StateView его прячет),
-## Внутренний круг открыт всем — здесь показываем всё равно только свой.
+## Стопки зрителя. Сброс и состав колоды видны только своему игроку
+## (StateView их прячет), Внутренний круг открыт всем — здесь показываем
+## всё равно только свой.
 func _refresh_piles(view: Dictionary) -> void:
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	_pile_inner.set_cards(me.get("inner_circle", []))
-	_pile_discard.set_cards(me.get("discard_pile", []))
+	_deck_tracker.set_cards(me.get("deck_cards", []), me.get("discard_pile", []))
 	# Сожранные карты — стопка общая для всех, не своя у зрителя.
 	_pile_devour.set_cards(view.get("devoured_pile", []))
 
@@ -1619,8 +1626,6 @@ func _open_pile(which: String) -> void:
 			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []))
 		"devour":
 			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []))
-		_:
-			_pile_dialog.open_pile("%s — Discard pile" % who, me.get("discard_pile", []))
 
 
 func _refresh_actions(view: Dictionary) -> void:
@@ -1667,9 +1672,9 @@ func _on_supply_clicked(card_id: String) -> void:
 ## Летит отдельная копия карты, а не сама карта слота: та в это же мгновение
 ## уже показывает пришедшую ей на смену.
 func _fly_to_discard(from: Rect2, cid: String) -> void:
-	if cid == "" or from.size.x < 1.0 or not _pile_discard.visible:
+	if cid == "" or from.size.x < 1.0 or not _deck_tracker.visible:
 		return
-	var to := _pile_discard.get_global_rect().get_center() - from.size * 0.5
+	var to := _deck_tracker.discard_rect().get_center() - from.size * 0.5
 	var start := from.position - get_global_position()
 	var finish := to - get_global_position()
 	if start.distance_to(finish) < 1.0:

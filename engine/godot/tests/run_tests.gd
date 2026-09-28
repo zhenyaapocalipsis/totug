@@ -1584,6 +1584,14 @@ func test_state_view_hides_hidden_info() -> void:
 	check_eq(other_view["players"]["red"]["hand_size"], 2, "чужой игрок видит только размер руки")
 	check_eq(other_view["players"]["red"]["discard_size"], 1, "чужой игрок видит только размер сброса")
 	check(not other_view["players"]["red"].has("discard_pile"), "содержимое чужого сброса скрыто")
+	red.deck.draw_pile = ["48344", "48342", "48343"]
+	var deck_view: Dictionary = StateView.for_player(state, "red")
+	check_eq(deck_view["players"]["red"]["deck_cards"], ["48342", "48343", "48344"],
+		"владелец видит состав колоды, но отсортированным — порядок добора скрыт")
+	check(not StateView.for_player(state, "blue")["players"]["red"].has("deck_cards"),
+		"состав чужой колоды скрыт")
+	check_eq(DeckTracker.sorted_by_cost(["48342", "48342"]).size(), 2,
+		"дектрекер: каждая копия карты — своя ступенька")
 
 	check_eq(self_view["troops"], state.troops, "войска на доске — открытая информация")
 	check_eq(self_view["market"]["display"], state.market.display, "маркет — открытая информация")

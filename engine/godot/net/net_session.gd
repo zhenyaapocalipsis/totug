@@ -59,7 +59,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 8
+const PROTOCOL := 9
 ## Режим партий, собранных поиском игры.
 const MATCH_MODE := GameSetup.MODE_RANDOM_4
 const MAX_ROOMS := 64

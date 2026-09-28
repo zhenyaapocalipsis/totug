@@ -91,6 +91,14 @@ func _fake_hover() -> void:
 	Input.parse_input_event(ev)
 
 
+## Число из --name=N, иначе fallback.
+static func _count_arg(name: String, fallback: int) -> int:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--%s=" % name):
+			return int(arg.get_slice("=", 1))
+	return fallback
+
+
 ## Сценарии прогоняются НАМЕРЕНИЯМИ, а не подделкой состояния: сцена ходит
 ## ровно теми же путями, что и живой игрок мышкой.
 func _run_scenario() -> void:
@@ -282,6 +290,25 @@ func _run_scenario() -> void:
 					_screen.send(Intent.deploy(pid5, String(slot5)))
 					break
 				_screen.send(Intent.end_turn(pid5))
+		"tracker":
+			# Дектрекер позднего хода: следующему игроку — докупленные карты
+			# в колоду и в сброс, затем ход переходит к нему.
+			var st_t := _screen.server.state
+			var now_t: String = st_t.current_player()
+			var next_t: String = st_t.turn_order[(st_t.turn_order.find(now_t) + 1) % st_t.turn_order.size()]
+			var d_t: Deck = st_t.players[next_t].deck
+			for n in _count_arg("deck_add", 12):
+				d_t.draw_pile.append(st_t.market.deck.pop_back())
+			for n in _count_arg("discard_add", 14):
+				d_t.discard_pile.append(st_t.market.deck.pop_back())
+			# Стартовая расстановка — вопросы; отвечаем первым вариантом.
+			for guard_t in 20:
+				if not _screen.server.resolver.is_waiting():
+					break
+				var pd_t: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd_t.player_id,
+					pd_t.legal_options[0] if not pd_t.legal_options.is_empty() else null))
+			_screen.send(Intent.end_turn(st_t.current_player()))
 		"outcasts":
 			# Раздача изгоев: ходящий разыгрывает Ghoul (каждому сопернику по
 			# изгою), затем Demogorgon (съесть карту руки, вытеснить, каждому

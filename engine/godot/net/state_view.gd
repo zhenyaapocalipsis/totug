@@ -8,8 +8,10 @@ extends RefCounted
 ## claude/progress.md, этап 6):
 ##   - Рука противника скрыта (только hand_size).
 ##   - Сброс противника скрыт (только discard_size).
-##   - Колода добора скрыта у ВСЕХ, включая владельца (только deck_size) —
-##     порядок карт в ней неизвестен и самому игроку после перетасовки.
+##   - Порядок колоды добора скрыт у ВСЕХ, включая владельца (он неизвестен
+##     и самому игроку после перетасовки). Владельцу — только СОСТАВ колоды,
+##     отсортированный по id (deck_cards, для дектрекера); остальным —
+##     deck_size.
 ##   - Войска/шпионы на доске, маркет, Внутренний круг, played_pile,
 ##     devoured_pile, played_aspects_this_turn — открытая информация всем.
 ##   - PendingDecision.legal_options видны только игроку, который решает;
@@ -254,6 +256,10 @@ static func _player_view(p: PlayerState, is_owner: bool) -> Dictionary:
 	if is_owner:
 		view["hand"] = p.deck.hand.duplicate()
 		view["discard_pile"] = p.deck.discard_pile.duplicate()
+		# Отсортировано: порядок добора не утекает даже владельцу.
+		var deck_cards := p.deck.draw_pile.duplicate()
+		deck_cards.sort()
+		view["deck_cards"] = deck_cards
 		view["pending_promotions"] = p.pending_promotions.duplicate()
 	return view
 
