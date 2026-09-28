@@ -47,6 +47,10 @@ var _first_run := false
 var _look: VBoxContainer
 var _stats: Control
 var _tab_buttons: Array[Button] = []
+## Любимый цвет места ("" — любой, PlayerProfile.clean_colour) и рамки его выбора.
+var _colour := ""
+var _frames: Dictionary = {}
+var _any_button: Button
 
 
 ## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
@@ -58,6 +62,9 @@ func _init(first_run: bool = false) -> void:
 
 	var local := PlayerProfile.load_local()
 	_pixels = PlayerProfile.emblem_pixels(String(local["emblem"]))
+	_colour = String(local["colour"])
+	if _colour != "":
+		_seat = _colour
 
 	var centre := CenterContainer.new()
 	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -137,23 +144,27 @@ func _init(first_run: bool = false) -> void:
 
 	editor.add_child(_tools())
 
-	_look.add_child(GameScreen.section_label("PREVIEW (CLICK A COLOUR TO TRY IT)"))
+	# Ряд фишек всех цветов — он же выбор любимого цвета (рамка у выбранного;
+	# ANY — без предпочтения).
+	_look.add_child(GameScreen.section_label("YOUR COLOUR (CLICK TO CHOOSE)"))
 	var previews := HBoxContainer.new()
 	previews.add_theme_constant_override("separation", 8)
 	previews.alignment = BoxContainer.ALIGNMENT_CENTER
 	_look.add_child(previews)
 	for pid: String in GameRoom.PLAYER_IDS:
+		var frame := PanelContainer.new()
+		frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		previews.add_child(frame)
+		_frames[pid] = frame
 		var big := TextureRect.new()
 		big.custom_minimum_size = Vector2.ONE * PlayerProfile.SIZE * PREVIEW_ZOOM
 		big.stretch_mode = TextureRect.STRETCH_SCALE
 		big.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		big.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		big.tooltip_text = pid.capitalize()
 		big.gui_input.connect(func(e: InputEvent):
-			if e is InputEventMouseButton and e.pressed:
-				_seat = pid
-				_canvas.queue_redraw())
-		previews.add_child(big)
+			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+				choose_colour(pid))
+		frame.add_child(big)
 		var small := TextureRect.new()
 		small.custom_minimum_size = Vector2.ONE * PlayerProfile.SIZE
 		small.stretch_mode = TextureRect.STRETCH_KEEP
@@ -162,9 +173,15 @@ func _init(first_run: bool = false) -> void:
 		previews.add_child(small)
 		_previews.append(big)
 		_previews.append(small)
+	_any_button = _button("ANY", func(): choose_colour(""))
+	_any_button.toggle_mode = true
+	_any_button.custom_minimum_size = Vector2(30, 16)
+	_any_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_any_button.tooltip_text = "No favourite colour."
+	previews.add_child(_any_button)
 
 	var hint := Label.new()
-	hint.text = "Left mouse: paint. Right mouse: erase.\nEmpty pixels show your seat colour."
+	hint.text = "Left mouse: paint. Right mouse: erase.\nOnline you get your colour if nobody chose it first."
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_look.add_child(hint)
@@ -184,6 +201,27 @@ func _init(first_run: bool = false) -> void:
 
 	_refresh_previews()
 	_refresh_counter()
+	_refresh_frames()
+
+
+## Выбрать любимый цвет ("" — любой). Холст показывает герб на этом цвете.
+func choose_colour(colour: String) -> void:
+	_colour = PlayerProfile.clean_colour(colour)
+	if _colour != "":
+		_seat = _colour
+		_canvas.queue_redraw()
+	_refresh_frames()
+
+
+func _refresh_frames() -> void:
+	for pid: String in _frames:
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(0, 0, 0, 0)
+		box.border_color = PixelTheme.GOLD if pid == _colour else Color(0, 0, 0, 0)
+		box.set_border_width_all(1)
+		box.set_content_margin_all(2)
+		(_frames[pid] as PanelContainer).add_theme_stylebox_override("panel", box)
+	_any_button.set_pressed_no_signal(_colour == "")
 
 
 ## Палитра, текущий цвет (он же выбор любого цвета) и ERASE ALL.
@@ -336,7 +374,7 @@ func _save() -> void:
 		if _name_edit.is_inside_tree():
 			_name_edit.grab_focus()
 		return
-	var err := PlayerProfile.save_local({"name": name_text, "emblem": emblem()})
+	var err := PlayerProfile.save_local({"name": name_text, "emblem": emblem(), "colour": _colour})
 	if err == OK:
 		closed.emit()
 	else:
@@ -347,7 +385,7 @@ func _save() -> void:
 ## Пустое имя не сохраняем: иначе игра сочтёт профиль несозданным.
 func _open_card_back() -> void:
 	if PlayerProfile.clean_name(_name_edit.text) != "":
-		PlayerProfile.save_local({"name": _name_edit.text, "emblem": emblem()})
+		PlayerProfile.save_local({"name": _name_edit.text, "emblem": emblem(), "colour": _colour})
 	card_back_requested.emit()
 
 

@@ -106,6 +106,7 @@ func _initialize() -> void:
 	# этап 7: сохранение партии и восстановление после перезапуска
 	test_game_journal_replay()
 	test_room_pause()
+	test_colour_preference()
 	test_resume_saved_game()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
@@ -3226,6 +3227,42 @@ func test_game_journal_replay() -> void:
 	check_eq(room.claim(5, "key-red"), "red", "переподключение по верному ключу находит цвет")
 	check_eq(room.claim(6, "key-red"), "", "тот же ключ второй раз — место уже занято")
 	check_eq(room.claim(7, "nope"), "", "чужой ключ — отказ")
+
+
+## Любимый цвет из профиля (решение владельца, 2026-09-28).
+func test_colour_preference() -> void:
+	section("профиль: любимый цвет места")
+	check_eq(PlayerProfile.clean_colour("purple"), "purple", "цвет игры годится")
+	check_eq(PlayerProfile.clean_colour("pink"), "", "чужой цвет — без предпочтения")
+	var two: Array[String] = ["red", "blue"]
+	check_eq(PlayerProfile.seat_first(two, "blue"), ["blue", "red"] as Array[String], "за одним экраном: свой цвет первым")
+	check_eq(PlayerProfile.seat_first(two, "purple"), ["purple", "blue"] as Array[String],
+		"цвета нет среди мест — он заменяет первый")
+	check_eq(PlayerProfile.seat_first(two, ""), two, "без предпочтения — как было")
+
+	var room := GameRoom.new("COLR", 3, GameSetup.MODE_STANDARD)
+	check_eq(room.add(1), "red", "без предпочтения — первый свободный")
+	room.profiles["red"] = {"name": "Ann"}
+	room.keys["red"] = "key-ann"
+	check_eq(room.add(2, "red"), "red", "red занят тем, кто его не выбирал, — меняются местами")
+	check_eq(room.seats[1], "blue", "уступивший пересел на освободившийся цвет")
+	check_eq(room.profiles.get("blue", {}).get("name", ""), "Ann", "профиль переехал вместе с игроком")
+	check_eq(room.keys.get("blue", ""), "key-ann", "ключ переехал вместе с игроком")
+	check(not room.profiles.has("red"), "за red пока нет чужого профиля")
+	check_eq(room.add(3, "red"), "green", "red уже выбран раньше — остаётся свободный цвет")
+	check_eq(room.prefer(3, "purple"), "purple", "свободный цвет — пересел")
+	check_eq(room.prefer(1, "purple"), "blue", "выбранный другим цвет не отнять")
+	room.deal(3)
+	check_eq(room.prefer(2, "blue"), "red", "после раздачи пересаживаться нельзя")
+
+	var old_path := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://profile_colour_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.save_local({"name": "Ann", "emblem": "", "colour": "green"})
+	PlayerProfile.save_local({"name": "Anna", "emblem": ""})
+	check_eq(String(PlayerProfile.load_local()["colour"]), "green", "цвет сохранён и не стёрт сохранением без цвета")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.path_override = old_path
 
 
 ## Пауза сетевой партии (решение владельца, 2026-09-27): отключился — партия

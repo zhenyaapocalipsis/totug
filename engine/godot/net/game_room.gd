@@ -18,6 +18,8 @@ var mode: String
 ## Кто создал комнату (или сел первым, если создатель ушёл) — он жмёт START.
 var owner_peer := 0
 var seats: Dictionary = {}  # peer id -> player id
+## Любимый цвет из профиля (PlayerProfile.clean_colour): peer id -> цвет.
+var wants: Dictionary = {}
 ## Профили сидящих (PlayerProfile): player id -> {name, emblem}.
 var profiles: Dictionary = {}
 ## Учётные записи рейтинга (RatingBook.account_of): player id -> account.
@@ -77,8 +79,9 @@ func joined() -> Array:
 	return ids
 
 
-## Посадить за первый свободный цвет. Возвращает цвет ("" — мест нет).
-func add(peer: int) -> String:
+## Посадить за первый свободный цвет, а если задан preferred — пересадить за
+## него (prefer). Возвращает цвет ("" — мест нет).
+func add(peer: int, preferred: String = "") -> String:
 	if started or is_full():
 		return ""
 	for pid: String in PLAYER_IDS:
@@ -86,8 +89,46 @@ func add(peer: int) -> String:
 			seats[peer] = pid
 			if owner_peer == 0:
 				owner_peer = peer
-			return pid
+			return prefer(peer, preferred) if preferred != "" else pid
 	return ""
+
+
+## Пересадить игрока за любимый цвет, пока партия не раздана. Цвет свободен —
+## садится. Занят тем, кто его сам не выбирал, — меняются местами (профиль,
+## ключ и учётная запись переезжают вместе с игроком). Занят тем, кто выбрал
+## его раньше, — остаётся где был. Возвращает цвет игрока.
+func prefer(peer: int, colour: String) -> String:
+	if not seats.has(peer):
+		return ""
+	if PLAYER_IDS.has(colour):
+		wants[peer] = colour
+	else:
+		wants.erase(peer)
+	var old := String(seats[peer])
+	if started or not PLAYER_IDS.has(colour) or old == colour:
+		return old
+	var holder = seats.find_key(colour)
+	if holder != null and String(wants.get(holder, "")) == colour:
+		return old
+	for data: Dictionary in [profiles, accounts, keys]:
+		_swap(data, old, colour)
+	seats[peer] = colour
+	if holder != null:
+		seats[holder] = old
+	return colour
+
+
+static func _swap(data: Dictionary, a: String, b: String) -> void:
+	var had_a := data.has(a)
+	var had_b := data.has(b)
+	var value_a = data.get(a)
+	var value_b = data.get(b)
+	data.erase(a)
+	data.erase(b)
+	if had_a:
+		data[b] = value_a
+	if had_b:
+		data[a] = value_b
 
 
 func remove(peer: int) -> void:
@@ -97,6 +138,7 @@ func remove(peer: int) -> void:
 		accounts.erase(pid)
 		keys.erase(pid)
 	seats.erase(peer)
+	wants.erase(peer)
 	if owner_peer == peer:
 		owner_peer = int(seats.keys()[0]) if not seats.is_empty() else 0
 

@@ -189,7 +189,29 @@ static func clean(profile: Dictionary) -> Dictionary:
 		"name": clean_name(String(profile.get("name", ""))),
 		"emblem": clean_emblem(String(profile.get("emblem", ""))),
 		"back": clean_back(String(profile.get("back", ""))),
+		"colour": clean_colour(String(profile.get("colour", ""))),
 	}
+
+
+## Любимый цвет места (решение владельца, 2026-09-28): один из цветов игры
+## или "" — всё равно какой. В сети сервер сажает за него, если может
+## (GameRoom.prefer); за одним экраном он достаётся первому месту (seat_first).
+static func clean_colour(colour: String) -> String:
+	return colour if GameRoom.PLAYER_IDS.has(colour) else ""
+
+
+## Цвета партии за одним экраном: любимый цвет — первым (у первого места
+## профиль этого компьютера). Если его нет среди цветов, он заменяет первый.
+static func seat_first(ids: Array[String], colour: String) -> Array[String]:
+	var out := ids.duplicate()
+	if clean_colour(colour) == "" or out.is_empty():
+		return out
+	if out.has(colour):
+		out.erase(colour)
+	else:
+		out.pop_front()
+	out.push_front(colour)
+	return out
 
 
 ## Тесты подменяют файл профиля своим: сетевой тест проходит через настоящий
@@ -212,9 +234,9 @@ static func path() -> String:
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
-		return {"name": "", "emblem": "", "back": ""}
+		return {"name": "", "emblem": "", "back": "", "colour": ""}
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", ""),
-		"back": cfg.get_value("profile", "back", "")})
+		"back": cfg.get_value("profile", "back", ""), "colour": cfg.get_value("profile", "colour", "")})
 
 
 ## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга
@@ -223,13 +245,16 @@ static func has_local() -> bool:
 	return String(load_local()["name"]) != ""
 
 
-## Имя и герб; ключ рейтинга, рубашка и запомненный рейтинг в файле не трогаются.
+## Имя, герб и любимый цвет (если он передан); ключ рейтинга, рубашка и
+## запомненный рейтинг в файле не трогаются.
 static func save_local(profile: Dictionary) -> int:
 	var p := clean(profile)
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("profile", "name", p["name"])
 	cfg.set_value("profile", "emblem", p["emblem"])
+	if profile.has("colour"):
+		cfg.set_value("profile", "colour", p["colour"])
 	return cfg.save(path())
 
 

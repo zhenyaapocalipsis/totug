@@ -149,8 +149,11 @@ func _close_net() -> void:
 func _start_game(player_ids: Array[String], game_seed: int, mode: String) -> void:
 	for child in get_children():
 		child.queue_free()
-	# За одним экраном профиль на компьютере один — он у первого цвета.
-	PlayerProfile.seats = {player_ids[0]: PlayerProfile.load_local()}
+	# За одним экраном профиль на компьютере один — он у первого цвета, и этот
+	# цвет — любимый цвет профиля, если он выбран.
+	var local := PlayerProfile.load_local()
+	player_ids = PlayerProfile.seat_first(player_ids, String(local["colour"]))
+	PlayerProfile.seats = {player_ids[0]: local}
 	var screen := GameScreen.new(game_seed, [], player_ids, mode)
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():

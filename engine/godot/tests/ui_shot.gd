@@ -377,6 +377,7 @@ func _run_scenario() -> void:
 				editor.paint(4, i, Color("fbf236"))
 				editor.paint(i, 4, Color("fbf236"))
 			editor.paint(4, 4, Color("000000"))
+			editor.choose_colour("blue")
 		"profile_stats":
 			# Вкладка STATS: звание, рейтинг и выдуманная история партий. Профиль —
 			# отдельный файл, настоящий у владельца не трогается.

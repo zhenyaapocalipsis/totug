@@ -99,6 +99,7 @@ func _process(delta: float) -> bool:
 		"lan_wait":
 			if players[0].is_full() and players[1].seat != "":
 				check(players[1].seat != players[0].seat, "[lan] у клиента свой цвет")
+				check(players[0].seat == "purple", "[lan] хост сел за любимый purple (выбрал первым)")
 				players[0].start_game(4242)
 				_step = "started"
 		"server_wait_code":
@@ -237,6 +238,8 @@ func _process(delta: float) -> bool:
 				check(room.mode == NetSession.MATCH_MODE and room.needed == 2,
 					"[match] стол на двоих, режим RANDOM 4 (получено %d, %s)" % [room.needed, room.mode])
 				check(seated[0].seat != seated[1].seat, "[match] у двоих разные цвета")
+				check((seated[0].seat == "purple") != (seated[1].seat == "purple"),
+					"[match] любимый purple достался одному из двоих")
 				check(seated[0].room_code == room.code and seated[0]._last_code == room.code,
 					"[match] код стола запомнен для переподключения")
 				check(not (boards[seated[0]].get("schematic", {}) as Dictionary).is_empty(),
@@ -548,7 +551,9 @@ func _session() -> NetSession:
 
 func _track(p: NetSession) -> void:
 	_tracked += 1
-	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches), "back": _back_for(_tracked)}
+	# Все хотят purple: за столом он достаётся одному, остальные — другие цвета.
+	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches), "back": _back_for(_tracked),
+		"colour": "purple"}
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	views[p] = {}

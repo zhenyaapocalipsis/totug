@@ -347,7 +347,8 @@ func _refresh_dots() -> void:
 ## рейтинг и рубашка карт — внутри профиля (решение владельца, 2026-09-28).
 func _profile_row() -> Control:
 	var local := PlayerProfile.load_local()
-	var icon := ProfileScreen.token_icon("red", String(local["emblem"]))
+	var colour := String(local["colour"])
+	var icon := ProfileScreen.token_icon(colour if colour != "" else "red", String(local["emblem"]))
 	var name_button := Button.new()
 	name_button.text = String(local["name"]) if String(local["name"]) != "" else "No name yet"
 	name_button.flat = true
