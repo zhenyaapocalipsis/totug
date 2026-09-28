@@ -455,7 +455,9 @@ func _draw_supplant(pos: Vector2, victim: String, killer: String, t: float) -> v
 ## Левый верхний угол картинки фишки с центром в pos — как её ставит _draw_troop.
 func _token_corner(pos: Vector2) -> Vector2:
 	var side := float(BoardSchematic.SLOT_R * 2 + 1)
-	return pos - Vector2(side, side) * 0.5 * _zoom
+	# По целым экранным пикселям, как и картинка схемы (_draw), — иначе пиксели
+	# фишки не совпадают с пикселями круга под ней.
+	return _snap(pos - Vector2(side, side) * 0.5 * _zoom)
 
 
 ## Фишка owner, опущенная на sunk пикселей схемы: всё, что ниже её обычного
@@ -944,7 +946,13 @@ func _slot_world(slot_id: String) -> Variant:
 	var slots := _slots()
 	if not slots.has(slot_id):
 		return null
-	return Vector2(float(slots[slot_id]["x"]), float(slots[slot_id]["y"]))
+	var at := Vector2(float(slots[slot_id]["x"]), float(slots[slot_id]["y"]))
+	# SchematicPainter рисует круг места вокруг пикселя round(at), а центр
+	# пикселя — на +0.5. Без этого фишка садилась на полпикселя схемы левее и
+	# выше круга (а при дробных координатах — до пикселя в любую сторону).
+	if _schematic_on():
+		return at.round() + Vector2(0.5, 0.5)
+	return at
 
 
 func _slot_radius_world() -> float:
@@ -1136,7 +1144,7 @@ func _draw() -> void:
 	var busy := _kill_slots()
 
 	for slot_id: String in slots.keys():
-		var pos := _to_screen(Vector2(float(slots[slot_id]["x"]), float(slots[slot_id]["y"])))
+		var pos := _to_screen(_slot_world(slot_id))
 		if pos.x < -radius or pos.y < -radius or pos.x > size.x + radius or pos.y > size.y + radius:
 			continue
 		var owner := String(troops.get(slot_id, ""))
@@ -1170,7 +1178,7 @@ func _draw_troop(pos: Vector2, owner: String) -> void:
 	var colour := troop_colour(owner)
 	if _schematic_on():
 		var token := _token(colour, "" if owner == GameState.WHITE else PlayerProfile.emblem_of(owner))
-		draw_texture_rect(token, Rect2(pos - token.get_size() * 0.5 * _zoom, token.get_size() * _zoom), false)
+		draw_texture_rect(token, Rect2(_token_corner(pos), token.get_size() * _zoom), false)
 	else:
 		var radius: float = maxf(_slot_radius_world() * _zoom, 3.0)
 		draw_circle(pos, radius, Color(0, 0, 0, 0.75))
@@ -1706,7 +1714,7 @@ func _click_at(screen_point: Vector2) -> void:
 	var best := ""
 	var best_dist := reach
 	for slot_id: String in slots.keys():
-		var pos := _to_screen(Vector2(float(slots[slot_id]["x"]), float(slots[slot_id]["y"])))
+		var pos := _to_screen(_slot_world(slot_id))
 		var d := screen_point.distance_to(pos)
 		if d < best_dist:
 			best_dist = d
