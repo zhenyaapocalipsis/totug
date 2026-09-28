@@ -560,7 +560,7 @@ func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: Stri
 		var account := RatingBook.account_of(key)
 		room.accounts[pid] = account
 		if account != "":
-			p["rating"] = ratings.rating_of(account)
+			p.merge(ratings.stats_of(account))
 	room.profiles[pid] = p
 
 
@@ -751,7 +751,7 @@ func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_s
 	profiles = seat_profiles.duplicate(true)
 	var own: Dictionary = profiles.get(seat, {})
 	if own.has("rating"):
-		PlayerProfile.cache_rating(int(own["rating"]))
+		PlayerProfile.cache_stats(own)
 	lobby_changed.emit(joined, needed, code, owner_seat)
 
 
@@ -975,10 +975,15 @@ func _rate_room(room: GameRoom) -> void:
 			"name": String((room.profiles.get(pid, {}) as Dictionary).get("name", ""))}
 		scores[pid] = int(Scoring.breakdown(state, pid)["total"])
 	var vp := Scoring.library_card_vp(state)
-	var result := ratings.record(players, scores, Array(Scoring.winners(state, vp[0], vp[1])))
+	var winners := Array(Scoring.winners(state, vp[0], vp[1]))
+	var result := ratings.record(players, scores, winners)
 	if result.is_empty():
 		_log("room %s: game over, not rated" % room.code)
 		return
+	# VP и победа — для истории партий в профиле у каждого игрока.
+	for pid: String in result:
+		result[pid]["vp"] = scores[pid]
+		result[pid]["won"] = winners.has(pid)
 	_log("room %s: rated %s" % [room.code, JSON.stringify(result)])
 	for peer: int in room.seats:
 		_send(peer, "_rating", [result])
@@ -987,7 +992,8 @@ func _rate_room(room: GameRoom) -> void:
 @rpc("authority", "call_remote", "reliable")
 func _rating(result: Dictionary) -> void:
 	if result.has(seat):
-		PlayerProfile.cache_rating(int(result[seat]["rating"]))
+		PlayerProfile.cache_stats(result[seat])
+		PlayerProfile.add_history(PlayerProfile.history_entry(seat, result, profiles))
 	rating_changed.emit(result)
 
 

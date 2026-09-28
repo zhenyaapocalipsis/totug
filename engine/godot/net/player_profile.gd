@@ -263,11 +263,123 @@ static func cached_rating() -> int:
 	return int(cfg.get_value("rating", "value", -1))
 
 
-static func cache_rating(value: int) -> void:
+## Запомнить, что сервер сообщил: {rating, games, wins} (games/wins может не быть).
+static func cache_stats(stats: Dictionary) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
-	cfg.set_value("rating", "value", value)
+	cfg.set_value("rating", "value", int(stats["rating"]))
+	for field in ["games", "wins"]:
+		if stats.has(field):
+			cfg.set_value("rating", field, int(stats[field]))
 	cfg.save(path())
+
+
+## Для карточки игрока: {rating (-1 — ещё не играл онлайн), games, wins}.
+static func cached_stats() -> Dictionary:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	return {"rating": int(cfg.get_value("rating", "value", -1)), "games": int(cfg.get_value("rating", "games", 0)),
+		"wins": int(cfg.get_value("rating", "wins", 0))}
+
+
+# --- звание по рейтингу ------------------------------------------------------
+
+## Звания по рейтингу (2026-09-28): новичок с START=1000 — WARRIOR.
+## [нижняя граница рейтинга, название, цвет камня].
+const RANKS := [
+	[0, "DRIDER", "8f563b"],
+	[950, "WARRIOR", "9badb7"],
+	[1050, "PRIESTESS", "639bff"],
+	[1150, "MATRON", "f2d23c"],
+	[1250, "TYRANT", "d77bba"],
+]
+const UNRANKED_COLOUR := "595652"
+const RANK_ICON := 7
+
+
+## Номер звания (0..RANKS.size()-1); -1 — рейтинга ещё нет.
+static func rank_index(rating: int) -> int:
+	if rating < 0:
+		return -1
+	var i := 0
+	for n in RANKS.size():
+		if rating >= int(RANKS[n][0]):
+			i = n
+	return i
+
+
+static func rank_title(rating: int) -> String:
+	var i := rank_index(rating)
+	return "UNRANKED" if i < 0 else String(RANKS[i][1])
+
+
+static func rank_colour(rating: int) -> Color:
+	var i := rank_index(rating)
+	return Color(UNRANKED_COLOUR if i < 0 else String(RANKS[i][2]))
+
+
+## Значок звания: гранёный камень-ромб 7x7 цвета звания.
+static func rank_icon(rating: int) -> Image:
+	var colour := rank_colour(rating)
+	var img := Image.create(RANK_ICON, RANK_ICON, false, Image.FORMAT_RGBA8)
+	var c := RANK_ICON / 2
+	for y in RANK_ICON:
+		for x in RANK_ICON:
+			var d := absi(x - c) + absi(y - c)
+			if d > c:
+				continue
+			var px := colour
+			if d == c:
+				px = colour.darkened(0.55)
+			elif x < c and y <= c or (x == c and y < c):
+				px = colour.lightened(0.35)
+			img.set_pixel(x, y, px)
+	img.set_pixel(c - 1, c - 1, Color.WHITE)
+	return img
+
+
+# --- история онлайн-партий -----------------------------------------------------
+
+const HISTORY_MAX := 10
+
+
+## Последние партии, новые первыми. Хранится у игрока (в файле профиля).
+static func history() -> Array:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	var list = cfg.get_value("history", "games", [])
+	return list if list is Array else []
+
+
+static func add_history(entry: Dictionary) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	var list := history()
+	list.push_front(entry)
+	cfg.set_value("history", "games", list.slice(0, HISTORY_MAX))
+	cfg.save(path())
+
+
+## Строка истории из итога партии (NetSession._rating): result — место ->
+## {rating, delta, vp, won}, profiles — место -> {name, emblem}.
+## Место: победитель первый; иначе 1 + сколько игроков победили или набрали больше.
+static func history_entry(own_seat: String, result: Dictionary, profiles: Dictionary) -> Dictionary:
+	var mine: Dictionary = result[own_seat]
+	var players := []
+	var place := 1
+	for pid: String in result:
+		var r: Dictionary = result[pid]
+		var p: Dictionary = profiles.get(pid, {})
+		players.append({"seat": pid, "name": String(p.get("name", "")), "emblem": String(p.get("emblem", "")),
+			"vp": int(r.get("vp", 0)), "won": bool(r.get("won", false))})
+		if pid != own_seat and not bool(mine.get("won", false)) \
+				and (bool(r.get("won", false)) or int(r.get("vp", 0)) > int(mine.get("vp", 0))):
+			place += 1
+	players.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a["won"] and not b["won"] or (a["won"] == b["won"] and a["vp"] > b["vp"]))
+	return {"time": int(Time.get_unix_time_from_system()), "seat": own_seat, "place": place,
+		"vp": int(mine.get("vp", 0)), "won": bool(mine.get("won", false)), "rating": int(mine["rating"]),
+		"delta": int(mine.get("delta", 0)), "players": players}
 
 
 static func name_of(seat: String) -> String:

@@ -8,6 +8,9 @@ extends Control
 ##
 ## Левая кнопка мыши — красить, правая — стирать (можно вести с зажатой
 ## кнопкой). Вёрстка кодом, как у остальных экранов меню.
+##
+## Вкладка STATS — звание по рейтингу, партии/победы и последние онлайн-партии
+## (PlayerProfile.cached_stats / history).
 
 signal closed
 
@@ -24,6 +27,7 @@ const SWATCH := 14
 const PREVIEW_ZOOM := 3
 const RIM := Color(0.04, 0.03, 0.06)
 const BUTTON_SIZE := Vector2(70, 16)
+const PLACES := ["1ST", "2ND", "3RD", "4TH"]
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
 var _pixels: Array[Color] = []
@@ -37,6 +41,10 @@ var _saved_note: Label
 ## Сколько пикселей ещё можно закрасить (PlayerProfile.MIN_SEAT_PIXELS).
 var _counter: Label
 var _first_run := false
+## Вкладки: редактор имени и герба / звание, рейтинг и история партий.
+var _look: VBoxContainer
+var _stats: Control
+var _tab_buttons: Array[Button] = []
 
 
 ## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
@@ -72,7 +80,29 @@ func _init(first_run: bool = false) -> void:
 		welcome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(welcome)
 
-	col.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
+	# Вкладки: EMBLEM — редактор (имя и герб), STATS — звание, рейтинг и история.
+	# При первом запуске статистики ещё нет — только редактор.
+	_look = VBoxContainer.new()
+	_look.add_theme_constant_override("separation", 4)
+	if not _first_run:
+		var tabs := HBoxContainer.new()
+		tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+		tabs.add_theme_constant_override("separation", 6)
+		col.add_child(tabs)
+		var group := ButtonGroup.new()
+		for tab: String in ["EMBLEM", "STATS"]:
+			var b := _button(tab, _show_tab.bind(tab == "STATS"))
+			b.toggle_mode = true
+			b.button_group = group
+			b.button_pressed = tab == "EMBLEM"
+			tabs.add_child(b)
+			_tab_buttons.append(b)
+		_stats = _stats_page()
+		_stats.visible = false
+		col.add_child(_stats)
+	col.add_child(_look)
+
+	_look.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
 	_name_edit = LineEdit.new()
 	_name_edit.max_length = PlayerProfile.NAME_MAX
 	_name_edit.placeholder_text = "Your name"
@@ -82,14 +112,14 @@ func _init(first_run: bool = false) -> void:
 	if _first_run:
 		_name_edit.grab_focus.call_deferred()
 	_name_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	col.add_child(_name_edit)
+	_look.add_child(_name_edit)
 
-	col.add_child(HSeparator.new())
-	col.add_child(GameScreen.section_label("EMBLEM: YOUR TROOP ON THE BOARD"))
+	_look.add_child(HSeparator.new())
+	_look.add_child(GameScreen.section_label("EMBLEM: YOUR TROOP ON THE BOARD"))
 	var editor := HBoxContainer.new()
 	editor.add_theme_constant_override("separation", 10)
 	editor.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_child(editor)
+	_look.add_child(editor)
 
 	_canvas = Control.new()
 	_canvas.custom_minimum_size = Vector2(CELL * PlayerProfile.SIZE + 1, CELL * PlayerProfile.SIZE + 1)
@@ -101,11 +131,11 @@ func _init(first_run: bool = false) -> void:
 
 	editor.add_child(_tools())
 
-	col.add_child(GameScreen.section_label("PREVIEW (CLICK A COLOUR TO TRY IT)"))
+	_look.add_child(GameScreen.section_label("PREVIEW (CLICK A COLOUR TO TRY IT)"))
 	var previews := HBoxContainer.new()
 	previews.add_theme_constant_override("separation", 8)
 	previews.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_child(previews)
+	_look.add_child(previews)
 	for pid: String in GameRoom.PLAYER_IDS:
 		var big := TextureRect.new()
 		big.custom_minimum_size = Vector2.ONE * PlayerProfile.SIZE * PREVIEW_ZOOM
@@ -131,7 +161,7 @@ func _init(first_run: bool = false) -> void:
 	hint.text = "Left mouse: paint. Right mouse: erase.\nEmpty pixels show your seat colour."
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(hint)
+	_look.add_child(hint)
 
 	col.add_child(HSeparator.new())
 	var buttons := HBoxContainer.new()
@@ -305,6 +335,145 @@ func _save() -> void:
 		closed.emit()
 	else:
 		_saved_note.text = "Could not save the profile (error %d)." % err
+
+
+func _show_tab(stats: bool) -> void:
+	# Окно не прыгает: страница STATS не ниже редактора.
+	_stats.custom_minimum_size = _look.get_combined_minimum_size()
+	_look.visible = not stats
+	_stats.visible = stats
+	for b: Button in _tab_buttons:
+		b.set_pressed_no_signal((b.text == "STATS") == stats)
+
+
+## Вкладка STATS: звание, рейтинг, партии/победы и последние онлайн-партии.
+## Всё — как сервер сообщил в последний раз (PlayerProfile.cached_stats/history).
+func _stats_page() -> Control:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 4)
+	var stats := PlayerProfile.cached_stats()
+	var rating := int(stats["rating"])
+
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	head.alignment = BoxContainer.ALIGNMENT_CENTER
+	page.add_child(head)
+	head.add_child(rank_badge(rating, 3))
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 0)
+	head.add_child(words)
+	var title := Label.new()
+	title.text = PlayerProfile.rank_title(rating)
+	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	title.add_theme_color_override("font_color", PlayerProfile.rank_colour(rating))
+	words.add_child(title)
+	var sub := Label.new()
+	sub.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	words.add_child(sub)
+	if rating < 0:
+		sub.text = "Play an online game to get a rating."
+		return page
+	var i := PlayerProfile.rank_index(rating)
+	sub.text = "RATING %d" % rating
+	if i + 1 < PlayerProfile.RANKS.size():
+		sub.text += "   NEXT: %s AT %d" % [PlayerProfile.RANKS[i + 1][1], PlayerProfile.RANKS[i + 1][0]]
+
+	var games := int(stats["games"])
+	var wins := int(stats["wins"])
+	var numbers := HBoxContainer.new()
+	numbers.alignment = BoxContainer.ALIGNMENT_CENTER
+	numbers.add_theme_constant_override("separation", 16)
+	page.add_child(numbers)
+	for pair in [["GAMES", str(games)], ["WINS", str(wins)],
+			["WIN RATE", "%d%%" % roundi(100.0 * wins / games) if games > 0 else "-"]]:
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 0)
+		numbers.add_child(box)
+		var value := Label.new()
+		value.text = pair[1]
+		value.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+		value.add_theme_color_override("font_color", PixelTheme.TEXT)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(value)
+		var caption := Label.new()
+		caption.text = pair[0]
+		caption.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(caption)
+
+	page.add_child(HSeparator.new())
+	page.add_child(GameScreen.section_label("LAST ONLINE GAMES"))
+	var list := PlayerProfile.history()
+	if list.is_empty():
+		var none := Label.new()
+		none.text = "No games recorded yet."
+		none.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+		none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		page.add_child(none)
+		return page
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 2)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	page.add_child(grid)
+	for header in ["DATE", "PLAYERS", "PLACE", "VP", "RATING"]:
+		grid.add_child(_cell(header, PixelTheme.TEXT_DIM))
+	for game: Dictionary in list:
+		grid.add_child(_cell(_date(int(game.get("time", 0))), PixelTheme.TEXT_DIM))
+		grid.add_child(_history_players(game))
+		var place := int(game.get("place", 0))
+		grid.add_child(_cell(PLACES[clampi(place - 1, 0, PLACES.size() - 1)],
+			PixelTheme.GOLD if place == 1 else PixelTheme.TEXT))
+		grid.add_child(_cell(str(int(game.get("vp", 0))), PixelTheme.TEXT))
+		var delta := int(game.get("delta", 0))
+		var rating_row := HBoxContainer.new()
+		rating_row.add_theme_constant_override("separation", 4)
+		rating_row.add_child(_cell(str(int(game.get("rating", 0))), PixelTheme.TEXT))
+		rating_row.add_child(_cell("%+d" % delta, Color("5fd36a") if delta > 0
+			else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
+		grid.add_child(rating_row)
+	return page
+
+
+func _cell(text: String, colour: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_color_override("font_color", colour)
+	return label
+
+
+## "28.09 14:05" по местному времени.
+static func _date(unix: int) -> String:
+	var bias := int(Time.get_time_zone_from_system().get("bias", 0))
+	var d := Time.get_datetime_dict_from_unix_time(unix + bias * 60)
+	return "%02d.%02d %02d:%02d" % [d["day"], d["month"], d["hour"], d["minute"]]
+
+
+## Фишки всех игроков партии (победитель первым); подсказка — имена и VP.
+func _history_players(game: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	for p: Dictionary in game.get("players", []):
+		var icon := token_icon(String(p.get("seat", "")), String(p.get("emblem", "")))
+		var who := String(p.get("name", ""))
+		if String(p.get("seat", "")) == String(game.get("seat", "")):
+			who += " (you)"
+		icon.tooltip_text = "%s: %d VP%s" % [who, int(p.get("vp", 0)), ", winner" if p.get("won", false) else ""]
+		row.add_child(icon)
+	return row
+
+
+## Значок звания (камень цвета звания), zoom — во сколько раз крупнее.
+static func rank_badge(rating: int, zoom: int = 1) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.texture = ImageTexture.create_from_image(PlayerProfile.rank_icon(rating))
+	icon.stretch_mode = TextureRect.STRETCH_SCALE
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.custom_minimum_size = Vector2.ONE * PlayerProfile.RANK_ICON * zoom
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.tooltip_text = PlayerProfile.rank_title(rating)
+	return icon
 
 
 ## Значок фишки игрока (цвет места + его герб) для списков в меню и лобби.

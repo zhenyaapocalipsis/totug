@@ -277,9 +277,18 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		var name_label := Label.new()
 		name_label.text = EventLogPanel.player_name(String(pid)) + (" (you)" if String(pid) == _net.seat else "")
 		var seat_profile: Dictionary = _net.profiles.get(pid, {})
-		if seat_profile.has("rating"):
-			name_label.text += "  %d" % int(seat_profile["rating"])
 		_seats.add_child(name_label)
+		# Звание камнем и рейтинг (подсказка — звание, партии и победы).
+		if seat_profile.has("rating"):
+			var rating := int(seat_profile["rating"])
+			var badge := ProfileScreen.rank_badge(rating)
+			badge.tooltip_text += "\n%d games, %d wins" % [int(seat_profile.get("games", 0)),
+				int(seat_profile.get("wins", 0))]
+			_seats.add_child(badge)
+			var rating_label := Label.new()
+			rating_label.text = str(rating)
+			rating_label.add_theme_color_override("font_color", PlayerProfile.rank_colour(rating))
+			_seats.add_child(rating_label)
 	var full := joined.size() >= needed
 	if _kind == "find":
 		# Стол собрал сервер, он же и раздаёт — START не нужен.

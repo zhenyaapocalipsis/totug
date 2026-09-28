@@ -81,6 +81,13 @@ func rating_of(account: String) -> int:
 	return int((accounts.get(account, {}) as Dictionary).get("rating", START))
 
 
+## Для карточки игрока: {rating, games, wins}. Новичок — START и нули.
+func stats_of(account: String) -> Dictionary:
+	var entry: Dictionary = accounts.get(account, {})
+	return {"rating": int(entry.get("rating", START)), "games": int(entry.get("games", 0)),
+		"wins": int(entry.get("wins", 0))}
+
+
 ## Изменения рейтинга по итогам партии: ratings и scores — место -> число.
 static func elo_deltas(ratings: Dictionary, scores: Dictionary) -> Dictionary:
 	var seats: Array = ratings.keys()
@@ -101,7 +108,8 @@ static func elo_deltas(ratings: Dictionary, scores: Dictionary) -> Dictionary:
 
 
 ## Записать партию. players: место -> {account, name}; scores: место -> VP;
-## winners — места победителей. Возвращает место -> {rating, delta}. Партия не
+## winners — места победителей. Возвращает место -> {rating, delta, games,
+## wins}. Партия не
 ## идёт в рейтинг ({}), если у кого-то нет учётной записи или один человек
 ## сидит за двумя цветами (два окна на одном компьютере).
 func record(players: Dictionary, scores: Dictionary, winners: Array) -> Dictionary:
@@ -123,6 +131,7 @@ func record(players: Dictionary, scores: Dictionary, winners: Array) -> Dictiona
 		entry["games"] = int(entry.get("games", 0)) + 1
 		entry["wins"] = int(entry.get("wins", 0)) + (1 if winners.has(seat) else 0)
 		accounts[account] = entry
-		out[seat] = {"rating": entry["rating"], "delta": deltas[seat]}
+		out[seat] = {"rating": entry["rating"], "delta": deltas[seat], "games": entry["games"],
+			"wins": entry["wins"]}
 	save()
 	return out

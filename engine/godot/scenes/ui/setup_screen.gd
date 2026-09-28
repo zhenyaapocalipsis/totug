@@ -356,9 +356,10 @@ func _profile_row() -> Control:
 	# Рейтинг онлайн-партий — каким его сервер сообщил в последний раз.
 	var rating := PlayerProfile.cached_rating()
 	if rating >= 0:
+		parts.append(ProfileScreen.rank_badge(rating))
 		var rating_label := Label.new()
-		rating_label.text = "RATING %d" % rating
-		rating_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+		rating_label.text = "%s %d" % [PlayerProfile.rank_title(rating), rating]
+		rating_label.add_theme_color_override("font_color", PlayerProfile.rank_colour(rating))
 		parts.append(rating_label)
 	var edit := _button("EDIT PROFILE", "Your name and emblem (drawn on your troops).",
 		func(): profile_requested.emit())

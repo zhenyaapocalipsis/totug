@@ -1036,6 +1036,38 @@ func test_rating() -> void:
 	check_eq(r["red"]["rating"], 1016, "рейтинг победителя записан")
 	check_eq(RatingBook.new(path).rating_of(b), 984, "рейтинг сохранён в файл")
 	check_eq(int(book.accounts[a]["wins"]), 1, "победа засчитана")
+	check_eq(int(r["red"]["games"]), 1, "итог партии несёт число партий")
+	check_eq(book.stats_of(b), {"rating": 984, "games": 1, "wins": 0}, "карточка игрока: рейтинг, партии, победы")
+	check_eq(book.stats_of("nobody"), {"rating": 1000, "games": 0, "wins": 0}, "карточка новичка")
+
+	# Звания и история партий в профиле.
+	check_eq(PlayerProfile.rank_title(-1), "UNRANKED", "без рейтинга — без звания")
+	check_eq(PlayerProfile.rank_title(1000), "WARRIOR", "новичок — WARRIOR")
+	check_eq(PlayerProfile.rank_title(949), "DRIDER", "ниже 950 — DRIDER")
+	check_eq(PlayerProfile.rank_title(5000), "TYRANT", "высший — TYRANT")
+	var res := {"red": {"rating": 990, "delta": -10, "vp": 40, "won": false},
+		"blue": {"rating": 1020, "delta": 20, "vp": 40, "won": true},
+		"green": {"rating": 995, "delta": -5, "vp": 30, "won": false}}
+	var profs := {"red": {"name": "Ann", "emblem": ""}, "blue": {"name": "Bob", "emblem": ""}}
+	var entry := PlayerProfile.history_entry("red", res, profs)
+	check_eq(entry["place"], 2, "равные VP, но победил другой — второе место")
+	check_eq(entry["players"][0]["name"], "Bob", "победитель в списке первым")
+	check_eq(PlayerProfile.history_entry("green", res, profs)["place"], 3, "третье место")
+	check_eq(PlayerProfile.history_entry("blue", res, profs)["place"], 1, "победитель — первое место")
+	var old_path := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://profile_history_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	for n in PlayerProfile.HISTORY_MAX + 2:
+		entry["vp"] = n
+		PlayerProfile.add_history(entry)
+	var hist := PlayerProfile.history()
+	check_eq(hist.size(), PlayerProfile.HISTORY_MAX, "история хранит только последние партии")
+	check_eq(int(hist[0]["vp"]), PlayerProfile.HISTORY_MAX + 1, "новая партия — первой")
+	PlayerProfile.cache_stats({"rating": 1016, "games": 3, "wins": 2})
+	PlayerProfile.cache_stats({"rating": 1020})
+	check_eq(PlayerProfile.cached_stats(), {"rating": 1020, "games": 3, "wins": 2}, "статистика запомнена в профиле")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.path_override = old_path
 	var same := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": a, "name": "Ann"}},
 			{"red": 40, "blue": 30}, ["red"])
 	check(same.is_empty(), "один человек за двумя цветами — партия без рейтинга")

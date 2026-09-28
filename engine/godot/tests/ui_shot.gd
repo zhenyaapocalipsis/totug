@@ -377,6 +377,28 @@ func _run_scenario() -> void:
 				editor.paint(4, i, Color("fbf236"))
 				editor.paint(i, 4, Color("fbf236"))
 			editor.paint(4, 4, Color("000000"))
+		"profile_stats":
+			# Вкладка STATS: звание, рейтинг и выдуманная история партий. Профиль —
+			# отдельный файл, настоящий у владельца не трогается.
+			PlayerProfile.path_override = "user://profile_shot.cfg"
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+			PlayerProfile.cache_stats({"rating": 1087, "games": 14, "wins": 6})
+			var names := ["Jarlaxle", "Zinda", "Quenthel", "Vierna"]
+			for n in range(9, -1, -1):
+				var count := 2 + n % 3
+				var res := {}
+				var profs := {}
+				for s in count:
+					var pid: String = GameRoom.PLAYER_IDS[s]
+					res[pid] = {"rating": 1087 - n * 7, "delta": 12 - (n * 5) % 25, "vp": 30 + (s * 7 + n * 3) % 20,
+						"won": s == n % count}
+					profs[pid] = {"name": names[s], "emblem": ""}
+				var entry := PlayerProfile.history_entry("red", res, profs)
+				entry["time"] = 1790000000 - n * 90000
+				PlayerProfile.add_history(entry)
+			var stats_screen := ProfileScreen.new()
+			root.add_child(stats_screen)
+			stats_screen._show_tab(true)
 		"menu":
 			# Главное меню поверх партии (строка профиля с кнопками).
 			root.add_child(SetupScreen.new())
