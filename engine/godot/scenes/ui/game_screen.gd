@@ -67,16 +67,12 @@ const SHAKE_NUDGE := 2.0
 ## Удар по убитому войску: стоп-кадр чуть длиннее посадки.
 const KILL_HITSTOP := 0.08
 ## Ширина правой колонки — ширина рынка в две мелкие карты; все зоны колонки
-## той же ширины (макет владельца, 2026-09-24). Плюс 68 пикселей (решения
-## владельца, 2026-09-27): 15 — столбцу TROPHY таблицы игроков (на четверых
-## четыре двузначных числа обычным шрифтом), 53 — столбцу имени (значок хода,
-## фишка с эмблемой и ник в 12 знаков). Доска от этого не мельчает: самая
-## широкая 4p-схема — 596 пикселей (100 раскладок) при зоне 636.
-## Ещё плюс 16 (владелец, 2026-09-28): рынок прижат вправо, слева от него
-## дектрекер в мелкую карту шириной. Зона доски — 620, схема всё так же 1:1.
-const COL := float(MarketPanel.WIDTH) + 84.0
-## Дектрекер — всё, что в колонке левее рынка.
-const TRACKER_W := COL - MarketPanel.WIDTH - GAP
+## той же ширины (макет владельца, 2026-09-24). Таблица игроков под эту
+## ширину — по две строки на игрока (трофеи второй строкой).
+const COL := float(MarketPanel.WIDTH)
+## Дектрекер — полоса в мелкую карту шириной во всю высоту экрана между
+## сводкой ходов и доской (владелец, 2026-09-28). Зона доски — 620, схема 1:1.
+const TRACKER_W := float(CardView.MINI_SIZE.x) + 2.0
 ## Ширина столбика кнопок стопок под рынком; остальное — End turn.
 const PILES_W := 80.0
 ## Высота зоны бараков.
@@ -729,15 +725,14 @@ func _layout() -> void:
 	var top_y := MARGIN
 	var bottom_y := h - MARGIN - BOTTOM_H
 
-	# Правая колонка: бараки, таблица игроков, под ней слева дектрекер до
-	# низа экрана, справа рынок, под рынком кнопки. Рынок ровно своего
-	# размера (карты целиком), таблице — всё, что осталось.
+	# Правая колонка: бараки, таблица игроков, под ней рынок, под рынком
+	# кнопки. Рынок ровно своего размера (карты целиком), таблице — всё, что
+	# осталось.
 	_place(_barracks, d_x, top_y, COL, TOP_H)
 	var market_h := _market_panel.get_combined_minimum_size().y
 	var market_y := bottom_y - GAP - market_h
-	var market_x := d_x + TRACKER_W + GAP
+	var market_x := d_x
 	_place(_market_panel, market_x, market_y, MarketPanel.WIDTH, market_h)
-	_place(_deck_tracker, d_x, market_y, TRACKER_W, h - MARGIN - market_y)
 	var players_y := top_y + TOP_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
 	_place(_piles_column, market_x, bottom_y, PILES_W, BOTTOM_H)
@@ -745,12 +740,15 @@ func _layout() -> void:
 	_place(_end_turn_area, market_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
-	# 2026-09-27: чат убран, сводка — до низа); доска — всё между ней и
-	# правой колонкой, от верха экрана до руки. Ширины сводки доске не жалко:
-	# масштаб схемы от неё не падает ни на двоих, ни на четверых.
+	# 2026-09-27: чат убран, сводка — до низа), за ней дектрекер тоже во всю
+	# высоту; доска — всё между ним и правой колонкой, от верха экрана до руки.
+	# Ширины сводки доске не жалко: масштаб схемы от неё не падает ни на
+	# двоих, ни на четверых.
 	var board_h := bottom_y - GAP - top_y
 	_place(_feed, a_x, top_y, TurnFeed.WIDTH, h - MARGIN - top_y)
-	var board_x := a_x + TurnFeed.WIDTH + GAP
+	var tracker_x := a_x + TurnFeed.WIDTH + GAP
+	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, h - MARGIN - top_y)
+	var board_x := tracker_x + TRACKER_W + GAP
 	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
 
 	# Рука — под доской, без подложки; запас сверху нужен карте под

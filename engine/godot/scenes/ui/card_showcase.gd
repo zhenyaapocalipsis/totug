@@ -183,8 +183,10 @@ func _input(event: InputEvent) -> void:
 	if _item.is_empty() or not (event is InputEventMouseButton):
 		return
 	var mb := event as InputEventMouseButton
+	# Точка — из самого щелчка, а не текущее место курсора: щелчок, пришедший
+	# не от мыши (тесты), иначе попадал по карте там, где лежит настоящий курсор.
 	if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT \
-			and _card_rect.has_point(get_local_mouse_position()):
+			and _card_rect.has_point((make_input_local(mb) as InputEventMouseButton).position):
 		skip()
 		get_viewport().set_input_as_handled()
 
