@@ -420,7 +420,8 @@ func _show_tab(stats: bool) -> void:
 	# Окно не прыгает: обе страницы одного размера — большего из двух.
 	_look.custom_minimum_size = Vector2.ZERO
 	_stats.custom_minimum_size = Vector2.ZERO
-	var need := _look.get_combined_minimum_size().max(_stats.get_combined_minimum_size())	_look.custom_minimum_size = need
+	var need := _look.get_combined_minimum_size().max(_stats.get_combined_minimum_size())
+	_look.custom_minimum_size = need
 	_stats.custom_minimum_size = need
 	_look.visible = not stats
 	_stats.visible = stats
