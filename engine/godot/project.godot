@@ -40,3 +40,4 @@ textures/canvas_textures/default_texture_filter=0
 
 WindowKeys="*res://scenes/window_keys.gd"
 SharpScale="*res://scenes/sharp_scale.gd"
+SfxPlayer="*res://scenes/sfx.gd"

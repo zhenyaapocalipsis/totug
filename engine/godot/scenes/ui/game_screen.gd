@@ -976,10 +976,16 @@ func _note(text: String) -> void:
 	_note_toast.show_note(text)
 
 
+## Отказ: та же строка, но с глухим «бзз».
+func _refuse(text: String) -> void:
+	Sfx.play("error")
+	_note(text)
+
+
 ## Ответ сервера — свой или пришедший по сети: перерисовка, сводка, тряска.
 func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	if err != GameServer.Error.OK:
-		_note("Not allowed: %s" % _error_name(err))
+		_refuse("Not allowed: %s" % _error_name(err))
 	refresh(view)
 	_react_to_events(events)
 	# Витрина (крупный показ повышенной, купленной, съеденной карты) запускается
@@ -1014,6 +1020,7 @@ func _react_to_events(events: Array) -> void:
 		var evt: Dictionary = e
 		var pid := String(evt.get("player_id", ""))
 		var started := false
+		_sound_for(evt, pid)
 		if String(evt.get("type", "")) != "give_insane_outcast" and not outcasts.is_empty():
 			_showcase_outcasts(outcasts)
 			outcasts = []
@@ -1083,6 +1090,20 @@ func _react_to_events(events: Array) -> void:
 	if power > 0.0:
 		_board_panel.shake(power)
 	_note_recap(events)
+
+
+## Звук события: сыгранная карта — шлепок, покупка — монеты. Ходы соперника
+## звучат тише своих.
+const EVENT_SOUNDS := {
+	"play_card": "card",
+	"recruit": "coins", "recruit_supply": "coins", "recruit_free": "coins",
+}
+
+
+func _sound_for(evt: Dictionary, pid: String) -> void:
+	var sound: String = EVENT_SOUNDS.get(String(evt.get("type", "")), "")
+	if sound != "":
+		Sfx.play(sound, pid != viewer_id)
 
 
 ## Один показ на все изгои одной карты (решение владельца, 2026-09-27:
@@ -1857,7 +1878,7 @@ func _on_slot_clicked(slot_id: String) -> void:
 		if _try_resolve_board_decision(pending, slot_id, _site_of_slot(slot_id)):
 			return
 		if _is_board_choice(String(pending["choice_type"])):
-			_note("That is not a valid target — valid targets have gold rings.")
+			_refuse("That is not a valid target — valid targets have gold rings.")
 			return
 
 	var view := _view
@@ -1867,7 +1888,7 @@ func _on_slot_clicked(slot_id: String) -> void:
 	elif (legal.get("deploy_slots", []) as Array).has(slot_id):
 		send(Intent.deploy(viewer_id, slot_id))
 	else:
-		_note(_explain_slot_refusal(slot_id, view, legal))
+		_refuse(_explain_slot_refusal(slot_id, view, legal))
 
 
 func _is_board_choice(choice_type: String) -> bool:
@@ -1956,14 +1977,14 @@ func _on_site_clicked(site_id: String) -> void:
 		if _try_resolve_board_decision(pending, "", site_id):
 			return
 		if _is_board_choice(String(pending["choice_type"])):
-			_note("That is not a valid target — valid targets have gold rings.")
+			_refuse("That is not a valid target — valid targets have gold rings.")
 			return
 
 	for target in ((_view.get("legal", {}) as Dictionary).get("return_spy", []) as Array):
 		if String((target as Dictionary)["site_id"]) == site_id:
-			_note("Click the spy itself to return it")
+			_refuse("Click the spy itself to return it")
 			return
-	_note("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
+	_refuse("%s: nothing to do here" % EventLogPanel.site_name(site_id, board_data))
 
 
 ## Клик прямо по ромбику шпиона: возвращаем именно его, без меню. Если этого

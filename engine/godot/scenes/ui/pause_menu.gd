@@ -45,6 +45,12 @@ func _init() -> void:
 	col.add_child(title)
 
 	col.add_child(_button("RESUME", func(): visible = false))
+	# Громкость звуков: щелчок — следующая ступень (100 → 75 → 50 → 25 → OFF).
+	var sound := _button(Sfx.volume_label(), func(): pass)
+	sound.pressed.connect(func():
+		Sfx.cycle_volume()
+		sound.text = Sfx.volume_label())
+	col.add_child(sound)
 	col.add_child(_button("MAIN MENU", func(): main_menu_requested.emit()))
 	col.add_child(_button("QUIT GAME", func(): get_tree().quit()))
 	_col = col
