@@ -28,8 +28,9 @@ const COLUMNS: Array[Array] = [
 const TOKEN_W := 11.0
 const NUM_W := 12.0
 const COL_GAP := 3
-## Подпись «TROPHY» перед цифрами зала: 6 знаков по 6 пикселей и промежуток.
-const TROPHY_LABEL_W := 40.0
+## Подпись «HALL» перед цифрами зала: 4 знака по 6 пикселей и промежуток
+## в 3 пикселя, как между цифрами (владелец, 2026-09-28).
+const HALL_LABEL_W := 27.0
 ## Строка трофеев наезжает на пустой низ строки чисел: глиф 7 пикселей в
 ## строке 11, так четыре блока с шапкой влезают над рынком.
 const LINE_OVERLAP := 2
@@ -125,8 +126,10 @@ func _add_row(pid: String) -> void:
 	var token := TextureRect.new()
 	token.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 	# Заглавные пиксельного шрифта сидят выше середины строки — фишку
-	# прижимаем к верху (высота 10 вместо строки 11), она поднимается на пиксель.
-	token.custom_minimum_size = Vector2(TOKEN_W, 10)
+	# поднимаем: прямоугольник на 4 пикселя ниже фишки, по центру его она
+	# выступает вверх на 2. Так центр фишки на одной линии с серединой ника и
+	# чисел (владелец, 2026-09-28).
+	token.custom_minimum_size = Vector2(TOKEN_W, BoardSchematic.SLOT_R * 2 + 1 - 4)
 	token.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	token.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	name_cell.add_child(token)
@@ -149,8 +152,8 @@ func _add_row(pid: String) -> void:
 	indent.custom_minimum_size = Vector2(TOKEN_W, 0)
 	indent.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	trophy_line.add_child(indent)
-	trophy_line.add_child(_head("TROPHY", "Trophy hall: killed troops, a number per colour",
-		TROPHY_LABEL_W, HORIZONTAL_ALIGNMENT_LEFT))
+	trophy_line.add_child(_head("HALL", "Trophy hall: killed troops, a number per colour",
+		HALL_LABEL_W, HORIZONTAL_ALIGNMENT_LEFT))
 	var trophies := HBoxContainer.new()
 	trophies.add_theme_constant_override("separation", 3)
 	trophies.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -272,7 +275,7 @@ func update_from_view(view: Dictionary) -> void:
 	# раздвигается под числа и уходит за край панели (там её обрезает), а
 	# раскладки на момент обновления ещё может не быть.
 	var small := false
-	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - TOKEN_W - TROPHY_LABEL_W
+	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - TOKEN_W - HALL_LABEL_W
 	for pid: String in _rows:
 		var box: HBoxContainer = _rows[pid]["trophies"]
 		if size.x > 0.0 and box.get_combined_minimum_size().x > room:
@@ -324,7 +327,7 @@ func _frame_button(hint: String) -> Button:
 
 
 ## Вопрос "возьми войско из трофейного зала" (Orcus, Lich): рамки прямо на
-## цифрах столбца TROPHY — щелчок по цифре берёт войско этого цвета из зала
+## цифрах зала (HALL) — щелчок по цифре берёт войско этого цвета из зала
 ## этого игрока (решение владельца, 2026-09-27). Вариант i в data.trophies —
 ## "зал|цвет", в ответ уходит его номер. Отказ (-1) — Skip в строке вопроса.
 func _update_trophy_choice(pd: Dictionary) -> void:
