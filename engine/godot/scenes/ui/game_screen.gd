@@ -1716,6 +1716,7 @@ func _announce_turn(view: Dictionary) -> void:
 	var current := String(view["current_player"])
 	if not _is_starting_pick(view) and current != _banner_player:
 		_banner_player = current
+		Sfx.reset_combo()
 		if net == null or current == viewer_id:
 			var text := "YOUR TURN" if net != null \
 				else "%s'S TURN" % EventLogPanel.player_name(current).to_upper()

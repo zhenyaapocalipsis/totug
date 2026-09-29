@@ -14,7 +14,7 @@ extends Node
 const BUS := "SFX"
 const SETTINGS_PATH := "user://settings.cfg"
 const DIR := "res://assets/sfx/"
-const VOICES := 8
+const VOICES := 12
 ## Ходы соперника звучат тише своих.
 const OTHER_DB := -6.0
 ## Ступени громкости для кнопки в меню (по кругу).
@@ -27,11 +27,16 @@ const SOUNDS := [
 	"deploy", "spy", "kill", "sink", "lift", "capture",
 	"turn", "victory", "defeat", "last_round",
 	"ping", "phrase",
+	"draw", "card_hover",
 ]
-## Звуки без разброса высоты.
-const STEADY := ["click", "turn", "victory", "defeat"]
+## Повышение тона как в Balatro: каждый следующий такой звук за ход — на
+## полутон выше (своя лесенка у каждого звука), не выше октавы. Новый ход
+## начинает лесенку заново (reset_combo). Случайного разброса высоты нет:
+## он смазывал бы лесенку.
+const COMBO := ["card", "coins", "deploy", "spy", "kill", "sink", "lift", "capture"]
+const COMBO_MAX := 12
 ## Поправка громкости отдельных звуков (дБ): наведение — еле слышно.
-const GAIN_DB := {"hover": -10.0}
+const GAIN_DB := {"hover": -10.0, "card_hover": -6.0}
 
 static var _instance: Sfx
 static var volume := 1.0
@@ -39,14 +44,29 @@ static var volume := 1.0
 var _streams: Dictionary = {}
 var _voices: Array[AudioStreamPlayer] = []
 var _next := 0
+## Сколько раз за ход уже звучал каждый звук из COMBO.
+var _combo: Dictionary = {}
 ## Откуда играть файл (сек): начало удара без тишины перед ним.
 static var _starts: Dictionary = {}
 
 
-## Проиграть звук по имени; quiet — чуть тише (действие соперника).
-static func play(sound: String, quiet: bool = false) -> void:
+## Проиграть звук по имени; quiet — чуть тише (действие соперника). step —
+## на сколько полутонов выше; по умолчанию (-1) для звуков из COMBO это
+## ступень лесенки хода, для остальных — ровно.
+static func play(sound: String, quiet: bool = false, step: int = -1) -> void:
 	if _instance != null:
-		_instance._play(sound, OTHER_DB if quiet else 0.0)
+		_instance._play(sound, OTHER_DB if quiet else 0.0, step)
+
+
+## Новый ход — лесенки тона начинаются заново.
+static func reset_combo() -> void:
+	if _instance != null:
+		_instance._combo.clear()
+
+
+## Высота звука на step полутонов выше.
+static func semitones(step: int) -> float:
+	return pow(2.0, step / 12.0)
 
 
 ## Следующая ступень громкости (по кругу), сразу сохраняется.
@@ -105,16 +125,19 @@ func _exit_tree() -> void:
 		_instance = null
 
 
-func _play(sound: String, db: float) -> void:
-	if not _streams.has(sound) or volume <= 0.0:
+func _play(sound: String, db: float, step: int) -> void:
+	if not _streams.has(sound):
+		return
+	if step < 0 and sound in COMBO:
+		step = int(_combo.get(sound, 0))
+		_combo[sound] = step + 1
+	if volume <= 0.0:
 		return
 	var p := _voices[_next]
 	_next = (_next + 1) % _voices.size()
 	p.stream = _streams[sound]
 	p.volume_db = db + float(GAIN_DB.get(sound, 0.0))
-	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
-	# Кнопка (решение владельца) и мелодии — всегда ровно.
-	p.pitch_scale = 1.0 if sound in STEADY else randf_range(0.95, 1.05)
+	p.pitch_scale = semitones(clampi(step, 0, COMBO_MAX))
 	p.play(_starts.get(p.stream, 0.0))
 
 

@@ -1,11 +1,11 @@
 class_name Music
 extends Node
 
-## Фоновая музыка по образцу Balatro: один зацикленный трек из четырёх слоёв
-## (assets/music/, собирает tests/build_music.gd) играет непрерывно, а слои
-## плавно включаются и глушатся по настроению партии. Мелодия никогда не
-## начинается заново — меняется только наполнение. В меню по Esc музыка
-## уходит «за стену» (фильтр срезает верха).
+## Фоновая музыка по образцу Balatro: пять версий одной композиции
+## (assets/music/music1…5.ogg, одной длины, зациклены) играют одновременно и
+## вровень, а слышна та, что подходит к настроению партии; при смене
+## настроения версии плавно перетекают друг в друга, и мелодия не начинается
+## заново. В меню по Esc музыка уходит «за стену» (фильтр срезает верха).
 ##
 ## Автозагрузка MusicPlayer (project.godot). Вызовы: Music.set_mood("turn"),
 ## Music.set_muffled(true). Без автозагрузки (тесты) ничего не делают.
@@ -14,16 +14,16 @@ extends Node
 
 const BUS := "Music"
 const DIR := "res://assets/music/"
-const STEMS := ["pad", "bass", "lead", "drums"]
-## Какие слои звучат при каком настроении (1 — громко, 0 — тихо).
+const TRACKS := ["music1", "music2", "music3", "music4", "music5"]
+## Какая версия звучит при каком настроении.
 const MOODS := {
-	"menu": [1.0, 0.0, 1.0, 0.0],    # главное меню: аккорды и мелодия
-	"turn": [1.0, 1.0, 1.0, 0.0],    # мой ход: полный трек без ударных
-	"wait": [1.0, 1.0, 0.0, 0.0],    # ход соперника: без мелодии, спокойнее
-	"tension": [1.0, 1.0, 1.0, 1.0], # последний круг: вступают ударные
-	"end": [1.0, 0.0, 0.0, 0.0],     # итоги партии: одни аккорды
+	"menu": "music1",     # главное меню
+	"turn": "music1",     # мой ход — основная версия
+	"wait": "music4",     # ход соперника — спокойнее
+	"tension": "music5",  # последний круг — самая напряжённая
+	"end": "music2",      # итоги партии
 }
-## За сколько секунд слой входит или уходит.
+## За сколько секунд версии перетекают друг в друга.
 const FADE := 1.5
 ## Музыка тише звуков: общий уровень шины при громкости 100%.
 const MIX_DB := -8.0
@@ -36,12 +36,11 @@ const LEVELS: Array[float] = [1.0, 0.75, 0.5, 0.25, 0.0]
 static var _instance: Music
 static var volume := 1.0
 
-## По проигрывателю на слой. Запущены в одном кадре и одной длины — идут
-## вровень. (AudioStreamSynchronized не годится: если он играет в момент
-## выхода из игры, Godot сообщает об утечке.)
+## По проигрывателю на версию. Запущены в одном кадре и одной длины — идут
+## вровень.
 var _players: Array[AudioStreamPlayer] = []
-var _levels: Array[float] = [0.0, 0.0, 0.0, 0.0]
-var _targets: Array[float] = [0.0, 0.0, 0.0, 0.0]
+var _levels: Array[float] = []
+var _targets: Array[float] = []
 var _mood := ""
 var _muffled := false
 var _lowpass: AudioEffectLowPassFilter
@@ -50,9 +49,8 @@ var _lowpass: AudioEffectLowPassFilter
 static func set_mood(mood: String) -> void:
 	if _instance != null and MOODS.has(mood) and mood != _instance._mood:
 		_instance._mood = mood
-		var levels: Array = MOODS[mood]
-		for i in levels.size():
-			_instance._targets[i] = float(levels[i])
+		for i in TRACKS.size():
+			_instance._targets[i] = 1.0 if TRACKS[i] == MOODS[mood] else 0.0
 
 
 static func set_muffled(muffled: bool) -> void:
@@ -97,12 +95,7 @@ func _ready() -> void:
 		AudioServer.add_bus()
 		var bus := AudioServer.bus_count - 1
 		AudioServer.set_bus_name(bus, BUS)
-		# Лёгкая реверберация — «пещера», и фильтр для меню по Esc.
-		var reverb := AudioEffectReverb.new()
-		reverb.room_size = 0.6
-		reverb.damping = 0.6
-		reverb.wet = 0.18
-		AudioServer.add_bus_effect(bus, reverb)
+		# Фильтр для меню по Esc.
 		_lowpass = AudioEffectLowPassFilter.new()
 		_lowpass.cutoff_hz = OPEN_HZ
 		AudioServer.add_bus_effect(bus, _lowpass)
@@ -111,13 +104,15 @@ func _ready() -> void:
 		volume = float(cfg.get_value("audio", "music_volume", 1.0))
 	_apply_volume()
 
-	for stem: String in STEMS:
+	for track: String in TRACKS:
 		var player := AudioStreamPlayer.new()
-		player.stream = load("%s%s.wav" % [DIR, stem])
+		player.stream = load("%s%s.ogg" % [DIR, track])
 		player.bus = BUS
 		player.volume_db = SILENT_DB
 		add_child(player)
 		_players.append(player)
+		_levels.append(0.0)
+		_targets.append(0.0)
 	for player in _players:
 		player.play()
 	set_mood("menu")

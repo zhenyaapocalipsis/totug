@@ -408,6 +408,7 @@ func _apply_colors() -> void:
 
 
 func _on_mouse_entered() -> void:
+	Sfx.play("card_hover")
 	if hover_preview:
 		CardPreview.set_hovered(self)
 

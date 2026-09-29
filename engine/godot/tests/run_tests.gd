@@ -3576,22 +3576,22 @@ func test_resume_saved_game() -> void:
 	net.free()
 
 
-## Музыка: все слои есть, одной длины (иначе разъедутся) и зациклены;
+## Музыка: все версии есть, одной длины (иначе разъедутся) и зациклены;
 ## настроение выбирается по виду партии.
 func test_music_stems_and_moods() -> void:
 	_current = "music"
 	var length := -1.0
-	for name: String in Music.STEMS:
-		var stream := load(Music.DIR + name + ".wav") as AudioStreamWAV
-		check(stream != null, "слой музыки %s загружается" % name)
+	for name: String in Music.TRACKS:
+		var stream := load(Music.DIR + name + ".ogg") as AudioStreamOggVorbis
+		check(stream != null, "версия музыки %s загружается" % name)
 		if stream == null:
 			continue
-		check(stream.loop_mode == AudioStreamWAV.LOOP_FORWARD, "слой %s зациклен" % name)
+		check(stream.loop, "версия %s зациклена" % name)
 		if length < 0.0:
 			length = stream.get_length()
-		check(absf(stream.get_length() - length) < 0.001, "слой %s той же длины" % name)
+		check(absf(stream.get_length() - length) < 0.01, "версия %s той же длины" % name)
 	for mood: String in Music.MOODS:
-		check_eq((Music.MOODS[mood] as Array).size(), Music.STEMS.size(), "настроение %s задаёт все слои" % mood)
+		check(Music.TRACKS.has(Music.MOODS[mood]), "настроение %s ведёт на существующую версию" % mood)
 	var view := {"current_player": "red", "game_over": false, "game_end_triggered": false}
 	check_eq(GameScreen.music_mood(view, "red", false), "turn", "мой ход — turn")
 	check_eq(GameScreen.music_mood(view, "blue", false), "wait", "ход соперника — wait")

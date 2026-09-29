@@ -184,6 +184,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_pos.append(Vector2.ZERO)
 			_vel.append(Vector2.ZERO)
 			_delay.append(ENTER_STAGGER * fresh)
+			_deal_sound(fresh)
 			fresh += 1
 		_cards[_cards.size() - 1].set_clickable(
 			zone_ids.has(cid) if from_zone else playable.has(cid))
@@ -203,6 +204,16 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	_layout()
 	queue_redraw()
+
+
+## Шорох карты, входящей в руку, в момент её вылета; каждая следующая карта
+## раздачи — на полутон выше, как в Balatro.
+func _deal_sound(order: int) -> void:
+	if order == 0 or not is_inside_tree():
+		Sfx.play("draw", false, order)
+		return
+	get_tree().create_timer(ENTER_STAGGER * order).timeout.connect(
+		func() -> void: Sfx.play("draw", false, order))
 
 
 static func _is_zone(card: CardView) -> bool:
