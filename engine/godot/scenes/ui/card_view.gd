@@ -370,18 +370,16 @@ func set_skin(tier: String) -> void:
 
 
 ## Настроить шейдер образа (card_skin.gdshader) под ступень tier_index (0 —
-## без образа, 4 — рубашка) и лицо карты: мелкое или полное (рубашка —
-## полного размера, без арта и поля текста).
+## без образа) и лицо карты: мелкое или полное.
 static func configure_skin(mat: ShaderMaterial, tier_index: int, mini: bool) -> void:
 	if mat.shader == null:
 		mat.shader = SKIN_SHADER
 		# Каждая карта покачивается в свой такт.
 		mat.set_shader_parameter("phase", randf() * TAU)
-	var back := tier_index == 4
 	mat.set_shader_parameter("tier", tier_index)
 	mat.set_shader_parameter("face_size", MINI_SIZE if mini else PIXEL_SIZE)
-	mat.set_shader_parameter("art_rect", Vector4.ZERO if back else (MINI_ART if mini else FULL_ART))
-	mat.set_shader_parameter("text_rect", Vector4.ZERO if mini or back else FULL_TEXT)
+	mat.set_shader_parameter("art_rect", MINI_ART if mini else FULL_ART)
+	mat.set_shader_parameter("text_rect", Vector4.ZERO if mini else FULL_TEXT)
 	# Мелкая карта в руке сама почти не качается — ряд не должен «плыть».
 	mat.set_shader_parameter("idle_amp", 0.5 if mini else 1.0)
 	mat.set_shader_parameter("glint_size", 2.0 if mini else 4.0)

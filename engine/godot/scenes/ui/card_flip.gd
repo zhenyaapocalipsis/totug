@@ -7,9 +7,8 @@ extends Control
 ## и встаёт ровно рубашкой или лицом к игроку (тогда пиксели снова ровные).
 ##
 ## Поворот честный, с перспективой: карта режется на вертикальные полоски, и
-## каждая рисуется на своей глубине. Рубашка переливается шейдером рубашки
-## (card_skin.gdshader, ступень 4), лицо — шейдером своего образа. Стороны —
-## два дочерних слоя со своими шейдерами, видна одна.
+## каждая рисуется на своей глубине. Стороны — два дочерних слоя, видна одна;
+## у лица свой шейдер образа.
 
 ## Сколько полосок и насколько близко «камера» (меньше — сильнее перспектива).
 const STRIPS := 24
@@ -35,9 +34,6 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_DRAG
 	_back_layer = _layer()
-	var back_mat := ShaderMaterial.new()
-	CardView.configure_skin(back_mat, 4, false)
-	_back_layer.material = back_mat
 	_face_layer = _layer()
 	_back_layer.draw.connect(func(): _draw_side(_back_layer, _back, false))
 	_face_layer.draw.connect(func(): _draw_side(_face_layer, _face, true))

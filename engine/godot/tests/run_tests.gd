@@ -3347,10 +3347,7 @@ func test_card_back() -> void:
 	for design in CardBack.DESIGNS:
 		var img := CardBack.image(design)
 		same_field = same_field and img.get_pixel(3, 40) == Color(CardBack.INK[design])
-		var seen_field := false
-		for x in range(12, 40):
-			seen_field = seen_field or img.get_pixel(x, 127) == CardBack.FIELD
-		same_field = same_field and seen_field
+		same_field = same_field and img.get_pixel(8, 127) == CardBack.FIELD
 	check(same_field, "поле рубашек — один цвет (цвет карты), рамка — цвет фракции")
 
 	# Карта, которую можно покрутить (коллекция → CARD BACKS).
@@ -3364,8 +3361,7 @@ func test_card_back() -> void:
 		"повернули — видно лицо карты")
 	check((flip._face_layer.material as ShaderMaterial).get_shader_parameter("tier") == 2,
 		"лицо — в своём образе")
-	check((flip._back_layer.material as ShaderMaterial).get_shader_parameter("tier") == 4,
-		"рубашка переливается своим шейдером")
+	check(flip._back_layer.material == null, "рубашка без шейдера (решение владельца)")
 	flip._speed = 0.0
 	flip.angle = PI - 0.3
 	for i in 120:

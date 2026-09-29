@@ -2,17 +2,15 @@ class_name CardBack
 extends RefCounted
 
 ## Рубашка карты в полный размер (CardView.PIXEL_SIZE, 1:1). Рубашки — готовые
-## рисунки (решение владельца, 2026-09-30: рисовалки нет, стиль — тёмный
-## минимализм как в Balatro): поле у всех одного цвета — основного цвета
-## лицевой стороны карт (её тёмно-фиолетовой рамки), рамка со скруглёнными
-## углами — цвета фракции, поле замощено приглушёнными знаками фракции.
-## CLASSIC есть у всех, остальные — ступени ULTRA — выпадают из лутбокса или
-## создаются за пыль (SkinCollection). Соперники видят рубашку, когда игрок
-## берёт карту вслепую (CardShowcase). В коллекции рубашка переливается
-## шейдером card_skin.gdshader (ступень BACK_SHEEN).
+## рисунки (решение владельца, 2026-09-30: рисовалки нет; стиль — тёмные
+## абстракции, без знаков и без шейдера): поле у всех одного цвета — основного
+## цвета лицевой стороны карт (её тёмно-фиолетовой рамки), рамка со
+## скруглёнными углами — цвета фракции, по полю — свой геометрический узор в
+## два приглушённых тона. CLASSIC есть у всех, остальные — ступени ULTRA —
+## выпадают из лутбокса или создаются за пыль (SkinCollection). Соперники
+## видят рубашку, когда игрок берёт карту вслепую (CardShowcase).
 ##
-## Всё рисуется кодом по пикселям, без сглаживания; знаки — пиксельные
-## спрайты-строки (# — знак, . — пусто).
+## Всё рисуется кодом по пикселям, без сглаживания.
 
 const CLASSIC := "classic"
 ## Порядок показа в коллекции: CLASSIC, затем фракции в порядке полуколод.
@@ -21,7 +19,7 @@ const NAMES := {"classic": "CLASSIC", "drow": "DROW", "dragons": "DRAGONS", "dem
 	"elementals": "ELEMENTALS", "aberrations": "ABERRATIONS", "undead": "UNDEAD"}
 ## Поле — основной цвет лицевой стороны карты (рамка карт cards_pixel).
 const FIELD := Color("24153f")
-## Рамка и знаки каждой рубашки.
+## Рамка и узор каждой рубашки.
 const INK := {
 	"classic": "b0924a",
 	"drow": "9a6ad0",
@@ -35,114 +33,8 @@ const BAYER := [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 ## Толщина рамки и отступ тонкой внутренней линии от края.
 const RIM := 6
 const INNER := 10
-## Шаг узора знаков; каждый второй ряд сдвинут на полшага.
-const STEP := Vector2i(26, 26)
-## Насколько знаки узора видны на поле (0 — не видны, 1 — цвет рамки).
-const PATTERN_MIX := 0.5
-
-## Знаки узора. У стихий их четыре — огонь, вода, земля, воздух — по очереди.
-const GLYPHS := {
-	"classic": [[
-		"...#...",
-		"..#.#..",
-		".#...#.",
-		"#..#..#",
-		".#...#.",
-		"..#.#..",
-		"...#...",
-	]],
-	"drow": [[
-		"#..#...#..#",
-		".#..#.#..#.",
-		"..#.###.#..",
-		"...#####...",
-		"#####.#####",
-		"...#####...",
-		"..#######..",
-		".#.#####.#.",
-		"#..#####..#",
-		"....###....",
-	]],
-	"dragons": [[
-		"....#....#....#",
-		"...##...##...##",
-		"...#....#....#.",
-		"..##...##...##.",
-		"..#....#....#..",
-		".##...##...##..",
-		".#....#....#...",
-		"#....#....#....",
-	]],
-	"demons": [[
-		"#.........#",
-		"#.........#",
-		"##.......##",
-		".##.....##.",
-		"..#######..",
-		"..#.###.#..",
-		"..#######..",
-		"...#####...",
-	]],
-	"elementals": [
-		[
-			"...#...",
-			"..##...",
-			"..###.#",
-			".####.#",
-			".######",
-			"###.###",
-			"##...##",
-			"##...##",
-			".#####.",
-		], [
-			"...#...",
-			"...#...",
-			"..###..",
-			"..###..",
-			".#####.",
-			"##.####",
-			"#.#####",
-			"##.####",
-			".#####.",
-		], [
-			"...#...",
-			"..###..",
-			"..####.",
-			".###.#.",
-			".######",
-			"###.###",
-			"#######",
-		], [
-			"..####.",
-			"......#",
-			"######.",
-			".......",
-			"#####..",
-			".....#.",
-			"..###..",
-		],
-	],
-	"aberrations": [[
-		"....#####....",
-		"..#########..",
-		".####...####.",
-		"####..#..####",
-		".####...####.",
-		"..#########..",
-		"....#####....",
-	]],
-	"undead": [[
-		"..#####..",
-		".#######.",
-		"#########",
-		"#..###..#",
-		"#..###..#",
-		"####.####",
-		".#######.",
-		"..#.#.#..",
-		"..#####..",
-	]],
-}
+## Насколько тона узора ближе к цвету рамки (0 — цвет поля).
+const TONES := [0.0, 0.22, 0.45]
 
 static var _textures: Dictionary = {}
 
@@ -163,7 +55,9 @@ static func texture(design: String) -> ImageTexture:
 static func image(design: String) -> Image:
 	var d := clean(design)
 	var ink := Color(INK[d])
-	var shade := FIELD.darkened(0.35)
+	var tones: Array[Color] = []
+	for k in TONES:
+		tones.append(FIELD.lerp(ink, k))
 	var size := Vector2i(CardView.PIXEL_SIZE)
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -175,93 +69,61 @@ static func image(design: String) -> Image:
 			# Скруглённые углы.
 			if cx < 4 and cy < 4 and (4 - cx) * (4 - cx) + (4 - cy) * (4 - cy) > 17:
 				continue
-			var colour := FIELD
+			var colour: Color = tones[_tone(d, x - c.x, y - c.y, x, y)]
 			if cx < RIM or cy < RIM:
 				colour = ink.darkened(0.25) if cx == 0 or cy == 0 else ink
 			elif (cx == INNER or cy == INNER) and cx >= INNER and cy >= INNER:
 				colour = ink.darkened(0.2)
-			elif cx > INNER and cy > INNER:
-				# К краям поля темнее — дизерингом.
-				var dist := Vector2(x - c.x, (y - c.y) * 0.7).length() / 110.0
-				if _bay(x, y) < dist * 0.6:
-					colour = shade
+			elif cx < INNER or cy < INNER:
+				colour = FIELD
 			img.set_pixel(x, y, colour)
-	_pattern(img, d, FIELD.lerp(ink, PATTERN_MIX))
 	return img
 
 
-## Поле замощено знаками рубашки: сетка STEP от центра карты, каждый второй
-## ряд со сдвигом; знаки у края поля обрезаются внутренней линией.
-static func _pattern(img: Image, design: String, colour: Color) -> void:
-	var glyphs: Array = GLYPHS[design]
-	var size := img.get_size()
-	var inside := Rect2i(INNER + 1, INNER + 1, size.x - 2 * INNER - 2, size.y - 2 * INNER - 2)
-	var c := size / 2
-	for row in range(-6, 7):
-		for col in range(-5, 6):
-			var at := c + Vector2i(col * STEP.x + (STEP.x / 2 if posmod(row, 2) == 1 else 0), row * STEP.y)
-			var glyph: Array = glyphs[posmod(row * 3 + col, glyphs.size())]
-			var h := glyph.size()
-			var w := String(glyph[0]).length()
-			var origin := at - Vector2i(w / 2, h / 2)
-			for gy in h:
-				var line: String = glyph[gy]
-				for gx in line.length():
-					var p := origin + Vector2i(gx, gy)
-					if line[gx] == "#" and inside.has_point(p):
-						img.set_pixelv(p, colour)
+## Тон узора (0 — поле, 1, 2 — светлее) в точке dx, dy от центра карты.
+## Все узоры симметричны относительно центра.
+static func _tone(design: String, dx: int, dy: int, x: int, y: int) -> int:
+	var ax := absi(dx)
+	var ay := absi(dy)
+	match design:
+		"drow":
+			# Вложенные прямоугольники — круги по воде от центра.
+			var d := maxf(ax, ay * 0.69)
+			return 2 if posmod(int(d), 12) == 0 and d >= 1.0 else (1 if posmod(int(d / 12.0), 2) == 0 else 0)
+		"dragons":
+			# Шевроны, как чешуя на хребте.
+			var v := ay + ax * 0.75
+			return 2 if posmod(int(v), 14) == 0 and v >= 1.0 else (1 if posmod(int(v / 14.0), 2) == 1 else 0)
+		"demons":
+			# Лучи из центра и тёмное сердце.
+			var r := Vector2(dx, dy).length()
+			if r < 16:
+				return 2 if r > 13 else 0
+			var sector := int(floorf((atan2(dy, dx) + PI) / TAU * 20.0))
+			return 1 if sector % 2 == 0 else 0
+		"elementals":
+			# Круги, расходящиеся от центра.
+			var r := Vector2(dx, dy).length()
+			return 2 if posmod(int(r), 10) == 0 and r >= 1.0 else (1 if posmod(int(r / 10.0), 2) == 1 else 0)
+		"aberrations":
+			# Волны, будто что-то шевелится под поверхностью.
+			var w := dy + sin(dx * 0.13) * 5.0
+			return 2 if posmod(floori(w), 11) == 0 else (1 if posmod(floori(w / 11.0), 2) == 0 else 0)
+		"undead":
+			# Решётка квадратов, к краям рассыпается в пыль.
+			var cell := posmod(int(floorf((dx + 4) / 8.0)) + int(floorf((dy + 4) / 8.0)), 2) == 0
+			var fade := 1.0 - Vector2(ax / 80.0, ay / 118.0).length() * 0.9
+			return 1 if cell and _bay(x, y) < fade else 0
+		_:
+			# CLASSIC: ромбическая сетка, ромбы через один залиты.
+			var u := dx + dy
+			var v := dx - dy
+			if posmod(u, 16) == 0 or posmod(v, 16) == 0:
+				return 2
+			return 1 if posmod(int(floorf(u / 16.0)) + int(floorf(v / 16.0)), 2) == 0 else 0
 
 
 # --- кисти -------------------------------------------------------------------
 
 static func _bay(x: int, y: int) -> float:
 	return BAYER[(posmod(y, 4)) * 4 + posmod(x, 4)] / 16.0
-
-
-static func _hash(x: int, y: int) -> float:
-	var h := x * 374761393 + y * 668265263
-	h = (h ^ (h >> 13)) * 1274126177
-	return float((h ^ (h >> 16)) & 0x7fffffff) / 2147483647.0
-
-
-## Отрезок по Брезенхэму, только внутри rect.
-static func _line(img: Image, a: Vector2i, b: Vector2i, colour: Color, rect: Rect2i) -> void:
-	var d := (b - a).abs()
-	var s := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
-	var err := d.x - d.y
-	var p := a
-	for _i in d.x + d.y + 2:
-		if rect.has_point(p):
-			img.set_pixelv(p, colour)
-		if p == b:
-			break
-		var e2 := err * 2
-		if e2 > -d.y:
-			err -= d.y
-			p.x += s.x
-		if e2 < d.x:
-			err += d.x
-			p.y += s.y
-
-
-static func _disc(img: Image, c: Vector2i, radius: int, fill: Color, rim: Color) -> void:
-	for y in range(-radius, radius + 1):
-		for x in range(-radius, radius + 1):
-			var dd := x * x + y * y
-			if dd <= radius * radius + radius:
-				img.set_pixelv(c + Vector2i(x, y), rim if dd > (radius - 1) * (radius - 1) + radius - 1 else fill)
-
-
-static func _ring(img: Image, c: Vector2i, radius: int, colour: Color) -> void:
-	for y in range(-radius, radius + 1):
-		for x in range(-radius, radius + 1):
-			var dd := x * x + y * y
-			if dd <= radius * radius + radius and dd > (radius - 1) * (radius - 1) + radius - 1:
-				img.set_pixelv(c + Vector2i(x, y), colour)
-
-
-static func _outline(img: Image, r: Rect2i, colour: Color) -> void:
-	img.fill_rect(Rect2i(r.position, Vector2i(r.size.x, 1)), colour)
-	img.fill_rect(Rect2i(r.position.x, r.end.y - 1, r.size.x, 1), colour)
-	img.fill_rect(Rect2i(r.position, Vector2i(1, r.size.y)), colour)
-	img.fill_rect(Rect2i(r.end.x - 1, r.position.y, 1, r.size.y), colour)
