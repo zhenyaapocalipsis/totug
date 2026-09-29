@@ -477,9 +477,8 @@ func refresh() -> void:
 	for design: String in _back_buttons:
 		var b: Button = _back_buttons[design]
 		var has := SkinCollection.owns_back(design)
-		var faction := String(CardBack.FACTIONS[design])
-		b.text = " %s%s%s" % [CardBack.NAMES[design], "  " + faction if faction != "" else "",
-			"  ON" if design == worn else ""]
+		var state := "  ON" if design == worn else ("" if has else "  %d" % SkinCollection.CRAFT_COST[SkinCollection.BACK_TIER])
+		b.text = " %s%s" % [CardBack.NAMES[design], state]
 		_tint(b, PixelTheme.GOLD if design == worn else (ultra if has else ultra.darkened(0.45)))
 		b.set_pressed_no_signal(design == _back_selected)
 	_back_preview.texture = CardBack.texture(_back_selected)

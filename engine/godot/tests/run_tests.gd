@@ -3286,10 +3286,10 @@ func test_card_back() -> void:
 			"рубашка %s во весь размер карты" % design)
 	check_eq(CardBack.clean("nonsense"), CardBack.CLASSIC, "неизвестная рубашка — CLASSIC")
 	var plain := CardBack.image("")
-	check(plain.get_pixel(plain.get_width() / 2, plain.get_height() / 2).is_equal_approx(PixelTheme.GOLD),
-		"обычная рубашка — с золотой точкой")
-	check(CardBack.texture("web") == CardBack.texture("web"), "текстура рубашки берётся из кэша")
-	check_eq(PlayerProfile.clean_back("web"), "web", "профиль хранит имя рубашки")
+	check(plain.get_pixel(0, 0).a == 0.0 and plain.get_pixel(3, 40) == Color(CardBack.LOOK["classic"][1]),
+		"обычная рубашка: скруглённые углы, рамка своего цвета")
+	check(CardBack.texture("drow") == CardBack.texture("drow"), "текстура рубашки берётся из кэша")
+	check_eq(PlayerProfile.clean_back("drow"), "drow", "профиль хранит имя рубашки")
 	check_eq(PlayerProfile.clean_back("classic"), "", "CLASSIC в профиле — пустая строка")
 	check_eq(PlayerProfile.clean_back("ac3232" + "0".repeat(100)), "", "старый рисунок вместо имени — CLASSIC")
 
@@ -3297,20 +3297,20 @@ func test_card_back() -> void:
 	PlayerProfile.path_override = "user://test_card_back.cfg"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.save_local({"name": "Jarlaxle", "emblem": ""})
-	check(not SkinCollection.set_back("web"), "не открытую рубашку не надеть")
+	check(not SkinCollection.set_back("drow"), "не открытую рубашку не надеть")
 	check_eq(SkinCollection.active_back(), "", "у новичка рубашка CLASSIC")
-	PlayerProfile.save_back("skull")
+	PlayerProfile.save_back("undead")
 	check_eq(String(PlayerProfile.load_local()["back"]), "", "не открытая рубашка из файла не уходит в партию")
 	SkinCollection.grant({"dust": 1700})
-	check(SkinCollection.craft_back("web"), "рубашка создаётся за пыль ULTRA")
+	check(SkinCollection.craft_back("drow"), "рубашка создаётся за пыль ULTRA")
 	check_eq(int(SkinCollection.load_data()["dust"]), 100, "списано %d пыли" % SkinCollection.CRAFT_COST["ultra"])
-	check_eq(SkinCollection.active_back(), "web", "созданная рубашка сразу надета")
-	check(not SkinCollection.craft_back("web") and not SkinCollection.craft_back(CardBack.CLASSIC),
+	check_eq(SkinCollection.active_back(), "drow", "созданная рубашка сразу надета")
+	check(not SkinCollection.craft_back("drow") and not SkinCollection.craft_back(CardBack.CLASSIC),
 		"второй раз и CLASSIC не создаются")
 	check(SkinCollection.set_back(CardBack.CLASSIC) and SkinCollection.active_back() == "", "CLASSIC надевается всегда")
-	check(SkinCollection.set_back("web"), "открытая рубашка надевается снова")
+	check(SkinCollection.set_back("drow"), "открытая рубашка надевается снова")
 	PlayerProfile.save_local({"name": "Jarlaxle2", "emblem": ""})
-	check_eq(String(PlayerProfile.load_local()["back"]), "web", "сохранение имени не снимает рубашку")
+	check_eq(String(PlayerProfile.load_local()["back"]), "drow", "сохранение имени не снимает рубашку")
 
 	# Лутбокс: из ULTRA часть — рубашки.
 	var rng := RandomNumberGenerator.new()
@@ -3329,8 +3329,8 @@ func test_card_back() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = saved_path
 
-	PlayerProfile.seats = {"blue": PlayerProfile.clean({"name": "Vizeran", "back": "eye"})}
-	check_eq(PlayerProfile.back_of("blue"), "eye", "рубашка соперника по цвету места")
+	PlayerProfile.seats = {"blue": PlayerProfile.clean({"name": "Vizeran", "back": "aberrations"})}
+	check_eq(PlayerProfile.back_of("blue"), "aberrations", "рубашка соперника по цвету места")
 	check_eq(PlayerProfile.back_of("red"), "", "без профиля — обычная рубашка")
 	PlayerProfile.seats = {}
 

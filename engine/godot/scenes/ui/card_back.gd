@@ -2,53 +2,49 @@ class_name CardBack
 extends RefCounted
 
 ## Рубашка карты в полный размер (CardView.PIXEL_SIZE, 1:1). Рубашки — готовые
-## рисунки (решение владельца, 2026-09-30: рисовалки больше нет): CLASSIC есть
-## у всех, остальные — по одной на фракцию, ступени ULTRA — выпадают из
-## лутбокса или создаются за пыль (SkinCollection). Соперники видят рубашку,
-## когда игрок берёт карту вслепую (CardShowcase).
+## рисунки (решение владельца, 2026-09-30: рисовалки больше нет, стиль —
+## тёмный минимализм как в Balatro): сплошной тёмный цвет фракции, толстая
+## приглушённая рамка со скруглёнными углами и один простой знак в центре.
+## CLASSIC есть у всех, остальные — по одной на фракцию, ступени ULTRA —
+## выпадают из лутбокса или создаются за пыль (SkinCollection). Соперники
+## видят рубашку, когда игрок берёт карту вслепую (CardShowcase).
 ##
-## Всё рисуется кодом по пикселям, без сглаживания; общая рамка — тёмный край,
-## кайма цвета рубашки и тонкая внутренняя линия.
+## Всё рисуется кодом по пикселям, без сглаживания; переход к краям поля —
+## дизеринг, без градиента.
 
 const CLASSIC := "classic"
 ## Порядок показа в коллекции: CLASSIC, затем фракции в порядке полуколод.
-const DESIGNS: Array[String] = ["classic", "web", "scales", "pits", "elements", "eye", "skull"]
-const NAMES := {"classic": "CLASSIC", "web": "LOLTH'S WEB", "scales": "DRAGON SCALES",
-	"pits": "DEMONWEB PITS", "elements": "ELEMENTAL PLANES", "eye": "BEHOLDER", "skull": "DEATH'S HEAD"}
-const FACTIONS := {"classic": "", "web": "DROW", "scales": "DRAGONS", "pits": "DEMONS",
-	"elements": "ELEMENTALS", "eye": "ABERRATIONS", "skull": "UNDEAD"}
-## Поле, кайма и внутренняя линия каждой рубашки.
+const DESIGNS: Array[String] = ["classic", "drow", "dragons", "demons", "elementals", "aberrations", "undead"]
+const NAMES := {"classic": "CLASSIC", "drow": "DROW", "dragons": "DRAGONS", "demons": "DEMONS",
+	"elementals": "ELEMENTALS", "aberrations": "ABERRATIONS", "undead": "UNDEAD"}
+## Поле и рамка/знак каждой рубашки.
 const LOOK := {
-	"classic": ["2b1d40", "f2d23c", "6b4a9a"],
-	"web": ["1c1230", "cbdbfc", "5b4a8a"],
-	"scales": ["2a0e08", "f2b23c", "8a3a14"],
-	"pits": ["0c0606", "df7126", "6a1a10"],
-	"elements": ["0e2430", "5fcde4", "2a6a7a"],
-	"eye": ["0e1a0c", "99e550", "3a6a22"],
-	"skull": ["0e1428", "9badb7", "3f4a74"],
+	"classic": ["1e1830", "a08a4a"],
+	"drow": ["22103a", "8a62b8"],
+	"dragons": ["2e1406", "b86a26"],
+	"demons": ["2e080e", "a83a46"],
+	"elementals": ["06262e", "3a96a6"],
+	"aberrations": ["122a0c", "5e9a34"],
+	"undead": ["0e1630", "6a80b4"],
 }
-const BG := Color("1a1226")
-const DIAMOND_A := Color("3d2a5c")
-const DIAMOND_B := Color("24183a")
 const BAYER := [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
+## Толщина рамки и отступ тонкой внутренней линии от края.
+const RIM := 6
+const INNER := 10
 
-## Череп нежити: # — кость, o — глазница, O — огонёк в глазнице, n — нос, t — зубы.
+## Череп нежити: # — кость, o — глазница.
 const SKULL := [
-	"....#######....",
-	"..###########..",
-	".#############.",
-	"###############",
-	"###############",
-	"##ooo#####ooo##",
-	"#ooOoo###ooOoo#",
-	"#oOOOo###oOOOo#",
-	"##ooo#nnn#ooo##",
-	".#####nnn#####.",
-	"..#####n#####..",
-	"...#########...",
-	"...#t#t#t#t#...",
-	"...#########...",
-	".....#####.....",
+	"..#######..",
+	".#########.",
+	"###########",
+	"###########",
+	"#ooo###ooo#",
+	"#ooo###ooo#",
+	"###########",
+	".####o####.",
+	"..#######..",
+	"..#.#.#.#..",
+	"..#######..",
 ]
 
 static var _textures: Dictionary = {}
@@ -69,285 +65,140 @@ static func texture(design: String) -> ImageTexture:
 
 static func image(design: String) -> Image:
 	var d := clean(design)
-	var look: Array = LOOK[d]
+	var fill := Color(LOOK[d][0])
+	var ink := Color(LOOK[d][1])
+	var shade := fill.darkened(0.35)
 	var size := Vector2i(CardView.PIXEL_SIZE)
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
-	var r := Rect2i(Vector2i.ZERO, size)
-	img.fill(BG)
-	img.fill_rect(r.grow(-2), Color(look[0]))
+	img.fill(Color(0, 0, 0, 0))
 	var c := size / 2
-	var field := r.grow(-7)
+	for y in size.y:
+		for x in size.x:
+			var cx := mini(x, size.x - 1 - x)
+			var cy := mini(y, size.y - 1 - y)
+			# Скруглённые углы.
+			if cx < 4 and cy < 4 and (4 - cx) * (4 - cx) + (4 - cy) * (4 - cy) > 17:
+				continue
+			var colour := fill
+			if cx < RIM or cy < RIM:
+				colour = ink.darkened(0.25) if cx == 0 or cy == 0 else ink
+			elif (cx == INNER or cy == INNER) and cx >= INNER and cy >= INNER:
+				colour = ink.darkened(0.2)
+			elif cx > INNER and cy > INNER:
+				# К краям поля темнее — дизерингом.
+				var dist := Vector2(x - c.x, (y - c.y) * 0.7).length() / 110.0
+				if _bay(x, y) < dist * 0.6:
+					colour = shade
+			img.set_pixel(x, y, colour)
 	match d:
-		"web":
-			_web(img, c, field)
-		"scales":
-			_scales(img, c, field)
-		"pits":
-			_pits(img, c, field)
-		"elements":
-			_elements(img, c, field)
-		"eye":
-			_eye(img, c, field)
-		"skull":
-			_skull(img, c, field)
+		"drow":
+			_spider(img, c, ink, fill)
+		"dragons":
+			_claws(img, c, ink)
+		"demons":
+			_horns(img, c, ink, fill)
+		"elementals":
+			_elements(img, c, ink, fill)
+		"aberrations":
+			_eye(img, c, ink, fill)
+		"undead":
+			_skull(img, c, ink, fill)
 		_:
-			_diamonds(img, c)
-	_outline(img, r.grow(-2), Color(look[1]))
-	_outline(img, r.grow(-6), Color(look[2]))
+			_diamond(img, c, ink, fill)
 	return img
 
 
-# --- рисунки -----------------------------------------------------------------
+# --- знаки -------------------------------------------------------------------
 
-## CLASSIC — вложенные ромбы и золотая точка.
-static func _diamonds(img: Image, c: Vector2i) -> void:
-	for i in range(6):
-		var d := 34 - i * 6
-		var dx := roundi(d * 0.7)
-		var colour := DIAMOND_A if i % 2 == 0 else DIAMOND_B
-		for y in range(-d, d + 1):
-			var half := int(dx * (1.0 - absf(y) / d))
-			img.fill_rect(Rect2i(c.x - half, c.y + y, half * 2 + 1, 1), colour)
-	img.fill_rect(Rect2i(c - Vector2i(3, 3), Vector2i(6, 6)), PixelTheme.GOLD)
+## CLASSIC: ромб-рамка.
+static func _diamond(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
+	for d in 14:
+		img.fill_rect(Rect2i(c.x - (13 - d), c.y - d, (13 - d) * 2 + 1, 1), ink)
+		img.fill_rect(Rect2i(c.x - (13 - d), c.y + d, (13 - d) * 2 + 1, 1), ink)
+	for d in 8:
+		img.fill_rect(Rect2i(c.x - (7 - d), c.y - d, (7 - d) * 2 + 1, 1), fill)
+		img.fill_rect(Rect2i(c.x - (7 - d), c.y + d, (7 - d) * 2 + 1, 1), fill)
 
 
-## LOLTH'S WEB (дроу): паутина во всё поле и паук в центре.
-static func _web(img: Image, c: Vector2i, field: Rect2i) -> void:
-	var spokes := 16
-	var silk := Color("7f74b0")
-	var bright := Color("cbdbfc")
-	for i in spokes:
-		var a := TAU * i / spokes
-		_line(img, c, c + Vector2i(roundi(cos(a) * 200), roundi(sin(a) * 200)), silk, field)
-	for k in range(1, 14):
-		var radius := 9.0 + 11.0 * k + k * k * 0.35
-		var colour := bright if k <= 3 else silk
-		for i in spokes:
-			var a0 := TAU * i / spokes
-			var a1 := TAU * (i + 1) / spokes
-			var prev := Vector2i(-9999, -9999)
-			for s in 13:
-				var t := s / 12.0
-				var a := lerpf(a0, a1, t)
-				# Нить между спицами провисает к центру.
-				var rr := radius * (1.0 - 0.1 * 4.0 * t * (1.0 - t))
-				var p := c + Vector2i(roundi(cos(a) * rr), roundi(sin(a) * rr))
-				if prev.x > -9999:
-					_line(img, prev, p, colour, field)
-				prev = p
-	# Паук: брюшко, голова, восемь ног, красная метка.
-	var body := Color("140c1e")
-	var rim := Color("6a5ad0")
+## DROW: паук — брюшко, голова и восемь ног.
+static func _spider(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
+	var r := Rect2i(Vector2i.ZERO, img.get_size())
 	for leg in 4:
 		for side in [-1, 1]:
-			var knee := c + Vector2i(side * (10 + leg * 2), -8 + leg * 5)
-			var foot := knee + Vector2i(side * 6, 6 + leg)
-			_line(img, c + Vector2i(0, -2 + leg * 2), knee, body, field)
-			_line(img, knee, foot, body, field)
-	_disc(img, c + Vector2i(0, 7), 8, body, rim)
-	_disc(img, c + Vector2i(0, -5), 5, body, rim)
-	img.fill_rect(Rect2i(c + Vector2i(-1, 4), Vector2i(3, 2)), Color("d0283e"))
-	img.fill_rect(Rect2i(c + Vector2i(0, 6), Vector2i(1, 3)), Color("d0283e"))
-	img.set_pixelv(c + Vector2i(-2, -6), PixelTheme.GOLD)
-	img.set_pixelv(c + Vector2i(2, -6), PixelTheme.GOLD)
+			var knee := c + Vector2i(side * (10 + leg * 2), -9 + leg * 5)
+			var foot := knee + Vector2i(side * 6, 7 + leg)
+			for w in 2:
+				_line(img, c + Vector2i(w * side, -3 + leg * 2), knee + Vector2i(w * side, 0), ink, r)
+				_line(img, knee + Vector2i(w * side, 0), foot + Vector2i(w * side, 0), ink, r)
+	_disc(img, c + Vector2i(0, 6), 8, ink, ink)
+	_disc(img, c + Vector2i(0, -6), 5, ink, ink)
+	img.fill_rect(Rect2i(c + Vector2i(-1, 3), Vector2i(3, 2)), fill)
+	img.fill_rect(Rect2i(c + Vector2i(0, 5), Vector2i(1, 3)), fill)
+	img.fill_rect(Rect2i(c + Vector2i(-1, 8), Vector2i(3, 2)), fill)
 
 
-## DRAGON SCALES (драконы): чешуя рядами и драконий глаз в медальоне.
-static func _scales(img: Image, c: Vector2i, field: Rect2i) -> void:
-	var ramp := [Color("d9892a"), Color("a8521a"), Color("6e2a10"), Color("3e1408")]
-	var edge := Color("1e0804")
-	var w := 16
-	var h := 10
-	var rad := 10.5
-	for y in range(field.position.y, field.end.y):
-		for x in range(field.position.x, field.end.x):
-			var row := floori(float(y) / h)
-			var hit := false
-			for i in [row - 1, row, row + 1]:
-				if hit:
-					break
-				var off: int = (i % 2) * (w / 2)
-				var col := floori(float(x - off + w / 2) / w)
-				for j in [col - 1, col, col + 1]:
-					var cx := float(j * w + off)
-					var cy := float(i * h)
-					var dist := Vector2(x - cx, y - cy).length()
-					if dist <= rad:
-						var k := clampf(dist / rad * 0.8 + (cy - y) / rad * 0.35, 0.0, 1.0)
-						var shade: Color = ramp[mini(3, int(k * 3.0 + _bay(x, y)))]
-						img.set_pixel(x, y, edge if dist > rad - 1.2 else shade)
-						hit = true
-						break
-	# Медальон с глазом: золотой обод, огненная радужка, вертикальный зрачок.
-	_disc(img, c, 30, Color("1e0804"), Color("f2d23c"))
-	_ring(img, c, 27, Color("8a3a14"))
-	for y in range(-20, 21):
-		for x in range(-26, 27):
-			var e := (x * x) / 676.0 + (y * y) / 400.0
-			if e <= 1.0:
-				var iris: Color = Color("fbf236").lerp(Color("df7126"), clampf(e * 1.4 + _bay(x, y) * 0.3, 0.0, 1.0))
-				img.set_pixelv(c + Vector2i(x, y), iris)
-	for y in range(-18, 19):
-		var half := int(4.0 * (1.0 - absf(y) / 19.0) + 0.5)
-		img.fill_rect(Rect2i(c.x - half, c.y + y, half * 2 + 1, 1), Color("0c0402"))
-	img.fill_rect(Rect2i(c + Vector2i(-12, -10), Vector2i(3, 3)), Color("fff6d0"))
-
-
-## DEMONWEB PITS (демоны): чёрный камень в лавовых трещинах, огненное кольцо.
-static func _pits(img: Image, c: Vector2i, field: Rect2i) -> void:
-	var cell := 22
-	for y in range(field.position.y, field.end.y):
-		for x in range(field.position.x, field.end.x):
-			var gx := floori(float(x) / cell)
-			var gy := floori(float(y) / cell)
-			var d1 := 1e9
-			var d2 := 1e9
-			for oy in [-1, 0, 1]:
-				for ox in [-1, 0, 1]:
-					var px: float = (gx + ox + _hash(gx + ox, gy + oy)) * cell
-					var py: float = (gy + oy + _hash(gy + oy + 7, gx + ox + 3)) * cell
-					var dd := Vector2(x - px, y - py).length()
-					if dd < d1:
-						d2 = d1
-						d1 = dd
-					elif dd < d2:
-						d2 = dd
-			var gap := d2 - d1
-			var colour := Color("140a08") if (x + y) % 7 == 0 and _hash(x, y) > 0.6 else Color("0c0606")
-			if gap < 1.2:
-				colour = Color("fbf236") if gap < 0.5 else Color("df7126")
-			elif gap < 3.0 and _bay(x, y) < 0.9 - (gap - 1.2) * 0.4:
-				colour = Color("8a1a10") if gap < 2.2 else Color("4a0c08")
-			img.set_pixel(x, y, colour)
-	# Огненное кольцо и три следа когтей.
-	_disc(img, c, 32, Color("0c0606"), Color("4a0c08"))
-	for rr in [30, 29, 28]:
-		_ring(img, c, rr, Color("df7126") if rr == 29 else Color("8a1a10"))
-	for y in range(-26, 27):
-		for x in range(-26, 27):
-			var dd := Vector2(x, y).length()
-			if dd < 26 and _bay(x, y) < 0.25 * (1.0 - dd / 26.0) + 0.05:
-				img.set_pixelv(c + Vector2i(x, y), Color("4a0c08"))
+## DRAGONS: три следа когтей.
+static func _claws(img: Image, c: Vector2i, ink: Color) -> void:
 	for k in [-1, 0, 1]:
-		var a := c + Vector2i(-16 + k * 10, -18)
-		var b := c + Vector2i(4 + k * 10, 18)
-		_line(img, a, b, Color("fbf236"), field)
-		_line(img, a + Vector2i(1, 0), b + Vector2i(1, 0), Color("df7126"), field)
+		for t in 30:
+			var y := -15 + t
+			var x: int = k * 9 + roundi(-y * 0.35 + sin(t * 0.1) * 2.0)
+			var half := int(2.5 * sin(PI * t / 29.0) + 0.5)
+			img.fill_rect(Rect2i(c.x + x - half, c.y + y, half * 2 + 1, 1), ink)
 
 
-## ELEMENTAL PLANES (элементали): круг из четырёх стихий на волнах силы.
-static func _elements(img: Image, c: Vector2i, field: Rect2i) -> void:
-	for y in range(field.position.y, field.end.y):
-		for x in range(field.position.x, field.end.x):
-			var dd := Vector2(x - c.x, (y - c.y) * 0.8).length()
-			if int(dd) % 10 == 0:
-				img.set_pixel(x, y, Color("1c4450"))
-			elif int(dd) % 10 == 5 and _bay(x, y) < 0.5:
-				img.set_pixel(x, y, Color("163440"))
-	var quads := [Color("df7126"), Color("306082"), Color("6abe30"), Color("cbdbfc")]
-	var dark := [Color("8a3a14"), Color("1c3a5a"), Color("37642a"), Color("7f8aa8")]
-	for y in range(-40, 41):
-		for x in range(-40, 41):
-			var dd := Vector2(x, y).length()
-			if dd > 40:
-				continue
-			# Четверти: огонь сверху, вода справа, земля снизу, воздух слева.
-			var q := 0 if (y < 0 and absi(x) <= -y) else (1 if (x > 0 and absi(y) < x) else (2 if y > 0 and absi(x) <= y else 3))
-			var colour: Color = quads[q] if dd < 38 - _bay(x, y) * 6.0 else dark[q]
-			if absi(absi(x) - absi(y)) <= 0 or dd >= 39:
-				colour = Color("0e2430")
-			img.set_pixelv(c + Vector2i(x, y), colour)
-	_ring(img, c, 41, Color("5fcde4"))
-	# Знаки стихий: пламя, волна, камень, вихрь.
-	var ink := Color("0e2430")
-	for i in 9:
-		img.fill_rect(Rect2i(c.x - (9 - i) / 2, c.y - 16 - i, 9 - (i / 2) * 2 + (i % 2), 1), ink)
-	for x in range(-8, 9):
-		img.set_pixelv(c + Vector2i(22 + x / 2, roundi(sin(x * 0.8) * 3)), ink)
-		img.set_pixelv(c + Vector2i(22 + x / 2, 5 + roundi(sin(x * 0.8) * 3)), ink)
-	img.fill_rect(Rect2i(c + Vector2i(-6, 17), Vector2i(12, 7)), ink)
-	img.fill_rect(Rect2i(c + Vector2i(-3, 14), Vector2i(7, 3)), ink)
-	for s in 26:
-		var a := s * 0.45
-		var rr := 1.5 + s * 0.3
-		img.set_pixelv(c + Vector2i(-24 + roundi(cos(a) * rr), roundi(sin(a) * rr)), ink)
-
-
-## BEHOLDER (аберрации): большой глаз, вокруг — глаза на стебельках.
-static func _eye(img: Image, c: Vector2i, field: Rect2i) -> void:
-	for y in range(field.position.y, field.end.y):
-		for x in range(field.position.x, field.end.x):
-			if _hash(x / 3, y / 3) > 0.93 and _bay(x, y) < 0.6:
-				img.set_pixel(x, y, Color("1e3614"))
-	var stalks := 10
-	for i in stalks:
-		var a := TAU * i / stalks - PI / 2.0
-		var tip := c + Vector2i(roundi(cos(a) * 62), roundi(sin(a) * 70))
-		var mid := c + Vector2i(roundi(cos(a + 0.25) * 42), roundi(sin(a + 0.25) * 48))
-		for w in [0, 1]:
-			_line(img, c + Vector2i(w, 0), mid + Vector2i(w, 0), Color("3a6a22"), field)
-			_line(img, mid + Vector2i(w, 0), tip + Vector2i(w, 0), Color("3a6a22"), field)
-		_disc(img, tip, 5, Color("eec39a"), Color("1e3614"))
-		_disc(img, tip, 2, Color("99e550"), Color("99e550"))
-		img.set_pixelv(tip, Color("0e1a0c"))
-	# Главный глаз: веко, белок, зелёная радужка, щель-зрачок, блик.
-	for y in range(-26, 27):
-		for x in range(-40, 41):
-			var e := (x * x) / 1600.0 + (y * y) / 676.0
-			if e <= 1.0:
-				img.set_pixelv(c + Vector2i(x, y), Color("3a6a22") if e > 0.82 else Color("eec39a"))
-	for y in range(-18, 19):
-		for x in range(-18, 19):
-			var dd := Vector2(x, y).length()
-			if dd <= 18:
-				var k := clampf(dd / 18.0 + _bay(x, y) * 0.25, 0.0, 1.0)
-				img.set_pixelv(c + Vector2i(x, y), Color("99e550").lerp(Color("37642a"), k))
-	for y in range(-16, 17):
-		var half := int(3.0 * (1.0 - absf(y) / 17.0) + 0.5)
-		img.fill_rect(Rect2i(c.x - half, c.y + y, half * 2 + 1, 1), Color("0e1a0c"))
-	img.fill_rect(Rect2i(c + Vector2i(-10, -9), Vector2i(3, 3)), Color("ffffff"))
-
-
-## DEATH'S HEAD (нежить): череп на скрещённых костях, в глазницах огоньки.
-static func _skull(img: Image, c: Vector2i, field: Rect2i) -> void:
-	for y in range(field.position.y, field.end.y):
-		var fog := absf(sin(y * 0.09)) * 0.5
-		for x in range(field.position.x, field.end.x):
-			if _bay(x, y) < fog * 0.35:
-				img.set_pixel(x, y, Color("18203c"))
-	var bone := Color("cbdbfc")
-	var bone_dark := Color("7f8aa8")
+## DEMONS: пара рогов над полукругом лба.
+static func _horns(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
 	for side in [-1, 1]:
-		var a := c + Vector2i(-side * 44, -40)
-		var b := c + Vector2i(side * 44, 46)
-		for w in range(-3, 4):
-			_line(img, a + Vector2i(w, 0), b + Vector2i(w, 0), bone_dark if absi(w) == 3 else bone, field)
-		for end in [a, b]:
-			_disc(img, end + Vector2i(-3, 0), 4, bone, bone_dark)
-			_disc(img, end + Vector2i(3, 0), 4, bone, bone_dark)
-	var zoom := 4
-	var n := SKULL.size()
-	var origin := c - Vector2i(15 * zoom / 2, n * zoom / 2 + 4)
-	for row in n:
+		for t in 26:
+			var k := t / 25.0
+			var x: int = side * roundi(6 + 12 * sin(k * 1.9))
+			var y := 8 - roundi(26 * k)
+			var half := int(4.0 * (1.0 - k) + 0.5)
+			img.fill_rect(Rect2i(c.x + x - half, c.y + y, half * 2 + 1, 1), ink)
+	for y in range(0, 10):
+		var half := int(sqrt(maxf(0.0, 100.0 - y * y)) * 1.1)
+		img.fill_rect(Rect2i(c.x - half, c.y + 6 + y, half * 2 + 1, 1), ink)
+	img.fill_rect(Rect2i(c + Vector2i(-6, 9), Vector2i(4, 2)), fill)
+	img.fill_rect(Rect2i(c + Vector2i(3, 9), Vector2i(4, 2)), fill)
+
+
+## ELEMENTALS: круг, разделённый крестом на четыре стихии.
+static func _elements(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
+	_disc(img, c, 15, ink, ink)
+	_disc(img, c, 11, fill, fill)
+	img.fill_rect(Rect2i(c.x - 1, c.y - 15, 3, 31), ink)
+	img.fill_rect(Rect2i(c.x - 15, c.y - 1, 31, 3), ink)
+	for q in [Vector2i(-6, -6), Vector2i(6, -6), Vector2i(-6, 6), Vector2i(6, 6)]:
+		_disc(img, c + q, 2, ink, ink)
+
+
+## ABERRATIONS: глаз с круглым зрачком и ресницами-стебельками.
+static func _eye(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
+	for y in range(-9, 10):
+		var half := int(16.0 * sqrt(1.0 - (y * y) / 100.0))
+		img.fill_rect(Rect2i(c.x - half, c.y + y, half * 2 + 1, 1), ink)
+	_disc(img, c, 6, fill, fill)
+	_disc(img, c, 3, ink, ink)
+	for k in [-2, -1, 0, 1, 2]:
+		var a: float = -PI / 2.0 + k * 0.5
+		var from := c + Vector2i(roundi(cos(a) * 12), roundi(sin(a) * 9))
+		var to := c + Vector2i(roundi(cos(a) * 19), roundi(sin(a) * 17))
+		_line(img, from, to, ink, Rect2i(Vector2i.ZERO, img.get_size()))
+
+
+## UNDEAD: череп.
+static func _skull(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
+	var zoom := 3
+	var w: int = String(SKULL[0]).length()
+	var origin := c - Vector2i(w * zoom / 2, SKULL.size() * zoom / 2)
+	for row in SKULL.size():
 		var line: String = SKULL[row]
 		for col in line.length():
-			var ch := line[col]
-			if ch == ".":
+			if line[col] == ".":
 				continue
-			var colour := bone
-			match ch:
-				"o", "n", "t":
-					colour = Color("0e1428")
-				"O":
-					colour = Color("5fcde4")
-				_:
-					var below := row + 1 < n and String(SKULL[row + 1])[col] == "."
-					var right := col + 1 < line.length() and line[col + 1] == "."
-					if below or right or col >= 11:
-						colour = Color("9badb7")
-			img.fill_rect(Rect2i(origin + Vector2i(col, row) * zoom, Vector2i.ONE * zoom), colour)
-	for eye in [Vector2i(3, 7), Vector2i(11, 7)]:
-		img.fill_rect(Rect2i(origin + eye * zoom + Vector2i(1, 1), Vector2i(2, 2)), Color("ffffff"))
+			img.fill_rect(Rect2i(origin + Vector2i(col, row) * zoom, Vector2i.ONE * zoom),
+				fill if line[col] == "o" else ink)
 
 
 # --- кисти -------------------------------------------------------------------

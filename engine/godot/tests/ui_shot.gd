@@ -471,10 +471,10 @@ func _run_scenario() -> void:
 			# Главное меню поверх партии (строка профиля с кнопками).
 			root.add_child(SetupScreen.new())
 		"card_back":
-			# Коллекция, раздел рубашек: открыта и надета LOLTH'S WEB.
+			# Коллекция, раздел рубашек: открыта и надета рубашка DROW.
 			PlayerProfile.path_override = "user://profile_shot.cfg"
 			SkinCollection.grant({"dust": SkinCollection.CRAFT_COST["ultra"]})
-			SkinCollection.craft_back("web")
+			SkinCollection.craft_back("drow")
 			var back_profile := ProfileScreen.new()
 			back_profile._page = "COLLECTION"
 			root.add_child(back_profile)
