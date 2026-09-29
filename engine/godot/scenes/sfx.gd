@@ -19,6 +19,15 @@ const VOICES := 8
 const OTHER_DB := -6.0
 ## Ступени громкости для кнопки в меню (по кругу).
 const LEVELS: Array[float] = [1.0, 0.75, 0.5, 0.25, 0.0]
+## Все звуки игры (имя = файл в DIR). Доска: посадка войска и шпиона, удар
+## Assassinate, «утонул» при Supplant, фишку сняли с доски (lift), локация
+## сменила хозяина. Колокол не использовать (решение владельца, 2026-09-29).
+const SOUNDS := [
+	"click", "hover", "card", "coins", "error",
+	"deploy", "spy", "kill", "sink", "lift", "capture",
+	"turn", "victory", "defeat", "last_round",
+	"ping", "phrase",
+]
 ## Звуки без разброса высоты.
 const STEADY := ["click", "turn", "victory", "defeat"]
 ## Поправка громкости отдельных звуков (дБ): наведение — еле слышно.
@@ -83,30 +92,11 @@ func _ready() -> void:
 		p.bus = BUS
 		add_child(p)
 		_voices.append(p)
-	# У звука может быть несколько вариантов — играет случайный.
-	_streams = {
-		"click": _files("click", 1),
-		"hover": _files("hover", 1),
-		"card": _files("card", 2),
-		"coins": _files("coins", 2),
-		"error": _files("error", 1),
-		# Доска: посадка войска и шпиона, удар Assassinate, «утонул» при
-		# Supplant, фишку сняли с доски (return), локация сменила хозяина.
-		"deploy": _files("deploy", 2),
-		"spy": _files("spy", 2),
-		"kill": _files("kill", 1),
-		"sink": _files("sink", 2),
-		"lift": _files("lift", 1),
-		"capture": _files("capture", 2),
-		# Ход и партия. Колокол не использовать (решение владельца, 2026-09-29).
-		"turn": _files("turn", 1),
-		"victory": _files("victory", 1),
-		"defeat": _files("defeat", 1),
-		"last_round": _files("last_round", 2),
-		# Чат по Tab: пинг и фраза.
-		"ping": _files("ping", 2),
-		"phrase": _files("phrase", 2),
-	}
+	# У каждого звука одна запись (решение владельца): res://assets/sfx/<name>.ogg.
+	for sound: String in SOUNDS:
+		var stream: AudioStream = load("%s%s.ogg" % [DIR, sound])
+		_streams[sound] = stream
+		_starts[stream] = _onset(stream)
 	get_tree().node_added.connect(_on_node_added)
 
 
@@ -120,7 +110,7 @@ func _play(sound: String, db: float) -> void:
 		return
 	var p := _voices[_next]
 	_next = (_next + 1) % _voices.size()
-	p.stream = (_streams[sound] as Array).pick_random()
+	p.stream = _streams[sound]
 	p.volume_db = db + float(GAIN_DB.get(sound, 0.0))
 	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
 	# Кнопка (решение владельца) и мелодии — всегда ровно.
@@ -137,15 +127,6 @@ func _on_node_added(node: Node) -> void:
 		if not button.disabled:
 			play("hover"))
 
-
-## Варианты звука из файлов: res://assets/sfx/<name>_1.ogg … _<count>.ogg.
-static func _files(name: String, count: int) -> Array:
-	var out := []
-	for i in range(1, count + 1):
-		var stream: AudioStream = load("%s%s_%d.ogg" % [DIR, name, i])
-		_starts[stream] = _onset(stream)
-		out.append(stream)
-	return out
 
 
 ## Где в записи начинается сам звук: первый отсчёт громче 10% пика, минус
