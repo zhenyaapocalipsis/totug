@@ -2,8 +2,9 @@ class_name Sfx
 extends Node
 
 ## Звуки игры. Автозагрузка SfxPlayer (project.godot) держит несколько
-## проигрывателей на шине "SFX"; звуки не лежат файлами, а синтезируются
-## при запуске (короткие ретро-щелчки под пиксель-арт).
+## проигрывателей на шине "SFX". Основные звуки — файлы из наборов Kenney
+## (CC0, assets/sfx/), а писк наведения и гудение отказа синтезируются
+## при запуске.
 ##
 ## Вызов из любого места: Sfx.play("card"). Без автозагрузки (прогон тестов
 ## скриптом) вызовы ничего не делают. Все кнопки (BaseButton) сами щёлкают
@@ -13,6 +14,7 @@ extends Node
 
 const BUS := "SFX"
 const SETTINGS_PATH := "user://settings.cfg"
+const DIR := "res://assets/sfx/"
 const RATE := 22050
 const VOICES := 8
 ## Ходы соперника звучат тише своих.
@@ -77,12 +79,13 @@ func _ready() -> void:
 		p.bus = BUS
 		add_child(p)
 		_voices.append(p)
+	# У звука может быть несколько вариантов — играет случайный.
 	_streams = {
-		"click": _wav(_click()),
-		"hover": _wav(_hover()),
-		"card": _wav(_card_slap()),
-		"coins": _wav(_coins()),
-		"error": _wav(_buzz()),
+		"click": _files("click", 3),
+		"hover": [_wav(_hover())],
+		"card": _files("card", 4),
+		"coins": _files("coins", 2),
+		"error": [_wav(_buzz())],
 	}
 	get_tree().node_added.connect(_on_node_added)
 
@@ -97,7 +100,7 @@ func _play(sound: String, db: float) -> void:
 		return
 	var p := _voices[_next]
 	_next = (_next + 1) % _voices.size()
-	p.stream = _streams[sound]
+	p.stream = (_streams[sound] as Array).pick_random()
 	p.volume_db = db
 	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
 	p.pitch_scale = randf_range(0.95, 1.05)
@@ -112,6 +115,14 @@ func _on_node_added(node: Node) -> void:
 	button.mouse_entered.connect(func():
 		if not button.disabled:
 			play("hover"))
+
+
+## Варианты звука из файлов: res://assets/sfx/<name>_1.ogg … _<count>.ogg.
+static func _files(name: String, count: int) -> Array:
+	var out := []
+	for i in range(1, count + 1):
+		out.append(load("%s%s_%d.ogg" % [DIR, name, i]))
+	return out
 
 
 # --- Синтез -------------------------------------------------------------
@@ -139,53 +150,12 @@ static func _square(phase: float) -> float:
 	return 1.0 if fmod(phase, 1.0) < 0.5 else -1.0
 
 
-## Кнопка: короткий прямоугольный «тик».
-static func _click() -> PackedFloat32Array:
-	var out := _buffer(0.03)
-	for i in out.size():
-		var t := float(i) / RATE
-		out[i] = _square(t * 1100.0) * exp(-t * 140.0) * 0.25
-	return out
-
-
 ## Наведение: едва слышный высокий писк.
 static func _hover() -> PackedFloat32Array:
 	var out := _buffer(0.02)
 	for i in out.size():
 		var t := float(i) / RATE
 		out[i] = sin(TAU * 1900.0 * t) * exp(-t * 200.0) * 0.08
-	return out
-
-
-## Карта о стол: шорох (сглаженный шум) плюс глухой низкий удар.
-static func _card_slap() -> PackedFloat32Array:
-	var out := _buffer(0.12)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	var smooth := 0.0
-	for i in out.size():
-		var t := float(i) / RATE
-		smooth = lerpf(smooth, rng.randf_range(-1.0, 1.0), 0.35)
-		var thump := sin(TAU * (140.0 - 300.0 * t) * t) * exp(-t * 45.0)
-		out[i] = (smooth * exp(-t * 55.0) * 0.6 + thump * 0.5) * 0.7
-	return out
-
-
-## Покупка: три металлических «дзынь» монет вразнобой.
-static func _coins() -> PackedFloat32Array:
-	var out := _buffer(0.35)
-	var hits := [[0.0, 2100.0], [0.07, 2500.0], [0.13, 2300.0]]
-	for i in out.size():
-		var t := float(i) / RATE
-		var s := 0.0
-		for hit in hits:
-			var dt: float = t - float(hit[0])
-			if dt < 0.0:
-				continue
-			var f: float = hit[1]
-			# Негармоничный обертон (x2.76) даёт металл вместо чистого тона.
-			s += (sin(TAU * f * dt) + 0.5 * sin(TAU * f * 2.76 * dt)) * exp(-dt * 22.0)
-		out[i] = s * 0.13
 	return out
 
 
