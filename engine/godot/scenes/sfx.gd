@@ -2,9 +2,8 @@ class_name Sfx
 extends Node
 
 ## Звуки игры. Автозагрузка SfxPlayer (project.godot) держит несколько
-## проигрывателей на шине "SFX". Основные звуки — файлы из наборов Kenney
-## (CC0, assets/sfx/), а писк наведения и гудение отказа синтезируются
-## при запуске.
+## проигрывателей на шине "SFX". Все звуки — файлы из наборов Kenney
+## (CC0, assets/sfx/).
 ##
 ## Вызов из любого места: Sfx.play("card"). Без автозагрузки (прогон тестов
 ## скриптом) вызовы ничего не делают. Все кнопки (BaseButton) сами щёлкают
@@ -15,7 +14,6 @@ extends Node
 const BUS := "SFX"
 const SETTINGS_PATH := "user://settings.cfg"
 const DIR := "res://assets/sfx/"
-const RATE := 22050
 const VOICES := 8
 ## Ходы соперника звучат тише своих.
 const OTHER_DB := -6.0
@@ -23,6 +21,8 @@ const OTHER_DB := -6.0
 const LEVELS: Array[float] = [1.0, 0.75, 0.5, 0.25, 0.0]
 ## Звуки без разброса высоты.
 const STEADY := ["click", "turn", "victory", "defeat"]
+## Поправка громкости отдельных звуков (дБ): наведение — еле слышно.
+const GAIN_DB := {"hover": -10.0}
 
 static var _instance: Sfx
 static var volume := 1.0
@@ -86,10 +86,10 @@ func _ready() -> void:
 	# У звука может быть несколько вариантов — играет случайный.
 	_streams = {
 		"click": _files("click", 1),
-		"hover": [_wav(_hover())],
+		"hover": _files("hover", 1),
 		"card": _files("card", 2),
 		"coins": _files("coins", 2),
-		"error": [_wav(_buzz())],
+		"error": _files("error", 1),
 		# Доска: посадка войска и шпиона, удар Assassinate, «утонул» при
 		# Supplant, фишку сняли с доски (return), локация сменила хозяина.
 		"deploy": _files("deploy", 2),
@@ -98,15 +98,14 @@ func _ready() -> void:
 		"sink": _files("sink", 2),
 		"lift": _files("lift", 1),
 		"capture": _files("capture", 2),
-		# Ход и партия. Перезвоны синтезируются: мелодий в наборах Kenney нет.
-		# Колокол не использовать (решение владельца, 2026-09-29).
-		"turn": [_wav(_melody([440.0, 659.0], 0.09, 0.25))],
-		"victory": [_wav(_melody([523.0, 659.0, 784.0, 1047.0], 0.11, 0.45))],
-		"defeat": [_wav(_melody([392.0, 311.0, 262.0], 0.2, 0.5))],
+		# Ход и партия. Колокол не использовать (решение владельца, 2026-09-29).
+		"turn": _files("turn", 1),
+		"victory": _files("victory", 1),
+		"defeat": _files("defeat", 1),
 		"last_round": _files("last_round", 2),
 		# Чат по Tab: пинг и фраза.
 		"ping": _files("ping", 2),
-		"phrase": _files("phrase", 1),
+		"phrase": _files("phrase", 2),
 	}
 	get_tree().node_added.connect(_on_node_added)
 
@@ -122,7 +121,7 @@ func _play(sound: String, db: float) -> void:
 	var p := _voices[_next]
 	_next = (_next + 1) % _voices.size()
 	p.stream = (_streams[sound] as Array).pick_random()
-	p.volume_db = db
+	p.volume_db = db + float(GAIN_DB.get(sound, 0.0))
 	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
 	# Кнопка (решение владельца) и мелодии — всегда ровно.
 	p.pitch_scale = 1.0 if sound in STEADY else randf_range(0.95, 1.05)
@@ -165,61 +164,3 @@ static func _onset(stream: AudioStream) -> float:
 			return maxf(float(i) / 44100.0 - 0.005, 0.0)
 	return 0.0
 
-
-# --- Синтез -------------------------------------------------------------
-
-static func _wav(samples: PackedFloat32Array) -> AudioStreamWAV:
-	var data := PackedByteArray()
-	data.resize(samples.size() * 2)
-	for i in samples.size():
-		data.encode_s16(i * 2, int(clampf(samples[i], -1.0, 1.0) * 32767.0))
-	var wav := AudioStreamWAV.new()
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = RATE
-	wav.stereo = false
-	wav.data = data
-	return wav
-
-
-static func _buffer(seconds: float) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(int(seconds * RATE))
-	return out
-
-
-static func _square(phase: float) -> float:
-	return 1.0 if fmod(phase, 1.0) < 0.5 else -1.0
-
-
-## Наведение: едва слышный высокий писк.
-static func _hover() -> PackedFloat32Array:
-	var out := _buffer(0.02)
-	for i in out.size():
-		var t := float(i) / RATE
-		out[i] = sin(TAU * 1900.0 * t) * exp(-t * 200.0) * 0.08
-	return out
-
-
-## Отказ: низкое гудение с падающим тоном.
-static func _buzz() -> PackedFloat32Array:
-	var out := _buffer(0.16)
-	for i in out.size():
-		var t := float(i) / RATE
-		var env := minf(t * 200.0, 1.0) * exp(-t * 12.0)
-		out[i] = _square(t * (120.0 - 80.0 * t)) * env * 0.2
-	return out
-
-
-## Короткая ретро-мелодия: ноты freqs (Гц) через step секунд, каждая звучит
-## hold секунд. Тембр — наполовину прямоугольник, наполовину синус: мягкий
-## чиптюн, не колокол.
-static func _melody(freqs: Array, step: float, hold: float) -> PackedFloat32Array:
-	var out := _buffer(step * (freqs.size() - 1) + hold)
-	for k in freqs.size():
-		var f: float = freqs[k]
-		var start := int(step * k * RATE)
-		for i in int(hold * RATE):
-			var t := float(i) / RATE
-			var env := minf(t * 300.0, 1.0) * exp(-t * 4.0 / hold)
-			out[start + i] += (_square(t * f) * 0.5 + sin(TAU * f * t) * 0.5) * env * 0.16
-	return out
