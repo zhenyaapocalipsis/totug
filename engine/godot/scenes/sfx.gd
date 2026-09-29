@@ -28,6 +28,8 @@ static var volume := 1.0
 var _streams: Dictionary = {}
 var _voices: Array[AudioStreamPlayer] = []
 var _next := 0
+## Откуда играть файл (сек): начало удара без тишины перед ним.
+static var _starts: Dictionary = {}
 
 
 ## Проиграть звук по имени; quiet — чуть тише (действие соперника).
@@ -105,7 +107,7 @@ func _play(sound: String, db: float) -> void:
 	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
 	# Кнопка — всегда ровно (решение владельца).
 	p.pitch_scale = 1.0 if sound == "click" else randf_range(0.95, 1.05)
-	p.play()
+	p.play(_starts.get(p.stream, 0.0))
 
 
 func _on_node_added(node: Node) -> void:
@@ -122,8 +124,27 @@ func _on_node_added(node: Node) -> void:
 static func _files(name: String, count: int) -> Array:
 	var out := []
 	for i in range(1, count + 1):
-		out.append(load("%s%s_%d.ogg" % [DIR, name, i]))
+		var stream: AudioStream = load("%s%s_%d.ogg" % [DIR, name, i])
+		_starts[stream] = _onset(stream)
+		out.append(stream)
 	return out
+
+
+## Где в записи начинается сам звук: первый отсчёт громче 10% пика, минус
+## 5 мс, чтобы не срезать атаку. У card-place удар идёт через 0,25–0,4 с
+## после начала файла — без этого розыгрыш звучал с задержкой.
+static func _onset(stream: AudioStream) -> float:
+	var playback := stream.instantiate_playback()
+	playback.start(0.0)
+	var frames := playback.mix_audio(1.0, int(stream.get_length() * 44100.0))
+	playback.stop()
+	var peak := 0.0
+	for f in frames:
+		peak = maxf(peak, absf(f.x))
+	for i in frames.size():
+		if absf(frames[i].x) > peak * 0.1:
+			return maxf(float(i) / 44100.0 - 0.005, 0.0)
+	return 0.0
 
 
 # --- Синтез -------------------------------------------------------------
