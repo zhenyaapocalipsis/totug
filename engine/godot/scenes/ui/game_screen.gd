@@ -46,6 +46,8 @@ const GAP := 2.0
 ## дуга. По прямой полёт читается как рывок.
 const FLIGHT_TIME := 0.42
 const FLIGHT_ARC := 26.0
+## На какой доле полёта купленная карта принимает образ покупателя.
+const SKIN_ON_FLIGHT := 0.3
 ## Войска и шпионы вылетают из барака на доску (см. _launch_token):
 ## выскакивают из барака на TOKEN_HOP пикселей, зависают, потом летят по дуге
 ## с разгоном и врезаются в место. TOKEN_STAGGER — пауза между фишками одного
@@ -1825,7 +1827,7 @@ static func _signed(delta: int) -> String:
 func _refresh_piles(view: Dictionary) -> void:
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	_pile_inner.set_cards(me.get("inner_circle", []))
-	_deck_tracker.set_cards(me.get("deck_cards", []), me.get("discard_pile", []))
+	_deck_tracker.set_cards(me.get("deck_cards", []), me.get("discard_pile", []), viewer_id)
 	# Сожранные карты — стопка общая для всех, не своя у зрителя.
 	_pile_devour.set_cards(view.get("devoured_pile", []))
 
@@ -1837,7 +1839,7 @@ func _open_pile(which: String) -> void:
 	var who := EventLogPanel.player_name(viewer_id)
 	match which:
 		"inner":
-			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []))
+			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []), viewer_id)
 		"devour":
 			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []))
 
@@ -1911,6 +1913,13 @@ func _fly_to_discard(from: Rect2, cid: String) -> void:
 			ghost.modulate.a = 1.0 - t * t,
 		0.0, 1.0, FLIGHT_TIME).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_callback(ghost.queue_free)
+	# Купленная карта стала своей: на лету она принимает образ покупателя
+	# (SkinCollection) — в маркете образов нет, они есть только у купленных карт.
+	var owned := CardView.skin_of(viewer_id, cid)
+	if owned != "":
+		get_tree().create_timer(FLIGHT_TIME * SKIN_ON_FLIGHT).timeout.connect(func():
+			if is_instance_valid(ghost):
+				ghost.set_skin(owned))
 
 
 ## Клик по троп-слоту двусмыслен: там может быть и Deploy в пустой слот, и

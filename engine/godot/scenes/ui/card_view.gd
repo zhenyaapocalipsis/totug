@@ -61,6 +61,15 @@ const SHAKE_SPEED := 64.0
 const ARRIVE_TIME := 0.34
 const ARRIVE_DROP := 10.0
 
+## Образ карты (SkinCollection): лицо перекрашивает шейдер. Области лица в его
+## пикселях (x0, y0, x1, y1) — арт и поле текста; у мелкого лица поля нет.
+const SKIN_SHADER := preload("res://scenes/ui/card_skin.gdshader")
+const FULL_ART := Vector4(6, 34, 170, 134)
+const FULL_TEXT := Vector4(7, 139, 169, 232)
+const MINI_ART := Vector4(3, 28, 77, 73)
+## Как быстро карта с образом поворачивается к мыши и обратно (доля за кадр 60 Гц).
+const SKIN_TILT_EASE := 0.12
+
 var card_id: String = ""
 var clickable: bool = false
 ## Показывать ли увеличенную копию при наведении (у самой копии — нет).
@@ -77,6 +86,15 @@ var _mini := false
 var _shake_left := 0.0
 ## Сколько ещё въезжать после смены карты в слоте.
 var _arrive_left := 0.0
+## Чья это карта ("" — ничья, как в маркете): её образ берётся из профиля
+## владельца за столом (PlayerProfile.skins_of). Образ — ступень SkinCollection
+## или "" (обычная карта).
+var owner_seat := ""
+var skin := ""
+## Мышь над картой с образом: наклон к ней (0..1) и сам наклон (-1..1).
+var _skin_hover := 0.0
+var _skin_tilt := Vector2.ZERO
+var _mouse_inside := false
 
 var _name_label: Label
 var _cost_label: Label
@@ -318,9 +336,65 @@ func _process(delta: float) -> void:
 	_arrive_left = maxf(_arrive_left - delta, 0.0)
 	if _arrive_left <= 0.0 and clip_contents:
 		clip_contents = false
-	if _shake_left <= 0.0 and _arrive_left <= 0.0:
+	var tilting := _update_skin_tilt(delta)
+	if _shake_left <= 0.0 and _arrive_left <= 0.0 and not tilting:
 		set_process(false)
 	queue_redraw()
+
+
+## Образ карты владельца seat для карты cid ("" — образа нет).
+static func skin_of(seat: String, cid: String) -> String:
+	if seat == "" or not SkinCollection.is_skinnable(cid):
+		return ""
+	return String(PlayerProfile.skins_of(seat).get(cid, ""))
+
+
+## Карта принадлежит игроку seat — показывать её в его образе.
+func set_card_owner(seat: String) -> void:
+	owner_seat = seat
+	set_skin(skin_of(seat, card_id))
+
+
+## Показать карту в образе tier (ступень SkinCollection) или обычной ("").
+func set_skin(tier: String) -> void:
+	skin = tier if SkinCollection.TIERS.has(tier) else ""
+	if skin == "" or _pixel == null:
+		material = null
+		return
+	var mat := material as ShaderMaterial
+	if mat == null:
+		mat = ShaderMaterial.new()
+		mat.shader = SKIN_SHADER
+		# Каждая карта покачивается в свой такт.
+		mat.set_shader_parameter("phase", randf() * TAU)
+		material = mat
+	mat.set_shader_parameter("tier", int(SkinCollection.TIER_INDEX[skin]))
+	mat.set_shader_parameter("face_size", face_size())
+	mat.set_shader_parameter("art_rect", MINI_ART if _mini else FULL_ART)
+	mat.set_shader_parameter("text_rect", Vector4.ZERO if _mini else FULL_TEXT)
+	# Мелкая карта в руке сама почти не качается — ряд не должен «плыть».
+	mat.set_shader_parameter("idle_amp", 0.5 if _mini else 1.0)
+	mat.set_shader_parameter("glint_size", 2.0 if _mini else 4.0)
+	mat.set_shader_parameter("flare_size", 3.0 if _mini else 5.0)
+	mat.set_shader_parameter("ember_count", 8 if _mini else 18)
+	queue_redraw()
+
+
+## Наклон к мыши у карты с образом: плавно к мыши, пока она над картой, и
+## обратно, когда ушла. true — ещё поворачивается, кадры нужны дальше.
+func _update_skin_tilt(delta: float) -> bool:
+	var mat := material as ShaderMaterial
+	if mat == null:
+		return false
+	var k := 1.0 - pow(1.0 - SKIN_TILT_EASE, delta * 60.0)
+	if _mouse_inside:
+		var dest: Rect2 = _pixel_rects()[0]
+		var m := (get_local_mouse_position() - dest.position) / dest.size.max(Vector2.ONE)
+		_skin_tilt = _skin_tilt.lerp(((m - Vector2(0.5, 0.5)) * 2.0).clamp(-Vector2.ONE, Vector2.ONE), k)
+	_skin_hover = lerpf(_skin_hover, 1.0 if _mouse_inside else 0.0, k)
+	mat.set_shader_parameter("tilt", _skin_tilt)
+	mat.set_shader_parameter("hover", _skin_hover)
+	return _mouse_inside or _skin_hover > 0.01
 
 
 func _notification(what: int) -> void:
@@ -344,6 +418,8 @@ func set_card(cid: String) -> void:
 	card_id = cid
 	if _pixel != null:
 		_pixel = mini_texture(cid) if _mini else pixel_texture(cid)
+		if owner_seat != "":
+			set_skin(skin_of(owner_seat, cid))
 		queue_redraw()
 		return
 	var data: Dictionary = CardLibrary.card_data(cid)
@@ -409,11 +485,15 @@ func _apply_colors() -> void:
 
 func _on_mouse_entered() -> void:
 	Sfx.play("card_hover")
+	_mouse_inside = true
+	if material != null:
+		set_process(true)
 	if hover_preview:
 		CardPreview.set_hovered(self)
 
 
 func _on_mouse_exited() -> void:
+	_mouse_inside = false
 	CardPreview.clear_hovered(self)
 
 

@@ -208,6 +208,7 @@ func _build_corner(pid: String, cards: Dictionary, area: Rect2) -> void:
 		var step := STEP_MAX if per_col <= 1 else clampf(room / float(per_col - 1), STEP_MIN, STEP_MAX)
 		for k in ids.size():
 			var card := CardView.new(String(ids[k]), int(CARD.x), int(CARD.y))
+			card.set_card_owner(pid)
 			card.set_clickable(false, false)
 			card.position = Vector2(col_x + float(k / per_col) * (CARD.x + CARD_GAP),
 					y0 + float(k % per_col) * step)

@@ -76,6 +76,8 @@ var _hovered_card: CardView = null
 ## одноимённая карта ряда — в руке три Noble, и при розыгрыше самого левого
 ## «сыгранной» выглядела бы самая правая.
 var _played_card: CardView = null
+## Чья рука: карты в ней — в образах этого игрока (CardView.set_owner).
+var _viewer := ""
 ## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
 var _choosing := false
 ## С какого места ряда идут карты Inner Circle (выбор "play a card from your
@@ -112,6 +114,7 @@ func _init() -> void:
 
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
+	_viewer = viewer_id
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	var hand: Array = p.get("hand", [])
 	var playable: Array = (view.get("legal", {}) as Dictionary).get("play_card", [])
@@ -231,6 +234,7 @@ static func _count_of(cards: Array[CardView], cid: String) -> int:
 
 func _make_card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
+	card.set_card_owner(_viewer)
 	card.pressed.connect(func(clicked: String):
 		# Запомнить до отправки: сервер ответит новой рукой синхронно, прямо
 		# внутри card_clicked, и к тому моменту пометка уже нужна.

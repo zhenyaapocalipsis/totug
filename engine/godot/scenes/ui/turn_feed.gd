@@ -101,7 +101,7 @@ func add(pid: String, cid: String, tag: String) -> void:
 	var block: Block = _blocks.back() if not _blocks.is_empty() else null
 	if block == null or block.pid != pid or _turn_closed:
 		block = _open_block(pid)
-	block.add_card(tag, _card(cid))
+	block.add_card(tag, _card(cid, pid, tag))
 	_after_add(follow)
 
 
@@ -123,9 +123,9 @@ func add_to_turn(pid: String, cid: String, tag: String) -> void:
 	var follow := _at_bottom()
 	var block := _current_block(pid)
 	if block.pid == pid:
-		block.add_card(tag, _card(cid))
+		block.add_card(tag, _card(cid, pid, tag))
 	else:
-		block.add_card(tag + ":" + pid, _card(cid))
+		block.add_card(tag + ":" + pid, _card(cid, pid, tag))
 	_after_add(follow)
 
 
@@ -282,8 +282,11 @@ func _trim() -> void:
 		old.queue_free()
 
 
-func _card(cid: String) -> CardView:
+## Карта pid — в его образе; съеденная (DEVOURED) ушла из маркета, она ничья.
+func _card(cid: String, pid: String, tag: String) -> CardView:
 	var card := CardView.new(cid, int(CARD.x), int(CARD.y))
+	if tag != "DEVOURED":
+		card.set_card_owner(pid)
 	card.hover_full = true   # полная карта по наведению, без Alt
 	card.set_clickable(false, false)
 	# PASS, а не STOP: колесо над картой должно листать колонку.

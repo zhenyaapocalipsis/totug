@@ -68,7 +68,8 @@ func _init() -> void:
 	col.add_child(close)
 
 
-func open_pile(title: String, ids: Array) -> void:
+## owner — чья стопка: карты в его образах ("" — стопка ничья, как съеденные).
+func open_pile(title: String, ids: Array, owner: String = "") -> void:
 	_title.text = "%s — %d card%s" % [title, ids.size(), "" if ids.size() == 1 else "s"]
 	for child in _grid.get_children():
 		_grid.remove_child(child)
@@ -88,6 +89,7 @@ func open_pile(title: String, ids: Array) -> void:
 
 	for cid in ids:
 		var card := CardView.new(String(cid), int(CARD_SIZE.x), int(CARD_SIZE.y))
+		card.set_card_owner(owner)
 		card.set_clickable(false, false)
 		_grid.add_child(card)
 	if ids.is_empty():

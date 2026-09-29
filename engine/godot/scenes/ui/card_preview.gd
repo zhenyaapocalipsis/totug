@@ -127,6 +127,7 @@ func _show(card: CardView, big: bool) -> void:
 		s = ((card.size * GROW).max(MIN_SIZE) if big else MIN_SIZE).round()
 	_card = CardView.new(card.card_id, int(s.x), int(s.y))
 	_card.hover_preview = false
+	_card.set_skin(card.skin)
 	_card.set_clickable(card.clickable, false)
 	CardView._ignore_mouse(_card)
 	add_child(_card)

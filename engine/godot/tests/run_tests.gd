@@ -1210,6 +1210,24 @@ func test_skin_collection() -> void:
 	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "skins": {target: "ultra"}})}
 	check_eq(PlayerProfile.skins_of("red"), {target: "ultra"}, "образы игрока за столом")
 	check_eq(PlayerProfile.skins_of("blue"), {}, "у игрока без профиля образов нет")
+
+	# Карта в игре: образ берётся у владельца, у ничьих карт (маркет) его нет.
+	var owned_view := CardView.new(target, 80, 76)
+	owned_view.set_card_owner("red")
+	check_eq(owned_view.skin, "ultra", "карта игрока — в его образе")
+	var mat := owned_view.material as ShaderMaterial
+	check(mat != null and int(mat.get_shader_parameter("tier")) == 3, "образ рисует шейдер ступени ULTRA")
+	check_eq(mat.get_shader_parameter("face_size"), Vector2(80, 76), "шейдер знает, что лицо мелкое")
+	owned_view.set_card("48342")
+	check(owned_view.skin == "" and owned_view.material == null, "Noble (стартовая карта) — без образа")
+	owned_view.set_card(target)
+	check_eq(owned_view.skin, "ultra", "карта в том же слоте снова в образе владельца")
+	var market_view := CardView.new(target, 176, 254)
+	check(market_view.skin == "" and market_view.material == null, "карта маркета (ничья) — без образа")
+	market_view.set_card_owner("blue")
+	check_eq(market_view.skin, "", "у игрока без образов карта обычная")
+	owned_view.free()
+	market_view.free()
 	PlayerProfile.seats = {}
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path

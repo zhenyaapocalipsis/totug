@@ -63,7 +63,7 @@ func _ready() -> void:
 
 
 ## deck — состав колоды добора, discard — сброс; порядок не важен.
-func set_cards(deck: Array, discard: Array) -> void:
+func set_cards(deck: Array, discard: Array, owner: String = "") -> void:
 	_deck = sorted_by_cost(deck)
 	_discard = sorted_by_cost(discard)
 	_deck_label.text = "DECK %d" % _deck.size()
@@ -73,6 +73,7 @@ func set_cards(deck: Array, discard: Array) -> void:
 	# картинку и собирается текстовой карточкой.
 	while _cards.size() < ids.size():
 		var card := CardView.new(String(ids[_cards.size()]), CARD.x, CARD.y)
+		card.set_card_owner(owner)
 		card.set_clickable(false, false)
 		add_child(card)
 		_cards.append(card)
