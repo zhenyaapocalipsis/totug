@@ -2,11 +2,11 @@ class_name CardBack
 extends RefCounted
 
 ## Рубашка карты в полный размер (CardView.PIXEL_SIZE, 1:1). Рубашки — готовые
-## рисунки (решение владельца, 2026-09-30: рисовалки нет; стиль — тёмные
-## абстракции, без знаков и без шейдера): поле у всех одного цвета — основного
-## цвета лицевой стороны карт (её тёмно-фиолетовой рамки), рамка со
-## скруглёнными углами — цвета фракции, по полю — свой геометрический узор в
-## два приглушённых тона. CLASSIC есть у всех, остальные — ступени ULTRA —
+## рисунки (решение владельца, 2026-09-30: рисовалки нет, без знаков и без
+## шейдера; стиль — воронка, как рубашка Yu-Gi-Oh!): светящиеся струи по
+## спирали вокруг чёрной дыры, в цвете фракции на тёмном цвете карты; рамка со
+## скруглёнными углами — цвета фракции. У каждой фракции своя закрутка
+## (VORTEX). CLASSIC есть у всех, остальные — ступени ULTRA —
 ## выпадают из лутбокса или создаются за пыль (SkinCollection). Соперники
 ## видят рубашку, когда игрок берёт карту вслепую (CardShowcase).
 ##
@@ -33,8 +33,16 @@ const BAYER := [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 ## Толщина рамки и отступ тонкой внутренней линии от края.
 const RIM := 6
 const INNER := 10
-## Насколько тона узора ближе к цвету рамки (0 — цвет поля).
-const TONES := [0.0, 0.22, 0.45]
+## Воронка каждой рубашки: [сколько рукавов, закрутка, направление].
+const VORTEX := {
+	"classic": [6, 2.6, 1],
+	"drow": [7, 2.9, -1],
+	"dragons": [5, 2.3, 1],
+	"demons": [6, 3.2, -1],
+	"elementals": [8, 2.4, 1],
+	"aberrations": [5, 3.4, 1],
+	"undead": [7, 2.2, -1],
+}
 
 static var _textures: Dictionary = {}
 
@@ -55,9 +63,9 @@ static func texture(design: String) -> ImageTexture:
 static func image(design: String) -> Image:
 	var d := clean(design)
 	var ink := Color(INK[d])
-	var tones: Array[Color] = []
-	for k in TONES:
-		tones.append(FIELD.lerp(ink, k))
+	# Палитра воронки: почти чёрный (цвет карты во тьме) -> цвет фракции -> блик.
+	var ramp: Array[Color] = [FIELD.darkened(0.55), FIELD.lerp(ink, 0.25).darkened(0.35), ink.darkened(0.3),
+		ink, ink.lightened(0.45)]
 	var size := Vector2i(CardView.PIXEL_SIZE)
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -69,58 +77,38 @@ static func image(design: String) -> Image:
 			# Скруглённые углы.
 			if cx < 4 and cy < 4 and (4 - cx) * (4 - cx) + (4 - cy) * (4 - cy) > 17:
 				continue
-			var colour: Color = tones[_tone(d, x - c.x, y - c.y, x, y)]
+			var colour: Color
 			if cx < RIM or cy < RIM:
-				colour = ink.darkened(0.25) if cx == 0 or cy == 0 else ink
+				colour = ink.darkened(0.25) if cx == 0 or cy == 0 else ink.darkened(0.1)
 			elif (cx == INNER or cy == INNER) and cx >= INNER and cy >= INNER:
-				colour = ink.darkened(0.2)
+				colour = ink.darkened(0.35)
 			elif cx < INNER or cy < INNER:
-				colour = FIELD
+				colour = ramp[0]
+			else:
+				var level := int(clampf(floorf(_vortex(d, x - c.x, y - c.y) * 4.0 + _bay(x, y)), 0.0, 4.0))
+				colour = ramp[level]
 			img.set_pixel(x, y, colour)
 	return img
 
 
-## Тон узора (0 — поле, 1, 2 — светлее) в точке dx, dy от центра карты.
-## Все узоры симметричны относительно центра.
-static func _tone(design: String, dx: int, dy: int, x: int, y: int) -> int:
-	var ax := absi(dx)
-	var ay := absi(dy)
-	match design:
-		"drow":
-			# Вложенные прямоугольники — круги по воде от центра.
-			var d := maxf(ax, ay * 0.69)
-			return 2 if posmod(int(d), 12) == 0 and d >= 1.0 else (1 if posmod(int(d / 12.0), 2) == 0 else 0)
-		"dragons":
-			# Шевроны, как чешуя на хребте.
-			var v := ay + ax * 0.75
-			return 2 if posmod(int(v), 14) == 0 and v >= 1.0 else (1 if posmod(int(v / 14.0), 2) == 1 else 0)
-		"demons":
-			# Лучи из центра и тёмное сердце.
-			var r := Vector2(dx, dy).length()
-			if r < 16:
-				return 2 if r > 13 else 0
-			var sector := int(floorf((atan2(dy, dx) + PI) / TAU * 20.0))
-			return 1 if sector % 2 == 0 else 0
-		"elementals":
-			# Круги, расходящиеся от центра.
-			var r := Vector2(dx, dy).length()
-			return 2 if posmod(int(r), 10) == 0 and r >= 1.0 else (1 if posmod(int(r / 10.0), 2) == 1 else 0)
-		"aberrations":
-			# Волны, будто что-то шевелится под поверхностью.
-			var w := dy + sin(dx * 0.13) * 5.0
-			return 2 if posmod(floori(w), 11) == 0 else (1 if posmod(floori(w / 11.0), 2) == 0 else 0)
-		"undead":
-			# Решётка квадратов, к краям рассыпается в пыль.
-			var cell := posmod(int(floorf((dx + 4) / 8.0)) + int(floorf((dy + 4) / 8.0)), 2) == 0
-			var fade := 1.0 - Vector2(ax / 80.0, ay / 118.0).length() * 0.9
-			return 1 if cell and _bay(x, y) < fade else 0
-		_:
-			# CLASSIC: ромбическая сетка, ромбы через один залиты.
-			var u := dx + dy
-			var v := dx - dy
-			if posmod(u, 16) == 0 or posmod(v, 16) == 0:
-				return 2
-			return 1 if posmod(int(floorf(u / 16.0)) + int(floorf(v / 16.0)), 2) == 0 else 0
+## Яркость воронки (0..1) в точке dx, dy от центра: логарифмическая спираль
+## тонких светящихся струй, чёрная дыра в центре, к краям темнее.
+static func _vortex(design: String, dx: int, dy: int) -> float:
+	var v: Array = VORTEX[design]
+	var arms := float(v[0])
+	var ry := dy * 0.78
+	var r := sqrt(dx * dx + ry * ry)
+	var a := atan2(ry, float(dx)) * float(v[2])
+	var s := a + log(r + 1.0) * float(v[1])
+	# Струи: узкие гребни, чуть колеблются; вторая, тонкая семья — между ними.
+	var ridge := pow(maxf(0.0, sin(s * arms + sin(s * 2.0 + r * 0.045) * 1.3)), 7.0)
+	var thin := pow(maxf(0.0, sin(s * arms * 2.0 + 1.7 + r * 0.02)), 12.0)
+	# Частота — целая: иначе на стыке углов (слева от центра) виден шов.
+	var glow := 0.5 + 0.5 * sin(s * floorf(arms * 0.5) + 1.0)
+	var light := ridge * 0.8 + thin * 0.35 + glow * 0.22
+	var hole := clampf((r - 12.0) / 34.0, 0.0, 1.0)
+	var edge := 1.0 - clampf((r - 60.0) / 90.0, 0.0, 1.0) * 0.6
+	return light * hole * hole * edge
 
 
 # --- кисти -------------------------------------------------------------------

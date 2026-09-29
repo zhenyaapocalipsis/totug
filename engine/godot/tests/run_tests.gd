@@ -3294,7 +3294,7 @@ func test_card_back() -> void:
 			"рубашка %s во весь размер карты" % design)
 	check_eq(CardBack.clean("nonsense"), CardBack.CLASSIC, "неизвестная рубашка — CLASSIC")
 	var plain := CardBack.image("")
-	check(plain.get_pixel(0, 0).a == 0.0 and plain.get_pixel(3, 40) == Color(CardBack.INK["classic"]),
+	check(plain.get_pixel(0, 0).a == 0.0 and _near(plain.get_pixel(3, 40), Color(CardBack.INK["classic"]).darkened(0.1)),
 		"обычная рубашка: скруглённые углы, рамка своего цвета")
 	check(CardBack.texture("drow") == CardBack.texture("drow"), "текстура рубашки берётся из кэша")
 	check_eq(PlayerProfile.clean_back("drow"), "drow", "профиль хранит имя рубашки")
@@ -3346,9 +3346,9 @@ func test_card_back() -> void:
 	var same_field := true
 	for design in CardBack.DESIGNS:
 		var img := CardBack.image(design)
-		same_field = same_field and img.get_pixel(3, 40) == Color(CardBack.INK[design])
-		same_field = same_field and img.get_pixel(8, 127) == CardBack.FIELD
-	check(same_field, "поле рубашек — один цвет (цвет карты), рамка — цвет фракции")
+		same_field = same_field and _near(img.get_pixel(3, 40), Color(CardBack.INK[design]).darkened(0.1))
+		same_field = same_field and img.get_pixel(8, 127) == CardBack.image(CardBack.CLASSIC).get_pixel(8, 127)
+	check(same_field, "фон рубашек у всех один (тёмный цвет карты), рамка — цвет фракции")
 
 	# Карта, которую можно покрутить (коллекция → CARD BACKS).
 	var flip := CardFlip.new()
@@ -3770,3 +3770,8 @@ func test_music_stems_and_moods() -> void:
 	check_eq(GameScreen.music_mood(view, "blue", false), "tension", "последний круг — tension")
 	view["game_over"] = true
 	check_eq(GameScreen.music_mood(view, "blue", false), "end", "итоги — end")
+
+
+## Цвета совпадают с точностью до 8 бит на канал (картинка хранит RGBA8).
+func _near(a: Color, b: Color) -> bool:
+	return absf(a.r - b.r) < 0.01 and absf(a.g - b.g) < 0.01 and absf(a.b - b.b) < 0.01
