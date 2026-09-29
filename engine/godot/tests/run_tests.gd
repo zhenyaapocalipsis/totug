@@ -631,10 +631,20 @@ func test_vp_bank() -> void:
 	check_eq(bank.fives, 0, "пятёрка потрачена")
 	check_eq(bank.ones, 1, "одна единица осталась")
 
+	# Жалоба владельца 2026-09-30: единицы кончились — и доход меньше 5 VP
+	# (тотальный контроль, Deploy при пустом бараке) давал 0.
+	var change := VPBank.new(0, 2)
+	check_eq(change.grant(1), 1, "единиц нет — пятёрка разменивается, выдан 1 VP")
+	check_eq(change.fives, 1, "одна пятёрка ушла в размен")
+	check_eq(change.ones, 4, "сдача — 4 единицы")
+	check_eq(change.grant(3), 3, "из сдачи выдано ещё 3")
+
 	var poor := VPBank.new(2, 0)  # только единицы
-	check_eq(poor.grant(5), 2, "запрошено 5, а в банке только 2 единицы — выдано 2")
+	check_eq(poor.grant(5), 5, "запрошено 5, в банке 2 единицы — всё равно выдано 5")
 	check_eq(poor.ones, 0, "банк опустошён")
-	check_eq(poor.grant(1), 0, "из пустого банка ничего не выдать")
+	check_eq(poor.extra, 3, "3 VP выданы сверх запаса")
+	check_eq(poor.grant(1), 1, "и из пустого банка VP выдаются")
+	check_eq(poor.extra, 4, "сверх запаса уже 4")
 
 	check_eq(VPBank.new().total_remaining(), 40 + 16 * 5, "полный банк = 120 VP")
 
@@ -1975,9 +1985,9 @@ func test_hotseat_three_and_four_players() -> void:
 
 
 func test_game_modes() -> void:
-	section("Режимы игры: STANDARD / DOUBLE / RANDOM 4 / RANDOM 6")
+	section("Режимы игры: STANDARD / DOUBLE / RANDOM 3 / RANDOM 4 / RANDOM 6")
 	var pids: Array[String] = ["red", "blue"]
-	var expected := {"standard": 2, "double": 2, "random4": 4, "random6": 6}
+	var expected := {"standard": 2, "double": 2, "random3": 3, "random4": 4, "random6": 6}
 	for mode: String in GameSetup.MODES:
 		var state := GameSetup.new_game(pids, 99, [], false, false, false, mode)
 		var total := state.market.deck.size() + state.market.display.size()

@@ -3,16 +3,20 @@ extends RefCounted
 
 ## Общий запас VP-токенов (рулбук, стр. 2 и 8): 40 номиналом 1 и 16 номиналом 5.
 ##
-## "Whenever you're told to gain VP, take unclaimed VP markers equaling that
-## amount" — то есть токены физически кончаются. grant() отдаёт максимум,
-## какой можно составить из того, что осталось: сначала пятёрками, остаток —
-## единицами. Если единиц не хватает на остаток, игрок получает МЕНЬШЕ VP,
-## чем должен был бы — правило не описывает размен пятёрки, поэтому этот
-## случай (практически недостижимый за партию: суммарно в банке 120 VP)
-## сознательно не пытается размениваться сложнее.
+## grant() ВСЕГДА выдаёт запрошенное. Раньше он отдавал «сколько можно
+## составить из оставшихся токенов» и пятёрки не разменивал: к середине
+## партии на четверых 40 единиц кончались, и любой доход меньше 5 VP
+## (тотальный контроль маркера, Deploy при пустом бараке) молча давал 0 —
+## жалоба владельца игры 2026-09-30. Теперь:
+##   • сначала пятёрками, остаток единицами;
+##   • единиц не хватает — пятёрка разменивается на пять единиц;
+##   • банк пуст — VP всё равно выдаются (как если бы игроки считали на
+##     бумаге), выданное сверх банка копится в extra.
 
 var ones: int
 var fives: int
+## VP, выданные сверх физического запаса токенов.
+var extra: int = 0
 
 
 func _init(initial_ones: int = 40, initial_fives: int = 16) -> void:
@@ -20,16 +24,20 @@ func _init(initial_ones: int = 40, initial_fives: int = 16) -> void:
 	fives = initial_fives
 
 
-## Возвращает реально выданное количество VP (может быть меньше amount).
+## Возвращает выданное количество VP — всегда amount (0 для amount <= 0).
 func grant(amount: int) -> int:
 	if amount <= 0:
 		return 0
 	var use_fives: int = mini(amount / 5, fives)
-	var remaining: int = amount - use_fives * 5
-	var use_ones: int = mini(remaining, ones)
 	fives -= use_fives
+	var remaining: int = amount - use_fives * 5
+	while remaining > ones and fives > 0:
+		fives -= 1
+		ones += 5
+	var use_ones: int = mini(remaining, ones)
 	ones -= use_ones
-	return use_fives * 5 + use_ones
+	extra += remaining - use_ones
+	return amount
 
 
 func total_remaining() -> int:

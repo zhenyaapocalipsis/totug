@@ -303,9 +303,9 @@ func _check_invariants(state: GameState, seed_value: int, turn: int) -> bool:
 	var tokens_total := 0
 	for player_id: String in state.players.keys():
 		tokens_total += int((state.players[player_id] as PlayerState).vp_tokens)
-	if bank_total + tokens_total != 40 + 16 * 5:
-		print("  ПРОБЛЕМА сид=%d ход=%d: VP-токены не сохраняются (банк %d + у игроков %d != 120)"
-			% [seed_value, turn, bank_total, tokens_total])
+	if bank_total + tokens_total != 40 + 16 * 5 + state.vp_bank.extra:
+		print("  ПРОБЛЕМА сид=%d ход=%d: VP-токены не сохраняются (банк %d + у игроков %d != 120 + сверх %d)"
+			% [seed_value, turn, bank_total, tokens_total, state.vp_bank.extra])
 		ok = false
 	if state.market.display.size() != Market.DISPLAY_SIZE:
 		print("  ПРОБЛЕМА сид=%d ход=%d: дисплей маркета не из 6 слотов" % [seed_value, turn])

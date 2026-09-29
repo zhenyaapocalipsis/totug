@@ -1,8 +1,8 @@
 class_name GainVP
 extends CardEffect
 
-## Гейн VP через физический банк токенов (VPBank.grant может отдать меньше
-## запрошенного, если токены кончились — см. vp_bank.gd).
+## Гейн VP через банк токенов (VPBank.grant выдаёт всё запрошенное, даже
+## когда токены кончились — см. vp_bank.gd).
 
 var amount: int
 

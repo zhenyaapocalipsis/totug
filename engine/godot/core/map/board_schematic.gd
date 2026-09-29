@@ -138,6 +138,7 @@ const TILE_ATTEMPTS := 5
 const REPAIR_ROUNDS := 2
 ## Сколько раз растаскивать оставшиеся пересечения (_push_apart).
 const PUSH_ROUNDS := 10
+const PUSH_GAP := 3.0      # least gap between boxes after _push_apart (see there)
 
 var _key: Array[String] = []
 var _kind: Array[int] = []
@@ -572,7 +573,12 @@ func _repair() -> void:
 ## свободного места там иногда нет вовсе. Гексы не рисуются, так что выход
 ## рамки за свой гекс не виден, а вот наложение видно сразу. Трассы после
 ## сдвига перекладываются (см. конец _repair).
+## Рамки растаскиваются до зазора PUSH_GAP, а не до касания: у рамки нечётной
+## ширины (45) _half округлён вниз, и на экране она на пиксель шире, чем
+## _node_rect. «Касающиеся» по расчёту Red Gate и Caer Sidi рисовались с общей
+## линией рамки — слипались (жалоба владельца, 2026-09-30).
 func _push_apart() -> void:
+	var pushed := {}
 	for _round in PUSH_ROUNDS:
 		var moved := false
 		for n in _key.size():
@@ -581,23 +587,66 @@ func _push_apart() -> void:
 			for m: int in _near[_hex[n]]:
 				if m <= n or _kind[m] == Kind.PORT:
 					continue
-				var over := _node_rect(n).intersection(_node_rect(m))
+				var over := _node_rect(n, PUSH_GAP * 0.5).intersection(_node_rect(m, PUSH_GAP * 0.5))
 				if over.size.x <= 0.0 or over.size.y <= 0.0:
 					continue
 				# Двигаем один узел на целое число шагов сетки: половина
 				# перекрытия у соседних рамок бывает меньше шага, и _snap
 				# возвращал бы узел на прежнее место.
-				var by := over.size.x if over.size.x <= over.size.y else over.size.y
-				var steps := ceilf((by + 1.0) / float(GRID)) * float(GRID)
-				var axis := Vector2(1.0, 0.0) if over.size.x <= over.size.y else Vector2(0.0, 1.0)
 				# Уступает меньший: кольцу подвинуться проще, чем рамке локации.
 				var small := m if _node_rect(m).get_area() <= _node_rect(n).get_area() else n
 				var other := n if small == m else m
-				var away: float = (_pos[small] - _pos[other]).dot(axis)
-				_pos[small] = _snap(_pos[small] + axis * steps * (1.0 if away >= 0.0 else -1.0))
+				# Сначала по короткой оси; если сдвиг кладёт узел на третьего
+				# соседа (узел зажат между двумя), пробуем второй узел пары и
+				# другую ось — иначе пара качалась бы туда-сюда до конца раундов.
+				var short_x := over.size.x <= over.size.y
+				var first := _pos[small]
+				var first_set := false
+				var placed := false
+				for axis: Vector2 in ([Vector2.RIGHT, Vector2.DOWN] if short_x else [Vector2.DOWN, Vector2.RIGHT]):
+					var by: float = over.size.x if axis.x != 0.0 else over.size.y
+					var steps := ceilf((by + 1.0) / float(GRID)) * float(GRID)
+					for mover: int in [small, other]:
+						var still := other if mover == small else small
+						var away: float = (_pos[mover] - _pos[still]).dot(axis)
+						var to := _snap(_pos[mover] + axis * steps * (1.0 if away >= 0.0 else -1.0))
+						if not first_set:
+							first_set = true
+							first = to
+						if _free_at(mover, to):
+							_pos[mover] = to
+							pushed[mover] = true
+							placed = true
+							break
+					if placed:
+						break
+				if not placed:
+					_pos[small] = first
+					pushed[small] = true
 				moved = true
 		if not moved:
-			return
+			break
+	# Туннели сдвинутых узлов заканчивались бы на прежнем месте рамки.
+	for n: int in pushed:
+		for e: int in _incident[n]:
+			_choose_route(e, {})
+
+
+## Встанет ли узел n в точку at с зазором PUSH_GAP до всех соседей.
+func _free_at(n: int, at: Vector2) -> bool:
+	var was := _pos[n]
+	_pos[n] = at
+	var rect := _node_rect(n, PUSH_GAP * 0.5)
+	var free := true
+	for m: int in _near[_hex[n]]:
+		if m == n or _kind[m] == Kind.PORT:
+			continue
+		var over := rect.intersection(_node_rect(m, PUSH_GAP * 0.5))
+		if over.size.x > 0.0 and over.size.y > 0.0:
+			free = false
+			break
+	_pos[n] = was
+	return free
 
 
 ## A node of another hex closer than NODE_GAP, or one of its own hex touching.

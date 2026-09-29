@@ -330,7 +330,7 @@ func _build_layout() -> void:
 	_piles_column.add_child(_pile_devour)
 
 	# 7. End turn — правый нижний угол: высокая кнопка, на ней же написано,
-	# чей сейчас ход; под ней таймер, над ней Deploy for 1 VP.
+	# чей сейчас ход; под ней таймер.
 	_end_turn_area = Control.new()
 	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_end_turn_area)
@@ -367,11 +367,6 @@ func _build_layout() -> void:
 	_last_round_label.visible = false
 	_last_round_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_end_turn_area.add_child(_last_round_label)
-	_deploy_vp_button = Button.new()
-	_deploy_vp_button.text = "Deploy: 1 VP"
-	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
-	_deploy_vp_button.pressed.connect(func(): _on_action_requested("deploy_for_vp"))
-	_end_turn_area.add_child(_deploy_vp_button)
 
 	# 1. Рука — поверх остальных зон: поднятая, она накрывает зону сыгранных карт.
 	_hand_panel = HandPanel.new()
@@ -407,6 +402,14 @@ func _build_layout() -> void:
 		label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 		label.add_theme_color_override("font_outline_color", PixelTheme.BG)
 		label.add_theme_constant_override("outline_size", 2)
+	# Deploy for 1 VP — прямо под счётчиком POWER (решение владельца,
+	# 2026-09-30): у кнопки End turn её не замечали и не получали VP.
+	_deploy_vp_button = Button.new()
+	_deploy_vp_button.text = "Deploy: 1 VP"
+	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
+	_deploy_vp_button.visible = false
+	_deploy_vp_button.pressed.connect(func(): _on_action_requested("deploy_for_vp"))
+	add_child(_deploy_vp_button)
 
 	# Витрина: крупный показ чужих покупок, промоутов и съеденных карт — поверх
 	# доски и руки, но под диалогами (999+) и крупным просмотром карты.
@@ -910,36 +913,42 @@ func _layout() -> void:
 	_place(_hand_panel, hand_x, hand_top, d_x - GAP - hand_x, h - MARGIN - hand_top)
 	_place_res_frame()
 
-	# Внутри зоны End turn: сверху Deploy (когда он есть), снизу таймер, а
-	# кнопка растянута на всё, что между ними. Подписи «чей ход» и «END TURN»
-	# лежат по центру кнопки.
-	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
-	var deploy_block: float = deploy_h + GAP if deploy_h > 0.0 else 0.0
+	# Внутри зоны End turn: снизу таймер, кнопка — на всё, что над ним.
+	# Подписи «чей ход» и «END TURN» лежат по центру кнопки.
 	var timer_block: float = TIMER_H
 	if _last_round_label.visible:
 		timer_block += float(PixelTheme.LINE_H)
-	var button_h: float = BOTTOM_H - deploy_block - timer_block
-	_deploy_vp_button.position = Vector2(0, 0)
-	_deploy_vp_button.size = Vector2(ew, deploy_h)
-	_end_turn_button.position = Vector2(0, deploy_block)
+	var button_h: float = BOTTOM_H - timer_block
+	_end_turn_button.position = Vector2.ZERO
 	_end_turn_button.size = Vector2(ew, button_h)
-	var caption_y := deploy_block + floorf((button_h - PixelTheme.LINE_H * 2.0) * 0.5)
+	var caption_y := floorf((button_h - PixelTheme.LINE_H * 2.0) * 0.5)
 	_turn_label.position = Vector2(0, caption_y)
 	_turn_label.size = Vector2(ew, PixelTheme.LINE_H)
 	_end_label.position = Vector2(0, caption_y + PixelTheme.LINE_H)
 	_end_label.size = Vector2(ew, PixelTheme.LINE_H)
-	_timer_label.position = Vector2(0, deploy_block + button_h)
+	_timer_label.position = Vector2(0, button_h)
 	_timer_label.size = Vector2(ew, TIMER_H)
-	_last_round_label.position = Vector2(0, deploy_block + button_h + TIMER_H)
+	_last_round_label.position = Vector2(0, button_h + TIMER_H)
 	_last_round_label.size = Vector2(ew, PixelTheme.LINE_H)
 
 
 ## Счётчики ходящего — по центру над рукой, поверх низа доски. Низ плашки —
 ## на верхнем краю зоны руки: выше него поднятая карта уже не достаёт.
+## Когда есть Deploy for 1 VP, плашка поднимается на высоту кнопки, а кнопка
+## встаёт под словом POWER. Позицию счётчика считаем по минимальным размерам:
+## HBox раскладывает детей отложенно, и position может быть ещё старым.
 func _place_res_frame() -> void:
 	var res_size := _res_frame.get_combined_minimum_size()
 	var x := _hand_panel.position.x + floorf((_hand_panel.size.x - res_size.x) * 0.5)
-	_place(_res_frame, x, _hand_panel.position.y - res_size.y, res_size.x, res_size.y)
+	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
+	var y := _hand_panel.position.y - res_size.y - deploy_h
+	_place(_res_frame, x, y, res_size.x, res_size.y)
+	if _deploy_vp_button.visible:
+		var sep := float(_res_zone.get_theme_constant("separation"))
+		var power_x := x + 1.0 + _res_title.get_combined_minimum_size().x + sep
+		var width := maxf(_res_power.get_combined_minimum_size().x,
+				_deploy_vp_button.get_combined_minimum_size().x)
+		_place(_deploy_vp_button, power_x, y + res_size.y, width, deploy_h)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
