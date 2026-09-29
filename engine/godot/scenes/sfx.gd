@@ -95,7 +95,7 @@ func _ready() -> void:
 		"kill": _files("kill", 1),
 		"sink": _files("sink", 2),
 		"lift": _files("lift", 1),
-		"capture": _files("capture", 1),
+		"capture": _files("capture", 2),
 	}
 	get_tree().node_added.connect(_on_node_added)
 

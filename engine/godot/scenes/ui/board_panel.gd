@@ -246,8 +246,8 @@ func _flush_captures() -> void:
 func _fire_captures(sites: Array[String]) -> void:
 	if sites.is_empty():
 		return
-	# Один удар колокола на все захваты разом; чужой захват — тише. Локация
-	# просто потеряла хозяина — без колокола.
+	# Один звон пластины на все захваты разом; чужой захват — тише. Локация
+	# просто потеряла хозяина — без звона.
 	for site_id in sites:
 		var owner := String(_control.get(site_id, ""))
 		if owner != "":
