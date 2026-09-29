@@ -24,6 +24,22 @@ func _initialize() -> void:
 	bg.color = Color("0e0a16")
 	bg.size = Vector2(960, 540)
 	root.add_child(bg)
+	# --screen=collection — вкладка COLLECTION профиля на отдельном файле
+	# профиля (настоящий не трогается): пара лутбоксов, пыль и открытые образы.
+	if OS.get_cmdline_user_args().has("--screen=collection"):
+		PlayerProfile.path_override = "user://profile_skin_shot.cfg"
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+		PlayerProfile.save_local({"name": "Shot"})
+		SkinCollection.grant({"boxes": 2, "dust": 450})
+		var cfg := ConfigFile.new()
+		cfg.load(PlayerProfile.path())
+		cfg.set_value("collection", "owned", ["%s:epic" % card, "%s:legendary" % card, "48340:ultra"])
+		cfg.set_value("collection", "active", {card: "legendary", "48340": "ultra"})
+		cfg.save(PlayerProfile.path())
+		var screen := ProfileScreen.new()
+		screen._page = "COLLECTION"
+		root.add_child(screen)
+		return
 	for i in TIERS.size():
 		var mini := CardView.new(card, 80, 76)
 		mini.set_skin(TIERS[i])

@@ -1229,6 +1229,40 @@ func test_skin_collection() -> void:
 	owned_view.free()
 	market_view.free()
 	PlayerProfile.seats = {}
+
+	# Вкладка COLLECTION профиля.
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	SkinCollection.grant({"boxes": 1, "dust": 100})
+	var profile_screen := ProfileScreen.new()
+	check(_find_button(profile_screen, "COLLECTION") != null, "в профиле есть вкладка COLLECTION")
+	profile_screen.free()
+	var page := CollectionPage.new()
+	check(_all_text(page).contains("DUST 100") and _all_text(page).contains("LOOT BOXES 1"),
+		"вкладка показывает пыль и лутбоксы")
+	var dropped := page.open_box()
+	check_eq(page.selected(), String(dropped["card"]), "открытый лутбокс показывает выпавшую карту")
+	check(_all_text(page).contains("New skin") and _all_text(page).contains("LOOT BOXES 0"),
+		"сообщение о новом образе, лутбокс потрачен")
+	check(page.open_box().is_empty(), "лутбоксов больше нет — открывать нечего")
+	var other := cards[3] if cards[3] != String(dropped["card"]) else cards[4]
+	page.select(other)
+	page.press_tier("epic")
+	check(_all_text(page).contains("Not enough dust") and not SkinCollection.owns(other, "epic"),
+		"пыли мало — образ не создан")
+	SkinCollection.grant({"dust": 200})
+	page.press_tier("epic")
+	check(_all_text(page).contains("Click again") and not SkinCollection.owns(other, "epic"),
+		"первый щелчок только показывает цену")
+	page.press_tier("epic")
+	check(SkinCollection.owns(other, "epic") and SkinCollection.active().get(other, "") == "epic",
+		"второй щелчок создаёт и включает образ")
+	check(_all_text(page).contains("DUST 100"), "пыль на вкладке обновилась")
+	page.press_tier("")
+	check(not SkinCollection.active().has(other), "PLAIN — карта снова без образа")
+	page.press_tier("epic")
+	check_eq(SkinCollection.active().get(other, ""), "epic", "открытый образ включается одним щелчком")
+	page.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path
 

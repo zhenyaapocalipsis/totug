@@ -11,6 +11,9 @@ extends Control
 ##
 ## Вкладка STATS — звание по рейтингу, партии/победы и последние онлайн-партии
 ## (PlayerProfile.cached_stats / history).
+##
+## Вкладка COLLECTION — образы карт: лутбоксы, пыль, создание и выбор
+## (CollectionPage, SkinCollection).
 
 signal closed
 ## Открыть рисовалку рубашки (CardBackScreen); её закрытие вернёт в профиль.
@@ -57,6 +60,8 @@ var _tab_buttons: Array[Button] = []
 var _chat: Control
 var _phrase_edits: Array[LineEdit] = []
 var _page := "STATS"
+## Вкладка COLLECTION: образы карт (CollectionPage).
+var _collection: CollectionPage
 ## Любимый цвет места ("" — любой, PlayerProfile.clean_colour) и рамки его выбора.
 var _colour := ""
 var _frames: Dictionary = {}
@@ -110,7 +115,7 @@ func _init(first_run: bool = false) -> void:
 		col.add_child(tabs)
 		var group := ButtonGroup.new()
 		# STATS первой и открыта сразу (решение владельца, 2026-09-28).
-		for tab: String in ["STATS", "EMBLEM", "CHAT"]:
+		for tab: String in ["STATS", "EMBLEM", "CHAT", "COLLECTION"]:
 			var b := _button(tab, _show_tab.bind(tab))
 			b.toggle_mode = true
 			b.button_group = group
@@ -130,6 +135,10 @@ func _init(first_run: bool = false) -> void:
 		_chat = _chat_page()
 		col.add_child(_chat)
 		_chat.visible = false
+		# Образы карт: лутбоксы, пыль, создание и выбор (SkinCollection).
+		_collection = CollectionPage.new()
+		col.add_child(_collection)
+		_collection.visible = false
 		_look.visible = false
 	col.add_child(_look)
 
@@ -427,11 +436,13 @@ func _ready() -> void:
 		_show_tab.call_deferred(_page)
 
 
-## page — STATS, EMBLEM или CHAT.
+## page — STATS, EMBLEM, CHAT или COLLECTION.
 func _show_tab(page: String) -> void:
 	_page = page
 	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat}
 	# Окно не прыгает: все страницы одного размера — большей из них.
+	# Коллекция (сетка карт) намного больше — у неё свой размер, иначе
+	# остальные вкладки стояли бы полупустыми.
 	var need := Vector2.ZERO
 	for p: Control in pages.values():
 		p.custom_minimum_size = Vector2.ZERO
@@ -440,6 +451,10 @@ func _show_tab(page: String) -> void:
 	for key: String in pages:
 		(pages[key] as Control).custom_minimum_size = need
 		(pages[key] as Control).visible = key == page
+	_collection.visible = page == "COLLECTION"
+	if _collection.visible:
+		_collection.refresh()
+		_collection.scroll_to_selected()
 	for b: Button in _tab_buttons:
 		b.set_pressed_no_signal(b.text == page)
 
