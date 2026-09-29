@@ -180,6 +180,7 @@ var _deploy_vp_button: Button
 var _preview: CardPreview
 var _pause_menu: PauseMenu
 var _game_over_panel: GameOverPanel
+var _game_over_heard := false
 ## Связь оборвалась (только сетевая партия): кнопка вручную повторить попытку.
 var _reconnect_banner: PanelContainer
 var _reconnect_status: Label
@@ -764,6 +765,7 @@ func show_ping(pid: String, zone: String, pos: Vector2) -> void:
 		global = _board_panel.get_global_transform() * _board_panel.local_of_world(pos)
 	else:
 		global = (zones[zone] as Control).get_global_transform() * pos
+	Sfx.play("ping")
 	_pings.ping(_pings.get_global_transform().affine_inverse() * global,
 		BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
 
@@ -786,6 +788,7 @@ func show_phrase(pid: String, text: String) -> void:
 	var row: Variant = _players_panel.row_rect(pid)
 	if clean == "" or row == null:
 		return
+	Sfx.play("phrase")
 	var anchor: Rect2 = _bubbles.get_global_transform().affine_inverse() * (row as Rect2)
 	_bubbles.say(pid, clean, anchor, BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
 
@@ -1498,6 +1501,8 @@ func _process(delta: float) -> void:
 	# таймером она в узкую колонку не помещается.
 	var last_round := bool(_view["game_end_triggered"])
 	if _last_round_label.visible != last_round:
+		if last_round:
+			Sfx.play("last_round")
 		_last_round_label.visible = last_round
 		_layout()
 	var pending: Dictionary = _view.get("pending_decision", {})
@@ -1626,11 +1631,22 @@ static func auto_decision_answer(options: Array) -> Variant:
 	return options[0]
 
 
+## Конец партии звучит один раз: победная мелодия или грустная. В хотсите
+## «проигравшего» за экраном нет — всегда победная.
+func _sound_game_over(view: Dictionary) -> void:
+	if _game_over_heard or not bool(view.get("game_over", false)):
+		return
+	_game_over_heard = true
+	var won := net == null or (view.get("winners", []) as Array).has(viewer_id)
+	Sfx.play("victory" if won else "defeat")
+
+
 func refresh(view: Dictionary) -> void:
 	_view = view
 	_refresh_turn(view)
 	_barracks.update_from_view(view)
 	_game_over_panel.update_from_view(view)
+	_sound_game_over(view)
 	_hand_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
@@ -1692,6 +1708,7 @@ func _announce_turn(view: Dictionary) -> void:
 			# Отложенно: в самом первом срезе экран ещё не разложен, и центра
 			# доски пока нет.
 			_show_banner.call_deferred(text, EventLogPanel.player_color(current))
+			Sfx.play("turn")
 			_request_attention()
 	var pending: Dictionary = view.get("pending_decision", {})
 	var key := "%s|%s" % [String(pending.get("player_id", "")), String(pending.get("prompt", ""))]

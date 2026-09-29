@@ -21,6 +21,8 @@ const VOICES := 8
 const OTHER_DB := -6.0
 ## Ступени громкости для кнопки в меню (по кругу).
 const LEVELS: Array[float] = [1.0, 0.75, 0.5, 0.25, 0.0]
+## Звуки без разброса высоты.
+const STEADY := ["click", "turn", "victory", "defeat"]
 
 static var _instance: Sfx
 static var volume := 1.0
@@ -96,6 +98,15 @@ func _ready() -> void:
 		"sink": _files("sink", 2),
 		"lift": _files("lift", 1),
 		"capture": _files("capture", 2),
+		# Ход и партия. Перезвоны синтезируются: мелодий в наборах Kenney нет.
+		# Колокол не использовать (решение владельца, 2026-09-29).
+		"turn": [_wav(_melody([440.0, 659.0], 0.09, 0.25))],
+		"victory": [_wav(_melody([523.0, 659.0, 784.0, 1047.0], 0.11, 0.45))],
+		"defeat": [_wav(_melody([392.0, 311.0, 262.0], 0.2, 0.5))],
+		"last_round": _files("last_round", 2),
+		# Чат по Tab: пинг и фраза.
+		"ping": _files("ping", 2),
+		"phrase": _files("phrase", 1),
 	}
 	get_tree().node_added.connect(_on_node_added)
 
@@ -113,8 +124,8 @@ func _play(sound: String, db: float) -> void:
 	p.stream = (_streams[sound] as Array).pick_random()
 	p.volume_db = db
 	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
-	# Кнопка — всегда ровно (решение владельца).
-	p.pitch_scale = 1.0 if sound == "click" else randf_range(0.95, 1.05)
+	# Кнопка (решение владельца) и мелодии — всегда ровно.
+	p.pitch_scale = 1.0 if sound in STEADY else randf_range(0.95, 1.05)
 	p.play(_starts.get(p.stream, 0.0))
 
 
@@ -196,4 +207,19 @@ static func _buzz() -> PackedFloat32Array:
 		var t := float(i) / RATE
 		var env := minf(t * 200.0, 1.0) * exp(-t * 12.0)
 		out[i] = _square(t * (120.0 - 80.0 * t)) * env * 0.2
+	return out
+
+
+## Короткая ретро-мелодия: ноты freqs (Гц) через step секунд, каждая звучит
+## hold секунд. Тембр — наполовину прямоугольник, наполовину синус: мягкий
+## чиптюн, не колокол.
+static func _melody(freqs: Array, step: float, hold: float) -> PackedFloat32Array:
+	var out := _buffer(step * (freqs.size() - 1) + hold)
+	for k in freqs.size():
+		var f: float = freqs[k]
+		var start := int(step * k * RATE)
+		for i in int(hold * RATE):
+			var t := float(i) / RATE
+			var env := minf(t * 300.0, 1.0) * exp(-t * 4.0 / hold)
+			out[start + i] += (_square(t * f) * 0.5 + sin(TAU * f * t) * 0.5) * env * 0.16
 	return out
