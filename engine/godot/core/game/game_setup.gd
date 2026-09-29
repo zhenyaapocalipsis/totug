@@ -35,13 +35,14 @@ const HAND_SIZE := 5
 ## Режимы сборки маркета (выбираются в меню перед партией):
 ##   STANDARD — две случайные разные полуколоды (рулбук);
 ##   DOUBLE   — одна случайная полуколода дважды;
-##   RANDOM 4 / RANDOM 6 — 4 или 6 случайных полуколод, из них по 20 карт
+##   RANDOM 3 / 4 / 6 — 3, 4 или 6 случайных полуколод, из них по 20 карт
 ##              каждого аспекта (см. build_market_cards).
 const MODE_STANDARD := "standard"
 const MODE_DOUBLE := "double"
+const MODE_RANDOM_3 := "random3"
 const MODE_RANDOM_4 := "random4"
 const MODE_RANDOM_6 := "random6"
-const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_4, MODE_RANDOM_6]
+const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6]
 const MARKET_PER_ASPECT := 20
 
 static var _half_deck_data: Dictionary = {}
@@ -190,6 +191,8 @@ static func _pick_two_half_decks(rng: RandomNumberGenerator) -> Array[String]:
 ## Сколько полуколод берёт режим (для DOUBLE — одна и та же дважды).
 static func mode_deck_count(mode: String) -> int:
 	match mode:
+		MODE_RANDOM_3:
+			return 3
 		MODE_RANDOM_4:
 			return 4
 		MODE_RANDOM_6:
@@ -206,7 +209,7 @@ static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[S
 			var one: String = pool[rng.randi_range(0, pool.size() - 1)]
 			var twice: Array[String] = [one, one]
 			return twice
-		MODE_RANDOM_4, MODE_RANDOM_6:
+		MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6:
 			Deck.shuffle_array(pool, rng)
 			return pool.slice(0, mini(mode_deck_count(mode), pool.size()))
 	return _pick_two_half_decks(rng)
@@ -214,7 +217,7 @@ static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[S
 
 ## Колода маркета из выбранных полуколод.
 ## STANDARD/DOUBLE: полуколоды целиком (DOUBLE — 2 × одна и та же, 80 карт).
-## RANDOM 4/6: все копии всех выбранных полуколод сваливаются в общий пул,
+## RANDOM 3/4/6: все копии всех выбранных полуколод сваливаются в общий пул,
 ## и по КАЖДОМУ аспекту из него случайно берутся MARKET_PER_ASPECT карт —
 ## как в обычном маркете (2 полуколоды × 10 копий на аспект = 20). Карты с
 ## большим числом копий так и остаются вероятнее, как в обычной игре.
@@ -222,7 +225,7 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 	var cards: Array[String] = []
 	for deck_name: String in decks:
 		cards.append_array(expand_half_deck(deck_name))
-	if mode != MODE_RANDOM_4 and mode != MODE_RANDOM_6:
+	if mode not in [MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6]:
 		return cards
 	var by_aspect := {}
 	for cid: String in cards:

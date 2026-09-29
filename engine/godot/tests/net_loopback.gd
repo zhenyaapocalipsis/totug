@@ -244,8 +244,8 @@ func _process(delta: float) -> bool:
 					and queue_seen.get(players[3], []) == [1, 3]:
 				var room: GameRoom = server.rooms.values()[0]
 				check(server.rooms.size() == 1, "[match] из очереди собран ровно один стол")
-				check(room.mode == NetSession.MATCH_MODE and room.needed == 2,
-					"[match] стол на двоих, режим RANDOM 4 (получено %d, %s)" % [room.needed, room.mode])
+				check(room.mode == GameSetup.MODE_STANDARD and room.needed == 2,
+					"[match] стол на двоих, режим STANDARD (получено %d, %s)" % [room.needed, room.mode])
 				check(seated[0].seat != seated[1].seat, "[match] у двоих разные цвета")
 				check((seated[0].seat == "purple") != (seated[1].seat == "purple"),
 					"[match] любимый purple достался одному из двоих")

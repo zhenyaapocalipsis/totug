@@ -61,9 +61,18 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 10
-## Режим партий, собранных поиском игры.
-const MATCH_MODE := GameSetup.MODE_RANDOM_4
+const PROTOCOL := 11
+## Режим партий, собранных поиском игры: зависит от размера стола
+## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
+static func match_mode(player_count: int) -> String:
+	match player_count:
+		2:
+			return GameSetup.MODE_STANDARD
+		3:
+			return GameSetup.MODE_RANDOM_3
+	return GameSetup.MODE_RANDOM_4
+
+
 const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
@@ -622,7 +631,7 @@ func _queue(version: int, player_count: int, player_name: String, emblem: String
 ## Первые needed из очереди садятся за новый стол, и партия сразу раздаётся.
 func _match(needed: int) -> void:
 	var line: Array = queues[needed]
-	var room := _new_room(needed, MATCH_MODE)
+	var room := _new_room(needed, match_mode(needed))
 	# Сначала рассадка по любимым цветам (кто раньше встал в очередь, тому и
 	# цвет), профили — когда места уже окончательные.
 	var batch: Array = line.slice(0, needed)

@@ -23,7 +23,7 @@ extends Control
 signal started(player_ids: Array[String], mode: String)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
 ## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN),
-## "find" — поиск игры на сервере (режим всегда NetSession.MATCH_MODE),
+## "find" — поиск игры на сервере (режим по размеру стола: NetSession.match_mode),
 ## "resume" — вернуться в незаконченную онлайн-партию (NetSession.saved_game).
 signal online_requested(kind: String, player_count: int, mode: String)
 ## Открыть профиль игрока (имя, герб, рубашка, статистика — ProfileScreen).
@@ -36,12 +36,14 @@ signal cards_requested
 const MODE_TITLES := {
 	"standard": "STANDARD",
 	"double": "DOUBLE",
+	"random3": "RANDOM 3",
 	"random4": "RANDOM 4",
 	"random6": "RANDOM 6",
 }
 const MODE_NOTES := {
 	"standard": "Market: two random half-decks.",
 	"double": "Market: one random half-deck, taken twice.",
+	"random3": "Market: 3 random half-decks, 20 cards of each aspect.",
 	"random4": "Market: 4 random half-decks, 20 cards of each aspect.",
 	"random6": "Market: 6 random half-decks, 20 cards of each aspect.",
 }
@@ -225,17 +227,19 @@ func _build_online() -> void:
 	_add_hint(PAGE_HINTS[_page])
 
 
-## Поиск игры: случайные соперники, режим всегда RANDOM 4 — выбрать можно
-## только, на сколько человек стол.
+## Поиск игры: случайные соперники, выбрать можно только, на сколько человек
+## стол; режим маркета от него зависит (NetSession.match_mode).
 func _build_matchmaking() -> void:
 	_add_title("MATCHMAKING")
-	_add_dim("Random opponents. Market: %s." % MODE_TITLES[NetSession.MATCH_MODE])
+	var market := _add_dim(_match_market_text())
 	_col.add_child(HSeparator.new())
 	var counts: Array = []
 	var group := ButtonGroup.new()
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
 		var b := _toggle(str(count), group, count == _match_count, 24)
-		b.pressed.connect(func(): _match_count = count)
+		b.pressed.connect(func():
+			_match_count = count
+			market.text = _match_market_text())
 		b.mouse_entered.connect(func(): _set_hint("Look for a table of %d players." % count))
 		b.mouse_exited.connect(func(): _set_hint(_hint_default))
 		counts.append(b)
@@ -243,9 +247,13 @@ func _build_matchmaking() -> void:
 	_col.add_child(_row(counts))
 	_col.add_child(HSeparator.new())
 	_col.add_child(_big_button("FIND GAME", "Wait in line until enough players are found.",
-		func(): online_requested.emit("find", _match_count, NetSession.MATCH_MODE)))
+		func(): online_requested.emit("find", _match_count, NetSession.match_mode(_match_count))))
 	_col.add_child(_back_button())
 	_add_hint(PAGE_HINTS[_page])
+
+
+func _match_market_text() -> String:
+	return "Random opponents. Market: %s." % MODE_TITLES[NetSession.match_mode(_match_count)]
 
 
 ## Игра с друзьями: своя комната или вход в чужую.

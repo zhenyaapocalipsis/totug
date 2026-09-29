@@ -137,7 +137,7 @@ func _build_server_part(col: VBoxContainer) -> void:
 		col.add_child(_dim("%d players, mode %s" % [_count, SetupScreen.MODE_TITLES.get(_mode, _mode)]))
 	elif _kind == "find":
 		col.add_child(_dim("%d players, mode %s, random opponents" % [
-			_count, SetupScreen.MODE_TITLES[NetSession.MATCH_MODE]]))
+			_count, SetupScreen.MODE_TITLES[NetSession.match_mode(_count)]]))
 	var server_row := _row(col)
 	server_row.add_child(_dim("SERVER"))
 	_server_edit = LineEdit.new()
