@@ -81,7 +81,7 @@ func _ready() -> void:
 		_voices.append(p)
 	# У звука может быть несколько вариантов — играет случайный.
 	_streams = {
-		"click": _files("click", 3),
+		"click": _files("click", 1),
 		"hover": [_wav(_hover())],
 		"card": _files("card", 4),
 		"coins": _files("coins", 2),
@@ -103,7 +103,8 @@ func _play(sound: String, db: float) -> void:
 	p.stream = (_streams[sound] as Array).pick_random()
 	p.volume_db = db
 	# Лёгкий разброс высоты: один и тот же звук подряд не звучит механически.
-	p.pitch_scale = randf_range(0.95, 1.05)
+	# Кнопка — всегда ровно (решение владельца).
+	p.pitch_scale = 1.0 if sound == "click" else randf_range(0.95, 1.05)
 	p.play()
 
 
