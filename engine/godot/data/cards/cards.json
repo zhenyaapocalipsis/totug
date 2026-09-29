@@ -1187,7 +1187,7 @@
     "type": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
-    "ability_text": "Place a spy. If another player’s spy is at that\nsite, gain 3 Influence."
+    "ability_text": "Place a spy. If another player’s spy is at that\nsite, gain 3 Power."
   },
   {
     "card_id": 48734,

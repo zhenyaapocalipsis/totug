@@ -564,7 +564,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 			return SupplantTroop.new(1, true, true)
 		"48719":  # Banshee
 			return PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
-				func(state, pid): return CardLibrary._site_has_enemy_spy(state, pid, site), GainInfluence.new(3)))
+				func(state, pid): return CardLibrary._site_has_enemy_spy(state, pid, site), GainPower.new(3)))
 		"48734":  # Necromancer
 			return ChooseEffect.new([GainInfluence.new(3), PromoteCard.new("hand_or_discard", "48734")],
 				["+3 Influence", "Promote this card, or a card from your hand or discard pile"])
