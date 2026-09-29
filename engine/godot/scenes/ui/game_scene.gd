@@ -78,22 +78,11 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_MAIN) -> void:
 	add_child(setup)
 
 
-## Профиль из главного меню. Рисовалки рубашки и фона открываются из него и
-## возвращают обратно в профиль.
+## Профиль из главного меню (рубашки и фон — в его вкладке COLLECTION).
 func _show_profile(game_seed: int) -> void:
 	_clear()
 	var profile := ProfileScreen.new()
 	profile.closed.connect(func(): _show_setup(game_seed))
-	profile.card_back_requested.connect(func():
-		_clear()
-		var back := CardBackScreen.new()
-		back.closed.connect(func(): _show_profile(game_seed))
-		add_child(back))
-	profile.background_requested.connect(func():
-		_clear()
-		var bg := BackgroundScreen.new()
-		bg.closed.connect(func(): _show_profile(game_seed))
-		add_child(bg))
 	add_child(profile)
 
 

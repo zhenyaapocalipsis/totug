@@ -24,6 +24,14 @@ func _initialize() -> void:
 	bg.color = Color("0e0a16")
 	bg.size = Vector2(960, 540)
 	root.add_child(bg)
+	# --screen=backs — все рубашки (CardBack.DESIGNS) 1:1, два ряда.
+	if OS.get_cmdline_user_args().has("--screen=backs"):
+		for i in CardBack.DESIGNS.size():
+			var back := TextureRect.new()
+			back.texture = CardBack.texture(CardBack.DESIGNS[i])
+			back.position = Vector2(8 + (i % 5) * 188, 8 + (i / 5) * 266)
+			root.add_child(back)
+		return
 	# --screen=collection — вкладка COLLECTION профиля на отдельном файле
 	# профиля (настоящий не трогается): пара лутбоксов, пыль и открытые образы.
 	if OS.get_cmdline_user_args().has("--screen=collection"):
@@ -39,6 +47,10 @@ func _initialize() -> void:
 		var screen := ProfileScreen.new()
 		screen._page = "COLLECTION"
 		root.add_child(screen)
+		# --section=CARD BACKS / BACKGROUNDS — другой раздел коллекции.
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--section="):
+				screen._collection.show_section(arg.get_slice("=", 1))
 		return
 	for i in TIERS.size():
 		var mini := CardView.new(card, 80, 76)

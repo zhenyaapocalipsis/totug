@@ -10,32 +10,18 @@ extends RefCounted
 ## Экраны не знают про шейдер: они просят UnderdarkBg.make() и кладут
 ## полученный ColorRect первым ребёнком, ровно на место прежней заливки.
 ##
-## Фон выбирает игрок в профиле (решение владельца, 2026-09-28, экран
-## BackgroundScreen): CLASSIC (эти разводы), BLACK, ORANGE IS NEW BLACK
-## (сплошные заливки), WINDOWS XP (холм и облака, xp_bg.gdshader) и MY
-## DRAWING — свой рисунок PICTURE_SIZE, растянутый на экран. Выбор хранится в
-## файле профиля, рисунок — PNG рядом с ним; сменили — перекрашиваются все
-## задники на экране (группа GROUP).
+## Фон выбирает игрок в профиле (решение владельца, 2026-09-28; с 2026-09-30 —
+## вкладка COLLECTION → BACKGROUNDS, своего рисунка больше нет): CLASSIC (эти
+## разводы), BLACK, ORANGE IS NEW BLACK (сплошные заливки) и WINDOWS XP (холм
+## и облака, xp_bg.gdshader). Выбор хранится в файле профиля; сменили —
+## перекрашиваются все задники на экране (группа GROUP).
 
 const SHADER_PATH := "res://scenes/ui/underdark_bg.gdshader"
 const XP_SHADER_PATH := "res://scenes/ui/xp_bg.gdshader"
 
 const STYLE_CLASSIC := "classic"
-const STYLE_CUSTOM := "custom"
-const STYLES: Array[String] = ["classic", "black", "orange", "xp", "custom"]
-const STYLE_NAMES := {"classic": "CLASSIC", "black": "BLACK", "orange": "ORANGE IS NEW BLACK", "xp": "WINDOWS XP",
-	"custom": "MY DRAWING"}
-## Свой рисунок: одна его клетка — 6x6 пикселей расчётного экрана 960x540.
-const PICTURE_SIZE := Vector2i(160, 90)
-## Свой рисунок на весь экран, клетки без сглаживания; в партии гасится.
-const PICTURE_SHADER := """shader_type canvas_item;
-uniform sampler2D picture : filter_nearest;
-uniform vec4 fade_to : source_color;
-uniform float fade = 0.0;
-void fragment() {
-	COLOR = vec4(mix(texture(picture, UV).rgb, fade_to.rgb, fade), 1.0);
-}
-"""
+const STYLES: Array[String] = ["classic", "black", "orange", "xp"]
+const STYLE_NAMES := {"classic": "CLASSIC", "black": "BLACK", "orange": "ORANGE IS NEW BLACK", "xp": "WINDOWS XP"}
 ## Сплошные заливки — за игровым экраном не гасятся: мешать доске им нечем.
 const FLAT := {"black": Color(0, 0, 0), "orange": Color("df7126")}
 ## За игровым экраном XP гасится слабее разводов: иначе от неба остаётся муть.
@@ -68,12 +54,8 @@ const SHADE_LIGHTEN := 0.35
 
 static var _shader: Shader = null
 static var _xp_shader: Shader = null
-static var _picture_shader: Shader = null
 ## Выбранный фон; "" — ещё не прочитан из профиля.
 static var _style := ""
-## Свой рисунок, как он лежит в PNG (null — ещё не читали или его нет).
-static var _picture: ImageTexture = null
-static var _picture_read := false
 
 
 ## Краски фона по полуколодам партии — столько, сколько полуколод в режиме:
@@ -137,36 +119,9 @@ static func _repaint_all() -> void:
 			_paint(node as ColorRect)
 
 
-## Файл своего рисунка — рядом с файлом профиля (у --profile=2 свой).
-static func picture_path() -> String:
-	return PlayerProfile.path().get_basename() + "_background.png"
-
-
-## Свой рисунок (null — не нарисован).
-static func picture() -> Image:
-	if not _picture_read:
-		_picture_read = true
-		var img := Image.load_from_file(picture_path()) if FileAccess.file_exists(picture_path()) else null
-		_picture = ImageTexture.create_from_image(img) if img != null and not img.is_empty() else null
-	return _picture.get_image() if _picture != null else null
-
-
-## Сохранить свой рисунок и сразу показать его фоном (MY DRAWING).
-static func save_picture(img: Image) -> int:
-	var err := img.save_png(picture_path())
-	if err != OK:
-		return err
-	_picture = ImageTexture.create_from_image(img)
-	_picture_read = true
-	set_style(STYLE_CUSTOM)
-	return OK
-
-
-## Тесты подменяют файл профиля: рисунок надо перечитать заново.
+## Тесты подменяют файл профиля: выбор надо перечитать заново.
 static func forget_cache() -> void:
 	_style = ""
-	_picture = null
-	_picture_read = false
 
 
 ## Покрасить задник выбранным фоном (fade и полуколоды — из make()).
@@ -182,20 +137,6 @@ static func _paint(rect: ColorRect) -> void:
 			if xp != null:
 				var mat := ShaderMaterial.new()
 				mat.shader = xp
-				mat.set_shader_parameter("fade", XP_GAME_FADE if fade > 0.0 else 0.0)
-				mat.set_shader_parameter("fade_to", PixelTheme.BG)
-				rect.material = mat
-		"custom":
-			# Рисунка нет (удалили файл, другой профиль) — как CLASSIC.
-			if picture() == null:
-				_paint_classic(rect, fade, rect.get_meta("half_decks", []))
-			elif DisplayServer.get_name() != "headless":
-				if _picture_shader == null:
-					_picture_shader = Shader.new()
-					_picture_shader.code = PICTURE_SHADER
-				var mat := ShaderMaterial.new()
-				mat.shader = _picture_shader
-				mat.set_shader_parameter("picture", _picture)
 				mat.set_shader_parameter("fade", XP_GAME_FADE if fade > 0.0 else 0.0)
 				mat.set_shader_parameter("fade_to", PixelTheme.BG)
 				rect.material = mat

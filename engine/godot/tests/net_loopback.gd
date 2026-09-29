@@ -696,10 +696,8 @@ func _check_profiles() -> void:
 				"[%s] профиль %s дошёл до %s" % [_scenario, owner_p.seat, other.seat])
 
 
-## Рубашка-метка: один пиксель в углу рисунка, цвет зависит от номера игрока.
+
+## Рубашка-метка: у каждого игрока своя (кроме CLASSIC), по номеру игрока.
 func _back_for(n: int) -> String:
-	var pixels: Array[Color] = []
-	pixels.resize(PlayerProfile.BACK_SIZE * PlayerProfile.BACK_SIZE)
-	pixels.fill(Color(0, 0, 0, 0))
-	pixels[0] = Color8(n * 20, 10, 200)
-	return PlayerProfile.back_from_pixels(pixels)
+	var backs := SkinCollection.collectible_backs()
+	return backs[n % backs.size()]

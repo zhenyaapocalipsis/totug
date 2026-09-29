@@ -12,14 +12,10 @@ extends Control
 ## Вкладка STATS — звание по рейтингу, партии/победы и последние онлайн-партии
 ## (PlayerProfile.cached_stats / history).
 ##
-## Вкладка COLLECTION — образы карт: лутбоксы, пыль, создание и выбор
+## Вкладка COLLECTION — образы карт, рубашки и фон: лутбоксы, пыль, создание и выбор
 ## (CollectionPage, SkinCollection).
 
 signal closed
-## Открыть рисовалку рубашки (CardBackScreen); её закрытие вернёт в профиль.
-signal card_back_requested
-## Открыть выбор и рисовалку фона (BackgroundScreen); закрытие вернёт в профиль.
-signal background_requested
 
 ## Палитра DawnBringer 32 — классический набор для пиксель-арта; любой другой
 ## цвет — щелчком по образцу кисти (ColorPickerButton).
@@ -122,14 +118,6 @@ func _init(first_run: bool = false) -> void:
 			b.button_pressed = tab == "STATS"
 			tabs.add_child(b)
 			_tab_buttons.append(b)
-		# Рубашка карт — свой экран (CardBackScreen), закрывается обратно в профиль.
-		var back := _button("CARD BACK", _open_card_back)
-		back.tooltip_text = "Draw the back of your cards."
-		tabs.add_child(back)
-		# Фон игры и его рисовалка — тоже свой экран (BackgroundScreen).
-		var bg := _button("BACKGROUND", _open_background)
-		bg.tooltip_text = "Choose or draw the background of the game."
-		tabs.add_child(bg)
 		_stats = _stats_page()
 		col.add_child(_stats)
 		_chat = _chat_page()
@@ -410,25 +398,6 @@ func _save() -> void:
 		_saved_note.text = "Could not save the profile (error %d)." % err
 
 
-## Уходя к рубашке или фону, имя и герб сохраняются — профиль откроется
-## заново с ними. Пустое имя не сохраняем: иначе игра сочтёт профиль несозданным.
-func _keep_edits() -> void:
-	if PlayerProfile.clean_name(_name_edit.text) != "":
-		PlayerProfile.save_local({"name": _name_edit.text, "emblem": emblem(), "colour": _colour})
-		if not _phrase_edits.is_empty():
-			PlayerProfile.save_phrases(phrases())
-
-
-func _open_card_back() -> void:
-	_keep_edits()
-	card_back_requested.emit()
-
-
-func _open_background() -> void:
-	_keep_edits()
-	background_requested.emit()
-
-
 ## Размеры страниц выравниваются, только когда экран уже в сцене и надписи
 ## перемерены пиксельным шрифтом темы — поэтому на кадр позже.
 func _ready() -> void:
@@ -439,10 +408,9 @@ func _ready() -> void:
 ## page — STATS, EMBLEM, CHAT или COLLECTION.
 func _show_tab(page: String) -> void:
 	_page = page
-	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat}
-	# Окно не прыгает: все страницы одного размера — большей из них.
-	# Коллекция (сетка карт) намного больше — у неё свой размер, иначе
-	# остальные вкладки стояли бы полупустыми.
+	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat, "COLLECTION": _collection}
+	# Окно не прыгает: все страницы одного размера — большей из них
+	# (решение владельца, 2026-09-30: и COLLECTION тоже).
 	var need := Vector2.ZERO
 	for p: Control in pages.values():
 		p.custom_minimum_size = Vector2.ZERO
@@ -451,10 +419,8 @@ func _show_tab(page: String) -> void:
 	for key: String in pages:
 		(pages[key] as Control).custom_minimum_size = need
 		(pages[key] as Control).visible = key == page
-	_collection.visible = page == "COLLECTION"
 	if _collection.visible:
 		_collection.refresh()
-		_collection.scroll_to_selected()
 	for b: Button in _tab_buttons:
 		b.set_pressed_no_signal(b.text == page)
 

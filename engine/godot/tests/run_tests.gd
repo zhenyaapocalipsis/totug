@@ -1241,7 +1241,7 @@ func test_skin_collection() -> void:
 		"вкладка показывает пыль и лутбоксы")
 	var dropped := page.open_box()
 	check_eq(page.selected(), String(dropped["card"]), "открытый лутбокс показывает выпавшую карту")
-	check(_all_text(page).contains("New skin") and _all_text(page).contains("LOOT BOXES 0"),
+	check(_all_text(page).contains("New: ") and _all_text(page).contains("LOOT BOXES 0"),
 		"сообщение о новом образе, лутбокс потрачен")
 	check(page.open_box().is_empty(), "лутбоксов больше нет — открывать нечего")
 	var other := cards[3] if cards[3] != String(dropped["card"]) else cards[4]
@@ -3081,11 +3081,11 @@ func test_background_palette() -> void:
 		check_eq(colours.size(), 2, "%s: две краски" % [bad])
 		check(colours[0] != colours[1], "%s: краски разные" % [bad])
 
-	# Выбор фона (решение владельца, 2026-09-28): в профиле, экран BackgroundScreen.
+	# Выбор фона (решение владельца, 2026-09-28; своего рисунка нет с 2026-09-30):
+	# во вкладке COLLECTION → BACKGROUNDS.
 	var old_path := PlayerProfile.path_override
 	PlayerProfile.path_override = "user://profile_bg_test.cfg"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(Bg.picture_path()))
 	Bg.forget_cache()
 	check_eq(Bg.style(), "classic", "по умолчанию — CLASSIC")
 	# Дерево сцены в тестах не запущено, так что перекраску группы set_style
@@ -3102,39 +3102,9 @@ func test_background_palette() -> void:
 	check_eq(Bg.style(), "orange", "выбор сохранён в профиле")
 	Bg.set_style("nonsense")
 	check_eq(Bg.style(), "classic", "неизвестный фон — CLASSIC")
-	check(Bg.picture() == null, "своего рисунка ещё нет")
-
-	# Рисовалка фона.
-	var painter := BackgroundScreen.new()
-	painter.set_brush(Color("ac3232"))
-	painter.paint_at(0, 0)
-	check_eq(painter.pixel(0, 0), Color("ac3232"), "кисть 1 красит клетку")
-	check_eq(painter.pixel(1, 0), PixelTheme.BG, "соседняя клетка не тронута")
-	painter.set_brush_size(4)
-	painter.paint_at(10, 10)
-	check(painter.pixel(8, 8) == Color("ac3232") and painter.pixel(11, 11) == Color("ac3232")
-		and painter.pixel(12, 12) == PixelTheme.BG, "кисть 4 — квадрат 4x4 вокруг клетки")
-	painter.paint_at(159, 89)
-	check_eq(painter.pixel(159, 89), Color("ac3232"), "кисть у края холста обрезается, не падает")
-	painter._push_undo()
-	painter.set_brush(Color("639bff"))
-	painter.fill_at(50, 50)
-	check_eq(painter.pixel(100, 5), Color("639bff"), "заливка разошлась по всему пустому полю")
-	check_eq(painter.pixel(10, 10), Color("ac3232"), "заливка не заходит в чужой цвет")
-	painter.undo()
-	check_eq(painter.pixel(100, 5), PixelTheme.BG, "UNDO отменил заливку")
-	painter._save()
-	check_eq(Bg.style(), Bg.STYLE_CUSTOM, "SAVE DRAWING ставит рисунок фоном")
-	Bg.forget_cache()
-	var saved := Bg.picture()
-	check(saved != null and saved.get_size() == Bg.PICTURE_SIZE, "рисунок сохранён в PNG нужного размера")
-	check(saved != null and saved.get_pixel(0, 0).is_equal_approx(Color("ac3232")), "в PNG — то, что нарисовано")
-	painter.free()
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(Bg.picture_path()))
-	Bg.forget_cache()
-	Bg._paint(rect)
-	check_eq(Bg.style(), Bg.STYLE_CUSTOM, "выбран свой рисунок")
-	check_eq(rect.color, PixelTheme.BG, "файла рисунка нет — фон как CLASSIC, без ошибок")
+	Bg.set_style("custom")
+	check_eq(Bg.style(), "classic", "бывший свой рисунок (custom) — теперь CLASSIC")
+	check(not Bg.STYLES.has("custom"), "рисовалки фона больше нет")
 	rect.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path
@@ -3307,57 +3277,60 @@ func test_chat_wheel_and_ping() -> void:
 
 
 func test_card_back() -> void:
-	section("рубашка карт: рисунок игрока")
-	var n := PlayerProfile.BACK_SIZE
-	var blank: Array[Color] = []
-	blank.resize(n * n)
-	blank.fill(Color(0, 0, 0, 0))
-	check_eq(PlayerProfile.back_from_pixels(blank), "", "пустая рубашка — пустая строка")
-	check_eq(PlayerProfile.clean_back("zz"), "", "испорченная рубашка отбрасывается")
-	check_eq(PlayerProfile.clean_back(PlayerProfile.blank_emblem()), "", "строка чужой длины не рубашка")
-
-	var pixels := blank.duplicate()
-	pixels[0] = Color("ac3232")
-	var back := PlayerProfile.back_from_pixels(pixels)
-	check_eq(back.length(), PlayerProfile.BACK_LENGTH, "рубашка — строка %d знаков" % PlayerProfile.BACK_LENGTH)
-	check(PlayerProfile.back_pixels(back)[0].to_html(false) == "ac3232", "рубашка переживает кодирование")
-	check_eq(String(PlayerProfile.clean({"back": back})["back"]), back, "профиль хранит рубашку")
-
-	var img := CardBack.image(back)
-	check_eq(img.get_size(), Vector2i(CardView.PIXEL_SIZE), "рубашка во весь размер карты")
-	var origin := img.get_size() / 2 - Vector2i.ONE * n * CardBack.ZOOM / 2
-	check(img.get_pixel(origin.x, origin.y).to_html(false) == "ac3232"
-		and img.get_pixel(origin.x + CardBack.ZOOM - 1, origin.y + CardBack.ZOOM - 1).to_html(false) == "ac3232",
-		"пиксель рисунка — квадрат %dx%d в центре рубашки" % [CardBack.ZOOM, CardBack.ZOOM])
-	check(img.get_pixel(origin.x + CardBack.ZOOM, origin.y).is_equal_approx(CardBack.FIELD), "пустое место рисунка — поле рубашки")
+	section("рубашки карт: готовые рисунки в коллекции")
+	check_eq(CardBack.DESIGNS[0], CardBack.CLASSIC, "первая рубашка — CLASSIC")
+	check_eq(CardBack.DESIGNS.size(), 7, "CLASSIC и по рубашке на каждую из шести фракций")
+	for design in CardBack.DESIGNS:
+		var img := CardBack.image(design)
+		check(img.get_size() == Vector2i(CardView.PIXEL_SIZE) and CardBack.NAMES.has(design),
+			"рубашка %s во весь размер карты" % design)
+	check_eq(CardBack.clean("nonsense"), CardBack.CLASSIC, "неизвестная рубашка — CLASSIC")
 	var plain := CardBack.image("")
 	check(plain.get_pixel(plain.get_width() / 2, plain.get_height() / 2).is_equal_approx(PixelTheme.GOLD),
-		"без рисунка — обычная рубашка с золотой точкой")
-	check(CardBack.texture(back) == CardBack.texture(back), "текстура рубашки берётся из кэша")
-
-	var editor := CardBackScreen.new()
-	editor.paint(0, 0, Color(0, 0, 0, 0))
-	for i in n * n:
-		editor.paint(i % n, i / n, Color(0, 0, 0, 0))
-	check_eq(editor.back(), "", "стёртый рисунок — обычная рубашка")
-	editor.set_mirror(true)
-	editor.paint(1, 5, Color("ffffff"))
-	var got := PlayerProfile.back_pixels(editor.back())
-	check(got[5 * n + 1].a > 0.0 and got[5 * n + n - 2].a > 0.0, "MIRROR красит и зеркальную клетку")
-	editor.free()
+		"обычная рубашка — с золотой точкой")
+	check(CardBack.texture("web") == CardBack.texture("web"), "текстура рубашки берётся из кэша")
+	check_eq(PlayerProfile.clean_back("web"), "web", "профиль хранит имя рубашки")
+	check_eq(PlayerProfile.clean_back("classic"), "", "CLASSIC в профиле — пустая строка")
+	check_eq(PlayerProfile.clean_back("ac3232" + "0".repeat(100)), "", "старый рисунок вместо имени — CLASSIC")
 
 	var saved_path := PlayerProfile.path_override
 	PlayerProfile.path_override = "user://test_card_back.cfg"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.save_local({"name": "Jarlaxle", "emblem": ""})
-	PlayerProfile.save_back(back)
+	check(not SkinCollection.set_back("web"), "не открытую рубашку не надеть")
+	check_eq(SkinCollection.active_back(), "", "у новичка рубашка CLASSIC")
+	PlayerProfile.save_back("skull")
+	check_eq(String(PlayerProfile.load_local()["back"]), "", "не открытая рубашка из файла не уходит в партию")
+	SkinCollection.grant({"dust": 1700})
+	check(SkinCollection.craft_back("web"), "рубашка создаётся за пыль ULTRA")
+	check_eq(int(SkinCollection.load_data()["dust"]), 100, "списано %d пыли" % SkinCollection.CRAFT_COST["ultra"])
+	check_eq(SkinCollection.active_back(), "web", "созданная рубашка сразу надета")
+	check(not SkinCollection.craft_back("web") and not SkinCollection.craft_back(CardBack.CLASSIC),
+		"второй раз и CLASSIC не создаются")
+	check(SkinCollection.set_back(CardBack.CLASSIC) and SkinCollection.active_back() == "", "CLASSIC надевается всегда")
+	check(SkinCollection.set_back("web"), "открытая рубашка надевается снова")
 	PlayerProfile.save_local({"name": "Jarlaxle2", "emblem": ""})
-	check_eq(String(PlayerProfile.load_local()["back"]), back, "сохранение имени не стирает рубашку")
+	check_eq(String(PlayerProfile.load_local()["back"]), "web", "сохранение имени не снимает рубашку")
+
+	# Лутбокс: из ULTRA часть — рубашки.
+	var rng := RandomNumberGenerator.new()
+	var backs := 0
+	var all_ultra := true
+	SkinCollection.grant({"boxes": 400})
+	for i in 400:
+		rng.seed = i
+		var got := SkinCollection.open_box(rng)
+		if got.has("back"):
+			backs += 1
+			all_ultra = all_ultra and got["tier"] == "ultra" \
+				and SkinCollection.collectible_backs().has(String(got["back"]))
+	check(all_ultra, "рубашка из лутбокса — ступени ULTRA")
+	check(backs > 0 and backs < 20, "рубашки выпадают редко, как ULTRA (%d из 400)" % backs)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = saved_path
 
-	PlayerProfile.seats = {"blue": {"name": "Vizeran", "back": back}}
-	check_eq(PlayerProfile.back_of("blue"), back, "рубашка соперника по цвету места")
+	PlayerProfile.seats = {"blue": PlayerProfile.clean({"name": "Vizeran", "back": "eye"})}
+	check_eq(PlayerProfile.back_of("blue"), "eye", "рубашка соперника по цвету места")
 	check_eq(PlayerProfile.back_of("red"), "", "без профиля — обычная рубашка")
 	PlayerProfile.seats = {}
 
@@ -3402,12 +3375,12 @@ func test_main_menu() -> void:
 		name_button.pressed.emit()
 	check(opened.has("profile"), "щелчок по имени открывает профиль")
 	var profile := ProfileScreen.new()
-	check(_find_button(profile, "CARD BACK") != null and _find_button(profile, "STATS") != null
-		and _find_button(profile, "BACKGROUND") != null, "в профиле есть вкладка STATS, CARD BACK и BACKGROUND")
+	check(_find_button(profile, "COLLECTION") != null and _find_button(profile, "STATS") != null
+		and _find_button(profile, "CARD BACK") == null, "в профиле STATS и COLLECTION; рубашки и фон — внутри коллекции")
 	check(_find_button(menu, "BACKGROUND: CLASSIC") == null, "выбора фона в главном меню нет — он в профиле")
 	profile.free()
 	var first_profile := ProfileScreen.new(true)
-	check(_find_button(first_profile, "CARD BACK") == null, "при первом запуске — только имя и герб")
+	check(_find_button(first_profile, "COLLECTION") == null, "при первом запуске — только имя и герб")
 	first_profile.free()
 
 	var got := {}

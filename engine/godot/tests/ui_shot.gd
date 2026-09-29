@@ -133,25 +133,12 @@ func _run_scenario() -> void:
 					fake[st.turn_order[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r}
 				_screen._game_over_panel.set_ratings(fake)
 		"background":
-			# Экран фона с рисунком: ночь, луна, горы. Отдельный файл профиля.
+			# Коллекция, раздел фонов (рисовалки фона больше нет). Отдельный файл профиля.
 			PlayerProfile.path_override = "user://profile_shot.cfg"
-			var painter := BackgroundScreen.new()
-			root.add_child(painter)
-			painter.set_brush(Color("222034"))
-			painter._push_undo()
-			painter._image.fill(Color("222034"))
-			painter.set_brush(Color("3f3f74"))
-			painter.set_brush_size(4)
-			for x in range(0, 160, 2):
-				var top := 60 - int(18.0 * absf(sin(x * 0.05)))
-				for y in range(top, 90, 3):
-					painter.paint_at(x, y)
-			painter.set_brush(Color("cbdbfc"))
-			for y in range(14, 24, 2):
-				for x in range(120, 130, 2):
-					if Vector2(x - 125, y - 19).length() < 5.0:
-						painter.paint_at(x, y)
-			painter._changed()
+			var bg_profile := ProfileScreen.new()
+			bg_profile._page = "COLLECTION"
+			root.add_child(bg_profile)
+			bg_profile._collection.show_section("BACKGROUNDS")
 		"profile_card":
 			# Карточка соперника поверх партии (щелчок по имени в таблице игроков).
 			PlayerProfile.seats = {"blue": {"name": "Zinda", "emblem": "", "rating": 1163, "games": 22, "wins": 12}}
@@ -484,20 +471,14 @@ func _run_scenario() -> void:
 			# Главное меню поверх партии (строка профиля с кнопками).
 			root.add_child(SetupScreen.new())
 		"card_back":
-			# Рисовалка рубашки поверх партии: зеркальный череп-паук.
-			var back_editor := CardBackScreen.new()
-			root.add_child(back_editor)
-			back_editor.set_mirror(true)
-			for y in range(6, 26):
-				for x in range(6, 16):
-					var dx := 15.5 - x
-					var dy := y - 14.0
-					if dx * dx / 90.0 + dy * dy / 70.0 <= 1.0:
-						back_editor.paint(x, y, Color("cbdbfc"))
-			for x in range(9, 14):
-				back_editor.paint(x, 12, Color("ac3232"))
-			for i in range(8):
-				back_editor.paint(2 + i, 4 + i * 3, Color("fbf236"))
+			# Коллекция, раздел рубашек: открыта и надета LOLTH'S WEB.
+			PlayerProfile.path_override = "user://profile_shot.cfg"
+			SkinCollection.grant({"dust": SkinCollection.CRAFT_COST["ultra"]})
+			SkinCollection.craft_back("web")
+			var back_profile := ProfileScreen.new()
+			back_profile._page = "COLLECTION"
+			root.add_child(back_profile)
+			back_profile._collection.show_section("CARD BACKS")
 		"emblems":
 			# Войска на доске с гербами: у красного крест, у синего точка.
 			var cross: Array[Color] = []

@@ -9,7 +9,8 @@ extends RefCounted
 ## превращается в пыль. За пыль образ можно создать сам (craft).
 ##
 ## Три ступени образа: EPIC (Faerie Fire), LEGENDARY (позолота), ULTRA
-## (призма); как они выглядят — scenes/ui/card_skin.gdshader.
+## (призма); как они выглядят — scenes/ui/card_skin.gdshader. Рубашки карт
+## (CardBack) тоже здесь: они ступени ULTRA (BACK_TIER).
 ##
 ## Коллекция хранится у игрока, в файле профиля (секция "collection"), как и
 ## история партий. В партию уходят только включённые образы (active): карта ->
@@ -30,6 +31,11 @@ const CRAFT_COST := {"epic": 200, "legendary": 600, "ultra": 1600}
 const DUPLICATE_DUST := {"epic": 50, "legendary": 150, "ultra": 400}
 ## Шансы ступени в лутбоксе, в процентах (в сумме 100).
 const BOX_ODDS := {"epic": 75, "legendary": 21, "ultra": 4}
+## Рубашки карт (CardBack) — ступени ULTRA (решение владельца, 2026-09-30):
+## стоят и повторяются как ULTRA; из выпавших ULTRA такая доля — рубашки.
+const BACK_TIER := "ultra"
+const BACK_SHARE := 0.5
+const BACK_PREFIX := "back"
 
 const SECTION := "collection"
 
@@ -69,7 +75,8 @@ static func clean_skins(skins: Variant) -> Dictionary:
 
 # --- хранение у игрока ---------------------------------------------------------
 
-## {dust, boxes, owned: ["карта:ступень", ...], active: карта -> ступень}.
+## {dust, boxes, owned: ["карта:ступень" и "back:рубашка", ...],
+## active: карта -> ступень}. Выбранная рубашка — в профиле (active_back).
 static func load_data() -> Dictionary:
 	var cfg := ConfigFile.new()
 	cfg.load(PlayerProfile.path())
@@ -78,7 +85,9 @@ static func load_data() -> Dictionary:
 	if saved_owned is Array:
 		for item in saved_owned:
 			var parts := String(item).split(":")
-			if parts.size() == 2 and TIERS.has(parts[1]) and is_skinnable(parts[0]) and not owned.has(String(item)):
+			var good := parts.size() == 2 and ((TIERS.has(parts[1]) and is_skinnable(parts[0]))
+				or (parts[0] == BACK_PREFIX and _is_back(parts[1])))
+			if good and not owned.has(String(item)):
 				owned.append(String(item))
 	var active := {}
 	var saved_active = cfg.get_value(SECTION, "active", {})
@@ -140,6 +149,8 @@ static func open_box(rng: RandomNumberGenerator) -> Dictionary:
 	var cid := cards[rng.randi_range(0, cards.size() - 1)]
 	var tier := tier_for_roll(rng.randi_range(0, 99))
 	data["boxes"] = int(data["boxes"]) - 1
+	if tier == BACK_TIER and rng.randf() < BACK_SHARE:
+		return _drop_back(data, rng)
 	var key := skin_key(cid, tier)
 	var dup := (data["owned"] as Array).has(key)
 	var dust := 0
@@ -152,6 +163,80 @@ static func open_box(rng: RandomNumberGenerator) -> Dictionary:
 			data["active"][cid] = tier
 	_save(data)
 	return {"card": cid, "tier": tier, "duplicate": dup, "dust": dust}
+
+
+## Из лутбокса выпала рубашка: {back, tier, duplicate, dust}. Новая сразу
+## надевается, если до неё была обычная.
+static func _drop_back(data: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
+	var backs := collectible_backs()
+	var design := backs[rng.randi_range(0, backs.size() - 1)]
+	var key := back_key(design)
+	var dup := (data["owned"] as Array).has(key)
+	var dust := 0
+	if dup:
+		dust = int(DUPLICATE_DUST[BACK_TIER])
+		data["dust"] = int(data["dust"]) + dust
+	else:
+		(data["owned"] as Array).append(key)
+	_save(data)
+	if not dup and active_back() == "":
+		PlayerProfile.save_back(design)
+	return {"back": design, "tier": BACK_TIER, "duplicate": dup, "dust": dust}
+
+
+# --- рубашки -------------------------------------------------------------------
+
+## Рубашки, которые открываются (все, кроме CLASSIC — она есть у всех).
+static func collectible_backs() -> Array[String]:
+	var out: Array[String] = []
+	for design in CardBack.DESIGNS:
+		if design != CardBack.CLASSIC:
+			out.append(design)
+	return out
+
+
+static func _is_back(design: String) -> bool:
+	return design != CardBack.CLASSIC and CardBack.DESIGNS.has(design)
+
+
+static func back_key(design: String) -> String:
+	return "%s:%s" % [BACK_PREFIX, design]
+
+
+static func owns_back(design: String) -> bool:
+	return design == CardBack.CLASSIC or design == "" or (load_data()["owned"] as Array).has(back_key(design))
+
+
+## Надетая рубашка ("" — CLASSIC). Не открытая (правили файл) не в счёт.
+static func active_back() -> String:
+	var cfg := ConfigFile.new()
+	cfg.load(PlayerProfile.path())
+	var design := PlayerProfile.clean_back(String(cfg.get_value("profile", "back", "")))
+	return design if owns_back(design) else ""
+
+
+## Надеть рубашку. false — она не открыта.
+static func set_back(design: String) -> bool:
+	if not owns_back(design):
+		return false
+	PlayerProfile.save_back(design)
+	return true
+
+
+## Создать рубашку за пыль (цена ULTRA) и сразу надеть.
+static func craft_back(design: String) -> bool:
+	if not _is_back(design):
+		return false
+	var data := load_data()
+	var key := back_key(design)
+	var cost := int(CRAFT_COST[BACK_TIER])
+	if (data["owned"] as Array).has(key) or int(data["dust"]) < cost:
+		return false
+	data["dust"] = int(data["dust"]) - cost
+	(data["owned"] as Array).append(key)
+	_save(data)
+	PlayerProfile.save_back(design)
+	return true
 
 
 ## Создать образ за пыль. false — уже есть, не хватает пыли или карта без образов.
