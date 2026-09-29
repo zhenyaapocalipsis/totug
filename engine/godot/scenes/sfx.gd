@@ -83,7 +83,7 @@ func _ready() -> void:
 	_streams = {
 		"click": _files("click", 1),
 		"hover": [_wav(_hover())],
-		"card": _files("card", 4),
+		"card": _files("card", 2),
 		"coins": _files("coins", 2),
 		"error": [_wav(_buzz())],
 	}
