@@ -1466,6 +1466,9 @@ func _hitstop(seconds: float) -> void:
 func _exit_tree() -> void:
 	# Экран закрыли посреди стоп-кадра — время не должно остаться стоящим.
 	Engine.time_scale = 1.0
+	# Вышли из партии — музыка главного меню, без приглушения.
+	Music.set_mood("menu")
+	Music.set_muffled(false)
 
 
 static func _error_name(err: int) -> String:
@@ -1631,6 +1634,16 @@ static func auto_decision_answer(options: Array) -> Variant:
 	return options[0]
 
 
+## Настроение музыки (см. Music.MOODS): итоги, последний круг, мой ход или
+## ожидание соперника. В хотсите за экраном всегда тот, кто ходит.
+static func music_mood(view: Dictionary, viewer: String, hotseat: bool) -> String:
+	if bool(view.get("game_over", false)):
+		return "end"
+	if bool(view.get("game_end_triggered", false)):
+		return "tension"
+	return "turn" if hotseat or acting_player(view) == viewer else "wait"
+
+
 ## Конец партии звучит один раз: победная мелодия или грустная. В хотсите
 ## «проигравшего» за экраном нет — всегда победная.
 func _sound_game_over(view: Dictionary) -> void:
@@ -1647,6 +1660,7 @@ func refresh(view: Dictionary) -> void:
 	_barracks.update_from_view(view)
 	_game_over_panel.update_from_view(view)
 	_sound_game_over(view)
+	Music.set_mood(music_mood(view, viewer_id, net == null))
 	_hand_panel.update_from_view(view, viewer_id)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)

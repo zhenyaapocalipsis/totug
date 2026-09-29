@@ -51,9 +51,16 @@ func _init() -> void:
 		Sfx.cycle_volume()
 		sound.text = Sfx.volume_label())
 	col.add_child(sound)
+	var music := _button(Music.volume_label(), func(): pass)
+	music.pressed.connect(func():
+		Music.cycle_volume()
+		music.text = Music.volume_label())
+	col.add_child(music)
 	col.add_child(_button("MAIN MENU", func(): main_menu_requested.emit()))
 	col.add_child(_button("QUIT GAME", func(): get_tree().quit()))
 	_col = col
+	# Пока меню открыто, музыка звучит приглушённо, «за стеной».
+	visibility_changed.connect(func(): Music.set_muffled(is_visible_in_tree()))
 
 
 ## Ещё одна кнопка — сразу под RESUME (сетевая партия: PAUSE FOR ALL).
