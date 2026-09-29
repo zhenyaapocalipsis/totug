@@ -246,6 +246,13 @@ func _flush_captures() -> void:
 func _fire_captures(sites: Array[String]) -> void:
 	if sites.is_empty():
 		return
+	# Один удар колокола на все захваты разом; чужой захват — тише. Локация
+	# просто потеряла хозяина — без колокола.
+	for site_id in sites:
+		var owner := String(_control.get(site_id, ""))
+		if owner != "":
+			Sfx.play("capture", owner != _viewer_id)
+			break
 	for site_id in sites:
 		_captures[site_id] = CAPTURE_TIME
 		spark_at_site(site_id, PLAYER_COLORS.get(String(_control.get(site_id, "")), Color(0.8, 0.8, 0.8)))
@@ -341,6 +348,7 @@ func _step_kills(delta: float) -> void:
 ## жертвы, доска дёргается. Supplant: фишка утонула — из лужи брызги.
 func _strike(k: Dictionary) -> void:
 	var slot_id := String(k["slot"])
+	Sfx.play("sink" if bool(k["supplant"]) else "kill", String(k["killer"]) != _viewer_id)
 	var at: Variant = _slot_world(slot_id)
 	if at != null:
 		var pos: Vector2 = _to_screen(at)
@@ -361,6 +369,7 @@ func _surface(k: Dictionary) -> void:
 	if at == null:
 		return
 	var pos: Vector2 = _to_screen(at)
+	Sfx.play("deploy", String(k["killer"]) != _viewer_id)
 	_impacts.append({"key": "troop|" + String(k["slot"]), "pos": pos, "left": IMPACT_TIME,
 		"radius": _arrival_radius("troop|"), "colour": troop_colour(String(k["killer"]))})
 	shake(LAND_SHAKE)
@@ -659,6 +668,7 @@ func land(key: String, heavy: bool = true) -> void:
 		queue_redraw()
 		return
 	var colour := troop_colour(_arrival_owner(key))
+	Sfx.play("deploy" if heavy else "spy", _arrival_owner(key) != _viewer_id)
 	_impacts.append({"key": key, "pos": at, "left": IMPACT_TIME,
 		"radius": _arrival_radius(key), "colour": colour})
 	_dust(at, colour)

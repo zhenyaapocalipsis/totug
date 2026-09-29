@@ -1049,15 +1049,15 @@ func _react_to_events(events: Array) -> void:
 					power = maxf(power, SHAKE_KILL)
 			"return_troop":
 				power = maxf(power, SHAKE_NUDGE)
-				started = _return_troop(String(evt.get("owner", "")),
+				started = _return_troop(String(evt.get("owner", "")), pid != viewer_id,
 					String(evt.get("slot_id", "")), launched)
 			"return_spy":
 				power = maxf(power, SHAKE_NUDGE)
-				started = _return_spy(String(evt.get("owner", "")),
+				started = _return_spy(String(evt.get("owner", "")), pid != viewer_id,
 					String(evt.get("site_id", "")), launched)
 			"return_own_spy":
 				power = maxf(power, SHAKE_NUDGE)
-				started = _return_spy(pid, String(evt.get("site_id", "")), launched)
+				started = _return_spy(pid, pid != viewer_id, String(evt.get("site_id", "")), launched)
 			# Свою покупку щелчком игрок и так видит (карта летит в сброс),
 			# чужую — только витриной.
 			"recruit":
@@ -1350,23 +1350,27 @@ func _move_troop(owner: String, from_slot: String, to_slot: String, order: int) 
 
 ## Return: войско срывается с места и улетает в барак хозяина, барак
 ## вспыхивает, принимая его. У белых (нейтральных) войск барака нет — они
-## взлетают и тают на месте.
-func _return_troop(owner: String, slot_id: String, order: int) -> bool:
+## взлетают и тают на месте. Отрыв от доски — звук «сняли фишку»; quiet —
+## снимает соперник.
+func _return_troop(owner: String, quiet: bool, slot_id: String, order: int) -> bool:
 	var from: Variant = _board_at(_board_panel.slot_global(slot_id))
 	if owner == "" or from == null:
 		return false
 	var colour := BoardPanel.troop_colour(owner)
 	_fly_to_barracks(_troop_token(owner), owner, from, order,
-		func() -> void: _board_panel.dust_at_slot(slot_id, colour))
+		func() -> void:
+			Sfx.play("lift", quiet)
+			_board_panel.dust_at_slot(slot_id, colour))
 	return true
 
 
 ## Шпион owner улетает от локации site_id обратно в барак.
-func _return_spy(owner: String, site_id: String, order: int) -> bool:
+func _return_spy(owner: String, quiet: bool, site_id: String, order: int) -> bool:
 	var from: Variant = _board_at(_board_panel.spy_departure_global(site_id))
 	if owner == "" or from == null:
 		return false
-	_fly_to_barracks(_spy_token(owner), owner, from, order, Callable())
+	_fly_to_barracks(_spy_token(owner), owner, from, order,
+		func() -> void: Sfx.play("lift", quiet))
 	return true
 
 

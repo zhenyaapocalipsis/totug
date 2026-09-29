@@ -88,6 +88,14 @@ func _ready() -> void:
 		"card": _files("card", 2),
 		"coins": _files("coins", 2),
 		"error": [_wav(_buzz())],
+		# Доска: посадка войска и шпиона, удар Assassinate, «утонул» при
+		# Supplant, фишку сняли с доски (return), локация сменила хозяина.
+		"deploy": _files("deploy", 2),
+		"spy": _files("spy", 2),
+		"kill": _files("kill", 1),
+		"sink": _files("sink", 2),
+		"lift": _files("lift", 1),
+		"capture": _files("capture", 1),
 	}
 	get_tree().node_added.connect(_on_node_added)
 
