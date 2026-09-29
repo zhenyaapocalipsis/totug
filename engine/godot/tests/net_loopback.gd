@@ -260,6 +260,8 @@ func _process(delta: float) -> bool:
 				check(room.matched, "[match] стол поиска игры помечен — за него будет награда")
 				check((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("skins", {}) \
 					== {SkinCollection.skinnable_cards()[0]: "legendary"}, "[match] образы карт соперника дошли")
+				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("favourite", "")) == "48314",
+					"[match] любимая карта соперника дошла")
 				waiting.close()
 				# Имена проверяются и в очереди: чужой ключ с именем первого — отказ.
 				_impostor = _session()
@@ -567,7 +569,7 @@ func _track(p: NetSession) -> void:
 	_tracked += 1
 	# Все хотят purple: за столом он достаётся одному, остальные — другие цвета.
 	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches), "back": _back_for(_tracked),
-		"colour": "purple", "skins": {SkinCollection.skinnable_cards()[0]: "legendary"}}
+		"colour": "purple", "skins": {SkinCollection.skinnable_cards()[0]: "legendary"}, "favourite": "48314"}
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	views[p] = {}

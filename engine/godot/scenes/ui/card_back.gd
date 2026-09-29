@@ -2,50 +2,147 @@ class_name CardBack
 extends RefCounted
 
 ## Рубашка карты в полный размер (CardView.PIXEL_SIZE, 1:1). Рубашки — готовые
-## рисунки (решение владельца, 2026-09-30: рисовалки больше нет, стиль —
-## тёмный минимализм как в Balatro): сплошной тёмный цвет фракции, толстая
-## приглушённая рамка со скруглёнными углами и один простой знак в центре.
-## CLASSIC есть у всех, остальные — по одной на фракцию, ступени ULTRA —
-## выпадают из лутбокса или создаются за пыль (SkinCollection). Соперники
-## видят рубашку, когда игрок берёт карту вслепую (CardShowcase).
+## рисунки (решение владельца, 2026-09-30: рисовалки нет, стиль — тёмный
+## минимализм как в Balatro): поле у всех одного цвета — основного цвета
+## лицевой стороны карт (её тёмно-фиолетовой рамки), рамка со скруглёнными
+## углами — цвета фракции, поле замощено приглушёнными знаками фракции.
+## CLASSIC есть у всех, остальные — ступени ULTRA — выпадают из лутбокса или
+## создаются за пыль (SkinCollection). Соперники видят рубашку, когда игрок
+## берёт карту вслепую (CardShowcase). В коллекции рубашка переливается
+## шейдером card_skin.gdshader (ступень BACK_SHEEN).
 ##
-## Всё рисуется кодом по пикселям, без сглаживания; переход к краям поля —
-## дизеринг, без градиента.
+## Всё рисуется кодом по пикселям, без сглаживания; знаки — пиксельные
+## спрайты-строки (# — знак, . — пусто).
 
 const CLASSIC := "classic"
 ## Порядок показа в коллекции: CLASSIC, затем фракции в порядке полуколод.
 const DESIGNS: Array[String] = ["classic", "drow", "dragons", "demons", "elementals", "aberrations", "undead"]
 const NAMES := {"classic": "CLASSIC", "drow": "DROW", "dragons": "DRAGONS", "demons": "DEMONS",
 	"elementals": "ELEMENTALS", "aberrations": "ABERRATIONS", "undead": "UNDEAD"}
-## Поле и рамка/знак каждой рубашки.
-const LOOK := {
-	"classic": ["1e1830", "a08a4a"],
-	"drow": ["22103a", "8a62b8"],
-	"dragons": ["2e1406", "b86a26"],
-	"demons": ["2e080e", "a83a46"],
-	"elementals": ["06262e", "3a96a6"],
-	"aberrations": ["122a0c", "5e9a34"],
-	"undead": ["0e1630", "6a80b4"],
+## Поле — основной цвет лицевой стороны карты (рамка карт cards_pixel).
+const FIELD := Color("24153f")
+## Рамка и знаки каждой рубашки.
+const INK := {
+	"classic": "b0924a",
+	"drow": "9a6ad0",
+	"dragons": "d07a2a",
+	"demons": "c04450",
+	"elementals": "3aa6b6",
+	"aberrations": "6aae3a",
+	"undead": "7a92c8",
 }
 const BAYER := [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 ## Толщина рамки и отступ тонкой внутренней линии от края.
 const RIM := 6
 const INNER := 10
+## Шаг узора знаков; каждый второй ряд сдвинут на полшага.
+const STEP := Vector2i(26, 26)
+## Насколько знаки узора видны на поле (0 — не видны, 1 — цвет рамки).
+const PATTERN_MIX := 0.5
 
-## Череп нежити: # — кость, o — глазница.
-const SKULL := [
-	"..#######..",
-	".#########.",
-	"###########",
-	"###########",
-	"#ooo###ooo#",
-	"#ooo###ooo#",
-	"###########",
-	".####o####.",
-	"..#######..",
-	"..#.#.#.#..",
-	"..#######..",
-]
+## Знаки узора. У стихий их четыре — огонь, вода, земля, воздух — по очереди.
+const GLYPHS := {
+	"classic": [[
+		"...#...",
+		"..#.#..",
+		".#...#.",
+		"#..#..#",
+		".#...#.",
+		"..#.#..",
+		"...#...",
+	]],
+	"drow": [[
+		"#..#...#..#",
+		".#..#.#..#.",
+		"..#.###.#..",
+		"...#####...",
+		"#####.#####",
+		"...#####...",
+		"..#######..",
+		".#.#####.#.",
+		"#..#####..#",
+		"....###....",
+	]],
+	"dragons": [[
+		"....#....#....#",
+		"...##...##...##",
+		"...#....#....#.",
+		"..##...##...##.",
+		"..#....#....#..",
+		".##...##...##..",
+		".#....#....#...",
+		"#....#....#....",
+	]],
+	"demons": [[
+		"#.........#",
+		"#.........#",
+		"##.......##",
+		".##.....##.",
+		"..#######..",
+		"..#.###.#..",
+		"..#######..",
+		"...#####...",
+	]],
+	"elementals": [
+		[
+			"...#...",
+			"..##...",
+			"..###.#",
+			".####.#",
+			".######",
+			"###.###",
+			"##...##",
+			"##...##",
+			".#####.",
+		], [
+			"...#...",
+			"...#...",
+			"..###..",
+			"..###..",
+			".#####.",
+			"##.####",
+			"#.#####",
+			"##.####",
+			".#####.",
+		], [
+			"...#...",
+			"..###..",
+			"..####.",
+			".###.#.",
+			".######",
+			"###.###",
+			"#######",
+		], [
+			"..####.",
+			"......#",
+			"######.",
+			".......",
+			"#####..",
+			".....#.",
+			"..###..",
+		],
+	],
+	"aberrations": [[
+		"....#####....",
+		"..#########..",
+		".####...####.",
+		"####..#..####",
+		".####...####.",
+		"..#########..",
+		"....#####....",
+	]],
+	"undead": [[
+		"..#####..",
+		".#######.",
+		"#########",
+		"#..###..#",
+		"#..###..#",
+		"####.####",
+		".#######.",
+		"..#.#.#..",
+		"..#####..",
+	]],
+}
 
 static var _textures: Dictionary = {}
 
@@ -65,9 +162,8 @@ static func texture(design: String) -> ImageTexture:
 
 static func image(design: String) -> Image:
 	var d := clean(design)
-	var fill := Color(LOOK[d][0])
-	var ink := Color(LOOK[d][1])
-	var shade := fill.darkened(0.35)
+	var ink := Color(INK[d])
+	var shade := FIELD.darkened(0.35)
 	var size := Vector2i(CardView.PIXEL_SIZE)
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -79,7 +175,7 @@ static func image(design: String) -> Image:
 			# Скруглённые углы.
 			if cx < 4 and cy < 4 and (4 - cx) * (4 - cx) + (4 - cy) * (4 - cy) > 17:
 				continue
-			var colour := fill
+			var colour := FIELD
 			if cx < RIM or cy < RIM:
 				colour = ink.darkened(0.25) if cx == 0 or cy == 0 else ink
 			elif (cx == INNER or cy == INNER) and cx >= INNER and cy >= INNER:
@@ -90,115 +186,30 @@ static func image(design: String) -> Image:
 				if _bay(x, y) < dist * 0.6:
 					colour = shade
 			img.set_pixel(x, y, colour)
-	match d:
-		"drow":
-			_spider(img, c, ink, fill)
-		"dragons":
-			_claws(img, c, ink)
-		"demons":
-			_horns(img, c, ink, fill)
-		"elementals":
-			_elements(img, c, ink, fill)
-		"aberrations":
-			_eye(img, c, ink, fill)
-		"undead":
-			_skull(img, c, ink, fill)
-		_:
-			_diamond(img, c, ink, fill)
+	_pattern(img, d, FIELD.lerp(ink, PATTERN_MIX))
 	return img
 
 
-# --- знаки -------------------------------------------------------------------
-
-## CLASSIC: ромб-рамка.
-static func _diamond(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
-	for d in 14:
-		img.fill_rect(Rect2i(c.x - (13 - d), c.y - d, (13 - d) * 2 + 1, 1), ink)
-		img.fill_rect(Rect2i(c.x - (13 - d), c.y + d, (13 - d) * 2 + 1, 1), ink)
-	for d in 8:
-		img.fill_rect(Rect2i(c.x - (7 - d), c.y - d, (7 - d) * 2 + 1, 1), fill)
-		img.fill_rect(Rect2i(c.x - (7 - d), c.y + d, (7 - d) * 2 + 1, 1), fill)
-
-
-## DROW: паук — брюшко, голова и восемь ног.
-static func _spider(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
-	var r := Rect2i(Vector2i.ZERO, img.get_size())
-	for leg in 4:
-		for side in [-1, 1]:
-			var knee := c + Vector2i(side * (10 + leg * 2), -9 + leg * 5)
-			var foot := knee + Vector2i(side * 6, 7 + leg)
-			for w in 2:
-				_line(img, c + Vector2i(w * side, -3 + leg * 2), knee + Vector2i(w * side, 0), ink, r)
-				_line(img, knee + Vector2i(w * side, 0), foot + Vector2i(w * side, 0), ink, r)
-	_disc(img, c + Vector2i(0, 6), 8, ink, ink)
-	_disc(img, c + Vector2i(0, -6), 5, ink, ink)
-	img.fill_rect(Rect2i(c + Vector2i(-1, 3), Vector2i(3, 2)), fill)
-	img.fill_rect(Rect2i(c + Vector2i(0, 5), Vector2i(1, 3)), fill)
-	img.fill_rect(Rect2i(c + Vector2i(-1, 8), Vector2i(3, 2)), fill)
-
-
-## DRAGONS: три следа когтей.
-static func _claws(img: Image, c: Vector2i, ink: Color) -> void:
-	for k in [-1, 0, 1]:
-		for t in 30:
-			var y := -15 + t
-			var x: int = k * 9 + roundi(-y * 0.35 + sin(t * 0.1) * 2.0)
-			var half := int(2.5 * sin(PI * t / 29.0) + 0.5)
-			img.fill_rect(Rect2i(c.x + x - half, c.y + y, half * 2 + 1, 1), ink)
-
-
-## DEMONS: пара рогов над полукругом лба.
-static func _horns(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
-	for side in [-1, 1]:
-		for t in 26:
-			var k := t / 25.0
-			var x: int = side * roundi(6 + 12 * sin(k * 1.9))
-			var y := 8 - roundi(26 * k)
-			var half := int(4.0 * (1.0 - k) + 0.5)
-			img.fill_rect(Rect2i(c.x + x - half, c.y + y, half * 2 + 1, 1), ink)
-	for y in range(0, 10):
-		var half := int(sqrt(maxf(0.0, 100.0 - y * y)) * 1.1)
-		img.fill_rect(Rect2i(c.x - half, c.y + 6 + y, half * 2 + 1, 1), ink)
-	img.fill_rect(Rect2i(c + Vector2i(-6, 9), Vector2i(4, 2)), fill)
-	img.fill_rect(Rect2i(c + Vector2i(3, 9), Vector2i(4, 2)), fill)
-
-
-## ELEMENTALS: круг, разделённый крестом на четыре стихии.
-static func _elements(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
-	_disc(img, c, 15, ink, ink)
-	_disc(img, c, 11, fill, fill)
-	img.fill_rect(Rect2i(c.x - 1, c.y - 15, 3, 31), ink)
-	img.fill_rect(Rect2i(c.x - 15, c.y - 1, 31, 3), ink)
-	for q in [Vector2i(-6, -6), Vector2i(6, -6), Vector2i(-6, 6), Vector2i(6, 6)]:
-		_disc(img, c + q, 2, ink, ink)
-
-
-## ABERRATIONS: глаз с круглым зрачком и ресницами-стебельками.
-static func _eye(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
-	for y in range(-9, 10):
-		var half := int(16.0 * sqrt(1.0 - (y * y) / 100.0))
-		img.fill_rect(Rect2i(c.x - half, c.y + y, half * 2 + 1, 1), ink)
-	_disc(img, c, 6, fill, fill)
-	_disc(img, c, 3, ink, ink)
-	for k in [-2, -1, 0, 1, 2]:
-		var a: float = -PI / 2.0 + k * 0.5
-		var from := c + Vector2i(roundi(cos(a) * 12), roundi(sin(a) * 9))
-		var to := c + Vector2i(roundi(cos(a) * 19), roundi(sin(a) * 17))
-		_line(img, from, to, ink, Rect2i(Vector2i.ZERO, img.get_size()))
-
-
-## UNDEAD: череп.
-static func _skull(img: Image, c: Vector2i, ink: Color, fill: Color) -> void:
-	var zoom := 3
-	var w: int = String(SKULL[0]).length()
-	var origin := c - Vector2i(w * zoom / 2, SKULL.size() * zoom / 2)
-	for row in SKULL.size():
-		var line: String = SKULL[row]
-		for col in line.length():
-			if line[col] == ".":
-				continue
-			img.fill_rect(Rect2i(origin + Vector2i(col, row) * zoom, Vector2i.ONE * zoom),
-				fill if line[col] == "o" else ink)
+## Поле замощено знаками рубашки: сетка STEP от центра карты, каждый второй
+## ряд со сдвигом; знаки у края поля обрезаются внутренней линией.
+static func _pattern(img: Image, design: String, colour: Color) -> void:
+	var glyphs: Array = GLYPHS[design]
+	var size := img.get_size()
+	var inside := Rect2i(INNER + 1, INNER + 1, size.x - 2 * INNER - 2, size.y - 2 * INNER - 2)
+	var c := size / 2
+	for row in range(-6, 7):
+		for col in range(-5, 6):
+			var at := c + Vector2i(col * STEP.x + (STEP.x / 2 if posmod(row, 2) == 1 else 0), row * STEP.y)
+			var glyph: Array = glyphs[posmod(row * 3 + col, glyphs.size())]
+			var h := glyph.size()
+			var w := String(glyph[0]).length()
+			var origin := at - Vector2i(w / 2, h / 2)
+			for gy in h:
+				var line: String = glyph[gy]
+				for gx in line.length():
+					var p := origin + Vector2i(gx, gy)
+					if line[gx] == "#" and inside.has_point(p):
+						img.set_pixelv(p, colour)
 
 
 # --- кисти -------------------------------------------------------------------

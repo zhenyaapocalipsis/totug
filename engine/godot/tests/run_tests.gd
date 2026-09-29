@@ -1239,12 +1239,14 @@ func test_skin_collection() -> void:
 	var page := CollectionPage.new()
 	check(_all_text(page).contains("DUST 100") and _all_text(page).contains("LOOT BOXES 1"),
 		"вкладка показывает пыль и лутбоксы")
+	# Сид с картой в лутбоксе (не рубашкой): без него тест зависел бы от случая.
+	page._rng.seed = 7
 	var dropped := page.open_box()
 	check_eq(page.selected(), String(dropped["card"]), "открытый лутбокс показывает выпавшую карту")
 	check(_all_text(page).contains("New: ") and _all_text(page).contains("LOOT BOXES 0"),
 		"сообщение о новом образе, лутбокс потрачен")
 	check(page.open_box().is_empty(), "лутбоксов больше нет — открывать нечего")
-	var other := cards[3] if cards[3] != String(dropped["card"]) else cards[4]
+	var other := cards[3] if cards[3] != String(dropped.get("card", "")) else cards[4]
 	page.select(other)
 	page.press_tier("epic")
 	check(_all_text(page).contains("Not enough dust") and not SkinCollection.owns(other, "epic"),
@@ -1261,6 +1263,12 @@ func test_skin_collection() -> void:
 	check(not SkinCollection.active().has(other), "PLAIN — карта снова без образа")
 	page.press_tier("epic")
 	check_eq(SkinCollection.active().get(other, ""), "epic", "открытый образ включается одним щелчком")
+	page.toggle_favourite()
+	check(PlayerProfile.favourite() == other and _all_text(page).contains("YOUR FAVOURITE CARD") == false
+		and _find_button(page, "YOUR FAVOURITE CARD") != null, "выбранная карта стала любимой")
+	check_eq(String(PlayerProfile.load_local()["favourite"]), other, "любимая карта уходит в партию с профилем")
+	page.toggle_favourite()
+	check_eq(PlayerProfile.favourite(), "", "второй щелчок снимает любимую карту")
 	page.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
@@ -3286,7 +3294,7 @@ func test_card_back() -> void:
 			"рубашка %s во весь размер карты" % design)
 	check_eq(CardBack.clean("nonsense"), CardBack.CLASSIC, "неизвестная рубашка — CLASSIC")
 	var plain := CardBack.image("")
-	check(plain.get_pixel(0, 0).a == 0.0 and plain.get_pixel(3, 40) == Color(CardBack.LOOK["classic"][1]),
+	check(plain.get_pixel(0, 0).a == 0.0 and plain.get_pixel(3, 40) == Color(CardBack.INK["classic"]),
 		"обычная рубашка: скруглённые углы, рамка своего цвета")
 	check(CardBack.texture("drow") == CardBack.texture("drow"), "текстура рубашки берётся из кэша")
 	check_eq(PlayerProfile.clean_back("drow"), "drow", "профиль хранит имя рубашки")
@@ -3333,6 +3341,45 @@ func test_card_back() -> void:
 	check_eq(PlayerProfile.back_of("blue"), "aberrations", "рубашка соперника по цвету места")
 	check_eq(PlayerProfile.back_of("red"), "", "без профиля — обычная рубашка")
 	PlayerProfile.seats = {}
+
+	# Поле у всех рубашек одного цвета — основного цвета карты; рамка — фракции.
+	var same_field := true
+	for design in CardBack.DESIGNS:
+		var img := CardBack.image(design)
+		same_field = same_field and img.get_pixel(3, 40) == Color(CardBack.INK[design])
+		var seen_field := false
+		for x in range(12, 40):
+			seen_field = seen_field or img.get_pixel(x, 127) == CardBack.FIELD
+		same_field = same_field and seen_field
+	check(same_field, "поле рубашек — один цвет (цвет карты), рамка — цвет фракции")
+
+	# Карта, которую можно покрутить (коллекция → CARD BACKS).
+	var flip := CardFlip.new()
+	flip.set_back("drow")
+	flip.set_face("48314", "legendary")
+	check(flip.shows_back(), "сначала к игроку рубашкой")
+	flip.angle = PI
+	flip._process(0.016)
+	check(not flip.shows_back() and flip._face_layer.visible and not flip._back_layer.visible,
+		"повернули — видно лицо карты")
+	check((flip._face_layer.material as ShaderMaterial).get_shader_parameter("tier") == 2,
+		"лицо — в своём образе")
+	check((flip._back_layer.material as ShaderMaterial).get_shader_parameter("tier") == 4,
+		"рубашка переливается своим шейдером")
+	flip._speed = 0.0
+	flip.angle = PI - 0.3
+	for i in 120:
+		flip._process(0.016)
+	check(is_equal_approx(flip.angle, PI), "отпустили — карта встаёт ровно лицом")
+	flip.free()
+
+	# Любимая карта.
+	check_eq(PlayerProfile.clean({"favourite": "48314"})["favourite"], "48314", "любимая карта — в профиле")
+	check_eq(PlayerProfile.clean({"favourite": "999"})["favourite"], "", "неизвестная карта — не любимая")
+	check(ProfileScreen.favourite_view("", {}) == null, "нет любимой — нечего показывать")
+	var card_fav := ProfileCard.new("blue", {"name": "Bob", "favourite": "48314", "skins": {"48314": "ultra"}})
+	check(_all_text(card_fav).contains("FAVOURITE"), "карточка игрока показывает любимую карту")
+	card_fav.free()
 
 
 func test_how_to_play() -> void:

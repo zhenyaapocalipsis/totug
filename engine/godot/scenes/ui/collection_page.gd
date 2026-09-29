@@ -51,9 +51,12 @@ var _tiles: Dictionary = {}
 var _selected := ""
 ## Что второй щелчок создаст за пыль: ступень карты или рубашка ("" — ничего).
 var _pending_craft := ""
-## CARD BACKS: кнопки рубашек, большая рубашка, кнопка USE/CRAFT.
+## CARD BACKS: кнопки рубашек, карта, которую можно покрутить (рубашка и
+## любимая карта), кнопка USE/CRAFT.
 var _back_buttons: Dictionary = {}
-var _back_preview: TextureRect
+var _back_preview: CardFlip
+## CARDS: кнопка «любимая карта» (PlayerProfile.favourite).
+var _favourite_button: Button
 var _back_action: Button
 var _back_selected := CardBack.CLASSIC
 ## BACKGROUNDS: кнопки фонов.
@@ -214,7 +217,18 @@ func _cards_page() -> Control:
 		b.mouse_exited.connect(func(): _preview.set_skin(_card_shown_tier()))
 		choices.add_child(b)
 		_tier_buttons[tier] = b
+	# Любимая карта — видна в профиле и в карточке игрока у соперников.
+	_favourite_button = _button("", func(): toggle_favourite())
+	_favourite_button.custom_minimum_size = Vector2(FULL.x, 16)
+	side.add_child(_favourite_button)
 	return page
+
+
+## Сделать выбранную карту любимой; она уже любимая — снять.
+func toggle_favourite() -> void:
+	PlayerProfile.save_favourite("" if PlayerProfile.favourite() == _selected else _selected)
+	Sfx.play("click")
+	refresh()
 
 
 ## Карты фракции (полуколоды или SUPPLY), по имени.
@@ -364,22 +378,21 @@ func _backs_page() -> Control:
 		var b := _button("", select_back.bind(design))
 		b.custom_minimum_size = LIST_BUTTON
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.mouse_entered.connect(func(): _back_preview.texture = CardBack.texture(design))
-		b.mouse_exited.connect(func(): _back_preview.texture = CardBack.texture(_back_selected))
+		b.mouse_entered.connect(func(): _back_preview.set_back(design))
+		b.mouse_exited.connect(func(): _back_preview.set_back(_back_selected))
 		list.add_child(b)
 		_back_buttons[design] = b
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 3)
 	body.add_child(side)
-	_back_preview = TextureRect.new()
-	_back_preview.custom_minimum_size = FULL
-	_back_preview.stretch_mode = TextureRect.STRETCH_KEEP
-	_back_preview.texture = CardBack.texture(CardBack.CLASSIC)
+	_back_preview = CardFlip.new()
+	_back_preview.set_back(CardBack.CLASSIC)
 	side.add_child(_back_preview)
 	_back_action = _button("", press_back)
 	_back_action.custom_minimum_size = Vector2(FULL.x, 16)
 	side.add_child(_back_action)
-	var hint := _label("Opponents see it when you\ntake a card unseen.", PixelTheme.TEXT_DIM)
+	var hint := _label("Drag the card to turn it over.\nOpponents see the back when you\ntake a card unseen.",
+		PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	side.add_child(hint)
 	return body
@@ -470,6 +483,9 @@ func refresh() -> void:
 			b.text = "%s %d" % [title, SkinCollection.CRAFT_COST[tier]]
 			colour = colour.darkened(0.35)
 		_tint(b, PixelTheme.GOLD if tier == on else colour)
+	var is_favourite := PlayerProfile.favourite() == _selected
+	_favourite_button.text = "YOUR FAVOURITE CARD" if is_favourite else "MAKE FAVOURITE"
+	_tint(_favourite_button, PixelTheme.GOLD if is_favourite else PixelTheme.TEXT)
 
 	var worn := SkinCollection.active_back()
 	worn = worn if worn != "" else CardBack.CLASSIC
@@ -481,7 +497,10 @@ func refresh() -> void:
 		b.text = " %s%s" % [CardBack.NAMES[design], state]
 		_tint(b, PixelTheme.GOLD if design == worn else (ultra if has else ultra.darkened(0.45)))
 		b.set_pressed_no_signal(design == _back_selected)
-	_back_preview.texture = CardBack.texture(_back_selected)
+	_back_preview.set_back(_back_selected)
+	var fav := PlayerProfile.favourite()
+	fav = fav if fav != "" else _selected
+	_back_preview.set_face(fav, String(active.get(fav, "")))
 	if _back_selected == worn:
 		_back_action.text = "IN USE"
 	elif SkinCollection.owns_back(_back_selected):

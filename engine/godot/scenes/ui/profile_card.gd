@@ -3,7 +3,8 @@ extends Control
 
 ## Карточка игрока по щелчку на его имя (решение владельца, 2026-09-28): в
 ## лобби и в таблице игроков партии. Фишка с гербом, имя, звание камнем,
-## рейтинг, партии и победы — то, что сервер раздал вместе с профилями
+## рейтинг, партии и победы, любимая карта в образе игрока — то, что сервер
+## раздал вместе с профилями
 ## (NetSession.profiles: rating, games, wins). За одним экраном рейтинга нет —
 ## только имя и герб.
 ##
@@ -50,6 +51,13 @@ func _init(pid: String = "", profile: Dictionary = {}) -> void:
 	name_label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	name_label.add_theme_color_override("font_color", BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
 	head.add_child(name_label)
+	# Любимая карта игрока — справа, в его образе.
+	var fav := ProfileScreen.favourite_view(String(profile.get("favourite", "")), profile.get("skins", {}))
+	if fav != null:
+		var spacer := Control.new()
+		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(spacer)
+		head.add_child(fav)
 
 	if not profile.has("rating"):
 		col.add_child(_line("No online rating.", PixelTheme.TEXT_DIM))

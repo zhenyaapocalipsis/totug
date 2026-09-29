@@ -364,20 +364,29 @@ func set_skin(tier: String) -> void:
 	var mat := material as ShaderMaterial
 	if mat == null:
 		mat = ShaderMaterial.new()
+		material = mat
+	configure_skin(mat, SkinCollection.TIER_INDEX[skin], _mini)
+	queue_redraw()
+
+
+## Настроить шейдер образа (card_skin.gdshader) под ступень tier_index (0 —
+## без образа, 4 — рубашка) и лицо карты: мелкое или полное (рубашка —
+## полного размера, без арта и поля текста).
+static func configure_skin(mat: ShaderMaterial, tier_index: int, mini: bool) -> void:
+	if mat.shader == null:
 		mat.shader = SKIN_SHADER
 		# Каждая карта покачивается в свой такт.
 		mat.set_shader_parameter("phase", randf() * TAU)
-		material = mat
-	mat.set_shader_parameter("tier", int(SkinCollection.TIER_INDEX[skin]))
-	mat.set_shader_parameter("face_size", face_size())
-	mat.set_shader_parameter("art_rect", MINI_ART if _mini else FULL_ART)
-	mat.set_shader_parameter("text_rect", Vector4.ZERO if _mini else FULL_TEXT)
+	var back := tier_index == 4
+	mat.set_shader_parameter("tier", tier_index)
+	mat.set_shader_parameter("face_size", MINI_SIZE if mini else PIXEL_SIZE)
+	mat.set_shader_parameter("art_rect", Vector4.ZERO if back else (MINI_ART if mini else FULL_ART))
+	mat.set_shader_parameter("text_rect", Vector4.ZERO if mini or back else FULL_TEXT)
 	# Мелкая карта в руке сама почти не качается — ряд не должен «плыть».
-	mat.set_shader_parameter("idle_amp", 0.5 if _mini else 1.0)
-	mat.set_shader_parameter("glint_size", 2.0 if _mini else 4.0)
-	mat.set_shader_parameter("flare_size", 3.0 if _mini else 5.0)
-	mat.set_shader_parameter("ember_count", 8 if _mini else 18)
-	queue_redraw()
+	mat.set_shader_parameter("idle_amp", 0.5 if mini else 1.0)
+	mat.set_shader_parameter("glint_size", 2.0 if mini else 4.0)
+	mat.set_shader_parameter("flare_size", 3.0 if mini else 5.0)
+	mat.set_shader_parameter("ember_count", 8 if mini else 18)
 
 
 ## Наклон к мыши у карты с образом: плавно к мыши, пока она над картой, и

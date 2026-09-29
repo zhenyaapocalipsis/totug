@@ -24,6 +24,20 @@ func _initialize() -> void:
 	bg.color = Color("0e0a16")
 	bg.size = Vector2(960, 540)
 	root.add_child(bg)
+	# --screen=flip — карта, которую крутят (CardFlip): прямо, в повороте, лицом.
+	if OS.get_cmdline_user_args().has("--screen=flip"):
+		var angles := [0.0, 0.6, 1.2, 2.3, PI]
+		for i in angles.size():
+			var flip := CardFlip.new()
+			flip.set_back("drow")
+			flip.set_face(card, "legendary")
+			flip.position = Vector2(8 + i * 188, 100)
+			flip.size = CardView.PIXEL_SIZE
+			flip.angle = angles[i]
+			flip._speed = 0.0
+			flip._dragging = true
+			root.add_child(flip)
+		return
 	# --screen=backs — все рубашки (CardBack.DESIGNS) 1:1, два ряда.
 	if OS.get_cmdline_user_args().has("--screen=backs"):
 		for i in CardBack.DESIGNS.size():

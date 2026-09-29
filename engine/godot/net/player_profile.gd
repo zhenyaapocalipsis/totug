@@ -124,6 +124,23 @@ static func clean_emblem(emblem: String) -> String:
 	return bytes.hex_encode()
 
 
+## Любимая карта (решение владельца, 2026-09-30): выбирается в коллекции,
+## видна в профиле и в карточке игрока. Любая карта игры; неизвестная — "".
+static func clean_favourite(cid: String) -> String:
+	return cid if cid != "" and not CardLibrary.card_data(cid).is_empty() else ""
+
+
+static func save_favourite(cid: String) -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	cfg.set_value("profile", "favourite", clean_favourite(cid))
+	return cfg.save(path())
+
+
+static func favourite() -> String:
+	return String(load_local()["favourite"])
+
+
 ## Рубашка из чужих рук (файл, сеть): имя известного рисунка, кроме CLASSIC;
 ## иначе "" (обычная рубашка).
 static func clean_back(back: String) -> String:
@@ -146,6 +163,7 @@ static func clean(profile: Dictionary) -> Dictionary:
 		"back": clean_back(String(profile.get("back", ""))),
 		"colour": clean_colour(String(profile.get("colour", ""))),
 		"skins": SkinCollection.clean_skins(profile.get("skins", {})),
+		"favourite": clean_favourite(String(profile.get("favourite", ""))),
 	}
 
 
@@ -190,10 +208,10 @@ static func path() -> String:
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
-		return {"name": "", "emblem": "", "back": "", "colour": "", "skins": {}}
+		return {"name": "", "emblem": "", "back": "", "colour": "", "skins": {}, "favourite": ""}
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", ""),
 		"back": SkinCollection.active_back(), "colour": cfg.get_value("profile", "colour", ""),
-		"skins": SkinCollection.active()})
+		"skins": SkinCollection.active(), "favourite": cfg.get_value("profile", "favourite", "")})
 
 
 ## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга

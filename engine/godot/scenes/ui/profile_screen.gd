@@ -479,6 +479,10 @@ func _stats_page() -> Control:
 	head.add_theme_constant_override("separation", 8)
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
 	page.add_child(head)
+	var local := PlayerProfile.load_local()
+	var fav := favourite_view(String(local["favourite"]), local["skins"])
+	if fav != null:
+		head.add_child(fav)
 	head.add_child(rank_badge(rating, 3))
 	var words := VBoxContainer.new()
 	words.add_theme_constant_override("separation", 0)
@@ -660,6 +664,24 @@ func _history_players(game: Dictionary) -> Control:
 
 
 ## Значок звания (камень цвета звания), zoom — во сколько раз крупнее.
+## Любимая карта игрока (PlayerProfile.favourite) мелким лицом в его образе
+## (skins — карта -> ступень) с подписью; нет любимой — null.
+static func favourite_view(cid: String, skins: Variant) -> Control:
+	if PlayerProfile.clean_favourite(cid) == "":
+		return null
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 1)
+	var card := CardView.new(cid, int(CardView.MINI_SIZE.x), int(CardView.MINI_SIZE.y))
+	card.set_skin(String((skins as Dictionary).get(cid, "")) if skins is Dictionary else "")
+	box.add_child(card)
+	var caption := Label.new()
+	caption.text = "FAVOURITE"
+	caption.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(caption)
+	return box
+
+
 static func rank_badge(rating: int, zoom: int = 1) -> TextureRect:
 	var icon := TextureRect.new()
 	icon.texture = ImageTexture.create_from_image(PlayerProfile.rank_icon(rating))

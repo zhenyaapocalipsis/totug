@@ -61,7 +61,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 13
+const PROTOCOL := 14
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -257,7 +257,7 @@ func find_match(address: String, port: int, player_count: int) -> int:
 	_remember_server(address, port)
 	return _connect(address, port, func():
 		var p := PlayerProfile.clean(profile)
-		_queue.rpc_id(1, PROTOCOL, player_count, p["name"], p["emblem"], p["back"], _client_key(), p["skins"],
+		_queue.rpc_id(1, PROTOCOL, player_count, p["name"], p["emblem"], p["back"], _client_key(), p["skins"], p["favourite"],
 			p["colour"]))
 
 
@@ -356,7 +356,8 @@ func _connect(address: String, port: int, then: Callable) -> int:
 	_on_connected = func():
 		then.call()
 		var p := PlayerProfile.clean(profile)
-		_profile_up.rpc_id(1, p["name"], p["emblem"], p["back"], _client_key(), p["colour"], p["skins"])
+		_profile_up.rpc_id(1, p["name"], p["emblem"], p["back"], _client_key(), p["colour"], p["skins"],
+			p["favourite"])
 	return OK
 
 
@@ -546,7 +547,7 @@ func _seat_peer(room: GameRoom, peer: int) -> void:
 
 @rpc("any_peer", "call_remote", "reliable")
 func _profile_up(player_name: String, emblem: String, back: String, key: String, colour: String,
-		skins: Dictionary) -> void:
+		skins: Dictionary, favourite: String) -> void:
 	if not is_host:
 		return
 	var peer := multiplayer.get_remote_sender_id()
@@ -557,7 +558,7 @@ func _profile_up(player_name: String, emblem: String, back: String, key: String,
 	if not _name_free(peer, player_name, key):
 		return
 	var pid := room.prefer(peer, PlayerProfile.clean_colour(colour))
-	_set_profile(room, pid, player_name, emblem, back, key, skins)
+	_set_profile(room, pid, player_name, emblem, back, key, skins, favourite)
 	_broadcast_lobby(room)
 
 
@@ -574,12 +575,13 @@ func _name_free(peer: int, player_name: String, key: String) -> bool:
 
 
 func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: String, back: String, key: String,
-		skins: Dictionary = {}) -> void:
+		skins: Dictionary = {}, favourite: String = "") -> void:
 	# Ключ хранится всегда (не только на выделенном сервере): по нему находит
 	# своё место переподключившийся игрок, а host-по-IP тоже даёт переподключение,
 	# хоть рейтинг там и не считается.
 	room.keys[pid] = key
-	var p := PlayerProfile.clean({"name": player_name, "emblem": emblem, "back": back, "skins": skins})
+	var p := PlayerProfile.clean({"name": player_name, "emblem": emblem, "back": back, "skins": skins,
+		"favourite": favourite})
 	# Рейтинг видят все за столом; сам ключ дальше сервера не уходит.
 	if ratings != null:
 		var account := RatingBook.account_of(key)
@@ -608,7 +610,7 @@ func _create(version: int, player_count: int, mode: String) -> void:
 ## Поиск игры: встать в очередь на player_count человек (только выделенный сервер).
 @rpc("any_peer", "call_remote", "reliable")
 func _queue(version: int, player_count: int, player_name: String, emblem: String, back: String,
-		key: String, skins: Dictionary, colour: String) -> void:
+		key: String, skins: Dictionary, favourite: String, colour: String) -> void:
 	if not dedicated:
 		return
 	var peer := multiplayer.get_remote_sender_id()
@@ -621,6 +623,7 @@ func _queue(version: int, player_count: int, player_name: String, emblem: String
 	line.append(peer)
 	queues[needed] = line
 	queued[peer] = {"needed": needed, "name": player_name, "emblem": emblem, "back": back, "key": key, "skins": skins,
+		"favourite": favourite,
 		"colour": PlayerProfile.clean_colour(colour)}
 	_log("queue %d: %d waiting" % [needed, line.size()])
 	# Сервер забит комнатами — стоят дальше; следующий пришедший проверит снова.
@@ -644,7 +647,7 @@ func _match(needed: int) -> void:
 		var q: Dictionary = queued[peer]
 		queued.erase(peer)
 		_set_profile(room, String(room.seats[peer]), String(q["name"]), String(q["emblem"]), String(q["back"]),
-			String(q["key"]), q.get("skins", {}))
+			String(q["key"]), q.get("skins", {}), String(q.get("favourite", "")))
 	queues[needed] = line.slice(needed)
 	_log("room %s matched: %d players, %s" % [room.code, room.needed, room.mode])
 	_broadcast_lobby(room)
