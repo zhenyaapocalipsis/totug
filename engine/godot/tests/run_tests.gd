@@ -109,6 +109,7 @@ func _initialize() -> void:
 	test_room_pause()
 	test_colour_preference()
 	test_resume_saved_game()
+	test_music_stems_and_moods()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -2740,6 +2741,20 @@ func test_audit_card_fixes() -> void:
 	check(Actions.recruit(state, "red", Market.DEVOURED_TOP_INDEX, 6), "её можно купить")
 	check(red.deck.discard_pile.has("48316") and state.devoured_pile.is_empty(), "карта ушла в сброс покупателя")
 
+	section("аудит: Carrion Crawler")
+	state = _build_rich_state()
+	red = state.players["red"]
+	red.deck.played_pile.append("48737")
+	var cc_victim: String = state.market.display[0]
+	var cc_deck_before: Array[String] = state.market.deck.duplicate()
+	r = EffectResolver.new()
+	r.apply(CardLibrary._CarrionCrawlerDevour.new(), "red", state)
+	r.resume(state, 0)
+	check_eq(state.market.display[0], "48737", "Crawler встал в слот сожранной карты")
+	check(state.devoured_pile.has(cc_victim), "сожранная карта в стопке Devoured")
+	check_eq(state.market.deck, cc_deck_before, "колода рынка не тронута: сожранная карта туда не вернулась")
+	check(not red.deck.played_pile.has("48737"), "Crawler ушёл из сыгранных")
+
 	state = _build_rich_state()
 	red = state.players["red"]
 	state.supplies = Supplies.standard(true)
@@ -3559,3 +3574,29 @@ func test_resume_saved_game() -> void:
 	net._forget_if_over({"game_over": true})
 	check(NetSession.saved_game().is_empty(), "партия кончилась — запись стёрта")
 	net.free()
+
+
+## Музыка: все слои есть, одной длины (иначе разъедутся) и зациклены;
+## настроение выбирается по виду партии.
+func test_music_stems_and_moods() -> void:
+	_current = "music"
+	var length := -1.0
+	for name: String in Music.STEMS:
+		var stream := load(Music.DIR + name + ".wav") as AudioStreamWAV
+		check(stream != null, "слой музыки %s загружается" % name)
+		if stream == null:
+			continue
+		check(stream.loop_mode == AudioStreamWAV.LOOP_FORWARD, "слой %s зациклен" % name)
+		if length < 0.0:
+			length = stream.get_length()
+		check(absf(stream.get_length() - length) < 0.001, "слой %s той же длины" % name)
+	for mood: String in Music.MOODS:
+		check_eq((Music.MOODS[mood] as Array).size(), Music.STEMS.size(), "настроение %s задаёт все слои" % mood)
+	var view := {"current_player": "red", "game_over": false, "game_end_triggered": false}
+	check_eq(GameScreen.music_mood(view, "red", false), "turn", "мой ход — turn")
+	check_eq(GameScreen.music_mood(view, "blue", false), "wait", "ход соперника — wait")
+	check_eq(GameScreen.music_mood(view, "blue", true), "turn", "хотсит — всегда turn")
+	view["game_end_triggered"] = true
+	check_eq(GameScreen.music_mood(view, "blue", false), "tension", "последний круг — tension")
+	view["game_over"] = true
+	check_eq(GameScreen.music_mood(view, "blue", false), "end", "итоги — end")

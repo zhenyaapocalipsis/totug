@@ -146,10 +146,8 @@ class _CarrionCrawlerDevour extends CardEffect:
 		if is_answered():
 			var index = answer()
 			if index != null and index != -1:
+				# Слот не рефиллим из колоды маркета: в него сразу встаёт сам Crawler.
 				var devoured: String = state.market.display[int(index)]
-				var refill: String = state.market.recruit_at(int(index))  # обычный рефилл...
-				if refill != "":
-					state.market.deck.append(refill)  # ...откатываем обратно в колоду маркета
 				state.devoured_pile.append(devoured)
 				var p: PlayerState = state.players[player_id]
 				var idx: int = p.deck.played_pile.find("48737")

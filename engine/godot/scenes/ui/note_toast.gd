@@ -18,6 +18,7 @@ var above: Control
 
 var _label: Label
 var _tween: Tween
+var _text := ""
 
 
 func _init() -> void:
@@ -33,6 +34,7 @@ func _init() -> void:
 
 
 func show_note(text: String) -> void:
+	_text = text
 	_label.text = text
 	if _tween != null:
 		_tween.kill()
@@ -46,20 +48,14 @@ func show_note(text: String) -> void:
 
 
 ## Одна строка, если влезает в ширину доски; длинная переносится.
+## Переносим сами, по словам: автоперенос Label в скрытой плашке считал строки
+## по старой узкой ширине — по слову на строку, и плашка вырастала на весь экран.
 func _place() -> void:
 	if area == null:
 		return
 	var rect := Rect2(area.position, area.size)
 	var room := maxf(rect.size.x - 24.0, 120.0)
-	var font := _label.get_theme_font("font")
-	var width := font.get_string_size(_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
-		_label.get_theme_font_size("font_size")).x
-	if width + 1.0 <= room:
-		_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-		_label.custom_minimum_size.x = 0.0
-	else:
-		_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_label.custom_minimum_size.x = room
+	_label.text = _wrap(_text.replace("\n", " "), room)
 	_label.size = Vector2.ZERO
 	size = Vector2.ZERO  # ужаться под новую надпись
 	var box := get_combined_minimum_size()
@@ -69,6 +65,24 @@ func _place() -> void:
 	visible = true
 
 
-## Для проверок: текст последней подсказки.
+## Разбивает текст на строки не шире room (слово длиннее строки — отдельной строкой).
+func _wrap(text: String, room: float) -> String:
+	var font := _label.get_theme_font("font")
+	var fs := _label.get_theme_font_size("font_size")
+	var lines: PackedStringArray = []
+	var line := ""
+	for word in text.split(" ", false):
+		var probe := word if line == "" else line + " " + word
+		if line != "" and font.get_string_size(probe, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 1.0 > room:
+			lines.append(line)
+			line = word
+		else:
+			line = probe
+	if line != "":
+		lines.append(line)
+	return "\n".join(lines)
+
+
+## Для проверок: текст последней подсказки (без переносов строк).
 func last_text() -> String:
-	return _label.text
+	return _text
