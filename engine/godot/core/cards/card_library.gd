@@ -43,6 +43,15 @@ static func card_data(card_id: String) -> Dictionary:
 	return _data.get(card_id, {})
 
 
+## Номера всех карт, в порядке файла карт.
+static func all_ids() -> Array[String]:
+	_ensure_loaded()
+	var out: Array[String] = []
+	for cid: String in _data:
+		out.append(cid)
+	return out
+
+
 static func card_aspect(card_id: String) -> String:
 	var c := card_data(card_id)
 	var a = c.get("aspect")

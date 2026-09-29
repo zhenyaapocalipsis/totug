@@ -192,6 +192,7 @@ static func clean(profile: Dictionary) -> Dictionary:
 		"emblem": clean_emblem(String(profile.get("emblem", ""))),
 		"back": clean_back(String(profile.get("back", ""))),
 		"colour": clean_colour(String(profile.get("colour", ""))),
+		"skins": SkinCollection.clean_skins(profile.get("skins", {})),
 	}
 
 
@@ -236,9 +237,10 @@ static func path() -> String:
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
-		return {"name": "", "emblem": "", "back": "", "colour": ""}
+		return {"name": "", "emblem": "", "back": "", "colour": "", "skins": {}}
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", ""),
-		"back": cfg.get_value("profile", "back", ""), "colour": cfg.get_value("profile", "colour", "")})
+		"back": cfg.get_value("profile", "back", ""), "colour": cfg.get_value("profile", "colour", ""),
+		"skins": SkinCollection.active()})
 
 
 ## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга
@@ -430,21 +432,32 @@ static func add_history(entry: Dictionary) -> void:
 	cfg.save(path())
 
 
+## Место в итоге партии (result — место -> {vp, won}): победитель первый;
+## иначе 1 + сколько игроков победили или набрали больше.
+static func place_of(own_seat: String, result: Dictionary) -> int:
+	var mine: Dictionary = result[own_seat]
+	if bool(mine.get("won", false)):
+		return 1
+	var place := 1
+	for pid: String in result:
+		var r: Dictionary = result[pid]
+		if pid != own_seat and (bool(r.get("won", false)) or int(r.get("vp", 0)) > int(mine.get("vp", 0))):
+			place += 1
+	return place
+
+
 ## Строка истории из итога партии (NetSession._rating): result — место ->
 ## {rating, delta, vp, won}, profiles — место -> {name, emblem}.
 ## Место: победитель первый; иначе 1 + сколько игроков победили или набрали больше.
 static func history_entry(own_seat: String, result: Dictionary, profiles: Dictionary) -> Dictionary:
 	var mine: Dictionary = result[own_seat]
 	var players := []
-	var place := 1
+	var place := place_of(own_seat, result)
 	for pid: String in result:
 		var r: Dictionary = result[pid]
 		var p: Dictionary = profiles.get(pid, {})
 		players.append({"seat": pid, "name": String(p.get("name", "")), "emblem": String(p.get("emblem", "")),
 			"vp": int(r.get("vp", 0)), "won": bool(r.get("won", false))})
-		if pid != own_seat and not bool(mine.get("won", false)) \
-				and (bool(r.get("won", false)) or int(r.get("vp", 0)) > int(mine.get("vp", 0))):
-			place += 1
 	players.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a["won"] and not b["won"] or (a["won"] == b["won"] and a["vp"] > b["vp"]))
 	return {"time": int(Time.get_unix_time_from_system()), "seat": own_seat, "place": place,
@@ -510,3 +523,9 @@ static func emblem_of(seat: String) -> String:
 
 static func back_of(seat: String) -> String:
 	return String((seats.get(seat, {}) as Dictionary).get("back", ""))
+
+
+## Включённые образы карт игрока за столом: карта -> ступень (SkinCollection).
+static func skins_of(seat: String) -> Dictionary:
+	var skins = (seats.get(seat, {}) as Dictionary).get("skins", {})
+	return skins if skins is Dictionary else {}

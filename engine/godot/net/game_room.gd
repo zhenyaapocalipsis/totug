@@ -27,6 +27,9 @@ var profiles: Dictionary = {}
 var accounts: Dictionary = {}
 ## Рейтинг по итогам этой партии уже пересчитан.
 var rated := false
+## Партию собрал поиск игры (NetSession._match): за неё дают награду
+## (SkinCollection.reward_for_place), за комнаты по коду — нет.
+var matched := false
 var started := false
 var server: GameServer
 ## Задача WorkerThreadPool, что считает снимок доски на выделенном сервере;
@@ -287,6 +290,7 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	room.profiles = (header.get("profiles", {}) as Dictionary).duplicate(true)
 	room.accounts = (header.get("accounts", {}) as Dictionary).duplicate(true)
 	room.keys = (header.get("keys", {}) as Dictionary).duplicate(true)
+	room.matched = bool(header.get("matched", false))
 	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode)
 	room.server = GameServer.new(state)
 	room.started = true

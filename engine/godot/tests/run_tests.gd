@@ -42,6 +42,7 @@ func _initialize() -> void:
 	test_scoring()
 	test_final_breakdown()
 	test_rating()
+	test_skin_collection()
 	test_cluster_bonus()
 
 	# этап 5: система эффектов карт
@@ -1128,6 +1129,90 @@ func test_rating() -> void:
 	check(book.claim_name(b, "") and book.claim_name("", "Anna") == true,
 		"пустое имя и игрок без ключа ничего не занимают")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func test_skin_collection() -> void:
+	section("образы карт: лутбоксы, пыль, коллекция")
+	var cards := SkinCollection.skinnable_cards()
+	check(cards.size() >= 100, "образы есть у всех покупаемых карт (%d)" % cards.size())
+	check(not cards.has("48342") and not cards.has("48344") and not cards.has(CardLibrary.INSANE_OUTCAST_ID),
+		"у Noble, Soldier и Insane Outcast (без цены) образов нет")
+	var odds := 0
+	for tier in SkinCollection.TIERS:
+		odds += int(SkinCollection.BOX_ODDS[tier])
+	check_eq(odds, 100, "шансы лутбокса в сумме 100%")
+	check_eq(SkinCollection.tier_for_roll(0), "epic", "бросок 0 — EPIC")
+	check_eq(SkinCollection.tier_for_roll(80), "legendary", "бросок 80 — LEGENDARY")
+	check_eq(SkinCollection.tier_for_roll(99), "ultra", "бросок 99 — ULTRA")
+
+	# Награда за место: первое — лутбокс, остальные — пыль.
+	var res := {"red": {"vp": 40, "won": true}, "blue": {"vp": 35, "won": false},
+		"green": {"vp": 20, "won": false}, "purple": {"vp": 30, "won": false}}
+	check_eq(PlayerProfile.place_of("red", res), 1, "победитель — первое место")
+	check_eq(PlayerProfile.place_of("purple", res), 3, "третье место по VP")
+	check_eq(SkinCollection.reward_for_place(1), {"boxes": 1}, "первое место — лутбокс")
+	check_eq(SkinCollection.reward_for_place(2), {"dust": 40}, "второе — 40 пыли")
+	check_eq(SkinCollection.reward_for_place(4), {"dust": 20}, "четвёртое — 20 пыли")
+
+	var old_path := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://profile_skins_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	check(SkinCollection.open_box(rng).is_empty(), "без лутбоксов открывать нечего")
+	SkinCollection.grant({"boxes": 2, "dust": 150})
+	SkinCollection.grant({"dust": 60})
+	var data := SkinCollection.load_data()
+	check(int(data["boxes"]) == 2 and int(data["dust"]) == 210, "награды копятся в профиле")
+	var got := SkinCollection.open_box(rng)
+	check(cards.has(String(got["card"])) and SkinCollection.TIERS.has(String(got["tier"])) and not got["duplicate"],
+		"лутбокс дал образ карты: %s %s" % [got["card"], got["tier"]])
+	check(SkinCollection.owns(got["card"], got["tier"]), "образ лёг в коллекцию")
+	check_eq(SkinCollection.active().get(got["card"], ""), got["tier"], "новый образ сразу включён")
+	check_eq(int(SkinCollection.load_data()["boxes"]), 1, "лутбокс потрачен")
+
+	# Повтор образа превращается в пыль.
+	var cfg := ConfigFile.new()
+	cfg.load(PlayerProfile.path())
+	var all_owned: Array = []
+	for cid in cards:
+		for tier in SkinCollection.TIERS:
+			all_owned.append(SkinCollection.skin_key(cid, tier))
+	cfg.set_value("collection", "owned", all_owned)
+	cfg.save(PlayerProfile.path())
+	var dust_before := int(SkinCollection.load_data()["dust"])
+	var again := SkinCollection.open_box(rng)
+	check(again["duplicate"] and int(again["dust"]) == int(SkinCollection.DUPLICATE_DUST[again["tier"]]),
+		"повтор — пыль вместо образа")
+	check_eq(int(SkinCollection.load_data()["dust"]), dust_before + int(again["dust"]), "пыль за повтор начислена")
+	cfg.load(PlayerProfile.path())
+	cfg.set_value("collection", "owned", [SkinCollection.skin_key(got["card"], got["tier"])])
+	cfg.set_value("collection", "dust", 250)
+	cfg.save(PlayerProfile.path())
+
+	# Создание за пыль и переключение.
+	var target := cards[0] if cards[0] != got["card"] else cards[1]
+	check(not SkinCollection.craft(target, "legendary"), "на LEGENDARY (600) пыли не хватает")
+	check(SkinCollection.craft(target, "epic"), "EPIC за 200 пыли создан")
+	check_eq(int(SkinCollection.load_data()["dust"]), 50, "пыль списана")
+	check(not SkinCollection.craft(target, "epic"), "второй раз тот же образ не создаётся")
+	check(not SkinCollection.craft("48342", "epic"), "карте без цены образ не создаётся")
+	check(not SkinCollection.set_active(target, "ultra"), "чужой (не открытый) образ не включается")
+	check(SkinCollection.set_active(target, ""), "образ можно выключить")
+	check(not SkinCollection.active().has(target), "выключенный образ не уходит в партию")
+	check(SkinCollection.set_active(target, "epic"), "и включить снова")
+	check_eq(PlayerProfile.load_local()["skins"].get(target, ""), "epic", "включённые образы — в профиле для партии")
+
+	# Из сети — только настоящие карты и ступени.
+	check_eq(SkinCollection.clean_skins({target: "epic", "48342": "epic", "999": "ultra", cards[2]: "gold"}),
+		{target: "epic"}, "чужие образы проверяются")
+	check_eq(SkinCollection.clean_skins("junk"), {}, "мусор вместо образов — пусто")
+	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "skins": {target: "ultra"}})}
+	check_eq(PlayerProfile.skins_of("red"), {target: "ultra"}, "образы игрока за столом")
+	check_eq(PlayerProfile.skins_of("blue"), {}, "у игрока без профиля образов нет")
+	PlayerProfile.seats = {}
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.path_override = old_path
 
 
 ## Граф с тремя сайтами гекса A2 (по 3 слота, как на настоящем тайле —
@@ -3421,13 +3506,14 @@ func test_game_journal_replay() -> void:
 	log.append(end_intent.to_dict())
 
 	var header := {"code": code, "ids": ids, "mode": GameSetup.MODE_STANDARD, "seed": seed_value,
-		"profiles": {}, "accounts": {}, "keys": {}}
+		"profiles": {}, "accounts": {}, "keys": {}, "matched": true}
 	GameJournal.save(code, header, log, dir)
 	var loaded := GameJournal.load_game(code, dir)
 	check(not loaded.is_empty(), "журнал читается обратно")
 	check_eq((loaded["intents"] as Array).size(), log.size(), "в журнале все принятые ходы")
 
 	var restored := GameRoom.restore(loaded["header"], loaded["intents"])
+	check(restored.matched, "после перезапуска сервера партия поиска игры помнит, что за неё награда")
 	check_eq(restored.server.state.current_player(), state.current_player(),
 		"восстановленная партия на том же ходе")
 	check_eq(Array(restored.server.state.players["red"].deck.hand), Array(state.players["red"].deck.hand),
