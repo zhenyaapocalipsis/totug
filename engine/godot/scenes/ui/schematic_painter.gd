@@ -61,20 +61,135 @@ static func paint(schematic: Dictionary, show_art := false, show_objects := fals
 		_paint_background(img, schematic)
 	if show_objects:
 		_paint_objects(img, schematic)
+	var tunnels := PackedByteArray()
+	tunnels.resize(img.get_width() * img.get_height())
 	for flat: Array in schematic.get("traces", []):
-		var points := PackedVector2Array()
-		for i in range(0, flat.size(), 2):
-			points.append(Vector2(flat[i], flat[i + 1]))
-		for seg: Array in rounded(points):
-			_line(img, seg[0], seg[1], TRACE)
+		for seg: Array in rounded(_points(flat)):
+			_tunnel_line(img, tunnels, seg[0], seg[1])
+	_outline_mask(img, tunnels)
+	_fill_tunnels(img, tunnels)
 	for slot_id: String in (schematic.get("rings", {}) as Dictionary).keys():
 		var at: Array = schematic["rings"][slot_id]
 		var c := Vector2i(roundi(at[0]), roundi(at[1]))
-		disc(img, c, BoardSchematic.RING_R, TRACE)
+		disc(img, c, BoardSchematic.RING_R + 1, OUTLINE)
+		_chamber(img, c, BoardSchematic.RING_R)
 		disc(img, c, BoardSchematic.RING_R - 2, BG)
+	for site: Dictionary in (schematic.get("sites", {}) as Dictionary).values():
+		_box_shadow(img, site)
 	for site_id: String in (schematic.get("sites", {}) as Dictionary).keys():
 		_site(img, schematic["sites"][site_id])
 	return img
+
+
+static func _points(flat: Array) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in range(0, flat.size(), 2):
+		points.append(Vector2(flat[i], flat[i + 1]))
+	return points
+
+
+# --- материалы доски: дорожки тоннелей --------------------------------------
+#
+# Бесшовные плитки 32x32 из PixelLab (create_tiles_pro, 2026-09-30): tunnel —
+# светлая брусчатка дорожек и колец, floor — пол пещеры, rock — скала стен.
+# Текстура берётся по мировым координатам (x % 32, y % 32): на поворотах и
+# стыках шва не видно. Нет файла — ровный цвет.
+
+const MAT_DIR := "res://assets/board_mat/"
+static var _mat_cache: Dictionary = {}   # имя -> Image или null
+
+## Ширина дорожки тоннеля: средний ряд — брусчатка, крайние — затенённые.
+const TUNNEL_W := 3
+const TUNNEL_RIM := 0.72
+
+
+## Картинка из res:// как Image RGBA8 или null. Через импортированную текстуру —
+## в собранной игре исходных PNG нет (Image.load_from_file там не работает).
+static func load_image(path: String) -> Variant:
+	var img: Image = null
+	if ResourceLoader.exists(path):
+		var tex := load(path) as Texture2D
+		if tex != null:
+			img = tex.get_image()
+	elif FileAccess.file_exists(path):
+		img = Image.load_from_file(path)
+	if img == null:
+		return null
+	if img.is_compressed():
+		img.decompress()
+	img.clear_mipmaps()
+	img.convert(Image.FORMAT_RGBA8)
+	return img
+
+
+static func _mat(mat_name: String) -> Variant:
+	if not _mat_cache.has(mat_name):
+		var path := MAT_DIR + mat_name + ".png"
+		var image: Variant = SchematicPainter.load_image(path)
+		_mat_cache[mat_name] = image
+	return _mat_cache[mat_name]
+
+
+static func _mat_at(mat_name: String, x: int, y: int, fallback: Color) -> Color:
+	var tex: Variant = _mat(mat_name)
+	if tex == null:
+		return fallback
+	var t := tex as Image
+	var c := t.get_pixel(posmod(x, t.get_width()), posmod(y, t.get_height()))
+	c.a = 1.0
+	return c
+
+
+static func _shade(c: Color, k: float) -> Color:
+	return Color(minf(c.r * k, 1.0), minf(c.g * k, 1.0), minf(c.b * k, 1.0), c.a)
+
+
+## Отмечает пиксели дорожки в маске (квадратная кисть TUNNEL_W, как _line).
+static func _tunnel_line(img: Image, mask: PackedByteArray, a: Vector2, b: Vector2) -> void:
+	var w := img.get_width()
+	var from := Vector2i(a.round())
+	var to := Vector2i(b.round())
+	var steps := maxi(absi(to.x - from.x), absi(to.y - from.y))
+	var off := TUNNEL_W / 2
+	for i in steps + 1:
+		var t := 0.0 if steps == 0 else float(i) / steps
+		var p := Vector2i((Vector2(from) + Vector2(to - from) * t).round())
+		for dy in TUNNEL_W:
+			for dx in TUNNEL_W:
+				var x := p.x - off + dx
+				var y := p.y - off + dy
+				if x >= 0 and y >= 0 and x < w and y < img.get_height():
+					mask[y * w + x] = 1
+
+
+## Заливает маску дорожек брусчаткой; пиксель у края маски темнее.
+static func _fill_tunnels(img: Image, mask: PackedByteArray) -> void:
+	var w := img.get_width()
+	var h := img.get_height()
+	for y in h:
+		for x in w:
+			if mask[y * w + x] == 0:
+				continue
+			var c := _mat_at("tunnel", x, y, TRACE)
+			var rim := x == 0 or y == 0 or x == w - 1 or y == h - 1 \
+				or mask[y * w + x - 1] == 0 or mask[y * w + x + 1] == 0 \
+				or mask[(y - 1) * w + x] == 0 or mask[(y + 1) * w + x] == 0
+			img.set_pixel(x, y, _shade(c, TUNNEL_RIM) if rim else c)
+
+
+## Кольцо-место на дорожке: круг той же брусчатки с затенённым краем.
+static func _chamber(img: Image, c: Vector2i, r: int) -> void:
+	for dy in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var d2 := dx * dx + dy * dy
+			if d2 > r * r + r:
+				continue
+			var x := c.x + dx
+			var y := c.y + dy
+			if x < 0 or y < 0 or x >= img.get_width() or y >= img.get_height():
+				continue
+			var col := _mat_at("tunnel", x, y, TRACE)
+			img.set_pixel(x, y, _shade(col, TUNNEL_RIM) if d2 > (r - 1) * (r - 1) + (r - 1) else col)
 
 
 ## Ломаная со скруглёнными углами, отрезками [от, до]. Каждый угол срезается
@@ -274,3 +389,47 @@ static func _blit_hex_art(img: Image, art: Image, centre: Vector2, rotation_deg:
 			if ax < 0 or ay < 0 or ax >= art.get_width() or ay >= art.get_height():
 				continue
 			img.set_pixel(x, y, art.get_pixel(ax, ay))
+
+
+# --- контур и тени поверх пещеры (CavePainter) --------------------------------
+
+## Тёмный контур вокруг дорожек, колец и коробок: на светлом полу пещеры
+## (мрамор, гранит) без него дорожка сливается с полом.
+const OUTLINE := Color(0.04, 0.03, 0.07, 0.9)
+const SHADOW := Color(0.02, 0.01, 0.04, 0.7)
+
+
+## Пиксель рядом с маской (по 8 соседям), но не в ней — в цвет OUTLINE.
+static func _outline_mask(img: Image, mask: PackedByteArray) -> void:
+	var w := img.get_width()
+	var h := img.get_height()
+	for y in h:
+		for x in w:
+			if mask[y * w + x] == 1:
+				continue
+			var near := false
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					var nx := x + dx
+					var ny := y + dy
+					if nx >= 0 and ny >= 0 and nx < w and ny < h and mask[ny * w + nx] == 1:
+						near = true
+			if near:
+				img.set_pixel(x, y, OUTLINE)
+
+
+## Коробка города отбрасывает тень на 2 пикселя вниз-вправо и обведена контуром.
+static func _box_shadow(img: Image, site: Dictionary) -> void:
+	var r: Array = site["rect"]
+	var rect := Rect2i(roundi(r[0]), roundi(r[1]), roundi(r[2]), roundi(r[3]))
+	if bool(site.get("marker", false)):
+		rect = rect.grow(1)
+	var shadow := Rect2i(rect.position + Vector2i(2, 2), rect.size).intersection(Rect2i(Vector2i.ZERO, img.get_size()))
+	img.fill_rect(shadow, SHADOW)
+	var ring := rect.grow(1).intersection(Rect2i(Vector2i.ZERO, img.get_size()))
+	for x in range(ring.position.x, ring.end.x):
+		img.set_pixel(x, ring.position.y, OUTLINE)
+		img.set_pixel(x, ring.end.y - 1, OUTLINE)
+	for y in range(ring.position.y, ring.end.y):
+		img.set_pixel(ring.position.x, y, OUTLINE)
+		img.set_pixel(ring.end.x - 1, y, OUTLINE)

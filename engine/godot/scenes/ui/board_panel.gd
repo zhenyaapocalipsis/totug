@@ -144,6 +144,26 @@ var art_layer := false
 ## гексов. См. SchematicPainter.OBJECT_TILES.
 var object_layer := false
 var _schematic_texture: ImageTexture = null
+## Пещера под схемой (CavePainter.paint): шире схемы на CAVE_MARGIN с
+## каждой стороны, рисуется первой, со сдвигом.
+var cave_layer := true
+var _cave_texture: ImageTexture = null
+## Пещера рисуется отдельным дочерним узлом позади панели: у неё свой шейдер
+## (cave_glow.gdshader — лава, туман, искры), а у остальной доски его нет.
+var _cave_node: CaveLayer = null
+## Пауки (позади схемы, над пещерой) и летучие мыши (над доской): CaveCritters.
+var _ground_critters: CaveCritters = null
+var _air_critters: CaveCritters = null
+const CAVE_GLOW_SHADER := preload("res://scenes/ui/cave_glow.gdshader")
+
+
+class CaveLayer extends Control:
+	var texture: Texture2D = null
+	var rect := Rect2()
+
+	func _draw() -> void:
+		if texture != null:
+			draw_texture_rect(texture, rect, false)
 var _tokens: Dictionary = {}     # colour html -> ImageTexture
 
 var _zoom := 0.0                 # 0 = ещё не подобран, подберётся под размер панели
@@ -195,6 +215,22 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	set_process(false)
+	_cave_node = CaveLayer.new()
+	_cave_node.show_behind_parent = true
+	_cave_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cave_node.texture_filter = CanvasItem.TEXTURE_FILTER_PARENT_NODE
+	var glow_material := ShaderMaterial.new()
+	glow_material.shader = CAVE_GLOW_SHADER
+	_cave_node.material = glow_material
+	add_child(_cave_node)
+	_ground_critters = CaveCritters.new()
+	_ground_critters.panel = self
+	_ground_critters.show_behind_parent = true
+	add_child(_ground_critters)
+	_air_critters = CaveCritters.new()
+	_air_critters.panel = self
+	_air_critters.air = true
+	add_child(_air_critters)
 
 
 func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) -> void:
@@ -910,11 +946,26 @@ func _load_textures() -> void:
 
 func _rebuild_schematic_texture() -> void:
 	_schematic_texture = null
+	_cave_texture = null
 	var schematic: Dictionary = _board.get("schematic", {})
 	if not schematic.is_empty():
 		var image := SchematicPainter.paint(schematic, art_layer, object_layer)
 		image.generate_mipmaps()
 		_schematic_texture = ImageTexture.create_from_image(image)
+		if cave_layer:
+			var layers := CavePainter.paint_layers(schematic)
+			_cave_texture = ImageTexture.create_from_image(layers[0])
+			(_cave_node.material as ShaderMaterial).set_shader_parameter(
+				"glow", ImageTexture.create_from_image(layers[1]))
+			_ground_critters.setup(layers[2])
+			_air_critters.setup(layers[2])
+
+
+## Видимость живности меняется отложенно: вызывается из _draw.
+func _show_critters(on: bool) -> void:
+	for layer: CaveCritters in [_ground_critters, _air_critters]:
+		if layer.visible != on:
+			layer.set_deferred("visible", on)
 
 
 func _schematic_on() -> bool:
@@ -1126,8 +1177,16 @@ func _draw() -> void:
 			texture_filter = filter
 		var origin := _to_screen(Vector2.ZERO)
 		origin = (origin * scale).round() / scale
+		var m := float(CavePainter.CAVE_MARGIN) * _zoom
+		_cave_node.texture = _cave_texture
+		_cave_node.rect = Rect2(origin - Vector2(m, m), _cave_texture.get_size() * _zoom) if _cave_texture != null else Rect2()
+		_cave_node.queue_redraw()
+		_show_critters(_cave_texture != null)
 		draw_texture_rect(_schematic_texture, Rect2(origin, _schematic_texture.get_size() * _zoom), false)
 	else:
+		_cave_node.texture = null
+		_cave_node.queue_redraw()
+		_show_critters(false)
 		for tile: Dictionary in (_board.get("tiles", []) as Array):
 			var texture: Texture2D = _textures.get(String(tile["hex_id"]))
 			if texture == null:
