@@ -25,9 +25,11 @@ const BAYER := [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 ## Толщина рамки.
 const RIM := 7
 ## Воронка: сколько волокон на оборот, закрутка и центр дыры.
-const FIBRES := 46
-const TWIST := 4.2
-const HOLE := 16.0
+const FIBRES := 58
+const TWIST := 3.6
+const HOLE := 22.0
+## Радиус скругления углов рубашки.
+const CORNER := 5.0
 
 static var _textures: Dictionary = {}
 
@@ -54,52 +56,69 @@ static func image(design: String) -> Image:
 	var top := RAMP.size() - 1
 	for y in size.y:
 		for x in size.x:
-			var cx := mini(x, size.x - 1 - x)
-			var cy := mini(y, size.y - 1 - y)
-			# Скруглённые углы.
-			if cx < 4 and cy < 4 and (4 - cx) * (4 - cx) + (4 - cy) * (4 - cy) > 17:
+			var p := Vector2(x + 0.5, y + 0.5) - c
+			# Расстояние до края скруглённого прямоугольника (внутри — меньше 0):
+			# и край, и полосы рамки одинаково огибают углы — без зазубрин.
+			var d := _edge(p, c, CORNER)
+			if d > 0.0:
 				continue
 			var colour: Color
-			if cx == 0 or cy == 0:
+			if d > -1.0:
 				colour = RAMP[0]
-			elif cx < RIM or cy < RIM:
-				# Рамка: светлая кромка снаружи, тёмная — у поля.
-				if cx == 1 or cy == 1:
-					colour = ink.lightened(0.15)
-				elif cx == RIM - 1 or cy == RIM - 1:
-					colour = ink.darkened(0.45)
-				else:
-					colour = ink
+			elif d > -2.0:
+				colour = ink.lightened(0.15)
+			elif d > -RIM + 1.0:
+				colour = ink
+			elif d > -RIM:
+				colour = ink.darkened(0.45)
 			else:
-				var light := _vortex(x + 0.5 - c.x, y + 0.5 - c.y)
-				var level := int(clampf(floorf(light * top + _bay(x, y)), 0.0, float(top)))
-				colour = RAMP[level]
+				var light := _vortex(p.x, p.y)
+				# Дизеринг вполсилы: тонкие струи иначе рассыпаются в пунктир.
+				colour = RAMP[int(clampf(floorf(light * top + 0.35 + _bay(x, y) * 0.3), 0.0, float(top)))]
 			img.set_pixel(x, y, colour)
 	return img
 
 
-## Яркость воронки (0..1) в точке dx, dy от центра карты.
+## Со знаком расстояние от точки p (от центра) до края прямоугольника
+## половины half со скруглёнными углами радиуса radius.
+static func _edge(p: Vector2, half: Vector2, radius: float) -> float:
+	var q := p.abs() - half + Vector2.ONE * radius
+	return q.max(Vector2.ZERO).length() + minf(maxf(q.x, q.y), 0.0) - radius
+
+
+## Яркость воронки (0..1) в точке dx, dy от центра карты. Основа тёмная;
+## светятся отдельные тонкие волокна, закрученные к чёрной дыре. Волокна не
+## ровные: их ведёт плавная «рябь», к краям сильнее — как прожилки на
+## рубашке Yu-Gi-Oh!.
 static func _vortex(dx: float, dy: float) -> float:
-	# Воронка чуть вытянута по высоте карты.
-	var ry := dy * 0.8
+	var ry := dy * 0.82
 	var r := sqrt(dx * dx + ry * ry)
 	var a := atan2(ry, dx)
-	# Логарифмическая спираль: к центру закручивается всё сильнее, как тоннель.
-	var s := a + log(r + 2.0) * TWIST
+	# Рябь: сумма медленных синусов по месту; у дыры почти нет, к углам сильнее.
+	var ripple := sin(dx * 0.047 + sin(dy * 0.031) * 2.2) * 0.9 + sin(dy * 0.056 - dx * 0.021 + 1.3) * 0.7 \
+		+ sin((dx + dy) * 0.083) * 0.25
+	var s := a + log(r + 2.0) * TWIST + ripple * clampf((r - 36.0) / 70.0, 0.0, 1.2) * 0.36
 	var u := s * FIBRES / TAU
 	var fibre := floorf(u)
-	# Каждое волокно — своей яркости и толщины, и мерцает вдоль длины.
-	var bright := 0.35 + 0.65 * _hashf(fibre, 1.0)
-	var width := 0.35 + 0.35 * _hashf(fibre, 2.0)
-	var along := 0.55 + 0.45 * sin(r * (0.06 + 0.05 * _hashf(fibre, 3.0)) + _hashf(fibre, 4.0) * TAU)
+	# Номер струи по кругу: пройдя оборот, струя остаётся той же (иначе слева
+	# от центра, на стыке углов, виден излом).
+	var id := fposmod(fibre, float(FIBRES))
+	# Светится не каждое волокно: часть ярких, часть еле видных.
+	var lit := _hashf(id, 1.0)
+	var bright := 0.55 + 0.45 * lit if lit > 0.4 else 0.2 + 0.4 * lit
+	var width := 0.24 + 0.24 * _hashf(id, 2.0)
+	# Струя идёт отрезками: вспыхивает и гаснет вдоль длины.
+	var along := clampf(sin(r * (0.035 + 0.05 * _hashf(id, 3.0)) + _hashf(id, 4.0) * TAU) * 1.2 + 0.65, 0.0, 1.0)
+	# Пучки: струи собираются в светлые жгуты с тёмными просветами между ними.
+	var bundle := clampf(0.7 + 0.5 * sin(s * 5.0 + sin(r * 0.03) * 1.5), 0.4, 1.0)
 	var across := 1.0 - clampf(absf(u - fibre - 0.5) / width, 0.0, 1.0)
-	var streak := across * across * bright * along
-	# Широкие светлые «рукава» под волокнами — чтобы не было пустоты.
-	var arms := 0.5 + 0.5 * sin(s * 4.0 + sin(s * 2.0) * 1.5)
-	# Чёрная дыра в центре, ярче всего снаружи, к самым углам чуть гаснет.
-	var hole := clampf((r - HOLE) / 42.0, 0.0, 1.0)
-	var outer := 1.0 - clampf((r - 105.0) / 60.0, 0.0, 0.35)
-	return clampf((streak * 0.8 + arms * 0.5) * pow(hole, 1.6) * outer * 1.45, 0.0, 1.0)
+	var core := across * across
+	var halo := clampf(1.0 - absf(u - fibre - 0.5) / (width * 2.4), 0.0, 1.0)
+	var streak := (core + halo * 0.45) * bright * along * bundle
+	# Дыра в центре; ярче всего кольцо вокруг неё, к углам тусклее.
+	var hole := clampf((r - HOLE) / 34.0, 0.0, 1.0)
+	var ring := 1.0 - clampf((r - 75.0) / 75.0, 0.0, 0.6)
+	return clampf(streak * pow(hole, 1.3) * ring * 1.6 + 0.04 * hole, 0.0, 1.0)
 
 
 # --- кисти -------------------------------------------------------------------
