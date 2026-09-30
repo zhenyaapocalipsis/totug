@@ -698,8 +698,6 @@ func _check_profiles() -> void:
 				"[%s] профиль %s дошёл до %s" % [_scenario, owner_p.seat, other.seat])
 
 
-
-## Рубашка-метка: у каждого игрока своя (кроме CLASSIC), по номеру игрока.
-func _back_for(n: int) -> String:
-	var backs := SkinCollection.collectible_backs()
-	return backs[n % backs.size()]
+## Рубашка у всех одна (CardBack.CLASSIC) — в профиле это "".
+func _back_for(_n: int) -> String:
+	return ""

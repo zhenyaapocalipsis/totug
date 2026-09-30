@@ -3285,70 +3285,36 @@ func test_chat_wheel_and_ping() -> void:
 
 
 func test_card_back() -> void:
-	section("рубашки карт: готовые рисунки в коллекции")
-	check_eq(CardBack.DESIGNS[0], CardBack.CLASSIC, "первая рубашка — CLASSIC")
-	check_eq(CardBack.DESIGNS.size(), 7, "CLASSIC и по рубашке на каждую из шести фракций")
-	for design in CardBack.DESIGNS:
-		var img := CardBack.image(design)
-		check(img.get_size() == Vector2i(CardView.PIXEL_SIZE) and CardBack.NAMES.has(design),
-			"рубашка %s во весь размер карты" % design)
-	check_eq(CardBack.clean("nonsense"), CardBack.CLASSIC, "неизвестная рубашка — CLASSIC")
-	var plain := CardBack.image("")
-	check(plain.get_pixel(0, 0).a == 0.0 and _near(plain.get_pixel(3, 40), Color(CardBack.INK["classic"]).darkened(0.1)),
-		"обычная рубашка: скруглённые углы, рамка своего цвета")
-	check(CardBack.texture("drow") == CardBack.texture("drow"), "текстура рубашки берётся из кэша")
-	check_eq(PlayerProfile.clean_back("drow"), "drow", "профиль хранит имя рубашки")
-	check_eq(PlayerProfile.clean_back("classic"), "", "CLASSIC в профиле — пустая строка")
-	check_eq(PlayerProfile.clean_back("ac3232" + "0".repeat(100)), "", "старый рисунок вместо имени — CLASSIC")
+	section("рубашка карт: одна на всех, воронка цвета карты")
+	check_eq(CardBack.DESIGNS, [CardBack.CLASSIC] as Array[String], "рубашка одна — CLASSIC")
+	var img := CardBack.image(CardBack.CLASSIC)
+	check_eq(img.get_size(), Vector2i(CardView.PIXEL_SIZE), "рубашка во весь размер карты")
+	check(img.get_pixel(0, 0).a == 0.0, "углы скруглены")
+	check(img.get_pixel(88, 127) == CardBack.RAMP[0], "в центре — чёрная дыра воронки")
+	var shades := {}
+	for x in range(10, 166, 3):
+		shades[img.get_pixel(x, 40)] = true
+	var ramp_only := true
+	for colour: Color in shades:
+		ramp_only = ramp_only and CardBack.RAMP.has(colour)
+	check(ramp_only and shades.size() >= 4, "воронка — только оттенки цвета карты (%d тонов)" % shades.size())
+	check_eq(CardBack.clean("drow"), CardBack.CLASSIC, "бывшие рубашки фракций — теперь CLASSIC")
+	check(CardBack.texture("") == CardBack.texture("classic"), "текстура рубашки берётся из кэша")
+	check_eq(PlayerProfile.clean_back("drow"), "", "в профиле рубашка — всегда обычная")
+	check(SkinCollection.collectible_backs().is_empty(), "рубашек в коллекции и в лутбоксах нет")
 
 	var saved_path := PlayerProfile.path_override
 	PlayerProfile.path_override = "user://test_card_back.cfg"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
-	PlayerProfile.save_local({"name": "Jarlaxle", "emblem": ""})
-	check(not SkinCollection.set_back("drow"), "не открытую рубашку не надеть")
-	check_eq(SkinCollection.active_back(), "", "у новичка рубашка CLASSIC")
-	PlayerProfile.save_back("undead")
-	check_eq(String(PlayerProfile.load_local()["back"]), "", "не открытая рубашка из файла не уходит в партию")
-	SkinCollection.grant({"dust": 1700})
-	check(SkinCollection.craft_back("drow"), "рубашка создаётся за пыль ULTRA")
-	check_eq(int(SkinCollection.load_data()["dust"]), 100, "списано %d пыли" % SkinCollection.CRAFT_COST["ultra"])
-	check_eq(SkinCollection.active_back(), "drow", "созданная рубашка сразу надета")
-	check(not SkinCollection.craft_back("drow") and not SkinCollection.craft_back(CardBack.CLASSIC),
-		"второй раз и CLASSIC не создаются")
-	check(SkinCollection.set_back(CardBack.CLASSIC) and SkinCollection.active_back() == "", "CLASSIC надевается всегда")
-	check(SkinCollection.set_back("drow"), "открытая рубашка надевается снова")
-	PlayerProfile.save_local({"name": "Jarlaxle2", "emblem": ""})
-	check_eq(String(PlayerProfile.load_local()["back"]), "drow", "сохранение имени не снимает рубашку")
-
-	# Лутбокс: из ULTRA часть — рубашки.
+	SkinCollection.grant({"boxes": 300})
 	var rng := RandomNumberGenerator.new()
 	var backs := 0
-	var all_ultra := true
-	SkinCollection.grant({"boxes": 400})
-	for i in 400:
+	for i in 300:
 		rng.seed = i
-		var got := SkinCollection.open_box(rng)
-		if got.has("back"):
-			backs += 1
-			all_ultra = all_ultra and got["tier"] == "ultra" \
-				and SkinCollection.collectible_backs().has(String(got["back"]))
-	check(all_ultra, "рубашка из лутбокса — ступени ULTRA")
-	check(backs > 0 and backs < 20, "рубашки выпадают редко, как ULTRA (%d из 400)" % backs)
+		backs += 1 if SkinCollection.open_box(rng).has("back") else 0
+	check_eq(backs, 0, "из лутбоксов выпадают только образы карт")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = saved_path
-
-	PlayerProfile.seats = {"blue": PlayerProfile.clean({"name": "Vizeran", "back": "aberrations"})}
-	check_eq(PlayerProfile.back_of("blue"), "aberrations", "рубашка соперника по цвету места")
-	check_eq(PlayerProfile.back_of("red"), "", "без профиля — обычная рубашка")
-	PlayerProfile.seats = {}
-
-	# Поле у всех рубашек одного цвета — основного цвета карты; рамка — фракции.
-	var same_field := true
-	for design in CardBack.DESIGNS:
-		var img := CardBack.image(design)
-		same_field = same_field and _near(img.get_pixel(3, 40), Color(CardBack.INK[design]).darkened(0.1))
-		same_field = same_field and img.get_pixel(8, 127) == CardBack.image(CardBack.CLASSIC).get_pixel(8, 127)
-	check(same_field, "фон рубашек у всех один (тёмный цвет карты), рамка — цвет фракции")
 
 	# Карта, которую можно покрутить (коллекция → CARD BACKS).
 	var flip := CardFlip.new()

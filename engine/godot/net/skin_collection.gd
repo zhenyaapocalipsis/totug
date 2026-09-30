@@ -149,7 +149,7 @@ static func open_box(rng: RandomNumberGenerator) -> Dictionary:
 	var cid := cards[rng.randi_range(0, cards.size() - 1)]
 	var tier := tier_for_roll(rng.randi_range(0, 99))
 	data["boxes"] = int(data["boxes"]) - 1
-	if tier == BACK_TIER and rng.randf() < BACK_SHARE:
+	if tier == BACK_TIER and not collectible_backs().is_empty() and rng.randf() < BACK_SHARE:
 		return _drop_back(data, rng)
 	var key := skin_key(cid, tier)
 	var dup := (data["owned"] as Array).has(key)

@@ -1,48 +1,33 @@
 class_name CardBack
 extends RefCounted
 
-## Рубашка карты в полный размер (CardView.PIXEL_SIZE, 1:1). Рубашки — готовые
-## рисунки (решение владельца, 2026-09-30: рисовалки нет, без знаков и без
-## шейдера; стиль — воронка, как рубашка Yu-Gi-Oh!): светящиеся струи по
-## спирали вокруг чёрной дыры, в цвете фракции на тёмном цвете карты; рамка со
-## скруглёнными углами — цвета фракции. У каждой фракции своя закрутка
-## (VORTEX). CLASSIC есть у всех, остальные — ступени ULTRA —
-## выпадают из лутбокса или создаются за пыль (SkinCollection). Соперники
-## видят рубашку, когда игрок берёт карту вслепую (CardShowcase).
+## Рубашка карты в полный размер (CardView.PIXEL_SIZE, 1:1). Рубашка одна на
+## всех (решение владельца, 2026-09-30): воронка в духе рубашки Yu-Gi-Oh! —
+## густые тонкие волокна закручиваются к чёрной дыре в центре, снаружи ярче,
+## к центру темнее; всё в основном цвете карты (тёмно-фиолетовая рамка
+## cards_pixel) и его светлых оттенках. Рамка со скруглёнными углами.
+## Соперники видят рубашку, когда игрок берёт карту вслепую (CardShowcase).
 ##
-## Всё рисуется кодом по пикселям, без сглаживания.
+## Рисуется кодом по пикселям: яркость воронки квантуется в палитру RAMP
+## дизерингом Байера, без сглаживания.
 
 const CLASSIC := "classic"
-## Порядок показа в коллекции: CLASSIC, затем фракции в порядке полуколод.
-const DESIGNS: Array[String] = ["classic", "drow", "dragons", "demons", "elementals", "aberrations", "undead"]
-const NAMES := {"classic": "CLASSIC", "drow": "DROW", "dragons": "DRAGONS", "demons": "DEMONS",
-	"elementals": "ELEMENTALS", "aberrations": "ABERRATIONS", "undead": "UNDEAD"}
-## Поле — основной цвет лицевой стороны карты (рамка карт cards_pixel).
+const DESIGNS: Array[String] = ["classic"]
+const NAMES := {"classic": "CLASSIC"}
+## Основной цвет лицевой стороны карты (её рамка) — от него вся палитра.
 const FIELD := Color("24153f")
-## Рамка и узор каждой рубашки.
-const INK := {
-	"classic": "b0924a",
-	"drow": "9a6ad0",
-	"dragons": "d07a2a",
-	"demons": "c04450",
-	"elementals": "3aa6b6",
-	"aberrations": "6aae3a",
-	"undead": "7a92c8",
-}
+## Цвет рамки рубашки.
+const INK := {"classic": "4a2f82"}
+## Палитра воронки от тьмы к блику — оттенки цвета карты.
+const RAMP: Array[Color] = [Color("0c0716"), Color("1a0f2e"), Color("24153f"), Color("3b2766"),
+	Color("5b3f99"), Color("8a6ad0"), Color("c8b4f0")]
 const BAYER := [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
-## Толщина рамки и отступ тонкой внутренней линии от края.
-const RIM := 6
-const INNER := 10
-## Воронка каждой рубашки: [сколько рукавов, закрутка, направление].
-const VORTEX := {
-	"classic": [6, 2.6, 1],
-	"drow": [7, 2.9, -1],
-	"dragons": [5, 2.3, 1],
-	"demons": [6, 3.2, -1],
-	"elementals": [8, 2.4, 1],
-	"aberrations": [5, 3.4, 1],
-	"undead": [7, 2.2, -1],
-}
+## Толщина рамки.
+const RIM := 7
+## Воронка: сколько волокон на оборот, закрутка и центр дыры.
+const FIBRES := 46
+const TWIST := 4.2
+const HOLE := 16.0
 
 static var _textures: Dictionary = {}
 
@@ -61,15 +46,12 @@ static func texture(design: String) -> ImageTexture:
 
 
 static func image(design: String) -> Image:
-	var d := clean(design)
-	var ink := Color(INK[d])
-	# Палитра воронки: почти чёрный (цвет карты во тьме) -> цвет фракции -> блик.
-	var ramp: Array[Color] = [FIELD.darkened(0.55), FIELD.lerp(ink, 0.25).darkened(0.35), ink.darkened(0.3),
-		ink, ink.lightened(0.45)]
+	var ink := Color(INK[clean(design)])
 	var size := Vector2i(CardView.PIXEL_SIZE)
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
-	var c := size / 2
+	var c := Vector2(size) * 0.5
+	var top := RAMP.size() - 1
 	for y in size.y:
 		for x in size.x:
 			var cx := mini(x, size.x - 1 - x)
@@ -78,40 +60,54 @@ static func image(design: String) -> Image:
 			if cx < 4 and cy < 4 and (4 - cx) * (4 - cx) + (4 - cy) * (4 - cy) > 17:
 				continue
 			var colour: Color
-			if cx < RIM or cy < RIM:
-				colour = ink.darkened(0.25) if cx == 0 or cy == 0 else ink.darkened(0.1)
-			elif (cx == INNER or cy == INNER) and cx >= INNER and cy >= INNER:
-				colour = ink.darkened(0.35)
-			elif cx < INNER or cy < INNER:
-				colour = ramp[0]
+			if cx == 0 or cy == 0:
+				colour = RAMP[0]
+			elif cx < RIM or cy < RIM:
+				# Рамка: светлая кромка снаружи, тёмная — у поля.
+				if cx == 1 or cy == 1:
+					colour = ink.lightened(0.15)
+				elif cx == RIM - 1 or cy == RIM - 1:
+					colour = ink.darkened(0.45)
+				else:
+					colour = ink
 			else:
-				var level := int(clampf(floorf(_vortex(d, x - c.x, y - c.y) * 4.0 + _bay(x, y)), 0.0, 4.0))
-				colour = ramp[level]
+				var light := _vortex(x + 0.5 - c.x, y + 0.5 - c.y)
+				var level := int(clampf(floorf(light * top + _bay(x, y)), 0.0, float(top)))
+				colour = RAMP[level]
 			img.set_pixel(x, y, colour)
 	return img
 
 
-## Яркость воронки (0..1) в точке dx, dy от центра: логарифмическая спираль
-## тонких светящихся струй, чёрная дыра в центре, к краям темнее.
-static func _vortex(design: String, dx: int, dy: int) -> float:
-	var v: Array = VORTEX[design]
-	var arms := float(v[0])
-	var ry := dy * 0.78
+## Яркость воронки (0..1) в точке dx, dy от центра карты.
+static func _vortex(dx: float, dy: float) -> float:
+	# Воронка чуть вытянута по высоте карты.
+	var ry := dy * 0.8
 	var r := sqrt(dx * dx + ry * ry)
-	var a := atan2(ry, float(dx)) * float(v[2])
-	var s := a + log(r + 1.0) * float(v[1])
-	# Струи: узкие гребни, чуть колеблются; вторая, тонкая семья — между ними.
-	var ridge := pow(maxf(0.0, sin(s * arms + sin(s * 2.0 + r * 0.045) * 1.3)), 7.0)
-	var thin := pow(maxf(0.0, sin(s * arms * 2.0 + 1.7 + r * 0.02)), 12.0)
-	# Частота — целая: иначе на стыке углов (слева от центра) виден шов.
-	var glow := 0.5 + 0.5 * sin(s * floorf(arms * 0.5) + 1.0)
-	var light := ridge * 0.8 + thin * 0.35 + glow * 0.22
-	var hole := clampf((r - 12.0) / 34.0, 0.0, 1.0)
-	var edge := 1.0 - clampf((r - 60.0) / 90.0, 0.0, 1.0) * 0.6
-	return light * hole * hole * edge
+	var a := atan2(ry, dx)
+	# Логарифмическая спираль: к центру закручивается всё сильнее, как тоннель.
+	var s := a + log(r + 2.0) * TWIST
+	var u := s * FIBRES / TAU
+	var fibre := floorf(u)
+	# Каждое волокно — своей яркости и толщины, и мерцает вдоль длины.
+	var bright := 0.35 + 0.65 * _hashf(fibre, 1.0)
+	var width := 0.35 + 0.35 * _hashf(fibre, 2.0)
+	var along := 0.55 + 0.45 * sin(r * (0.06 + 0.05 * _hashf(fibre, 3.0)) + _hashf(fibre, 4.0) * TAU)
+	var across := 1.0 - clampf(absf(u - fibre - 0.5) / width, 0.0, 1.0)
+	var streak := across * across * bright * along
+	# Широкие светлые «рукава» под волокнами — чтобы не было пустоты.
+	var arms := 0.5 + 0.5 * sin(s * 4.0 + sin(s * 2.0) * 1.5)
+	# Чёрная дыра в центре, ярче всего снаружи, к самым углам чуть гаснет.
+	var hole := clampf((r - HOLE) / 42.0, 0.0, 1.0)
+	var outer := 1.0 - clampf((r - 105.0) / 60.0, 0.0, 0.35)
+	return clampf((streak * 0.8 + arms * 0.5) * pow(hole, 1.6) * outer * 1.45, 0.0, 1.0)
 
 
 # --- кисти -------------------------------------------------------------------
 
 static func _bay(x: int, y: int) -> float:
 	return BAYER[(posmod(y, 4)) * 4 + posmod(x, 4)] / 16.0
+
+
+## Случайное число 0..1 от номера волокна (одно и то же при каждом рисовании).
+static func _hashf(n: float, salt: float) -> float:
+	return fposmod(sin(n * 127.1 + salt * 311.7) * 43758.5453, 1.0)

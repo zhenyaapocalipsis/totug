@@ -84,7 +84,8 @@ func _init() -> void:
 	var odds: Array[String] = []
 	for tier in SkinCollection.TIERS:
 		odds.append("%s %d%%" % [SkinCollection.TIER_TITLES[tier], SkinCollection.BOX_ODDS[tier]])
-	top.add_child(_label("%s (CARD BACKS ARE ULTRA)" % "  ".join(odds), PixelTheme.TEXT_DIM))
+	var backs_note := " (CARD BACKS ARE ULTRA)" if not SkinCollection.collectible_backs().is_empty() else ""
+	top.add_child(_label("  ".join(odds) + backs_note, PixelTheme.TEXT_DIM))
 
 	var sections := HBoxContainer.new()
 	sections.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -374,6 +375,10 @@ func _backs_page() -> Control:
 	list.add_theme_constant_override("separation", 3)
 	list.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	body.add_child(list)
+	# Рубашка одна на всех (решение владельца, 2026-09-30) — выбирать не из
+	# чего: остаётся только карта, которую можно покрутить.
+	var choice := CardBack.DESIGNS.size() > 1
+	list.visible = choice
 	for design in CardBack.DESIGNS:
 		var b := _button("", select_back.bind(design))
 		b.custom_minimum_size = LIST_BUTTON
@@ -391,6 +396,7 @@ func _backs_page() -> Control:
 	_back_action = _button("", press_back)
 	_back_action.custom_minimum_size = Vector2(FULL.x, 16)
 	side.add_child(_back_action)
+	_back_action.visible = choice
 	var hint := _label("Drag the card to turn it over.\nOpponents see the back when you\ntake a card unseen.",
 		PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
