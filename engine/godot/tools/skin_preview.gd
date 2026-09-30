@@ -6,7 +6,7 @@ extends SceneTree
 ## Снимок — на CAPTURE_FRAME кадре: к нему шейдер точно собран и нарисован.
 
 const CAPTURE_FRAME := 20
-const TIERS := ["", "epic", "legendary", "ultra"]
+const TIERS := ["", "faerie", "gilded", "prism"]
 
 var _frame := 0
 var _out := "res://skin_preview.png"
@@ -29,8 +29,8 @@ func _initialize() -> void:
 		var angles := [0.0, 0.6, 1.2, 2.3, PI]
 		for i in angles.size():
 			var flip := CardFlip.new()
-			flip.set_back("drow")
-			flip.set_face(card, "legendary")
+			flip.set_back(CardBack.CLASSIC)
+			flip.set_face(card, "gilded")
 			flip.position = Vector2(8 + i * 188, 100)
 			flip.size = CardView.PIXEL_SIZE
 			flip.angle = angles[i]
@@ -55,8 +55,8 @@ func _initialize() -> void:
 		SkinCollection.grant({"boxes": 2, "dust": 450})
 		var cfg := ConfigFile.new()
 		cfg.load(PlayerProfile.path())
-		cfg.set_value("collection", "owned", ["%s:epic" % card, "%s:legendary" % card, "48340:ultra"])
-		cfg.set_value("collection", "active", {card: "legendary", "48340": "ultra"})
+		cfg.set_value("collection", "owned", ["shader:faerie", "shader:gilded"])
+		cfg.set_value("collection", "shader", "gilded")
 		cfg.save(PlayerProfile.path())
 		var screen := ProfileScreen.new()
 		screen._page = "COLLECTION"

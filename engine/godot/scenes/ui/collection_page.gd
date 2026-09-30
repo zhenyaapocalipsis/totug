@@ -4,34 +4,36 @@ extends VBoxContainer
 ## Вкладка COLLECTION профиля (решение владельца, 2026-09-30).
 ##
 ## Общая строка сверху — пыль, лутбоксы, OPEN BOX и шансы лутбокса. Под ней
-## три раздела:
-##   CARDS — образы карт (SkinCollection), карты по фракциям: слева сетка
-##     фракции (под картой три метки — какие ступени открыты), справа
-##     выбранная карта целиком и кнопки PLAIN / EPIC / LEGENDARY / ULTRA;
-##   CARD BACKS — рубашки (CardBack), ступень ULTRA: список и рубашка целиком;
+## разделы:
+##   CARDS — все карты по фракциям; выбранная карта целиком и MAKE FAVOURITE.
+##     Здесь же будут альтернативные арты карт;
+##   SHADERS — шейдеры (SkinCollection.SHADERS), все ступени ULTRA: список и
+##     примерка на любимой карте и двух карточках колоды. Включённый шейдер
+##     ложится в партии на всю колоду игрока, со стартовыми картами;
+##   CARD BACKS — рубашка (одна на всех): карта, которую можно покрутить;
 ##   BACKGROUNDS — фон игры (UnderdarkBg), бесплатно.
-## Открытое включается щелчком. Закрытое создаётся за пыль: первый щелчок
-## показывает цену, второй создаёт (пыль зря не тратится). Наведение на
-## кнопку примеряет её на большой карте или рубашке.
+## Открытый шейдер включается щелчком. Закрытый создаётся за пыль: первый
+## щелчок показывает цену, второй создаёт (пыль зря не тратится). Наведение на
+## строку списка примеряет шейдер.
 ##
-## Всё сохраняется сразу (SkinCollection пишет в файл профиля); образы и
-## рубашка уйдут в следующую онлайн-партию вместе с профилем.
+## Всё сохраняется сразу (SkinCollection пишет в файл профиля); шейдер уйдёт в
+## следующую онлайн-партию вместе с профилем.
 
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
-const SECTIONS: Array[String] = ["CARDS", "CARD BACKS", "BACKGROUNDS"]
-## Фракции — полуколоды рынка в порядке книги правил; SUPPLY — общие стопки.
-const FACTIONS: Array[String] = ["drow", "dragons", "demons", "elementals", "aberrations", "undead", "supply"]
+const SECTIONS: Array[String] = ["CARDS", "SHADERS", "CARD BACKS", "BACKGROUNDS"]
+## Фракции — полуколоды рынка в порядке книги правил; STARTING — стартовая
+## колода и общие стопки (шейдер ложится и на них).
+const FACTIONS: Array[String] = ["drow", "dragons", "demons", "elementals", "aberrations", "undead", "starting"]
 const COLUMNS := 5
 const ROWS := 4
 const MINI := Vector2(80, 76)
 const FULL := Vector2(176, 254)
-const MARK := Vector2(8, 3)
-const MARK_OFF := Color("2a1f45")
 const TAB_SIZE := Vector2(0, 16)
-const TIER_BUTTON := Vector2(86, 16)
 const LIST_BUTTON := Vector2(150, 18)
-## Кнопки ступеней: "" — карта без образа.
-const CHOICES: Array[String] = ["", "epic", "legendary", "ultra"]
+## Примерка шейдера: стартовая карта и карта маркета рядом с любимой —
+## видно, что шейдер ложится на всю колоду.
+const SAMPLE_CARDS: Array[String] = ["48342", "48306"]
+const DEFAULT_FAVOURITE := "48314"
 
 var _dust_label: Label
 var _boxes_label: Label
@@ -40,25 +42,24 @@ var _note: Label
 var _section := "CARDS"
 var _section_buttons: Dictionary = {}
 var _pages: Dictionary = {}
-## CARDS: фракция, её кнопки, сетка, большая карта и кнопки ступеней.
+## CARDS: фракция, её кнопки, сетка, большая карта, «любимая карта».
 var _faction := "drow"
 var _faction_buttons: Dictionary = {}
 var _grid: GridContainer
 var _preview: CardView
-var _tier_buttons: Dictionary = {}
-## Карта -> {tile, card, marks} — плитки текущей фракции.
+## Карта -> {tile, card} — плитки текущей фракции.
 var _tiles: Dictionary = {}
 var _selected := ""
-## Что второй щелчок создаст за пыль: ступень карты или рубашка ("" — ничего).
-var _pending_craft := ""
-## CARD BACKS: кнопки рубашек, карта, которую можно покрутить (рубашка и
-## любимая карта), кнопка USE/CRAFT.
-var _back_buttons: Dictionary = {}
-var _back_preview: CardFlip
-## CARDS: кнопка «любимая карта» (PlayerProfile.favourite).
 var _favourite_button: Button
-var _back_action: Button
-var _back_selected := CardBack.CLASSIC
+## SHADERS: кнопки ("" — без шейдера), примерка, кнопка USE/CRAFT.
+var _shader_buttons: Dictionary = {}
+var _shader_views: Array[CardView] = []
+var _shader_action: Button
+var _shader_selected := ""
+## Что второй щелчок создаст за пыль ("" — ничего).
+var _pending_craft := ""
+## CARD BACKS: карта, которую можно покрутить (рубашка и любимая карта).
+var _back_preview: CardFlip
 ## BACKGROUNDS: кнопки фонов.
 var _bg_buttons: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
@@ -81,11 +82,8 @@ func _init() -> void:
 	_open_button = _button("OPEN BOX", func(): open_box())
 	_open_button.custom_minimum_size = Vector2(70, 16)
 	top.add_child(_open_button)
-	var odds: Array[String] = []
-	for tier in SkinCollection.TIERS:
-		odds.append("%s %d%%" % [SkinCollection.TIER_TITLES[tier], SkinCollection.BOX_ODDS[tier]])
-	var backs_note := " (CARD BACKS ARE ULTRA)" if not SkinCollection.collectible_backs().is_empty() else ""
-	top.add_child(_label("  ".join(odds) + backs_note, PixelTheme.TEXT_DIM))
+	top.add_child(_label("BOX: A SHADER (ULTRA) %d%%, OTHERWISE DUST" % SkinCollection.BOX_ODDS[SkinCollection.SHADER_TIER],
+		PixelTheme.TEXT_DIM))
 
 	var sections := HBoxContainer.new()
 	sections.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -103,21 +101,18 @@ func _init() -> void:
 	_note = _label("", PixelTheme.GOLD)
 	_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_pages["CARDS"] = _cards_page()
+	_pages["SHADERS"] = _shaders_page()
 	_pages["CARD BACKS"] = _backs_page()
 	_pages["BACKGROUNDS"] = _backgrounds_page()
 	for section in SECTIONS:
 		add_child(_pages[section])
 	add_child(_note)
 
-	_back_selected = SkinCollection.active_back() if SkinCollection.active_back() != "" else CardBack.CLASSIC
-	# Первой открыта фракция, где уже есть образ (или DROW).
-	var start := "drow"
-	for item in (SkinCollection.load_data()["owned"] as Array):
-		var cid := String(item).get_slice(":", 0)
-		if cid != SkinCollection.BACK_PREFIX:
-			start = faction_of(cid)
-			break
-	show_faction(start)
+	_shader_selected = SkinCollection.active_shader()
+	var fav := PlayerProfile.favourite()
+	show_faction(faction_of(fav) if fav != "" else "drow")
+	if fav != "" and _tiles.has(fav):
+		select(fav)
 	show_section("CARDS")
 
 
@@ -142,7 +137,7 @@ static func _tint(b: Button, colour: Color) -> void:
 		b.add_theme_color_override(state, colour)
 
 
-## Раздел CARDS, CARD BACKS или BACKGROUNDS. Разделы одного размера — большего.
+## Раздел по имени (SECTIONS). Разделы одного размера — большего.
 func show_section(section: String) -> void:
 	_section = section
 	_pending_craft = ""
@@ -167,6 +162,12 @@ func section() -> String:
 func _set_note(text: String, colour: Color = PixelTheme.GOLD) -> void:
 	_note.text = text
 	_note.add_theme_color_override("font_color", colour)
+
+
+## Любимая карта игрока (или карта по умолчанию) — на ней примеряются шейдеры.
+static func _showcase_card() -> String:
+	var fav := PlayerProfile.favourite()
+	return fav if fav != "" else DEFAULT_FAVOURITE
 
 
 # --- CARDS ---------------------------------------------------------------------
@@ -194,30 +195,19 @@ func _cards_page() -> Control:
 	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", 2)
 	_grid.add_theme_constant_override("v_separation", 2)
-	_grid.custom_minimum_size = Vector2(COLUMNS * (MINI.x + 2), ROWS * (MINI.y + MARK.y + 3))
+	_grid.custom_minimum_size = Vector2(COLUMNS * (MINI.x + 2), ROWS * (MINI.y + 2))
 	_grid.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	body.add_child(_grid)
 
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 2)
 	body.add_child(side)
-	var first := faction_cards("drow")[0]
-	_preview = CardView.new(first, int(FULL.x), int(FULL.y))
+	_preview = CardView.new(faction_cards("drow")[0], int(FULL.x), int(FULL.y))
 	_preview.hover_preview = false
 	side.add_child(_preview)
-	var choices := GridContainer.new()
-	choices.columns = 2
-	choices.add_theme_constant_override("h_separation", 4)
-	choices.add_theme_constant_override("v_separation", 2)
-	side.add_child(choices)
-	for tier in CHOICES:
-		var b := _button("", press_tier.bind(tier))
-		b.custom_minimum_size = TIER_BUTTON
-		# Наведение примеряет ступень на большой карте.
-		b.mouse_entered.connect(func(): _preview.set_skin(tier))
-		b.mouse_exited.connect(func(): _preview.set_skin(_card_shown_tier()))
-		choices.add_child(b)
-		_tier_buttons[tier] = b
+	var soon := _label("ALTERNATIVE ARTS\nCOMING SOON", PixelTheme.TEXT_DIM)
+	soon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	side.add_child(soon)
 	# Любимая карта — видна в профиле и в карточке игрока у соперников.
 	_favourite_button = _button("", func(): toggle_favourite())
 	_favourite_button.custom_minimum_size = Vector2(FULL.x, 16)
@@ -232,16 +222,20 @@ func toggle_favourite() -> void:
 	refresh()
 
 
-## Карты фракции (полуколоды или SUPPLY), по имени.
+## Карты фракции (полуколоды или STARTING), по имени.
 static func faction_cards(faction: String) -> Array[String]:
 	var ids: Array[String] = []
-	if faction == "supply":
-		ids = [Supplies.PRIESTESS_OF_LOLTH, Supplies.HOUSE_GUARD]
+	if faction == "starting":
+		var pool: Array = []
+		pool.append_array(GameSetup.starting_deck())
+		pool.append_array([Supplies.PRIESTESS_OF_LOLTH, Supplies.HOUSE_GUARD, Supplies.INSANE_OUTCAST])
+		for cid in pool:
+			if not ids.has(String(cid)):
+				ids.append(String(cid))
 	else:
 		for cid in GameSetup.expand_half_deck(faction):
 			if not ids.has(cid):
 				ids.append(cid)
-	ids = ids.filter(func(cid: String) -> bool: return SkinCollection.is_skinnable(cid))
 	ids.sort_custom(func(a: String, b: String) -> bool:
 		return EventLogPanel.card_name(a) < EventLogPanel.card_name(b))
 	return ids
@@ -265,46 +259,22 @@ func show_faction(faction: String) -> void:
 	var cards := faction_cards(faction)
 	for cid in cards:
 		_add_tile(cid)
-	var owned: Array = SkinCollection.load_data()["owned"]
-	var pick := cards[0]
-	for cid in cards:
-		for tier in SkinCollection.TIERS:
-			if owned.has(SkinCollection.skin_key(cid, tier)):
-				pick = cid
-				break
-		if pick != cards[0]:
-			break
-	select(pick)
+	select(cards[0])
 
 
 func _add_tile(cid: String) -> void:
-	var tile := VBoxContainer.new()
-	tile.add_theme_constant_override("separation", 1)
 	var card := CardView.new(cid, int(MINI.x), int(MINI.y))
 	card.hover_preview = false
 	card.highlight = false
 	card.set_clickable(true)
 	card.pressed.connect(func(_id: String): select(cid))
-	tile.add_child(card)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 2)
-	var marks: Array[ColorRect] = []
-	for tier in SkinCollection.TIERS:
-		var mark := ColorRect.new()
-		mark.custom_minimum_size = MARK
-		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(mark)
-		marks.append(mark)
-	tile.add_child(row)
-	_grid.add_child(tile)
-	_tiles[cid] = {"tile": tile, "card": card, "marks": marks}
+	_grid.add_child(card)
+	_tiles[cid] = {"tile": card, "card": card}
 
 
-## Выбрать карту: она справа целиком, кнопки — про её ступени.
+## Выбрать карту: она справа целиком.
 func select(cid: String) -> void:
 	_selected = cid
-	_pending_craft = ""
 	_set_note("")
 	_preview.set_card(cid)
 	refresh()
@@ -314,60 +284,9 @@ func selected() -> String:
 	return _selected
 
 
-func _card_shown_tier() -> String:
-	if _pending_craft != "" and SkinCollection.TIERS.has(_pending_craft):
-		return _pending_craft
-	return String(SkinCollection.active().get(_selected, ""))
+# --- SHADERS -------------------------------------------------------------------
 
-
-## Кнопка ступени: открытая — включить; закрытая — первый щелчок показывает
-## цену и примеряет, второй создаёт за пыль.
-func press_tier(tier: String) -> void:
-	if tier == "" or SkinCollection.owns(_selected, tier):
-		_pending_craft = ""
-		SkinCollection.set_active(_selected, tier)
-		_set_note("")
-		Sfx.play("click")
-		refresh()
-		return
-	if not _can_pay(tier, SkinCollection.TIER_TITLES[tier]):
-		return
-	if _pending_craft != tier:
-		_ask_craft(tier, SkinCollection.TIER_TITLES[tier])
-		return
-	_pending_craft = ""
-	SkinCollection.craft(_selected, tier)
-	_crafted("%s %s" % [SkinCollection.TIER_TITLES[tier], EventLogPanel.card_name(_selected)])
-	_preview.flash_arrival()
-
-
-func _can_pay(tier: String, title: String) -> bool:
-	var cost := int(SkinCollection.CRAFT_COST[tier])
-	if int(SkinCollection.load_data()["dust"]) >= cost:
-		return true
-	_pending_craft = ""
-	_set_note("Not enough dust: %s costs %d." % [title, cost])
-	Sfx.play("error")
-	refresh()
-	return false
-
-
-func _ask_craft(what: String, title: String) -> void:
-	_pending_craft = what
-	var tier: String = what if SkinCollection.TIERS.has(what) else SkinCollection.BACK_TIER
-	_set_note("Craft %s for %d dust? Click again." % [title, SkinCollection.CRAFT_COST[tier]])
-	refresh()
-
-
-func _crafted(title: String) -> void:
-	_set_note("Crafted: %s." % title)
-	Sfx.play("coins")
-	refresh()
-
-
-# --- CARD BACKS ----------------------------------------------------------------
-
-func _backs_page() -> Control:
+func _shaders_page() -> Control:
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 12)
 	body.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -375,65 +294,113 @@ func _backs_page() -> Control:
 	list.add_theme_constant_override("separation", 3)
 	list.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	body.add_child(list)
-	# Рубашка одна на всех (решение владельца, 2026-09-30) — выбирать не из
-	# чего: остаётся только карта, которую можно покрутить.
-	var choice := CardBack.DESIGNS.size() > 1
-	list.visible = choice
-	for design in CardBack.DESIGNS:
-		var b := _button("", select_back.bind(design))
+	var choices: Array[String] = [""]
+	choices.append_array(SkinCollection.SHADERS)
+	for shader in choices:
+		var b := _button("", select_shader.bind(shader))
 		b.custom_minimum_size = LIST_BUTTON
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.mouse_entered.connect(func(): _back_preview.set_back(design))
-		b.mouse_exited.connect(func(): _back_preview.set_back(_back_selected))
+		b.mouse_entered.connect(func(): _try_on(shader))
+		b.mouse_exited.connect(func(): _try_on(_shader_shown()))
 		list.add_child(b)
-		_back_buttons[design] = b
+		_shader_buttons[shader] = b
+	var hint := _label("The shader covers your whole\ndeck in a game, starting cards\ntoo. Market cards stay plain.",
+		PixelTheme.TEXT_DIM)
+	list.add_child(hint)
+
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 3)
 	body.add_child(side)
-	_back_preview = CardFlip.new()
-	_back_preview.set_back(CardBack.CLASSIC)
-	side.add_child(_back_preview)
-	_back_action = _button("", press_back)
-	_back_action.custom_minimum_size = Vector2(FULL.x, 16)
-	side.add_child(_back_action)
-	_back_action.visible = choice
-	var hint := _label("Drag the card to turn it over.\nOpponents see the back when you\ntake a card unseen.",
-		PixelTheme.TEXT_DIM)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	side.add_child(hint)
+	var cards := HBoxContainer.new()
+	cards.add_theme_constant_override("separation", 6)
+	side.add_child(cards)
+	var big := CardView.new(_showcase_card(), int(FULL.x), int(FULL.y))
+	big.hover_preview = false
+	cards.add_child(big)
+	_shader_views.append(big)
+	var minis := VBoxContainer.new()
+	minis.add_theme_constant_override("separation", 6)
+	cards.add_child(minis)
+	for cid in SAMPLE_CARDS:
+		var mini := CardView.new(cid, int(MINI.x), int(MINI.y))
+		mini.hover_preview = false
+		minis.add_child(mini)
+		_shader_views.append(mini)
+	_shader_action = _button("", press_shader)
+	_shader_action.custom_minimum_size = Vector2(FULL.x, 16)
+	_shader_action.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	side.add_child(_shader_action)
 	return body
 
 
-func select_back(design: String) -> void:
-	_back_selected = design
+func _try_on(shader: String) -> void:
+	for view in _shader_views:
+		view.set_skin(shader)
+
+
+func _shader_shown() -> String:
+	return _pending_craft if _pending_craft != "" else _shader_selected
+
+
+func select_shader(shader: String) -> void:
+	_shader_selected = shader
 	_pending_craft = ""
 	_set_note("")
 	refresh()
 
 
-func selected_back() -> String:
-	return _back_selected
+func selected_shader() -> String:
+	return _shader_selected
 
 
-## USE — надеть открытую рубашку; закрытую — создать за пыль (два щелчка).
-func press_back() -> void:
-	var design := _back_selected
-	var title := String(CardBack.NAMES[design])
-	if SkinCollection.owns_back(design):
+## USE — включить открытый шейдер (или снять — PLAIN); закрытый — создать за
+## пыль: первый щелчок показывает цену, второй создаёт.
+func press_shader() -> void:
+	var shader := _shader_selected
+	if shader == "" or SkinCollection.owns_shader(shader):
 		_pending_craft = ""
-		SkinCollection.set_back(design)
+		SkinCollection.set_shader(shader)
 		_set_note("")
 		Sfx.play("click")
 		refresh()
 		return
-	if not _can_pay(SkinCollection.BACK_TIER, title):
+	var title := String(SkinCollection.SHADER_TITLES[shader])
+	var cost := int(SkinCollection.CRAFT_COST[SkinCollection.SHADER_TIER])
+	if int(SkinCollection.load_data()["dust"]) < cost:
+		_pending_craft = ""
+		_set_note("Not enough dust: %s costs %d." % [title, cost])
+		Sfx.play("error")
+		refresh()
 		return
-	if _pending_craft != design:
-		_ask_craft(design, title)
+	if _pending_craft != shader:
+		_pending_craft = shader
+		_set_note("Craft %s for %d dust? Click again." % [title, cost])
+		refresh()
 		return
 	_pending_craft = ""
-	SkinCollection.craft_back(design)
-	_crafted(title)
+	SkinCollection.craft_shader(shader)
+	_set_note("Crafted: %s." % title)
+	Sfx.play("coins")
+	refresh()
+	for view in _shader_views:
+		view.flash_arrival()
+
+
+# --- CARD BACKS ----------------------------------------------------------------
+
+func _backs_page() -> Control:
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 3)
+	side.alignment = BoxContainer.ALIGNMENT_CENTER
+	_back_preview = CardFlip.new()
+	_back_preview.set_back(CardBack.CLASSIC)
+	_back_preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	side.add_child(_back_preview)
+	var hint := _label("Drag the card to turn it over.\nOpponents see the back when you\ntake a card unseen.",
+		PixelTheme.TEXT_DIM)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	side.add_child(hint)
+	return side
 
 
 # --- BACKGROUNDS ---------------------------------------------------------------
@@ -459,61 +426,44 @@ func _backgrounds_page() -> Control:
 
 # --- общее ---------------------------------------------------------------------
 
-## Пыль, лутбоксы, метки и надписи кнопок — по файлу профиля.
+## Пыль, лутбоксы и надписи кнопок — по файлу профиля.
 func refresh() -> void:
 	var data := SkinCollection.load_data()
 	_dust_label.text = "DUST %d" % int(data["dust"])
 	_boxes_label.text = "LOOT BOXES %d" % int(data["boxes"])
 	_open_button.disabled = int(data["boxes"]) <= 0
-	var owned: Array = data["owned"]
-	var active: Dictionary = data["active"]
+	var worn := String(data["shader"])
 
 	for cid: String in _tiles:
-		var t: Dictionary = _tiles[cid]
-		(t["card"] as CardView).set_skin(String(active.get(cid, "")))
-		(t["card"] as CardView).highlight = cid == _selected
-		(t["card"] as CardView).queue_redraw()
-		for i in SkinCollection.TIERS.size():
-			var tier := SkinCollection.TIERS[i]
-			(t["marks"][i] as ColorRect).color = Color(SkinCollection.TIER_COLOURS[tier]) \
-				if owned.has(SkinCollection.skin_key(cid, tier)) else MARK_OFF
-	var on := String(active.get(_selected, ""))
-	_preview.set_skin(_card_shown_tier())
-	for tier: String in _tier_buttons:
-		var b: Button = _tier_buttons[tier]
-		var colour := PixelTheme.TEXT if tier == "" else Color(SkinCollection.TIER_COLOURS[tier])
-		var title := "PLAIN" if tier == "" else String(SkinCollection.TIER_TITLES[tier])
-		if tier == "" or owned.has(SkinCollection.skin_key(_selected, tier)):
-			b.text = title + (" ON" if tier == on else "")
-		else:
-			b.text = "%s %d" % [title, SkinCollection.CRAFT_COST[tier]]
-			colour = colour.darkened(0.35)
-		_tint(b, PixelTheme.GOLD if tier == on else colour)
+		var card: CardView = _tiles[cid]["card"]
+		card.highlight = cid == _selected
+		card.queue_redraw()
 	var is_favourite := PlayerProfile.favourite() == _selected
 	_favourite_button.text = "YOUR FAVOURITE CARD" if is_favourite else "MAKE FAVOURITE"
 	_tint(_favourite_button, PixelTheme.GOLD if is_favourite else PixelTheme.TEXT)
 
-	var worn := SkinCollection.active_back()
-	worn = worn if worn != "" else CardBack.CLASSIC
-	var ultra := Color(SkinCollection.TIER_COLOURS[SkinCollection.BACK_TIER])
-	for design: String in _back_buttons:
-		var b: Button = _back_buttons[design]
-		var has := SkinCollection.owns_back(design)
-		var state := "  ON" if design == worn else ("" if has else "  %d" % SkinCollection.CRAFT_COST[SkinCollection.BACK_TIER])
-		b.text = " %s%s" % [CardBack.NAMES[design], state]
-		_tint(b, PixelTheme.GOLD if design == worn else (ultra if has else ultra.darkened(0.45)))
-		b.set_pressed_no_signal(design == _back_selected)
-	_back_preview.set_back(_back_selected)
-	var fav := PlayerProfile.favourite()
-	fav = fav if fav != "" else _selected
-	_back_preview.set_face(fav, String(active.get(fav, "")))
-	if _back_selected == worn:
-		_back_action.text = "IN USE"
-	elif SkinCollection.owns_back(_back_selected):
-		_back_action.text = "USE"
+	var ultra := Color(SkinCollection.TIER_COLOURS[SkinCollection.SHADER_TIER])
+	var cost := int(SkinCollection.CRAFT_COST[SkinCollection.SHADER_TIER])
+	for shader: String in _shader_buttons:
+		var b: Button = _shader_buttons[shader]
+		var has := shader == "" or SkinCollection.owns_shader(shader)
+		var title := "PLAIN" if shader == "" else String(SkinCollection.SHADER_TITLES[shader])
+		var state := "  ON" if shader == worn else ("" if has else "  %d" % cost)
+		b.text = " %s%s" % [title, state]
+		var colour := PixelTheme.TEXT if shader == "" else Color(SkinCollection.SHADER_COLOURS[shader])
+		_tint(b, PixelTheme.GOLD if shader == worn else (colour if has else ultra.darkened(0.45)))
+		b.set_pressed_no_signal(shader == _shader_selected)
+	_shader_views[0].set_card(_showcase_card())
+	_try_on(_shader_shown())
+	if _shader_selected == worn:
+		_shader_action.text = "IN USE"
+	elif _shader_selected == "" or SkinCollection.owns_shader(_shader_selected):
+		_shader_action.text = "USE"
 	else:
-		_back_action.text = "CRAFT ULTRA %d" % SkinCollection.CRAFT_COST[SkinCollection.BACK_TIER]
-	_back_action.disabled = _back_selected == worn
+		_shader_action.text = "CRAFT ULTRA %d" % cost
+	_shader_action.disabled = _shader_selected == worn
+
+	_back_preview.set_face(_showcase_card(), worn)
 
 	for style: String in _bg_buttons:
 		var b: Button = _bg_buttons[style]
@@ -521,30 +471,29 @@ func refresh() -> void:
 		_tint(b, PixelTheme.GOLD if style == UnderdarkBg.style() else PixelTheme.TEXT)
 
 
-## Открыть лутбокс: выпавшая карта или рубашка открывается в своём разделе.
+## Открыть лутбокс: выпавший шейдер открывается в разделе SHADERS, пыль —
+## просто строкой снизу.
 func open_box() -> Dictionary:
 	var got := SkinCollection.open_box(_rng)
 	if got.is_empty():
 		return got
 	var tier := String(got["tier"])
-	var title := ""
-	if got.has("back"):
-		show_section("CARD BACKS")
-		select_back(String(got["back"]))
-		title = "card back %s" % CardBack.NAMES[got["back"]]
-	else:
-		var cid := String(got["card"])
-		show_section("CARDS")
-		show_faction(faction_of(cid))
-		select(cid)
-		title = "%s %s" % [SkinCollection.TIER_TITLES[tier], EventLogPanel.card_name(cid)]
-		_preview.set_skin(tier)
-		_preview.flash_arrival()
 	var colour := Color(SkinCollection.TIER_COLOURS[tier])
+	var shader := String(got["shader"])
+	if shader == "":
+		refresh()
+		_set_note("%s: +%d dust." % [SkinCollection.TIER_TITLES[tier], int(got["dust"])], colour)
+		Sfx.play("coins")
+		return got
+	show_section("SHADERS")
+	select_shader(shader)
+	var title := String(SkinCollection.SHADER_TITLES[shader])
 	if got["duplicate"]:
-		_set_note("Already had %s: +%d dust." % [title, int(got["dust"])], colour)
+		_set_note("Already had the %s shader: +%d dust." % [title, int(got["dust"])], colour)
 		Sfx.play("coins")
 	else:
-		_set_note("New: %s!" % title, colour)
-		Sfx.play("victory" if tier != "epic" else "card")
+		_set_note("New shader: %s!" % title, colour)
+		Sfx.play("victory")
+		for view in _shader_views:
+			view.flash_arrival()
 	return got

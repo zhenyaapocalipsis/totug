@@ -162,7 +162,7 @@ static func clean(profile: Dictionary) -> Dictionary:
 		"emblem": clean_emblem(String(profile.get("emblem", ""))),
 		"back": clean_back(String(profile.get("back", ""))),
 		"colour": clean_colour(String(profile.get("colour", ""))),
-		"skins": SkinCollection.clean_skins(profile.get("skins", {})),
+		"shader": SkinCollection.clean_shader(profile.get("shader", "")),
 		"favourite": clean_favourite(String(profile.get("favourite", ""))),
 	}
 
@@ -208,10 +208,10 @@ static func path() -> String:
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
-		return {"name": "", "emblem": "", "back": "", "colour": "", "skins": {}, "favourite": ""}
+		return {"name": "", "emblem": "", "back": "", "colour": "", "shader": "", "favourite": ""}
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", ""),
-		"back": SkinCollection.active_back(), "colour": cfg.get_value("profile", "colour", ""),
-		"skins": SkinCollection.active(), "favourite": cfg.get_value("profile", "favourite", "")})
+		"back": cfg.get_value("profile", "back", ""), "colour": cfg.get_value("profile", "colour", ""),
+		"shader": SkinCollection.active_shader(), "favourite": cfg.get_value("profile", "favourite", "")})
 
 
 ## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга
@@ -276,8 +276,7 @@ static func save_phrases(phrases: Array) -> int:
 	return cfg.save(path())
 
 
-## Выбранная рубашка (вкладка COLLECTION → CARD BACKS); открыта ли она —
-## проверяет SkinCollection.set_back.
+## Выбранная рубашка (сейчас рубашка одна — CardBack.CLASSIC, это "").
 static func save_back(back: String) -> int:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
@@ -497,7 +496,6 @@ static func back_of(seat: String) -> String:
 	return String((seats.get(seat, {}) as Dictionary).get("back", ""))
 
 
-## Включённые образы карт игрока за столом: карта -> ступень (SkinCollection).
-static func skins_of(seat: String) -> Dictionary:
-	var skins = (seats.get(seat, {}) as Dictionary).get("skins", {})
-	return skins if skins is Dictionary else {}
+## Включённый шейдер игрока за столом (SkinCollection.SHADERS, "" — нет).
+static func shader_of(seat: String) -> String:
+	return SkinCollection.clean_shader((seats.get(seat, {}) as Dictionary).get("shader", ""))

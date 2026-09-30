@@ -61,7 +61,7 @@ const SHAKE_SPEED := 64.0
 const ARRIVE_TIME := 0.34
 const ARRIVE_DROP := 10.0
 
-## Образ карты (SkinCollection): лицо перекрашивает шейдер. Области лица в его
+## Шейдер карты (SkinCollection.SHADERS): лицо перекрашивает шейдер. Области лица в его
 ## пикселях (x0, y0, x1, y1) — арт и поле текста; у мелкого лица поля нет.
 const SKIN_SHADER := preload("res://scenes/ui/card_skin.gdshader")
 const FULL_ART := Vector4(6, 34, 170, 134)
@@ -86,8 +86,8 @@ var _mini := false
 var _shake_left := 0.0
 ## Сколько ещё въезжать после смены карты в слоте.
 var _arrive_left := 0.0
-## Чья это карта ("" — ничья, как в маркете): её образ берётся из профиля
-## владельца за столом (PlayerProfile.skins_of). Образ — ступень SkinCollection
+## Чья это карта ("" — ничья, как в маркете): шейдер берётся из профиля
+## владельца за столом (PlayerProfile.shader_of): имя шейдера
 ## или "" (обычная карта).
 var owner_seat := ""
 var skin := ""
@@ -342,22 +342,25 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Образ карты владельца seat для карты cid ("" — образа нет).
-static func skin_of(seat: String, cid: String) -> String:
-	if seat == "" or not SkinCollection.is_skinnable(cid):
+## Шейдер владельца seat для его карты (решение владельца, 2026-09-30:
+## шейдер ложится на всю колоду игрока, со стартовыми картами). "" — ничья
+## карта (маркет) или у владельца нет шейдера. cid оставлен на будущее —
+## для альтернативных артов отдельных карт.
+static func skin_of(seat: String, _cid: String) -> String:
+	if seat == "":
 		return ""
-	return String(PlayerProfile.skins_of(seat).get(cid, ""))
+	return PlayerProfile.shader_of(seat)
 
 
-## Карта принадлежит игроку seat — показывать её в его образе.
+## Карта принадлежит игроку seat — показывать её с его шейдером.
 func set_card_owner(seat: String) -> void:
 	owner_seat = seat
 	set_skin(skin_of(seat, card_id))
 
 
-## Показать карту в образе tier (ступень SkinCollection) или обычной ("").
-func set_skin(tier: String) -> void:
-	skin = tier if SkinCollection.TIERS.has(tier) else ""
+## Показать карту с шейдером (SkinCollection.SHADERS) или обычной ("").
+func set_skin(shader: String) -> void:
+	skin = SkinCollection.clean_shader(shader)
 	if skin == "" or _pixel == null:
 		material = null
 		return
@@ -365,7 +368,7 @@ func set_skin(tier: String) -> void:
 	if mat == null:
 		mat = ShaderMaterial.new()
 		material = mat
-	configure_skin(mat, SkinCollection.TIER_INDEX[skin], _mini)
+	configure_skin(mat, SkinCollection.SHADER_INDEX[skin], _mini)
 	queue_redraw()
 
 

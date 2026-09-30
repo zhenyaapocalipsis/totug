@@ -1132,11 +1132,7 @@ func test_rating() -> void:
 
 
 func test_skin_collection() -> void:
-	section("образы карт: лутбоксы, пыль, коллекция")
-	var cards := SkinCollection.skinnable_cards()
-	check(cards.size() >= 100, "образы есть у всех покупаемых карт (%d)" % cards.size())
-	check(not cards.has("48342") and not cards.has("48344") and not cards.has(CardLibrary.INSANE_OUTCAST_ID),
-		"у Noble, Soldier и Insane Outcast (без цены) образов нет")
+	section("коллекция: лутбоксы, пыль, шейдеры на всю колоду")
 	var odds := 0
 	for tier in SkinCollection.TIERS:
 		odds += int(SkinCollection.BOX_ODDS[tier])
@@ -1144,6 +1140,7 @@ func test_skin_collection() -> void:
 	check_eq(SkinCollection.tier_for_roll(0), "epic", "бросок 0 — EPIC")
 	check_eq(SkinCollection.tier_for_roll(80), "legendary", "бросок 80 — LEGENDARY")
 	check_eq(SkinCollection.tier_for_roll(99), "ultra", "бросок 99 — ULTRA")
+	check_eq(SkinCollection.SHADER_TIER, "ultra", "все шейдеры — ступени ULTRA")
 
 	# Награда за место: первое — лутбокс, остальные — пыль.
 	var res := {"red": {"vp": 40, "won": true}, "blue": {"vp": 35, "won": false},
@@ -1158,74 +1155,65 @@ func test_skin_collection() -> void:
 	PlayerProfile.path_override = "user://profile_skins_test.cfg"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
 	check(SkinCollection.open_box(rng).is_empty(), "без лутбоксов открывать нечего")
-	SkinCollection.grant({"boxes": 2, "dust": 150})
+	SkinCollection.grant({"boxes": 300, "dust": 150})
 	SkinCollection.grant({"dust": 60})
-	var data := SkinCollection.load_data()
-	check(int(data["boxes"]) == 2 and int(data["dust"]) == 210, "награды копятся в профиле")
-	var got := SkinCollection.open_box(rng)
-	check(cards.has(String(got["card"])) and SkinCollection.TIERS.has(String(got["tier"])) and not got["duplicate"],
-		"лутбокс дал образ карты: %s %s" % [got["card"], got["tier"]])
-	check(SkinCollection.owns(got["card"], got["tier"]), "образ лёг в коллекцию")
-	check_eq(SkinCollection.active().get(got["card"], ""), got["tier"], "новый образ сразу включён")
-	check_eq(int(SkinCollection.load_data()["boxes"]), 1, "лутбокс потрачен")
-
-	# Повтор образа превращается в пыль.
-	var cfg := ConfigFile.new()
-	cfg.load(PlayerProfile.path())
-	var all_owned: Array = []
-	for cid in cards:
-		for tier in SkinCollection.TIERS:
-			all_owned.append(SkinCollection.skin_key(cid, tier))
-	cfg.set_value("collection", "owned", all_owned)
-	cfg.save(PlayerProfile.path())
-	var dust_before := int(SkinCollection.load_data()["dust"])
-	var again := SkinCollection.open_box(rng)
-	check(again["duplicate"] and int(again["dust"]) == int(SkinCollection.DUPLICATE_DUST[again["tier"]]),
-		"повтор — пыль вместо образа")
-	check_eq(int(SkinCollection.load_data()["dust"]), dust_before + int(again["dust"]), "пыль за повтор начислена")
-	cfg.load(PlayerProfile.path())
-	cfg.set_value("collection", "owned", [SkinCollection.skin_key(got["card"], got["tier"])])
-	cfg.set_value("collection", "dust", 250)
-	cfg.save(PlayerProfile.path())
+	check_eq(int(SkinCollection.load_data()["dust"]), 210, "награды копятся в профиле")
+	# Много лутбоксов: шейдер — только с ULTRA, остальное — пыль.
+	var shaders := 0
+	var first := {}
+	var right := true
+	for i in 300:
+		rng.seed = i
+		var got := SkinCollection.open_box(rng)
+		if String(got["shader"]) != "":
+			shaders += 1
+			right = right and got["tier"] == "ultra"
+			if first.is_empty():
+				first = got
+		else:
+			right = right and int(got["dust"]) == int(SkinCollection.DUPLICATE_DUST[got["tier"]])
+	check(right, "шейдер выпадает только ступенью ULTRA, иначе пыль по ступени")
+	check(shaders > 0 and shaders < 30, "шейдеры редки, как ULTRA (%d из 300)" % shaders)
+	check(not first.is_empty() and not first["duplicate"] and SkinCollection.owns_shader(String(first["shader"])),
+		"первый выпавший шейдер лёг в коллекцию")
+	check_eq(SkinCollection.active_shader(), String(first["shader"]), "первый шейдер сразу включён")
+	check_eq(int(SkinCollection.load_data()["boxes"]), 0, "лутбоксы потрачены")
 
 	# Создание за пыль и переключение.
-	var target := cards[0] if cards[0] != got["card"] else cards[1]
-	check(not SkinCollection.craft(target, "legendary"), "на LEGENDARY (600) пыли не хватает")
-	check(SkinCollection.craft(target, "epic"), "EPIC за 200 пыли создан")
-	check_eq(int(SkinCollection.load_data()["dust"]), 50, "пыль списана")
-	check(not SkinCollection.craft(target, "epic"), "второй раз тот же образ не создаётся")
-	check(not SkinCollection.craft("48342", "epic"), "карте без цены образ не создаётся")
-	check(not SkinCollection.set_active(target, "ultra"), "чужой (не открытый) образ не включается")
-	check(SkinCollection.set_active(target, ""), "образ можно выключить")
-	check(not SkinCollection.active().has(target), "выключенный образ не уходит в партию")
-	check(SkinCollection.set_active(target, "epic"), "и включить снова")
-	check_eq(PlayerProfile.load_local()["skins"].get(target, ""), "epic", "включённые образы — в профиле для партии")
+	var cfg := ConfigFile.new()
+	cfg.load(PlayerProfile.path())
+	cfg.set_value("collection", "owned", [SkinCollection.shader_key("faerie")])
+	cfg.set_value("collection", "shader", "faerie")
+	cfg.set_value("collection", "dust", 1700)
+	cfg.save(PlayerProfile.path())
+	check(not SkinCollection.set_shader("prism"), "не открытый шейдер не включается")
+	check(SkinCollection.craft_shader("prism"), "шейдер создаётся за пыль ULTRA")
+	check_eq(int(SkinCollection.load_data()["dust"]), 100, "списано 1600 пыли")
+	check_eq(SkinCollection.active_shader(), "prism", "созданный шейдер сразу включён")
+	check(not SkinCollection.craft_shader("prism") and not SkinCollection.craft_shader("gilded"),
+		"второй раз и без пыли — не создаётся")
+	check(SkinCollection.set_shader("") and SkinCollection.active_shader() == "", "шейдер можно снять")
+	check(SkinCollection.set_shader("faerie"), "открытый шейдер включается")
+	check_eq(PlayerProfile.load_local()["shader"], "faerie", "включённый шейдер — в профиле для партии")
+	check_eq(SkinCollection.clean_shader("gold"), "", "чужой шейдер из сети проверяется")
 
-	# Из сети — только настоящие карты и ступени.
-	check_eq(SkinCollection.clean_skins({target: "epic", "48342": "epic", "999": "ultra", cards[2]: "gold"}),
-		{target: "epic"}, "чужие образы проверяются")
-	check_eq(SkinCollection.clean_skins("junk"), {}, "мусор вместо образов — пусто")
-	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "skins": {target: "ultra"}})}
-	check_eq(PlayerProfile.skins_of("red"), {target: "ultra"}, "образы игрока за столом")
-	check_eq(PlayerProfile.skins_of("blue"), {}, "у игрока без профиля образов нет")
-
-	# Карта в игре: образ берётся у владельца, у ничьих карт (маркет) его нет.
-	var owned_view := CardView.new(target, 80, 76)
+	# Партия: шейдер владельца на любой его карте, стартовые — тоже.
+	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "shader": "prism"})}
+	check_eq(PlayerProfile.shader_of("red"), "prism", "шейдер игрока за столом")
+	check_eq(PlayerProfile.shader_of("blue"), "", "у игрока без профиля шейдера нет")
+	var owned_view := CardView.new("48306", 80, 76)
 	owned_view.set_card_owner("red")
-	check_eq(owned_view.skin, "ultra", "карта игрока — в его образе")
+	check_eq(owned_view.skin, "prism", "карта игрока — с его шейдером")
 	var mat := owned_view.material as ShaderMaterial
-	check(mat != null and int(mat.get_shader_parameter("tier")) == 3, "образ рисует шейдер ступени ULTRA")
+	check(mat != null and int(mat.get_shader_parameter("tier")) == 3, "PRISM рисует эффект призмы")
 	check_eq(mat.get_shader_parameter("face_size"), Vector2(80, 76), "шейдер знает, что лицо мелкое")
 	owned_view.set_card("48342")
-	check(owned_view.skin == "" and owned_view.material == null, "Noble (стартовая карта) — без образа")
-	owned_view.set_card(target)
-	check_eq(owned_view.skin, "ultra", "карта в том же слоте снова в образе владельца")
-	var market_view := CardView.new(target, 176, 254)
-	check(market_view.skin == "" and market_view.material == null, "карта маркета (ничья) — без образа")
+	check_eq(owned_view.skin, "prism", "стартовая карта (Noble) — тоже с шейдером")
+	var market_view := CardView.new("48306", 176, 254)
+	check(market_view.skin == "" and market_view.material == null, "карта маркета (ничья) — без шейдера")
 	market_view.set_card_owner("blue")
-	check_eq(market_view.skin, "", "у игрока без образов карта обычная")
+	check_eq(market_view.skin, "", "у игрока без шейдера карта обычная")
 	owned_view.free()
 	market_view.free()
 	PlayerProfile.seats = {}
@@ -1237,40 +1225,41 @@ func test_skin_collection() -> void:
 	check(_find_button(profile_screen, "COLLECTION") != null, "в профиле есть вкладка COLLECTION")
 	profile_screen.free()
 	var page := CollectionPage.new()
+	check(_find_button(page, "SHADERS") != null and _find_button(page, "CARDS") != null,
+		"в коллекции разделы CARDS и SHADERS")
 	check(_all_text(page).contains("DUST 100") and _all_text(page).contains("LOOT BOXES 1"),
 		"вкладка показывает пыль и лутбоксы")
-	# Сид с картой в лутбоксе (не рубашкой): без него тест зависел бы от случая.
-	page._rng.seed = 7
+	check(CollectionPage.faction_cards("starting").has("48342"), "в CARDS есть и стартовые карты")
+	page._rng.seed = 1
 	var dropped := page.open_box()
-	check_eq(page.selected(), String(dropped["card"]), "открытый лутбокс показывает выпавшую карту")
-	check(_all_text(page).contains("New: ") and _all_text(page).contains("LOOT BOXES 0"),
-		"сообщение о новом образе, лутбокс потрачен")
+	check(not dropped.is_empty() and _all_text(page).contains("LOOT BOXES 0"), "лутбокс открыт и потрачен")
 	check(page.open_box().is_empty(), "лутбоксов больше нет — открывать нечего")
-	var other := cards[3] if cards[3] != String(dropped.get("card", "")) else cards[4]
-	page.select(other)
-	page.press_tier("epic")
-	check(_all_text(page).contains("Not enough dust") and not SkinCollection.owns(other, "epic"),
-		"пыли мало — образ не создан")
-	SkinCollection.grant({"dust": 200})
-	page.press_tier("epic")
-	check(_all_text(page).contains("Click again") and not SkinCollection.owns(other, "epic"),
+	page.select_shader("gilded")
+	page.press_shader()
+	check(_all_text(page).contains("Not enough dust") and not SkinCollection.owns_shader("gilded"),
+		"пыли мало — шейдер не создан")
+	SkinCollection.grant({"dust": 1600})
+	page.press_shader()
+	check(_all_text(page).contains("Click again") and not SkinCollection.owns_shader("gilded"),
 		"первый щелчок только показывает цену")
-	page.press_tier("epic")
-	check(SkinCollection.owns(other, "epic") and SkinCollection.active().get(other, "") == "epic",
-		"второй щелчок создаёт и включает образ")
-	check(_all_text(page).contains("DUST 100"), "пыль на вкладке обновилась")
-	page.press_tier("")
-	check(not SkinCollection.active().has(other), "PLAIN — карта снова без образа")
-	page.press_tier("epic")
-	check_eq(SkinCollection.active().get(other, ""), "epic", "открытый образ включается одним щелчком")
+	page.press_shader()
+	check(SkinCollection.owns_shader("gilded") and SkinCollection.active_shader() == "gilded",
+		"второй щелчок создаёт и включает шейдер")
+	page.select_shader("")
+	page.press_shader()
+	check_eq(SkinCollection.active_shader(), "", "PLAIN — колода без шейдера")
+	page.select_shader("gilded")
+	page.press_shader()
+	check_eq(SkinCollection.active_shader(), "gilded", "открытый шейдер включается одним щелчком")
+	page.select(CollectionPage.faction_cards("drow")[3])
+	var other := page.selected()
 	page.toggle_favourite()
-	check(PlayerProfile.favourite() == other and _all_text(page).contains("YOUR FAVOURITE CARD") == false
-		and _find_button(page, "YOUR FAVOURITE CARD") != null, "выбранная карта стала любимой")
+	check(PlayerProfile.favourite() == other and _find_button(page, "YOUR FAVOURITE CARD") != null,
+		"выбранная карта стала любимой")
 	check_eq(String(PlayerProfile.load_local()["favourite"]), other, "любимая карта уходит в партию с профилем")
 	page.toggle_favourite()
 	check_eq(PlayerProfile.favourite(), "", "второй щелчок снимает любимую карту")
 	page.free()
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path
 
@@ -3301,25 +3290,11 @@ func test_card_back() -> void:
 	check_eq(CardBack.clean("drow"), CardBack.CLASSIC, "бывшие рубашки фракций — теперь CLASSIC")
 	check(CardBack.texture("") == CardBack.texture("classic"), "текстура рубашки берётся из кэша")
 	check_eq(PlayerProfile.clean_back("drow"), "", "в профиле рубашка — всегда обычная")
-	check(SkinCollection.collectible_backs().is_empty(), "рубашек в коллекции и в лутбоксах нет")
-
-	var saved_path := PlayerProfile.path_override
-	PlayerProfile.path_override = "user://test_card_back.cfg"
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
-	SkinCollection.grant({"boxes": 300})
-	var rng := RandomNumberGenerator.new()
-	var backs := 0
-	for i in 300:
-		rng.seed = i
-		backs += 1 if SkinCollection.open_box(rng).has("back") else 0
-	check_eq(backs, 0, "из лутбоксов выпадают только образы карт")
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
-	PlayerProfile.path_override = saved_path
 
 	# Карта, которую можно покрутить (коллекция → CARD BACKS).
 	var flip := CardFlip.new()
-	flip.set_back("drow")
-	flip.set_face("48314", "legendary")
+	flip.set_back(CardBack.CLASSIC)
+	flip.set_face("48314", "gilded")
 	check(flip.shows_back(), "сначала к игроку рубашкой")
 	flip.angle = PI
 	flip._process(0.016)
@@ -3338,8 +3313,8 @@ func test_card_back() -> void:
 	# Любимая карта.
 	check_eq(PlayerProfile.clean({"favourite": "48314"})["favourite"], "48314", "любимая карта — в профиле")
 	check_eq(PlayerProfile.clean({"favourite": "999"})["favourite"], "", "неизвестная карта — не любимая")
-	check(ProfileScreen.favourite_view("", {}) == null, "нет любимой — нечего показывать")
-	var card_fav := ProfileCard.new("blue", {"name": "Bob", "favourite": "48314", "skins": {"48314": "ultra"}})
+	check(ProfileScreen.favourite_view("", "") == null, "нет любимой — нечего показывать")
+	var card_fav := ProfileCard.new("blue", {"name": "Bob", "favourite": "48314", "shader": "prism"})
 	check(_all_text(card_fav).contains("FAVOURITE"), "карточка игрока показывает любимую карту")
 	card_fav.free()
 

@@ -65,7 +65,7 @@ func set_face(cid: String, tier: String) -> void:
 		if mat == null:
 			mat = ShaderMaterial.new()
 			_face_layer.material = mat
-		CardView.configure_skin(mat, SkinCollection.TIER_INDEX[tier], false)
+		CardView.configure_skin(mat, SkinCollection.SHADER_INDEX[tier], false)
 	_face_layer.queue_redraw()
 
 

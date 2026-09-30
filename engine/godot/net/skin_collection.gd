@@ -1,56 +1,46 @@
 class_name SkinCollection
 extends RefCounted
 
-## Образы карт (решение владельца, 2026-09-30): косметика, на игру не влияет.
+## Коллекция косметики (решение владельца, 2026-09-30), на игру не влияет.
 ##
 ## Награды — только за партии поиска игры (NetSession._match) на выделенном
-## сервере: первое место получает лутбокс, остальные — пыль по месту. Лутбокс
-## даёт случайный образ случайной карты; повтор уже открытого образа
-## превращается в пыль. За пыль образ можно создать сам (craft).
+## сервере: первое место получает лутбокс, остальные — пыль по месту.
 ##
-## Три ступени образа: EPIC (Faerie Fire), LEGENDARY (позолота), ULTRA
-## (призма); как они выглядят — scenes/ui/card_skin.gdshader. Рубашки карт
-## (CardBack) тоже здесь: они ступени ULTRA (BACK_TIER).
+## Шейдеры (решение владельца, 2026-09-30): FAERIE FIRE, GILDED, PRISM — как
+## они выглядят, см. scenes/ui/card_skin.gdshader. Все — ступени ULTRA.
+## Включённый шейдер ложится сразу на всю колоду игрока в партии, со
+## стартовыми картами (CardView.skin_of); в маркете карты ничьи и обычные.
+##
+## Лутбокс бросает ступень по BOX_ODDS: ULTRA — случайный шейдер (повтор —
+## пыль), EPIC и LEGENDARY — пока просто пыль: для них будут альтернативные
+## арты карт (вкладка CARDS). Шейдер можно создать за пыль (craft_shader).
 ##
 ## Коллекция хранится у игрока, в файле профиля (секция "collection"), как и
-## история партий. В партию уходят только включённые образы (active): карта ->
-## ступень. В игре образ виден на картах, которые игрок купил с рынка (карты
-## стартовой колоды образов не имеют — у них нет цены).
+## история партий. В партию уходит только включённый шейдер.
 
 const TIERS: Array[String] = ["epic", "legendary", "ultra"]
 const TIER_TITLES := {"epic": "EPIC", "legendary": "LEGENDARY", "ultra": "ULTRA"}
 const TIER_COLOURS := {"epic": "b9a0ff", "legendary": "ffc24a", "ultra": "9ff0ff"}
-## Номер ступени для шейдера (0 — без образа).
-const TIER_INDEX := {"epic": 1, "legendary": 2, "ultra": 3}
+
+const SHADERS: Array[String] = ["faerie", "gilded", "prism"]
+const SHADER_TITLES := {"faerie": "FAERIE FIRE", "gilded": "GILDED", "prism": "PRISM"}
+const SHADER_COLOURS := {"faerie": "b9a0ff", "gilded": "ffc24a", "prism": "9ff0ff"}
+## Номер эффекта в card_skin.gdshader (0 — без шейдера).
+const SHADER_INDEX := {"faerie": 1, "gilded": 2, "prism": 3}
+## Ступень всех шейдеров.
+const SHADER_TIER := "ultra"
+const SHADER_PREFIX := "shader"
 
 ## Пыль за место в партии поиска игры (первое место — лутбокс).
 const DUST_BY_PLACE := {2: 40, 3: 30, 4: 20}
-## Сколько пыли стоит создать образ.
+## Сколько пыли стоит создать предмет ступени.
 const CRAFT_COST := {"epic": 200, "legendary": 600, "ultra": 1600}
-## Сколько пыли даёт повтор образа из лутбокса.
+## Сколько пыли даёт повтор (и пока — EPIC/LEGENDARY из лутбокса).
 const DUPLICATE_DUST := {"epic": 50, "legendary": 150, "ultra": 400}
 ## Шансы ступени в лутбоксе, в процентах (в сумме 100).
 const BOX_ODDS := {"epic": 75, "legendary": 21, "ultra": 4}
-## Рубашки карт (CardBack) — ступени ULTRA (решение владельца, 2026-09-30):
-## стоят и повторяются как ULTRA; из выпавших ULTRA такая доля — рубашки.
-const BACK_TIER := "ultra"
-const BACK_SHARE := 0.5
-const BACK_PREFIX := "back"
 
 const SECTION := "collection"
-
-
-## Карты, у которых может быть образ: все, что покупаются (есть цена).
-static func skinnable_cards() -> Array[String]:
-	var out: Array[String] = []
-	for cid in CardLibrary.all_ids():
-		if CardLibrary.card_cost(cid) >= 0:
-			out.append(cid)
-	return out
-
-
-static func is_skinnable(cid: String) -> bool:
-	return CardLibrary.card_cost(cid) >= 0
 
 
 ## Награда за место: {"boxes": 1} или {"dust": N}.
@@ -60,23 +50,19 @@ static func reward_for_place(place: int) -> Dictionary:
 	return {"dust": int(DUST_BY_PLACE.get(place, DUST_BY_PLACE[4]))}
 
 
-## Включённые образы из чужих рук (сеть): только настоящие карты с ценой и
-## настоящие ступени.
-static func clean_skins(skins: Variant) -> Dictionary:
-	var out := {}
-	if not skins is Dictionary:
-		return out
-	for cid in (skins as Dictionary):
-		var tier := String((skins as Dictionary)[cid])
-		if TIERS.has(tier) and is_skinnable(String(cid)):
-			out[String(cid)] = tier
-	return out
+## Шейдер из чужих рук (сеть, файл): известный или "".
+static func clean_shader(shader: Variant) -> String:
+	var s := str(shader) if shader != null else ""
+	return s if SHADERS.has(s) else ""
+
+
+static func shader_key(shader: String) -> String:
+	return "%s:%s" % [SHADER_PREFIX, shader]
 
 
 # --- хранение у игрока ---------------------------------------------------------
 
-## {dust, boxes, owned: ["карта:ступень" и "back:рубашка", ...],
-## active: карта -> ступень}. Выбранная рубашка — в профиле (active_back).
+## {dust, boxes, owned: ["shader:faerie", ...], shader: включённый или ""}.
 static func load_data() -> Dictionary:
 	var cfg := ConfigFile.new()
 	cfg.load(PlayerProfile.path())
@@ -85,17 +71,14 @@ static func load_data() -> Dictionary:
 	if saved_owned is Array:
 		for item in saved_owned:
 			var parts := String(item).split(":")
-			var good := parts.size() == 2 and ((TIERS.has(parts[1]) and is_skinnable(parts[0]))
-				or (parts[0] == BACK_PREFIX and _is_back(parts[1])))
-			if good and not owned.has(String(item)):
+			if parts.size() == 2 and parts[0] == SHADER_PREFIX and SHADERS.has(parts[1]) \
+					and not owned.has(String(item)):
 				owned.append(String(item))
-	var active := {}
-	var saved_active = cfg.get_value(SECTION, "active", {})
-	for cid in clean_skins(saved_active):
-		if owned.has(skin_key(cid, String(saved_active[cid]))):
-			active[cid] = String(saved_active[cid])
+	var shader := clean_shader(cfg.get_value(SECTION, "shader", ""))
+	if not owned.has(shader_key(shader)):
+		shader = ""
 	return {"dust": maxi(0, int(cfg.get_value(SECTION, "dust", 0))),
-		"boxes": maxi(0, int(cfg.get_value(SECTION, "boxes", 0))), "owned": owned, "active": active}
+		"boxes": maxi(0, int(cfg.get_value(SECTION, "boxes", 0))), "owned": owned, "shader": shader}
 
 
 static func _save(data: Dictionary) -> void:
@@ -104,21 +87,20 @@ static func _save(data: Dictionary) -> void:
 	cfg.set_value(SECTION, "dust", int(data["dust"]))
 	cfg.set_value(SECTION, "boxes", int(data["boxes"]))
 	cfg.set_value(SECTION, "owned", data["owned"])
-	cfg.set_value(SECTION, "active", data["active"])
+	cfg.set_value(SECTION, "shader", data["shader"])
+	# Образы отдельных карт (до 2026-09-30) больше не нужны.
+	if cfg.has_section_key(SECTION, "active"):
+		cfg.erase_section_key(SECTION, "active")
 	cfg.save(PlayerProfile.path())
 
 
-static func skin_key(cid: String, tier: String) -> String:
-	return "%s:%s" % [cid, tier]
+static func owns_shader(shader: String) -> bool:
+	return (load_data()["owned"] as Array).has(shader_key(shader))
 
 
-static func owns(cid: String, tier: String) -> bool:
-	return (load_data()["owned"] as Array).has(skin_key(cid, tier))
-
-
-## Включённые образы — они уходят в партию вместе с профилем.
-static func active() -> Dictionary:
-	return load_data()["active"]
+## Включённый шейдер — он уходит в партию вместе с профилем ("" — без него).
+static func active_shader() -> String:
+	return String(load_data()["shader"])
 
 
 ## Получить награду от сервера ({"boxes": N} / {"dust": N}).
@@ -139,129 +121,55 @@ static func tier_for_roll(roll: int) -> String:
 	return TIERS[0]
 
 
-## Открыть лутбокс: {card, tier, duplicate, dust}; {} — лутбоксов нет.
-## Новый образ сразу включается, если у карты ещё не было включённого.
+## Открыть лутбокс: {tier, shader, duplicate, dust}; shader "" — выпала только
+## пыль. {} — лутбоксов нет. Новый шейдер сразу включается, если до него был
+## никакой.
 static func open_box(rng: RandomNumberGenerator) -> Dictionary:
 	var data := load_data()
 	if int(data["boxes"]) <= 0:
 		return {}
-	var cards := skinnable_cards()
-	var cid := cards[rng.randi_range(0, cards.size() - 1)]
 	var tier := tier_for_roll(rng.randi_range(0, 99))
 	data["boxes"] = int(data["boxes"]) - 1
-	if tier == BACK_TIER and not collectible_backs().is_empty() and rng.randf() < BACK_SHARE:
-		return _drop_back(data, rng)
-	var key := skin_key(cid, tier)
-	var dup := (data["owned"] as Array).has(key)
+	var shader := ""
+	var dup := false
 	var dust := 0
-	if dup:
+	if tier == SHADER_TIER:
+		shader = SHADERS[rng.randi_range(0, SHADERS.size() - 1)]
+		dup = (data["owned"] as Array).has(shader_key(shader))
+		if dup:
+			dust = int(DUPLICATE_DUST[tier])
+		else:
+			(data["owned"] as Array).append(shader_key(shader))
+			if String(data["shader"]) == "":
+				data["shader"] = shader
+	else:
 		dust = int(DUPLICATE_DUST[tier])
-		data["dust"] = int(data["dust"]) + dust
-	else:
-		(data["owned"] as Array).append(key)
-		if not (data["active"] as Dictionary).has(cid):
-			data["active"][cid] = tier
+	data["dust"] = int(data["dust"]) + dust
 	_save(data)
-	return {"card": cid, "tier": tier, "duplicate": dup, "dust": dust}
+	return {"tier": tier, "shader": shader, "duplicate": dup, "dust": dust}
 
 
-## Из лутбокса выпала рубашка: {back, tier, duplicate, dust}. Новая сразу
-## надевается, если до неё была обычная.
-static func _drop_back(data: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
-	var backs := collectible_backs()
-	var design := backs[rng.randi_range(0, backs.size() - 1)]
-	var key := back_key(design)
-	var dup := (data["owned"] as Array).has(key)
-	var dust := 0
-	if dup:
-		dust = int(DUPLICATE_DUST[BACK_TIER])
-		data["dust"] = int(data["dust"]) + dust
-	else:
-		(data["owned"] as Array).append(key)
-	_save(data)
-	if not dup and active_back() == "":
-		PlayerProfile.save_back(design)
-	return {"back": design, "tier": BACK_TIER, "duplicate": dup, "dust": dust}
-
-
-# --- рубашки -------------------------------------------------------------------
-
-## Рубашки, которые открываются (все, кроме CLASSIC — она есть у всех).
-static func collectible_backs() -> Array[String]:
-	var out: Array[String] = []
-	for design in CardBack.DESIGNS:
-		if design != CardBack.CLASSIC:
-			out.append(design)
-	return out
-
-
-static func _is_back(design: String) -> bool:
-	return design != CardBack.CLASSIC and CardBack.DESIGNS.has(design)
-
-
-static func back_key(design: String) -> String:
-	return "%s:%s" % [BACK_PREFIX, design]
-
-
-static func owns_back(design: String) -> bool:
-	return design == CardBack.CLASSIC or design == "" or (load_data()["owned"] as Array).has(back_key(design))
-
-
-## Надетая рубашка ("" — CLASSIC). Не открытая (правили файл) не в счёт.
-static func active_back() -> String:
-	var cfg := ConfigFile.new()
-	cfg.load(PlayerProfile.path())
-	var design := PlayerProfile.clean_back(String(cfg.get_value("profile", "back", "")))
-	return design if owns_back(design) else ""
-
-
-## Надеть рубашку. false — она не открыта.
-static func set_back(design: String) -> bool:
-	if not owns_back(design):
-		return false
-	PlayerProfile.save_back(design)
-	return true
-
-
-## Создать рубашку за пыль (цена ULTRA) и сразу надеть.
-static func craft_back(design: String) -> bool:
-	if not _is_back(design):
+## Создать шейдер за пыль (цена ULTRA) и сразу включить. false — уже есть или
+## не хватает пыли.
+static func craft_shader(shader: String) -> bool:
+	if not SHADERS.has(shader):
 		return false
 	var data := load_data()
-	var key := back_key(design)
-	var cost := int(CRAFT_COST[BACK_TIER])
-	if (data["owned"] as Array).has(key) or int(data["dust"]) < cost:
+	var cost := int(CRAFT_COST[SHADER_TIER])
+	if (data["owned"] as Array).has(shader_key(shader)) or int(data["dust"]) < cost:
 		return false
 	data["dust"] = int(data["dust"]) - cost
-	(data["owned"] as Array).append(key)
-	_save(data)
-	PlayerProfile.save_back(design)
-	return true
-
-
-## Создать образ за пыль. false — уже есть, не хватает пыли или карта без образов.
-static func craft(cid: String, tier: String) -> bool:
-	if not TIERS.has(tier) or not is_skinnable(cid):
-		return false
-	var data := load_data()
-	var key := skin_key(cid, tier)
-	if (data["owned"] as Array).has(key) or int(data["dust"]) < int(CRAFT_COST[tier]):
-		return false
-	data["dust"] = int(data["dust"]) - int(CRAFT_COST[tier])
-	(data["owned"] as Array).append(key)
-	data["active"][cid] = tier
+	(data["owned"] as Array).append(shader_key(shader))
+	data["shader"] = shader
 	_save(data)
 	return true
 
 
-## Включить образ карты (tier "" — показывать карту обычной).
-static func set_active(cid: String, tier: String) -> bool:
+## Включить шейдер ("" — колода без шейдера). false — он не открыт.
+static func set_shader(shader: String) -> bool:
 	var data := load_data()
-	if tier == "":
-		(data["active"] as Dictionary).erase(cid)
-	elif (data["owned"] as Array).has(skin_key(cid, tier)):
-		data["active"][cid] = tier
-	else:
+	if shader != "" and not (data["owned"] as Array).has(shader_key(shader)):
 		return false
+	data["shader"] = clean_shader(shader)
 	_save(data)
 	return true

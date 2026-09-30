@@ -480,7 +480,7 @@ func _stats_page() -> Control:
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
 	page.add_child(head)
 	var local := PlayerProfile.load_local()
-	var fav := favourite_view(String(local["favourite"]), local["skins"])
+	var fav := favourite_view(String(local["favourite"]), String(local["shader"]))
 	if fav != null:
 		head.add_child(fav)
 	head.add_child(rank_badge(rating, 3))
@@ -665,14 +665,14 @@ func _history_players(game: Dictionary) -> Control:
 
 ## Значок звания (камень цвета звания), zoom — во сколько раз крупнее.
 ## Любимая карта игрока (PlayerProfile.favourite) мелким лицом в его образе
-## (skins — карта -> ступень) с подписью; нет любимой — null.
-static func favourite_view(cid: String, skins: Variant) -> Control:
+## (shader — его шейдер, "" — без него) с подписью; нет любимой — null.
+static func favourite_view(cid: String, shader: String) -> Control:
 	if PlayerProfile.clean_favourite(cid) == "":
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 1)
 	var card := CardView.new(cid, int(CardView.MINI_SIZE.x), int(CardView.MINI_SIZE.y))
-	card.set_skin(String((skins as Dictionary).get(cid, "")) if skins is Dictionary else "")
+	card.set_skin(shader)
 	box.add_child(card)
 	var caption := Label.new()
 	caption.text = "FAVOURITE"
