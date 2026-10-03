@@ -2947,6 +2947,9 @@ func test_board_schematic() -> void:
 		# доводка всей доски (решение владельца 2026-09-22): несколько секунд на партию
 		check(took < 6000, "%s: схема собирается за приемлемое время (%d мс)" % [tag, took])
 		check_eq(int(s["fallback_routes"]), 0, "%s: все трассы взяты из таблицы тайлов" % tag)
+		# владелец, 2026-10-03: «дорожки не должны пересекаться» — ни петель,
+		# ни пересечений трасс, у которых нет общего конца
+		check_eq(_trace_crossings(s), 0, "%s: трассы не пересекаются и не делают петель" % tag)
 
 		var slots: Dictionary = s["slots"]
 		var missing := 0
@@ -3716,3 +3719,42 @@ func test_music_stems_and_moods() -> void:
 ## Цвета совпадают с точностью до 8 бит на канал (картинка хранит RGBA8).
 func _near(a: Color, b: Color) -> bool:
 	return absf(a.r - b.r) < 0.01 and absf(a.g - b.g) < 0.01 and absf(a.b - b.b) < 0.01
+
+
+## Сколько на схеме мест, где трасса касается сама себя (петля) или пересекает
+## трассу без общего с ней конца. Внутри рамок локаций не считается: там трассы
+## не видны.
+func _trace_crossings(s: Dictionary) -> int:
+	var boxes: Array[Rect2] = []
+	for site_id: String in (s["sites"] as Dictionary).keys():
+		var r: Array = s["sites"][site_id]["rect"]
+		boxes.append(Rect2(r[0], r[1], r[2], r[3]).grow(1.0))
+	var segs: Array = []  # [от, до, номер трассы, номер отрезка]
+	var traces: Array = s["traces"]
+	for t in traces.size():
+		var flat: Array = traces[t]
+		for i in range(0, flat.size() - 2, 2):
+			segs.append([Vector2(flat[i], flat[i + 1]), Vector2(flat[i + 2], flat[i + 3]), t, i / 2])
+	var ends: Array = s["trace_ends"]
+	var found := 0
+	for i in segs.size():
+		for j in range(i + 1, segs.size()):
+			var a: Array = segs[i]
+			var b: Array = segs[j]
+			if a[2] == b[2]:
+				if absi(int(a[3]) - int(b[3])) < 2:
+					continue
+			elif (ends[a[2]] as Array).has(ends[b[2]][0]) or (ends[a[2]] as Array).has(ends[b[2]][1]):
+				continue
+			var ra := Rect2(a[0], Vector2.ZERO).expand(a[1]).grow(0.01)
+			var rb := Rect2(b[0], Vector2.ZERO).expand(b[1]).grow(0.01)
+			if not ra.intersects(rb):
+				continue
+			var at := ra.intersection(rb).get_center()
+			var hidden := false
+			for box in boxes:
+				if box.has_point(at):
+					hidden = true
+			if not hidden:
+				found += 1
+	return found
