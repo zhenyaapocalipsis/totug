@@ -3042,21 +3042,46 @@ func test_board_schematic() -> void:
 					overlaps += 1
 		check_eq(overlaps, 0, "%s: рамки локаций и кольца не налезают друг на друга" % tag)
 
-		# зоны гексов (владелец, 2026-10-03): не пересекаются, между вершинами
-		# пола разных гексов — не меньше ZONE_SEP шагов сетки (зазор одинаковый)
+		# зоны гексов (владелец, 2026-10-03/04): между вершинами пола разных
+		# гексов — не меньше ZONE_SEP шагов сетки (зазор одинаковый); ближе
+		# можно только под рамками городов, где пол обязателен
 		var owner_of := {}
 		for hex: String in (s["zones"] as Dictionary).keys():
 			for v: Array in s["zones"][hex]:
 				owner_of[Vector2i(int(v[0]), int(v[1]))] = hex
 		check(owner_of.size() > 0, "%s: у гексов есть зоны" % tag)
+		var t := float(BoardSchematic.ZONE_TILE)
+		var under_site := func(v: Vector2i) -> bool:
+			var cell := Rect2(Vector2(v) * t - Vector2(t, t) * 0.5, Vector2(t, t))
+			for site_id: String in (s["sites"] as Dictionary).keys():
+				var sr: Array = s["sites"][site_id]["rect"]
+				if site_id.get_slice(":", 0) == owner_of[v] and cell.intersects(Rect2(sr[0], sr[1], sr[2], sr[3])):
+					return true
+			return false
 		var close_zones := 0
 		for v: Vector2i in owner_of.keys():
 			for dj in range(-(BoardSchematic.ZONE_SEP - 1), BoardSchematic.ZONE_SEP):
 				for di in range(-(BoardSchematic.ZONE_SEP - 1), BoardSchematic.ZONE_SEP):
 					var w := v + Vector2i(di, dj)
-					if owner_of.has(w) and owner_of[w] != owner_of[v]:
+					if owner_of.has(w) and owner_of[w] != owner_of[v] \
+							and not (under_site.call(v) and under_site.call(w)):
 						close_zones += 1
 		check_eq(close_zones, 0, "%s: зоны разных гексов не сходятся ближе зазора" % tag)
+		# на четверых гексы раздвинуты: каждый город стоит на полу своей зоны
+		if int(run[0]) == 4:
+			var off_floor := 0
+			for site_id: String in (s["sites"] as Dictionary).keys():
+				var sr: Array = s["sites"][site_id]["rect"]
+				var area := 0
+				var on := 0
+				for y in range(int(sr[1]), int(sr[1] + sr[3])):
+					for x in range(int(sr[0]), int(sr[0] + sr[2])):
+						area += 1
+						if owner_of.get(Vector2i(roundi(x / t), roundi(y / t)), "") == site_id.get_slice(":", 0):
+							on += 1
+				if on < area * 0.6:
+					off_floor += 1
+			check_eq(off_floor, 0, "%s: каждый город стоит на полу своей зоны" % tag)
 
 	var board := StateView.board_snapshot(GameSetup.new_game(["red", "blue"], 5))
 	var image := SchematicPainter.paint(board["schematic"])

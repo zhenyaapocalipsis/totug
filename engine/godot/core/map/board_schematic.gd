@@ -143,14 +143,9 @@ const REPAIR_ROUNDS := 2
 ## при 1:1. Пока только на четверых: на 2-3 игроков щели вышли бы широкими,
 ## это владелец решит по скриншотам.
 const ZONE := Vector2(697, 456)
-## Верх зоны занимает вопрос «X decides — click a gold site on the board» в
-## две строки (DecisionDialog у верхнего края): доска растягивается только
-## ниже него, и BoardPanel ставит её по центру оставшейся части зоны.
-const PROMPT_STRIP := 36.0
-## Низ зоны во время хода закрывает счётчик Power/Influence над рукой
-## (GameScreen._place_res_frame: строка 11 px + рамка, а под ним ещё 12 px
-## подъёма карты): нижний ряд доски стоит выше него.
-const BOTTOM_STRIP := 26.0
+## Доска берёт всю высоту зоны (владелец, 2026-10-04): вопрос сверху и
+## счётчик Power/Influence снизу ложатся поверх её краёв — иначе зонам гексов
+## (_zones) не хватает места между гексами.
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
@@ -158,17 +153,20 @@ const SPREAD_SLACK := 4.0
 ## участок пола с тайловой стеной по краю (SchematicPainter, наборы PixelLab
 ## Wang 16 px). Считаются по вершинам сетки ZONE_TILE: вершина — пол гекса,
 ## если до его рамок, колец и трасс не дальше ZONE_R, а до рамки города с
-## маркером — не дальше ZONE_R_MARK (зона у значимых городов больше). Спорную
-## вершину берёт гекс, у которого она глубже внутри. Между вершинами разных
-## гексов — не меньше ZONE_SEP шагов сетки: тогда между стенами любых
-## соседних зон ровно один пустой тайл, зазор везде одинаковый.
+## маркером — не дальше ZONE_R_MARK (зона у значимых городов больше). Под
+## рамками городов пол обязателен (все города группы — на её зоне); прочую
+## спорную вершину берёт гекс, у которого она глубже внутри. Между вершинами
+## разных гексов — ZONE_SEP шага сетки: зоны соседей сходятся стена к стене
+## (владелец, 2026-10-04), зазор везде одинаковый.
 const ZONE_TILE := 16
 const ZONE_R := 24.0
 const ZONE_R_MARK := 40.0
-const ZONE_SEP := 3
+const ZONE_SEP := 2
+## Рамки городов разных гексов при раздвигании — не ближе этого (по большей
+## из осей): под каждой нужен свой пол, а между ними — две стены.
+const BOX_ZONE_GAP := 32.0
 ## Поле картинки под зоны вокруг схемы: стена крайних зон не обрезается
-## краем картинки. Сверху и снизу поле ложится под полосы вопроса и счётчика
-## (PROMPT_STRIP, BOTTOM_STRIP), по ширине доска раздвигается на 2 поля уже.
+## краем картинки; доска раздвигается на 2 поля меньше зоны.
 const ZONE_PAD := 16
 
 
@@ -234,7 +232,7 @@ static func build(state: GameState, polish := true) -> Dictionary:
 		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
 	if SPREAD_PLAYERS.has(players):
-		schematic._spread(ZONE - Vector2(ZONE_PAD * 2, PROMPT_STRIP + BOTTOM_STRIP))
+		schematic._spread(ZONE - Vector2(ZONE_PAD * 2, ZONE_PAD * 2))
 	return schematic._export(state)
 
 
@@ -1426,6 +1424,7 @@ func _last_run(edges: Array, at: Vector2) -> float:
 var _sp_off := {}          # hex -> Vector2
 var _sp_items := {}        # hex -> Array of [Rect2, edge or -1]: рамки, кольца, отрезки трасс
 var _sp_box := {}          # hex -> Rect2 вокруг всех его _sp_items
+var _sp_sites := {}        # hex -> Array[Rect2] рамок его городов
 var _sp_ports: Array = []
 var _sp_port_edges: Array = []   # port index -> {edge: true}
 var _sp_ports_of: Dictionary = {}  # hex -> Array of port indices
@@ -1470,16 +1469,20 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 	_sp_off = {}
 	_sp_items = {}
 	_sp_box = {}
+	_sp_sites = {}
 	_sp_ports_of = {}
 	_sp_port_edges = []
 	for hex: String in hexes:
 		_sp_off[hex] = Vector2.ZERO
 		_sp_items[hex] = []
+		_sp_sites[hex] = []
 		_sp_ports_of[hex] = []
 	for n in _key.size():
 		if _kind[n] != Kind.PORT:
 			# с запасом _obstacles: трасса проходит не ближе 2 px от рамки
 			(_sp_items[_hex[n]] as Array).append([_node_rect(n, 2.0), -1])
+		if _kind[n] == Kind.SITE:
+			(_sp_sites[_hex[n]] as Array).append(_node_rect(n))
 	for e in _routes.size():
 		var pts := _routes[e]
 		for i in pts.size() - 1:
@@ -1678,15 +1681,45 @@ func _sp_ring_place(group: Array, cell: Dictionary, start: Dictionary, params: V
 		_sp_off[hex] = (start[hex] as Vector2) + by * JOG_MIN
 
 
-## Самая узкая щель слоя (x1000) плюс сумма самых узких щелей его гексов.
+## Оценка слоя. Главное — зазор между рамками городов соседних гексов (до
+## BOX_ZONE_GAP: под каждой рамкой свой пол, между ними две стены): самый
+## узкий, потом сумма; затем самая узкая щель между всем содержимым и сумма.
 func _sp_ring_score(group: Array, adj: Dictionary) -> float:
+	var box_low := INF
+	var box_total := 0.0
 	var low := INF
 	var total := 0.0
 	for hex: String in group:
+		var box_gap := minf(_sp_box_gap(hex, adj[hex]), BOX_ZONE_GAP)
+		box_low = minf(box_low, box_gap)
+		box_total += box_gap
 		var gap := _sp_min_gap(hex, adj[hex], -INF)
 		low = minf(low, gap)
 		total += gap
-	return low * 1000.0 + total
+	return box_low * 1.0e6 + box_total * 1.0e3 + low * 10.0 + total * 0.01
+
+
+## Оценка одного гекса для _sp_maximin — так же: рамки городов, потом всё.
+func _sp_hex_score(hex: String, adj: Array) -> float:
+	return minf(_sp_box_gap(hex, adj), BOX_ZONE_GAP) * 1000.0 + _sp_min_gap(hex, adj, -INF)
+
+
+## Самый узкий зазор между рамками городов гекса и его соседей — по большей
+## из осей: рамки, разошедшиеся хоть по одной оси на BOX_ZONE_GAP, получают
+## каждая свой пол.
+func _sp_box_gap(hex: String, adj: Array) -> float:
+	var best := INF
+	var own_off: Vector2 = _sp_off[hex]
+	for other: String in adj:
+		var other_off: Vector2 = _sp_off[other]
+		for r: Rect2 in _sp_sites[hex]:
+			var a := Rect2(r.position + own_off, r.size)
+			for r2: Rect2 in _sp_sites[other]:
+				var b := Rect2(r2.position + other_off, r2.size)
+				var dx := maxf(0.0, maxf(a.position.x - b.end.x, b.position.x - a.end.x))
+				var dy := maxf(0.0, maxf(a.position.y - b.end.y, b.position.y - a.end.y))
+				best = minf(best, maxf(dx, dy))
+	return best
 
 
 ## Гексы группы по очереди сдвигаются (на шаг JOG_MIN в любую из восьми
@@ -1698,11 +1731,11 @@ func _sp_maximin(group: Array, adj: Dictionary) -> void:
 		var moved := false
 		for hex: String in group:
 			var start: Vector2 = _sp_off[hex]
-			var best := _sp_min_gap(hex, adj[hex], -INF)
+			var best := _sp_hex_score(hex, adj[hex])
 			var best_off := start
 			for d in dirs:
 				_sp_off[hex] = start + d * JOG_MIN
-				var gap := _sp_min_gap(hex, adj[hex], best + 0.5)
+				var gap := _sp_hex_score(hex, adj[hex])
 				if gap > best + 0.5 and _sp_ok(hex):
 					best = gap
 					best_off = _sp_off[hex]
@@ -2074,8 +2107,22 @@ func _zones(shift: Vector2, size: Vector2) -> Dictionary:
 	var cols := int(floor(size.x / ZONE_TILE))
 	var rows := int(floor(size.y / ZONE_TILE))
 	var label := {}   # Vector2i -> [hex, depth]
+	# Под рамкой города пол обязателен: вершины, чьи клетки (±ZONE_TILE/2)
+	# задевают рамку, — пол её гекса (глубина INF), уступать они не будут.
+	var half := ZONE_TILE / 2.0
+	for n in _key.size():
+		if _kind[n] != Kind.SITE:
+			continue
+		var site := _node_rect(n)
+		site.position += shift
+		for j in range(floori((site.position.y - half) / ZONE_TILE) + 1, ceili((site.end.y + half) / ZONE_TILE)):
+			for i in range(floori((site.position.x - half) / ZONE_TILE) + 1, ceili((site.end.x + half) / ZONE_TILE)):
+				if not label.has(Vector2i(i, j)):
+					label[Vector2i(i, j)] = [_hex[n], INF]
 	for j in range(1, rows):
 		for i in range(1, cols):
+			if label.has(Vector2i(i, j)):
+				continue
 			var v := Vector2(i * ZONE_TILE, j * ZONE_TILE)
 			var best_hex := ""
 			var best := 0.0
@@ -2099,6 +2146,8 @@ func _zones(shift: Vector2, size: Vector2) -> Dictionary:
 	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return float(label[a][1]) < float(label[b][1]))
 	for v: Vector2i in order:
 		var hex: String = label[v][0]
+		if float(label[v][1]) == INF:
+			continue
 		var clash := false
 		for dj in range(-(ZONE_SEP - 1), ZONE_SEP):
 			for di in range(-(ZONE_SEP - 1), ZONE_SEP):
