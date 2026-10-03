@@ -149,18 +149,15 @@ const ZONE := Vector2(697, 456)
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
-## Зоны гексов (решение владельца, 2026-10-03): у каждого гекса — свой
-## участок пола с тайловой стеной по краю (SchematicPainter, наборы PixelLab
-## Wang 16 px). Считаются по вершинам сетки ZONE_TILE: вершина — пол гекса,
-## если до его рамок, колец и трасс не дальше ZONE_R, а до рамки города с
-## маркером — не дальше ZONE_R_MARK (зона у значимых городов больше). Под
-## рамками городов пол обязателен (все города группы — на её зоне); прочую
-## спорную вершину берёт гекс, у которого она глубже внутри. Между вершинами
-## разных гексов — ZONE_SEP шага сетки: зоны соседей сходятся стена к стене
-## (владелец, 2026-10-04), зазор везде одинаковый.
+## Зоны гексов (решение владельца, 2026-10-03/04, по рисунку): зоны делят всю
+## доску без пустот — центральный гекс, шесть вокруг него, внешние до краёв и
+## углов. У каждой — пол темы и тайловая стена по краю (SchematicPainter,
+## наборы PixelLab Wang 16 px). Считаются по вершинам сетки ZONE_TILE: под
+## рамками городов пол обязателен (все города группы — на её зоне), прочая
+## вершина — гексу, к чьему шестиугольнику (после раздвигания) она ближе.
+## Между вершинами разных гексов — ZONE_SEP шага сетки: соседи сходятся
+## стена к стене, зазор везде одинаковый.
 const ZONE_TILE := 16
-const ZONE_R := 24.0
-const ZONE_R_MARK := 40.0
 const ZONE_SEP := 2
 ## Рамки городов разных гексов при раздвигании — не ближе этого (по большей
 ## из осей): под каждой нужен свой пол, а между ними — две стены.
@@ -2068,40 +2065,6 @@ func _export(state: GameState) -> Dictionary:
 
 ## Вершины пола каждого гекса (см. ZONE_TILE) в координатах картинки.
 func _zones(shift: Vector2, size: Vector2) -> Dictionary:
-	# что гекс держит на полу: рамки, кольца и трассы внутри своего гекса
-	# (мостики через щели между гексами — не его)
-	var own := {}     # hex -> Array[Rect2]
-	var marks := {}   # hex -> Array[Rect2] рамок значимых городов
-	for hex: String in _centre.keys():
-		own[hex] = []
-		marks[hex] = []
-	for n in _key.size():
-		if _kind[n] == Kind.PORT:
-			continue
-		var r := _node_rect(n)
-		r.position += shift
-		(own[_hex[n]] as Array).append(r)
-		if _marked.has(n):
-			(marks[_hex[n]] as Array).append(r)
-	for e in _routes.size():
-		var hex: String = _hex[_edge_b[e]]
-		var poly: PackedVector2Array = _poly[hex]
-		var pts := _routes[e]
-		for i in pts.size() - 1:
-			if _edge_dir[e] >= 0 and not Geometry2D.is_point_in_polygon((pts[i] + pts[i + 1]) * 0.5, poly):
-				continue
-			(own[hex] as Array).append(Rect2(pts[i] + shift, Vector2.ZERO).expand(pts[i + 1] + shift))
-	var reach := {}   # hex -> Rect2, дальше которого зона не уходит
-	for hex: String in own.keys():
-		var items: Array = own[hex]
-		if items.is_empty():
-			continue
-		var box: Rect2 = items[0]
-		for r: Rect2 in items:
-			box = box.merge(r)
-		reach[hex] = box.grow(maxf(ZONE_R, ZONE_R_MARK))
-
-	# глубина вершины в зоне гекса: > 0 — внутри
 	# вершина пола — не у самого края: тайлы вокруг неё (со стеной) целиком
 	# в картинке
 	var cols := int(floor(size.x / ZONE_TILE))
@@ -2123,17 +2086,16 @@ func _zones(shift: Vector2, size: Vector2) -> Dictionary:
 		for i in range(1, cols):
 			if label.has(Vector2i(i, j)):
 				continue
-			var v := Vector2(i * ZONE_TILE, j * ZONE_TILE)
+			# остальное — гексу, к чьему шестиугольнику вершина ближе (внутри —
+			# глубина до края, снаружи — минус расстояние): границы зон идут
+			# посередине щелей вдоль рёбер гексов, а крайние зоны — до краёв
+			var p := Vector2(i * ZONE_TILE, j * ZONE_TILE) - shift
 			var best_hex := ""
-			var best := 0.0
-			for hex: String in reach.keys():
-				if not (reach[hex] as Rect2).has_point(v):
-					continue
-				var depth := -INF
-				for r: Rect2 in own[hex]:
-					depth = maxf(depth, ZONE_R - _point_rect_gap(v, r))
-				for r: Rect2 in marks[hex]:
-					depth = maxf(depth, ZONE_R_MARK - _point_rect_gap(v, r))
+			var best := -INF
+			for hex: String in _poly.keys():
+				var poly: PackedVector2Array = _poly[hex]
+				var edge := _outside_by(p, poly)
+				var depth := edge if Geometry2D.is_point_in_polygon(p, poly) else -edge
 				if depth > best:
 					best = depth
 					best_hex = hex
