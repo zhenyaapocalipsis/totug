@@ -1520,6 +1520,7 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 				group.append(hex)
 		_sp_ring_apart(group, adj, cell)
 		_sp_maximin(group, adj)
+		_sp_fill(group, adj, layer, cell)
 	# слой у центра разошёлся — у углов могло появиться место встать на линию
 	_sp_align(outer, cell)
 	# повороты ступенек могли остаться от отменённых проб (_sp_align
@@ -1729,6 +1730,36 @@ func _sp_maximin(group: Array, adj: Dictionary) -> void:
 			return
 
 
+## Пустоты между углами и кольцом (владелец, 2026-10-04): гекс слоя уходит
+## наружу, пока его рамки ближе к внутренним соседям (центр и свой слой), чем
+## к внешним, — так он встаёт посередине между центром и краем.
+const FILL_MIN_GAP := 8.0   # ближе этого содержимое соседей при шаге не сходится
+
+func _sp_fill(group: Array, adj: Dictionary, layer: Dictionary, cell: Dictionary) -> void:
+	for _round in 60:
+		var moved := false
+		for hex: String in group:
+			var inner: Array = []
+			var outer: Array = []
+			for other: String in adj[hex]:
+				(outer if int(layer[other]) > int(layer[hex]) else inner).append(other)
+			if outer.is_empty():
+				continue
+			var c: Vector2i = cell[hex]
+			for step: Vector2 in _spread_steps(Vector2(signi(c.x), signi(c.y))).slice(0, 3):
+				var was: Vector2 = _sp_off[hex]
+				if _sp_box_gap(hex, inner) >= _sp_box_gap(hex, outer) - JOG_MIN:
+					break
+				_sp_off[hex] = was + step * JOG_MIN
+				if _sp_box_gap(hex, inner) <= _sp_box_gap(hex, outer) + 0.5 \
+						and _sp_min_gap(hex, adj[hex], FILL_MIN_GAP) > FILL_MIN_GAP and _sp_ok(hex):
+					moved = true
+					break
+				_sp_off[hex] = was
+		if not moved:
+			return
+
+
 ## Самая узкая щель между содержимым гекса и его соседей. Как только щель
 ## не больше stop — дальше не считаем (кандидат уже хуже).
 func _sp_min_gap(hex: String, adj: Array, stop: float) -> float:
@@ -1792,8 +1823,18 @@ func _sp_bridge_rects(i: int, mode := -1) -> Array:
 		return []
 	if mode < 0:
 		mode = int(port.get("mode", 0))
-	var path: PackedVector2Array = _bridge_path((port["p"] as Vector2) + off_a, (port["p"] as Vector2) + off_b,
-		port["u"], mode, port["run_a"], port["run_b"])["check"]
+	var m_a: Vector2 = (port["p"] as Vector2) + off_a
+	var m_b: Vector2 = (port["p"] as Vector2) + off_b
+	var path: PackedVector2Array = _bridge_path(m_a, m_b, port["u"], mode, port["run_a"], port["run_b"])["check"]
+	# Концы у m_a и m_b — продолжение своих трасс, которые уже легли: рамка, от
+	# которой трасса отходит, может стоять в 1 px позади середины ребра (короткая
+	# трасса в соседний гекс), и проверка с запасом приняла бы её за касание.
+	var last := path.size() - 1
+	if last >= 1:
+		if path[0].is_equal_approx(m_a) or path[0].is_equal_approx(m_b):
+			path[0] = path[0].move_toward(path[1], 2.0)
+		if path[last].is_equal_approx(m_a) or path[last].is_equal_approx(m_b):
+			path[last] = path[last].move_toward(path[last - 1], 2.0)
 	var rects: Array = []
 	for k in path.size() - 1:
 		if not path[k].is_equal_approx(path[k + 1]):
