@@ -147,6 +147,10 @@ const ZONE := Vector2(697, 456)
 ## две строки (DecisionDialog у верхнего края): доска растягивается только
 ## ниже него, и BoardPanel ставит её по центру оставшейся части зоны.
 const PROMPT_STRIP := 36.0
+## Низ зоны во время хода закрывает счётчик Power/Influence над рукой
+## (GameScreen._place_res_frame: строка 11 px + рамка, а под ним ещё 12 px
+## подъёма карты): нижний ряд доски стоит выше него.
+const BOTTOM_STRIP := 26.0
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
@@ -166,6 +170,7 @@ var _half: Array[Vector2] = []
 var _index: Dictionary = {}          # key -> node index
 var _centre: Dictionary = {}         # layout slot -> Vector2
 var _lattice_centre: Dictionary = {} # то же до раздвигания (_spread): кто кому сосед
+var _marked: Dictionary = {}         # node -> true: город с маркером контроля
 var _incident: Array = []            # node -> Array[int] of edges
 
 var _edge_a: Array[int] = []         # port end when _edge_dir >= 0
@@ -211,7 +216,7 @@ static func build(state: GameState, polish := true) -> Dictionary:
 		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
 	if SPREAD_PLAYERS.has(players):
-		schematic._spread(ZONE - Vector2(0, PROMPT_STRIP))
+		schematic._spread(ZONE - Vector2(0, PROMPT_STRIP + BOTTOM_STRIP))
 	return schematic._export(state)
 
 
@@ -445,7 +450,9 @@ func _collect(graph: MapGraph, layout: Dictionary, hex_by_slot: Dictionary) -> v
 		var hex := site_id.get_slice(":", 0)
 		var box := site_box(String(site["name"]), members.size(), ControlMarkers.is_marked(String(site["hex"]), String(site["name"])))
 		var home: Vector2 = _centre[hex] + to_schematic(sum / maxi(members.size(), 1))
-		_add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
+		var site_node := _add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
+		if ControlMarkers.is_marked(String(site["hex"]), String(site["name"])):
+			_marked[site_node] = true
 	# Табличка ярусов бонуса A2 — узел без туннелей рядом с его тремя
 	# городами: раскладка сама найдёт ей место, соседи и туннели её обходят.
 	var a2_homes := {}
@@ -1305,14 +1312,14 @@ func _spread(zone: Vector2) -> void:
 	for port: Dictionary in ports:
 		var m_a: Vector2 = (port["p"] as Vector2) + (off[port["a"]] as Vector2)
 		var m_b: Vector2 = (port["p"] as Vector2) + (off[port["b"]] as Vector2)
-		var path := _bridge_path(m_a, m_b, port["u"])
-		var meet := path[1]
+		var path := _bridge_path(m_a, m_b, port["u"], int(port.get("mode", 0)), port["run_a"], port["run_b"])
+		var meet: Vector2 = (path["a"] as PackedVector2Array)[0]
 		_pos[port["node"]] = meet
 		_home[port["node"]] = meet
 		for e: int in port["edges_a"]:
-			_bridge(e, m_a, PackedVector2Array([meet, m_a]))
+			_bridge(e, m_a, path["a"])
 		for e: int in port["edges_b"]:
-			_bridge(e, m_b, path.slice(1))
+			_bridge(e, m_b, path["b"])
 	# _repair здесь не нужен и вреден: _sp_ok уже не пустил ни одного касания,
 	# а цена трассы (_local_cost) штрафует мостик за выход из своего гекса —
 	# _repair переложил бы его через полдоски поперёк чужих трасс.
@@ -1320,18 +1327,44 @@ func _spread(zone: Vector2) -> void:
 
 
 ## Путь через щель от середины ребра гекса A (m_a) до середины ребра гекса B
-## (m_b); u — направление от A к B, в нём трассы входят в рёбра.
-## [m_a, точка встречи, (два поворота ступеньки,) m_b].
-static func _bridge_path(m_a: Vector2, m_b: Vector2, u: Vector2) -> PackedVector2Array:
+## (m_b); u — направление от A к B, в нём трассы входят в рёбра. run_a, run_b —
+## длина прямого последнего участка трассы до ребра: ступенька может стоять
+## и на нём, а не только в щели (так соседи расходятся вбок, даже когда щели
+## вдоль u нет). mode — где ступенька поворачивает: 0 посередине щели, 1 у
+## гекса A, 2 у B (_sp_ok выбирает тот, что ни на что не ложится).
+## Ответ: "a" — от точки встречи к трассе A (кончается на её прямом участке),
+## "b" — к трассе B, "check" — только новые отрезки (для проверок).
+const BRIDGE_MODES := 3
+
+static func _bridge_path(m_a: Vector2, m_b: Vector2, u: Vector2, mode := 0,
+		run_a := 0.0, run_b := 0.0) -> Dictionary:
 	var along := (m_b - m_a).dot(u)
 	var side := (m_b - m_a) - u * along
 	if side.length() < 0.5:
-		return PackedVector2Array([m_a, m_a + u * roundf(along / 2.0), m_b])
-	var run := roundf(along / 2.0)
-	var turn := m_a + u * run
-	# точка встречи — на прямом участке до первого поворота (при узкой щели
-	# прямо в m_a: там трасса гекса A идёт дальше прямо)
-	return PackedVector2Array([m_a, m_a + u * floorf(run / 2.0), turn, turn + side, m_b])
+		var mid := m_a + u * roundf(along / 2.0)
+		return {"a": PackedVector2Array([mid, m_a]), "b": PackedVector2Array([mid, m_b]),
+			"check": PackedVector2Array([m_a, m_b])}
+	var e_a := m_a - u * run_a
+	var e_b := m_b + u * run_b
+	var span := run_a + along + run_b
+	var t := run_a + roundf(along / 2.0)
+	if mode == 1:
+		t = JOG_MIN
+	elif mode == 2:
+		t = span - JOG_MIN
+	t = clampf(t, JOG_MIN, span - JOG_MIN)
+	var turn := e_a + u * t
+	var turn2 := turn + side
+	var check := PackedVector2Array([m_a if t >= run_a else turn, turn, turn2,
+		m_b if span - t >= run_b else turn2])
+	# точка встречи — посередине более длинного прямого участка
+	if t >= span - t:
+		var meet := e_a + u * roundf(t / 2.0)
+		return {"a": PackedVector2Array([meet, e_a]), "b": PackedVector2Array([meet, turn, turn2, e_b]),
+			"check": check}
+	var meet2 := turn2 + u * roundf((span - t) / 2.0)
+	return {"a": PackedVector2Array([meet2, turn2, turn, e_a]), "b": PackedVector2Array([meet2, e_b]),
+		"check": check}
 
 
 ## Узлы PORT, которые соединяют ровно два гекса: {node, a, b, p, u, edges_a, edges_b}.
@@ -1353,8 +1386,22 @@ func _spread_ports() -> Array:
 		var b: String = by_hex.keys()[1]
 		ports.append({"node": n, "a": a, "b": b, "p": _pos[n],
 			"u": DIRS[_edge_dir[(by_hex[b] as Array)[0]]],
-			"edges_a": by_hex[a], "edges_b": by_hex[b]})
+			"edges_a": by_hex[a], "edges_b": by_hex[b],
+			"run_a": _last_run(by_hex[a], _pos[n]), "run_b": _last_run(by_hex[b], _pos[n])})
 	return ports
+
+
+## Самый короткий прямой участок, которым трассы edges подходят к точке at.
+func _last_run(edges: Array, at: Vector2) -> float:
+	var shortest := INF
+	for e: int in edges:
+		var pts := _routes[e]
+		if pts.size() < 2:
+			return 0.0
+		var near := pts[0] if pts[0].distance_to(at) <= pts[pts.size() - 1].distance_to(at) else pts[pts.size() - 1]
+		var next := pts[1] if near == pts[0] else pts[pts.size() - 2]
+		shortest = minf(shortest, near.distance_to(next))
+	return 0.0 if shortest == INF else shortest
 
 
 # Состояние поиска сдвигов (_spread_offsets и проверки при нём).
@@ -1365,6 +1412,7 @@ var _sp_ports: Array = []
 var _sp_port_edges: Array = []   # port index -> {edge: true}
 var _sp_ports_of: Dictionary = {}  # hex -> Array of port indices
 var _sp_zone := Vector2.ZERO
+var _sp_start_size := Vector2.ZERO   # доска до раздвигания (без полей картинки)
 
 
 ## Сдвиг каждого гекса шагами JOG_MIN: тогда и вбок, и вдоль щели между
@@ -1424,6 +1472,11 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 		for item: Array in items:
 			box = box.merge(item[0])
 		_sp_box[hex] = box
+	# тем же счётом, что и в _sp_ok (по _sp_box)
+	var start := Rect2()
+	for hex: String in hexes:
+		start = _sp_box[hex] if start.size == Vector2.ZERO else start.merge(_sp_box[hex])
+	_sp_start_size = start.size
 	for i in ports.size():
 		var own := {}
 		for e: int in ports[i]["edges_a"]:
@@ -1434,27 +1487,236 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 		(_sp_ports_of[ports[i]["a"]] as Array).append(i)
 		(_sp_ports_of[ports[i]["b"]] as Array).append(i)
 
-	var any_moved := false
-	for level in range(max_layer, 0, -1):
+	var outer: Array = []
+	for hex: String in hexes:
+		if layer[hex] == max_layer:
+			outer.append(hex)
+	# внешний слой — наружу до края зоны, по шагу за круг
+	for _round in 200:
+		var moved := false
+		for hex: String in outer:
+			var c: Vector2i = cell[hex]
+			for step: Vector2 in _spread_steps(Vector2(signi(c.x), signi(c.y))):
+				var was: Vector2 = _sp_off[hex]
+				_sp_off[hex] = was + step * JOG_MIN
+				if _sp_ok(hex):
+					moved = true
+					break
+				_sp_off[hex] = was
+		if not moved:
+			break
+	_sp_align(outer, cell)
+	# внутренние слои (решение владельца, 2026-10-03: «раздвинь на возможный
+	# максимум, чтобы они были равноудалены от всего») — каждый гекс встаёт
+	# туда, где самая узкая щель до соседей шире всего
+	for level in range(max_layer - 1, 0, -1):
 		var group: Array = []
 		for hex: String in hexes:
 			if layer[hex] == level:
 				group.append(hex)
-		for _round in 200:
-			var moved := false
-			for hex: String in group:
-				var c: Vector2i = cell[hex]
-				for step: Vector2 in _spread_steps(Vector2(signi(c.x), signi(c.y))):
-					var was: Vector2 = _sp_off[hex]
-					_sp_off[hex] = was + step * JOG_MIN
-					if (level == max_layer or _sp_balanced(hex, adj[hex], layer)) and _sp_ok(hex):
-						moved = true
+		_sp_ring_apart(group, adj, cell)
+		_sp_maximin(group, adj)
+	# слой у центра разошёлся — у углов могло появиться место встать на линию
+	_sp_align(outer, cell)
+	# повороты ступенек могли остаться от отменённых проб (_sp_align
+	# откатывает сдвиги): ещё раз подобрать их под итоговые сдвиги
+	for hex: String in hexes:
+		_sp_ok(hex)
+	for hex: String in hexes:
+		if not (_sp_off[hex] as Vector2).is_zero_approx():
+			return _sp_off
+	return {}
+
+
+## Значимые города (с маркером контроля) в верхних углах — на одну линию с
+## самым верхним значимым городом (Shedaklah), в нижних — с самым нижним
+## (Lolth): по верхнему краю рамки (владелец, 2026-10-03). Если ровно не
+## встаёт (что-то задевает), гекс остаётся, где был.
+func _sp_align(outer: Array, cell: Dictionary) -> void:
+	var tops := {}   # hex -> верх его значимой рамки сейчас, вместе со сдвигом
+	for n in _key.size():
+		if _kind[n] == Kind.SITE and _marked.has(n) and outer.has(_hex[n]):
+			var top := _pos[n].y - _half[n].y + (_sp_off[_hex[n]] as Vector2).y
+			tops[_hex[n]] = minf(float(tops.get(_hex[n], INF)), top)
+	for sign_y: int in [-1, 1]:
+		var edge_row := 0
+		for hex: String in tops:
+			var r: int = (cell[hex] as Vector2i).y
+			if r * sign_y > edge_row * sign_y:
+				edge_row = r
+		if edge_row == 0:
+			continue
+		# Линия — по крайнему городу (Shedaklah, Lolth); если углы до неё не
+		# дотягиваются (их туннели вылезли бы за зону), пробуем линии углов:
+		# тогда крайний город сам встаёт на линию углов.
+		var side_hexes: Array = []
+		var lines: Array = []
+		for hex: String in tops:
+			var r: int = (cell[hex] as Vector2i).y
+			if r * sign_y > 0:
+				side_hexes.append(hex)
+				if r == edge_row:
+					lines.push_front(tops[hex])
+				else:
+					lines.append(tops[hex])
+		if lines.is_empty():
+			continue
+		# и всё между ними, через 2 px, ближние к линии крайнего города — первыми
+		var lo: float = lines.min()
+		var hi: float = lines.max()
+		var edge_line: float = lines[0]
+		var y := lo
+		while y <= hi:
+			if not lines.has(y):
+				lines.append(y)
+			y += float(GRID)
+		var rest: Array = lines.slice(1)
+		rest.sort_custom(func(a: float, b: float) -> bool: return absf(a - edge_line) < absf(b - edge_line))
+		lines = [edge_line] + rest
+		var start := {}
+		for hex: String in side_hexes:
+			start[hex] = _sp_off[hex]
+		# гекс может ещё чуть сдвинуться вбок, чтобы его ступеньки разошлись
+		var sideways: Array[float] = [0.0]
+		for k in range(1, 5):
+			sideways.append(-k * JOG_MIN)
+			sideways.append(k * JOG_MIN)
+		for line: float in lines:
+			for hex: String in side_hexes:
+				var was: Vector2 = start[hex]
+				_sp_off[hex] = Vector2(was.x, was.y + line - float(tops[hex]))
+			var all_fit := true
+			for hex: String in side_hexes:
+				var fits := false
+				var on_line: Vector2 = _sp_off[hex]
+				for dx in sideways:
+					_sp_off[hex] = on_line + Vector2(dx, 0)
+					if _sp_ok(hex):
+						fits = true
 						break
-					_sp_off[hex] = was
-			if not moved:
+				if not fits:
+					all_fit = false
+					break
+			if all_fit:
+				# сдвиг вбок одного мог помешать уже поставленному соседу
+				for hex: String in side_hexes:
+					if not _sp_ok(hex):
+						all_fit = false
+						break
+			if all_fit:
 				break
-			any_moved = true
-	return _sp_off if any_moved else {}
+			for hex: String in side_hexes:
+				_sp_off[hex] = start[hex]
+
+
+## Слой целиком расходится от центра — по одному его гексы друг друга держат
+## (шаг одного даёт ступеньку 6x6 прямо у тесного ребра). Гекс в клетке
+## (c, r) сдвигается на (знак c * ew, 0), если он в ряду центра, иначе на
+## (знак c * dx, -вверх или +вниз). Четыре числа (кратны JOG_MIN) растут по шагу,
+## пока растёт оценка: сначала самая узкая щель слоя, потом сумма щелей.
+## Высоты у доски мало (зона между вопросом и счётчиком), и вверх-вниз слой
+## уходит не дальше крайних гексов — дальше ступенька к ним не помещается.
+func _sp_ring_apart(group: Array, adj: Dictionary, cell: Dictionary) -> void:
+	var start := {}
+	for hex: String in group:
+		start[hex] = _sp_off[hex]
+	var params := Vector4.ZERO   # ew, dx, вверх, вниз
+	var best := _sp_ring_score(group, adj)
+	var steps: Array[Vector4] = [Vector4(1, 0, 0, 0), Vector4(0, 1, 0, 0), Vector4(0, 0, 1, 0),
+		Vector4(0, 0, 0, 1), Vector4(0, 0, 1, 1), Vector4(1, 1, 0, 0), Vector4(0, 1, 1, 0),
+		Vector4(0, 1, 0, 1), Vector4(0, 1, 1, 1), Vector4(1, 1, 1, 1)]
+	# по кругу: каждое направление шага пробуется по разу за круг, так все
+	# четыре числа растут вместе (иначе первое уходит далеко, и ступенька
+	# между соседями слоя выходит широкой и ни во что не вписывается)
+	for _round in 40:
+		var improved := false
+		for step in steps:
+			for k in [1, 2]:
+				var cand := params + step * float(k)
+				_sp_ring_place(group, cell, start, cand)
+				var score := _sp_ring_score(group, adj)
+				if score <= best + 0.5:
+					continue
+				var all_ok := true
+				for hex: String in group:
+					if not _sp_ok(hex):
+						all_ok = false
+						break
+				if all_ok:
+					best = score
+					params = cand
+					improved = true
+					break
+		if not improved:
+			break
+	_sp_ring_place(group, cell, start, params)
+
+
+func _sp_ring_place(group: Array, cell: Dictionary, start: Dictionary, params: Vector4) -> void:
+	for hex: String in group:
+		var c: Vector2i = cell[hex]
+		var by := Vector2(signi(c.x) * params.x, 0) if c.y == 0 \
+			else Vector2(signi(c.x) * params.y, -params.z if c.y < 0 else params.w)
+		_sp_off[hex] = (start[hex] as Vector2) + by * JOG_MIN
+
+
+## Самая узкая щель слоя (x1000) плюс сумма самых узких щелей его гексов.
+func _sp_ring_score(group: Array, adj: Dictionary) -> float:
+	var low := INF
+	var total := 0.0
+	for hex: String in group:
+		var gap := _sp_min_gap(hex, adj[hex], -INF)
+		low = minf(low, gap)
+		total += gap
+	return low * 1000.0 + total
+
+
+## Гексы группы по очереди сдвигаются (на шаг JOG_MIN в любую из восьми
+## сторон), пока самая узкая щель до соседей растёт.
+func _sp_maximin(group: Array, adj: Dictionary) -> void:
+	var dirs: Array[Vector2] = [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1),
+		Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]
+	for _round in 60:
+		var moved := false
+		for hex: String in group:
+			var start: Vector2 = _sp_off[hex]
+			var best := _sp_min_gap(hex, adj[hex], -INF)
+			var best_off := start
+			for d in dirs:
+				_sp_off[hex] = start + d * JOG_MIN
+				var gap := _sp_min_gap(hex, adj[hex], best + 0.5)
+				if gap > best + 0.5 and _sp_ok(hex):
+					best = gap
+					best_off = _sp_off[hex]
+			_sp_off[hex] = best_off
+			if best_off != start:
+				moved = true
+		if not moved:
+			return
+
+
+## Самая узкая щель между содержимым гекса и его соседей. Как только щель
+## не больше stop — дальше не считаем (кандидат уже хуже).
+func _sp_min_gap(hex: String, adj: Array, stop: float) -> float:
+	var best := INF
+	var own_off: Vector2 = _sp_off[hex]
+	for other: String in adj:
+		var other_off: Vector2 = _sp_off[other]
+		for item: Array in _sp_items[hex]:
+			var r := Rect2((item[0] as Rect2).position + own_off, (item[0] as Rect2).size)
+			for item2: Array in _sp_items[other]:
+				var gap := _rect_gap(r, Rect2((item2[0] as Rect2).position + other_off, (item2[0] as Rect2).size))
+				if gap < best:
+					best = gap
+					if best <= stop:
+						return best
+	return best
+
+
+static func _rect_gap(a: Rect2, b: Rect2) -> float:
+	var dx := maxf(0.0, maxf(a.position.x - b.end.x, b.position.x - a.end.x))
+	var dy := maxf(0.0, maxf(a.position.y - b.end.y, b.position.y - a.end.y))
+	return sqrt(dx * dx + dy * dy)
 
 
 ## Куда пробовать сдвинуть гекс (в шагах JOG_MIN), от коротких к длинным,
@@ -1487,28 +1749,17 @@ static func _hex_steps(a: Vector2i, b: Vector2i) -> int:
 	return maxi(dr, (dc + dr) / 2)
 
 
-## Щель до внутренних соседей не шире щели до внешних.
-func _sp_balanced(hex: String, adj: Array, layer: Dictionary) -> bool:
-	var gap_in := INF
-	var gap_out := INF
-	for other: String in adj:
-		var u := ((_lattice_centre[other] as Vector2) - (_lattice_centre[hex] as Vector2)).normalized()
-		var gap := ((_sp_off[other] as Vector2) - (_sp_off[hex] as Vector2)).dot(u)
-		if int(layer[other]) < int(layer[hex]):
-			gap_in = minf(gap_in, gap)
-		elif int(layer[other]) > int(layer[hex]):
-			gap_out = minf(gap_out, gap)
-	return gap_out == INF or gap_in <= gap_out
-
-
 ## Bridge of port i at the current offsets, as grown segment rects ([] = no gap).
-func _sp_bridge_rects(i: int) -> Array:
+func _sp_bridge_rects(i: int, mode := -1) -> Array:
 	var port: Dictionary = _sp_ports[i]
 	var off_a: Vector2 = _sp_off[port["a"]]
 	var off_b: Vector2 = _sp_off[port["b"]]
 	if off_a == off_b:
 		return []
-	var path := _bridge_path((port["p"] as Vector2) + off_a, (port["p"] as Vector2) + off_b, port["u"])
+	if mode < 0:
+		mode = int(port.get("mode", 0))
+	var path: PackedVector2Array = _bridge_path((port["p"] as Vector2) + off_a, (port["p"] as Vector2) + off_b,
+		port["u"], mode, port["run_a"], port["run_b"])["check"]
 	var rects: Array = []
 	for k in path.size() - 1:
 		if not path[k].is_equal_approx(path[k + 1]):
@@ -1527,26 +1778,10 @@ func _sp_ok(hex: String) -> bool:
 		var side := (d - (port["u"] as Vector2) * along).length()
 		if along < -0.5:
 			return false
-		if side > 0.5 and (along < JOG_MIN - 0.5 or side < JOG_MIN - 0.5):
+		# ступенька встаёт на прямые участки трасс и щель между ними
+		var span := float(port["run_a"]) + along + float(port["run_b"])
+		if side > 0.5 and (span < JOG_MIN * 2 - 0.5 or side < JOG_MIN - 0.5):
 			return false
-
-	var bridges := {}
-	for i in _sp_ports.size():
-		var rects := _sp_bridge_rects(i)
-		if not rects.is_empty():
-			bridges[i] = rects
-	var all := Rect2()
-	var first := true
-	for other: String in _sp_box.keys():
-		var b := Rect2((_sp_box[other] as Rect2).position + (_sp_off[other] as Vector2), (_sp_box[other] as Rect2).size)
-		all = b if first else all.merge(b)
-		first = false
-	for i: int in bridges:
-		for r: Rect2 in bridges[i]:
-			all = all.merge(r)
-	var room := _sp_zone - Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2 - Vector2(SPREAD_SLACK, SPREAD_SLACK)
-	if all.size.x > room.x or all.size.y > room.y:
-		return false
 
 	var own_off: Vector2 = _sp_off[hex]
 	var own_box := Rect2((_sp_box[hex] as Rect2).position + own_off, (_sp_box[hex] as Rect2).size)
@@ -1565,28 +1800,85 @@ func _sp_ok(hex: String) -> bool:
 				if r.intersects(Rect2((item2[0] as Rect2).position + other_off, (item2[0] as Rect2).size)):
 					return false
 
-	for i: int in bridges:
-		var own: Dictionary = _sp_port_edges[i]
-		var mine := (_sp_ports_of[hex] as Array).has(i)
-		for r: Rect2 in bridges[i]:
-			for other: String in (_sp_box.keys() if mine else [hex]):
-				var off: Vector2 = _sp_off[other]
-				if not r.intersects(Rect2((_sp_box[other] as Rect2).position + off, (_sp_box[other] as Rect2).size)):
-					continue
-				for item: Array in _sp_items[other]:
-					if own.has(item[1]):
-						continue
-					if r.intersects(Rect2((item[0] as Rect2).position + off, (item[0] as Rect2).size)):
-						return false
-			if not mine:
+	# мостики чужих щелей стоят как стояли: на них не должно лечь ничто гекса
+	var bridges := {}
+	var mine: Array = _sp_ports_of[hex]
+	for i in _sp_ports.size():
+		if mine.has(i):
+			continue
+		var rects := _sp_bridge_rects(i)
+		if rects.is_empty():
+			continue
+		bridges[i] = rects
+		if _sp_rects_hit(rects, [hex], _sp_port_edges[i]):
+			return false
+	# свои мостики: для каждого — первый поворот ступеньки, что ни на что не ложится
+	var modes := {}
+	for i: int in mine:
+		var current := int((_sp_ports[i] as Dictionary).get("mode", 0))
+		var placed := false
+		for k in BRIDGE_MODES:
+			var mode := (current + k) % BRIDGE_MODES
+			var rects := _sp_bridge_rects(i, mode)
+			if rects.is_empty():
+				placed = true
+				break
+			if _sp_rects_hit(rects, _sp_box.keys(), _sp_port_edges[i]):
 				continue
+			var crossed := false
 			for j: int in bridges:
-				if j == i:
-					continue
-				for r2: Rect2 in bridges[j]:
-					if r.intersects(r2):
-						return false
+				for r: Rect2 in rects:
+					for r2: Rect2 in bridges[j]:
+						if r.intersects(r2):
+							crossed = true
+							break
+					if crossed:
+						break
+				if crossed:
+					break
+			if crossed:
+				continue
+			bridges[i] = rects
+			modes[i] = mode
+			placed = true
+			break
+		if not placed:
+			return false
+
+	var all := Rect2()
+	var first := true
+	for other: String in _sp_box.keys():
+		var b := Rect2((_sp_box[other] as Rect2).position + (_sp_off[other] as Vector2), (_sp_box[other] as Rect2).size)
+		all = b if first else all.merge(b)
+		first = false
+	for i: int in bridges:
+		for r: Rect2 in bridges[i]:
+			all = all.merge(r)
+	# доска, которая уже до раздвигания выше (шире) зоны, по этой оси не растёт,
+	# но по другой раздвигается
+	var room := (_sp_zone - Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2 - Vector2(SPREAD_SLACK, SPREAD_SLACK)) \
+		.max(_sp_start_size)
+	if all.size.x > room.x + 0.5 or all.size.y > room.y + 0.5:
+		return false
+	for i: int in modes:
+		(_sp_ports[i] as Dictionary)["mode"] = modes[i]
 	return true
+
+
+## Ложится ли какой-то из прямоугольников на содержимое гексов hexes (кроме
+## трасс own — тех, что этот мостик продолжает).
+func _sp_rects_hit(rects: Array, hexes: Array, own: Dictionary) -> bool:
+	for r: Rect2 in rects:
+		for other: String in hexes:
+			var off: Vector2 = _sp_off[other]
+			if not r.intersects(Rect2((_sp_box[other] as Rect2).position + off, (_sp_box[other] as Rect2).size)):
+				continue
+			for item: Array in _sp_items[other]:
+				if own.has(item[1]):
+					continue
+				if r.intersects(Rect2((item[0] as Rect2).position + off, (item[0] as Rect2).size)):
+					return true
+	return false
 
 
 ## Route e ended at the old edge midpoint, now at `at`; it starts with the

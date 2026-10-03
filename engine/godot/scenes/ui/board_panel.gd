@@ -1072,10 +1072,11 @@ func _ensure_view() -> void:
 ## поверх неё (решение владельца, 2026-09-27).
 func _view_centre() -> Vector2:
 	var centre := size * 0.5
-	# Схема — по центру части зоны под полосой вопроса (BoardSchematic.PROMPT_STRIP):
-	# на четверых доска раздвинута во всю зону, и верхний ряд ушёл бы под вопрос.
+	# Схема — по центру части зоны между полосой вопроса сверху и счётчиком
+	# Power/Influence снизу (BoardSchematic.PROMPT_STRIP, BOTTOM_STRIP): на
+	# четверых доска раздвинута во всю зону, и края ушли бы под них.
 	if _schematic_on():
-		centre.y += BoardSchematic.PROMPT_STRIP * 0.5
+		centre.y += (BoardSchematic.PROMPT_STRIP - BoardSchematic.BOTTOM_STRIP) * 0.5
 	# Центр кладём на сетку ЭКРАННЫХ пикселей: иначе схема съезжает на треть
 	# пикселя и nearest рисует соседние ряды разной толщины.
 	var scale := window_scale()
