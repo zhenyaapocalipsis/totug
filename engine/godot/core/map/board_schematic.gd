@@ -136,6 +136,23 @@ const POLISH_PASSES := [[4, 12], [2, 4]]
 const TILE_ATTEMPTS := 5
 ## How many times _repair goes over the board.
 const REPAIR_ROUNDS := 2
+## Доска во всю свою зону (решение владельца, 2026-10-03): собранные гексы
+## раздвигаются целиком — содержимое гекса не трогается, растут только щели
+## между гексами, и туннели переходят через щель (см. _spread). ZONE — зона
+## доски на экране 960x540 (GameScreen, после Stage Mini-1), в пикселях схемы
+## при 1:1. Пока только на четверых: на 2-3 игроков щели вышли бы широкими,
+## это владелец решит по скриншотам.
+const ZONE := Vector2(697, 456)
+## Верх зоны занимает вопрос «X decides — click a gold site on the board» в
+## две строки (DecisionDialog у верхнего края): доска растягивается только
+## ниже него, и BoardPanel ставит её по центру оставшейся части зоны.
+const PROMPT_STRIP := 36.0
+const SPREAD_PLAYERS := [4]
+## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
+const SPREAD_SLACK := 4.0
+## Кратчайший прямой отрезок «ступеньки» в щели между диагональными соседями:
+## скругление угла съедает по 3 px с каждой стороны.
+const JOG_MIN := 6
 ## Сколько раз растаскивать оставшиеся пересечения (_push_apart).
 const PUSH_ROUNDS := 10
 const PUSH_GAP := 3.0      # least gap between boxes after _push_apart (see there)
@@ -148,6 +165,7 @@ var _home: Array[Vector2] = []
 var _half: Array[Vector2] = []
 var _index: Dictionary = {}          # key -> node index
 var _centre: Dictionary = {}         # layout slot -> Vector2
+var _lattice_centre: Dictionary = {} # то же до раздвигания (_spread): кто кому сосед
 var _incident: Array = []            # node -> Array[int] of edges
 
 var _edge_a: Array[int] = []         # port end when _edge_dir >= 0
@@ -192,6 +210,8 @@ static func build(state: GameState, polish := true) -> Dictionary:
 	if polish:
 		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
+	if SPREAD_PLAYERS.has(players):
+		schematic._spread(ZONE - Vector2(0, PROMPT_STRIP))
 	return schematic._export(state)
 
 
@@ -412,6 +432,7 @@ func _collect(graph: MapGraph, layout: Dictionary, hex_by_slot: Dictionary) -> v
 	for layout_slot: String in hex_by_slot.keys():
 		var place: Dictionary = places[layout_slot]
 		_centre[layout_slot] = _snap(to_schematic(Vector2(float(place["x"]), -float(place["z"]))))
+		_lattice_centre[layout_slot] = _centre[layout_slot]
 
 	# Graph positions are hex-local, already rotated, z pointing up.
 	for site_id: String in graph.sites.keys():
@@ -1194,7 +1215,7 @@ func _index_neighbourhoods() -> void:
 		_poly_nodes[hex] = hex_polygon(_centre[hex], NODE_GAP)
 		var near: Array[int] = []
 		for n in _key.size():
-			if _kind[n] != Kind.PORT and (_centre[hex] as Vector2).distance_to(_centre[_hex[n]]) < K * 2.1:
+			if _kind[n] != Kind.PORT and (_lattice_centre[hex] as Vector2).distance_to(_lattice_centre[_hex[n]]) < K * 2.1:
 				near.append(n)
 		_near[hex] = near
 
@@ -1252,9 +1273,139 @@ func _snapshot_routes(inc: Array) -> Array:
 	return out
 
 
+# --- spread ------------------------------------------------------------------------
+
+## Раздвигает готовую доску до зоны: каждый гекс сдвигается целиком на
+## (столбец * gx, ряд * gy), где столбец — полшага соседа по горизонтали (K),
+## ряд — шаг диагонального соседа. Внутри гексов ничего не меняется, поэтому
+## новых пересечений там нет; каждая щель лежит между своими двумя гексами.
+## Туннель через ребро теперь идёт через щель: соседи слева-справа — прямой
+## отрезок, диагональные — «ступенька» из двух поворотов (вдоль ряда gy,
+## вбок gx). Точка встречи (узел PORT) ставится на прямой участок ступеньки,
+## и обе половины, как и прежде, сходятся в ней встречно.
+func _spread(zone: Vector2) -> void:
+	var size := _extent().size + Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2
+	var row_step := float(K) * sqrt(3.0) / SQUEEZE
+	var first: Vector2 = _lattice_centre.values()[0]
+	var cell := {}
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := -lo
+	for hex: String in _lattice_centre.keys():
+		var d: Vector2 = (_lattice_centre[hex] as Vector2) - first
+		var c := Vector2i(roundi(d.x / K), roundi(d.y / row_step))
+		cell[hex] = c
+		lo = lo.min(c)
+		hi = hi.max(c)
+	var gx := 0
+	var gy := 0
+	if hi.x > lo.x:
+		gx = maxi(0, floori((zone.x - SPREAD_SLACK - size.x) / (hi.x - lo.x) / GRID) * GRID)
+	if hi.y > lo.y:
+		gy = maxi(0, floori((zone.y - SPREAD_SLACK - size.y) / (hi.y - lo.y) / GRID) * GRID)
+	# ступенька между диагональными соседями: вбок gx, вдоль ряда gy
+	if gx < JOG_MIN or gy < JOG_MIN:
+		gx = 0
+	if gx == 0 and gy == 0:
+		return
+
+	var off := {}
+	for hex: String in cell.keys():
+		var c: Vector2i = cell[hex]
+		off[hex] = Vector2(c.x * gx, c.y * gy)
+		_centre[hex] = (_lattice_centre[hex] as Vector2) + (off[hex] as Vector2)
+	var old_port := {}
+	for n in _key.size():
+		if _kind[n] == Kind.PORT:
+			old_port[n] = _pos[n]
+			continue
+		_pos[n] += off[_hex[n]]
+		_home[n] += off[_hex[n]]
+	for e in _routes.size():
+		var inner := _edge_b[e]
+		var by: Vector2 = off[_hex[inner]]
+		var points := _routes[e]
+		for i in points.size():
+			points[i] += by
+		_routes[e] = points
+
+	for port: int in old_port.keys():
+		var by_hex := {}
+		for e: int in _incident[port]:
+			var hex: String = _hex[_edge_b[e]]
+			if not by_hex.has(hex):
+				by_hex[hex] = []
+			(by_hex[hex] as Array).append(e)
+		if by_hex.size() != 2:
+			push_warning("schematic: port %s does not join two hexes" % _key[port])
+			continue
+		var hex_a: String = by_hex.keys()[0]
+		var hex_b: String = by_hex.keys()[1]
+		var p: Vector2 = old_port[port]
+		var m_a: Vector2 = p + (off[hex_a] as Vector2)
+		var m_b: Vector2 = p + (off[hex_b] as Vector2)
+		var u: Vector2 = DIRS[_edge_dir[(by_hex[hex_b] as Array)[0]]]   # from A toward B
+		var along := (m_b - m_a).dot(u)
+		var side := (m_b - m_a) - u * along
+		var bridge_a := PackedVector2Array()
+		var bridge_b := PackedVector2Array()
+		if side.length() < 0.5:
+			var meet := m_a + u * roundf(along / 2.0)
+			bridge_a = [meet, m_a]
+			bridge_b = [meet, m_b]
+		else:
+			var h := roundf(along / 2.0)
+			var turn := m_a + u * h
+			# точка встречи — на прямом участке до первого поворота (при
+			# узкой щели прямо в m_a: там трасса гекса A идёт дальше прямо)
+			var meet := m_a + u * floorf(h / 2.0)
+			bridge_a = [meet, m_a]
+			bridge_b = [meet, turn, turn + side, m_b]
+		_pos[port] = bridge_a[0]
+		_home[port] = bridge_a[0]
+		for e: int in by_hex[hex_a]:
+			_bridge(e, m_a, bridge_a)
+		for e: int in by_hex[hex_b]:
+			_bridge(e, m_b, bridge_b)
+
+	_index_neighbourhoods()
+	_repair()
+
+
+## Route e ended at the old edge midpoint, now at `at`; it starts with the
+## bridge instead (bridge runs from the meeting point to `at`).
+func _bridge(e: int, at: Vector2, bridge: PackedVector2Array) -> void:
+	var points := _routes[e]
+	if points.is_empty():
+		return
+	var reversed := points[points.size() - 1].distance_to(at) < points[0].distance_to(at)
+	if reversed:
+		points.reverse()
+	var joined := bridge.duplicate()
+	joined.append_array(points.slice(1))
+	# точка посреди прямого отрезка (стык мостика и трассы) не нужна
+	var out := PackedVector2Array()
+	for q in joined:
+		var last := out.size() - 1
+		if last >= 0 and out[last].is_equal_approx(q):
+			continue
+		if last >= 1:
+			var d1 := out[last] - out[last - 1]
+			var d2 := q - out[last]
+			if is_zero_approx(d1.cross(d2)) and d1.dot(d2) > 0.0:
+				out[last] = q
+				continue
+		out.append(q)
+	if reversed:
+		out.reverse()
+	_routes[e] = out
+	_visible[e] = _clip(e, out)
+	_bbox[e] = _bounds(_visible[e])
+
+
 # --- export ------------------------------------------------------------------------
 
-func _export(state: GameState) -> Dictionary:
+## Everything drawn: boxes, rings and traces, without the image margin.
+func _extent() -> Rect2:
 	var lo := Vector2(INF, INF)
 	var hi := Vector2(-INF, -INF)
 	for n in _key.size():
@@ -1266,8 +1417,14 @@ func _export(state: GameState) -> Dictionary:
 		for p in points:
 			lo = lo.min(p)
 			hi = hi.max(p)
+	return Rect2(lo, hi - lo)
+
+
+func _export(state: GameState) -> Dictionary:
+	var extent := _extent()
+	var lo := extent.position
 	var shift := (-lo + Vector2(IMAGE_MARGIN, IMAGE_MARGIN)).round()
-	var size := (hi - lo + Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2).ceil()
+	var size := (extent.size + Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2).ceil()
 
 	var starting := GameSetup.STARTING_SITE_NAMES
 	var marked := ControlMarkers.marked_sites(state)

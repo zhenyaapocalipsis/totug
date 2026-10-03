@@ -2988,9 +2988,11 @@ func test_board_schematic() -> void:
 		check_eq(bad_angle, 0, "%s: отрезки трасс идут только по осям" % tag)
 		check_eq(bad_turn, 0, "%s: каждый изгиб трассы — ровно 90 градусов" % tag)
 
-		# через ребро: точка — середина между центрами гексов, и обе трассы
-		# сходятся в ней встречно (перпендикулярность ребру ушла вместе с
-		# трассами под 45°, решение владельца 2026-09-22)
+		# через ребро: точка лежит между своим гексом и соседом (на доске на
+		# четверых гексы раздвинуты, и точка — в щели между ними, см.
+		# BoardSchematic._spread), и обе трассы сходятся в ней встречно
+		# (перпендикулярность ребру ушла вместе с трассами под 45°, решение
+		# владельца 2026-09-22)
 		var centres: Dictionary = s["hex_centres"]
 		var bad_port := 0
 		for port: String in (s["ports"] as Dictionary).keys():
@@ -2998,10 +3000,11 @@ func test_board_schematic() -> void:
 			var dirs: Array = dir_at_port.get(port, [])
 			var hex: String = port.get_slice(":", 1)
 			var outward := at - Vector2(centres[hex][0], centres[hex][1])
-			var mirrored := Vector2(centres[hex][0], centres[hex][1]) + outward * 2.0
 			var neighbour_found := false
 			for other: String in centres.keys():
-				if Vector2(centres[other][0], centres[other][1]).is_equal_approx(mirrored):
+				var to_other := Vector2(centres[other][0], centres[other][1]) - at
+				if other != hex and to_other.dot(outward) > 0.0 \
+						and to_other.length() < outward.length() * 1.6:
 					neighbour_found = true
 			if dirs.size() != 2 or not neighbour_found \
 					or not (dirs[0] as Vector2).is_equal_approx(-(dirs[1] as Vector2)):
