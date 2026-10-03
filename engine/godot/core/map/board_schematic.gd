@@ -143,8 +143,12 @@ const REPAIR_ROUNDS := 2
 ## при 1:1. Пока только на четверых: на 2-3 игроков щели вышли бы широкими,
 ## это владелец решит по скриншотам.
 const ZONE := Vector2(697, 456)
-## Доска берёт всю высоту зоны (владелец, 2026-10-04): вопрос сверху и
-## счётчик Power/Influence снизу ложатся поверх её краёв.
+## Верх зоны занимает вопрос «X decides — click a gold site on the board» в
+## две строки (DecisionDialog у верхнего края), низ во время хода — счётчик
+## Power/Influence над рукой (владелец, 2026-10-04: доска на них не заходит).
+## Доска раздвигается между ними, BoardPanel ставит её по центру этой части.
+const PROMPT_STRIP := 36.0
+const BOTTOM_STRIP := 26.0
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
@@ -215,7 +219,7 @@ static func build(state: GameState, polish := true) -> Dictionary:
 		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
 	if SPREAD_PLAYERS.has(players):
-		schematic._spread(ZONE)
+		schematic._spread(ZONE - Vector2(0, PROMPT_STRIP + BOTTOM_STRIP))
 	return schematic._export(state)
 
 
@@ -1509,7 +1513,7 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 				_sp_off[hex] = was
 		if not moved:
 			break
-	_sp_align(outer, cell)
+	_sp_edges(outer, cell)
 	# внутренние слои (решение владельца, 2026-10-03: «раздвинь на возможный
 	# максимум, чтобы они были равноудалены от всего») — каждый гекс встаёт
 	# туда, где самая узкая щель до соседей шире всего
@@ -1521,9 +1525,10 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 		_sp_ring_apart(group, adj, cell)
 		_sp_maximin(group, adj)
 		_sp_fill(group, adj, layer, cell)
-	# слой у центра разошёлся — у углов могло появиться место встать на линию
-	_sp_align(outer, cell)
-	# повороты ступенек могли остаться от отменённых проб (_sp_align
+	# слой у центра разошёлся: кольцо — в колонки, у краёв — снова на линии
+	_sp_columns(cell)
+	_sp_edges(outer, cell)
+	# повороты ступенек могли остаться от отменённых проб (выравнивание
 	# откатывает сдвиги): ещё раз подобрать их под итоговые сдвиги
 	for hex: String in hexes:
 		_sp_ok(hex)
@@ -1533,85 +1538,212 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 	return {}
 
 
-## Значимые города (с маркером контроля) в верхних углах — на одну линию с
-## самым верхним значимым городом (Shedaklah), в нижних — с самым нижним
-## (Lolth): по верхнему краю рамки (владелец, 2026-10-03). Если ровно не
-## встаёт (что-то задевает), гекс остаётся, где был.
-func _sp_align(outer: Array, cell: Dictionary) -> void:
-	var tops := {}   # hex -> верх его значимой рамки сейчас, вместе со сдвигом
-	for n in _key.size():
-		if _kind[n] == Kind.SITE and _marked.has(n) and outer.has(_hex[n]):
-			var top := _pos[n].y - _half[n].y + (_sp_off[_hex[n]] as Vector2).y
-			tops[_hex[n]] = minf(float(tops.get(_hex[n], INF)), top)
-	for sign_y: int in [-1, 1]:
-		var edge_row := 0
-		for hex: String in tops:
-			var r: int = (cell[hex] as Vector2i).y
-			if r * sign_y > edge_row * sign_y:
-				edge_row = r
-		if edge_row == 0:
-			continue
-		# Линия — по крайнему городу (Shedaklah, Lolth); если углы до неё не
-		# дотягиваются (их туннели вылезли бы за зону), пробуем линии углов:
-		# тогда крайний город сам встаёт на линию углов.
-		var side_hexes: Array = []
-		var lines: Array = []
-		for hex: String in tops:
-			var r: int = (cell[hex] as Vector2i).y
-			if r * sign_y > 0:
-				side_hexes.append(hex)
-				if r == edge_row:
-					lines.push_front(tops[hex])
-				else:
-					lines.append(tops[hex])
-		if lines.is_empty():
-			continue
-		# и всё между ними, через 2 px, ближние к линии крайнего города — первыми
-		var lo: float = lines.min()
-		var hi: float = lines.max()
-		var edge_line: float = lines[0]
-		var y := lo
-		while y <= hi:
-			if not lines.has(y):
-				lines.append(y)
-			y += float(GRID)
-		var rest: Array = lines.slice(1)
-		rest.sort_custom(func(a: float, b: float) -> bool: return absf(a - edge_line) < absf(b - edge_line))
-		lines = [edge_line] + rest
-		var start := {}
-		for hex: String in side_hexes:
-			start[hex] = _sp_off[hex]
-		# гекс может ещё чуть сдвинуться вбок, чтобы его ступеньки разошлись
-		var sideways: Array[float] = [0.0]
-		for k in range(1, 5):
-			sideways.append(-k * JOG_MIN)
-			sideways.append(k * JOG_MIN)
-		for line: float in lines:
-			for hex: String in side_hexes:
-				var was: Vector2 = start[hex]
-				_sp_off[hex] = Vector2(was.x, was.y + line - float(tops[hex]))
-			var all_fit := true
-			for hex: String in side_hexes:
-				var fits := false
-				var on_line: Vector2 = _sp_off[hex]
-				for dx in sideways:
-					_sp_off[hex] = on_line + Vector2(dx, 0)
-					if _sp_ok(hex):
-						fits = true
-						break
-				if not fits:
+## Доска — сетка 5 колонок x 3 ряда гексов (владелец, 2026-10-04, рисунок с
+## красными рамками): колонка по клетке гекса (_sp_col). Крайние города стоят
+## по краям доски на одной линии: верхний ряд — по верху рамок, нижний — по
+## низу, левая колонка — по левому краю, правая — по правому.
+func _sp_edges(outer: Array, cell: Dictionary) -> void:
+	var top: Array = []
+	var bottom: Array = []
+	var left: Array = []
+	var right: Array = []
+	var corners: Array = []   # им можно чуть сдвинуться вдоль линии
+	var sides: Array = []
+	for hex: String in outer:
+		var c: Vector2i = cell[hex]
+		if c.y < 0:
+			top.append(hex)
+		elif c.y > 0:
+			bottom.append(hex)
+		if c.x <= -3:
+			left.append(hex)
+		elif c.x >= 3:
+			right.append(hex)
+		if c.x != 0 and c.y != 0:
+			corners.append(hex)
+		elif c.y == 0:
+			sides.append(hex)
+	_sp_line_up(top, 2, corners)
+	_sp_line_up(bottom, 3, corners)
+	_sp_line_up(left, 0, sides)
+	_sp_line_up(right, 1, sides)
+
+
+## Колонка сетки 0..4 по клетке гекса: края (|столбец| >= 3), кольцо, центр.
+static func _sp_col(c: Vector2i) -> int:
+	if c.x <= -3:
+		return 0
+	if c.x < 0:
+		return 1
+	if c.x == 0:
+		return 2
+	return 3 if c.x < 3 else 4
+
+
+## Рамка вокруг всех городов гекса (со сдвигом).
+func _sp_frames(hex: String) -> Rect2:
+	var off: Vector2 = _sp_off[hex]
+	var out := Rect2()
+	var first := true
+	for r: Rect2 in _sp_sites[hex]:
+		var moved := Rect2(r.position + off, r.size)
+		out = moved if first else out.merge(moved)
+		first = false
+	return out
+
+
+## Край рамки городов: 0 левый, 1 правый, 2 верх, 3 низ, 4 середина по x.
+func _sp_edge(hex: String, side: int) -> float:
+	var f := _sp_frames(hex)
+	match side:
+		0:
+			return f.position.x
+		1:
+			return f.end.x
+		2:
+			return f.position.y
+		3:
+			return f.end.y
+	return f.position.x + floorf(f.size.x / 2.0)
+
+
+## Ставит края side гексов hexes на одну линию. Линии пробуются через GRID px:
+## у краёв доски — сначала самая внешняя, у середины колонки — ближайшая к
+## средней. Гексы из slide могут ещё сдвинуться поперёк (вдоль линии) на шаг
+## JOG_MIN, чтобы их ступеньки разошлись. Не встаёт ни одна — всё как было.
+func _sp_line_up(hexes: Array, side: int, slide: Array) -> bool:
+	if hexes.size() < 2:
+		return false
+	var axis := 1 if side == 2 or side == 3 else 0
+	var start := {}
+	var vals := {}
+	var mean := 0.0
+	for hex: String in hexes:
+		start[hex] = _sp_off[hex]
+		vals[hex] = _sp_edge(hex, side)
+		mean += float(vals[hex]) / hexes.size()
+	var lo: float = vals.values().min()
+	var hi: float = vals.values().max()
+	var target := mean
+	if side == 0 or side == 2:
+		target = lo
+	elif side == 1 or side == 3:
+		target = hi
+	var lines: Array = []
+	var v := lo
+	while v < hi:
+		lines.append(v)
+		v += float(GRID)
+	lines.append(hi)
+	lines.sort_custom(func(a: float, b: float) -> bool: return absf(a - target) < absf(b - target))
+	var across: Array[float] = [0.0]
+	for k in range(1, 5):
+		across.append(-k * JOG_MIN)
+		across.append(k * JOG_MIN)
+	for line: float in lines:
+		for hex: String in hexes:
+			var o: Vector2 = start[hex]
+			o[axis] += line - float(vals[hex])
+			_sp_off[hex] = o
+		var all_fit := true
+		for hex: String in hexes:
+			var on_line: Vector2 = _sp_off[hex]
+			var fits := false
+			for d: float in (across if slide.has(hex) else [0.0]):
+				var o := on_line
+				o[1 - axis] += d
+				_sp_off[hex] = o
+				if _sp_ok(hex):
+					fits = true
+					break
+			if not fits:
+				all_fit = false
+				break
+		if all_fit:
+			# сдвиг поперёк одного мог помешать уже поставленному соседу
+			for hex: String in hexes:
+				if not _sp_ok(hex):
 					all_fit = false
 					break
-			if all_fit:
-				# сдвиг вбок одного мог помешать уже поставленному соседу
-				for hex: String in side_hexes:
-					if not _sp_ok(hex):
-						all_fit = false
-						break
-			if all_fit:
+		if all_fit:
+			return true
+		for hex: String in hexes:
+			_sp_off[hex] = start[hex]
+	return false
+
+
+## Средние колонки (красные рамки владельца): гексы кольца стоят друг под
+## другом на всю высоту — верхний поднимается, нижний опускается, пока можно,
+## средний встаёт посередине между ними; потом все трое — на одну середину.
+func _sp_columns(cell: Dictionary) -> void:
+	for col in [1, 3]:
+		var hexes: Array = []
+		for hex: String in cell:
+			if _sp_col(cell[hex]) == col:
+				hexes.append(hex)
+		hexes.sort_custom(func(a: String, b: String) -> bool: return (cell[a] as Vector2i).y < (cell[b] as Vector2i).y)
+		if hexes.size() != 3:
+			continue
+		for pair: Array in [[hexes[0], -1.0], [hexes[2], 1.0]]:
+			var hex: String = pair[0]
+			for _step in 40:
+				var was: Vector2 = _sp_off[hex]
+				_sp_off[hex] = was + Vector2(0, float(pair[1]) * JOG_MIN)
+				if not _sp_ok(hex):
+					_sp_off[hex] = was
+					break
+		var mid: String = hexes[1]
+		for _step in 40:
+			var up := _sp_edge(mid, 2) - _sp_edge(hexes[0], 3)
+			var down := _sp_edge(hexes[2], 2) - _sp_edge(mid, 3)
+			if absf(up - down) <= JOG_MIN:
 				break
-			for hex: String in side_hexes:
-				_sp_off[hex] = start[hex]
+			var was: Vector2 = _sp_off[mid]
+			_sp_off[mid] = was + Vector2(0, JOG_MIN if down > up else -JOG_MIN)
+			if not _sp_ok(mid):
+				_sp_off[mid] = was
+				break
+		if not _sp_line_up(hexes, 4, hexes):
+			_sp_toward(hexes)
+	var centre_col: Array = []
+	for hex: String in cell:
+		if _sp_col(cell[hex]) == 2:
+			centre_col.append(hex)
+	_sp_line_up(centre_col, 4, [])
+
+
+## Ровно на одну середину колонка не встала: гексы подходят к средней из их
+## середин, пока можно (ближе — уже лучше).
+func _sp_toward(hexes: Array) -> void:
+	var mean := 0.0
+	for hex: String in hexes:
+		mean += _sp_edge(hex, 4) / hexes.size()
+	_sp_toward_line(hexes, roundf(mean / GRID) * GRID)
+
+
+## Каждый гекс подходит к линии: сразу на место, иначе шагом JOG_MIN
+## (ступенька к соседу — 0 или не меньше JOG_MIN), последние пиксели по GRID.
+func _sp_toward_line(hexes: Array, line: float) -> void:
+	for _round in 60:
+		var moved := false
+		for hex: String in hexes:
+			var gap := line - _sp_edge(hex, 4)
+			if absf(gap) < 0.5:
+				continue
+			var was: Vector2 = _sp_off[hex]
+			var tries: Array[float] = [absf(gap)]
+			for k in range(4, 0, -1):
+				if k * JOG_MIN < absf(gap):
+					tries.append(k * JOG_MIN)
+			tries.append(minf(absf(gap), GRID))
+			for t in tries:
+				_sp_off[hex] = was + Vector2(signf(gap) * t, 0)
+				if _sp_ok(hex):
+					moved = true
+					break
+				_sp_off[hex] = was
+		if not moved:
+			return
 
 
 ## Слой целиком расходится от центра — по одному его гексы друг друга держат
@@ -1851,7 +1983,10 @@ func _sp_ok(hex: String) -> bool:
 		var d: Vector2 = (_sp_off[port["b"]] as Vector2) - (_sp_off[port["a"]] as Vector2)
 		var along := d.dot(port["u"])
 		var side := (d - (port["u"] as Vector2) * along).length()
-		if along < -0.5:
+		# Гексы зашли друг за друга вдоль u: годится, только если они разошлись
+		# вбок — ступенька встаёт на прямые участки обеих трасс (span ниже),
+		# а хвосты трасс за ней _bridge отрезает.
+		if along < -0.5 and side < 0.5:
 			return false
 		# ступенька встаёт на прямые участки трасс и щель между ними
 		var span := float(port["run_a"]) + along + float(port["run_b"])
