@@ -1275,100 +1275,318 @@ func _snapshot_routes(inc: Array) -> Array:
 
 # --- spread ------------------------------------------------------------------------
 
-## Раздвигает готовую доску до зоны: каждый гекс сдвигается целиком на
-## (столбец * gx, ряд * gy), где столбец — полшага соседа по горизонтали (K),
-## ряд — шаг диагонального соседа. Внутри гексов ничего не меняется, поэтому
-## новых пересечений там нет; каждая щель лежит между своими двумя гексами.
-## Туннель через ребро теперь идёт через щель: соседи слева-справа — прямой
-## отрезок, диагональные — «ступенька» из двух поворотов (вдоль ряда gy,
-## вбок gx). Точка встречи (узел PORT) ставится на прямой участок ступеньки,
-## и обе половины, как и прежде, сходятся в ней встречно.
+## Раздвигает готовую доску до зоны. Каждый гекс сдвигается целиком, внутри
+## гексов ничего не меняется, растут только щели между ними. Туннель через
+## ребро идёт через щель: прямо, если соседи сдвинулись одинаково вбок, иначе
+## «ступенькой» из двух поворотов (_bridge_path). Точка встречи (узел PORT)
+## лежит на прямом участке, и обе половины сходятся в ней встречно.
+##
+## Сдвиги ищет _spread_offsets (решение владельца, 2026-10-03, по рисунку):
+## внешние гексы уходят наружу до края зоны — угловые по диагонали, в углы;
+## гексы вокруг центра отходят «чуть дальше», пока щель до центра не
+## сравняется со щелью до внешних соседей. Центральный гекс стоит на месте.
 func _spread(zone: Vector2) -> void:
-	var size := _extent().size + Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2
-	var row_step := float(K) * sqrt(3.0) / SQUEEZE
-	var first: Vector2 = _lattice_centre.values()[0]
-	var cell := {}
-	var lo := Vector2i(1 << 30, 1 << 30)
-	var hi := -lo
-	for hex: String in _lattice_centre.keys():
-		var d: Vector2 = (_lattice_centre[hex] as Vector2) - first
-		var c := Vector2i(roundi(d.x / K), roundi(d.y / row_step))
-		cell[hex] = c
-		lo = lo.min(c)
-		hi = hi.max(c)
-	var gx := 0
-	var gy := 0
-	if hi.x > lo.x:
-		gx = maxi(0, floori((zone.x - SPREAD_SLACK - size.x) / (hi.x - lo.x) / GRID) * GRID)
-	if hi.y > lo.y:
-		gy = maxi(0, floori((zone.y - SPREAD_SLACK - size.y) / (hi.y - lo.y) / GRID) * GRID)
-	# ступенька между диагональными соседями: вбок gx, вдоль ряда gy
-	if gx < JOG_MIN or gy < JOG_MIN:
-		gx = 0
-	if gx == 0 and gy == 0:
+	var ports := _spread_ports()
+	var off := _spread_offsets(ports, zone)
+	if off.is_empty():
 		return
-
-	var off := {}
-	for hex: String in cell.keys():
-		var c: Vector2i = cell[hex]
-		off[hex] = Vector2(c.x * gx, c.y * gy)
+	for hex: String in off.keys():
 		_centre[hex] = (_lattice_centre[hex] as Vector2) + (off[hex] as Vector2)
-	var old_port := {}
 	for n in _key.size():
-		if _kind[n] == Kind.PORT:
-			old_port[n] = _pos[n]
-			continue
-		_pos[n] += off[_hex[n]]
-		_home[n] += off[_hex[n]]
+		if _kind[n] != Kind.PORT:
+			_pos[n] += off[_hex[n]]
+			_home[n] += off[_hex[n]]
 	for e in _routes.size():
-		var inner := _edge_b[e]
-		var by: Vector2 = off[_hex[inner]]
+		var by: Vector2 = off[_hex[_edge_b[e]]]
 		var points := _routes[e]
 		for i in points.size():
 			points[i] += by
 		_routes[e] = points
+	for port: Dictionary in ports:
+		var m_a: Vector2 = (port["p"] as Vector2) + (off[port["a"]] as Vector2)
+		var m_b: Vector2 = (port["p"] as Vector2) + (off[port["b"]] as Vector2)
+		var path := _bridge_path(m_a, m_b, port["u"])
+		var meet := path[1]
+		_pos[port["node"]] = meet
+		_home[port["node"]] = meet
+		for e: int in port["edges_a"]:
+			_bridge(e, m_a, PackedVector2Array([meet, m_a]))
+		for e: int in port["edges_b"]:
+			_bridge(e, m_b, path.slice(1))
+	# _repair здесь не нужен и вреден: _sp_ok уже не пустил ни одного касания,
+	# а цена трассы (_local_cost) штрафует мостик за выход из своего гекса —
+	# _repair переложил бы его через полдоски поперёк чужих трасс.
+	_index_neighbourhoods()
 
-	for port: int in old_port.keys():
+
+## Путь через щель от середины ребра гекса A (m_a) до середины ребра гекса B
+## (m_b); u — направление от A к B, в нём трассы входят в рёбра.
+## [m_a, точка встречи, (два поворота ступеньки,) m_b].
+static func _bridge_path(m_a: Vector2, m_b: Vector2, u: Vector2) -> PackedVector2Array:
+	var along := (m_b - m_a).dot(u)
+	var side := (m_b - m_a) - u * along
+	if side.length() < 0.5:
+		return PackedVector2Array([m_a, m_a + u * roundf(along / 2.0), m_b])
+	var run := roundf(along / 2.0)
+	var turn := m_a + u * run
+	# точка встречи — на прямом участке до первого поворота (при узкой щели
+	# прямо в m_a: там трасса гекса A идёт дальше прямо)
+	return PackedVector2Array([m_a, m_a + u * floorf(run / 2.0), turn, turn + side, m_b])
+
+
+## Узлы PORT, которые соединяют ровно два гекса: {node, a, b, p, u, edges_a, edges_b}.
+func _spread_ports() -> Array:
+	var ports: Array = []
+	for n in _key.size():
+		if _kind[n] != Kind.PORT:
+			continue
 		var by_hex := {}
-		for e: int in _incident[port]:
+		for e: int in _incident[n]:
 			var hex: String = _hex[_edge_b[e]]
 			if not by_hex.has(hex):
 				by_hex[hex] = []
 			(by_hex[hex] as Array).append(e)
 		if by_hex.size() != 2:
-			push_warning("schematic: port %s does not join two hexes" % _key[port])
+			push_warning("schematic: port %s does not join two hexes" % _key[n])
 			continue
-		var hex_a: String = by_hex.keys()[0]
-		var hex_b: String = by_hex.keys()[1]
-		var p: Vector2 = old_port[port]
-		var m_a: Vector2 = p + (off[hex_a] as Vector2)
-		var m_b: Vector2 = p + (off[hex_b] as Vector2)
-		var u: Vector2 = DIRS[_edge_dir[(by_hex[hex_b] as Array)[0]]]   # from A toward B
-		var along := (m_b - m_a).dot(u)
-		var side := (m_b - m_a) - u * along
-		var bridge_a := PackedVector2Array()
-		var bridge_b := PackedVector2Array()
-		if side.length() < 0.5:
-			var meet := m_a + u * roundf(along / 2.0)
-			bridge_a = [meet, m_a]
-			bridge_b = [meet, m_b]
-		else:
-			var h := roundf(along / 2.0)
-			var turn := m_a + u * h
-			# точка встречи — на прямом участке до первого поворота (при
-			# узкой щели прямо в m_a: там трасса гекса A идёт дальше прямо)
-			var meet := m_a + u * floorf(h / 2.0)
-			bridge_a = [meet, m_a]
-			bridge_b = [meet, turn, turn + side, m_b]
-		_pos[port] = bridge_a[0]
-		_home[port] = bridge_a[0]
-		for e: int in by_hex[hex_a]:
-			_bridge(e, m_a, bridge_a)
-		for e: int in by_hex[hex_b]:
-			_bridge(e, m_b, bridge_b)
+		var a: String = by_hex.keys()[0]
+		var b: String = by_hex.keys()[1]
+		ports.append({"node": n, "a": a, "b": b, "p": _pos[n],
+			"u": DIRS[_edge_dir[(by_hex[b] as Array)[0]]],
+			"edges_a": by_hex[a], "edges_b": by_hex[b]})
+	return ports
 
-	_index_neighbourhoods()
-	_repair()
+
+# Состояние поиска сдвигов (_spread_offsets и проверки при нём).
+var _sp_off := {}          # hex -> Vector2
+var _sp_items := {}        # hex -> Array of [Rect2, edge or -1]: рамки, кольца, отрезки трасс
+var _sp_box := {}          # hex -> Rect2 вокруг всех его _sp_items
+var _sp_ports: Array = []
+var _sp_port_edges: Array = []   # port index -> {edge: true}
+var _sp_ports_of: Dictionary = {}  # hex -> Array of port indices
+var _sp_zone := Vector2.ZERO
+
+
+## Сдвиг каждого гекса шагами JOG_MIN: тогда и вбок, и вдоль щели между
+## соседями выходит 0 или не меньше JOG_MIN — ступенька всегда помещается.
+## Внешний слой раздвигается до края зоны по очереди, по шагу за круг (так
+## доска растёт во все стороны поровну), внутренние слои — до равных щелей.
+## Пустой ответ — двигать нечего.
+func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
+	var hexes: Array = _lattice_centre.keys()
+	var mean := Vector2.ZERO
+	for hex: String in hexes:
+		mean += _lattice_centre[hex] as Vector2
+	mean /= float(hexes.size())
+	var centre_hex: String = hexes[0]
+	for hex: String in hexes:
+		if (_lattice_centre[hex] as Vector2).distance_to(mean) < (_lattice_centre[centre_hex] as Vector2).distance_to(mean):
+			centre_hex = hex
+	var row_step := float(K) * sqrt(3.0) / SQUEEZE
+	var cell := {}
+	for hex: String in hexes:
+		var d: Vector2 = (_lattice_centre[hex] as Vector2) - (_lattice_centre[centre_hex] as Vector2)
+		cell[hex] = Vector2i(roundi(d.x / K), roundi(d.y / row_step))
+	var layer := {}
+	var max_layer := 0
+	for hex: String in hexes:
+		layer[hex] = _hex_steps(cell[hex], Vector2i.ZERO)
+		max_layer = maxi(max_layer, int(layer[hex]))
+	var adj := {}
+	for hex: String in hexes:
+		adj[hex] = []
+		for other: String in hexes:
+			if other != hex and _hex_steps(cell[hex], cell[other]) == 1:
+				(adj[hex] as Array).append(other)
+
+	_sp_zone = zone
+	_sp_ports = ports
+	_sp_off = {}
+	_sp_items = {}
+	_sp_box = {}
+	_sp_ports_of = {}
+	_sp_port_edges = []
+	for hex: String in hexes:
+		_sp_off[hex] = Vector2.ZERO
+		_sp_items[hex] = []
+		_sp_ports_of[hex] = []
+	for n in _key.size():
+		if _kind[n] != Kind.PORT:
+			# с запасом _obstacles: трасса проходит не ближе 2 px от рамки
+			(_sp_items[_hex[n]] as Array).append([_node_rect(n, 2.0), -1])
+	for e in _routes.size():
+		var pts := _routes[e]
+		for i in pts.size() - 1:
+			(_sp_items[_hex[_edge_b[e]]] as Array).append([Rect2(pts[i], Vector2.ZERO).expand(pts[i + 1]).grow(1.0), e])
+	for hex: String in hexes:
+		var items: Array = _sp_items[hex]
+		var box: Rect2 = items[0][0] if not items.is_empty() else Rect2()
+		for item: Array in items:
+			box = box.merge(item[0])
+		_sp_box[hex] = box
+	for i in ports.size():
+		var own := {}
+		for e: int in ports[i]["edges_a"]:
+			own[e] = true
+		for e: int in ports[i]["edges_b"]:
+			own[e] = true
+		_sp_port_edges.append(own)
+		(_sp_ports_of[ports[i]["a"]] as Array).append(i)
+		(_sp_ports_of[ports[i]["b"]] as Array).append(i)
+
+	var any_moved := false
+	for level in range(max_layer, 0, -1):
+		var group: Array = []
+		for hex: String in hexes:
+			if layer[hex] == level:
+				group.append(hex)
+		for _round in 200:
+			var moved := false
+			for hex: String in group:
+				var c: Vector2i = cell[hex]
+				for step: Vector2 in _spread_steps(Vector2(signi(c.x), signi(c.y))):
+					var was: Vector2 = _sp_off[hex]
+					_sp_off[hex] = was + step * JOG_MIN
+					if (level == max_layer or _sp_balanced(hex, adj[hex], layer)) and _sp_ok(hex):
+						moved = true
+						break
+					_sp_off[hex] = was
+			if not moved:
+				break
+			any_moved = true
+	return _sp_off if any_moved else {}
+
+
+## Куда пробовать сдвинуть гекс (в шагах JOG_MIN), от коротких к длинным,
+## наружу от центра — d: знаки его столбца и ряда. Длинные шаги нужны для
+## тупиков: гекс и его диагональный сосед держат друг друга (шаг вбок без
+## шага вдоль щели — ступенька не помещается), а шаг сразу на 2-3 клетки
+## перешагивает такое место.
+static func _spread_steps(d: Vector2) -> Array:
+	var out: Array = []
+	for total in range(1, 5):
+		for i in range(total, -1, -1):
+			var j := total - i
+			if (i > 0 and d.x == 0.0) or (j > 0 and d.y == 0.0):
+				continue
+			out.append(Vector2(d.x * i, d.y * j))
+	# сначала по диагонали (в угол), потом по одной оси
+	out.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		var la := absf(a.x) + absf(a.y)
+		var lb := absf(b.x) + absf(b.y)
+		if la != lb:
+			return la < lb
+		return absf(absf(a.x) - absf(a.y)) < absf(absf(b.x) - absf(b.y)))
+	return out
+
+
+## Шагов между двумя клетками сетки гексов (столбец — полшага, ряд — шаг).
+static func _hex_steps(a: Vector2i, b: Vector2i) -> int:
+	var dc := absi(a.x - b.x)
+	var dr := absi(a.y - b.y)
+	return maxi(dr, (dc + dr) / 2)
+
+
+## Щель до внутренних соседей не шире щели до внешних.
+func _sp_balanced(hex: String, adj: Array, layer: Dictionary) -> bool:
+	var gap_in := INF
+	var gap_out := INF
+	for other: String in adj:
+		var u := ((_lattice_centre[other] as Vector2) - (_lattice_centre[hex] as Vector2)).normalized()
+		var gap := ((_sp_off[other] as Vector2) - (_sp_off[hex] as Vector2)).dot(u)
+		if int(layer[other]) < int(layer[hex]):
+			gap_in = minf(gap_in, gap)
+		elif int(layer[other]) > int(layer[hex]):
+			gap_out = minf(gap_out, gap)
+	return gap_out == INF or gap_in <= gap_out
+
+
+## Bridge of port i at the current offsets, as grown segment rects ([] = no gap).
+func _sp_bridge_rects(i: int) -> Array:
+	var port: Dictionary = _sp_ports[i]
+	var off_a: Vector2 = _sp_off[port["a"]]
+	var off_b: Vector2 = _sp_off[port["b"]]
+	if off_a == off_b:
+		return []
+	var path := _bridge_path((port["p"] as Vector2) + off_a, (port["p"] as Vector2) + off_b, port["u"])
+	var rects: Array = []
+	for k in path.size() - 1:
+		if not path[k].is_equal_approx(path[k + 1]):
+			rects.append(Rect2(path[k], Vector2.ZERO).expand(path[k + 1]).grow(1.0))
+	return rects
+
+
+## Годится ли доска после сдвига гекса hex: щели не отрицательные и ступеньки
+## помещаются, всё влезает в зону, ничто гекса не касается чужого, мостики
+## ни на что не ложатся.
+func _sp_ok(hex: String) -> bool:
+	for i: int in _sp_ports_of[hex]:
+		var port: Dictionary = _sp_ports[i]
+		var d: Vector2 = (_sp_off[port["b"]] as Vector2) - (_sp_off[port["a"]] as Vector2)
+		var along := d.dot(port["u"])
+		var side := (d - (port["u"] as Vector2) * along).length()
+		if along < -0.5:
+			return false
+		if side > 0.5 and (along < JOG_MIN - 0.5 or side < JOG_MIN - 0.5):
+			return false
+
+	var bridges := {}
+	for i in _sp_ports.size():
+		var rects := _sp_bridge_rects(i)
+		if not rects.is_empty():
+			bridges[i] = rects
+	var all := Rect2()
+	var first := true
+	for other: String in _sp_box.keys():
+		var b := Rect2((_sp_box[other] as Rect2).position + (_sp_off[other] as Vector2), (_sp_box[other] as Rect2).size)
+		all = b if first else all.merge(b)
+		first = false
+	for i: int in bridges:
+		for r: Rect2 in bridges[i]:
+			all = all.merge(r)
+	var room := _sp_zone - Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2 - Vector2(SPREAD_SLACK, SPREAD_SLACK)
+	if all.size.x > room.x or all.size.y > room.y:
+		return false
+
+	var own_off: Vector2 = _sp_off[hex]
+	var own_box := Rect2((_sp_box[hex] as Rect2).position + own_off, (_sp_box[hex] as Rect2).size)
+	for other: String in _sp_box.keys():
+		var other_off: Vector2 = _sp_off[other]
+		if other == hex or other_off == own_off:
+			continue
+		var other_box := Rect2((_sp_box[other] as Rect2).position + other_off, (_sp_box[other] as Rect2).size)
+		if not own_box.intersects(other_box):
+			continue
+		for item: Array in _sp_items[hex]:
+			var r := Rect2((item[0] as Rect2).position + own_off, (item[0] as Rect2).size)
+			if not r.intersects(other_box):
+				continue
+			for item2: Array in _sp_items[other]:
+				if r.intersects(Rect2((item2[0] as Rect2).position + other_off, (item2[0] as Rect2).size)):
+					return false
+
+	for i: int in bridges:
+		var own: Dictionary = _sp_port_edges[i]
+		var mine := (_sp_ports_of[hex] as Array).has(i)
+		for r: Rect2 in bridges[i]:
+			for other: String in (_sp_box.keys() if mine else [hex]):
+				var off: Vector2 = _sp_off[other]
+				if not r.intersects(Rect2((_sp_box[other] as Rect2).position + off, (_sp_box[other] as Rect2).size)):
+					continue
+				for item: Array in _sp_items[other]:
+					if own.has(item[1]):
+						continue
+					if r.intersects(Rect2((item[0] as Rect2).position + off, (item[0] as Rect2).size)):
+						return false
+			if not mine:
+				continue
+			for j: int in bridges:
+				if j == i:
+					continue
+				for r2: Rect2 in bridges[j]:
+					if r.intersects(r2):
+						return false
+	return true
 
 
 ## Route e ended at the old edge midpoint, now at `at`; it starts with the

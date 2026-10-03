@@ -2988,24 +2988,21 @@ func test_board_schematic() -> void:
 		check_eq(bad_angle, 0, "%s: отрезки трасс идут только по осям" % tag)
 		check_eq(bad_turn, 0, "%s: каждый изгиб трассы — ровно 90 градусов" % tag)
 
-		# через ребро: точка лежит между своим гексом и соседом (на доске на
-		# четверых гексы раздвинуты, и точка — в щели между ними, см.
-		# BoardSchematic._spread), и обе трассы сходятся в ней встречно
-		# (перпендикулярность ребру ушла вместе с трассами под 45°, решение
-		# владельца 2026-09-22)
-		var centres: Dictionary = s["hex_centres"]
+		# через ребро: в точке сходятся трассы ровно двух гексов, и сходятся
+		# встречно (перпендикулярность ребру ушла вместе с трассами под 45°,
+		# решение владельца 2026-09-22; на доске на четверых гексы раздвинуты,
+		# и точка лежит в щели между ними, см. BoardSchematic._spread)
+		var hexes_at_port := {}   # port -> {hex: true}
+		for t in (s["trace_ends"] as Array).size():
+			var pair2: Array = s["trace_ends"][t]
+			if String(pair2[0]).begins_with("port:"):
+				var seen: Dictionary = hexes_at_port.get(pair2[0], {})
+				seen[String(pair2[1]).get_slice(":", 0)] = true
+				hexes_at_port[pair2[0]] = seen
 		var bad_port := 0
 		for port: String in (s["ports"] as Dictionary).keys():
-			var at := Vector2(s["ports"][port][0], s["ports"][port][1])
 			var dirs: Array = dir_at_port.get(port, [])
-			var hex: String = port.get_slice(":", 1)
-			var outward := at - Vector2(centres[hex][0], centres[hex][1])
-			var neighbour_found := false
-			for other: String in centres.keys():
-				var to_other := Vector2(centres[other][0], centres[other][1]) - at
-				if other != hex and to_other.dot(outward) > 0.0 \
-						and to_other.length() < outward.length() * 1.6:
-					neighbour_found = true
+			var neighbour_found := (hexes_at_port.get(port, {}) as Dictionary).size() == 2
 			if dirs.size() != 2 or not neighbour_found \
 					or not (dirs[0] as Vector2).is_equal_approx(-(dirs[1] as Vector2)):
 				bad_port += 1
