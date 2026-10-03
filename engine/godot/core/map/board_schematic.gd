@@ -154,6 +154,24 @@ const BOTTOM_STRIP := 26.0
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
+## Зоны гексов (решение владельца, 2026-10-03): у каждого гекса — свой
+## участок пола с тайловой стеной по краю (SchematicPainter, наборы PixelLab
+## Wang 16 px). Считаются по вершинам сетки ZONE_TILE: вершина — пол гекса,
+## если до его рамок, колец и трасс не дальше ZONE_R, а до рамки города с
+## маркером — не дальше ZONE_R_MARK (зона у значимых городов больше). Спорную
+## вершину берёт гекс, у которого она глубже внутри. Между вершинами разных
+## гексов — не меньше ZONE_SEP шагов сетки: тогда между стенами любых
+## соседних зон ровно один пустой тайл, зазор везде одинаковый.
+const ZONE_TILE := 16
+const ZONE_R := 24.0
+const ZONE_R_MARK := 40.0
+const ZONE_SEP := 3
+## Поле картинки под зоны вокруг схемы: стена крайних зон не обрезается
+## краем картинки. Сверху и снизу поле ложится под полосы вопроса и счётчика
+## (PROMPT_STRIP, BOTTOM_STRIP), по ширине доска раздвигается на 2 поля уже.
+const ZONE_PAD := 16
+
+
 ## Кратчайший прямой отрезок «ступеньки» в щели между диагональными соседями:
 ## скругление угла съедает по 3 px с каждой стороны.
 const JOG_MIN := 6
@@ -216,7 +234,7 @@ static func build(state: GameState, polish := true) -> Dictionary:
 		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
 	if SPREAD_PLAYERS.has(players):
-		schematic._spread(ZONE - Vector2(0, PROMPT_STRIP + BOTTOM_STRIP))
+		schematic._spread(ZONE - Vector2(ZONE_PAD * 2, PROMPT_STRIP + BOTTOM_STRIP))
 	return schematic._export(state)
 
 
@@ -1933,8 +1951,9 @@ func _extent() -> Rect2:
 func _export(state: GameState) -> Dictionary:
 	var extent := _extent()
 	var lo := extent.position
-	var shift := (-lo + Vector2(IMAGE_MARGIN, IMAGE_MARGIN)).round()
-	var size := (extent.size + Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2).ceil()
+	var pad := float(IMAGE_MARGIN + ZONE_PAD)
+	var shift := (-lo + Vector2(pad, pad)).round()
+	var size := (extent.size + Vector2(pad, pad) * 2).ceil()
 
 	var starting := GameSetup.STARTING_SITE_NAMES
 	var marked := ControlMarkers.marked_sites(state)
@@ -2008,4 +2027,100 @@ func _export(state: GameState) -> Dictionary:
 		"fallback_routes": _fallback_routes,
 		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет
 		"a2_legend": a2_legend,
+		# зоны гексов: hex -> [[i, j], ...] — вершины сетки ZONE_TILE (в
+		# пикселях картинки i * ZONE_TILE, j * ZONE_TILE), где у гекса пол
+		"zones": _zones(shift, size),
 	}
+
+
+## Вершины пола каждого гекса (см. ZONE_TILE) в координатах картинки.
+func _zones(shift: Vector2, size: Vector2) -> Dictionary:
+	# что гекс держит на полу: рамки, кольца и трассы внутри своего гекса
+	# (мостики через щели между гексами — не его)
+	var own := {}     # hex -> Array[Rect2]
+	var marks := {}   # hex -> Array[Rect2] рамок значимых городов
+	for hex: String in _centre.keys():
+		own[hex] = []
+		marks[hex] = []
+	for n in _key.size():
+		if _kind[n] == Kind.PORT:
+			continue
+		var r := _node_rect(n)
+		r.position += shift
+		(own[_hex[n]] as Array).append(r)
+		if _marked.has(n):
+			(marks[_hex[n]] as Array).append(r)
+	for e in _routes.size():
+		var hex: String = _hex[_edge_b[e]]
+		var poly: PackedVector2Array = _poly[hex]
+		var pts := _routes[e]
+		for i in pts.size() - 1:
+			if _edge_dir[e] >= 0 and not Geometry2D.is_point_in_polygon((pts[i] + pts[i + 1]) * 0.5, poly):
+				continue
+			(own[hex] as Array).append(Rect2(pts[i] + shift, Vector2.ZERO).expand(pts[i + 1] + shift))
+	var reach := {}   # hex -> Rect2, дальше которого зона не уходит
+	for hex: String in own.keys():
+		var items: Array = own[hex]
+		if items.is_empty():
+			continue
+		var box: Rect2 = items[0]
+		for r: Rect2 in items:
+			box = box.merge(r)
+		reach[hex] = box.grow(maxf(ZONE_R, ZONE_R_MARK))
+
+	# глубина вершины в зоне гекса: > 0 — внутри
+	# вершина пола — не у самого края: тайлы вокруг неё (со стеной) целиком
+	# в картинке
+	var cols := int(floor(size.x / ZONE_TILE))
+	var rows := int(floor(size.y / ZONE_TILE))
+	var label := {}   # Vector2i -> [hex, depth]
+	for j in range(1, rows):
+		for i in range(1, cols):
+			var v := Vector2(i * ZONE_TILE, j * ZONE_TILE)
+			var best_hex := ""
+			var best := 0.0
+			for hex: String in reach.keys():
+				if not (reach[hex] as Rect2).has_point(v):
+					continue
+				var depth := -INF
+				for r: Rect2 in own[hex]:
+					depth = maxf(depth, ZONE_R - _point_rect_gap(v, r))
+				for r: Rect2 in marks[hex]:
+					depth = maxf(depth, ZONE_R_MARK - _point_rect_gap(v, r))
+				if depth > best:
+					best = depth
+					best_hex = hex
+			if best_hex != "":
+				label[Vector2i(i, j)] = [best_hex, best]
+
+	# между вершинами разных гексов — не меньше ZONE_SEP шагов: мельче
+	# сидящая в своей зоне уступает (идём от мелких к глубоким)
+	var order: Array = label.keys()
+	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return float(label[a][1]) < float(label[b][1]))
+	for v: Vector2i in order:
+		var hex: String = label[v][0]
+		var clash := false
+		for dj in range(-(ZONE_SEP - 1), ZONE_SEP):
+			for di in range(-(ZONE_SEP - 1), ZONE_SEP):
+				var w := v + Vector2i(di, dj)
+				if label.has(w) and String(label[w][0]) != hex:
+					clash = true
+					break
+			if clash:
+				break
+		if clash:
+			label.erase(v)
+
+	var zones := {}
+	for v: Vector2i in label.keys():
+		var hex: String = label[v][0]
+		if not zones.has(hex):
+			zones[hex] = []
+		(zones[hex] as Array).append([v.x, v.y])
+	return zones
+
+
+static func _point_rect_gap(p: Vector2, r: Rect2) -> float:
+	var dx := maxf(0.0, maxf(r.position.x - p.x, p.x - r.end.x))
+	var dy := maxf(0.0, maxf(r.position.y - p.y, p.y - r.end.y))
+	return sqrt(dx * dx + dy * dy)

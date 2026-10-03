@@ -61,6 +61,7 @@ static func paint(schematic: Dictionary, show_art := false, show_objects := fals
 		_paint_background(img, schematic)
 	if show_objects:
 		_paint_objects(img, schematic)
+	_paint_zones(img, schematic)
 	for flat: Array in schematic.get("traces", []):
 		var points := PackedVector2Array()
 		for i in range(0, flat.size(), 2):
@@ -75,6 +76,101 @@ static func paint(schematic: Dictionary, show_art := false, show_objects := fals
 	for site_id: String in (schematic.get("sites", {}) as Dictionary).keys():
 		_site(img, schematic["sites"][site_id])
 	return img
+
+
+## Зоны гексов (BoardSchematic._zones): пол и стена по краю из набора тайлов
+## темы главного города гекса (с маркером, иначе самого большого). Наборы —
+## PixelLab create_topdown_tileset, Wang 16 px: лист 4x4, номер тайла =
+## NW*8 + NE*4 + SW*2 + SE (1 — угол на полу). Тайл «весь пол» отражается по
+## хэшу клетки, чтобы узор не шёл рядами. Нет набора — набор "cave".
+const WALLS_DIR := "res://assets/board_walls/"
+const FLOOR_KEY := 15
+## Тайлы темнее, чем сгенерированы: светлые полы (зал, руины, туман) иначе
+## спорят с белыми рамками городов и трассами.
+const ZONE_DIM := 0.55
+const SITE_THEMES := {
+	"Lolth Shrine": "temple", "Wells of Darkness": "temple",
+	"Great Web": "web", "The Great Web": "web", "Spiderhome": "web",
+	"Web (N)": "web", "Web (NE)": "web", "Web (NW)": "web",
+	"Web (S)": "web", "Web (SE)": "web", "Web (SW)": "web",
+	"Menzoberranzan": "drow", "Erelhei-Cinlu": "drow", "Xal Veldrin": "drow",
+	"Zi'Xzolca": "drow", "Xith Idrana": "drow", "Xelathir": "drow",
+	"Venathir": "drow", "Enzithir": "drow",
+	"Council Chamber": "hall", "Caer Sidi": "hall",
+	"Black Gate": "gate", "Red Gate": "gate",
+	"Darkflame": "lava", "Magma Gate": "lava",
+	"Araumycos": "fungus", "Red Forest": "fungus", "Shedaklah": "fungus",
+	"Iblith": "ruins", "Kulggen": "ruins", "Vrith": "ruins",
+	"Spiral Desert": "desert", "Iron Wastes": "desert",
+	"Fogtown": "mist", "Faerholme": "mist", "Darklight Realm": "mist", "The Twilight": "mist",
+	"Thanatos Gate": "necro", "Gallenghast": "necro",
+}
+static var _walls_cache: Dictionary = {}   # theme -> Image or null
+
+
+static func _walls(theme: String) -> Variant:
+	if not _walls_cache.has(theme):
+		var path := WALLS_DIR + "walls_" + theme + ".png"
+		var sheet: Variant = null
+		if ResourceLoader.exists(path):
+			var tex := load(path) as Texture2D
+			if tex != null:
+				var image := tex.get_image()
+				if image.is_compressed():
+					image.decompress()
+				sheet = image
+		_walls_cache[theme] = sheet
+	return _walls_cache[theme]
+
+
+## Тема гекса: город с маркером, иначе город с наибольшим числом мест.
+static func _hex_theme(schematic: Dictionary, hex: String) -> String:
+	var best := ""
+	var best_rank := -1
+	for site_id: String in (schematic.get("sites", {}) as Dictionary).keys():
+		if site_id.get_slice(":", 0) != hex:
+			continue
+		var site: Dictionary = schematic["sites"][site_id]
+		var rank := (site.get("slots", {}) as Dictionary).size() + (100 if bool(site.get("marker", false)) else 0)
+		if rank > best_rank:
+			best_rank = rank
+			best = String(site.get("name", ""))
+	return String(SITE_THEMES.get(best, "cave"))
+
+
+static func _paint_zones(img: Image, schematic: Dictionary) -> void:
+	var t := BoardSchematic.ZONE_TILE
+	for hex: String in (schematic.get("zones", {}) as Dictionary).keys():
+		var sheet: Variant = _walls(_hex_theme(schematic, hex))
+		if sheet == null:
+			sheet = _walls("cave")
+		if sheet == null:
+			continue
+		var floor := {}
+		for v: Array in schematic["zones"][hex]:
+			floor[Vector2i(int(v[0]), int(v[1]))] = true
+		var tiles := {}
+		for v: Vector2i in floor.keys():
+			for dj in [-1, 0]:
+				for di in [-1, 0]:
+					tiles[v + Vector2i(di, dj)] = true
+		for tile: Vector2i in tiles.keys():
+			var key := (8 if floor.has(tile) else 0) + (4 if floor.has(tile + Vector2i(1, 0)) else 0) \
+				+ (2 if floor.has(tile + Vector2i(0, 1)) else 0) + (1 if floor.has(tile + Vector2i(1, 1)) else 0)
+			if key == 0:
+				continue
+			var flip := absi(hash(tile)) % 4 if key == FLOOR_KEY else 0
+			for y in t:
+				for x in t:
+					var px := tile.x * t + x
+					var py := tile.y * t + y
+					if px < 0 or py < 0 or px >= img.get_width() or py >= img.get_height():
+						continue
+					var sx := (t - 1 - x) if flip & 1 else x
+					var sy := (t - 1 - y) if flip & 2 else y
+					var c := (sheet as Image).get_pixel((key % 4) * t + sx, (key / 4) * t + sy)
+					if c.a > 0.0:
+						img.set_pixel(px, py, Color(c.r * ZONE_DIM, c.g * ZONE_DIM, c.b * ZONE_DIM, c.a))
 
 
 ## Ломаная со скруглёнными углами, отрезками [от, до]. Каждый угол срезается
