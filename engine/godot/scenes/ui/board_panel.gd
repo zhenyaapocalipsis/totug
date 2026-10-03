@@ -1006,12 +1006,11 @@ func _zoom_limits() -> Vector2:
 
 func _board_rect() -> Rect2:
 	if _schematic_on():
-		# Без пустых полей картинки (IMAGE_MARGIN) и поля под стены зон
-		# (ZONE_PAD): доска на четверых бывает на пару пикселей шире зоны, и из-за
-		# полей её ужимало бы вдвое. Поля же пусть лучше уйдут за край (сверху и
-		# снизу — под полосы вопроса и счётчика).
+		# Без пустых полей картинки (IMAGE_MARGIN): доска на четверых бывает на
+		# пару пикселей шире зоны, и из-за полей её ужимало бы вдвое. Поля же
+		# пусть лучше уйдут за край — зона доски их обрезает.
 		return Rect2(Vector2.ZERO, _schematic_texture.get_size()) \
-			.grow(-float(BoardSchematic.IMAGE_MARGIN + BoardSchematic.ZONE_PAD))
+			.grow(-float(BoardSchematic.IMAGE_MARGIN))
 	var tiles: Array = _board.get("tiles", [])
 	if tiles.is_empty():
 		return Rect2()

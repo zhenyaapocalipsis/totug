@@ -144,27 +144,13 @@ const REPAIR_ROUNDS := 2
 ## это владелец решит по скриншотам.
 const ZONE := Vector2(697, 456)
 ## Доска берёт всю высоту зоны (владелец, 2026-10-04): вопрос сверху и
-## счётчик Power/Influence снизу ложатся поверх её краёв — иначе зонам гексов
-## (_zones) не хватает места между гексами.
+## счётчик Power/Influence снизу ложатся поверх её краёв.
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
-## Зоны гексов (решение владельца, 2026-10-03/04, по рисунку): зоны делят всю
-## доску без пустот — центральный гекс, шесть вокруг него, внешние до краёв и
-## углов. У каждой — пол темы и тайловая стена по краю (SchematicPainter,
-## наборы PixelLab Wang 16 px). Считаются по вершинам сетки ZONE_TILE: под
-## рамками городов пол обязателен (все города группы — на её зоне), прочая
-## вершина — гексу, к чьему шестиугольнику (после раздвигания) она ближе.
-## Между вершинами разных гексов — ZONE_SEP шага сетки: соседи сходятся
-## стена к стене, зазор везде одинаковый.
-const ZONE_TILE := 16
-const ZONE_SEP := 2
-## Рамки городов разных гексов при раздвигании — не ближе этого (по большей
-## из осей): под каждой нужен свой пол, а между ними — две стены.
+## Рамки городов разных гексов при раздвигании стремятся разойтись хотя бы на
+## столько (по большей из осей) — группы гексов читаются отдельно.
 const BOX_ZONE_GAP := 32.0
-## Поле картинки под зоны вокруг схемы: стена крайних зон не обрезается
-## краем картинки; доска раздвигается на 2 поля меньше зоны.
-const ZONE_PAD := 16
 
 
 ## Кратчайший прямой отрезок «ступеньки» в щели между диагональными соседями:
@@ -229,7 +215,7 @@ static func build(state: GameState, polish := true) -> Dictionary:
 		schematic._optimise(POLISH_PASSES)
 	schematic._repair()
 	if SPREAD_PLAYERS.has(players):
-		schematic._spread(ZONE - Vector2(ZONE_PAD * 2, ZONE_PAD * 2))
+		schematic._spread(ZONE)
 	return schematic._export(state)
 
 
@@ -1981,7 +1967,7 @@ func _extent() -> Rect2:
 func _export(state: GameState) -> Dictionary:
 	var extent := _extent()
 	var lo := extent.position
-	var pad := float(IMAGE_MARGIN + ZONE_PAD)
+	var pad := float(IMAGE_MARGIN)
 	var shift := (-lo + Vector2(pad, pad)).round()
 	var size := (extent.size + Vector2(pad, pad) * 2).ceil()
 
@@ -2057,81 +2043,5 @@ func _export(state: GameState) -> Dictionary:
 		"fallback_routes": _fallback_routes,
 		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет
 		"a2_legend": a2_legend,
-		# зоны гексов: hex -> [[i, j], ...] — вершины сетки ZONE_TILE (в
-		# пикселях картинки i * ZONE_TILE, j * ZONE_TILE), где у гекса пол
-		"zones": _zones(shift, size),
 	}
 
-
-## Вершины пола каждого гекса (см. ZONE_TILE) в координатах картинки.
-func _zones(shift: Vector2, size: Vector2) -> Dictionary:
-	# вершина пола — не у самого края: тайлы вокруг неё (со стеной) целиком
-	# в картинке
-	var cols := int(floor(size.x / ZONE_TILE))
-	var rows := int(floor(size.y / ZONE_TILE))
-	var label := {}   # Vector2i -> [hex, depth]
-	# Под рамкой города пол обязателен: вершины, чьи клетки (±ZONE_TILE/2)
-	# задевают рамку, — пол её гекса (глубина INF), уступать они не будут.
-	var half := ZONE_TILE / 2.0
-	for n in _key.size():
-		if _kind[n] != Kind.SITE:
-			continue
-		var site := _node_rect(n)
-		site.position += shift
-		for j in range(floori((site.position.y - half) / ZONE_TILE) + 1, ceili((site.end.y + half) / ZONE_TILE)):
-			for i in range(floori((site.position.x - half) / ZONE_TILE) + 1, ceili((site.end.x + half) / ZONE_TILE)):
-				if not label.has(Vector2i(i, j)):
-					label[Vector2i(i, j)] = [_hex[n], INF]
-	for j in range(1, rows):
-		for i in range(1, cols):
-			if label.has(Vector2i(i, j)):
-				continue
-			# остальное — гексу, к чьему шестиугольнику вершина ближе (внутри —
-			# глубина до края, снаружи — минус расстояние): границы зон идут
-			# посередине щелей вдоль рёбер гексов, а крайние зоны — до краёв
-			var p := Vector2(i * ZONE_TILE, j * ZONE_TILE) - shift
-			var best_hex := ""
-			var best := -INF
-			for hex: String in _poly.keys():
-				var poly: PackedVector2Array = _poly[hex]
-				var edge := _outside_by(p, poly)
-				var depth := edge if Geometry2D.is_point_in_polygon(p, poly) else -edge
-				if depth > best:
-					best = depth
-					best_hex = hex
-			if best_hex != "":
-				label[Vector2i(i, j)] = [best_hex, best]
-
-	# между вершинами разных гексов — не меньше ZONE_SEP шагов: мельче
-	# сидящая в своей зоне уступает (идём от мелких к глубоким)
-	var order: Array = label.keys()
-	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return float(label[a][1]) < float(label[b][1]))
-	for v: Vector2i in order:
-		var hex: String = label[v][0]
-		if float(label[v][1]) == INF:
-			continue
-		var clash := false
-		for dj in range(-(ZONE_SEP - 1), ZONE_SEP):
-			for di in range(-(ZONE_SEP - 1), ZONE_SEP):
-				var w := v + Vector2i(di, dj)
-				if label.has(w) and String(label[w][0]) != hex:
-					clash = true
-					break
-			if clash:
-				break
-		if clash:
-			label.erase(v)
-
-	var zones := {}
-	for v: Vector2i in label.keys():
-		var hex: String = label[v][0]
-		if not zones.has(hex):
-			zones[hex] = []
-		(zones[hex] as Array).append([v.x, v.y])
-	return zones
-
-
-static func _point_rect_gap(p: Vector2, r: Rect2) -> float:
-	var dx := maxf(0.0, maxf(r.position.x - p.x, p.x - r.end.x))
-	var dy := maxf(0.0, maxf(r.position.y - p.y, p.y - r.end.y))
-	return sqrt(dx * dx + dy * dy)
