@@ -77,7 +77,13 @@ const COL := float(MarketPanel.WIDTH)
 ## широкой 4p-схеме 596, схема 1:1.
 const TRACKER_W := float(DeckTracker.WIDTH)
 ## Ширина столбика кнопок стопок под рынком; остальное — End turn.
-const PILES_W := 80.0
+const PILES_W := 58.0
+## Высота низа правой колонки (стопки и End turn): ниже ряда руки, чтобы
+## таблице четырёх игроков хватило места над рынком (владелец, 2026-10-03).
+const RIGHT_BOTTOM_H := 48.0
+## Полоска цвета ходящего на кнопке End turn — вместо ника, который в кнопку
+## не влезал (владелец, 2026-10-03).
+const TURN_CHIP_H := 5.0
 ## Высота зоны бараков.
 const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
@@ -173,6 +179,7 @@ var _end_turn_style: StyleBoxFlat
 ## Две строки поверх кнопки End turn: чей ход (в цвет игрока) и сама надпись.
 ## Кнопка Godot однострочная, поэтому текст лежит отдельными подписями.
 var _turn_label: Label
+var _turn_chip: ColorRect
 var _end_label: Label
 var _timer_label: Label
 ## Пометка «начался последний круг» — отдельной строкой: в узкую колонку
@@ -268,6 +275,18 @@ static func section_label(text: String) -> Label:
 	return label
 
 
+## Заголовок части колонки — светлый текст на полосе цвета рамки: MOVES над
+## сводкой, DECK и DISCARD в дектрекере (владелец, 2026-10-03: серые
+## подписи терялись среди карт).
+static func band_label(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.clip_text = true
+	label.add_theme_color_override("font_color", PixelTheme.TEXT)
+	label.add_theme_stylebox_override("normal", PixelTheme.box(PixelTheme.BORDER, PixelTheme.BORDER, 0, 2, 0))
+	return label
+
+
 func _build_layout() -> void:
 	# Тот же задник, что в меню, но приглушённый: за доской и картами он
 	# должен только слегка дышать, а не спорить с ними за внимание.
@@ -354,6 +373,9 @@ func _build_layout() -> void:
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_turn_label.clip_text = true
 	_end_turn_area.add_child(_turn_label)
+	_turn_chip = ColorRect.new()
+	_turn_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_end_turn_area.add_child(_turn_chip)
 	_end_label = Label.new()
 	_end_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -881,20 +903,21 @@ func _layout() -> void:
 	var d_x := w - MARGIN - COL
 	var top_y := MARGIN
 	var bottom_y := h - MARGIN - BOTTOM_H
+	var right_bottom_y := h - MARGIN - RIGHT_BOTTOM_H
 
 	# Правая колонка: бараки, таблица игроков, под ней рынок, под рынком
 	# кнопки. Рынок ровно своего размера (карты целиком), таблице — всё, что
 	# осталось.
 	_place(_barracks, d_x, top_y, COL, TOP_H)
 	var market_h := _market_panel.get_combined_minimum_size().y
-	var market_y := bottom_y - GAP - market_h
+	var market_y := right_bottom_y - GAP - market_h
 	var market_x := d_x
 	_place(_market_panel, market_x, market_y, MarketPanel.WIDTH, market_h)
 	var players_y := top_y + TOP_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
-	_place(_piles_column, market_x, bottom_y, PILES_W, BOTTOM_H)
+	_place(_piles_column, market_x, right_bottom_y, PILES_W, RIGHT_BOTTOM_H)
 	var ew := MarketPanel.WIDTH - PILES_W - GAP
-	_place(_end_turn_area, market_x + PILES_W + GAP, bottom_y, ew, BOTTOM_H)
+	_place(_end_turn_area, market_x + PILES_W + GAP, right_bottom_y, ew, RIGHT_BOTTOM_H)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
 	# 2026-09-27: чат убран, сводка — до низа), за ней дектрекер тоже во всю
@@ -920,12 +943,15 @@ func _layout() -> void:
 	var timer_block: float = TIMER_H
 	if _last_round_label.visible:
 		timer_block += float(PixelTheme.LINE_H)
-	var button_h: float = BOTTOM_H - timer_block
+	var button_h: float = RIGHT_BOTTOM_H - timer_block
 	_end_turn_button.position = Vector2.ZERO
 	_end_turn_button.size = Vector2(ew, button_h)
 	var caption_y := floorf((button_h - PixelTheme.LINE_H * 2.0) * 0.5)
 	_turn_label.position = Vector2(0, caption_y)
 	_turn_label.size = Vector2(ew, PixelTheme.LINE_H)
+	# Полоска цвета — по центру первой строки, с полями от краёв кнопки.
+	_turn_chip.position = Vector2(6, caption_y + floorf((PixelTheme.LINE_H - TURN_CHIP_H) * 0.5))
+	_turn_chip.size = Vector2(ew - 12, TURN_CHIP_H)
 	_end_label.position = Vector2(0, caption_y + PixelTheme.LINE_H)
 	_end_label.size = Vector2(ew, PixelTheme.LINE_H)
 	_timer_label.position = Vector2(0, button_h)
@@ -1691,27 +1717,23 @@ func _refresh_turn(view: Dictionary) -> void:
 	if bool(view["game_over"]):
 		_turn_label.text = "GAME OVER"
 		_turn_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+		_turn_chip.visible = false
 		_end_label.text = ""
 		return
 	_announce_turn(view)
-	var who := EventLogPanel.player_name(current).to_upper()
-	# Сетевая партия, ход чужой: на кнопке — кого ждём (решение владельца,
-	# 2026-09-27), сама кнопка серая.
+	# Ник в кнопку не влезает — чей ход, говорит полоска цвета ходящего
+	# (владелец, 2026-10-03), имя — в подсказке.
+	_turn_label.text = ""
+	_turn_chip.visible = true
+	_turn_chip.color = EventLogPanel.player_color(current)
+	_end_turn_button.tooltip_text = "%s's turn. Click, or hold Space for 3 seconds, to end the turn" \
+		% EventLogPanel.player_name(current)
+	# Сетевая партия, ход чужой: кого ждём — полоской, сама кнопка серая
+	# (решение владельца, 2026-09-27).
 	if net != null and current != viewer_id:
-		_turn_label.text = "WAITING:"
-		_turn_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-		_end_label.text = who
-		_end_label.add_theme_color_override("font_color", EventLogPanel.player_color(current))
+		_end_label.text = "WAITING"
+		_end_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		return
-	# Длинное имя из профиля не влезает в кнопку вместе с "'S TURN" —
-	# тогда пишем одно имя: цвет надписи и так говорит, чей ход.
-	var text := "YOUR TURN" if net != null else "%s'S TURN" % who
-	var font := _turn_label.get_theme_font("font")
-	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
-			_turn_label.get_theme_font_size("font_size")).x > _turn_label.size.x:
-		text = who
-	_turn_label.text = text
-	_turn_label.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	_end_label.text = "END TURN"
 	_end_label.remove_theme_color_override("font_color")
 

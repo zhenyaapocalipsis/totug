@@ -1202,12 +1202,12 @@ func test_skin_collection() -> void:
 	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "shader": "prism"})}
 	check_eq(PlayerProfile.shader_of("red"), "prism", "шейдер игрока за столом")
 	check_eq(PlayerProfile.shader_of("blue"), "", "у игрока без профиля шейдера нет")
-	var owned_view := CardView.new("48306", 80, 76)
+	var owned_view := CardView.new("48306", 58, 84)
 	owned_view.set_card_owner("red")
 	check_eq(owned_view.skin, "prism", "карта игрока — с его шейдером")
 	var mat := owned_view.material as ShaderMaterial
 	check(mat != null and int(mat.get_shader_parameter("tier")) == 3, "PRISM рисует эффект призмы")
-	check_eq(mat.get_shader_parameter("face_size"), Vector2(80, 76), "шейдер знает, что лицо мелкое")
+	check_eq(mat.get_shader_parameter("face_size"), Vector2(58, 84), "шейдер знает, что лицо мелкое")
 	owned_view.set_card("48342")
 	check_eq(owned_view.skin, "prism", "стартовая карта (Noble) — тоже с шейдером")
 	var market_view := CardView.new("48306", 176, 254)

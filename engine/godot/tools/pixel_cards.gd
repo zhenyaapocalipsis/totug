@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 
 ## Pixel-art card faces for every card in data/cards/cards.json.
 ## Run: Godot_v4.7.2-stable_win64_console.exe --headless --script "C:/tyrants of the underdark godot/engine/godot/tools/pixel_cards.gd"
@@ -13,19 +13,58 @@ const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
 ## а ужимать её нельзя — текст превратится в кашу. Поэтому у каждой карты есть
 ## второе лицо, нарисованное сразу маленьким: имя, цена, арт и оба VP.
 ##
-## Ширина 80, а не 64: в 64 имена вроде WATER ELEMENTAL MYRMIDON не влезали
-## даже в две строки и обрезались, а WEAPONMASTER уезжал за край. Размер один
-## на все карты — иначе они не встанут ровным рядом в руке и маркете.
-const MINI_W := 80
-const MINI_H := 76
-## Шапка и арт под ней. В шапке слева имя, справа колонка: цена, значок
-## аспекта, VP в колоде и во внутреннем круге (решение владельца, 2026-09-24).
+## 58x84 — пропорции большой карты 176x254 (решение владельца, 2026-10-03).
+## Размер один на все карты — иначе они не встанут ровным рядом в руке и маркете.
+const MINI_W := 58
+const MINI_H := 84
+## Шапка — только имя во всю ширину, до трёх строк по 9 букв: так влезают все
+## имена, вплоть до WATER ELEMENTAL MYRMIDON. Цены, аспекта и VP на мелкой
+## карте нет (решение владельца, 2026-10-03), их читают на большой.
 const MINI_HEAD := 26
-const MINI_ART_H := 45
+const MINI_ART_H := MINI_H - MINI_HEAD - 5
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
-## Ширина правой колонки шапки: две плашки VP по 7 пикселей с зазором в 1.
-const MINI_VP_W := 15
+## Арт мелкой карты не ужимается, а вырезается 1:1 из арта готовой большой
+## карты (assets/cards_pixel) — вокруг лица. По умолчанию вырез по центру и
+## ближе к верху арта; карты, где лицо в другом месте, — в MINI_FACE.
+const FULL_ART_POS := Vector2i(6, 34)
+const MINI_FACE_DEFAULT := Vector2i(56, 12)
+## card_id -> левый верхний угол выреза в арте большой карты (164x100);
+## x не больше 112, y не больше 47. Подобрано на глаз по сетке.
+const MINI_FACE := {
+	48302: Vector2i(39, 0), 48306: Vector2i(47, 1), 48310: Vector2i(63, 0), 48312: Vector2i(26, 35),
+	48314: Vector2i(84, 23), 48315: Vector2i(39, 0), 48316: Vector2i(21, 28), 48318: Vector2i(84, 8),
+	48320: Vector2i(77, 0), 48322: Vector2i(56, 0), 48324: Vector2i(112, 0), 48325: Vector2i(82, 22),
+	48327: Vector2i(83, 23), 48328: Vector2i(70, 0), 48329: Vector2i(53, 8), 48331: Vector2i(112, 10),
+	48334: Vector2i(66, 0), 48336: Vector2i(81, 0), 48338: Vector2i(97, 11), 48339: Vector2i(20, 0),
+	48340: Vector2i(39, 0), 48341: Vector2i(59, 24), 48342: Vector2i(56, 0), 48343: Vector2i(52, 2),
+	48344: Vector2i(47, 0), 48345: Vector2i(16, 8),
+	48400: Vector2i(83, 18), 48402: Vector2i(6, 28), 48403: Vector2i(16, 8), 48405: Vector2i(6, 21),
+	48407: Vector2i(61, 1), 48409: Vector2i(63, 0), 48413: Vector2i(59, 0), 48415: Vector2i(69, 0),
+	48418: Vector2i(60, 11), 48419: Vector2i(64, 0), 48421: Vector2i(27, 25), 48424: Vector2i(55, 0),
+	48425: Vector2i(77, 21), 48426: Vector2i(21, 0), 48428: Vector2i(40, 10), 48429: Vector2i(83, 18),
+	48432: Vector2i(69, 11), 48433: Vector2i(103, 18), 48436: Vector2i(87, 1), 48439: Vector2i(77, 8),
+	48500: Vector2i(47, 8), 48501: Vector2i(63, 1), 48503: Vector2i(61, 47), 48506: Vector2i(63, 0),
+	48509: Vector2i(51, 0), 48512: Vector2i(40, 22), 48513: Vector2i(73, 0), 48514: Vector2i(83, 0),
+	48516: Vector2i(73, 21), 48519: Vector2i(49, 0), 48521: Vector2i(50, 8), 48524: Vector2i(93, 40),
+	48527: Vector2i(74, 31), 48529: Vector2i(50, 35), 48531: Vector2i(53, 21), 48534: Vector2i(99, 5),
+	48535: Vector2i(93, 8), 48537: Vector2i(101, 0), 48538: Vector2i(112, 38), 48539: Vector2i(81, 5),
+	48600: Vector2i(101, 25), 48606: Vector2i(73, 0), 48610: Vector2i(97, 8), 48613: Vector2i(56, 11),
+	48615: Vector2i(53, 11), 48617: Vector2i(40, 31), 48620: Vector2i(104, 21), 48623: Vector2i(11, 25),
+	48625: Vector2i(76, 21), 48626: Vector2i(83, 1), 48628: Vector2i(83, 0), 48629: Vector2i(0, 15),
+	48630: Vector2i(63, 5), 48632: Vector2i(60, 0), 48633: Vector2i(54, 5), 48636: Vector2i(7, 21),
+	48638: Vector2i(53, 18), 48639: Vector2i(49, 0),
+	48700: Vector2i(44, 3), 48701: Vector2i(63, 8), 48702: Vector2i(60, 36), 48703: Vector2i(53, 35),
+	48704: Vector2i(87, 0), 48705: Vector2i(41, 0), 48706: Vector2i(66, 15), 48707: Vector2i(57, 45),
+	48708: Vector2i(53, 5), 48709: Vector2i(53, 47), 48710: Vector2i(0, 25), 48711: Vector2i(97, 41),
+	48712: Vector2i(53, 0), 48713: Vector2i(46, 33), 48714: Vector2i(97, 47), 48715: Vector2i(56, 30),
+	48716: Vector2i(51, 25), 48717: Vector2i(59, 30), 48718: Vector2i(46, 25), 48719: Vector2i(80, 18),
+	48720: Vector2i(63, 5), 48721: Vector2i(53, 0), 48722: Vector2i(87, 0), 48723: Vector2i(83, 0),
+	48724: Vector2i(31, 0), 48725: Vector2i(36, 0), 48726: Vector2i(56, 28), 48727: Vector2i(37, 11),
+	48728: Vector2i(66, 0), 48729: Vector2i(21, 0), 48730: Vector2i(26, 0), 48731: Vector2i(64, 5),
+	48732: Vector2i(67, 5), 48733: Vector2i(84, 15), 48734: Vector2i(29, 0), 48735: Vector2i(64, 1),
+	48736: Vector2i(37, 0), 48737: Vector2i(63, 35), 48738: Vector2i(69, 0), 48739: Vector2i(33, 31),
+}
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const W := 176
 const ART_H := 100
@@ -60,7 +99,7 @@ const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETU
 ## Слова, которых тут нет, рвутся примерно посередине — генератор печатает их
 ## как "hyphenated", их стоит дописать сюда.
 const NAME_BREAKS := {
-	"AMBASSADOR": [2, 5, 7], "BLACKGUARD": [5], "BRAINWASHED": [5], "DEATHBLADE": [5],
+	"AMBASSADOR": [2, 5, 7], "BLACKGUARD": [5], "BRAINWASHED": [5], "CONSCRIPTION": [3, 8], "DEATHBLADE": [5],
 	"DEMOGORGON": [2, 4, 7], "DOPPELGANGER": [3, 6, 9], "DRAGONCLAW": [3, 6],
 	"INFILTRATOR": [2, 5, 8], "INFORMATION": [2, 5, 7], "INQUISITOR": [2, 5, 7],
 	"JACKALWERE": [4, 6], "MINDWITNESS": [4, 7], "NALFESHNEE": [3, 7],
@@ -505,18 +544,13 @@ func sv(v: Variant) -> String:
 
 
 
-## Мелкое лицо карты 80x76 для руки, маркета и полос сыгранных карт: шапка в
-## цвет аспекта с именем и ценой, под ней арт — и всё. Ни типа существа, ни
-## текста способности, ни VP здесь нет: для хода они ничего не решают, а
-## прочесть их можно на большой карте под курсором.
-##
-## Цена стоит в правом верхнем углу, как на большой карте: в маркете виден
-## только верх лица, и цена должна попадать в него вместе с именем.
+## Мелкое лицо карты 58x84 для руки, маркета и полос сыгранных карт: шапка с
+## именем, под ней арт — и всё. Ни цены, ни аспекта, ни текста способности, ни
+## VP здесь нет: их читают на большой карте под курсором. Большая карта должна
+## быть уже нарисована — арт вырезается из неё.
 func render_mini(c: Dictionary) -> Image:
 	img = Image.create(MINI_W, MINI_H, false, Image.FORMAT_RGBA8)
 	img.fill(C_OUTLINE)
-	var aspect := sv(c["aspect"])
-	var aspect_col: Color = ASPECT_COLOR.get(aspect, C_GREY)
 	rect(1, 1, MINI_W - 2, MINI_H - 2, C_FRAME)
 	rect(1, 1, MINI_W - 2, 1, C_FRAME_HI)
 	# Низ рамки того же цвета, что бока (а не темнее, как у большой карты):
@@ -524,34 +558,23 @@ func render_mini(c: Dictionary) -> Image:
 	# выглядеть обрезанной по нижнему краю.
 	rect(1, MINI_H - 2, MINI_W - 2, 1, C_FRAME)
 
-	# Шапка цвета рамки карты, одна на все карты (решение владельца,
-	# 2026-09-24): аспект теперь показывает значок, а не подложка.
+	# Шапка цвета рамки карты, одна на все карты (решение владельца, 2026-09-24).
 	rect(1, 1, MINI_W - 2, MINI_HEAD, C_FRAME)
-	# Правая колонка сверху вниз: цена (того же цвета, что имя), значок
-	# аспекта, плашки VP в колоде и VP во внутреннем круге.
-	var cost_str := "" if c["cost"] == null else str(int(c["cost"]))
-	if cost_str != "":
-		text(MINI_W - 3 - text_width(cost_str, 1), 2, cost_str, C_LIGHT, 1, C_OUTLINE)
-	if aspect != "":
-		glyph_rows(MINI_W - 3 - 7, 10, ICONS[aspect], aspect_col)
-	# Плашки прижаты к правому краю; ширина по числу (у Insane Outcast -1).
-	var ic_x := mini_vp_badge(MINI_W - 3, 18, str(int(c["inner_circle_vp"])), C_IC_HI, C_LIGHT)
-	mini_vp_badge(ic_x - 1, 18, str(int(c["deck_vp"])), C_PARCH, C_INK)
-	# Колонка во всю высоту шапки, поэтому имя идёт слева от неё во всех строках.
-	var room := MINI_W - 5 - (MINI_VP_W + 3)
+	# Имя во всю ширину шапки: 9 букв (53 px) от x=2, тень уходит на x=55.
+	var room := MINI_W - 5
 	var name_lines := wrap_name(clean(sv(c["name"])), room, room, MINI_NAME_LINES, MINI_NAME_LINES)
-	# По верхнему краю, а не по центру шапки: имя должно начинаться на одной
-	# линии с ценой, иначе короткие имена провисают относительно неё.
 	for i in name_lines.size():
-		text(3, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
+		text(2, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
 
-	# арт
+	# арт: кусок 1:1 из арта большой карты
 	var art_y := 1 + MINI_HEAD + 1
 	var aw := MINI_W - 6
-	var art := pixelize(art_region(int(c["card_id"]), aw, MINI_ART_H), aw, MINI_ART_H, 16)
+	var full := Image.load_from_file(OUT + "%d.png" % int(c["card_id"]))
+	full.convert(Image.FORMAT_RGBA8)
+	var face: Vector2i = MINI_FACE.get(int(c["card_id"]), MINI_FACE_DEFAULT)
 	# Чёрная обводка в пиксель по всему периметру арта, как на большой карте.
 	rect(2, art_y - 1, aw + 2, MINI_ART_H + 2, C_OUTLINE)
-	img.blit_rect(art, Rect2i(0, 0, aw, MINI_ART_H), Vector2i(3, art_y))
+	img.blit_rect(full, Rect2i(FULL_ART_POS + face, Vector2i(aw, MINI_ART_H)), Vector2i(3, art_y))
 	return img
 
 

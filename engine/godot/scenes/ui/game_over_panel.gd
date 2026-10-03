@@ -12,7 +12,7 @@ const COL_W := 34
 ## Полоса посередине под таблицу итогов — колоды раскладываются по бокам от неё.
 const CENTRE_W := 340.0
 const MARGIN := 6.0
-const CARD := Vector2(80, 76)  # мелкое лицо карты
+const CARD := CardView.MINI_SIZE  # мелкое лицо карты
 const CARD_GAP := 2.0
 ## Шаг лесенки: видны имя, цена и VP карты. Если карт много — шаг меньше.
 const STEP_MAX := 18.0

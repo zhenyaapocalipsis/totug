@@ -6,7 +6,7 @@ extends Control
 ## или клавишей Escape. Карты внутри не кликаются — их читают увеличением
 ## по зажатому Alt.
 
-const CARD_SIZE := Vector2(80, 76)   # мелкое лицо карты, пиксель в пиксель
+const CARD_SIZE := CardView.MINI_SIZE   # мелкое лицо карты, пиксель в пиксель
 const PANEL_MAX := Vector2(600, 330)
 
 var _center: CenterContainer

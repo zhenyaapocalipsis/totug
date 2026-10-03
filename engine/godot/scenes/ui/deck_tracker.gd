@@ -6,7 +6,7 @@ extends Control
 ## в колоде добора и в сбросе, — не в настоящем порядке (его не знает и сам
 ## игрок), а по убыванию цены, одинаковые карты рядом.
 ##
-## Карты — мелкие лица 80x76 лесенкой: каждая следующая ложится на предыдущую,
+## Карты — мелкие лица 58x84 лесенкой: каждая следующая ложится на предыдущую,
 ## от той видна только верхняя полоска (имя и цена). Шаг лесенки один на обе
 ## части и подбирается под высоту полосы: мало карт — они стоят целиком, много
 ## — полоски тоньше. Разделитель «DISCARD» плавает: стоит сразу под колодой.
@@ -45,13 +45,13 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_spine = SpineLabel.new("DECKTRACKER")
 	add_child(_spine)
-	_deck_label = GameScreen.section_label("DECK 0")
+	_deck_label = GameScreen.band_label("DECK 0")
 	add_child(_deck_label)
 	_divider = ColorRect.new()
 	_divider.color = PixelTheme.BORDER
 	_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_divider)
-	_discard_label = GameScreen.section_label("DISCARD 0")
+	_discard_label = GameScreen.band_label("DISCARD 0")
 	add_child(_discard_label)
 	resized.connect(_arrange)
 

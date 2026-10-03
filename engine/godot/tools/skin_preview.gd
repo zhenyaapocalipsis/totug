@@ -67,10 +67,10 @@ func _initialize() -> void:
 				screen._collection.show_section(arg.get_slice("=", 1))
 		return
 	for i in TIERS.size():
-		var mini := CardView.new(card, 80, 76)
+		var mini := CardView.new(card, int(CardView.MINI_SIZE.x), int(CardView.MINI_SIZE.y))
 		mini.set_skin(TIERS[i])
 		mini.position = Vector2(10 + i * 90, 4)
-		mini.size = Vector2(80, 76)
+		mini.size = CardView.MINI_SIZE
 
 		root.add_child(mini)
 		var full := CardView.new(card, 176, 254)

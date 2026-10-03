@@ -29,13 +29,13 @@ extends PanelContainer
 ## Карты — обычные CardView: по наведению полная карта по центру экрана,
 ## с Alt — крупнее (CardPreview).
 
-const CARD := Vector2(80, 76)
+const CARD := CardView.MINI_SIZE
 ## Поле колонки и поле блока внутри рамки (рамка — 1 пиксель из него).
 const PAD := 1
 const BLOCK_PAD := 2
-## Ширина колонки: корешок и зазор за ним, карта, поля блока и колонки.
-## GameScreen отдаёт её слева от доски.
-const WIDTH := SpineLabel.WIDTH + PAD + CARD.x + (BLOCK_PAD + PAD) * 2
+## Ширина колонки: карта, поля блока и колонки. GameScreen отдаёт её слева
+## от доски.
+const WIDTH := CARD.x + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
 const ORDER: Array[String] = [
 	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED"]
@@ -74,15 +74,18 @@ var _hovered: Array = []   # [Block, key] строки под мышью или 
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	# Подложка и рамка зоны, как у дектрекера (владелец, 2026-09-28); слева
-	# корешок с надписью MOVES.
+	# Подложка и рамка зоны, как у дектрекера (владелец, 2026-09-28); сверху
+	# заголовок MOVES — вместо корешка (владелец, 2026-10-03). Всё, что шире
+	# колонки, обрезается: иначе рамки блоков залезали на дектрекер.
 	add_theme_stylebox_override("panel", GameScreen.zone_style(PAD))
-	var row := HBoxContainer.new()
+	clip_contents = true
+	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", PAD)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
-	row.add_child(SpineLabel.new("MOVES"))
+	row.add_child(GameScreen.band_label("MOVES"))
 	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -386,9 +389,10 @@ class Block extends PanelContainer:
 		var marks: HBoxContainer = row[1]
 		# Квадратики — пока влезают в ширину карты рядом с подписью: иначе
 		# строка раздвинула бы колонку.
-		var font := label.get_theme_font("font")
-		var text_w := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
-			label.get_theme_font_size("font_size")).x
+		# Шрифт моноширинный, 6 пикселей на знак. Мерить шрифтом темы нельзя:
+		# в момент добавления строки тема до неё ещё не дошла, и мерился
+		# крупный шрифт по умолчанию — квадратиков влезало меньше, чем есть места.
+		var text_w := label.text.length() * 6 - 1
 		var room := int((TurnFeed.CARD.x - text_w - 2) / (MARK + 1))
 		while marks.get_child_count() > maxi(room, 0):
 			var extra := marks.get_child(marks.get_child_count() - 1)
@@ -414,6 +418,9 @@ class Block extends PanelContainer:
 		# PASS: наведение строка ловит, а колесо уходит дальше — листать колонку.
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		var label := Label.new()
+		# Без обрезки "SUPPLANT 12" шире карты 58 и раздвигает колонку.
+		label.clip_text = true
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var colour := PixelTheme.TEXT_DIM
 		if key == "vp" or key == "a2_vp" or key == "mark_vp":
 			colour = PixelTheme.GOLD
@@ -452,6 +459,7 @@ class Block extends PanelContainer:
 		cell.add_child(ladder)
 		var label := Label.new()
 		label.text = base
+		label.clip_text = true
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var colour := PixelTheme.DANGER if base == "DEVOURED" else PixelTheme.TEXT_DIM
 		if owner != "":
@@ -474,9 +482,10 @@ class Block extends PanelContainer:
 ## названием, последняя — целиком. Наведение на шапку показывает крупно
 ## именно ту карту: следующая её шапку не закрывает.
 class Ladder extends Control:
-	## Сколько видно от каждой карты под следующей: две строки названия.
-	const STEP := 20
-	const SIZE := Vector2(80, 76)
+	## Сколько видно от каждой карты под следующей: вся шапка с именем (до
+	## трёх строк) и рамка над ней.
+	const STEP := 27
+	const SIZE := CardView.MINI_SIZE
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE

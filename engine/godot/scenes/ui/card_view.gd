@@ -37,16 +37,16 @@ const BASE_WIDTH := 150.0
 ## цену, аспект и арт; целиком её читают через увеличенную копию.
 const PIXEL_DIR := "res://assets/cards_pixel/"
 const PIXEL_SIZE := Vector2(176, 254)
-## Мелкое лицо той же карты: имя, цена и арт — без текста способности и без
-## VP. Экран рисуется в 640x360, и в руке с маркетом помещается только оно;
-## полную карту показывает увеличенная копия под курсором (CardPreview).
+## Мелкое лицо той же карты: имя и арт (лицо, вырезанное 1:1 из большой
+## карты) — без цены, аспекта, текста и VP. Пропорции те же, что у большой
+## карты; полную карту показывает увеличенная копия под курсором (CardPreview).
 const MINI_DIR := "res://assets/cards_mini/"
-const MINI_SIZE := Vector2(80, 76)
+const MINI_SIZE := Vector2(58, 84)
 ## Слот уже этого — берём мелкое лицо: крупное в нём было бы нечитаемой кашей.
 const MINI_MAX_WIDTH := 110.0
 const PIXEL_HIGHLIGHT := Color("f2d23c")
 const PIXEL_TOP_H := 136.0  # шапка + арт
-const MINI_TOP_H := 76.0    # мелкое лицо и есть шапка + арт, целиком
+const MINI_TOP_H := 84.0    # мелкое лицо и есть шапка + арт, целиком
 
 ## Отказ: карта дёргается вбок и краснеет. Дёргается ТОЛЬКО отрисовка
 ## (draw_set_transform), а не position узла: в руке положение карты каждый
@@ -66,7 +66,10 @@ const ARRIVE_DROP := 10.0
 const SKIN_SHADER := preload("res://scenes/ui/card_skin.gdshader")
 const FULL_ART := Vector4(6, 34, 170, 134)
 const FULL_TEXT := Vector4(7, 139, 169, 232)
-const MINI_ART := Vector4(3, 28, 77, 73)
+const MINI_ART := Vector4(3, 28, 55, 81)
+## Плашка цены на мелком лице (show_cost): высота и базовая линия цифр.
+const COST_BOX_H := 9.0
+const COST_BASELINE := 8.0
 ## Как быстро карта с образом поворачивается к мыши и обратно (доля за кадр 60 Гц).
 const SKIN_TILT_EASE := 0.12
 
@@ -79,6 +82,8 @@ var hover_preview: bool = true
 var hover_full: bool = false
 ## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
 var highlight: bool = true
+## Цена в углу мелкого лица — у карт рынка (на самом лице цены нет).
+var show_cost := false
 var _pixel: Texture2D = null
 ## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
 var _mini := false
@@ -267,6 +272,8 @@ func _draw() -> void:
 	if texture_filter != filter:
 		texture_filter = filter
 	draw_texture_rect_region(_pixel, dest, rects[1])
+	if show_cost and _mini:
+		_draw_cost(dest)
 	if clickable and highlight:
 		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 1.0)
 	if _shake_left > 0.0:
@@ -278,6 +285,28 @@ func _draw() -> void:
 		# Белая вспышка, гаснущая быстрее, чем карта доезжает.
 		var a := _arrive_left / ARRIVE_TIME
 		draw_rect(dest, Color(1, 1, 1, 0.5 * a * a))
+
+
+## Цена в правом нижнем углу арта мелкого лица (владелец, 2026-10-03: на
+## самой мелкой карте цены нет, а на рынке она нужна): золотые цифры на
+## тёмной плашке. Рисуется в пикселях лица, затем масштабом лица.
+func _draw_cost(dest: Rect2) -> void:
+	var cost: Variant = CardLibrary.card_data(card_id).get("cost")
+	if cost == null:
+		return
+	var text := str(int(cost))
+	var font := get_theme_font("font", "Label")
+	var font_size := get_theme_font_size("font_size", "Label")
+	var text_w := ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+	var k := dest.size.x / face_size().x
+	var art_end := Vector2(MINI_ART.z, MINI_ART.w)
+	var box := Rect2(art_end - Vector2(text_w + 3.0, COST_BOX_H), Vector2(text_w + 3.0, COST_BOX_H))
+	var shift := _shake_offset() + _arrive_offset()
+	draw_set_transform(dest.position + shift, 0.0, Vector2(k, k))
+	draw_rect(box, PixelTheme.BG)
+	draw_string(font, Vector2(box.position.x + 2.0, box.position.y + COST_BASELINE), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.GOLD)
+	draw_set_transform(shift)
 
 
 ## Смещение отрисовки при тряске: только по горизонтали и только целыми

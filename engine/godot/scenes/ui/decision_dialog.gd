@@ -24,7 +24,7 @@ const MAX_LIST_HEIGHT := 150
 const WIDTH := 300.0
 ## Выбор карты (promote, discard, devour...) — сетка мелких лиц карт вместо
 ## строк с названиями: карту узнают по арту, а полную читают через Alt.
-const CARD_SIZE := Vector2(80, 76)
+const CARD_SIZE := CardView.MINI_SIZE
 const CARD_COLUMNS_MAX := 6
 const CARD_LIST_MAX_HEIGHT := 240
 

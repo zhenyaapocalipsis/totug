@@ -24,7 +24,7 @@ const COLUMNS: Array[Array] = [
 	["inner_circle", "IC", "Cards in Inner Circle"],
 ]
 ## Фишка войска с эмблемой (9 пикселей и 2 отступа); строка цифр начинается
-## от левого края ника. Числовой столбец — 2 знака.
+## от левого края панели. Числовой столбец — 2 знака.
 const TOKEN_W := 11.0
 const NUM_W := 12.0
 const COL_GAP := 3
@@ -156,15 +156,11 @@ func _add_row(pid: String) -> void:
 		"values": values, "trophies": trophies}
 
 
-## Строка столбцов (шапка или цифры игрока): от левого края ника, столбцы
-## через COL_GAP. Отступ меньше фишки на промежуток — его добавляет ряд.
+## Строка столбцов (шапка или цифры игрока): от левого края панели, без
+## отступа под фишку (владелец, 2026-10-03), столбцы через COL_GAP.
 static func _numbers_row() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", COL_GAP)
-	var indent := Control.new()
-	indent.custom_minimum_size = Vector2(TOKEN_W - COL_GAP, 0)
-	indent.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(indent)
 	return row
 
 
@@ -286,8 +282,8 @@ func update_from_view(view: Dictionary) -> void:
 	# раздвигается под числа и уходит за край панели (там её обрезает), а
 	# раскладки на момент обновления ещё может не быть.
 	var small := false
-	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - TOKEN_W - (NUM_W + COL_GAP) * COLUMNS.size() \
-		- HALL_GAP - COL_GAP
+	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - (NUM_W + COL_GAP) * COLUMNS.size() \
+		- HALL_GAP
 	for pid: String in _rows:
 		var box: HBoxContainer = _rows[pid]["trophies"]
 		if size.x > 0.0 and box.get_combined_minimum_size().x > room:
