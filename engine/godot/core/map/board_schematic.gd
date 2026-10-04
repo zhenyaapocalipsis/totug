@@ -1316,6 +1316,14 @@ func _spread(zone: Vector2) -> void:
 		var port: Dictionary = ports[i]
 		var m_a: Vector2 = (port["p"] as Vector2) + (off[port["a"]] as Vector2)
 		var m_b: Vector2 = (port["p"] as Vector2) + (off[port["b"]] as Vector2)
+		if _grid_full.has(i):
+			# трасса проложена целиком: делится в точке встречи на две
+			var whole := _split_path(_grid_paths[i])
+			_pos[port["node"]] = (whole["a"] as PackedVector2Array)[0]
+			_home[port["node"]] = _pos[port["node"]]
+			_set_route(port["edges_a"][0], whole["a"])
+			_set_route(port["edges_b"][0], whole["b"])
+			continue
 		var path := _split_path(_grid_paths[i]) if _grid_paths.has(i) \
 			else _bridge_path(m_a, m_b, port["u"], int(port.get("mode", 0)), port["run_a"], port["run_b"])
 		var meet: Vector2 = (path["a"] as PackedVector2Array)[0]
@@ -1772,6 +1780,7 @@ const ROUTE_EDGE := 8.0
 
 func _grid_try(cell: Dictionary) -> bool:
 	_grid_paths = {}
+	_grid_full = {}
 	var slot := {}   # Vector2i(колонка, ряд) -> hex
 	for hex: String in cell:
 		var c: Vector2i = cell[hex]
@@ -1850,6 +1859,7 @@ func _grid_try(cell: Dictionary) -> bool:
 		for hex: String in cell:
 			_sp_off[hex] = Vector2.ZERO
 		_grid_paths = {}
+		_grid_full = {}
 		return false
 	return true
 
@@ -1946,11 +1956,43 @@ var _rt_soft := PackedInt32Array()  # трассы гексов: ребро + 1,
 var _rt_bridge := PackedByteArray() # уже проложенные мостики
 var _rt_keep := PackedInt32Array()  # клетки перед стыками: номер порта + 1
 const ROUTE_KEEP := 4               # клеток перед стыком
+## Стык, к которому с каждой стороны подходит одна трасса, прокладывается
+## целиком — от кольца или города гекса A до кольца или города гекса B
+## (владелец, 2026-10-04, вариант «В»): старые куски трасс внутри гексов не
+## держат мостик, и крючков у колец нет. Не легла — стык мостиком по-старому.
+var _rt_full := {}    # port index -> true
+var _rt_skip := {}    # их рёбра: старые трассы не мешают, они прокладываются заново
+var _grid_full := {}  # то же после удачной прокладки: путь в _grid_paths — от узла A до узла B
 const RING_CELLS := (RING_R + 2) / GRID   # клеток от середины кольца до края его запаса
 
 func _grid_route(r: Rect2) -> bool:
 	_rt_origin = r.position
 	_rt_size = Vector2i(int(r.size.x / GRID) + 1, int(r.size.y / GRID) + 1)
+	# у стыка с одной трассой с каждой стороны она прокладывается целиком;
+	# не легла — этот стык мостиком по-старому, и всё заново
+	_rt_full = {}
+	for i in _sp_ports.size():
+		if (_sp_ports[i]["edges_a"] as Array).size() == 1 and (_sp_ports[i]["edges_b"] as Array).size() == 1:
+			_rt_full[i] = true
+	var started := Time.get_ticks_msec()
+	while true:
+		var failed := _grid_route_once(started)
+		if failed == -1:
+			_grid_full = _rt_full.duplicate()
+			return true
+		if not _rt_full.has(failed):
+			return false
+		_rt_full.erase(failed)
+	return false
+
+
+## Одна прокладка всех трасс при данном _rt_full: -1 — легли, иначе порт,
+## что не лёг последним (-2 — вышло время).
+func _grid_route_once(started: int) -> int:
+	_rt_skip = {}
+	for i: int in _rt_full:
+		_rt_skip[_sp_ports[i]["edges_a"][0]] = true
+		_rt_skip[_sp_ports[i]["edges_b"][0]] = true
 	_rt_hard = PackedByteArray()
 	_rt_hard.resize(_rt_size.x * _rt_size.y)
 	_rt_soft = PackedInt32Array()
@@ -1963,19 +2005,37 @@ func _grid_route(r: Rect2) -> bool:
 			var rect := Rect2((item[0] as Rect2).position + off, (item[0] as Rect2).size)
 			if int(item[1]) < 0:
 				_rt_mark(_rt_hard, rect)
-			else:
+			elif not _rt_skip.has(int(item[1])):
 				_rt_mark_edge(rect.grow(float(TRACE_GAP) - 1.0), int(item[1]))
 	var order: Array = range(_sp_ports.size())
 	var ends := {}
 	for i: int in order:
 		var port: Dictionary = _sp_ports[i]
-		ends[i] = [(port["p"] as Vector2) + (_sp_off[port["a"]] as Vector2),
-			(port["p"] as Vector2) + (_sp_off[port["b"]] as Vector2)]
+		if _rt_full.has(i):
+			ends[i] = [_pos[_edge_b[port["edges_a"][0]]] + (_sp_off[port["a"]] as Vector2),
+				_pos[_edge_b[port["edges_b"][0]]] + (_sp_off[port["b"]] as Vector2)]
+		else:
+			ends[i] = [(port["p"] as Vector2) + (_sp_off[port["a"]] as Vector2),
+				(port["p"] as Vector2) + (_sp_off[port["b"]] as Vector2)]
 	# перед каждым стыком — несколько клеток только для его трассы: иначе
 	# проложенная раньше чужая проходит вплотную поперёк и запирает стык
 	_rt_keep = PackedInt32Array()
 	_rt_keep.resize(_rt_size.x * _rt_size.y)
 	for i: int in order:
+		if _rt_full.has(i):
+			# у трассы целиком — перед выходами из кольца (их мало)
+			for side in ["a", "b"]:
+				var e: int = _sp_ports[i]["edges_" + side][0]
+				if _kind[_edge_b[e]] != Kind.RING:
+					continue
+				var exits := _rt_exits(e, _sp_ports[i][side], i)
+				for c0: Vector2i in exits:
+					for k in ROUTE_KEEP:
+						var c: Vector2i = c0 + Vector2i(DIRS[int(exits[c0][0])]) * k
+						if c.x >= 0 and c.y >= 0 and c.x < _rt_size.x and c.y < _rt_size.y:
+							var ki := c.y * _rt_size.x + c.x
+							_rt_keep[ki] = i + 1 if _rt_keep[ki] == 0 or _rt_keep[ki] == i + 1 else -1
+			continue
 		var su := Vector2i(_sp_ports[i]["u"])
 		var ca := Vector2i((((ends[i][0] as Vector2) - _rt_origin) / GRID).round())
 		var cb := Vector2i((((ends[i][1] as Vector2) - _rt_origin) / GRID).round())
@@ -1985,25 +2045,24 @@ func _grid_route(r: Rect2) -> bool:
 					var ki := c.y * _rt_size.x + c.x
 					# у двух стыков сразу — свободна для обоих (-1)
 					_rt_keep[ki] = i + 1 if _rt_keep[ki] == 0 or _rt_keep[ki] == i + 1 else -1
-	# сначала те, кому нужен обход (B не впереди по u — трасса разворачивается),
-	# потом короткие
+	# сначала мостики, которым нужен обход (B не впереди по u — трасса
+	# разворачивается), потом короткие
 	var key := func(i: int) -> float:
 		var d: Vector2 = (ends[i][1] as Vector2) - (ends[i][0] as Vector2)
-		var ahead := d.dot(_sp_ports[i]["u"]) > JOG_MIN
+		var ahead := _rt_full.has(i) or d.dot(_sp_ports[i]["u"]) > JOG_MIN
 		return absf(d.x) + absf(d.y) + (0.0 if not ahead else 10000.0)
 	order.sort_custom(func(a: int, b: int) -> bool: return key.call(a) < key.call(b))
 	# не легла — она первой, остальные заново (ROUTE_RETRIES раз, не дольше
 	# ROUTE_BUDGET_MS: доска строится при старте партии)
-	var started := Time.get_ticks_msec()
 	for _attempt in ROUTE_RETRIES:
 		if Time.get_ticks_msec() - started > ROUTE_BUDGET_MS:
-			return false
+			return -2
 		var failed := _rt_route_all(order, ends)
 		if failed < 0:
-			return true
+			return -1
 		order.erase(failed)
 		order.push_front(failed)
-	return false
+	return order[0]
 
 
 const ROUTE_RETRIES := 6
@@ -2014,7 +2073,7 @@ func _rt_route_all(order: Array, ends: Dictionary) -> int:
 	_grid_paths = {}
 	_rt_bridge.fill(0)
 	for i: int in order:
-		var path := _rt_find(i)
+		var path := _rt_find_full(i) if _rt_full.has(i) else _rt_find(i)
 		if path.is_empty():
 			return i
 		_grid_paths[i] = path
@@ -2306,6 +2365,193 @@ func _rt_find(i: int) -> PackedVector2Array:
 	return out
 
 
+## Откуда трасса e (стык — её узел _edge_a) выходит из своего кольца или
+## города в гексе hex: {клетка: [направление наружу, точка на узле]}. Из
+## кольца — по сторонам, куда не уходят другие его трассы (из середины); из
+## города — с любой стороны рамки, не ближе PIN_MARGIN к углу, конец на 1 px
+## внутри рамки (как _ends). Клетка — первая свободная за запасом узла.
+func _rt_exits(e: int, hex: String, i: int) -> Dictionary:
+	var n := _edge_b[e]
+	var off: Vector2 = _sp_off[hex]
+	var out := {}
+	if _kind[n] == Kind.RING:
+		var c := _pos[n] + off
+		var used := {}
+		for e2: int in _incident[n]:
+			if e2 == e or _rt_skip.has(e2):
+				continue
+			var pts := _routes[e2]
+			if pts.size() < 2:
+				continue
+			var from := pts[0] if pts[0].distance_to(_pos[n]) <= pts[pts.size() - 1].distance_to(_pos[n]) else pts[pts.size() - 1]
+			var next := pts[1] if from == pts[0] else pts[pts.size() - 2]
+			if next.distance_to(from) > 0.5:
+				used[_dir_index(next - from)] = true
+		for d in 4:
+			if used.has(d):
+				continue
+			var cell := Vector2i(((c + DIRS[d] * float(RING_R + 4) - _rt_origin) / GRID).round())
+			if _rt_open(cell, i):
+				out[cell] = [d, c]
+		return out
+	if _kind[n] != Kind.SITE:
+		return out
+	var box := Rect2(_node_rect(n).position + off, _node_rect(n).size)
+	for d in 4:
+		var dv: Vector2 = DIRS[d]
+		var ax := dv.abs()
+		var along := Vector2(ax.y, ax.x)
+		var sign_d := dv.dot(ax)
+		var edge := box.end.dot(ax) if sign_d > 0.0 else box.position.dot(ax)
+		var o_ax := _rt_origin.dot(ax)
+		var o_al := _rt_origin.dot(along)
+		# рамка в сетке препятствий — с запасом 2 px (_sp_items)
+		var k := floori((edge + 2.0 - o_ax) / GRID) + 1 if sign_d > 0.0 else ceili((edge - 2.0 - o_ax) / GRID) - 1
+		for t in range(ceili((box.position.dot(along) + PIN_MARGIN - o_al) / GRID),
+				floori((box.end.dot(along) - PIN_MARGIN - o_al) / GRID) + 1):
+			var cell := Vector2i(ax * float(k) + along * float(t))
+			if _rt_open(cell, i):
+				out[cell] = [d, ax * (edge - sign_d) + along * (o_al + float(t * GRID))]
+	return out
+
+
+## Клетка внутри сетки и свободна для трассы порта i (-1 — ничьей).
+func _rt_open(c: Vector2i, i: int) -> bool:
+	if c.x < 0 or c.y < 0 or c.x >= _rt_size.x or c.y >= _rt_size.y:
+		return false
+	var idx := c.y * _rt_size.x + c.x
+	return _rt_hard[idx] == 0 and _rt_bridge[idx] == 0 and _rt_soft[idx] == 0 \
+		and (_rt_keep[idx] <= 0 or _rt_keep[idx] == i + 1)
+
+
+## Путь порта i целиком (_rt_full): от точки на узле A до точки на узле B, по
+## осям, повороты не ближе JOG_MIN; первый и последний прямые участки не короче
+## JOG_MIN за запасом узла. Из равных — выход ближе к середине стороны рамки.
+func _rt_find_full(i: int) -> PackedVector2Array:
+	var port: Dictionary = _sp_ports[i]
+	var starts := _rt_exits(port["edges_a"][0], port["a"], i)
+	var goals := _rt_exits(port["edges_b"][0], port["b"], i)
+	if starts.is_empty() or goals.is_empty():
+		return PackedVector2Array()
+	var a_lo := Vector2i(1 << 20, 1 << 20)
+	var a_hi := -a_lo
+	for c: Vector2i in starts:
+		a_lo = a_lo.min(c)
+		a_hi = a_hi.max(c)
+	var b_lo := Vector2i(1 << 20, 1 << 20)
+	var b_hi := -b_lo
+	for c: Vector2i in goals:
+		b_lo = b_lo.min(c)
+		b_hi = b_hi.max(c)
+	var m := int(ROUTE_MARGIN / GRID)
+	var lo := Vector2i(maxi(0, mini(a_lo.x, b_lo.x) - m), maxi(0, mini(a_lo.y, b_lo.y) - m))
+	var hi := Vector2i(mini(_rt_size.x - 1, maxi(a_hi.x, b_hi.x) + m), mini(_rt_size.y - 1, maxi(a_hi.y, b_hi.y) + m))
+	var w := hi.x - lo.x + 1
+	var h := hi.y - lo.y + 1
+	var runs := JOG_MIN / GRID
+	var states := 4 * (runs + 1)
+	var g := PackedFloat32Array()
+	g.resize(w * h * states)
+	g.fill(INF)
+	var parent := PackedInt32Array()
+	parent.resize(w * h * states)
+	parent.fill(-1)
+	var heap_s := PackedInt32Array()
+	var heap_f := PackedFloat32Array()
+	for c0: Vector2i in starts:
+		var s0 := (((c0.y - lo.y) * w + (c0.x - lo.x)) * 4 + int(starts[c0][0])) * (runs + 1)
+		g[s0] = _rt_pin_cost(port["edges_a"][0], port["a"], starts[c0])
+		_rt_push(heap_s, heap_f, s0, g[s0] + float(_seg_dist(c0, b_lo, b_hi)) * ROUTE_GREED)
+	var goal := -1
+	var best := INF
+	while not heap_s.is_empty():
+		var s := heap_s[0]
+		var f := heap_f[0]
+		_rt_pop(heap_s, heap_f)
+		if f >= best:
+			break
+		var run := s % (runs + 1)
+		var d := (s / (runs + 1)) % 4
+		var cell_i := s / states
+		var c := Vector2i(lo.x + cell_i % w, lo.y + cell_i / w)
+		if f > g[s] + float(_seg_dist(c, b_lo, b_hi)) * ROUTE_GREED + 0.01:
+			continue
+		if goals.has(c) and d == (int(goals[c][0]) + 2) % 4 and run >= runs:
+			var total := g[s] + _rt_pin_cost(port["edges_b"][0], port["b"], goals[c])
+			if total < best:
+				best = total
+				goal = s
+			continue
+		for nd in 4:
+			if nd == (d + 2) % 4:
+				continue
+			var turn := nd != d
+			if turn and run < runs:
+				continue
+			var nc := c + Vector2i(DIRS[nd])
+			if nc.x < lo.x or nc.y < lo.y or nc.x > hi.x or nc.y > hi.y or not _rt_open(nc, i):
+				continue
+			var nrun := 1 if turn else mini(run + 1, runs)
+			var ns := (((nc.y - lo.y) * w + (nc.x - lo.x)) * 4 + nd) * (runs + 1) + nrun
+			var ng := g[s] + 1.0 + (ROUTE_BEND / GRID if turn else 0.0)
+			if ng < g[ns]:
+				g[ns] = ng
+				parent[ns] = s
+				_rt_push(heap_s, heap_f, ns, ng + float(_seg_dist(nc, b_lo, b_hi)) * ROUTE_GREED)
+	if goal < 0:
+		return PackedVector2Array()
+	var cells: Array[Vector2i] = []
+	var s2 := goal
+	while s2 >= 0:
+		var ci := s2 / states
+		cells.append(Vector2i(lo.x + ci % w, lo.y + ci / w))
+		s2 = parent[s2]
+	cells.reverse()
+	var pts := PackedVector2Array()
+	for k in cells.size():
+		if k == 0 or k == cells.size() - 1 or (cells[k] - cells[k - 1]) != (cells[k + 1] - cells[k]):
+			pts.append(_rt_origin + Vector2(cells[k]) * GRID)
+	var a_at: Vector2 = starts[cells[0]][1]
+	var b_at: Vector2 = goals[cells[cells.size() - 1]][1]
+	# середина кольца может стоять и не на чётном пикселе: первый (последний)
+	# прямой участок — по линии узла; у прямого пути город подстраивается под кольцо
+	var across_a := Vector2(absf(DIRS[int(starts[cells[0]][0])].y), absf(DIRS[int(starts[cells[0]][0])].x))
+	var across_b := Vector2(absf(DIRS[int(goals[cells[cells.size() - 1]][0])].y), absf(DIRS[int(goals[cells[cells.size() - 1]][0])].x))
+	if pts.size() == 2 and absf(a_at.dot(across_a) - b_at.dot(across_a)) > 0.1:
+		if _kind[_edge_b[port["edges_b"][0]]] == Kind.SITE:
+			b_at += across_a * (a_at.dot(across_a) - b_at.dot(across_a))
+		elif _kind[_edge_b[port["edges_a"][0]]] == Kind.SITE:
+			a_at += across_a * (b_at.dot(across_a) - a_at.dot(across_a))
+		else:
+			return PackedVector2Array()
+	for k in [0, 1]:
+		pts[k] += across_a * (a_at.dot(across_a) - pts[k].dot(across_a))
+	for k in [pts.size() - 1, pts.size() - 2]:
+		pts[k] += across_b * (b_at.dot(across_b) - pts[k].dot(across_b))
+	var out := PackedVector2Array([a_at])
+	pts.append(b_at)
+	for q in pts:
+		var last := out.size() - 1
+		if out[last].is_equal_approx(q):
+			continue
+		if last >= 1 and is_zero_approx((out[last] - out[last - 1]).cross(q - out[last])) \
+				and (out[last] - out[last - 1]).dot(q - out[last]) > 0.0:
+			out[last] = q
+			continue
+		out.append(q)
+	return out
+
+
+## Небольшая цена выхода из рамки города вдали от середины её стороны.
+func _rt_pin_cost(e: int, hex: String, exit: Array) -> float:
+	var n := _edge_b[e]
+	if _kind[n] != Kind.SITE:
+		return 0.0
+	var mid: Vector2 = _pos[n] + (_sp_off[hex] as Vector2)
+	var along := Vector2(absf(DIRS[int(exit[0])].y), absf(DIRS[int(exit[0])].x))
+	return absf(((exit[1] as Vector2) - mid).dot(along)) / GRID * 0.25
+
+
 ## Кольцо, стоящее прямо на стыке порта i (сторона A или B): стороны (DIRS),
 ## куда из него не уходит ни одна другая трасса — по ним мостик может выйти из
 ## кольца или войти в него. Сторона к стыку (u у A, -u у B) свободна всегда.
@@ -2400,7 +2646,10 @@ static func _split_path(path: PackedVector2Array) -> Dictionary:
 	for k in path.size() - 1:
 		if path[k].distance_to(path[k + 1]) > path[best].distance_to(path[best + 1]):
 			best = k
-	var meet := ((path[best] + path[best + 1]) / 2.0 / float(GRID)).round() * float(GRID)
+	# по отрезку от его начала (у трассы целиком первый отрезок может стоять
+	# и на нечётном пикселе — от середины кольца)
+	var seg := path[best + 1] - path[best]
+	var meet := path[best] + seg.normalized() * roundf(seg.length() / 2.0 / float(GRID)) * float(GRID)
 	var a := PackedVector2Array([meet])
 	for k in range(best, -1, -1):
 		a.append(path[k])
@@ -2753,6 +3002,12 @@ func _sp_rects_hit(rects: Array, hexes: Array, own: Dictionary) -> bool:
 				if r.intersects(Rect2((item[0] as Rect2).position + off, (item[0] as Rect2).size)):
 					return true
 	return false
+
+
+func _set_route(e: int, points: PackedVector2Array) -> void:
+	_routes[e] = points
+	_visible[e] = _clip(e, points)
+	_bbox[e] = _bounds(_visible[e])
 
 
 ## Route e ended at the old edge midpoint, now at `at`; it starts with the
