@@ -1350,6 +1350,8 @@ func _spread(zone: Vector2) -> void:
 	for j: int in _grid_full:
 		if j >= ports.size():
 			_set_route(_rt_inner[j - ports.size()], _grid_paths[j])
+	if not _grid_full.is_empty():
+		_straighten()
 	# _repair здесь не нужен и вреден: _sp_ok уже не пустил ни одного касания,
 	# а цена трассы (_local_cost) штрафует мостик за выход из своего гекса —
 	# _repair переложил бы его через полдоски поперёк чужих трасс.
@@ -2130,7 +2132,7 @@ func _grid_route_once(started: int) -> int:
 
 
 const ROUTE_RETRIES := 6
-const ROUTE_BUDGET_MS := 2500
+const ROUTE_BUDGET_MS := 4000
 
 ## Прокладывает мостики по порядку; ответ — порт, что не лёг, или -1.
 func _rt_route_all(order: Array, ends: Dictionary) -> int:
@@ -2484,23 +2486,17 @@ func _rt_exits(e: int, n: int, hex: String, i: int) -> Array:
 			var leave := _leave_dir(pts, _pos[n], float(RING_R + 1))
 			if leave >= 0:
 				used[leave] = true
-		# и по линии чуть вбок от середины (не дальше RING_R): ступенька к
-		# середине тогда целиком под кружком кольца (пятый элемент — сдвиг)
-		var across := Vector2i.ZERO
+		# в кольцо трасса входит только через середину (владелец, 2026-10-04:
+		# кольцо рисуется полым — ступенька вбок внутри него видна как крючок)
 		for d in 4:
 			if used.has(d):
 				continue
 			var step := Vector2i(DIRS[d])
-			across = Vector2i(absi(step.y), absi(step.x))
-			for k in [0, -1, 1, -2, 2]:
-				var start: Vector2i = c0 + across * k
-				if k != 0 and absf((_rt_origin + Vector2(start) * GRID - c).dot(Vector2(across))) > float(RING_R):
-					continue
-				var cell := start
-				while _rt_owner(cell) == n + 1:
-					cell += step
-				if cell != start and _rt_open(cell, i, n, n):
-					out.append([start, d, c, cell, k != 0])
+			var cell := c0
+			while _rt_owner(cell) == n + 1:
+				cell += step
+			if cell != c0 and _rt_open(cell, i, n, n):
+				out.append([c0, d, c, cell])
 		return out
 	if _kind[n] != Kind.SITE:
 		return out
@@ -2720,43 +2716,31 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 		return PackedVector2Array()
 	var a_at: Vector2 = start_exit[2]
 	var b_at: Vector2 = goal_exit[2]
-	var side_a: bool = start_exit.size() > 4 and start_exit[4]   # в кольцо сбоку от середины
-	var side_b: bool = goal_exit.size() > 4 and goal_exit[4]
 	# середина кольца может стоять и не на чётном пикселе: первый (последний)
 	# прямой участок — по линии узла; у прямого пути город подстраивается под кольцо
 	var across_a := Vector2(absf(DIRS[int(start_exit[1])].y), absf(DIRS[int(start_exit[1])].x))
 	var across_b := Vector2(absf(DIRS[int(goal_exit[1])].y), absf(DIRS[int(goal_exit[1])].x))
-	if pts.size() == 2 and not side_a and not side_b and absf(a_at.dot(across_a) - b_at.dot(across_a)) > 0.1:
+	if pts.size() == 2 and absf(a_at.dot(across_a) - b_at.dot(across_a)) > 0.1:
 		if _kind[nb] == Kind.SITE:
 			b_at += across_a * (a_at.dot(across_a) - b_at.dot(across_a))
 		elif _kind[na] == Kind.SITE:
 			a_at += across_a * (b_at.dot(across_a) - a_at.dot(across_a))
 		else:
 			return PackedVector2Array()
-	if not side_a:
-		for k in [0, 1]:
-			pts[k] += across_a * (a_at.dot(across_a) - pts[k].dot(across_a))
-	if not side_b:
-		for k in [pts.size() - 1, pts.size() - 2]:
-			pts[k] += across_b * (b_at.dot(across_b) - pts[k].dot(across_b))
+	for k in [0, 1]:
+		pts[k] += across_a * (a_at.dot(across_a) - pts[k].dot(across_a))
+	for k in [pts.size() - 1, pts.size() - 2]:
+		pts[k] += across_b * (b_at.dot(across_b) - pts[k].dot(across_b))
 	# у кольца (развилки) клетка середины — сама середина с точностью до
-	# пикселя: заменить, а не добавлять (иначе шажок назад на 1 px); сбоку —
-	# конец линии напротив середины, и ступенька к ней (под кружком кольца)
+	# пикселя: заменить, а не добавлять (иначе шажок назад на 1 px)
 	if _kind[na] == Kind.SITE:
-		pts.insert(0, a_at)
-	elif side_a:
-		pts[0] += (Vector2.ONE - across_a) * ((a_at - pts[0]).dot(Vector2.ONE - across_a))
 		pts.insert(0, a_at)
 	else:
 		pts[0] = a_at
-	var tail := pts.size() - 1
 	if _kind[nb] == Kind.SITE:
 		pts.append(b_at)
-	elif side_b:
-		pts[tail] += (Vector2.ONE - across_b) * ((b_at - pts[tail]).dot(Vector2.ONE - across_b))
-		pts.append(b_at)
 	else:
-		pts[tail] = b_at
+		pts[pts.size() - 1] = b_at
 	var out := PackedVector2Array([pts[0]])
 	for q in pts:
 		var last := out.size() - 1
@@ -2773,8 +2757,7 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 ## Небольшая цена выхода из рамки города вдали от середины её стороны.
 func _rt_pin_cost(n: int, hex: String, exit: Array) -> float:
 	if _kind[n] != Kind.SITE:
-		# в кольцо сбоку — только если по середине выйдет хуже
-		return 2.0 if exit.size() > 4 and exit[4] else 0.0
+		return 0.0
 	var mid: Vector2 = _pos[n] + (_sp_off[hex] as Vector2)
 	var along := Vector2(absf(DIRS[int(exit[1])].y), absf(DIRS[int(exit[1])].x))
 	return absf(((exit[2] as Vector2) - mid).dot(along)) / GRID * 0.25
@@ -3245,6 +3228,146 @@ func _sp_rects_hit(rects: Array, hexes: Array, own: Dictionary) -> bool:
 				if r.intersects(Rect2((item[0] as Rect2).position + off, (item[0] as Rect2).size)):
 					return true
 	return false
+
+
+## Зигзаги (поворот, шаг вбок, поворот в ту же сторону) спрямляются после
+## прокладки (владелец, 2026-10-04, обведённые крюки): кусок до шага или после
+## него сдвигается на этот шаг, и два поворота уходят. Конец у города скользит
+## вдоль стороны рамки; у кольца конец не двигается (входит в середину).
+## Новые отрезки не задевают рамки и чужие трассы.
+const STRAIGHTEN_ROUNDS := 3
+
+var _st_box: Array[Rect2] = []   # рамка каждой трассы (для быстрой проверки)
+
+func _straighten() -> void:
+	_st_box = []
+	for e in _routes.size():
+		_st_box.append(_route_box(_routes[e]))
+	for _round in STRAIGHTEN_ROUNDS:
+		var changed := false
+		for e in _routes.size():
+			while _unzig(e):
+				changed = true
+		if not changed:
+			return
+
+
+## Убрать один зигзаг трассы e; false — нечего или некуда.
+func _unzig(e: int) -> bool:
+	var pts := _routes[e]
+	for k in range(0, pts.size() - 3):
+		var s0 := pts[k + 1] - pts[k]
+		var j := pts[k + 2] - pts[k + 1]
+		var s2 := pts[k + 3] - pts[k + 2]
+		if s0.length() < 0.5 or s2.length() < 0.5 or j.length() < 0.5 or s0.normalized().dot(s2.normalized()) < 0.99:
+			continue
+		for first: bool in [true, false]:
+			var cand := _zig_shift(e, pts, k, j, first)
+			if not cand.is_empty() and _route_free(e, pts, cand):
+				_set_route(e, cand)
+				_st_box[e] = _route_box(cand)
+				return true
+	return false
+
+
+## Узел трассы e у её начала (start) или конца: трасса идёт от _edge_a к _edge_b.
+func _route_end(e: int, _pts: PackedVector2Array, start: bool) -> int:
+	return _edge_a[e] if start else _edge_b[e]
+
+
+## Трасса без зигзага у k (first — сдвинуть кусок до шага на j, иначе кусок
+## после шага на -j) или [], если так нельзя.
+func _zig_shift(e: int, pts: PackedVector2Array, k: int, j: Vector2, first: bool) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var last := pts.size() - 1
+	# конец, что сдвигается, и его сосед по отрезку вдоль j
+	var at := k if first else k + 3
+	var move := j if first else -j
+	var tip := pts[at] + move
+	var is_end := at == 0 or at == last
+	if is_end:
+		var n := _route_end(e, pts, at == 0)
+		if _kind[n] == Kind.SITE:
+			var box := _node_rect(n)
+			var along := Vector2(absf(move.normalized().x), absf(move.normalized().y))
+			var c := tip.dot(along)
+			if c < box.position.dot(along) + PIN_MARGIN or c > box.end.dot(along) - PIN_MARGIN:
+				return PackedVector2Array()
+		else:
+			# кольцо — только через середину, стык — на прямой двух половин
+			return PackedVector2Array()
+	else:
+		var nb := pts[at - 1] if first else pts[at + 1]
+		var old_len := (pts[at] - nb)
+		var new_len := (tip - nb)
+		if new_len.length() < float(JOG_MIN) or new_len.dot(old_len) <= 0.0:
+			return PackedVector2Array()
+	if first:
+		for q in range(0, k):
+			out.append(pts[q])
+		out.append(tip)
+		for q in range(k + 3, pts.size()):
+			out.append(pts[q])
+	else:
+		for q in range(0, k + 1):
+			out.append(pts[q])
+		out.append(tip)
+		for q in range(k + 4, pts.size()):
+			out.append(pts[q])
+	return out
+
+
+## Новые отрезки cand (которых не было в old) не задевают чужих рамок и
+## колец и не подходят к чужим трассам ближе TRACE_GAP (у общего узла можно).
+func _route_free(e: int, old: PackedVector2Array, cand: PackedVector2Array) -> bool:
+	var had := {}
+	for k in old.size() - 1:
+		had[[old[k], old[k + 1]]] = true
+	var ends := [_edge_a[e], _edge_b[e]]
+	for k in cand.size() - 1:
+		var p := cand[k]
+		var q := cand[k + 1]
+		if had.has([p, q]):
+			continue
+		var seg := Rect2(p, Vector2.ZERO).expand(q)
+		for o in _key.size():
+			if _kind[o] == Kind.PORT:
+				continue
+			var r := _node_rect(o, 1.0)
+			if ends.has(o):
+				# у своего узла — только отрезок, что из него выходит
+				if r.has_point(p) or r.has_point(q) or not r.intersects(seg):
+					continue
+				return false
+			if r.intersects(seg):
+				return false
+		var near := seg.grow(float(TRACE_GAP) - 1.0)
+		for e2 in _routes.size():
+			if e2 == e or not near.intersects(_st_box[e2]):
+				continue
+			var shared := -1
+			for m: int in [_edge_a[e2], _edge_b[e2]]:
+				if ends.has(m):
+					shared = m
+			var pts2 := _routes[e2]
+			for t in pts2.size() - 1:
+				var seg2 := Rect2(pts2[t], Vector2.ZERO).expand(pts2[t + 1])
+				if not near.intersects(seg2):
+					continue
+				if shared >= 0:
+					var zone := Rect2(_pos[shared], Vector2.ZERO).grow(float(TRACE_GAP) + 1.0) if _kind[shared] == Kind.PORT \
+						else _node_rect(shared, float(TRACE_GAP))
+					if zone.has_point(near.intersection(seg2).get_center()):
+						continue
+				return false
+	return true
+
+
+static func _route_box(pts: PackedVector2Array) -> Rect2:
+	var r := Rect2(pts[0], Vector2.ZERO) if not pts.is_empty() else Rect2()
+	for p in pts:
+		r = r.expand(p)
+	return r.grow(1.0)
 
 
 func _set_route(e: int, points: PackedVector2Array) -> void:
