@@ -1959,7 +1959,7 @@ func _nudge_hits(hex: String) -> bool:
 ## уже стоит (рамки, кольца, трассы гексов и уже проложенные мостики), только
 ## по осям, поворот не ближе JOG_MIN от прошлого. От m_a трасса не идёт назад
 ## (-u), в m_b не входит против u. Короткие — первыми. Хоть одна не легла — false.
-const ROUTE_BEND := 16.0
+const ROUTE_BEND := 128.0
 const ROUTE_NEAR := 8.0      # у своих концов трассы гексов не мешают
 const ROUTE_MARGIN := 80.0   # ищем в рамке концов с таким запасом (по всей доске — долго)
 ## Поиск тянется к цели сильнее точного (путь чуть длиннее лучшего, зато
@@ -2645,7 +2645,7 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 		if g0 < g[s0]:
 			g[s0] = g0
 			start_of[s0] = exit
-			_rt_push(heap_s, heap_f, s0, g0 + float(_seg_dist(c0, b_lo, b_hi)) * ROUTE_GREED)
+			_rt_push(heap_s, heap_f, s0, g0 + _rt_h(c0, int(exit[1]), b_lo, b_hi))
 	var goal := -1
 	var goal_exit: Array = []
 	var best := INF
@@ -2659,7 +2659,7 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 		var d := (s / (runs + 1)) % 4
 		var cell_i := s / states
 		var c := Vector2i(lo.x + cell_i % w, lo.y + cell_i / w)
-		if f > g[s] + float(_seg_dist(c, b_lo, b_hi)) * ROUTE_GREED + 0.01:
+		if f > g[s] + _rt_h(c, d, b_lo, b_hi) + 0.01:
 			continue
 		var key := Vector3i(c.x, c.y, d)
 		if goals.has(key) and run >= runs and not start_of.has(s):
@@ -2699,7 +2699,7 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 			if ng < g[ns]:
 				g[ns] = ng
 				parent[ns] = s
-				_rt_push(heap_s, heap_f, ns, ng + float(_seg_dist(nc, b_lo, b_hi)) * ROUTE_GREED)
+				_rt_push(heap_s, heap_f, ns, ng + _rt_h(nc, nd, b_lo, b_hi))
 	if goal < 0:
 		return PackedVector2Array()
 	var cells: Array[Vector2i] = []
@@ -2815,6 +2815,21 @@ static func _on_ray(rel: Vector2i, su: Vector2i, from: int, to: int) -> bool:
 		return false
 	var t := rel.x * su.x + rel.y * su.y
 	return t >= from and t <= to
+
+
+## Оценка остатка пути из клетки c в направлении d до целей lo..hi: клетки по
+## осям и повороты, без которых не обойтись (цель не прямо впереди — хоть
+## один, позади — два). С большой ценой поворота без них поиск тонет.
+static func _rt_h(c: Vector2i, d: int, lo: Vector2i, hi: Vector2i) -> float:
+	var h := float(_seg_dist(c, lo, hi)) * ROUTE_GREED
+	if c.x >= lo.x and c.x <= hi.x and c.y >= lo.y and c.y <= hi.y:
+		return h
+	var v := Vector2i(DIRS[d])
+	var in_band := (c.y >= lo.y and c.y <= hi.y) if v.y == 0 else (c.x >= lo.x and c.x <= hi.x)
+	var ahead := (hi.x >= c.x if v.x > 0 else lo.x <= c.x) if v.y == 0 else (hi.y >= c.y if v.y > 0 else lo.y <= c.y)
+	if in_band and ahead:
+		return h
+	return h + (ROUTE_BEND / GRID) * (2.0 if in_band else 1.0)
 
 
 ## Клеток по осям от c до прямоугольника lo..hi (0 — внутри).
