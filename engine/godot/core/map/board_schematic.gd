@@ -2484,15 +2484,23 @@ func _rt_exits(e: int, n: int, hex: String, i: int) -> Array:
 			var leave := _leave_dir(pts, _pos[n], float(RING_R + 1))
 			if leave >= 0:
 				used[leave] = true
+		# и по линии чуть вбок от середины (не дальше RING_R): ступенька к
+		# середине тогда целиком под кружком кольца (пятый элемент — сдвиг)
+		var across := Vector2i.ZERO
 		for d in 4:
 			if used.has(d):
 				continue
 			var step := Vector2i(DIRS[d])
-			var cell := c0
-			while _rt_owner(cell) == n + 1:
-				cell += step
-			if _rt_open(cell, i, n, n):
-				out.append([c0, d, c, cell])
+			across = Vector2i(absi(step.y), absi(step.x))
+			for k in [0, -1, 1, -2, 2]:
+				var start: Vector2i = c0 + across * k
+				if k != 0 and absf((_rt_origin + Vector2(start) * GRID - c).dot(Vector2(across))) > float(RING_R):
+					continue
+				var cell := start
+				while _rt_owner(cell) == n + 1:
+					cell += step
+				if cell != start and _rt_open(cell, i, n, n):
+					out.append([start, d, c, cell, k != 0])
 		return out
 	if _kind[n] != Kind.SITE:
 		return out
@@ -2603,8 +2611,15 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 	var centre_b := Vector2i(-1, -1)
 	if _kind[na] == Kind.PORT:
 		centre_a = starts[0][0]
+	var lanes_b := {}   # Vector2i(направление прихода, поперечная клетка): путь в кольцо B
+	var stops_b := {}   # клетки, где путь в кольцо B кончается
 	if _kind[nb] == Kind.RING or _kind[nb] == Kind.PORT:
-		centre_b = goal_list[0][0]
+		centre_b = Vector2i((((goal_list[0][2] as Vector2) - _rt_origin) / GRID).round())
+		for exit: Array in goal_list:
+			var gc: Vector2i = exit[0]
+			var arrive := (int(exit[1]) + 2) % 4
+			lanes_b[Vector2i(arrive, gc.y if arrive % 2 == 0 else gc.x)] = true
+			stops_b[gc] = true
 	var m := int(ROUTE_MARGIN / GRID)
 	var lo := Vector2i(maxi(0, mini(a_lo.x, b_lo.x) - m), maxi(0, mini(a_lo.y, b_lo.y) - m))
 	var hi := Vector2i(mini(_rt_size.x - 1, maxi(a_hi.x, b_hi.x) + m), mini(_rt_size.y - 1, maxi(a_hi.y, b_hi.y) + m))
@@ -2654,7 +2669,7 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 				goal = s
 				goal_exit = goals[key]
 			continue
-		if c == centre_b:
+		if stops_b.has(c):
 			continue
 		var za := _rt_zone(c, na, centre_a)
 		var zb := _rt_zone(c, nb, centre_b)
@@ -2673,9 +2688,8 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 					continue
 			elif _rt_zone(nc, nb, centre_b):
 				# в кольцо (развилку) B — прямо к середине, по свободной стороне
-				var rel := nc - centre_b
-				var on_line := rel.x * int(DIRS[nd].y) - rel.y * int(DIRS[nd].x) == 0
-				if not zb and not (on_line and goals.has(Vector3i(centre_b.x, centre_b.y, nd))):
+				var lane := Vector2i(nd, nc.y if nd % 2 == 0 else nc.x)
+				if not zb and not lanes_b.has(lane):
 					continue
 			elif not _rt_open(nc, i, na, nb):
 				continue
@@ -2706,31 +2720,43 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 		return PackedVector2Array()
 	var a_at: Vector2 = start_exit[2]
 	var b_at: Vector2 = goal_exit[2]
+	var side_a: bool = start_exit.size() > 4 and start_exit[4]   # в кольцо сбоку от середины
+	var side_b: bool = goal_exit.size() > 4 and goal_exit[4]
 	# середина кольца может стоять и не на чётном пикселе: первый (последний)
 	# прямой участок — по линии узла; у прямого пути город подстраивается под кольцо
 	var across_a := Vector2(absf(DIRS[int(start_exit[1])].y), absf(DIRS[int(start_exit[1])].x))
 	var across_b := Vector2(absf(DIRS[int(goal_exit[1])].y), absf(DIRS[int(goal_exit[1])].x))
-	if pts.size() == 2 and absf(a_at.dot(across_a) - b_at.dot(across_a)) > 0.1:
+	if pts.size() == 2 and not side_a and not side_b and absf(a_at.dot(across_a) - b_at.dot(across_a)) > 0.1:
 		if _kind[nb] == Kind.SITE:
 			b_at += across_a * (a_at.dot(across_a) - b_at.dot(across_a))
 		elif _kind[na] == Kind.SITE:
 			a_at += across_a * (b_at.dot(across_a) - a_at.dot(across_a))
 		else:
 			return PackedVector2Array()
-	for k in [0, 1]:
-		pts[k] += across_a * (a_at.dot(across_a) - pts[k].dot(across_a))
-	for k in [pts.size() - 1, pts.size() - 2]:
-		pts[k] += across_b * (b_at.dot(across_b) - pts[k].dot(across_b))
+	if not side_a:
+		for k in [0, 1]:
+			pts[k] += across_a * (a_at.dot(across_a) - pts[k].dot(across_a))
+	if not side_b:
+		for k in [pts.size() - 1, pts.size() - 2]:
+			pts[k] += across_b * (b_at.dot(across_b) - pts[k].dot(across_b))
 	# у кольца (развилки) клетка середины — сама середина с точностью до
-	# пикселя: заменить, а не добавлять (иначе шажок назад на 1 px)
+	# пикселя: заменить, а не добавлять (иначе шажок назад на 1 px); сбоку —
+	# конец линии напротив середины, и ступенька к ней (под кружком кольца)
 	if _kind[na] == Kind.SITE:
+		pts.insert(0, a_at)
+	elif side_a:
+		pts[0] += (Vector2.ONE - across_a) * ((a_at - pts[0]).dot(Vector2.ONE - across_a))
 		pts.insert(0, a_at)
 	else:
 		pts[0] = a_at
+	var tail := pts.size() - 1
 	if _kind[nb] == Kind.SITE:
 		pts.append(b_at)
+	elif side_b:
+		pts[tail] += (Vector2.ONE - across_b) * ((b_at - pts[tail]).dot(Vector2.ONE - across_b))
+		pts.append(b_at)
 	else:
-		pts[pts.size() - 1] = b_at
+		pts[tail] = b_at
 	var out := PackedVector2Array([pts[0]])
 	for q in pts:
 		var last := out.size() - 1
@@ -2747,7 +2773,8 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 ## Небольшая цена выхода из рамки города вдали от середины её стороны.
 func _rt_pin_cost(n: int, hex: String, exit: Array) -> float:
 	if _kind[n] != Kind.SITE:
-		return 0.0
+		# в кольцо сбоку — только если по середине выйдет хуже
+		return 2.0 if exit.size() > 4 and exit[4] else 0.0
 	var mid: Vector2 = _pos[n] + (_sp_off[hex] as Vector2)
 	var along := Vector2(absf(DIRS[int(exit[1])].y), absf(DIRS[int(exit[1])].x))
 	return absf(((exit[2] as Vector2) - mid).dot(along)) / GRID * 0.25
