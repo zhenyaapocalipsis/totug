@@ -1351,7 +1351,7 @@ func _spread(zone: Vector2) -> void:
 		if j >= ports.size():
 			_set_route(_rt_inner[j - ports.size()], _grid_paths[j])
 	if not _grid_full.is_empty():
-		_straighten()
+		_straighten(ports)
 	# _repair здесь не нужен и вреден: _sp_ok уже не пустил ни одного касания,
 	# а цена трассы (_local_cost) штрафует мостик за выход из своего гекса —
 	# _repair переложил бы его через полдоски поперёк чужих трасс.
@@ -3239,22 +3239,88 @@ const STRAIGHTEN_ROUNDS := 3
 
 var _st_box: Array[Rect2] = []   # рамка каждой трассы (для быстрой проверки)
 
-func _straighten() -> void:
+## Трасса через стык (по одному ребру с каждой стороны) спрямляется целиком:
+## обе половины — одна трасса от узла A до узла B, а точка встречи ставится
+## заново (владелец, 2026-10-04, вариант А: зигзаги стояли у точки встречи).
+func _straighten(ports: Array) -> void:
 	_st_box = []
 	for e in _routes.size():
 		_st_box.append(_route_box(_routes[e]))
+	var seams: Array = []   # [узел стыка, ребро A, ребро B]
+	var in_seam := {}
+	for port: Dictionary in ports:
+		if port["edges_a"].size() != 1 or port["edges_b"].size() != 1:
+			continue
+		var ea: int = port["edges_a"][0]
+		var eb: int = port["edges_b"][0]
+		var at: Vector2 = _pos[port["node"]]
+		if _routes[ea].size() < 2 or _routes[eb].size() < 2 or _routes[ea][0].distance_to(at) > 0.5 \
+				or _routes[eb][0].distance_to(at) > 0.5:
+			continue
+		seams.append([port["node"], ea, eb])
+		in_seam[ea] = true
+		in_seam[eb] = true
 	for _round in STRAIGHTEN_ROUNDS:
 		var changed := false
 		for e in _routes.size():
-			while _unzig(e):
+			if in_seam.has(e):
+				continue
+			while true:
+				var cand := _unzig(_routes[e], [_edge_a[e], _edge_b[e]], [e])
+				if cand.is_empty():
+					break
+				_set_route(e, cand)
+				_st_box[e] = _route_box(cand)
+				changed = true
+		for s: Array in seams:
+			while _unzig_seam(s):
 				changed = true
 		if not changed:
 			return
 
 
-## Убрать один зигзаг трассы e; false — нечего или некуда.
-func _unzig(e: int) -> bool:
-	var pts := _routes[e]
+## Убрать один зигзаг трассы через стык s; false — нечего или некуда.
+func _unzig_seam(s: Array) -> bool:
+	var ea: int = s[1]
+	var eb: int = s[2]
+	var whole := _routes[ea].duplicate()   # от узла A к точке встречи
+	whole.reverse()
+	var b := _routes[eb]
+	for k in range(1, b.size()):
+		whole.append(b[k])
+	whole = _drop_straight(whole)
+	var cand := _unzig(whole, [_edge_b[ea], _edge_b[eb]], [ea, eb])
+	if cand.is_empty():
+		return false
+	var parts := _split_path(cand)
+	_pos[s[0]] = (parts["a"] as PackedVector2Array)[0]
+	_home[s[0]] = _pos[s[0]]
+	_set_route(ea, parts["a"])
+	_set_route(eb, parts["b"])
+	_st_box[ea] = _route_box(_routes[ea])
+	_st_box[eb] = _route_box(_routes[eb])
+	return true
+
+
+## Без точек посреди прямого участка (и повторов).
+static func _drop_straight(pts: PackedVector2Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in pts:
+		if not out.is_empty() and out[out.size() - 1].distance_to(p) < 0.5:
+			continue
+		if out.size() >= 2:
+			var u := out[out.size() - 1] - out[out.size() - 2]
+			var v := p - out[out.size() - 1]
+			if absf(u.cross(v)) < 0.01 and u.dot(v) > 0.0:
+				out[out.size() - 1] = p
+				continue
+		out.append(p)
+	return out
+
+
+## Путь pts без одного зигзага или [], если нечего или некуда. ends — узлы
+## у начала и конца пути, skip — свои трассы (их старые отрезки не мешают).
+func _unzig(pts: PackedVector2Array, ends: Array, skip: Array) -> PackedVector2Array:
 	for k in range(0, pts.size() - 3):
 		var s0 := pts[k + 1] - pts[k]
 		var j := pts[k + 2] - pts[k + 1]
@@ -3262,22 +3328,15 @@ func _unzig(e: int) -> bool:
 		if s0.length() < 0.5 or s2.length() < 0.5 or j.length() < 0.5 or s0.normalized().dot(s2.normalized()) < 0.99:
 			continue
 		for first: bool in [true, false]:
-			var cand := _zig_shift(e, pts, k, j, first)
-			if not cand.is_empty() and _route_free(e, pts, cand):
-				_set_route(e, cand)
-				_st_box[e] = _route_box(cand)
-				return true
-	return false
+			var cand := _zig_shift(ends, pts, k, j, first)
+			if not cand.is_empty() and _route_free(skip, ends, pts, cand):
+				return cand
+	return PackedVector2Array()
 
 
-## Узел трассы e у её начала (start) или конца: трасса идёт от _edge_a к _edge_b.
-func _route_end(e: int, _pts: PackedVector2Array, start: bool) -> int:
-	return _edge_a[e] if start else _edge_b[e]
-
-
-## Трасса без зигзага у k (first — сдвинуть кусок до шага на j, иначе кусок
+## Путь без зигзага у k (first — сдвинуть кусок до шага на j, иначе кусок
 ## после шага на -j) или [], если так нельзя.
-func _zig_shift(e: int, pts: PackedVector2Array, k: int, j: Vector2, first: bool) -> PackedVector2Array:
+func _zig_shift(ends: Array, pts: PackedVector2Array, k: int, j: Vector2, first: bool) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var last := pts.size() - 1
 	# конец, что сдвигается, и его сосед по отрезку вдоль j
@@ -3286,7 +3345,7 @@ func _zig_shift(e: int, pts: PackedVector2Array, k: int, j: Vector2, first: bool
 	var tip := pts[at] + move
 	var is_end := at == 0 or at == last
 	if is_end:
-		var n := _route_end(e, pts, at == 0)
+		var n: int = ends[0] if at == 0 else ends[1]
 		if _kind[n] == Kind.SITE:
 			var box := _node_rect(n)
 			var along := Vector2(absf(move.normalized().x), absf(move.normalized().y))
@@ -3319,11 +3378,10 @@ func _zig_shift(e: int, pts: PackedVector2Array, k: int, j: Vector2, first: bool
 
 ## Новые отрезки cand (которых не было в old) не задевают чужих рамок и
 ## колец и не подходят к чужим трассам ближе TRACE_GAP (у общего узла можно).
-func _route_free(e: int, old: PackedVector2Array, cand: PackedVector2Array) -> bool:
+func _route_free(skip: Array, ends: Array, old: PackedVector2Array, cand: PackedVector2Array) -> bool:
 	var had := {}
 	for k in old.size() - 1:
 		had[[old[k], old[k + 1]]] = true
-	var ends := [_edge_a[e], _edge_b[e]]
 	for k in cand.size() - 1:
 		var p := cand[k]
 		var q := cand[k + 1]
@@ -3343,7 +3401,7 @@ func _route_free(e: int, old: PackedVector2Array, cand: PackedVector2Array) -> b
 				return false
 		var near := seg.grow(float(TRACE_GAP) - 1.0)
 		for e2 in _routes.size():
-			if e2 == e or not near.intersects(_st_box[e2]):
+			if skip.has(e2) or not near.intersects(_st_box[e2]):
 				continue
 			var shared := -1
 			for m: int in [_edge_a[e2], _edge_b[e2]]:
