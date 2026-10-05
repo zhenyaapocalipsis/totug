@@ -115,16 +115,14 @@ func _init(first_run: bool = false) -> void:
 		# PROFILE): вкладки столбцом слева, страница справа (владелец, 2026-10-06).
 		var row := HBoxContainer.new()
 		row.set_anchors_preset(Control.PRESET_FULL_RECT)
-		row.add_theme_constant_override("separation", 6)
+		row.add_theme_constant_override("separation", SetupScreen.GAP)
 		add_child(row)
 		var tabs := VBoxContainer.new()
-		tabs.add_theme_constant_override("separation", 4)
+		tabs.add_theme_constant_override("separation", 2)
 		row.add_child(tabs)
 		row.add_child(VSeparator.new())
-		var centre := CenterContainer.new()
-		centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(centre)
-		centre.add_child(col)
+		# Страница прижата к левому верхнему углу, как разделы PLAY.
+		row.add_child(col)
 		var group := ButtonGroup.new()
 		# STATS первой и открыта сразу (решение владельца, 2026-09-28).
 		for tab: String in ["STATS", "EMBLEM", "CHAT", "COLLECTION"]:
@@ -232,6 +230,8 @@ func _init(first_run: bool = false) -> void:
 	_refresh_previews()
 	_refresh_counter()
 	_refresh_frames()
+	if _stats != null:
+		_show_tab(_page)
 
 
 ## Выбрать любимый цвет ("" — любой). Холст показывает герб на этом цвете.
@@ -414,26 +414,13 @@ func _save() -> void:
 		_saved_note.text = "Could not save the profile (error %d)." % err
 
 
-## Размеры страниц выравниваются, только когда экран уже в сцене и надписи
-## перемерены пиксельным шрифтом темы — поэтому на кадр позже.
-func _ready() -> void:
-	if _stats != null:
-		_show_tab.call_deferred(_page)
-
-
 ## page — STATS, EMBLEM, CHAT или COLLECTION.
 func _show_tab(page: String) -> void:
 	_page = page
 	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat, "COLLECTION": _collection}
-	# Окно не прыгает: все страницы одного размера — большей из них
-	# (решение владельца, 2026-09-30: и COLLECTION тоже).
-	var need := Vector2.ZERO
-	for p: Control in pages.values():
-		p.custom_minimum_size = Vector2.ZERO
-	for p: Control in pages.values():
-		need = need.max(p.get_combined_minimum_size())
+	# Окно меню постоянного размера, страницы не выравниваются — каждая
+	# своей высоты, SAVE сразу под ней (всё компактно, 2026-10-06).
 	for key: String in pages:
-		(pages[key] as Control).custom_minimum_size = need
 		(pages[key] as Control).visible = key == page
 	_buttons.visible = page == "EMBLEM" or page == "CHAT"
 	_saved_note.text = ""

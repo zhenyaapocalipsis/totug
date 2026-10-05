@@ -67,12 +67,11 @@ const SECTION_HINTS := {
 	PAGE_HOW_TO_PLAY: "Rules for beginners, page by page.",
 }
 
-const GAP := 6
-const TAB_HEIGHT := 20.0
+const GAP := 2
+const TAB_HEIGHT := 16.0
 ## Кнопки столбца слева — и в PLAY, и в профиле.
-const SIDE_BUTTON := Vector2(110, 22)
-const CORNER_BUTTON := Vector2(140, 24)
-const MENU_WIDTH := 400.0
+const SIDE_BUTTON := Vector2(80, 16)
+const CORNER_BUTTON := Vector2(90, 16)
 const BUTTON_SIZE := Vector2(90, 16)
 const DOT := 7.0
 ## Задник и патчноуты подключены файлом, а не по глобальному имени класса:
@@ -125,7 +124,7 @@ func _init(page: String = PAGE_ONLINE) -> void:
 	margin.add_child(col)
 
 	var title_bar := PanelContainer.new()
-	title_bar.add_theme_stylebox_override("panel", GameScreen.zone_style(4))
+	title_bar.add_theme_stylebox_override("panel", GameScreen.zone_style(1))
 	col.add_child(title_bar)
 	var title := Label.new()
 	# Заголовок — тот же шрифт ровно вдвое крупнее (пиксель остаётся квадратным).
@@ -201,15 +200,13 @@ func _show_tab(tab: String) -> void:
 
 func _build_news() -> Control:
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 4)
-	col.add_child(_heading("PATCH NOTES", PixelTheme.GOLD))
-	col.add_child(HSeparator.new())
+	col.add_theme_constant_override("separation", 2)
 	var notes := RichTextLabel.new()
 	notes.bbcode_enabled = true
 	notes.scroll_active = true
 	notes.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	notes.add_theme_color_override("default_color", PixelTheme.TEXT)
-	notes.add_theme_constant_override("line_separation", 2)
+	notes.add_theme_constant_override("line_separation", 0)
 	var list := PatchNotes.entries()
 	notes.text = PatchNotes.bbcode(list) if not list.is_empty() else "No patch notes yet."
 	col.add_child(notes)
@@ -222,7 +219,7 @@ func _build_play() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", GAP)
 	var side := VBoxContainer.new()
-	side.add_theme_constant_override("separation", 4)
+	side.add_theme_constant_override("separation", 2)
 	row.add_child(side)
 	var group := ButtonGroup.new()
 	for section: String in PLAY_SECTIONS:
@@ -241,17 +238,14 @@ func _build_play() -> Control:
 
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.add_theme_constant_override("separation", 4)
+	right.add_theme_constant_override("separation", 2)
 	row.add_child(right)
-	var centre := CenterContainer.new()
-	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.add_child(centre)
+	# Содержимое раздела прижато к левому верхнему углу (владелец: всё
+	# максимально компактно, 2026-10-06).
 	_col = VBoxContainer.new()
-	# Ширина постоянная: иначе содержимое (оно по центру) прыгало бы при
-	# смене описания режима.
-	_col.custom_minimum_size.x = MENU_WIDTH
-	_col.add_theme_constant_override("separation", 4)
-	centre.add_child(_col)
+	_col.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_col.add_theme_constant_override("separation", 2)
+	right.add_child(_col)
 
 	right.add_child(HSeparator.new())
 	var bottom := HBoxContainer.new()
@@ -284,7 +278,6 @@ func _show_section(section: String) -> void:
 		child.queue_free()
 	_mode_note = null
 	_dots = null
-	_add_title(SECTION_TITLES[section])
 	match section:
 		PAGE_LOBBY:
 			_build_lobby()
@@ -437,12 +430,8 @@ func _refresh_dots() -> void:
 
 ## Все настройки игры: громкость (как в меню по Esc) и полный экран (как F11).
 func _build_settings() -> Control:
-	var centre := CenterContainer.new()
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 4)
-	centre.add_child(col)
-	col.add_child(_heading("SETTINGS", PixelTheme.GOLD))
-	col.add_child(HSeparator.new())
+	col.add_theme_constant_override("separation", 2)
 	# Громкость: щелчок — следующая ступень (100 → 75 → 50 → 25 → OFF).
 	var sound := _setting_button(Sfx.volume_label())
 	sound.pressed.connect(func():
@@ -465,7 +454,7 @@ func _build_settings() -> Control:
 	col.add_child(screen)
 	col.add_child(HSeparator.new())
 	_add_dim_to(col, "Click a button for the next step.\nF11 or Alt+Enter: full screen or window.")
-	return centre
+	return col
 
 
 static func _screen_label() -> String:
@@ -476,8 +465,8 @@ static func _screen_label() -> String:
 func _setting_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(140, 18)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.custom_minimum_size = Vector2(100, 16)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_style_button(b)
 	return b
 
@@ -494,15 +483,6 @@ func _tab_button(text: String, ratio: float) -> Button:
 	return b
 
 
-func _add_title(text: String) -> void:
-	var title := Label.new()
-	title.text = text
-	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
-	title.add_theme_color_override("font_color", PixelTheme.GOLD)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_col.add_child(title)
-
-
 func _add_dim(text: String) -> Label:
 	return _add_dim_to(_col, text)
 
@@ -511,7 +491,7 @@ func _add_dim_to(parent: Control, text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	parent.add_child(label)
 	return label
 
@@ -520,7 +500,7 @@ func _heading(text: String, colour: Color = PixelTheme.TEXT_DIM) -> Label:
 	var label := GameScreen.section_label(text)
 	label.add_theme_color_override("font_color", colour)
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return label
 
 
@@ -533,7 +513,7 @@ func _button(text: String, hint: String, action: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = BUTTON_SIZE
-	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_style_button(b)
 	b.pressed.connect(action)
 	b.mouse_entered.connect(func(): _set_hint(hint))
@@ -561,8 +541,8 @@ func _pair(a: Control, b: Control) -> HBoxContainer:
 
 func _row(items: Array) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 2)
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	for item: Control in items:
 		row.add_child(item)
 	return row
