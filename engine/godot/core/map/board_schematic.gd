@@ -1480,6 +1480,11 @@ var _sp_ports_of: Dictionary = {}  # hex -> Array of port indices
 var _sp_zone := Vector2.ZERO
 var _sp_start_size := Vector2.ZERO   # доска до раздвигания (без полей картинки)
 var _grid_paths := {}      # port index -> путь от m_a до m_b (сетка 5x3, _grid_try)
+## Подложки сетки 5x3 (владелец, 2026-10-05): 15 одинаковых прямоугольников
+## на всю доску, щель PLATE_GAP между ними; SchematicPainter кладёт в каждый
+## пол и стену темы гекса. Нет сетки — нет подложек.
+const PLATE_GAP := 6.0
+var _plates := {}          # hex -> Rect2
 
 
 ## Сдвиг каждого гекса шагами JOG_MIN: тогда и вбок, и вдоль щели между
@@ -1560,7 +1565,7 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 
 	# Сетка 5x3 с трассами между гексами, проложенными заново (владелец,
 	# 2026-10-04); не легла — раздвигаем по-старому, мостиками-ступеньками.
-	if _grid_try(cell):
+	if _grid_try(cell, true) or _grid_try(cell, false):
 		return _sp_off
 	var outer: Array = []
 	for hex: String in hexes:
@@ -1830,9 +1835,10 @@ const GRID_MIN_GAP_X := 2.0
 ## выходит в неё и обходит свой гекс.
 const ROUTE_EDGE := 8.0
 
-func _grid_try(cell: Dictionary) -> bool:
+func _grid_try(cell: Dictionary, even_columns: bool) -> bool:
 	_grid_paths = {}
 	_grid_full = {}
+	_plates = {}
 	var slot := {}   # Vector2i(колонка, ряд) -> hex
 	for hex: String in cell:
 		var c: Vector2i = cell[hex]
@@ -1871,9 +1877,30 @@ func _grid_try(cell: Dictionary) -> bool:
 	var gap_x := (r.size.x - used) / 4.0
 	if gap_x < GRID_MIN_GAP_X:
 		return false
-	var lines_x: Array[float] = [r.position.x + first]
+	var packed: Array[float] = [r.position.x + first]
 	for c in 4:
-		lines_x.append(lines_x[c] + need[c] + gap_x)
+		packed.append(packed[c] + need[c] + gap_x)
+	# Подложки (_plates) одинаковые, и гекс стоит посередине своей: средние
+	# колонки — с шагом в подложку, крайние — как раньше, по краю доски. Не
+	# расходятся соседи — колонки понемногу съезжают к плотной раскладке. Не
+	# проложились так трассы — вторая попытка (even_columns false) плотная.
+	var pitch := r.size.x / 5.0
+	var even: Array[float] = packed.duplicate()
+	for c in range(1, 4):
+		even[c] = r.position.x + pitch * (c + 0.5)
+	var lines_x: Array[float] = packed
+	for step in (11 if even_columns else 0):
+		var t := step / 10.0
+		var mix: Array[float] = []
+		for c in 5:
+			mix.append(lerpf(even[c], packed[c], t))
+		var fits := true
+		for c in 4:
+			if mix[c + 1] - mix[c] < need[c] + GRID_MIN_GAP_X:
+				fits = false
+		if fits:
+			lines_x = mix
+			break
 
 	# по y: верх и низ — к краям, средний ряд — где самая узкая щель шире всего
 	var ykey := {}
@@ -1913,6 +1940,10 @@ func _grid_try(cell: Dictionary) -> bool:
 		_grid_paths = {}
 		_grid_full = {}
 		return false
+	var plate := (r.size - Vector2(4, 2) * PLATE_GAP) / Vector2(5, 3)
+	for key: Vector2i in slot:
+		var at := r.position + Vector2(key.x, key.y + 1) * (plate + Vector2(PLATE_GAP, PLATE_GAP))
+		_plates[slot[key]] = Rect2(at.round(), plate.round())
 	return true
 
 
@@ -3948,6 +3979,9 @@ func _extent() -> Rect2:
 		for p in points:
 			lo = lo.min(p)
 			hi = hi.max(p)
+	for plate: Rect2 in _plates.values():
+		lo = lo.min(plate.position)
+		hi = hi.max(plate.end)
 	return Rect2(lo, hi - lo)
 
 
@@ -4015,6 +4049,10 @@ func _export(state: GameState) -> Dictionary:
 	# трассы и рамки сами по себе от id и поворота плитки не зависят.
 	var hex_by_slot: Dictionary = state.layout.get("hex_by_slot", {})
 	var rotations: Dictionary = state.layout.get("rotations", {})
+	var plates := {}
+	for hex: String in _plates:
+		var plate: Rect2 = _plates[hex]
+		plates[hex] = [plate.position.x + shift.x, plate.position.y + shift.y, plate.size.x, plate.size.y]
 	var hexes := {}
 	for hex: String in _centre.keys():
 		hexes[hex] = {
@@ -4030,5 +4068,7 @@ func _export(state: GameState) -> Dictionary:
 		"fallback_routes": _fallback_routes,
 		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет
 		"a2_legend": a2_legend,
+		# подложки сетки 5x3: hex -> [x, y, w, h]; пусто без сетки
+		"plates": plates,
 	}
 
