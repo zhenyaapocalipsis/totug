@@ -1,21 +1,21 @@
 class_name SetupScreen
 extends Control
 
-## Главное меню — дерево коротких страниц, на каждой две-три большие кнопки
-## (решение владельца, 2026-09-26):
+## Главное меню по образцу Dota 2 (макет владельца, 2026-10-06):
 ##
-##   главная      — профиль сверху, PLAY, LIBRARY, QUIT;
-##   play         — ONLINE, HOTSEAT;
-##   hotseat      — режим рынка, сколько игроков, START GAME;
-##   online       — MATCHMAKING, LOBBY;
-##   matchmaking  — на сколько человек стол, FIND GAME (случайные соперники);
-##   lobby        — своя партия для друзей (CREATE ROOM / HOST BY IP)
-##                  и вход в чужую (JOIN BY CODE / JOIN BY IP);
-##   library      — HOW TO PLAY, CARDS (все карты игры).
+##   сверху полоса с названием игры;
+##   под ней строка кнопок NEWS, PROFILE, PLAY, SETTINGS, EXIT;
+##   ниже, на весь остаток экрана, окно с тем, что открыла кнопка:
+##     NEWS     — патчноуты: заголовки коммитов по дням (PatchNotes), прокрутка;
+##     PROFILE  — профиль (ProfileScreen): столбец STATS / EMBLEM / CHAT /
+##                COLLECTION слева;
+##     PLAY     — столбец ONLINE / LOBBY / HOTSEAT / HOW TO PLAY слева, большая
+##                кнопка в правом нижнем углу (SEARCH, CREATE ROOM, START, OPEN),
+##                рядом с ней строка-подсказка: что сделает кнопка под мышью;
+##     SETTINGS — громкость звуков и музыки, полный экран;
+##   EXIT закрывает игру.
 ##
-## Esc и BACK на вложенной странице возвращают на страницу выше
-## (PAGE_PARENTS). Под кнопками строка-подсказка: что сделает кнопка под мышью.
-##
+## Страница меню — вкладка или раздел PLAY (current_page, show_page).
 ## GameScreen получает уже готовый список цветов — экран партии ничего не
 ## знает про меню. Вёрстка кодом по той же причине, что и в game_screen.gd:
 ## .tscn в этом проекте правится вслепую, без редактора.
@@ -26,12 +26,8 @@ signal started(player_ids: Array[String], mode: String)
 ## "find" — поиск игры на сервере (режим по размеру стола: NetSession.match_mode),
 ## "resume" — вернуться в незаконченную онлайн-партию (NetSession.saved_game).
 signal online_requested(kind: String, player_count: int, mode: String)
-## Открыть профиль игрока (имя, герб, рубашка, статистика — ProfileScreen).
-signal profile_requested
 ## Открыть обучение для новичков (how_to_play_screen.gd).
 signal how_to_play_requested
-## Открыть библиотеку карт (card_library_screen.gd).
-signal cards_requested
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -48,59 +44,70 @@ const MODE_NOTES := {
 	"random6": "Market: 6 random half-decks, 20 cards of each aspect.",
 }
 
-const PAGE_MAIN := "main"
+## Вкладки (кнопки под названием).
+const PAGE_NEWS := "news"
+const PAGE_PROFILE := "profile"
 const PAGE_PLAY := "play"
-const PAGE_HOTSEAT := "hotseat"
+const PAGE_SETTINGS := "settings"
+const TABS: Array[String] = [PAGE_NEWS, PAGE_PROFILE, PAGE_PLAY, PAGE_SETTINGS]
+## Ширины кнопок вкладок и EXIT — доли, как на макете владельца.
+const TAB_RATIOS := {PAGE_NEWS: 2.1, PAGE_PROFILE: 3.0, PAGE_PLAY: 6.1, PAGE_SETTINGS: 3.4, "exit": 4.0}
+## Разделы PLAY (столбец слева в окне).
 const PAGE_ONLINE := "online"
-const PAGE_MATCHMAKING := "matchmaking"
 const PAGE_LOBBY := "lobby"
-const PAGE_LIBRARY := "library"
-## Куда ведут BACK и Esc с каждой вложенной страницы.
-const PAGE_PARENTS := {
-	PAGE_PLAY: PAGE_MAIN,
-	PAGE_HOTSEAT: PAGE_PLAY,
-	PAGE_ONLINE: PAGE_PLAY,
-	PAGE_MATCHMAKING: PAGE_ONLINE,
-	PAGE_LOBBY: PAGE_ONLINE,
-	PAGE_LIBRARY: PAGE_MAIN,
-}
-## Подсказка внизу страницы, пока мышь не над кнопкой.
-const PAGE_HINTS := {
-	PAGE_MAIN: "Point at a button to see what it does.",
-	PAGE_PLAY: "Point at a button to see what it does.",
-	PAGE_HOTSEAT: "The first player is drawn at random.",
-	PAGE_ONLINE: "Other players will see your name and emblem.",
-	PAGE_MATCHMAKING: "The game starts as soon as the table is full.",
-	PAGE_LOBBY: "Room code: through our server. IP: home network or Radmin VPN.",
-	PAGE_LIBRARY: "Point at a button to see what it does.",
+const PAGE_HOTSEAT := "hotseat"
+const PAGE_HOW_TO_PLAY := "how_to_play"
+const PLAY_SECTIONS: Array[String] = [PAGE_ONLINE, PAGE_LOBBY, PAGE_HOTSEAT, PAGE_HOW_TO_PLAY]
+const SECTION_TITLES := {PAGE_ONLINE: "ONLINE", PAGE_LOBBY: "LOBBY", PAGE_HOTSEAT: "HOTSEAT",
+	PAGE_HOW_TO_PLAY: "HOW TO PLAY"}
+const SECTION_HINTS := {
+	PAGE_ONLINE: "Play with random people who are looking for a game too.",
+	PAGE_LOBBY: "Create a room for friends or join theirs.",
+	PAGE_HOTSEAT: "2-4 players take turns at this computer.",
+	PAGE_HOW_TO_PLAY: "Rules for beginners, page by page.",
 }
 
-const BIG_BUTTON := Vector2(170, 22)
+const GAP := 6
+const TAB_HEIGHT := 20.0
+## Кнопки столбца слева — и в PLAY, и в профиле.
+const SIDE_BUTTON := Vector2(110, 22)
+const CORNER_BUTTON := Vector2(140, 24)
 const MENU_WIDTH := 400.0
 const BUTTON_SIZE := Vector2(90, 16)
 const DOT := 7.0
-## Задник экрана подключён файлом, а не по глобальному имени класса:
+## Задник и патчноуты подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
+const PatchNotes := preload("res://scenes/ui/patch_notes.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
 var _count: int = GameScreen.MIN_PLAYERS
-## На сколько человек искать стол (FIND GAME) — отдельно от своей комнаты.
+## На сколько человек искать стол (SEARCH) — отдельно от своей комнаты.
 var _match_count: int = GameScreen.MIN_PLAYERS
-var _page := PAGE_MAIN
-## Содержимое карточки меню — пересобирается при смене страницы.
+var _tab := PAGE_PLAY
+var _section := PAGE_ONLINE
+## Окно под кнопками и его содержимое по вкладкам (строится при первом показе).
+var _window: PanelContainer
+var _tabs: Dictionary = {}
+var _tab_buttons: Dictionary = {}
+var _section_buttons: Dictionary = {}
+## Содержимое раздела PLAY — пересобирается при смене раздела.
 var _col: VBoxContainer
-## Строка-подсказка внизу страницы (текст кнопки под мышью).
+## Строка-подсказка внизу окна PLAY (текст кнопки под мышью).
 var _hint: Label
 var _hint_default := ""
+## Большая кнопка в правом нижнем углу окна PLAY и что она делает.
+var _action: Button
+var _action_call := Callable()
+var _action_hint := ""
 ## Надписи и фишки, которые меняются вместе с выбором режима и игроков.
 var _mode_note: Label
 var _dots: HBoxContainer
 
 
-## page — с какой страницы открыть меню (возврат из обучения, лобби и т. п.).
-func _init(page: String = PAGE_MAIN) -> void:
+## page — какую вкладку или раздел PLAY открыть (возврат из обучения, лобби).
+func _init(page: String = PAGE_ONLINE) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 
@@ -108,129 +115,202 @@ func _init(page: String = PAGE_MAIN) -> void:
 	# ни доска, ни карты.
 	add_child(UnderdarkBg.make())
 
-	var centre := CenterContainer.new()
-	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(centre)
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, GAP)
+	add_child(margin)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", GAP)
+	margin.add_child(col)
 
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", GameScreen.zone_style(8))
-	centre.add_child(card)
+	var title_bar := PanelContainer.new()
+	title_bar.add_theme_stylebox_override("panel", GameScreen.zone_style(4))
+	col.add_child(title_bar)
+	var title := Label.new()
+	# Заголовок — тот же шрифт ровно вдвое крупнее (пиксель остаётся квадратным).
+	title.text = "TYRANTS OF THE UNDERDARK"
+	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	title.add_theme_color_override("font_color", PixelTheme.GOLD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_bar.add_child(title)
 
-	_col = VBoxContainer.new()
-	# Ширина постоянная: иначе окно (оно по центру) раздувалось бы и прыгало,
-	# когда под мышью меняется строка-подсказка или описание режима.
-	_col.custom_minimum_size.x = MENU_WIDTH
-	_col.add_theme_constant_override("separation", 4)
-	card.add_child(_col)
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", GAP)
+	col.add_child(bar)
+	var group := ButtonGroup.new()
+	for tab: String in TABS:
+		var b := _tab_button(tab.to_upper().replace("_", " "), TAB_RATIOS[tab])
+		b.toggle_mode = true
+		b.button_group = group
+		b.pressed.connect(_show_tab.bind(tab))
+		bar.add_child(b)
+		_tab_buttons[tab] = b
+	var quit := _tab_button("EXIT", TAB_RATIOS["exit"])
+	quit.pressed.connect(func(): get_tree().quit())
+	bar.add_child(quit)
+
+	_window = PanelContainer.new()
+	_window.add_theme_stylebox_override("panel", GameScreen.zone_style(GAP))
+	_window.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(_window)
 
 	show_page(page)
 
 
 func current_page() -> String:
-	return _page
+	return _section if _tab == PAGE_PLAY else _tab
 
 
+## Вкладка (PAGE_NEWS…) или раздел PLAY (PAGE_ONLINE…); PAGE_PLAY — последний
+## открытый раздел.
 func show_page(page: String) -> void:
-	_page = page
+	if PLAY_SECTIONS.has(page):
+		_section = page
+		_show_tab(PAGE_PLAY)
+	elif TABS.has(page):
+		_show_tab(page)
+	else:
+		_show_tab(PAGE_PLAY)
+
+
+func _show_tab(tab: String) -> void:
+	_tab = tab
+	if not _tabs.has(tab):
+		var content: Control
+		match tab:
+			PAGE_NEWS:
+				content = _build_news()
+			PAGE_PROFILE:
+				content = ProfileScreen.new()
+			PAGE_SETTINGS:
+				content = _build_settings()
+			_:
+				content = _build_play()
+		_tabs[tab] = content
+		_window.add_child(content)
+	for key: String in _tabs:
+		(_tabs[key] as Control).visible = key == tab
+	for key: String in _tab_buttons:
+		(_tab_buttons[key] as Button).set_pressed_no_signal(key == tab)
+	if tab == PAGE_PLAY:
+		_show_section(_section)
+
+
+# --- NEWS -------------------------------------------------------------------
+
+func _build_news() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	col.add_child(_heading("PATCH NOTES", PixelTheme.GOLD))
+	col.add_child(HSeparator.new())
+	var notes := RichTextLabel.new()
+	notes.bbcode_enabled = true
+	notes.scroll_active = true
+	notes.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	notes.add_theme_color_override("default_color", PixelTheme.TEXT)
+	notes.add_theme_constant_override("line_separation", 2)
+	var list := PatchNotes.entries()
+	notes.text = PatchNotes.bbcode(list) if not list.is_empty() else "No patch notes yet."
+	col.add_child(notes)
+	return col
+
+
+# --- PLAY -------------------------------------------------------------------
+
+func _build_play() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", GAP)
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 4)
+	row.add_child(side)
+	var group := ButtonGroup.new()
+	for section: String in PLAY_SECTIONS:
+		var b := Button.new()
+		b.text = SECTION_TITLES[section]
+		b.toggle_mode = true
+		b.button_group = group
+		b.custom_minimum_size = SIDE_BUTTON
+		_style_button(b)
+		b.pressed.connect(_show_section.bind(section))
+		b.mouse_entered.connect(func(): _set_hint(SECTION_HINTS[section]))
+		b.mouse_exited.connect(func(): _set_hint(_hint_default))
+		side.add_child(b)
+		_section_buttons[section] = b
+	row.add_child(VSeparator.new())
+
+	var right := VBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_theme_constant_override("separation", 4)
+	row.add_child(right)
+	var centre := CenterContainer.new()
+	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(centre)
+	_col = VBoxContainer.new()
+	# Ширина постоянная: иначе содержимое (оно по центру) прыгало бы при
+	# смене описания режима.
+	_col.custom_minimum_size.x = MENU_WIDTH
+	_col.add_theme_constant_override("separation", 4)
+	centre.add_child(_col)
+
+	right.add_child(HSeparator.new())
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", GAP)
+	right.add_child(bottom)
+	_hint = Label.new()
+	_hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bottom.add_child(_hint)
+	_action = Button.new()
+	_action.custom_minimum_size = CORNER_BUTTON
+	_style_button(_action)
+	_action.pressed.connect(func():
+		if _action_call.is_valid():
+			_action_call.call())
+	_action.mouse_entered.connect(func(): _set_hint(_action_hint))
+	_action.mouse_exited.connect(func(): _set_hint(_hint_default))
+	bottom.add_child(_action)
+	return row
+
+
+func _show_section(section: String) -> void:
+	_section = section
+	for key: String in _section_buttons:
+		(_section_buttons[key] as Button).set_pressed_no_signal(key == section)
 	for child in _col.get_children():
 		_col.remove_child(child)
 		child.queue_free()
 	_mode_note = null
 	_dots = null
-	match page:
-		PAGE_PLAY:
-			_build_play()
-		PAGE_HOTSEAT:
-			_build_hotseat()
-		PAGE_ONLINE:
-			_build_online()
-		PAGE_MATCHMAKING:
-			_build_matchmaking()
+	_add_title(SECTION_TITLES[section])
+	match section:
 		PAGE_LOBBY:
 			_build_lobby()
-		PAGE_LIBRARY:
-			_build_library()
+		PAGE_HOTSEAT:
+			_build_hotseat()
+		PAGE_HOW_TO_PLAY:
+			_build_how_to_play()
 		_:
-			_page = PAGE_MAIN
-			_build_main()
+			_build_online()
 
 
-## Esc и BACK: на страницу выше.
-func go_back() -> void:
-	if PAGE_PARENTS.has(_page):
-		show_page(PAGE_PARENTS[_page])
+## Большая кнопка в углу: надпись, подсказка и что делает.
+func _set_action(text: String, hint: String, action: Callable) -> void:
+	_action.text = text
+	_action_hint = hint
+	_action_call = action
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.keycode == KEY_ESCAPE \
-			and PAGE_PARENTS.has(_page):
-		go_back()
-		get_viewport().set_input_as_handled()
-
-
-# --- страницы ---------------------------------------------------------------
-
-func _build_main() -> void:
-	_add_title("TYRANTS OF THE UNDERDARK")
-	_col.add_child(_profile_row())
-	_col.add_child(HSeparator.new())
-
-	# Незаконченная онлайн-партия (игру закрыли или она упала) — вернуться в неё.
-	if not NetSession.saved_game().is_empty():
-		_col.add_child(_big_button("RETURN TO GAME", "Your online game is not over yet: go back to your seat.",
-			func(): online_requested.emit("resume", 0, "")))
-	_col.add_child(_big_button("PLAY", "Start a game: online or at this computer.",
-		func(): show_page(PAGE_PLAY)))
-	_col.add_child(_big_button("LIBRARY", "How to play and every card of the game.",
-		func(): show_page(PAGE_LIBRARY)))
-	_col.add_child(_big_button("QUIT", "Close the game.",
-		func(): get_tree().quit()))
-
-	_add_hint(PAGE_HINTS[_page])
-
-
-func _build_play() -> void:
-	_add_title("PLAY")
-	_col.add_child(HSeparator.new())
-	_col.add_child(_big_button("ONLINE", "Play over the internet or a home network.",
-		func(): show_page(PAGE_ONLINE)))
-	_col.add_child(_big_button("HOTSEAT", "2-4 players take turns at this computer.",
-		func(): show_page(PAGE_HOTSEAT)))
-	_col.add_child(HSeparator.new())
-	_col.add_child(_back_button())
-	_add_hint(PAGE_HINTS[_page])
-
-
-func _build_hotseat() -> void:
-	_add_title("HOTSEAT")
-	_add_dim("Players take turns at this computer.")
-	_col.add_child(HSeparator.new())
-	_add_game_options()
-	_col.add_child(HSeparator.new())
-
-	_col.add_child(_big_button("START GAME", "Deal the cards and begin.",
-		func(): started.emit(GameScreen.player_ids_for(_count), _mode)))
-	_col.add_child(_back_button())
-	_add_hint(PAGE_HINTS[_page])
-
-
-func _build_online() -> void:
-	_add_title("ONLINE")
-	_col.add_child(HSeparator.new())
-	_col.add_child(_big_button("MATCHMAKING", "Play with random people who are looking for a game too.",
-		func(): show_page(PAGE_MATCHMAKING)))
-	_col.add_child(_big_button("LOBBY", "Create a room for friends or join theirs.",
-		func(): show_page(PAGE_LOBBY)))
-	_col.add_child(HSeparator.new())
-	_col.add_child(_back_button())
-	_add_hint(PAGE_HINTS[_page])
+func _set_default_hint(text: String) -> void:
+	_hint_default = text
+	_set_hint(text)
 
 
 ## Поиск игры: случайные соперники, выбрать можно только, на сколько человек
 ## стол; режим маркета от него зависит (NetSession.match_mode).
-func _build_matchmaking() -> void:
-	_add_title("MATCHMAKING")
+func _build_online() -> void:
 	var market := _add_dim(_match_market_text())
 	_col.add_child(HSeparator.new())
 	var counts: Array = []
@@ -245,29 +325,29 @@ func _build_matchmaking() -> void:
 		counts.append(b)
 	_col.add_child(_heading("PLAYERS"))
 	_col.add_child(_row(counts))
-	_col.add_child(HSeparator.new())
-	_col.add_child(_big_button("FIND GAME", "Wait in line until enough players are found.",
-		func(): online_requested.emit("find", _match_count, NetSession.match_mode(_match_count))))
-	_col.add_child(_back_button())
-	_add_hint(PAGE_HINTS[_page])
+	# Незаконченная онлайн-партия (игру закрыли или она упала) — вернуться в неё.
+	if not NetSession.saved_game().is_empty():
+		_col.add_child(HSeparator.new())
+		var back := _button("RETURN TO GAME", "Your online game is not over yet: go back to your seat.",
+			func(): online_requested.emit("resume", 0, ""))
+		back.custom_minimum_size = SIDE_BUTTON
+		_col.add_child(back)
+	_set_default_hint("The game starts as soon as the table is full. Other players will see your name and emblem.")
+	_set_action("SEARCH", "Wait in line until enough players are found.",
+		func(): online_requested.emit("find", _match_count, NetSession.match_mode(_match_count)))
 
 
 func _match_market_text() -> String:
 	return "Random opponents. Market: %s." % MODE_TITLES[NetSession.match_mode(_match_count)]
 
 
-## Игра с друзьями: своя комната или вход в чужую.
+## Игра с друзьями: своя комната (CREATE ROOM в углу, HOST BY IP) или вход в чужую.
 func _build_lobby() -> void:
-	_add_title("LOBBY")
 	_col.add_child(HSeparator.new())
 	_col.add_child(_heading("NEW GAME WITH FRIENDS", PixelTheme.GOLD))
 	_add_game_options()
-	_col.add_child(_pair(
-		_button("CREATE ROOM", "Get a room code on our server and send it to friends.",
-			func(): online_requested.emit("create", _count, _mode)),
-		_button("HOST BY IP", "Home network or Radmin VPN: friends join by your IP.",
-			func(): online_requested.emit("host", _count, _mode))))
-
+	_col.add_child(_button("HOST BY IP", "Home network or Radmin VPN: friends join by your IP.",
+		func(): online_requested.emit("host", _count, _mode)))
 	_col.add_child(HSeparator.new())
 	_col.add_child(_heading("JOIN A FRIEND'S GAME", PixelTheme.GOLD))
 	_col.add_child(_pair(
@@ -275,22 +355,24 @@ func _build_lobby() -> void:
 			func(): online_requested.emit("join_code", 0, _mode)),
 		_button("JOIN BY IP", "Type the IP of the friend who pressed HOST BY IP.",
 			func(): online_requested.emit("join_ip", 0, _mode))))
+	_set_default_hint("Room code: through our server. IP: home network or Radmin VPN.")
+	_set_action("CREATE ROOM", "Get a room code on our server and send it to friends.",
+		func(): online_requested.emit("create", _count, _mode))
 
+
+func _build_hotseat() -> void:
+	_add_dim("Players take turns at this computer.")
 	_col.add_child(HSeparator.new())
-	_col.add_child(_back_button())
-	_add_hint(PAGE_HINTS[_page])
+	_add_game_options()
+	_set_default_hint("The first player is drawn at random.")
+	_set_action("START", "Deal the cards and begin.",
+		func(): started.emit(GameScreen.player_ids_for(_count), _mode))
 
 
-func _build_library() -> void:
-	_add_title("LIBRARY")
-	_col.add_child(HSeparator.new())
-	_col.add_child(_big_button("HOW TO PLAY", "Rules for beginners, page by page.",
-		func(): how_to_play_requested.emit()))
-	_col.add_child(_big_button("CARDS", "Every card of the game, half-deck by half-deck.",
-		func(): cards_requested.emit()))
-	_col.add_child(HSeparator.new())
-	_col.add_child(_back_button())
-	_add_hint(PAGE_HINTS[_page])
+func _build_how_to_play() -> void:
+	_add_dim("Rules for beginners, page by page:\nturns, cards, troops, spies and how to win.")
+	_set_default_hint("Arrows turn the pages, Esc brings you back here.")
+	_set_action("OPEN", "Open the rules.", func(): how_to_play_requested.emit())
 
 
 ## Режим рынка и число игроков — общие для hotseat и новой сетевой партии.
@@ -351,37 +433,68 @@ func _refresh_dots() -> void:
 		_dots.add_child(dot)
 
 
-## Своя фишка с гербом, имя (щелчок — профиль) и камень звания. Звание,
-## рейтинг и рубашка карт — внутри профиля (решение владельца, 2026-09-28).
-func _profile_row() -> Control:
-	var local := PlayerProfile.load_local()
-	var colour := String(local["colour"])
-	var icon := ProfileScreen.token_icon(colour if colour != "" else "red", String(local["emblem"]))
-	var name_button := Button.new()
-	name_button.text = String(local["name"]) if String(local["name"]) != "" else "No name yet"
-	name_button.flat = true
-	name_button.focus_mode = Control.FOCUS_NONE
-	name_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	name_button.add_theme_color_override("font_color", PixelTheme.TEXT)
-	name_button.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
-	name_button.add_theme_color_override("font_pressed_color", PixelTheme.GOLD)
-	name_button.pressed.connect(func(): profile_requested.emit())
-	name_button.mouse_entered.connect(func(): _set_hint("Your profile: name, emblem, card back, rank and last games."))
-	name_button.mouse_exited.connect(func(): _set_hint(_hint_default))
-	var parts: Array[Control] = [icon, name_button]
-	# Звание онлайн-партий — каким его сервер сообщил в последний раз.
-	var rating := PlayerProfile.cached_rating()
-	if rating >= 0:
-		parts.append(ProfileScreen.rank_badge(rating))
-	var row := _row(parts)
-	row.add_theme_constant_override("separation", 6)
-	return row
+# --- SETTINGS ---------------------------------------------------------------
+
+## Все настройки игры: громкость (как в меню по Esc) и полный экран (как F11).
+func _build_settings() -> Control:
+	var centre := CenterContainer.new()
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	centre.add_child(col)
+	col.add_child(_heading("SETTINGS", PixelTheme.GOLD))
+	col.add_child(HSeparator.new())
+	# Громкость: щелчок — следующая ступень (100 → 75 → 50 → 25 → OFF).
+	var sound := _setting_button(Sfx.volume_label())
+	sound.pressed.connect(func():
+		Sfx.cycle_volume()
+		sound.text = Sfx.volume_label())
+	col.add_child(sound)
+	var music := _setting_button(Music.volume_label())
+	music.pressed.connect(func():
+		Music.cycle_volume()
+		music.text = Music.volume_label())
+	col.add_child(music)
+	var screen := _setting_button(_screen_label())
+	screen.pressed.connect(func():
+		var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(
+			DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
+		screen.text = _screen_label())
+	# F11 и Alt+Enter переключают экран и мимо этой кнопки.
+	screen.visibility_changed.connect(func(): screen.text = _screen_label())
+	col.add_child(screen)
+	col.add_child(HSeparator.new())
+	_add_dim_to(col, "Click a button for the next step.\nF11 or Alt+Enter: full screen or window.")
+	return centre
+
+
+static func _screen_label() -> String:
+	var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	return "SCREEN: FULL" if full else "SCREEN: WINDOW"
+
+
+func _setting_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(140, 18)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_style_button(b)
+	return b
 
 
 # --- мелкие детали вёрстки ---------------------------------------------------
 
+func _tab_button(text: String, ratio: float) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.size_flags_stretch_ratio = ratio
+	b.custom_minimum_size.y = TAB_HEIGHT
+	_style_button(b)
+	return b
+
+
 func _add_title(text: String) -> void:
-	# Заголовок — тот же шрифт ровно вдвое крупнее (пиксель остаётся квадратным).
 	var title := Label.new()
 	title.text = text
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
@@ -391,11 +504,15 @@ func _add_title(text: String) -> void:
 
 
 func _add_dim(text: String) -> Label:
+	return _add_dim_to(_col, text)
+
+
+func _add_dim_to(parent: Control, text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_col.add_child(label)
+	parent.add_child(label)
 	return label
 
 
@@ -407,28 +524,9 @@ func _heading(text: String, colour: Color = PixelTheme.TEXT_DIM) -> Label:
 	return label
 
 
-func _add_hint(default_text: String) -> void:
-	_col.add_child(HSeparator.new())
-	_hint_default = default_text
-	_hint = _add_dim(default_text)
-	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
-
 func _set_hint(text: String) -> void:
 	if _hint != null and is_instance_valid(_hint):
 		_hint.text = text
-
-
-func _big_button(text: String, hint: String, action: Callable) -> Control:
-	var b := _button(text, hint, action)
-	b.custom_minimum_size = BIG_BUTTON
-	return b
-
-
-func _back_button() -> Control:
-	var b := _button("BACK", "One step back (Esc).", go_back)
-	b.custom_minimum_size = Vector2(70, 16)
-	return b
 
 
 func _button(text: String, hint: String, action: Callable) -> Button:

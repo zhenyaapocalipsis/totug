@@ -14,7 +14,11 @@ extends Control
 ##
 ## Вкладка COLLECTION — образы карт, рубашки и фон: лутбоксы, пыль, создание и выбор
 ## (CollectionPage, SkinCollection).
+##
+## Обычный профиль — содержимое окна главного меню (вкладка PROFILE), без
+## своего задника; при первом запуске — отдельный экран с кнопкой CREATE.
 
+## Профиль сохранён (при первом запуске после этого открывается меню).
 signal closed
 
 ## Палитра DawnBringer 32 — классический набор для пиксель-арта; любой другой
@@ -62,6 +66,8 @@ var _collection: CollectionPage
 var _colour := ""
 var _frames: Dictionary = {}
 var _any_button: Button
+## SAVE с чертой над ним — виден только на вкладках, где есть что сохранять.
+var _buttons: VBoxContainer
 
 
 ## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
@@ -69,7 +75,6 @@ func _init(first_run: bool = false) -> void:
 	_first_run = first_run
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
-	add_child(UnderdarkBg.make())
 
 	var local := PlayerProfile.load_local()
 	_pixels = PlayerProfile.emblem_pixels(String(local["emblem"]))
@@ -77,23 +82,24 @@ func _init(first_run: bool = false) -> void:
 	if _colour != "":
 		_seat = _colour
 
-	var centre := CenterContainer.new()
-	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(centre)
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
-	centre.add_child(card)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 4)
-	card.add_child(col)
-
-	var title := Label.new()
-	title.text = "CREATE YOUR PROFILE" if _first_run else "PLAYER PROFILE"
-	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
-	title.add_theme_color_override("font_color", PixelTheme.GOLD)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(title)
 	if _first_run:
+		# Первый запуск: отдельный экран — задник и окно по центру.
+		add_child(UnderdarkBg.make())
+		var centre := CenterContainer.new()
+		centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(centre)
+		var card := PanelContainer.new()
+		card.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
+		centre.add_child(card)
+		card.add_child(col)
+		var title := Label.new()
+		title.text = "CREATE YOUR PROFILE"
+		title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+		title.add_theme_color_override("font_color", PixelTheme.GOLD)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(title)
 		var welcome := Label.new()
 		welcome.text = "Welcome! Choose a name and draw your emblem."
 		welcome.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
@@ -105,10 +111,20 @@ func _init(first_run: bool = false) -> void:
 	_look = VBoxContainer.new()
 	_look.add_theme_constant_override("separation", 4)
 	if not _first_run:
-		var tabs := HBoxContainer.new()
-		tabs.alignment = BoxContainer.ALIGNMENT_CENTER
-		tabs.add_theme_constant_override("separation", 6)
-		col.add_child(tabs)
+		# Обычный профиль живёт в окне главного меню (SetupScreen, вкладка
+		# PROFILE): вкладки столбцом слева, страница справа (владелец, 2026-10-06).
+		var row := HBoxContainer.new()
+		row.set_anchors_preset(Control.PRESET_FULL_RECT)
+		row.add_theme_constant_override("separation", 6)
+		add_child(row)
+		var tabs := VBoxContainer.new()
+		tabs.add_theme_constant_override("separation", 4)
+		row.add_child(tabs)
+		row.add_child(VSeparator.new())
+		var centre := CenterContainer.new()
+		centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(centre)
+		centre.add_child(col)
 		var group := ButtonGroup.new()
 		# STATS первой и открыта сразу (решение владельца, 2026-09-28).
 		for tab: String in ["STATS", "EMBLEM", "CHAT", "COLLECTION"]:
@@ -116,6 +132,7 @@ func _init(first_run: bool = false) -> void:
 			b.toggle_mode = true
 			b.button_group = group
 			b.button_pressed = tab == "STATS"
+			b.custom_minimum_size = SetupScreen.SIDE_BUTTON
 			tabs.add_child(b)
 			_tab_buttons.append(b)
 		_stats = _stats_page()
@@ -201,14 +218,12 @@ func _init(first_run: bool = false) -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_look.add_child(hint)
 
-	col.add_child(HSeparator.new())
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 6)
-	col.add_child(buttons)
-	buttons.add_child(_button("CREATE" if _first_run else "SAVE", _save))
-	if not _first_run:
-		buttons.add_child(_button("CANCEL", func(): closed.emit()))
+	_buttons = VBoxContainer.new()
+	_buttons.add_theme_constant_override("separation", 4)
+	col.add_child(_buttons)
+	_buttons.add_child(HSeparator.new())
+	var save := _button("CREATE" if _first_run else "SAVE", _save)
+	_buttons.add_child(save)
 	_saved_note = Label.new()
 	_saved_note.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_saved_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -393,6 +408,7 @@ func _save() -> void:
 	if err == OK and not _phrase_edits.is_empty():
 		err = PlayerProfile.save_phrases(phrases())
 	if err == OK:
+		_saved_note.text = "Saved."
 		closed.emit()
 	else:
 		_saved_note.text = "Could not save the profile (error %d)." % err
@@ -419,6 +435,8 @@ func _show_tab(page: String) -> void:
 	for key: String in pages:
 		(pages[key] as Control).custom_minimum_size = need
 		(pages[key] as Control).visible = key == page
+	_buttons.visible = page == "EMBLEM" or page == "CHAT"
+	_saved_note.text = ""
 	if _collection.visible:
 		_collection.refresh()
 	for b: Button in _tab_buttons:

@@ -12,7 +12,6 @@ extends Control
 ## Файлом, а не глобальным именем класса: так экран виден и без кэша редактора.
 const HowToPlayScreen := preload("res://scenes/ui/how_to_play_screen.gd")
 const TutorialOfferScreen := preload("res://scenes/ui/tutorial_offer_screen.gd")
-const CardLibraryScreen := preload("res://scenes/ui/card_library_screen.gd")
 
 
 func _ready() -> void:
@@ -60,33 +59,19 @@ func _show_tutorial_offer(game_seed: int) -> void:
 
 ## Главное меню. Сюда же возвращает кнопка MAIN MENU из меню по Esc; новая
 ## партия получает новый сид. page — какую страницу меню открыть (возврат
-## из обучения, библиотеки карт и лобби — туда, откуда пришли).
-func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_MAIN) -> void:
+## из обучения и лобби — туда, откуда пришли).
+func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void:
 	_close_net()
 	PlayerProfile.seats = {}
 	_clear()
 	var setup := SetupScreen.new(page)
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
 	setup.online_requested.connect(_show_lobby)
-	setup.profile_requested.connect(func(): _show_profile(game_seed))
-	setup.how_to_play_requested.connect(func(): _show_how_to_play(game_seed, SetupScreen.PAGE_LIBRARY))
-	setup.cards_requested.connect(func():
-		_clear()
-		var cards: Control = CardLibraryScreen.new()
-		cards.closed.connect(func(): _show_setup(game_seed, SetupScreen.PAGE_LIBRARY))
-		add_child(cards))
+	setup.how_to_play_requested.connect(func(): _show_how_to_play(game_seed, SetupScreen.PAGE_HOW_TO_PLAY))
 	add_child(setup)
 
 
-## Профиль из главного меню (рубашки и фон — в его вкладке COLLECTION).
-func _show_profile(game_seed: int) -> void:
-	_clear()
-	var profile := ProfileScreen.new()
-	profile.closed.connect(func(): _show_setup(game_seed))
-	add_child(profile)
-
-
-func _show_how_to_play(game_seed: int, back_page: String = SetupScreen.PAGE_MAIN) -> void:
+func _show_how_to_play(game_seed: int, back_page: String = SetupScreen.PAGE_ONLINE) -> void:
 	_clear()
 	var learn: Control = HowToPlayScreen.new()
 	learn.closed.connect(func(): _show_setup(game_seed, back_page))
@@ -110,8 +95,7 @@ func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STA
 	get_tree().root.add_child(net)
 	net.game_started.connect(_start_net_game)
 	var lobby := LobbyScreen.new(net, kind, count, mode)
-	var back_page: String = {"find": SetupScreen.PAGE_MATCHMAKING, "resume": SetupScreen.PAGE_MAIN}.get(
-		kind, SetupScreen.PAGE_LOBBY)
+	var back_page: String = SetupScreen.PAGE_ONLINE if kind in ["find", "resume"] else SetupScreen.PAGE_LOBBY
 	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system()), back_page))
 	add_child(lobby)
 

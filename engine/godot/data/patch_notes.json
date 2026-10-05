@@ -1,0 +1,1126 @@
+[
+	{
+		"date": "2026-10-05",
+		"text": "Stage Plates-off: grid plates removed (owner, 2026-10-05)"
+	},
+	{
+		"date": "2026-10-05",
+		"text": "Stage Plates-1: 15 equal themed plates under the 5x3 grid (4 players)"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-10: traces routed whole from city to city, rings placed on them afterwards"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-9: a trace across a hex seam is straightened whole, meeting point placed anew"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-8: traces enter a ring only through its centre; zigzags straightened"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-7: a bend costs 128 cells of route, search counts unavoidable bends"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-6: a trace may enter a ring up to RING_R off its centre"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-5: in-hex hooked traces and fork seams rerouted, ring exits read right"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-4: traces across a hex seam routed whole, ring or city to ring or city"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-3: no tiny steps where two hexes meet slightly off-line"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-2: hexes snap to a true 5x3 grid, bridges between them routed anew"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Grid-1: board as a 5x3 grid of hexes, edge cities on one line, strips for prompt and counter"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Fill-1: ring hexes move out into the empty corners of the board"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Zones-off: tiled hex zones removed (owner, 2026-10-04)"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Zones-3: hex zones tile the whole board, as in the owner's sketch"
+	},
+	{
+		"date": "2026-10-04",
+		"text": "Stage Zones-2: every city stands on its own hex zone; groups spread evenly around the centre"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Zones-1: every hex stands on its own zone of themed floor with a tiled wall rim"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Spread-3: marker cities aligned top and bottom, room for the Power/Influence counter, ring around the centre spread apart"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Spread-2: corner hexes go to the board corners, ring hexes a bit further out"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Spread-1: 4-player board fills its zone by spreading whole hexes apart"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Cave-2: board back to the plain schematic (Cave-1 reverted)"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Mini-1: before/after screenshots of the 4-player screen"
+	},
+	{
+		"date": "2026-10-03",
+		"text": "Stage Mini-1: mini cards 58x84 with face crops; right column fits 4 players"
+	},
+	{
+		"date": "2026-10-01",
+		"text": "Stage Cave-1: the board is one underdark dungeon under the schematic"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Stage Loot-6: shaders are collection items applied to the whole deck; SHADERS tab; CARDS kept for alternative arts"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Card back: wavy vortex closer to the reference - dark base, broken bright strands in bundles, rippling toward the corners; clean rounded frame corners"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Card back: one for everyone - Yu-Gi-Oh style vortex in the card's main colour"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Card backs: pixel-art vortex in the Yu-Gi-Oh style - glowing spiral streaks around a black hole, faction colour, own twist per faction"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Card backs: abstract geometric patterns, no symbols, no shader"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Stage Loot-5: card backs share the card colour and are tiled with faction symbols, shimmer shader, rotatable preview, favourite card"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Card backs: dark minimal style (Balatro-like) - faction colour, muted rounded frame, one small symbol"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Stage Loot-4: COLLECTION with CARDS by faction, CARD BACKS (ULTRA) and BACKGROUNDS; drawing editors removed"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Stage Loot-3: COLLECTION tab in the profile (open loot boxes, craft skins for dust, switch a card's skin)"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Stage Loot-2: card skin shader (EPIC Faerie Fire, LEGENDARY gilded, ULTRA prism) shown on cards players bought"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Stage Loot-1: card skin collection, dust and loot boxes awarded by matchmaking place"
+	},
+	{
+		"date": "2026-09-30",
+		"text": "Fix: VP bank makes change and never runs dry, Deploy for 1 VP under the Power counter, site boxes no longer stick together"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Fix: Banshee gives 3 Power (not Influence) when another player's spy is at the site"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Matchmaking: market mode by table size (2 - STANDARD, 3 - new RANDOM 3, 4 - RANDOM 4)"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: Balatro-style pitch ladder per turn, owner's 5-version soundtrack crossfaded by mood, deal and card hover sounds"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Sound-4: adaptive layered background music (Balatro-style) with muffle in Esc menu"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Fix: Carrion Crawler no longer returns the devoured card to the market deck; hint toast no longer grows to full screen"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: one sample per sound (files renamed to <name>.ogg)"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: Kenney samples replace all synthesized sounds (turn, victory, defeat, error, hover), new ping and chat phrase"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Sound-3: turn chime, last round, victory/defeat, chat ping and phrase"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: site capture rings a light metal plate instead of the bell"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Sound-2: board sounds (deploy, spy, assassinate, supplant, return, capture)"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: skip leading silence in samples (card play hit was 0.25-0.4 s late)"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: card play keeps the two most similar samples (card-place-3/4)"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Sound: single fixed button click"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Sound-1b: Kenney CC0 samples for click, card play and recruit"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Sound-1: synthesized SFX (buttons, card play, recruit, refusals) and volume in Esc menu"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Site boxes: free pixel between the slot circles and the bottom frame"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Troop tokens sit exactly on the painted slot circle (pixel-centre offset fix)"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Chat-3: Cyrillic in names and chat phrases"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Chat-2: round ping centre"
+	},
+	{
+		"date": "2026-09-29",
+		"text": "Stage Chat-1: Tab ping and chat wheel"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Vertical spine captions: MOVES on the left of the move feed, DECKTRACKER on the left of the deck tracker; move feed on the zone panel like the tracker, turn blocks in solid player colours (no transparency); board zone 598"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Players table: all of a player's numbers on one line under the header (VP HD DK DS IC, then the trophy hall with an extra gap), name alone on the line above"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Players table: TROPHY renamed HALL, hall numbers pulled up to the label (3 px, as between numbers); player token raised so its centre lines up with the name and the numbers"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Deck tracker full height between the move feed and the board; right column narrowed to the market width; players table two lines per player (numbers, then trophy hall under the name), current player on a lighter band; tracker lays out its cards on ready (resized never came when the size was set before entering the tree); showcase hit test uses the click position, not the live cursor"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Deck tracker: deck and discard left of the market as a cost-sorted ladder with a floating DISCARD divider; market pushed right, column +16 px (board zone 620, still 1:1); DISCARD button removed, INNER/DEVOUR and a narrower End turn under the market; owner's view carries the deck composition sorted by id (protocol 9)"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI test: choosing a target player by clicking the name selects the player and does not open the profile card"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Profile: fix a line joined by mistake in the tab size equalising (parse error)"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Profile: STATS tab first and open by default, EMBLEM second; page sizes equalised one frame after opening"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Profile STATS: average VP by source with bars, half-decks with win rate, records (server sends the VP breakdown with the rating); click a player's name in the lobby or the players table for their card (rank, rating, games, wins)"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Background: choice moved into the profile (BACKGROUND screen) with a painter for MY DRAWING (160x90, brush sizes, fill, colour pick, undo); XP clouds use a sin-free hash (no cut-off edges), brown path removed"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Backgrounds: BACKGROUND button in the main menu and the Esc menu cycles CLASSIC / BLACK / ORANGE IS NEW BLACK / WINDOWS XP (pixel-art hill and clouds drawn by a shader); choice saved in the profile, every open screen repaints at once"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Profile: favourite seat colour (or ANY); online rooms and matchmaking seat you there unless someone chose it first, hotseat gives it to the first seat; protocol 8"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Menu: click your name to open the profile; only the rank gem stays next to it; CARD BACK moved into the profile (returns there when closed)"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Profile: STATS tab with rank, rating, games/wins/win rate and the last 10 online games; rank gem next to names in menu and lobby"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "A2 legend: tiers shown as 1-3 dots; troops tier lit for every qualifying player alongside the control holder"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "A2 bonus: Power/Influence paid as soon as a tier is reached; feed rows for A2 and control-marker income; A2 frame with tier legend laid out on the board; web icon for Influence"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: control-marker sites show +1 Influence and crown +N VP icons left of the troops, black until controlled, then in the owner's colour; hover tooltip"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Revert control-marker tabs (c1801e0, 0908155, 5ba8b6c): back to the board before them"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Board: marker sites keep side clearance for their tabs so neighbours move away (Great Web no longer crowded)"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: marker tabs pick a mirrored spot (sides, above or below corners) that clears neighbouring sites, tunnels and rings"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: control-marker sites show tabs - left +1 Influence for control, right crown +N VP for total control, with hover tooltip"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: turn timer starts at 2:00 (+10s per action, max 5:00)"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: turn timer starts at 1:00 and grows +10s per played card or card question, max 5:00"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "Rules: card Deploy with empty barracks gives 1 VP per undeployed troop"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: new kill animations - assassinate cracks in two, supplant sinks in a shadow pool"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: hovering an action row in the turn feed highlights it on the board"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: crossed swords instead of the aim over a killed troop"
+	},
+	{
+		"date": "2026-09-28",
+		"text": "UI: assassinate/supplant animation - aim, strike, trophy flight"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Tests: final round with 4 players, trigger from every seat"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Fix: final round ends after the last player in turn order, not before the trigger player"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Fix: update check stuck on 2560x1440 - SharpScale reparent silently cancelled the HTTPRequest; updater now resends it"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: SharpScale stays off on the headless server"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: sharp bilinear scaling for non-integer screens (2560x1440): no black bars, even pixels"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: controlled sites filled with the owner's colour (30%, total control 60%); ui_shot scenario \"control\""
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Net: pause on disconnect, abandon after 5 min, pause for all, RETURN TO GAME"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: during starting-site setup the turn timer, the label above it and the > marker follow the player who is picking (was stuck on the first player); each pick gets its own full timer and is auto-chosen at zero"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: Insane Outcasts from one card shown as a row of big cards, one per receiver with its own \"RED RECRUITS Г—2\" plate; each flies to its receiver"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: Insane Outcasts from one card get one showcase (\"EACH OPPONENT RECRUITS Г—2\"), copies fly to every receiver at once"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Tests: ui_shot scenario \"outcasts\" (Ghoul + Demogorgon, --players=4 --decks=demons,undead); default cursor moved off the turn feed"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: Insane Outcasts given by card effects get the showcase animation (\"RED RECRUITS\", big card, flies to the receiver's discard/barracks); ui_shot --decks= option"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: turn feed shows an Insane Outcast returned to the supply instead of devour/promote (TO SUPPLY group)"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: turn feed shows Insane Outcasts given by card effects (OUTCAST group, label in the receiver's colour); ui_shot scenario \"feed\""
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Fix: starting-site strip could stretch to 683 px and invisibly cover the board, eating clicks; its height now follows its content"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: chat and log removed; turn feed runs to the screen bottom with DISCARDED group and action lines (DEPLOY, KILL with victim colours, SPY, +VP); hints pop up above the Power/Influence counter"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: end turn by holding Space for 3 seconds (fill bar on the End turn button); a plain Space press no longer ends the turn"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: enemy spies are returned only by clicking the spy itself; site click, whose-spy popup and site outline for spy targets removed"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: click a spy diamond to return exactly that spy; returnable spies get their own ring (site-name popup stays as fallback)"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: when several enemy spies stand at a site, a popup asks whose spy to return (3-Power action and card effects)"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: troop token with the player's emblem before each nick in the players table; right column +11 px for it"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: starting site prompt moved from the players table to the strip above the board, pulsing in the player's colour"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: right column +42 px more for the name column - 12-letter nick plus turn marker fits"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: right column +15 px so four two-digit trophy counts fit in the normal font; market centred; board never zooms above 1:1"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: trophy numbers switch to the small 3x5 font when a hall does not fit (4 players, two-digit counts); tighter trophy frames"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: trophy hall choice (Orcus, Lich) by clicking trophy numbers in the players table; drop the token window"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: player choice frames in the players table pulse"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: choose a player by clicking their row in the players table - no window, no dim"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: Inner Circle devour (Zuggtmoy) and discard promote (Matron Mother) chosen in the hand row"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: Inner Circle choice (Elder Brain) in the hand row - dim hand, gap, gold Inner Circle cards (replaces the second row)"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: Inner Circle choice (Elder Brain) as a second row above the hand - hand stays visible"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: decision prompt waits for the card showcase to finish - no double dim"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: free recruit and play-from-market chosen on the market; Inner Circle choice shown in place of the hand, no dim"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: promote from hand chosen in the hand, market devour chosen on the market; discard prompt names the discarding player in their colour and pulses"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: discard/devour from hand is chosen in the hand itself - no window, no dim; forced discard names who made you discard"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: pile window without frame, centred title and Close; Waiting for X without frame and dim; board no longer shifts under decision strip"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "Cards: Ravenous Zombies +1 Power, Wight +2 Power; assassinate prompt shows white troops left (Quaggoth)"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: turn banner, pulsing End turn / WAITING in other players' turns, taskbar flash online; counter frame invisible"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: big centred Power/Influence above the hand, coloured trophy digits in the players table"
+	},
+	{
+		"date": "2026-09-27",
+		"text": "UI: chat in the bottom-left corner, players table under barracks, Power/Influence above the hand"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РїР»Р°С€РєР° РіРѕСЂРѕРґР° СЃ РјР°СЂРєРµСЂРѕРј вЂ” СЃРІРµС‚Р»Рѕ-Р·РѕР»РѕС‚Р°СЏ, Р° РЅРµ С‚С‘РјРЅР°СЏ (С‚С‘РјРЅС‹Рµ вЂ” СЃС‚Р°СЂС‚РѕРІС‹Рµ)"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РіРѕСЂРѕРґР° СЃ РјР°СЂРєРµСЂРѕРј РєРѕРЅС‚СЂРѕР»СЏ вЂ” С‚С‘РјРЅРѕ-Р·РѕР»РѕС‚Р°СЏ РїР»Р°С€РєР° РІ Р·РѕР»РѕС‚РѕР№ СЂР°РјРєРµ С‚РѕР»С‰РёРЅРѕР№ 2"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РµРґРёРЅРѕРµ Р·Р°С‚РµРјРЅРµРЅРёРµ СЌРєСЂР°РЅР° PixelTheme.DIM (0.92) РґР»СЏ РІСЃРµС… РѕРєРѕРЅ, РјРµРЅСЋ Рё РІРёС‚СЂРёРЅС‹"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РїРѕР»РЅР°СЏ РєР°СЂС‚Р° РїРѕ РЅР°РІРµРґРµРЅРёСЋ вЂ” С‚РѕР»СЊРєРѕ Сѓ СЂС‹РЅРєР° Рё СЃРІРѕРґРєРё С…РѕРґРѕРІ; Alt вЂ” РІРµР·РґРµ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РІРёС‚СЂРёРЅР° Р·Р°С‚РµРјРЅСЏРµС‚ РІРµСЃСЊ СЌРєСЂР°РЅ, Р° РЅРµ С‚РѕР»СЊРєРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РґРѕСЃРєРё"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: С„РёС€РєР° СЃРѕРїРµСЂРЅРёРєР° РЅР° РѕРґРЅРѕРј СѓСЂРѕРІРЅРµ СЃ РёРјРµРЅРµРј (РїРѕРїСЂР°РІРєР° РЅР° CAPS_SHIFT РїРёРєСЃРµР»СЊРЅРѕРіРѕ С€СЂРёС„С‚Р°)"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РІС‹Р±РѕСЂ СЃРѕРїРµСЂРЅРёРєР° вЂ” С„РёС€РєР° СЃ СЌРјР±Р»РµРјРѕР№ Сѓ РёРјРµРЅРё; Lich СЃРїСЂР°С€РёРІР°РµС‚ РєРѕСЂРѕС‚РєРѕ В«Whose trophy hall?В»"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Tools: СЃРЅРёРјРѕРє РѕРєРЅР° РІРѕРїСЂРѕСЃР° вЂ” --pick=С‚РµРєСЃС‚ РІС‹Р±РёСЂР°РµС‚ РІР°СЂРёР°РЅС‚ РїРѕ id РёР»Рё РЅР°Р·РІР°РЅРёСЋ Р»РѕРєР°С†РёРё"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: С„РёС€РєРё РІ РѕРєРЅРµ С‚СЂРѕС„РµР№РЅРѕРіРѕ Р·Р°Р»Р° вЂ” РєР°СЂС‚РёРЅРєР° СЃ РґРѕСЃРєРё, СЃ СЌРјР±Р»РµРјРѕР№ С…РѕР·СЏРёРЅР° РІРѕР№СЃРєР°"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РІР·СЏС‚СЊ РІРѕР№СЃРєРѕ РёР· С‚СЂРѕС„РµР№РЅРѕРіРѕ Р·Р°Р»Р° вЂ” С„РёС€РєРё РїРѕ Р·Р°Р»Р°Рј РЅР° Р·Р°С‚РµРјРЅС‘РЅРЅРѕРј СЌРєСЂР°РЅРµ, Skip, СЃС‡С‘С‚С‡РёРє (1 of 2); СЃРІРѕР№ Р·Р°Р» РЅРµ РїСЂРµРґР»Р°РіР°РµС‚СЃСЏ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Tools: СЃРЅРёРјРѕРє РѕРєРЅР° РІРѕРїСЂРѕСЃР° вЂ” --trophies РєР»Р°РґС‘С‚ РІРѕР№СЃРєР° РІ С‚СЂРѕС„РµР№РЅС‹Рµ Р·Р°Р»С‹ (Orcus, Lich)"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: White Wyrmling Рё Cult Fanatic СЃСЂР°Р·Сѓ РїРѕРєР°Р·С‹РІР°СЋС‚ РєР°СЂС‚С‹ СЂС‹РЅРєР° РґР»СЏ Devour (СЃ Skip); РІС‹Р±РѕСЂ РЅР° СЂС‹РЅРєРµ вЂ” СЃРµС‚РєРѕР№ РєР°СЂС‚"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РІРѕРїСЂРѕСЃ СЃ С†РµР»СЊСЋ РЅР° РґРѕСЃРєРµ вЂ” РєСЂСѓРїРЅС‹Р№ С‚РµРєСЃС‚ Р±РµР· СЂР°РјРєРё РїРѕ С†РµРЅС‚СЂСѓ; В«You mayВ» вЂ” РєР°СЂС‚Р° Рё Skip, РєР°Рє Сѓ Promote"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Tools: СЃРЅРёРјРѕРє РѕРєРЅР° РІРѕРїСЂРѕСЃР° РєР°СЂС‚С‹ вЂ” --pick=N РѕС‚РІРµС‡Р°РµС‚ РЅР° РІРѕРїСЂРѕСЃС‹ РїРѕ РїРѕСЂСЏРґРєСѓ, --wait=N Р¶РґС‘С‚ РїСЂРѕСЏРІР»РµРЅРёСЏ, РІРѕРїСЂРѕСЃ Р·Р°РґР°С‘С‚СЃСЏ РїРѕСЃР»Рµ РІС…РѕРґР° СЌРєСЂР°РЅР° РІ РґРµСЂРµРІРѕ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: СЂРёСЃРѕРІР°Р»РєР° СЂСѓР±Р°С€РєРё РєР°СЂС‚ вЂ” СЂРёСЃСѓРЅРѕРє 32x32 РІ С†РµРЅС‚СЂРµ СЂСѓР±Р°С€РєРё, РІРёРґРµРЅ СЃРѕРїРµСЂРЅРёРєР°Рј"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: С‚Р°Р№РјРµСЂ РѕС‚РІРµС‚Р° РЅР° С‡СѓР¶СѓСЋ РєР°СЂС‚Сѓ вЂ” 30 СЃРµРєСѓРЅРґ, РїРѕ РЅСѓР»СЋ РѕС‚РІРµС‚ РІС‹Р±РёСЂР°РµС‚СЃСЏ СЃР°Рј"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Fix: С‚Р°Р№РјРµСЂ С…РѕРґР° СЃС‚РѕРёС‚, РїРѕРєР° РЅР° РІРѕРїСЂРѕСЃ РєР°СЂС‚С‹ РѕС‚РІРµС‡Р°РµС‚ РґСЂСѓРіРѕР№ РёРіСЂРѕРє"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: CARDS вЂ” РїРѕР»РЅС‹Рµ РєР°СЂС‚С‹ 1:1 РїРѕ РїСЏС‚СЊ РІ СЂСЏРґ СЃ РїСЂРѕРєСЂСѓС‚РєРѕР№"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РјРµРЅСЋ РґРµСЂРµРІРѕРј вЂ” PLAY/LIBRARY/QUIT, ONLINE/HOTSEAT, MATCHMAKING/LOBBY; РЅРѕРІС‹Р№ СЌРєСЂР°РЅ CARDS"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Fix: С‚РµСЃС‚С‹ Р±РѕР»СЊС€Рµ РЅРµ РїРёС€СѓС‚ РІ РЅР°СЃС‚РѕСЏС‰РёР№ РїСЂРѕС„РёР»СЊ РёРіСЂРѕРєР°"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: РЅР°РІРµРґРµРЅРёРµ РЅР° Р»СЋР±СѓСЋ РєР°СЂС‚Сѓ вЂ” РїРѕР»РЅР°СЏ РєР°СЂС‚Р° РїРѕ С†РµРЅС‚СЂСѓ РІ СЂРѕРґРЅРѕРј СЂР°Р·РјРµСЂРµ; Alt вЂ” РєСЂСѓРїРЅРµРµ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: СЃРІРѕРґРєР° С…РѕРґРѕРІ вЂ” РіСЂСѓРїРїС‹ РІ РїРѕСЂСЏРґРєРµ PLAYED/PROMOTED/BOUGHT/DEVOURED, СЂР°РјРєР° С…РѕРґР° С†РІРµС‚Р° РёРіСЂРѕРєР°"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: СЃРІРѕРґРєР° С…РѕРґРѕРІ вЂ” СЃС‹РіСЂР°РЅРЅС‹Рµ РєР°СЂС‚С‹ Р»РµСЃРµРЅРєРѕР№; РґР»РёРЅРЅРѕРµ РёРјСЏ Р±РµР· 'S TURN"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: СЃРІРѕРґРєР° С…РѕРґРѕРІ Р±РµР· СЂР°РјРєРё; РЅР°РІРµРґРµРЅРёРµ РЅР° РµС‘ РєР°СЂС‚Сѓ вЂ” РїРѕР»РЅР°СЏ РєР°СЂС‚Р° РїРѕ С†РµРЅС‚СЂСѓ Р±РµР· Alt"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "UI: Р±РµСЃРєРѕРЅРµС‡РЅР°СЏ СЃРІРѕРґРєР° С…РѕРґРѕРІ вЂ” РїРѕСЃС‚РѕСЏРЅРЅР°СЏ РєРѕР»РѕРЅРєР° СЃР»РµРІР° РѕС‚ РґРѕСЃРєРё"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: СЃРІРѕРґРєР° С…РѕРґРѕРІ СЃРѕРїРµСЂРЅРёРєРѕРІ вЂ” РєРѕР»РѕРЅРєРѕР№ Сѓ Р»РµРІРѕРіРѕ РєСЂР°СЏ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: СЃРІРѕРґРєР° С…РѕРґРѕРІ СЃРѕРїРµСЂРЅРёРєРѕРІ РЅР°Рґ СЂСѓРєРѕР№ РІ РЅР°С‡Р°Р»Рµ СЃРІРѕРµРіРѕ С…РѕРґР°"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: РІРёС‚СЂРёРЅР° РєР°СЂС‚ вЂ” С‡СѓР¶РёРµ РїРѕРєСѓРїРєРё, РїСЂРѕРјРѕСѓС‚ Рё devour РєСЂСѓРїРЅРѕ РЅР°Рґ РґРѕСЃРєРѕР№"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: РїРѕР»С‘С‚С‹ С„РёС€РµРє РґР»СЏ Move (СЃ РјРµСЃС‚Р° РЅР° РјРµСЃС‚Рѕ) Рё Return (РѕР±СЂР°С‚РЅРѕ РІ Р±Р°СЂР°Рє)"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: Р·Р°С…РІР°С‚ Р»РѕРєР°С†РёРё РІСЃРїС‹С…РёРІР°РµС‚ РїРѕСЃР»Рµ РїРѕСЃР°РґРєРё РІРѕР№СЃРєР°, Р° РЅРµ РґРѕ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: РІРµСЃ РїРѕР»С‘С‚Р° РёР· Р±Р°СЂР°РєР° вЂ” РїРѕРґСЃРєРѕРє, СЂР°Р·РіРѕРЅ, СЃС‚РѕРї-РєР°РґСЂ Рё СѓРґР°СЂ РЅР° РїРѕСЃР°РґРєРµ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: РїРѕР»С‘С‚ РёР· Р±Р°СЂР°РєР° Рё РїСЂРё РґРµРїР»РѕРµ Р·Р° Power (СЃРѕР±С‹С‚РёРµ deploy)"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Anim: РІРѕР№СЃРєР° Рё С€РїРёРѕРЅС‹ РІС‹Р»РµС‚Р°СЋС‚ РёР· Р±Р°СЂР°РєР° РЅР° РґРѕСЃРєСѓ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Menu: РїРѕСЃС‚РѕСЏРЅРЅР°СЏ С€РёСЂРёРЅР° РѕРєРЅР° вЂ” РЅРµ РїСЂС‹РіР°РµС‚ РїСЂРё РЅР°РІРµРґРµРЅРёРё РЅР° РєРЅРѕРїРєРё"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Unique names: РїСЂРѕРІРµСЂРєР° РёРјРµРЅРё Рё РІ РѕС‡РµСЂРµРґРё FIND GAME (РїРѕСЃР»Рµ СЃР»РёСЏРЅРёСЏ СЃ РјР°С‚С‡РјРµР№РєРёРЅРіРѕРј)"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Unique names: СЃРµСЂРІРµСЂ РЅРµ РїСѓСЃРєР°РµС‚ РёРіСЂРѕРєР° СЃ С‡СѓР¶РёРј РёРјРµРЅРµРј"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Matchmaking: FIND GAME вЂ” РѕС‡РµСЂРµРґСЊ РЅР° 2/3/4 РёРіСЂРѕРєР°, СЃС‚РѕР» RANDOM 4"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Menu: NEWBY -> NEWBIE"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Menu: РїРµСЂРІС‹Р№ РїСЂРѕС„РёР»СЊ РїСЂРё Р·Р°РїСѓСЃРєРµ, РІРѕРїСЂРѕСЃ РїСЂРѕ РѕР±СѓС‡РµРЅРёРµ, РЅРѕРІРѕРµ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Download link: deploy.sh uploads the game zip to the server"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage 7 fix: PROTOCOL 4 вЂ” РІС…РѕРґ РІ РєРѕРјРЅР°С‚Сѓ С‚РµРїРµСЂСЊ РЅРµСЃС‘С‚ РєР»СЋС‡ РїСЂРѕС„РёР»СЏ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage 8: 4 РёРіСЂРѕРєР° РїРѕ СЃРµС‚Рё"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage 7: СЃРѕС…СЂР°РЅРµРЅРёРµ РїР°СЂС‚РёРё Рё РїРµСЂРµРїРѕРґРєР»СЋС‡РµРЅРёРµ"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage Auto-Update: РёРіСЂР° СЃР°РјР° СЃРєР°С‡РёРІР°РµС‚ РЅРѕРІСѓСЋ РІРµСЂСЃРёСЋ СЃ СЃРµСЂРІРµСЂР° (nginx, game.pck + version.txt), deploy.sh РІС‹РєР»Р°РґС‹РІР°РµС‚ РµС‘ Рё РїРµСЂРµСЃРѕР±РёСЂР°РµС‚ GAME online"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Server docs: РіРґРµ Р»РµР¶Р°С‚ СЂРµР№С‚РёРЅРіРё, deploy РёС… РЅРµ С‚СЂРѕРіР°РµС‚"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage Rating-1 release: СЃРµСЂРІРµСЂ РѕР±РЅРѕРІР»С‘РЅ (PROTOCOL 3), РЅРѕРІР°СЏ СЃР±РѕСЂРєР° exe, README РїСЂРѕ СЂРµР№С‚РёРЅРі"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage Rating-1: СЂРµР№С‚РёРЅРі Р­Р»Рѕ РѕРЅР»Р°Р№РЅ-РїР°СЂС‚РёР№ РЅР° СЃРµСЂРІРµСЂРµ (РєР»СЋС‡ РёРіСЂРѕРєР°, РёС‚РѕРіРё, Р»РѕР±Р±Рё, РјРµРЅСЋ), PROTOCOL 3"
+	},
+	{
+		"date": "2026-09-26",
+		"text": "Stage Game-End-2: РёС‚РѕРіРё Р±РµР· СЂР°РјРєРё, РєРѕР»РѕРґС‹ РёРіСЂРѕРєРѕРІ Р»РµСЃРµРЅРєРѕР№ РїРѕ СѓРіР»Р°Рј СЌРєСЂР°РЅР°"
+	},
+	{
+		"date": "2026-09-25",
+		"text": "Stage Game-End-Screen: РёС‚РѕРіРё РїР°СЂС‚РёРё РїРѕСЃР»Рµ GAME OVER вЂ” СЃС‡С‘С‚ РїРѕ СЃС‚Р°С‚СЊСЏРј, РїРѕР±РµРґРёС‚РµР»СЊ, VIEW BOARD / MAIN MENU"
+	},
+	{
+		"date": "2026-09-25",
+		"text": "Stage Tutorial-1: HOW TO PLAY РІ РіР»Р°РІРЅРѕРј РјРµРЅСЋ вЂ” 14 СЃС‚СЂР°РЅРёС† РїРѕ РѕСЃРЅРѕРІРЅРѕР№ РєРЅРёРіРµ РїСЂР°РІРёР» СЃ РєР°СЂС‚Р°РјРё Рё РјРёРЅРё-РґРѕСЃРєРѕР№ РёР· РёРіСЂС‹"
+	},
+	{
+		"date": "2026-09-25",
+		"text": "Stage Profile-3: С‚С‘РјРЅС‹Р№ РѕР±РѕРґРѕРє С„РёС€РєРё РІРµСЂРЅСѓР»Рё; РіРµСЂР± РЅРµР»СЊР·СЏ Р·Р°РєСЂР°СЃРёС‚СЊ С†РµР»РёРєРѕРј (РјРёРЅРёРјСѓРј 12 РїРёРєСЃРµР»РµР№ С†РІРµС‚Р° РјРµСЃС‚Р°)"
+	},
+	{
+		"date": "2026-09-25",
+		"text": "Stage Profile-2: РѕР±РѕРґРѕРє С„РёС€РєРё вЂ” РІСЃРµРіРґР° С†РІРµС‚ РјРµСЃС‚Р°, РіРµСЂР± РµРіРѕ РЅРµ Р·Р°РєСЂР°С€РёРІР°РµС‚"
+	},
+	{
+		"date": "2026-09-25",
+		"text": "Stage Profile-1: РїСЂРѕС„РёР»СЊ РёРіСЂРѕРєР° вЂ” РёРјСЏ Рё РіРµСЂР±, РїРёРєСЃРµР»СЊРЅС‹Р№ СЂРµРґР°РєС‚РѕСЂ РЅР° С„РёС€РєРµ РІРѕР№СЃРєР° 9x9"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Server-3: СЃР±РѕСЂРєР° TyrantsOfTheUnderdark.exe РґР»СЏ РёРіСЂС‹ РѕРЅР»Р°Р№РЅ (GAME online/, Р°СЂС…РёРІ РґР»СЏ РґСЂСѓРіР°)"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Schematic-Speed: С‡РµСЂС‚С‘Р¶ РґРѕСЃРєРё РІ 5 СЂР°Р· Р±С‹СЃС‚СЂРµРµ, РЅР° СЃРµСЂРІРµСЂРµ вЂ” РІ С„РѕРЅРµ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Server-2: СЃРµСЂРІРµСЂ РІ РёРЅС‚РµСЂРЅРµС‚Рµ (VPS 129.101.123.70, systemd-СЃР»СѓР¶Р±Р° tyrants, UDP 7780)"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Server-1: РІС‹РґРµР»РµРЅРЅС‹Р№ СЃРµСЂРІРµСЂ СЃ РєРѕРјРЅР°С‚Р°РјРё РїРѕ РєРѕРґСѓ (-- --server, UDP 7780)"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage 6 UPnP-Fix: СЂРѕСѓС‚РµСЂ РёС‰РµРј С‡РµСЂРµР· РєР°Р¶РґСѓСЋ СЃРµС‚РµРІСѓСЋ РєР°СЂС‚Сѓ (РЅРµ С‡РµСЂРµР· С‚СѓРЅРЅРµР»СЊ VPN), СЃРµСЂС‹Р№ Р°РґСЂРµСЃ РїСЂРѕРІР°Р№РґРµСЂР° РЅР°Р·С‹РІР°РµРј РїСЂСЏРјРѕ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage 6 UPnP: С…РѕСЃС‚ СЃР°Рј РїСЂРѕСЃРёС‚ СЂРѕСѓС‚РµСЂ РѕС‚РєСЂС‹С‚СЊ РїРѕСЂС‚ 7777 Рё РїРѕРєР°Р·С‹РІР°РµС‚ РёРЅС‚РµСЂРЅРµС‚-Р°РґСЂРµСЃ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage 6 Network: РёРіСЂР° РїРѕ СЃРµС‚Рё вЂ” HOST 2/3/4 Рё JOIN РїРѕ IP (ENet, РїРѕСЂС‚ 7777), Р»РѕР±Р±Рё, С…РѕРґС‹ Рё С‡Р°С‚ С‡РµСЂРµР· С…РѕСЃС‚Р°"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Button-Text-Centre: РЅР°РґРїРёСЃРё РЅР° РєРЅРѕРїРєР°С… РїРѕ С†РµРЅС‚СЂСѓ РїРѕ РІС‹СЃРѕС‚Рµ (СЃРґРІРёРі РЅР° 2 px РїРѕРґ Р·Р°РіР»Р°РІРЅС‹Рµ)"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Pause-Menu-Fix: РїРѕРґРєР»СЋС‡РµРЅРѕ РјРµРЅСЋ РїРѕ Esc Рё РєРЅРѕРїРєР° QUIT GAME (РїСЂРѕС€Р»С‹Р№ РєРѕРјРјРёС‚ СЃРѕРґРµСЂР¶Р°Р» С‚РѕР»СЊРєРѕ pause_menu.gd)"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Pause-Menu: РјРµРЅСЋ РїРѕ Esc (РіР»Р°РІРЅРѕРµ РјРµРЅСЋ / РІС‹С…РѕРґ), РєРЅРѕРїРєР° QUIT GAME РІ РіР»Р°РІРЅРѕРј РјРµРЅСЋ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Players-Menu-Trophies: РјРµРЅСЋ Tab Р±РµР· Power/Influence/Troops/Spies, С‚СЂРѕС„РµРё С†РёС„СЂР°РјРё РїРѕ С†РІРµС‚Р°Рј"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Marker-Influence-Now: Influence Р·Р° РјР°СЂРєРµСЂ РєРѕРЅС‚СЂРѕР»СЏ СЃСЂР°Р·Сѓ РїСЂРё РІР·СЏС‚РёРё РєРѕРЅС‚СЂРѕР»СЏ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Hint-Pulse: РїРѕРґСЃРєР°Р·РєРё РЅР° РґРѕСЃРєРµ РјРµСЂС†Р°СЋС‚ Рё РѕР±РІРµРґРµРЅС‹ С‚С‘РјРЅС‹Рј РєРѕРЅС‚СѓСЂРѕРј"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Centre-Tiles: РІ С†РµРЅС‚СЂРµ РґРѕСЃРєРё С‚РѕР»СЊРєРѕ A1, A2, A3 Рё A9 (Wells of Darkness)"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Game-Modes-Bg: С„РѕРЅ РїР°СЂС‚РёРё РєСЂР°СЃРёС‚СЃСЏ РїРѕ РІСЃРµРј РїРѕР»СѓРєРѕР»РѕРґР°Рј СЂРµР¶РёРјР°"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Game-Modes: СЂРµР¶РёРјС‹ STANDARD, DOUBLE, RANDOM 4, RANDOM 6"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Conscription-Officer-Art: Р°СЂС‚ РѕР±СЂРµР·Р°РЅ Р±РµР· Р·РЅР°С‡РєР° Р°СЃРїРµРєС‚Р°"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Conscription-Officer: РІ СЃС‚Р°СЂС‚РѕРІРѕР№ РєРѕР»РѕРґРµ РѕРґРёРЅ Noble Р·Р°РјРµРЅС‘РЅ РЅР° Conscription Officer"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Full-Cards-VP: VP РЅР° РїРѕР»РЅРѕР№ РєР°СЂС‚Рµ С‚Р°РєРёРјРё Р¶Рµ РїР»Р°С€РєР°РјРё, РєР°Рє РЅР° РјРµР»РєРѕР№"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Layout-24c: СЃС‹РіСЂР°РЅРЅС‹Рµ РєР°СЂС‚С‹ Р»РµСЃРµРЅРєРѕР№ РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё, Р±Р°СЂР°РєРё РЅР° 4 РёРіСЂРѕРєР° РІ РѕРґРЅСѓ СЃС‚СЂРѕРєСѓ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Fix: РєР°СЂС‚С‹ РІ РѕРєРЅРµ РІС‹Р±РѕСЂР° СЃРЅРѕРІР° РЅР°Р¶РёРјР°СЋС‚СЃСЏ вЂ” Р·Р°С‚РµРјРЅРµРЅРёРµ РЅРµ РїРµСЂРµС…РІР°С‚С‹РІР°РµС‚ РєР»РёРєРё"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Dim-4: РІС‹Р±РѕСЂ СЃРѕРїРµСЂРЅРёРєР° вЂ” Р±РµР· СЂР°РјРєРё, РєСЂСѓРїРЅРѕ РїРѕ С†РµРЅС‚СЂСѓ, РёРјРµРЅР° С†РІРµС‚РѕРј РёРіСЂРѕРєР°, Р·Р°С‚РµРјРЅРµРЅРёРµ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Dim-3: Р±РµР· Р·РѕР»РѕС‚С‹С… СЂР°РјРѕРє РІ РІС‹Р±РѕСЂРµ РєР°СЂС‚, Skip вЂ” РѕРґРЅР° РЅР°РґРїРёСЃСЊ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Dim-2: РІС‹Р±РѕСЂ РєР°СЂС‚С‹ (devour/promote/discard) Р±РµР· СЂР°РјРєРё, РІРѕРїСЂРѕСЃ РїРѕ С†РµРЅС‚СЂСѓ РєСЂСѓРїРЅРѕ"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Dim: Р·Р°С‚РµРјРЅРµРЅРёРµ СЌРєСЂР°РЅР° РїСЂРё РІС‹Р±РѕСЂРµ РєР°СЂС‚С‹"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Cards-3: РѕРєРЅРѕ РєР°СЂС‚-РІР°СЂРёР°РЅС‚РѕРІ РїСЂРѕР·СЂР°С‡РЅРѕРµ, РІРѕРїСЂРѕСЃ Рё or РїРѕ С†РµРЅС‚СЂСѓ РєСЂСѓРїРЅС‹Рј С€СЂРёС„С‚РѕРј"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Cards-2: РєР°СЂС‚С‹-РІР°СЂРёР°РЅС‚С‹ РїРѕР»РЅРѕРіРѕ СЂР°Р·РјРµСЂР° 176x254 СЃ РЅР°Р·РІР°РЅРёРµРј РІР°СЂРёР°РЅС‚Р°"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Choice-Cards: Choose one вЂ” РїРѕР»РЅРѕС„РѕСЂРјР°С‚РЅС‹Рµ РєР°СЂС‚С‹ (Р°СЂС‚ + С‚РµРєСЃС‚ РІР°СЂРёР°РЅС‚Р°) СЃ or РјРµР¶РґСѓ РЅРёРјРё"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Card-Choice: РІС‹Р±РѕСЂ РєР°СЂС‚С‹ (promote/discard) вЂ” СЃРµС‚РєР° РјРёРЅРё-РєР°СЂС‚ РІРјРµСЃС‚Рѕ СЃРїРёСЃРєР° СЃС‚СЂРѕРє"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Mini-Cards-2: С€Р°РїРєР° РјРµР»РєРѕР№ РєР°СЂС‚С‹ С†РІРµС‚Р° СЂР°РјРєРё, С†РµРЅР°/Р°СЃРїРµРєС‚/VP СЃРїСЂР°РІР°, РїРµСЂРµРЅРѕСЃС‹ РїРѕ СЃР»РѕРіР°Рј"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Fix-Carrion: Carrion Crawler РґР°С‘С‚ +3 Power, Р° РЅРµ Influence"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Layout-24b: СЂС‹РЅРѕРє РІ РґРІРµ РєРѕР»РѕРЅРєРё"
+	},
+	{
+		"date": "2026-09-24",
+		"text": "Stage Layout-24: РїСЂР°РІР°СЏ РєРѕР»РѕРЅРєР° (Р±Р°СЂР°РєРё, СЃС‹РіСЂР°РЅРЅС‹Рµ, СЂС‹РЅРѕРє, РєРЅРѕРїРєРё), РґРѕСЃРєР° СЃР»РµРІР°, РїСЂРѕР·СЂР°С‡РЅР°СЏ СЂСѓРєР°, Alt-РєР°СЂС‚Р° РїРѕ С†РµРЅС‚СЂСѓ"
+	},
+	{
+		"date": "2026-09-23",
+		"text": "Stage Bg-Pixel-3: С„РѕРЅ С‚РµС‡С‘С‚ РїР»Р°РІРЅРѕ, Р±РµР· СЂС‹РІРєРѕРІ"
+	},
+	{
+		"date": "2026-09-23",
+		"text": "Stage Bg-Pixel-2: РїРёРєСЃРµР»СЊ С„РѕРЅР° СЂР°РІРµРЅ РїРёРєСЃРµР»СЋ РёРіСЂС‹"
+	},
+	{
+		"date": "2026-09-23",
+		"text": "Stage Bg-Pixel: С„РѕРЅ РјРµРЅСЋ Рё РїР°СЂС‚РёРё РјРµРґР»РµРЅРЅРµРµ Рё РІ РїРёРєСЃРµР»СЊ-Р°СЂС‚Рµ"
+	},
+	{
+		"date": "2026-09-23",
+		"text": "Stage HexArt-1: Р·Р°РіРѕС‚РѕРІРєР° С„РѕРЅР° РіРµРєСЃРѕРІ + РѕР±СЉРµРєС‚С‹ РїР°СѓРє/РіСЂРёР±С‹ (PixelLab)"
+	},
+	{
+		"date": "2026-09-23",
+		"text": "Stage Board-7: РєРѕР»РѕРЅРєР° СЂС‹РЅРєР° СЂР°РІРЅР° РєРѕР»РѕРЅРєРµ СЃС‹РіСЂР°РЅРЅС‹С… РєР°СЂС‚"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Board-6: РїСЂСЏРјС‹Рµ СѓРіР»С‹ С‚СЂР°СЃСЃ, СЃРєСЂСѓРіР»С‘РЅРЅС‹Рµ, Рё РіРµРєСЃС‹ РїРѕ Р·РѕР»РѕС‚РѕРјСѓ СЃРµС‡РµРЅРёСЋ"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Board-5: РґРѕСЃРєР° РїРѕРґ СЌРєСЂР°РЅ 960x540 вЂ” РєСЂСѓРїРЅС‹Р№ С€СЂРёС„С‚ Рё С†РµР»С‹Р№ РјР°СЃС€С‚Р°Р±"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Layout-1: РЅРѕРІС‹Р№ РјР°РєРµС‚ СЌРєСЂР°РЅР° 960x540"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Board-4: РґРѕРІРѕРґРєР° РІСЃРµР№ РґРѕСЃРєРё РїСЂРё СЃС‚Р°СЂС‚Рµ РїР°СЂС‚РёРё"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Board-3: СЃС…РµРјР° СѓР¶Р°С‚Р° РґРѕ С€Р°РіР° 48 вЂ” РґРѕСЃРєР° РЅР° С‡РµС‚РІРµСЂС‹С… 1:1"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Board-2: РїРѕРґРїРёСЃРё РЅР° РґРѕСЃРєРµ С€СЂРёС„С‚РѕРј 3x5, РєСѓСЃРєРё СЃС…РµРјС‹ РїРµСЂРµСЃС‡РёС‚Р°РЅС‹"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Stage Board-1: С‚СѓРїРёРєРѕРІС‹Рµ РєРѕР»СЊС†Р° С‚СѓРЅРЅРµР»РµР№ СѓР±СЂР°РЅС‹ РёР· РёРіСЂС‹"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "Р’РѕР·РІСЂР°С‚ Рє СЃРѕСЃС‚РѕСЏРЅРёСЋ a0c2f88 (РїРѕ СЂРµС€РµРЅРёСЋ РІР»Р°РґРµР»СЊС†Р°)"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "РљР°СЂС‚Р° РїРѕ Р°СЂС‚Сѓ: СЃРІСЏР·Рё РїРѕ 45 РіСЂР°РґСѓСЃРѕРІ Р±РµР· РµРґРёРЅРѕРіРѕ РїРµСЂРµСЃРµС‡РµРЅРёСЏ"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "РљР°СЂС‚Р° РїРѕ Р°СЂС‚Сѓ: С‚РµСЃРЅС‹Рµ С‚Р°Р№Р»С‹ СЂР°Р·РґРІРёРіР°СЋС‚СЃСЏ, Р»СѓС‡С€РёР№ РёР· РґРІСѓС… СЃРїРѕСЃРѕР±РѕРІ"
+	},
+	{
+		"date": "2026-09-22",
+		"text": "РљР°СЂС‚Р° РїРѕ Р°СЂС‚Сѓ РїРµС‡Р°С‚РЅРѕРіРѕ РїРѕР»СЏ: РЅРѕР»СЊ РїРµСЂРµСЃРµС‡РµРЅРёР№ РїРѕ РїРѕСЃС‚СЂРѕРµРЅРёСЋ"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "Р”РµСЂРµРІРѕ РґРѕРІРµРґРµРЅРѕ РґРѕ СѓРјР° Рё РІСЃС‘ СЂР°РІРЅРѕ РїСЂРѕРёРіСЂС‹РІР°РµС‚: РїСЂРёС‡РёРЅР° РЅР°Р№РґРµРЅР°"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "Р Р°СЃРєР»Р°РґРєР° РґРµСЂРµРІРѕРј: СЃРґРµР»Р°РЅР°, РїСЂРѕРІРµСЂРµРЅР°, РѕРєР°Р·Р°Р»Р°СЃСЊ С…СѓР¶Рµ РїСЂСѓР¶РёРЅ"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "Р Р°СЃРєР»Р°РґРєР° РёР· РіСЂР°С„Р°: РїСЂСѓР¶РёРЅРЅР°СЏ РјРѕРґРµР»СЊ (РїРѕРєР° Р·Р° С„Р»Р°РіРѕРј, РІС‹РєР»СЋС‡РµРЅР°)"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "РћР±С…РѕРґ Р±РѕР»СЊС€Рµ РЅРµ РґРµР»Р°РµС‚ РєСЂСЋРєРѕРІ: РґР»РёРЅР° РїСѓС‚Рё СЃС‚РѕРёС‚ Р·Р°РјРµС‚РЅРѕ"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "РЈР±СЂР°РЅС‹ С‚СѓРїРёРєРѕРІС‹Рµ С‚РѕРЅРЅРµР»Рё (РїСЂРѕР±Р° РїРѕ РґРѕР±СЂСѓ РІР»Р°РґРµР»СЊС†Р°, РѕС‚РєР°С‚С‹РІР°РµС‚СЃСЏ РѕРґРЅРёРј С„Р»Р°РіРѕРј)"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "РџРµСЂРµРєР»Р°РґРєР° С‚СЂР°СЃСЃ: СЃРЅР°С‡Р°Р»Р° С…СѓРґС€РёРµ; РіСЂСѓРїРїРѕРІС‹Рµ Р·Р°С…РѕРґС‹ РїСЂРѕРІРµСЂРµРЅС‹ Рё РЅРµ РЅСѓР¶РЅС‹"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "Р Р°Р·РІРѕРґРєР°: Р·Р°Р·РѕСЂ РѕС‚ СЂР°РјРѕРє Рё РѕР±С…РѕРґ С‡СѓР¶РёС… С‚СЂР°СЃСЃ"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "РЎРІРѕР±РѕРґРЅР°СЏ СѓРїР°РєРѕРІРєР° РІРєР»СЋС‡РµРЅР°: РґРѕСЃРєР° РѕРґРёРЅ Рє РѕРґРЅРѕРјСѓ РІРѕ РІСЃРµС… СЂР°СЃРєР»Р°РґР°С…"
+	},
+	{
+		"date": "2026-09-21",
+		"text": "Р РѕСѓС‚РµСЂ РІ РѕР±С…РѕРґ РїСЂРµРїСЏС‚СЃС‚РІРёР№ Рё С‡РёСЃС‚Р°СЏ РєР°СЂС‚Р° РЅР° С‡РµС‚РІРµСЂС‹С…"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РЈРїР°РєРѕРІРєР°: РЅР°Р»РѕР¶РµРЅРёР№ РЅРµС‚ РЅРёРіРґРµ, РІСЂРµРјСЏ РІ Р±СЋРґР¶РµС‚Рµ; РјРµС€Р°РµС‚ СЂР°Р·РІРѕРґРєР°"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РЈРїР°РєРѕРІРєР°: РЅР° РґРІРѕРёС… Рё С‚СЂРѕРёС… РЅР°Р»РѕР¶РµРЅРёР№ РЅРµС‚, РЅР° С‡РµС‚РІРµСЂС‹С… РѕСЃС‚Р°Р»РѕСЃСЊ"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РЎРІРѕР±РѕРґРЅР°СЏ СѓРїР°РєРѕРІРєР°: РІ СЃРµРјСЊ СЂР°Р· Р±С‹СЃС‚СЂРµРµ, РЅР° РґРІРѕРёС… Рё С‚СЂРѕРёС… С‡РёСЃС‚Рѕ"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РџСЂРѕС‚РѕС‚РёРї СЃРІРѕР±РѕРґРЅРѕР№ СѓРїР°РєРѕРІРєРё РєР°СЂС‚С‹ (РїРѕРєР° РІС‹РєР»СЋС‡РµРЅ)"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Р”РѕСЃРєР° Р·Р°РїРѕР»РЅСЏРµС‚ СЃРІРѕСЋ Р·РѕРЅСѓ: С€Р°Рі СЃРµС‚РєРё СЃС…РµРјС‹ РїРѕРґ С‡РёСЃР»Рѕ РёРіСЂРѕРєРѕРІ"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "UI: С€РёСЂРѕРєРёР№ С‡Р°С‚, СЂСѓРєР° РІРЅР°С…Р»С‘СЃС‚, РІРѕРїСЂРѕСЃ Рѕ СЃС‚Р°СЂС‚РѕРІРѕР№ Р»РѕРєР°С†РёРё РІ РІРµСЂС…РЅРµР№ Р·РѕРЅРµ"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РњРёРЅРё-РєР°СЂС‚Р°: С‡С‘СЂРЅР°СЏ РѕР±РІРѕРґРєР° РІРѕРєСЂСѓРі Р°СЂС‚Р° СЃРѕ РІСЃРµС… СЃС‚РѕСЂРѕРЅ"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РњРёРЅРё-РєР°СЂС‚Р°: СЂР°РјРєР° Р·Р°РјС‹РєР°РµС‚СЃСЏ СЃРЅРёР·Сѓ"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "РњРёРЅРё-РєР°СЂС‚Р° РїРѕ РјР°РєРµС‚Сѓ РІР»Р°РґРµР»СЊС†Р°: С‚РѕР»СЊРєРѕ РёРјСЏ, С†РµРЅР° Рё Р°СЂС‚"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage C: РёСЃРєСЂС‹ РїСЂРё СѓР±РёР№СЃС‚РІРµ Рё Р·Р°С…РІР°С‚Рµ Р»РѕРєР°С†РёРё"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage C: РґРѕСЃРєР° РґС‘СЂРіР°РµС‚СЃСЏ РЅР° СѓР±РёР№СЃС‚РІРµ, Р·Р°С…РІР°С‡РµРЅРЅР°СЏ Р»РѕРєР°С†РёСЏ РІСЃРїС‹С…РёРІР°РµС‚"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage B: РєСѓРїР»РµРЅРЅР°СЏ РєР°СЂС‚Р° СѓР»РµС‚Р°РµС‚ РІ СЃС‚РѕРїРєСѓ СЃР±СЂРѕСЃР°"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage B: СЃС‡С‘С‚С‡РёРєРё РЅР°РєСЂСѓС‡РёРІР°СЋС‚СЃСЏ, СЃС‚СЂРѕРєРё Р¶СѓСЂРЅР°Р»Р° РІС‹С…РѕРґСЏС‚ РїРѕ РѕРґРЅРѕР№"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage B: РјР°СЂРєРµС‚ Р¶РёРІС‘С‚ РІ РїРѕСЃС‚РѕСЏРЅРЅС‹С… СЃР»РѕС‚Р°С… вЂ” РЅРѕРІР°СЏ РєР°СЂС‚Р° РІСЉРµР·Р¶Р°РµС‚ СЃРѕ РІСЃРїС‹С€РєРѕР№"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage: СѓР»РµС‚Р°РµС‚ РёРјРµРЅРЅРѕ СЃС‹РіСЂР°РЅРЅР°СЏ РєР°СЂС‚Р°; С‡РёРЅС‘РЅ С‚РµСЃС‚ РєРЅРѕРїРєРё End turn"
+	},
+	{
+		"date": "2026-09-20",
+		"text": "Stage: РґРІРёР¶РµРЅРёРµ Р±РѕРґСЂРµРµ вЂ” РїРѕРґСЉС‘Рј Р±РµР· СЃС‚СѓРїРµРЅРµРє, СЃС‹РіСЂР°РЅРЅР°СЏ РєР°СЂС‚Р° СѓР»РµС‚Р°РµС‚ РІРІРµСЂС…"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: РёРіСЂР° РѕС‚РІРµС‡Р°РµС‚ РЅР° РґРµР№СЃС‚РІРёСЏ вЂ” РѕС‚РєР°Р·, РІСЃРїР»С‹РІР°СЋС‰РёРµ С†РёС„СЂС‹, РІРґР°РІР»РёРІР°РЅРёРµ РєРЅРѕРїРѕРє"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: СЂСѓРєР° РѕР¶РёРІР°РµС‚ вЂ” РєР°СЂС‚С‹ РїРµСЂРµРµР·Р¶Р°СЋС‚ РЅР° РїСЂСѓР¶РёРЅРµ, Р° РЅРµ РїСЂС‹РіР°СЋС‚"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: С„РѕРЅ РїР°СЂС‚РёРё РєСЂР°СЃРёС‚СЃСЏ РїРѕ РїРѕР»СѓРєРѕР»РѕРґР°Рј, С‚РµС‡РµРЅРёРµ РјРµРґР»РµРЅРЅРµРµ"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: СѓР±СЂР°РЅР° Р»РµСЃРµРЅРєР° РЅР° РєСЂР°СЏС… РјР°Р·РєРѕРІ С„РѕРЅР°"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: С„РѕРЅ РїРµСЂРµРїРёСЃР°РЅ РЅР° СЂР°Р·Р»РёС‚СѓСЋ РєСЂР°СЃРєСѓ вЂ” РєР°Рє РІ Balatro"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: Р¶РёРІРѕР№ С„РѕРЅ РџРѕРґР·РµРјСЊСЏ (С€РµР№РґРµСЂ) РІ РјРµРЅСЋ Рё Р·Р° РґРѕСЃРєРѕР№"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: Devoured РїРѕРґ РјР°СЂРєРµС‚РѕРј, End turn РІ СѓРіР»Сѓ, P/I РѕРІРµСЂР»РµРµРј"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: РІС‹СЂР°РІРЅРёРІР°РЅРёРµ Р·РѕРЅ СЌРєСЂР°РЅР° РїРѕ СЂРµС€РµРЅРёСЋ РІР»Р°РґРµР»СЊС†Р°"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: РјРµР»РєРѕРµ Р»РёС†Рѕ РєР°СЂС‚С‹ 80x91 вЂ” С†РµРЅР° РІ СѓРіР»Сѓ, VP РїРѕРґ Р°СЂС‚РѕРј"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: Р°РєРєСѓСЂР°С‚РЅР°СЏ РїРѕРґСЃРІРµС‚РєР° РјРµСЃС‚ РЅР° РґРѕСЃРєРµ"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Stage: HUD РїРѕ СЂРµС€РµРЅРёСЋ РІР»Р°РґРµР»СЊС†Р° вЂ” С‡РµР№ С…РѕРґ РЅР° РєРЅРѕРїРєРµ, Tab-СЂР°СЃРєР»Р°Рґ, С‡С‘С‚РєР°СЏ РґРѕСЃРєР°"
+	},
+	{
+		"date": "2026-09-19",
+		"text": "Pixel UI: fullscreen, РїСЂРµР¶РЅСЏСЏ СЂР°СЃСЃС‚Р°РЅРѕРІРєР° Р·РѕРЅ, С‡РёС‚Р°РµРјР°СЏ РєР°СЂС‚Р°"
+	},
+	{
+		"date": "2026-09-18",
+		"text": "Pixel-art UI: 640x360 canvas, bitmap font, mini card faces"
+	},
+	{
+		"date": "2026-09-18",
+		"text": "UI: common played-cards zone, vertical opponent panels, turn timer"
+	},
+	{
+		"date": "2026-09-18",
+		"text": "Stage: hotseat for 3 and 4 players"
+	},
+	{
+		"date": "2026-09-16",
+		"text": "Schematic board: pixel-art circuit-board map instead of hex art"
+	},
+	{
+		"date": "2026-09-16",
+		"text": "UI: show pixel-art card faces in hand, market, strips and hover preview"
+	},
+	{
+		"date": "2026-09-16",
+		"text": "Pixel-art card faces: generator tool and 125 rendered cards"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Fix: run every deferred end-of-turn effect, not only the first decision"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "UI layout: nine-zone game screen with sliding hand and card hover preview"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Decision dialog: name market cards instead of 'Market slot N'"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Stage 3: UI usability вЂ” English UI, turn banner, decision bar over board, clearer log"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Place spy: a player cannot have two own spies at one site"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Start turn in real games: grant A2 bonus and marker Influence, reset Focus"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Move enemy troop: source must be in Presence, destination anywhere"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Fix edge tunnels that bypass art: C4 SW -> Red Gate, X4 S -> Fountain of Screams"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Fix starting sites: use black-box sites from hex art"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Stage 2: fix card effects and data found in audit"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Stage 1: card and rules audit report"
+	},
+	{
+		"date": "2026-09-15",
+		"text": "Stage 0: initial snapshot (429 tests passing)"
+	}
+]

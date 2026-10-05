@@ -99,6 +99,22 @@ static func _count_arg(name: String, fallback: int) -> int:
 	return fallback
 
 
+## Строка из --name=..., иначе fallback.
+static func _arg(name: String, fallback: String) -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--%s=" % name):
+			return arg.get_slice("=", 1)
+	return fallback
+
+
+## Профиль живёт в окне главного меню: меню на вкладке PROFILE поверх
+## партии, вернуть сам профиль.
+func _menu_profile() -> ProfileScreen:
+	var menu := SetupScreen.new(SetupScreen.PAGE_PROFILE)
+	root.add_child(menu)
+	return menu._tabs[SetupScreen.PAGE_PROFILE]
+
+
 ## Сценарии прогоняются НАМЕРЕНИЯМИ, а не подделкой состояния: сцена ходит
 ## ровно теми же путями, что и живой игрок мышкой.
 func _run_scenario() -> void:
@@ -135,9 +151,8 @@ func _run_scenario() -> void:
 		"background":
 			# Коллекция, раздел фонов (рисовалки фона больше нет). Отдельный файл профиля.
 			PlayerProfile.path_override = "user://profile_shot.cfg"
-			var bg_profile := ProfileScreen.new()
-			bg_profile._page = "COLLECTION"
-			root.add_child(bg_profile)
+			var bg_profile := _menu_profile()
+			(func(): bg_profile._show_tab.call_deferred("COLLECTION")).call_deferred()
 			bg_profile._collection.show_section("BACKGROUNDS")
 		"profile_card":
 			# Карточка соперника поверх партии (щелчок по имени в таблице игроков).
@@ -427,13 +442,11 @@ func _run_scenario() -> void:
 				_screen._wheel.set_process(false)
 				_screen._wheel.point_at(_screen._wheel.centre() + Vector2(0, 30))).call_deferred()
 		"profile_chat":
-			var chat_editor := ProfileScreen.new()
-			root.add_child(chat_editor)
+			var chat_editor := _menu_profile()
 			(func(): chat_editor._show_tab.call_deferred("CHAT")).call_deferred()
 		"profile":
 			# Редактор герба поверх партии, с нарисованным крестом.
-			var editor := ProfileScreen.new()
-			root.add_child(editor)
+			var editor := _menu_profile()
 			for i in range(1, 8):
 				editor.paint(4, i, Color("fbf236"))
 				editor.paint(i, 4, Color("fbf236"))
@@ -465,17 +478,16 @@ func _run_scenario() -> void:
 				entry["ic_cards"] = 3 + n % 5
 				PlayerProfile.add_history(entry)
 				PlayerProfile.add_totals(entry)
-			var stats_screen := ProfileScreen.new()
-			root.add_child(stats_screen)
+			var stats_screen := _menu_profile()
 		"menu":
-			# Главное меню поверх партии (строка профиля с кнопками).
-			root.add_child(SetupScreen.new())
+			# Главное меню поверх партии; --page=news / profile / settings /
+			# online / lobby / hotseat / how_to_play — какая вкладка открыта.
+			root.add_child(SetupScreen.new(_arg("page", SetupScreen.PAGE_ONLINE)))
 		"card_back":
 			# Коллекция, раздел рубашек: рубашка, которую можно покрутить.
 			PlayerProfile.path_override = "user://profile_shot.cfg"
-			var back_profile := ProfileScreen.new()
-			back_profile._page = "COLLECTION"
-			root.add_child(back_profile)
+			var back_profile := _menu_profile()
+			(func(): back_profile._show_tab.call_deferred("COLLECTION")).call_deferred()
 			back_profile._collection.show_section("CARD BACKS")
 		"emblems":
 			# Войска на доске с гербами: у красного крест, у синего точка.
