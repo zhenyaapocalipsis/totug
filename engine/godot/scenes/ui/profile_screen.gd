@@ -40,6 +40,8 @@ const VP_PART_NAMES := {"sites": "SITES", "total_control": "TOTAL CONTROL", "tro
 	"deck": "DECK", "inner_circle": "INNER CIRCLE", "tokens": "VP TOKENS"}
 const BAR_W := 60
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
+## Вкладки обычного профиля; STATS первой и открыта сразу (владелец, 2026-09-28).
+const TABS: Array[String] = ["STATS", "EMBLEM", "CHAT", "COLLECTION"]
 
 var _pixels: Array[Color] = []
 var _brush := Color("ffffff")
@@ -68,6 +70,8 @@ var _frames: Dictionary = {}
 var _any_button: Button
 ## SAVE с чертой над ним — виден только на вкладках, где есть что сохранять.
 var _buttons: VBoxContainer
+## Обычный профиль: столбец вкладок и страница (по ней — размер профиля).
+var _row: HBoxContainer
 
 
 ## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
@@ -113,7 +117,8 @@ func _init(first_run: bool = false) -> void:
 	if not _first_run:
 		# Обычный профиль живёт в окне главного меню (SetupScreen, вкладка
 		# PROFILE): вкладки столбцом слева, страница справа (владелец, 2026-10-06).
-		var row := HBoxContainer.new()
+		_row = HBoxContainer.new()
+		var row := _row
 		row.set_anchors_preset(Control.PRESET_FULL_RECT)
 		row.add_theme_constant_override("separation", SetupScreen.GAP)
 		add_child(row)
@@ -124,13 +129,13 @@ func _init(first_run: bool = false) -> void:
 		# Страница прижата к левому верхнему углу, как разделы PLAY.
 		row.add_child(col)
 		var group := ButtonGroup.new()
-		# STATS первой и открыта сразу (решение владельца, 2026-09-28).
-		for tab: String in ["STATS", "EMBLEM", "CHAT", "COLLECTION"]:
+		for tab: String in TABS:
 			var b := _button(tab, _show_tab.bind(tab))
 			b.toggle_mode = true
 			b.button_group = group
 			b.button_pressed = tab == "STATS"
 			b.custom_minimum_size = SetupScreen.SIDE_BUTTON
+			b.size_flags_horizontal = Control.SIZE_FILL
 			tabs.add_child(b)
 			_tab_buttons.append(b)
 		_stats = _stats_page()

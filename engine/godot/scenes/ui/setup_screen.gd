@@ -50,8 +50,6 @@ const PAGE_PROFILE := "profile"
 const PAGE_PLAY := "play"
 const PAGE_SETTINGS := "settings"
 const TABS: Array[String] = [PAGE_NEWS, PAGE_PROFILE, PAGE_PLAY, PAGE_SETTINGS]
-## Ширины кнопок вкладок и EXIT — доли, как на макете владельца.
-const TAB_RATIOS := {PAGE_NEWS: 2.1, PAGE_PROFILE: 3.0, PAGE_PLAY: 6.1, PAGE_SETTINGS: 3.4, "exit": 4.0}
 ## Разделы PLAY (столбец слева в окне).
 const PAGE_ONLINE := "online"
 const PAGE_LOBBY := "lobby"
@@ -70,8 +68,8 @@ const SECTION_HINTS := {
 const GAP := 2
 const TAB_HEIGHT := 16.0
 ## Кнопки столбца слева — и в PLAY, и в профиле.
-const SIDE_BUTTON := Vector2(80, 16)
-const CORNER_BUTTON := Vector2(90, 16)
+const SIDE_BUTTON := Vector2(0, 16)
+const CORNER_BUTTON := Vector2(0, 16)
 const BUTTON_SIZE := Vector2(90, 16)
 const DOT := 7.0
 ## Задник и патчноуты подключены файлом, а не по глобальному имени класса:
@@ -86,6 +84,8 @@ var _count: int = GameScreen.MIN_PLAYERS
 var _match_count: int = GameScreen.MIN_PLAYERS
 var _tab := PAGE_PLAY
 var _section := PAGE_ONLINE
+## С какой страницы меню открыли (к ней возвращаемся после замера окна).
+var _first_page := PAGE_ONLINE
 ## Окно под кнопками и его содержимое по вкладкам (строится при первом показе).
 var _window: PanelContainer
 var _tabs: Dictionary = {}
@@ -114,14 +114,14 @@ func _init(page: String = PAGE_ONLINE) -> void:
 	# ни доска, ни карты.
 	add_child(UnderdarkBg.make())
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, GAP)
-	add_child(margin)
+	# Меню — компактный блок по центру экрана, не на весь экран (владелец,
+	# 2026-10-06).
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(centre)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", GAP)
-	margin.add_child(col)
+	centre.add_child(col)
 
 	var title_bar := PanelContainer.new()
 	title_bar.add_theme_stylebox_override("panel", GameScreen.zone_style(1))
@@ -139,22 +139,57 @@ func _init(page: String = PAGE_ONLINE) -> void:
 	col.add_child(bar)
 	var group := ButtonGroup.new()
 	for tab: String in TABS:
-		var b := _tab_button(tab.to_upper().replace("_", " "), TAB_RATIOS[tab])
+		var b := _tab_button(tab.to_upper())
 		b.toggle_mode = true
 		b.button_group = group
 		b.pressed.connect(_show_tab.bind(tab))
 		bar.add_child(b)
 		_tab_buttons[tab] = b
-	var quit := _tab_button("EXIT", TAB_RATIOS["exit"])
+	var quit := _tab_button("EXIT")
 	quit.pressed.connect(func(): get_tree().quit())
 	bar.add_child(quit)
 
 	_window = PanelContainer.new()
 	_window.add_theme_stylebox_override("panel", GameScreen.zone_style(GAP))
-	_window.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(_window)
 
+	_first_page = page
 	show_page(page)
+
+
+## Окно — по самому большому содержимому из всех вкладок и разделов, чтобы
+## оно не прыгало при переключении. Мерить можно только в сцене: надписи
+## перемеряются пиксельным шрифтом темы — поэтому на кадр позже.
+func _ready() -> void:
+	_fit_window.call_deferred()
+
+
+func _fit_window() -> void:
+	var need := Vector2.ZERO
+	for tab: String in TABS:
+		_show_tab(tab)
+		var content: Control = _tabs[tab]
+		if tab == PAGE_PLAY:
+			for section: String in PLAY_SECTIONS:
+				_show_section(section)
+				need = need.max(content.get_combined_minimum_size())
+		elif tab == PAGE_PROFILE:
+			# Профиль — простой Control, его размер — у строки внутри.
+			var profile: ProfileScreen = content
+			for page: String in ProfileScreen.TABS:
+				profile._show_tab(page)
+				if page == "COLLECTION":
+					# Разделы коллекции равняются по самому большому при показе
+					# раздела — теперь, когда надписи уже перемерены.
+					profile._collection.show_section(CollectionPage.SECTIONS[0])
+				need = need.max(profile._row.get_combined_minimum_size())
+			profile._show_tab(ProfileScreen.TABS[0])
+		else:
+			need = need.max(content.get_combined_minimum_size())
+	# Патчноутам своего размера нет (прокрутка) — им хватит и этого окна.
+	_window.custom_minimum_size = need + _window.get_theme_stylebox("panel").get_minimum_size()
+	_section = _first_page if PLAY_SECTIONS.has(_first_page) else PAGE_ONLINE
+	show_page(_first_page)
 
 
 func current_page() -> String:
@@ -473,11 +508,10 @@ func _setting_button(text: String) -> Button:
 
 # --- мелкие детали вёрстки ---------------------------------------------------
 
-func _tab_button(text: String, ratio: float) -> Button:
+## Кнопка под названием — шириной по своей надписи.
+func _tab_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.size_flags_stretch_ratio = ratio
 	b.custom_minimum_size.y = TAB_HEIGHT
 	_style_button(b)
 	return b

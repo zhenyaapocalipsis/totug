@@ -1,5 +1,13 @@
 [
 	{
+		"date": "2026-10-06",
+		"text": "Stage Menu-2: compact main menu (smaller buttons and gaps, content in the top-left corner)"
+	},
+	{
+		"date": "2026-10-06",
+		"text": "Stage Menu-1: Dota-style main menu (title, NEWS/PROFILE/PLAY/SETTINGS/EXIT, one big window)"
+	},
+	{
 		"date": "2026-10-05",
 		"text": "Stage Plates-off: grid plates removed (owner, 2026-10-05)"
 	},
