@@ -2950,25 +2950,6 @@ func test_board_schematic() -> void:
 		# владелец, 2026-10-03: «дорожки не должны пересекаться» — ни петель,
 		# ни пересечений трасс, у которых нет общего конца
 		check_eq(_trace_crossings(s), 0, "%s: трассы не пересекаются и не делают петель" % tag)
-		# подложки сетки 5x3 (владелец, 2026-10-05): на четверых — 15
-		# одинаковых, целиком в картинке и не налезают друг на друга
-		var plates: Dictionary = s.get("plates", {})
-		if int(run[0]) == 4:
-			check_eq(plates.size(), 15, "%s: 15 подложек под гексы" % tag)
-			var plate_bad := 0
-			var image := Rect2(Vector2.ZERO, Vector2(s["size"][0], s["size"][1]))
-			var seen: Array[Rect2] = []
-			for p: Array in plates.values():
-				var plate := Rect2(p[0], p[1], p[2], p[3])
-				if plate.size != Vector2(plates.values()[0][2], plates.values()[0][3]) or not image.encloses(plate):
-					plate_bad += 1
-				for other in seen:
-					if other.intersects(plate):
-						plate_bad += 1
-				seen.append(plate)
-			check_eq(plate_bad, 0, "%s: подложки одного размера, в картинке, не налезают" % tag)
-		else:
-			check(plates.is_empty(), "%s: без сетки 5x3 подложек нет" % tag)
 
 		var slots: Dictionary = s["slots"]
 		var missing := 0
