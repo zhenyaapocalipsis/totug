@@ -67,10 +67,12 @@ const SECTION_HINTS := {
 
 const GAP := 2
 const TAB_HEIGHT := 16.0
-## Кнопки столбца слева — и в PLAY, и в профиле.
-const SIDE_BUTTON := Vector2(0, 16)
+## Кнопки столбца слева — и в PLAY, и в профиле: столбцы одной ширины.
+const SIDE_BUTTON := Vector2(76, 16)
 const CORNER_BUTTON := Vector2(0, 16)
 const BUTTON_SIZE := Vector2(90, 16)
+const MENU_WIDTH := 400.0
+const HINT_WIDTH := 300.0
 const DOT := 7.0
 ## Задник и патчноуты подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из
@@ -124,7 +126,12 @@ func _init(page: String = PAGE_ONLINE) -> void:
 	centre.add_child(col)
 
 	var title_bar := PanelContainer.new()
-	title_bar.add_theme_stylebox_override("panel", GameScreen.zone_style(1))
+	# Под заглавными буквами у шрифта запас на хвосты строчных (вдвое больший
+	# у крупного шрифта) — столько же отступа сверху, и надпись посередине.
+	var title_box := GameScreen.zone_style(1)
+	title_box.content_margin_top = 1 + 3 * PixelTheme.CAPS_SHIFT
+	title_box.content_margin_bottom = 0
+	title_bar.add_theme_stylebox_override("panel", title_box)
 	col.add_child(title_bar)
 	var title := Label.new()
 	# Заголовок — тот же шрифт ровно вдвое крупнее (пиксель остаётся квадратным).
@@ -275,12 +282,15 @@ func _build_play() -> Control:
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.add_theme_constant_override("separation", 2)
 	row.add_child(right)
-	# Содержимое раздела прижато к левому верхнему углу (владелец: всё
-	# максимально компактно, 2026-10-06).
+	# Содержимое раздела — по центру окна (владелец, 2026-10-06).
+	var centre := CenterContainer.new()
+	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(centre)
 	_col = VBoxContainer.new()
-	_col.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Ширина постоянная: иначе описание режима, меняясь, двигало бы раздел.
+	_col.custom_minimum_size.x = MENU_WIDTH
 	_col.add_theme_constant_override("separation", 2)
-	right.add_child(_col)
+	centre.add_child(_col)
 
 	right.add_child(HSeparator.new())
 	var bottom := HBoxContainer.new()
@@ -289,6 +299,9 @@ func _build_play() -> Control:
 	_hint = Label.new()
 	_hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# С переносом слов надпись без ширины считает себя очень высокой (по
+	# слову в строке) и раздувает окно при замере — ширина задана заранее.
+	_hint.custom_minimum_size.x = HINT_WIDTH
 	_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	bottom.add_child(_hint)
@@ -415,6 +428,7 @@ func _add_game_options() -> void:
 	_col.add_child(_row(modes))
 	_mode_note = _add_dim(MODE_NOTES[_mode])
 	_mode_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_mode_note.custom_minimum_size.x = MENU_WIDTH
 
 	_col.add_child(_heading("PLAYERS"))
 	var counts: Array[Button] = []
@@ -465,8 +479,10 @@ func _refresh_dots() -> void:
 
 ## Все настройки игры: громкость (как в меню по Esc) и полный экран (как F11).
 func _build_settings() -> Control:
+	var centre := CenterContainer.new()
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
+	centre.add_child(col)
 	# Громкость: щелчок — следующая ступень (100 → 75 → 50 → 25 → OFF).
 	var sound := _setting_button(Sfx.volume_label())
 	sound.pressed.connect(func():
@@ -489,7 +505,7 @@ func _build_settings() -> Control:
 	col.add_child(screen)
 	col.add_child(HSeparator.new())
 	_add_dim_to(col, "Click a button for the next step.\nF11 or Alt+Enter: full screen or window.")
-	return col
+	return centre
 
 
 static func _screen_label() -> String:
@@ -501,17 +517,18 @@ func _setting_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(100, 16)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_style_button(b)
 	return b
 
 
 # --- мелкие детали вёрстки ---------------------------------------------------
 
-## Кнопка под названием — шириной по своей надписи.
+## Кнопка под названием: все пять одной ширины, вместе — во всю ширину меню.
 func _tab_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.custom_minimum_size.y = TAB_HEIGHT
 	_style_button(b)
 	return b
@@ -525,7 +542,7 @@ func _add_dim_to(parent: Control, text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(label)
 	return label
 
@@ -534,7 +551,7 @@ func _heading(text: String, colour: Color = PixelTheme.TEXT_DIM) -> Label:
 	var label := GameScreen.section_label(text)
 	label.add_theme_color_override("font_color", colour)
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
 
 
@@ -547,7 +564,7 @@ func _button(text: String, hint: String, action: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = BUTTON_SIZE
-	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_style_button(b)
 	b.pressed.connect(action)
 	b.mouse_entered.connect(func(): _set_hint(hint))
@@ -576,7 +593,7 @@ func _pair(a: Control, b: Control) -> HBoxContainer:
 func _row(items: Array) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 2)
-	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	for item: Control in items:
 		row.add_child(item)
 	return row

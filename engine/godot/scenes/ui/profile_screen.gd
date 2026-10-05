@@ -72,6 +72,8 @@ var _any_button: Button
 var _buttons: VBoxContainer
 ## Обычный профиль: столбец вкладок и страница (по ней — размер профиля).
 var _row: HBoxContainer
+## Никнейм на вкладке STATS.
+var _stats_name: Label
 
 
 ## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
@@ -126,8 +128,11 @@ func _init(first_run: bool = false) -> void:
 		tabs.add_theme_constant_override("separation", 2)
 		row.add_child(tabs)
 		row.add_child(VSeparator.new())
-		# Страница прижата к левому верхнему углу, как разделы PLAY.
-		row.add_child(col)
+		# Страница — по центру окна, как разделы PLAY.
+		var centre := CenterContainer.new()
+		centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(centre)
+		centre.add_child(col)
 		var group := ButtonGroup.new()
 		for tab: String in TABS:
 			var b := _button(tab, _show_tab.bind(tab))
@@ -414,6 +419,8 @@ func _save() -> void:
 		err = PlayerProfile.save_phrases(phrases())
 	if err == OK:
 		_saved_note.text = "Saved."
+		if _stats_name != null:
+			_stats_name.text = _display_name(name_text)
 		closed.emit()
 	else:
 		_saved_note.text = "Could not save the profile (error %d)." % err
@@ -497,6 +504,12 @@ func _stats_page() -> Control:
 	var words := VBoxContainer.new()
 	words.add_theme_constant_override("separation", 0)
 	head.add_child(words)
+	# Никнейм над званием (владелец, 2026-10-06); после SAVE — новый.
+	_stats_name = Label.new()
+	_stats_name.text = _display_name(String(local["name"]))
+	_stats_name.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	_stats_name.add_theme_color_override("font_color", PixelTheme.TEXT)
+	words.add_child(_stats_name)
 	var title := Label.new()
 	title.text = PlayerProfile.rank_title(rating)
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
@@ -653,6 +666,10 @@ func _cell(text: String, colour: Color) -> Label:
 
 
 ## "28.09 14:05" по местному времени.
+static func _display_name(name_text: String) -> String:
+	return name_text if name_text != "" else "No name yet"
+
+
 static func _date(unix: int) -> String:
 	var bias := int(Time.get_time_zone_from_system().get("bias", 0))
 	var d := Time.get_datetime_dict_from_unix_time(unix + bias * 60)

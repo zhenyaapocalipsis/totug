@@ -26,14 +26,18 @@ static func entries() -> Array:
 	return _cache
 
 
+## git пишет в файл, а не в ответ OS.execute: ответ Windows читает в своей
+## кодировке, и русские заголовки превращались в кракозябры.
 static func from_git() -> Array:
-	var out: Array = []
 	var dir := ProjectSettings.globalize_path("res://")
+	var tmp := ProjectSettings.globalize_path("user://patch_notes_git.txt")
 	var code := OS.execute("git", ["-C", dir, "log", "--no-merges", "--date=short",
-		"--pretty=format:%ad%x09%s"], out)
-	if code != 0 or out.is_empty():
+		"--pretty=format:%ad%x09%s", "--output=" + tmp])
+	if code != 0 or not FileAccess.file_exists(tmp):
 		return []
-	return parse(String(out[0]))
+	var text := FileAccess.get_file_as_string(tmp)
+	DirAccess.remove_absolute(tmp)
+	return parse(text)
 
 
 ## Строки «дата<Tab>заголовок» в записи.
@@ -46,18 +50,37 @@ static func parse(text: String) -> Array:
 	return list
 
 
-## Текст для RichTextLabel: дата золотом, под ней коммиты этого дня.
+## Текст для RichTextLabel: дата золотом, под ней списком коммиты этого дня
+## (длинная строка переносится с отступом, не под дефис).
 static func bbcode(list: Array) -> String:
-	var out := PackedStringArray()
+	var out := ""
 	var day := ""
 	for entry: Dictionary in list:
 		if String(entry["date"]) != day:
+			if day != "":
+				out += "[/ul]\n\n"
 			day = String(entry["date"])
-			if not out.is_empty():
-				out.append("")
-			out.append("[color=#%s]%s[/color]" % [PixelTheme.GOLD.to_html(false), day])
-		out.append("- " + String(entry["text"]).replace("[", "[lb]"))
-	return "\n".join(out)
+			out += "[color=#%s]%s[/color]\n[ul bullet=-]" % [PixelTheme.GOLD.to_html(false), day]
+		else:
+			out += "\n"
+		out += clean(String(entry["text"])).replace("[", "[lb]")
+	return out + "[/ul]" if day != "" else out
+
+
+## Знаки, которых нет в пиксельном шрифте: похожие из него, прочие — прочь.
+const SUBSTITUTES := {"—": "-", "–": "-", "«": "\"", "»": "\"", "“": "\"", "”": "\"",
+	"’": "'", "×": "x", "→": "->", "←": "<-", "…": "...", "≥": ">=", "≤": "<="}
+
+
+static func clean(text: String) -> String:
+	var font: Font = load(PixelTheme.FONT_PATH)
+	var out := ""
+	for ch in text:
+		if font.has_char(ch.unicode_at(0)):
+			out += ch
+		elif SUBSTITUTES.has(ch):
+			out += SUBSTITUTES[ch]
+	return out
 
 
 static func _load() -> Array:
