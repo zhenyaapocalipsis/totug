@@ -107,6 +107,10 @@ const NAME_BREAKS := {
 	"JACKALWERE": [4, 6], "MINDWITNESS": [4, 7], "NALFESHNEE": [3, 7],
 	"NECROMANCER": [3, 5, 8], "NEGOTIATOR": [2, 4, 6, 7], "SHATTERKEEL": [4, 7],
 	"SPELLSPINNER": [5, 9], "WEAPONMASTER": [6, 9], "WYRMSPEAKER": [4, 9],
+	# Первые слова в 9 букв не влезают рядом с ценой (8 букв), рвём по слогу.
+	"PRIESTESS": [6], "MERCENARY": [5], "UNDERDARK": [5], "ENCHANTER": [6],
+	"GIBBERING": [6], "SPECTATOR": [4], "INTELLECT": [5], "PUPPETEER": [6],
+	"ULITHARID": [3],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -596,17 +600,9 @@ func mini_vp_badge(right: int, y: int, v: String, bg: Color, fg: Color) -> int:
 ## от цены (ширина beside), остальные идут под ней во всю ширину (free). Слово
 ## длиннее строки рвётся: по дефису, если он есть, иначе просто по месту с
 ## дефисом — иначе WEAPONMASTER и MELEE-MAGTHERE уезжают за край карты.
+## Имя всегда начинается с первой строки — длинное слово рвётся переносом
+## (владелец, 2026-10-06).
 func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) -> Array[String]:
-	# Слово, которое не влезает рядом с ценой, лучше начать со следующей строки
-	# (оставив строку у цены пустой), чем рвать: BEHOLDER, а не BEHO-LDER.
-	var skipped := _wrap_name(s, beside, free, blocked, max_lines, true)
-	if skipped.size() <= max_lines:
-		return skipped
-	return _wrap_name(s, beside, free, blocked, max_lines, false)
-
-
-func _wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int,
-		skip_blocked: bool) -> Array[String]:
 	var lines: Array[String] = []
 	var words: Array = Array(s.split(" ", false))
 	var cur := ""
@@ -629,15 +625,13 @@ func _wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int,
 		elif cur != "":
 			lines.append(cur)
 			cur = ""
-		elif skip_blocked and lines.size() < blocked and text_width(word, 1) <= free:
-			lines.append("")
 		else:
 			var parts := split_word(word, room)
 			lines.append(parts[0])
 			words[i] = parts[1]
 	if cur != "":
 		lines.append(cur)
-	if lines.size() > max_lines and not skip_blocked:
+	if lines.size() > max_lines:
 		print("name does not fit: ", s, " -> ", lines)
 		lines.resize(max_lines)
 		lines[max_lines - 1] = lines[max_lines - 1] + "."
