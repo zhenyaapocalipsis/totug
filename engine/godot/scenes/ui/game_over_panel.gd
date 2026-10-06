@@ -8,7 +8,7 @@ extends Control
 signal main_menu_requested
 
 const BUTTON_SIZE := Vector2(90, 16)
-const COL_W := 34
+const COL_W := 31
 ## Полоса посередине под таблицу итогов — колоды раскладываются по бокам от неё.
 const CENTRE_W := 340.0
 const MARGIN := 6.0
@@ -244,13 +244,22 @@ func set_ratings(result: Dictionary) -> void:
 
 ## "1016 +16": новый рейтинг и изменение (рост — зелёным, падение — красным).
 func _rating_cell(pid: String) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 1)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
+	col.add_child(row)
 	if not _ratings.has(pid):
-		return row
+		return col
 	var r: Dictionary = _ratings[pid]
 	var delta := int(r["delta"])
 	row.add_child(_cell(str(int(r["rating"])), PixelTheme.TEXT, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	var colour := Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)
 	row.add_child(_cell("%+d" % delta, colour, 0, HORIZONTAL_ALIGNMENT_LEFT))
-	return row
+	# Награда за место (только партии поиска игры): лутбокс за 1-е, пыль за остальные.
+	var reward: Dictionary = r.get("reward", {})
+	if int(reward.get("boxes", 0)) > 0:
+		col.add_child(_cell("+%d BOX" % int(reward["boxes"]), PixelTheme.GOLD, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	if int(reward.get("dust", 0)) > 0:
+		col.add_child(_cell("+%d DUST" % int(reward["dust"]), PixelTheme.TEXT_DIM, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	return col

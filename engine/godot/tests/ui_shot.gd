@@ -129,9 +129,9 @@ func _run_scenario() -> void:
 			# Колоды как в конце настоящей партии: докупленные карты и круг.
 			for pid_go: String in st.turn_order:
 				var d_go: Deck = st.players[pid_go].deck
-				for n in 14:
+				for n in _count_arg("discard", 14):
 					d_go.discard_pile.append(st.market.deck.pop_back())
-				for n in 3:
+				for n in _count_arg("circle", 3):
 					d_go.inner_circle.append(st.market.deck.pop_back())
 			for guard in 40:
 				if st.game_over:
@@ -145,8 +145,14 @@ func _run_scenario() -> void:
 			# Как придёт от сервера после онлайн-партии (здесь — выдуманный).
 			if _scenario == "game_over_rated":
 				var fake := {}
-				for i_r in st.turn_order.size():
-					fake[st.turn_order[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r}
+				var fs := {}
+				for p_f: String in st.turn_order:
+					fs[p_f] = Scoring.breakdown(st, p_f)
+				var ranked: Array = st.turn_order.duplicate()
+				ranked.sort_custom(func(a, b): return int(fs[a]["total"]) > int(fs[b]["total"]))
+				for i_r in ranked.size():
+					fake[ranked[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r,
+							"reward": SkinCollection.reward_for_place(i_r + 1)}
 				_screen._game_over_panel.set_ratings(fake)
 		"background":
 			# Коллекция, раздел фонов (рисовалки фона больше нет). Отдельный файл профиля.
