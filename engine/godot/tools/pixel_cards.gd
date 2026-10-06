@@ -22,7 +22,7 @@ const MINI_H := 84
 ## владельца, 2026-10-03). Цена — в правом верхнем углу шапки (2026-10-06),
 ## поэтому первая строка имени короче на MINI_COST_W.
 const MINI_HEAD := 26
-const MINI_COST_W := 6  # плашка цены x 51..56 и пиксель зазора — 8 букв имени ещё влезают
+const MINI_COST_W := 6  # цифра цены x 51..55 и пиксель зазора — 8 букв имени ещё влезают
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
@@ -572,15 +572,13 @@ func render_mini(c: Dictionary) -> Image:
 	var name_lines := wrap_name(clean(sv(c["name"])), room - MINI_COST_W, room, 1, MINI_NAME_LINES)
 	for i in name_lines.size():
 		text(2, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
-	# Цена — часть лица: золотая цифра на тёмной плашке в правом верхнем углу
-	# шапки (владелец, 2026-10-06). У стартовых карт цены нет — и плашки нет.
+	# Цена — часть лица: цифра в правом верхнем углу шапки, тем же цветом и с
+	# той же тенью, что имя, без плашки (владелец, 2026-10-06). Цифра на x 51..55,
+	# тень на 56; от тени имени в 8 букв (x=49) её отделяет пиксель шапки.
+	# У стартовых карт цены нет.
 	if c["cost"] != null:
 		var cost := str(int(c["cost"]))
-		# Плашка вплотную к контуру карты (x 51..56): между ней и тенью имени
-		# в 8 букв (до x=49) остаётся пиксель шапки.
-		var cw := text_width(cost, 1) + 1
-		rect(MINI_W - 1 - cw, 1, cw, 9, C_OUTLINE)
-		text(MINI_W - cw, 2, cost, C_GOLD, 1)
+		text(MINI_W - 2 - text_width(cost, 1), 2, cost, C_LIGHT, 1, C_OUTLINE)
 
 	# арт: кусок 1:1 из арта большой карты
 	var art_y := 1 + MINI_HEAD + 1
