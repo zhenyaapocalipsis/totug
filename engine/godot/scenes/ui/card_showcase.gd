@@ -422,7 +422,7 @@ func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool
 	else:
 		c.draw_texture_rect(face, rect, false)
 	if fx:
-		CardFx.draw_front(c, cid, rect, fx_t)
+		CardFx.draw_front(c, cid, rect, fx_t, size)
 	if _flash > 0.0:
 		c.draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
 	_draw_glow(c, rect)
