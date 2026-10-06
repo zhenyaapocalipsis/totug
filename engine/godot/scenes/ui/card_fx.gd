@@ -325,8 +325,8 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	# пока щупальце в движении, по телу бегут сокращения (толщина пульсирует)
 	var pulse := 0.12 * (1.0 - clampf(out, 0.0, 1.0)) + 0.04 + 0.1 * gone
 
-	# точки полосок от головы к корню: нормаль, полуширина, строка спрайта и границы
-	# тела в этой строке (чтобы тело всегда заполняло полоску, как бы ни гулял спрайт)
+	# точки полосок от головы к корню: нормаль, полуширина и строка спрайта (без зацикливания;
+	# зацикливание — ниже, при рисовании каждой полоски)
 	var normals := PackedVector2Array()
 	var halves := PackedFloat32Array()
 	var rows := PackedFloat32Array()
@@ -340,16 +340,19 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		halves.append(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)))
 		# текстура привязана к ГОЛОВЕ: кольца едут вместе с ней (щупальце движется, а не
 		# «открывается» из-под маски); по телу бегут волны сжатия, поэтому кольца
-		# перетекают и когда щупальце уже дошло. Дальше конца спрайта — туда-обратно.
+		# перетекают и когда щупальце уже дошло.
 		var flow := RING_FLOW * sin(dist * 0.045 - t * 4.5 + phase)
-		rows.append(row_lo + fposmod(dist * density + flow * density, period))
+		rows.append(dist * density + flow * density)
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
 		if (head - float(j) * STEP >= split) != front:
 			continue
-		var r0 := rows[j]
-		var r1 := rows[j + 1]
+		# внутри полоски строки идут непрерывно: переход через конец периода случается
+		# только между полосками (иначе вся плитка за один шаг разворачивается назад и
+		# щупальце «рвётся»); узор в конце периода совпадает с началом
+		var r0 := row_lo + fposmod(rows[j], period)
+		var r1 := r0 + (rows[j + 1] - rows[j])
 		var i0 := clampi(int(r0), 0, lefts.size() - 1)
 		var i1 := clampi(int(r1), 0, lefts.size() - 1)
 		var n0 := normals[j] * halves[j]
