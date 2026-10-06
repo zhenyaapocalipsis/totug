@@ -59,6 +59,8 @@ const RING_P_MAX := 90
 ## Сколько строк и точек поперёк тела сравниваем при поиске периода колец.
 const RING_CHECK := 50
 const RING_SAMPLES := 12
+## Сколько строк спрайта перекрываются на шве плитки (примерно одно кольцо).
+const SEAM_ROWS := 18.0
 const TIP_LEN := 80.0
 ## Минимальная полуширина тела, пиксели: у самого острия щупальце не рвётся на пунктир.
 const MIN_HALF := 0.9
@@ -365,11 +367,21 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var n0 := normals[j] * halves[j]
 		var n1 := normals[j + 1] * halves[j + 1]
 		# draw_primitive, а не draw_polygon: тот отказывается рисовать «скрученный» кусок
-		c.draw_primitive(
-			PackedVector2Array([body[j] - n0, body[j] + n0, body[j + 1] + n1, body[j + 1] - n1]),
-			colours, PackedVector2Array([
-				Vector2(lefts[i0] / w, r0 / h), Vector2(rights[i0] / w, r0 / h),
-				Vector2(rights[i1] / w, r1 / h), Vector2(lefts[i1] / w, r1 / h)]), tex)
+		var quad := PackedVector2Array([body[j] - n0, body[j] + n0, body[j + 1] + n1, body[j + 1] - n1])
+		c.draw_primitive(quad, colours, PackedVector2Array([
+			Vector2(lefts[i0] / w, r0 / h), Vector2(rights[i0] / w, r0 / h),
+			Vector2(rights[i1] / w, r1 / h), Vector2(lefts[i1] / w, r1 / h)]), tex)
+		# шов плитки: в начале каждого периода поверх накладывается настоящее продолжение
+		# предыдущей плитки (строки спрайта на период ниже), затухая за SEAM_ROWS строк —
+		# узор и яркость перетекают без ступеньки
+		var phase_row := r0 - row_lo
+		if phase_row < SEAM_ROWS:
+			var fade := Color(1, 1, 1, 1.0 - phase_row / SEAM_ROWS)
+			var j0 := clampi(int(r0 + period), 0, lefts.size() - 1)
+			var j1 := clampi(int(r1 + period), 0, lefts.size() - 1)
+			c.draw_primitive(quad, PackedColorArray([fade, fade, fade, fade]), PackedVector2Array([
+				Vector2(lefts[j0] / w, (r0 + period) / h), Vector2(rights[j0] / w, (r0 + period) / h),
+				Vector2(rights[j1] / w, (r1 + period) / h), Vector2(lefts[j1] / w, (r1 + period) / h)]), tex)
 
 
 ## Границы тела спрайта по строкам (непрозрачные пиксели; левая и правая, в пикселях
