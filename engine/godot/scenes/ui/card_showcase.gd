@@ -86,8 +86,8 @@ func _init() -> void:
 ##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
 		face_down: bool = false, back: String = "", art: String = "", morph: bool = false,
-		shader: String = "") -> void:
-	_enqueue(cid, [{"text": text, "colour": colour, "to": to, "shader": shader}], from, face_down, back, art, morph)
+		shader: String = "", fx: bool = false) -> void:
+	_enqueue(cid, [{"text": text, "colour": colour, "to": to, "shader": shader}], from, face_down, back, art, morph, fx)
 
 
 ## Одна карта сразу нескольким игрокам (изгои от Ghoul, Demogorgon): ряд
@@ -99,13 +99,13 @@ func show_row(cid: String, slots: Array[Dictionary]) -> void:
 
 
 func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: String, art: String = "",
-		morph: bool = false) -> void:
+		morph: bool = false, fx: bool = false) -> void:
 	var alt := art if art != "" and AltArts.card_of(art) == cid and AltArts.full_texture(art) != null else ""
 	_queue.append({"cid": cid, "slots": slots, "from": from,
 		"face_down": face_down, "back": CardBack.texture(back),
 		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid),
 		"art": alt, "alt_face": AltArts.full_texture(alt), "alt_mini": AltArts.mini_texture(alt),
-		"morph": alt != "" and morph})
+		"morph": alt != "" and morph, "fx": fx and CardFx.has(cid)})
 	if _item.is_empty():
 		_next()
 	set_process(true)
@@ -113,7 +113,13 @@ func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: S
 
 ## Карта рассыпается (съедена): у неё нет точки, куда улетать.
 func _crumbles() -> bool:
-	return (_item["slots"] as Array).size() == 1 and _item["slots"][0]["to"] == null
+	return (_item["slots"] as Array).size() == 1 and _item["slots"][0]["to"] == null and not _has_fx()
+
+
+## Сыгранная уникальная карта: вокруг неё играет эффект CardFx, а уходит она
+## не полётом и не крошкой, а тает на месте.
+func _has_fx() -> bool:
+	return bool(_item.get("fx", false))
 
 
 ## Для проверок и чтобы не показывать лишнего: идёт ли сейчас показ.
@@ -179,6 +185,8 @@ func _morph_time() -> float:
 
 
 func _hold_time() -> float:
+	if _has_fx():
+		return CardFx.HOLD_TIME
 	return HOLD_TIME_LEGENDARY if bool(_item["morph"]) and _is_legendary() else HOLD_TIME
 
 
@@ -345,8 +353,10 @@ func _draw_slot(c: SlotLayer, slot: int) -> void:
 	var rects := _row_rects(area)
 	var face: Texture2D = _face()
 	var slots: Array = _item["slots"]
-	var small := (_phase == "exit" and not _crumbles()) or (_phase == "enter" and _item["from"] != null)
+	var small := (_phase == "exit" and not _crumbles() and not _has_fx()) \
+		or (_phase == "enter" and _item["from"] != null)
 	c.set_skin(_slot_skin(slot), small)
+	c.modulate.a = 1.0 - _ease_in(_t / EXIT_TIME) if _phase == "exit" and _has_fx() else 1.0
 
 	match _phase:
 		"enter":
@@ -364,7 +374,9 @@ func _draw_slot(c: SlotLayer, slot: int) -> void:
 		"hold":
 			_draw_big(c, slot, rects[slot], face, false)
 		"exit":
-			if _crumbles():
+			if _has_fx():
+				_draw_big(c, slot, rects[slot], face, false)
+			elif _crumbles():
 				if slot == 0:
 					_draw_crumble(c, rects[0], face, _t / CRUMBLE_TIME)
 					_show_banner(0, rects[0])
@@ -397,6 +409,9 @@ func _row_rects(area: Rect2) -> Array[Rect2]:
 ## Крупная карта ряда: лицом или рубашкой, в первые мгновения — вспышка.
 func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool) -> void:
 	_card_rect = rect if _card_rect == Rect2() else _card_rect.merge(rect)
+	if _has_fx() and slot == 0 and (_phase == "hold" or _phase == "exit"):
+		# эффект идёт от начала выдержки и дальше, пока карта тает
+		CardFx.draw_behind(c, String(_item["cid"]), rect, _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0))
 	if down or face == null:
 		_draw_back(c, rect)
 	else:

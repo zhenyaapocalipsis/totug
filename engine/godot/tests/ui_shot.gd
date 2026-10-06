@@ -68,7 +68,7 @@ func _initialize() -> void:
 	root.add_child(_screen)
 	# Вопрос карты надо задавать, когда экран уже в дереве: вне дерева окно
 	# вопроса меряет свои варианты нулём и выходит пустым.
-	if _scenario == "decision" or _scenario == "outcasts":
+	if _scenario == "decision" or _scenario == "outcasts" or _scenario == "unique_fx":
 		_run_scenario.call_deferred()
 	else:
 		_run_scenario()
@@ -343,6 +343,20 @@ func _run_scenario() -> void:
 					_screen.send(Intent.make_decision(pd11.player_id, ans11))
 			# Баннер хода в начале партии закрыл бы витрину — в игре карта не
 			# разыгрывается в первую же секунду хода.
+			_screen._turn_banner.hide()
+		"unique_fx":
+			# Розыгрыш уникальной карты (--card=ID, по умолчанию Ulitharid): витрина
+			# с эффектом CardFx. Снимать через --wait=N кадров (60 кадров ~ 1 с).
+			await process_frame
+			await process_frame
+			while _screen.server.resolver.is_waiting():
+				var pd12: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd12.player_id, pd12.legal_options[0]))
+			var st12 := _screen.server.state
+			var mover12: String = st12.current_player()
+			var cid12 := _arg("card", "48701")
+			st12.players[mover12].deck.hand.append(cid12)
+			_screen.send(Intent.play_card(mover12, cid12))
 			_screen._turn_banner.hide()
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
@@ -620,7 +634,7 @@ func _process(_delta: float) -> bool:
 			if arg.begins_with("--wait="):
 				_shot_at = _frame + int(arg.get_slice("=", 1))
 	# Окно вопроса проявляется с анимацией: --wait=N — снять через N кадров.
-	if (_scenario == "decision" or _scenario == "outcasts") and _shot_at < 0:
+	if (_scenario == "decision" or _scenario == "outcasts" or _scenario == "unique_fx") and _shot_at < 0:
 		_shot_at = _frame + 60
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--wait="):

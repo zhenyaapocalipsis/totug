@@ -1129,6 +1129,13 @@ func _react_to_events(events: Array) -> void:
 			# Выдачи одной карты (идут подряд) собираются в один показ.
 			"give_insane_outcast":
 				outcasts.append(evt)
+			# Уникальная карта: вспышка, свой эффект вокруг неё и встряска доски.
+			"play_card":
+				var played := String(evt.get("card_id", ""))
+				if CardFx.has(played):
+					_showcase_card(pid, played, "PLAYS", null, "", false, false, true)
+					Sfx.play(CardFx.sound(played), pid != viewer_id)
+					power = maxf(power, SHAKE_KILL)
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
@@ -1300,7 +1307,7 @@ const RECAP_STATS := {
 ##          зрителя — в его стопку, для соперника — в его барак) или "" —
 ##          рассыпается (съедена).
 func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest: String,
-		face_down: bool = false, morph: bool = false) -> void:
+		face_down: bool = false, morph: bool = false, fx: bool = false) -> void:
 	if cid == "":
 		return
 	var start: Variant = null
@@ -1310,7 +1317,7 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
 		colour, start, to, face_down, PlayerProfile.back_of(pid), PlayerProfile.art_of(pid, cid), morph,
-		PlayerProfile.shader_of(pid))
+		PlayerProfile.shader_of(pid), fx)
 
 
 ## Куда улетает карта витрины, взятая pid: для зрителя — в его стопку
