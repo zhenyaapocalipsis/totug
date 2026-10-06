@@ -1,22 +1,21 @@
-extends Control
+extends VBoxContainer
 
 ## HOW TO PLAY: обучение для новичков по основной книге правил (Tyrants of the
 ## Underdark Rulebook), без правил Demonweb (решение владельца, 2026-09-25).
 ##
-## Страницы листаются кнопками или стрелками, Esc — назад в меню. На каждой
-## странице слева текст, справа картинка из материалов самой игры: пиксельные
-## лица карт (CardView) и маленькая доска, нарисованная тем же SchematicPainter,
-## что и доска в партии, с настоящими фишками (красные — с гербом игрока).
-##
-## Вёрстка кодом, как у остальных экранов меню.
+## Живёт прямо в окне главного меню, раздел PLAY → HOW TO PLAY, без лишней
+## кнопки OPEN (владелец, 2026-10-06) — поэтому компактное: сверху текст
+## страницы, под ним картинка, внизу листалка. Страницы листаются кнопками или
+## стрелками. Картинки — из материалов самой игры: пиксельные лица карт
+## (CardView) и маленькая доска, нарисованная тем же SchematicPainter, что и
+## доска в партии, с настоящими фишками (красные — с гербом игрока).
 
-signal closed
-
-const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
-
-const TEXT_W := 320
-const PIC_SIZE := Vector2(392, 310)
-const BOARD_ZOOM := 3
+const WIDTH := 470
+## Под текст — место на 10 строк: картинка под ним не прыгает от страницы к
+## странице.
+const TEXT_H := 10 * PixelTheme.LINE_H
+const PIC_H := 260
+const BOARD_ZOOM := 2
 const BUTTON_SIZE := Vector2(70, 16)
 
 # Карты из data/cards/cards.json.
@@ -49,53 +48,32 @@ var _prev: Button
 var _next: Button
 
 
-func _init() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	theme = PixelTheme.theme()
-	add_child(UnderdarkBg.make())
+## page — с какой страницы открыть (меню помнит, где остановились).
+func _init(page: int = 0) -> void:
+	add_theme_constant_override("separation", 4)
 	_emblem = String(PlayerProfile.load_local()["emblem"])
 	_pages = _build_pages()
 
-	var centre := CenterContainer.new()
-	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(centre)
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
-	centre.add_child(card)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 4)
-	card.add_child(col)
-
-	var head := Label.new()
-	head.text = "HOW TO PLAY"
-	head.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
-	head.add_theme_color_override("font_color", PixelTheme.GOLD)
-	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(head)
-
 	_title = GameScreen.section_label("")
-	col.add_child(_title)
-	col.add_child(HSeparator.new())
+	_title.add_theme_color_override("font_color", PixelTheme.GOLD)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(_title)
 
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 12)
-	col.add_child(body)
 	_text = RichTextLabel.new()
 	_text.bbcode_enabled = true
 	_text.fit_content = true
 	_text.scroll_active = false
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text.custom_minimum_size = Vector2(TEXT_W, PIC_SIZE.y)
-	body.add_child(_text)
+	_text.custom_minimum_size = Vector2(WIDTH, TEXT_H)
+	add_child(_text)
 	_pic = CenterContainer.new()
-	_pic.custom_minimum_size = PIC_SIZE
-	body.add_child(_pic)
+	_pic.custom_minimum_size = Vector2(WIDTH, PIC_H)
+	add_child(_pic)
 
-	col.add_child(HSeparator.new())
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 8)
-	col.add_child(buttons)
+	add_child(buttons)
 	_prev = _button("< BACK", func(): show_page(_page - 1))
 	buttons.add_child(_prev)
 	_counter = Label.new()
@@ -105,15 +83,8 @@ func _init() -> void:
 	buttons.add_child(_counter)
 	_next = _button("NEXT >", func(): show_page(_page + 1))
 	buttons.add_child(_next)
-	buttons.add_child(_button("MENU", func(): closed.emit()))
 
-	var hint := Label.new()
-	hint.text = "Arrow keys turn pages, Esc returns to the menu."
-	hint.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(hint)
-
-	show_page(0)
+	show_page(page)
 
 
 func page_count() -> int:
@@ -138,17 +109,16 @@ func show_page(index: int) -> void:
 	_next.disabled = _page == _pages.size() - 1
 
 
+## Стрелки (и A / D) листают, пока раздел открыт.
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo:
+	if key == null or not key.pressed or key.echo or not is_visible_in_tree():
 		return
 	match key.keycode:
 		KEY_RIGHT, KEY_D:
 			show_page(_page + 1)
 		KEY_LEFT, KEY_A:
 			show_page(_page - 1)
-		KEY_ESCAPE:
-			closed.emit()
 		_:
 			return
 	get_viewport().set_input_as_handled()
@@ -327,7 +297,7 @@ func _pic_market() -> Control:
 	col.add_theme_constant_override("separation", 3)
 	col.add_child(_caption("MARKET: 6 CARDS FACE UP", PixelTheme.GOLD))
 	var grid := GridContainer.new()
-	grid.columns = 3
+	grid.columns = 6
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
 	for cid: String in MARKET_SAMPLE:

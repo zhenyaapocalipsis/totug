@@ -10,7 +10,6 @@ extends Control
 ## --players=2..4 пропускает меню и сразу раздаёт столько цветов.
 
 ## Файлом, а не глобальным именем класса: так экран виден и без кэша редактора.
-const HowToPlayScreen := preload("res://scenes/ui/how_to_play_screen.gd")
 const TutorialOfferScreen := preload("res://scenes/ui/tutorial_offer_screen.gd")
 
 
@@ -51,7 +50,7 @@ func _show_tutorial_offer(game_seed: int) -> void:
 	var offer: Control = TutorialOfferScreen.new()
 	offer.answered.connect(func(wants: bool):
 		if wants:
-			_show_how_to_play(game_seed)
+			_show_setup(game_seed, SetupScreen.PAGE_HOW_TO_PLAY)
 		else:
 			_show_setup(game_seed))
 	add_child(offer)
@@ -59,7 +58,7 @@ func _show_tutorial_offer(game_seed: int) -> void:
 
 ## Главное меню. Сюда же возвращает кнопка MAIN MENU из меню по Esc; новая
 ## партия получает новый сид. page — какую страницу меню открыть (возврат
-## из обучения и лобби — туда, откуда пришли).
+## из лобби — туда, откуда пришли; новичку — сразу обучение).
 func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void:
 	_close_net()
 	PlayerProfile.seats = {}
@@ -67,15 +66,7 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	var setup := SetupScreen.new(page)
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
 	setup.online_requested.connect(_show_lobby)
-	setup.how_to_play_requested.connect(func(): _show_how_to_play(game_seed, SetupScreen.PAGE_HOW_TO_PLAY))
 	add_child(setup)
-
-
-func _show_how_to_play(game_seed: int, back_page: String = SetupScreen.PAGE_ONLINE) -> void:
-	_clear()
-	var learn: Control = HowToPlayScreen.new()
-	learn.closed.connect(func(): _show_setup(game_seed, back_page))
-	add_child(learn)
 
 
 func _clear() -> void:
@@ -85,7 +76,10 @@ func _clear() -> void:
 
 ## Сетевая игра: лобби хоста или входа по IP. Связь (NetSession) живёт в
 ## /root/Net — по одному и тому же пути у всех, иначе RPC не найдут узел.
-func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STANDARD) -> void:
+## address — код комнаты или IP, набранные в меню (вход сразу, без второго
+## вопроса).
+func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STANDARD,
+		address: String = "") -> void:
 	for child in get_children():
 		child.queue_free()
 	_close_net()
@@ -94,7 +88,7 @@ func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STA
 	net.profile = PlayerProfile.load_local()
 	get_tree().root.add_child(net)
 	net.game_started.connect(_start_net_game)
-	var lobby := LobbyScreen.new(net, kind, count, mode)
+	var lobby := LobbyScreen.new(net, kind, count, mode, address)
 	var back_page: String = SetupScreen.PAGE_ONLINE if kind in ["find", "resume"] else SetupScreen.PAGE_LOBBY
 	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system()), back_page))
 	add_child(lobby)

@@ -72,8 +72,10 @@ var _any_button: Button
 var _buttons: VBoxContainer
 ## Обычный профиль: столбец вкладок и страница (по ней — размер профиля).
 var _row: HBoxContainer
-## Никнейм на вкладке STATS.
+## Никнейм на вкладке STATS, кнопка EDIT / OK рядом и строка «Saved.» под ним.
 var _stats_name: Label
+var _rename: Button
+var _name_note: Label
 
 
 ## first_run — первый запуск игры: профиля ещё нет, имя обязательно, CANCEL нет.
@@ -155,19 +157,15 @@ func _init(first_run: bool = false) -> void:
 		_look.visible = false
 	col.add_child(_look)
 
-	_look.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
-	_name_edit = LineEdit.new()
-	_name_edit.max_length = PlayerProfile.NAME_MAX
-	_name_edit.placeholder_text = "Your name"
-	_name_edit.text = String(local["name"])
-	_name_edit.custom_minimum_size = Vector2(160, 0)
-	_name_edit.text_submitted.connect(func(_t: String): _save())
+	# Имя при первом запуске — здесь, над гербом; потом оно меняется на
+	# вкладке STATS, где и показано (владелец, 2026-10-06).
 	if _first_run:
+		_look.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
+		_name_edit = _new_name_edit(String(local["name"]))
+		_name_edit.text_submitted.connect(func(_t: String): _save())
 		_name_edit.grab_focus.call_deferred()
-	_name_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_look.add_child(_name_edit)
-
-	_look.add_child(HSeparator.new())
+		_look.add_child(_name_edit)
+		_look.add_child(HSeparator.new())
 	_look.add_child(GameScreen.section_label("EMBLEM: YOUR TROOP ON THE BOARD"))
 	var editor := HBoxContainer.new()
 	editor.add_theme_constant_override("separation", 10)
@@ -200,7 +198,6 @@ func _init(first_run: bool = false) -> void:
 		big.custom_minimum_size = Vector2.ONE * PlayerProfile.SIZE * PREVIEW_ZOOM
 		big.stretch_mode = TextureRect.STRETCH_SCALE
 		big.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		big.tooltip_text = pid.capitalize()
 		big.gui_input.connect(func(e: InputEvent):
 			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 				choose_colour(pid))
@@ -217,7 +214,6 @@ func _init(first_run: bool = false) -> void:
 	_any_button.toggle_mode = true
 	_any_button.custom_minimum_size = Vector2(30, 16)
 	_any_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_any_button.tooltip_text = "No favourite colour."
 	previews.add_child(_any_button)
 
 	var hint := Label.new()
@@ -279,7 +275,6 @@ func _tools() -> Control:
 		var swatch := ColorRect.new()
 		swatch.color = Color(hex)
 		swatch.custom_minimum_size = Vector2(SWATCH, SWATCH)
-		swatch.tooltip_text = "#" + hex
 		swatch.gui_input.connect(func(e: InputEvent):
 			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 				_set_brush(Color(hex)))
@@ -297,7 +292,6 @@ func _tools() -> Control:
 	_custom.edit_alpha = false
 	_custom.color = _brush
 	_custom.custom_minimum_size = Vector2(SWATCH * 3, SWATCH)
-	_custom.tooltip_text = "Click to pick any colour"
 	SetupScreen._style_button(_custom)
 	_custom.color_changed.connect(_set_brush)
 	row.add_child(_custom)
@@ -407,8 +401,12 @@ func _refresh_previews() -> void:
 
 
 func _save() -> void:
-	var name_text := PlayerProfile.clean_name(_name_edit.text)
-	_name_edit.text = name_text
+	# В обычном профиле имя правится отдельно (STATS, _save_name): SAVE герба
+	# не должен прихватить недописанное имя.
+	var name_text := PlayerProfile.clean_name(_name_edit.text) if _first_run \
+		else String(PlayerProfile.load_local()["name"])
+	if _first_run:
+		_name_edit.text = name_text
 	if _first_run and name_text == "":
 		_saved_note.text = "Enter a name (letters and digits)."
 		if _name_edit.is_inside_tree():
@@ -419,11 +417,48 @@ func _save() -> void:
 		err = PlayerProfile.save_phrases(phrases())
 	if err == OK:
 		_saved_note.text = "Saved."
-		if _stats_name != null:
-			_stats_name.text = _display_name(name_text)
 		closed.emit()
 	else:
 		_saved_note.text = "Could not save the profile (error %d)." % err
+
+
+func _new_name_edit(text: String) -> LineEdit:
+	var edit := LineEdit.new()
+	edit.max_length = PlayerProfile.NAME_MAX
+	edit.placeholder_text = "Your name"
+	edit.text = text
+	edit.custom_minimum_size = Vector2(160, 0)
+	edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	edit.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return edit
+
+
+## STATS: имя — надписью или полем для правки.
+func _edit_name(on: bool) -> void:
+	_stats_name.visible = not on
+	_name_edit.visible = on
+	_rename.text = "OK" if on else "EDIT"
+	_name_note.visible = false
+	if on:
+		_name_edit.text = String(PlayerProfile.load_local()["name"])
+		if _name_edit.is_inside_tree():
+			_name_edit.grab_focus()
+			_name_edit.select_all()
+
+
+## Сохранить только имя: герб и цвет — какие сохранены (недоделанный герб
+## на вкладке EMBLEM не уходит в файл вместе с именем).
+func _save_name() -> void:
+	var name_text := PlayerProfile.clean_name(_name_edit.text)
+	var err := PlayerProfile.save_local({"name": name_text,
+		"emblem": String(PlayerProfile.load_local()["emblem"])})
+	_edit_name(false)
+	_name_note.visible = true
+	if err == OK:
+		_stats_name.text = _display_name(name_text)
+		_name_note.text = "Saved."
+	else:
+		_name_note.text = "Could not save the name (error %d)." % err
 
 
 ## page — STATS, EMBLEM, CHAT или COLLECTION.
@@ -436,6 +471,8 @@ func _show_tab(page: String) -> void:
 		(pages[key] as Control).visible = key == page
 	_buttons.visible = page == "EMBLEM" or page == "CHAT"
 	_saved_note.text = ""
+	# Ушли со STATS посреди правки имени — правка отменяется.
+	_edit_name(false)
 	if _collection.visible:
 		_collection.refresh()
 	for b: Button in _tab_buttons:
@@ -504,12 +541,37 @@ func _stats_page() -> Control:
 	var words := VBoxContainer.new()
 	words.add_theme_constant_override("separation", 0)
 	head.add_child(words)
-	# Никнейм над званием (владелец, 2026-10-06); после SAVE — новый.
+	# Никнейм над званием, там же и смена (владелец, 2026-10-06): EDIT
+	# превращает его в поле, OK или Enter — сохранить, Esc — передумать.
+	var name_row := HBoxContainer.new()
+	name_row.add_theme_constant_override("separation", 4)
+	words.add_child(name_row)
 	_stats_name = Label.new()
 	_stats_name.text = _display_name(String(local["name"]))
 	_stats_name.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	_stats_name.add_theme_color_override("font_color", PixelTheme.TEXT)
-	words.add_child(_stats_name)
+	name_row.add_child(_stats_name)
+	_name_edit = _new_name_edit(String(local["name"]))
+	_name_edit.visible = false
+	_name_edit.text_submitted.connect(func(_t: String): _save_name())
+	_name_edit.gui_input.connect(func(e: InputEvent):
+		var key := e as InputEventKey
+		if key != null and key.pressed and key.keycode == KEY_ESCAPE:
+			_edit_name(false)
+			_name_edit.accept_event())
+	name_row.add_child(_name_edit)
+	_rename = _button("EDIT", func():
+		if _name_edit.visible:
+			_save_name()
+		else:
+			_edit_name(true))
+	_rename.custom_minimum_size = Vector2(36, 16)
+	_rename.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	name_row.add_child(_rename)
+	_name_note = Label.new()
+	_name_note.add_theme_color_override("font_color", PixelTheme.GOLD)
+	_name_note.visible = false
+	words.add_child(_name_note)
 	var title := Label.new()
 	title.text = PlayerProfile.rank_title(rating)
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
@@ -665,11 +727,11 @@ func _cell(text: String, colour: Color) -> Label:
 	return label
 
 
-## "28.09 14:05" по местному времени.
 static func _display_name(name_text: String) -> String:
 	return name_text if name_text != "" else "No name yet"
 
 
+## "28.09 14:05" по местному времени.
 static func _date(unix: int) -> String:
 	var bias := int(Time.get_time_zone_from_system().get("bias", 0))
 	var d := Time.get_datetime_dict_from_unix_time(unix + bias * 60)

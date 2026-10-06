@@ -480,9 +480,15 @@ func _run_scenario() -> void:
 				PlayerProfile.add_totals(entry)
 			var stats_screen := _menu_profile()
 		"menu":
-			# Главное меню поверх партии; --page=news / profile / settings /
-			# online / lobby / hotseat / how_to_play — какая вкладка открыта.
-			root.add_child(SetupScreen.new(_arg("page", SetupScreen.PAGE_ONLINE)))
+			# Главное меню поверх партии; --page=profile / settings / online /
+			# lobby / hotseat / how_to_play — какая вкладка открыта;
+			# --lobby=join / direct / ip — что выбрано в LOBBY.
+			var menu := SetupScreen.new(_arg("page", SetupScreen.PAGE_ONLINE))
+			var lobby := _arg("lobby", "")
+			menu._lobby_join = lobby == "join" or lobby == "ip"
+			menu._join_by_ip = lobby == "ip"
+			menu._lobby_direct = lobby == "direct"
+			root.add_child(menu)
 		"card_back":
 			# Коллекция, раздел рубашек: рубашка, которую можно покрутить.
 			PlayerProfile.path_override = "user://profile_shot.cfg"

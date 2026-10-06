@@ -38,7 +38,10 @@ var _searching_since := -1
 var _queue_text := ""
 
 
-func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = "") -> void:
+## address — код комнаты (join_code) или IP хоста (join_ip), набранные в
+## главном меню: с ним вход начинается сразу.
+func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = "",
+		address: String = "") -> void:
 	_net = net
 	_kind = kind
 	_count = player_count
@@ -107,14 +110,20 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	_net.connection_lost.connect(_on_connection_lost)
 	_net.queue_changed.connect(_on_queue_changed)
 	match kind:
-		"create":
-			_status.text = "Press CREATE ROOM."
-		"find":
-			_status.text = "Press FIND GAME."
+		# CREATE ROOM и SEARCH уже нажаты в главном меню — второй раз не просим;
+		# кнопка здесь — только повтор, если связь не удалась.
+		"create", "find":
+			_on_go()
 		"join_code":
 			_status.text = "Enter the room code your friend got."
+			if address != "":
+				_code_edit.text = address.to_upper()
+				_on_go()
 		"join_ip":
 			_status.text = "Enter the host's address."
+			if address != "":
+				_ip_edit.text = address
+				_on_go()
 		"resume":
 			_on_go()
 		"host":

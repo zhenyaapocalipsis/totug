@@ -3348,22 +3348,14 @@ func test_main_menu() -> void:
 	section("главное меню, первый профиль и вопрос про обучение")
 	var menu := SetupScreen.new()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "меню открывается на PLAY → ONLINE")
-	for text in ["NEWS", "PROFILE", "PLAY", "SETTINGS", "EXIT"]:
+	for text in ["PROFILE", "PLAY", "SETTINGS", "EXIT"]:
 		check(_find_button(menu, text) != null, "под названием есть кнопка %s" % text)
 	for text in ["ONLINE", "LOBBY", "HOTSEAT", "HOW TO PLAY", "SEARCH"]:
 		check(_find_button(menu, text) != null, "в окне PLAY есть %s" % text)
 	check(_find_button(menu, "LIBRARY") == null and _find_button(menu, "CARDS") == null,
 		"библиотеки карт в меню больше нет")
 
-	_find_button(menu, "NEWS").pressed.emit()
-	check_eq(menu.current_page(), SetupScreen.PAGE_NEWS, "NEWS открывает патчноуты")
-	var notes: Array = SetupScreen.PatchNotes.parse("2026-10-05\tStage B: second [x]\n2026-10-05\tStage A: first\n2026-10-04\tOld\n")
-	check_eq(notes.size(), 3, "патчноуты: по записи на коммит")
-	var notes_text: String = SetupScreen.PatchNotes.bbcode(notes)
-	check(notes_text.find("2026-10-05") < notes_text.find("Stage B") and notes_text.find("Stage A") < notes_text.find("2026-10-04"),
-		"патчноуты: дата, под ней коммиты этого дня, свежие сверху")
-	check(notes_text.count("2026-10-05") == 1 and notes_text.contains("[lb]x]"), "дата один раз, скобки коммита не ломают разметку")
-	check(not SetupScreen.PatchNotes.entries().is_empty(), "патчноуты есть (из git или из файла)")
+	check(_find_button(menu, "NEWS") == null, "NEWS убрана (владелец, 2026-10-06)")
 
 	_find_button(menu, "PROFILE").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_PROFILE, "PROFILE открывает профиль в окне меню")
@@ -3371,6 +3363,7 @@ func test_main_menu() -> void:
 		check(_find_button(menu, text) != null, "в профиле есть %s" % text)
 	check(_find_button(menu, "CARD BACK") == null and _find_button(menu, "CANCEL") == null,
 		"рубашки и фон — внутри коллекции; CANCEL не нужен")
+	check(_find_button(menu, "EDIT") != null, "ник меняется на вкладке STATS (кнопка EDIT)")
 	var first_profile := ProfileScreen.new(true)
 	check(_find_button(first_profile, "COLLECTION") == null, "при первом запуске — только имя и герб")
 	first_profile.free()
@@ -3384,8 +3377,7 @@ func test_main_menu() -> void:
 
 	var got := {}
 	menu.started.connect(func(ids: Array[String], m: String): got["start"] = [ids.size(), m])
-	menu.online_requested.connect(func(k: String, c: int, m: String): got["online"] = [k, c, m])
-	menu.how_to_play_requested.connect(func(): got["learn"] = true)
+	menu.online_requested.connect(func(k: String, c: int, m: String, a: String): got["online"] = [k, c, m, a])
 	_find_button(menu, "PLAY").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY возвращает в последний раздел")
 	_find_button(menu, "HOTSEAT").pressed.emit()
@@ -3399,26 +3391,48 @@ func test_main_menu() -> void:
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "ONLINE открывает поиск игры")
 	_find_button(menu, "2").pressed.emit()
 	_find_button(menu, "SEARCH").pressed.emit()
-	check_eq(got.get("online"), ["find", 2, GameSetup.MODE_STANDARD], "SEARCH: на 2 игроков — режим STANDARD")
+	check_eq(got.get("online"), ["find", 2, GameSetup.MODE_STANDARD, ""], "SEARCH: на 2 игроков — режим STANDARD")
 	_find_button(menu, "3").pressed.emit()
 	_find_button(menu, "SEARCH").pressed.emit()
-	check_eq(got.get("online"), ["find", 3, GameSetup.MODE_RANDOM_3], "SEARCH: на 3 игроков — режим RANDOM 3")
+	check_eq(got.get("online"), ["find", 3, GameSetup.MODE_RANDOM_3, ""], "SEARCH: на 3 игроков — режим RANDOM 3")
 	_find_button(menu, "4").pressed.emit()
 	_find_button(menu, "SEARCH").pressed.emit()
-	check_eq(got.get("online"), ["find", 4, GameSetup.MODE_RANDOM_4], "SEARCH: на 4 игроков — режим RANDOM 4")
+	check_eq(got.get("online"), ["find", 4, GameSetup.MODE_RANDOM_4, ""], "SEARCH: на 4 игроков — режим RANDOM 4")
 	_find_button(menu, "LOBBY").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_LOBBY, "LOBBY открывает игру с друзьями")
+	check(_find_button(menu, "CREATE") != null and _find_button(menu, "JOIN") != null,
+		"в LOBBY сверху выбор: CREATE или JOIN")
 	_find_button(menu, "CREATE ROOM").pressed.emit()
-	check_eq(got.get("online"), ["create", 3, GameSetup.MODE_RANDOM_4],
+	check_eq(got.get("online"), ["create", 3, GameSetup.MODE_RANDOM_4, ""],
 		"CREATE ROOM в углу: 3 игрока и режим запомнены, выбор стола для поиска их не трогает")
-	_find_button(menu, "JOIN BY CODE").pressed.emit()
-	check_eq(got.get("online")[0], "join_code", "JOIN BY CODE — вход по коду")
-	_find_button(menu, "JOIN BY IP").pressed.emit()
-	check_eq(got.get("online")[0], "join_ip", "JOIN BY IP — вход по IP")
+	_find_button(menu, "DIRECT IP").pressed.emit()
+	check(_find_button(menu, "CREATE ROOM") == null, "связь DIRECT IP: кнопка в углу уже не CREATE ROOM")
+	_find_button(menu, "HOST").pressed.emit()
+	check_eq(got.get("online")[0], "host", "DIRECT IP → HOST: игра по IP этого компьютера")
+	_find_button(menu, "JOIN").pressed.emit()
+	check(_find_button(menu, "STANDARD") == null,
+		"JOIN: режим и игроков выбирает тот, кто создал игру")
+	var code_edit: LineEdit = menu._col.find_children("*", "LineEdit", true, false)[0]
+	code_edit.text = "wxyz"
+	menu._action.pressed.emit()
+	check_eq(got.get("online"), ["join_code", 0, GameSetup.MODE_RANDOM_4, "wxyz"],
+		"JOIN по коду: код из поля уходит в лобби")
+	_find_button(menu, "BY IP").pressed.emit()
+	var ip_edit: LineEdit = menu._col.find_children("*", "LineEdit", true, false)[0]
+	ip_edit.text = "26.1.2.3"
+	_find_button(menu, "JOIN").pressed.emit()
+	check(got.get("online")[0] != "join_ip", "кнопка JOIN сверху только переключает вкладку")
+	menu._action.pressed.emit()
+	check_eq(got.get("online")[0], "join_ip", "JOIN по IP — вход по IP")
+	check_eq(got.get("online")[3], "26.1.2.3", "JOIN по IP: адрес из поля уходит в лобби")
 	_find_button(menu, "HOW TO PLAY").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_HOW_TO_PLAY, "HOW TO PLAY — раздел PLAY")
-	_find_button(menu, "OPEN").pressed.emit()
-	check(got.get("learn", false), "OPEN в углу открывает обучение")
+	check(_find_button(menu, "OPEN") == null and _find_button(menu, "NEXT >") != null,
+		"HOW TO PLAY: обучение сразу в окне, без кнопки OPEN")
+	_find_button(menu, "NEXT >").pressed.emit()
+	_find_button(menu, "HOTSEAT").pressed.emit()
+	_find_button(menu, "HOW TO PLAY").pressed.emit()
+	check_eq(menu._learn.current_page(), 1, "обучение открывается там, где остановились")
 	menu.free()
 
 	var back := SetupScreen.new(SetupScreen.PAGE_LOBBY)
@@ -3664,7 +3678,7 @@ func test_resume_saved_game() -> void:
 		"code": "WXYZ", "by_code": true}, "партия запомнена: сервер и код комнаты")
 	menu = SetupScreen.new()
 	var got := []
-	menu.online_requested.connect(func(k: String, _c: int, _m: String): got.append(k))
+	menu.online_requested.connect(func(k: String, _c: int, _m: String, _a: String): got.append(k))
 	var button := _find_button(menu, "RETURN TO GAME")
 	check(button != null, "есть партия — на главной кнопка RETURN TO GAME")
 	if button != null:
