@@ -353,18 +353,28 @@ func _process(delta: float) -> void:
 
 ## Шейдер владельца seat для его карты (решение владельца, 2026-09-30:
 ## шейдер ложится на всю колоду игрока, со стартовыми картами). "" — ничья
-## карта (маркет) или у владельца нет шейдера. cid оставлен на будущее —
-## для альтернативных артов отдельных карт.
-static func skin_of(seat: String, _cid: String) -> String:
+## карта (маркет) или у владельца нет шейдера.
+static func skin_of(_seat: String, _cid: String) -> String:
+	if _seat == "":
+		return ""
+	return PlayerProfile.shader_of(_seat)
+
+
+## Альтернативный арт, который владелец seat выбрал для своей карты cid ("" —
+## оригинальный, у карты маркета и у игрока без выбора тоже).
+static func art_of(seat: String, cid: String) -> String:
 	if seat == "":
 		return ""
-	return PlayerProfile.shader_of(seat)
+	return PlayerProfile.art_of(seat, cid)
 
 
-## Карта принадлежит игроку seat — показывать её с его шейдером.
+## Карта принадлежит игроку seat — показывать её с его шейдером и артом.
 func set_card_owner(seat: String) -> void:
 	owner_seat = seat
-	set_skin(skin_of(seat, card_id))
+	if card_id != "":
+		set_card(card_id)
+	else:
+		set_skin(skin_of(seat, card_id))
 
 
 ## Показать карту с шейдером (SkinCollection.SHADERS) или обычной ("").
@@ -443,6 +453,8 @@ func set_art(new_art: String) -> void:
 func set_card(cid: String) -> void:
 	card_id = cid
 	if _pixel != null:
+		if owner_seat != "":
+			art = art_of(owner_seat, cid)
 		if art != "" and AltArts.card_of(art) != cid:
 			art = ""
 		_pixel = mini_texture(cid, art) if _mini else pixel_texture(cid, art)

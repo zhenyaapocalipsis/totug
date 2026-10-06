@@ -1270,6 +1270,36 @@ func test_skin_collection() -> void:
 	market_view.free()
 	PlayerProfile.seats = {}
 
+	# Альтернативные арты в партии: арт владельца — только на его карте, у других и
+	# в маркете оригинал; строка артов чистится при приёме из сети.
+	check_eq(AltArts.clean_list("48403_2,48310_1,48310_1,x,48403_1"), "48310_1,48403_2",
+		"строка артов: известные, по одному на карту, по порядку")
+	check_eq(AltArts.clean_list(null), "", "пустая строка артов")
+	check_eq(AltArts.map_to_list(AltArts.list_to_map("48310_1,48403_2")), "48310_1,48403_2", "строка <-> словарь артов")
+	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "arts": "48403_2,48310_1,мусор"}),
+		"blue": PlayerProfile.clean({"name": "Bob"})}
+	check_eq(PlayerProfile.seats["red"]["arts"], "48310_1,48403_2", "профиль за столом хранит чистую строку артов")
+	check_eq(PlayerProfile.art_of("red", "48403"), "48403_2", "арт карты игрока за столом")
+	check_eq(PlayerProfile.art_of("red", "48302"), "", "у карты без выбранного арта оригинал")
+	check_eq(PlayerProfile.art_of("blue", "48403"), "", "у игрока без артов оригинал")
+	var red_blue := CardView.new("48403", 176, 254)
+	var plain_dragon: Texture2D = red_blue._pixel
+	red_blue.set_card_owner("red")
+	check(red_blue.art == "48403_2" and red_blue._pixel != plain_dragon, "карта игрока показывает его арт")
+	red_blue.set_card("48310")
+	check_eq(red_blue.art, "48310_1", "другая его карта — свой арт")
+	red_blue.set_card("48302")
+	check(red_blue.art == "" and red_blue._pixel != null, "карта без арта — оригинал")
+	red_blue.set_card_owner("blue")
+	red_blue.set_card("48403")
+	check(red_blue.art == "" and red_blue._pixel == plain_dragon, "у соперника без арта карта обычная")
+	var market_dragon := CardView.new("48403", 176, 254)
+	check(market_dragon.art == "" and market_dragon._pixel == plain_dragon, "карта маркета — оригинальный арт")
+	red_blue.free()
+	market_dragon.free()
+	check_eq(String(PlayerProfile.clean({"arts": "48403_2"})["arts"]), "48403_2", "арты проходят PlayerProfile.clean")
+	PlayerProfile.seats = {}
+
 	# Вкладка COLLECTION профиля.
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	SkinCollection.grant({"boxes": 1, "dust": 100})

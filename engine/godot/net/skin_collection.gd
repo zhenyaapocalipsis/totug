@@ -17,8 +17,8 @@ extends RefCounted
 ## craft_art).
 ##
 ## Коллекция хранится у игрока, в файле профиля (секция "collection"), как и
-## история партий. В партию уходит только включённый шейдер; выбранные арты пока
-## видны только в самой коллекции.
+## история партий. В партию уходят включённый шейдер и выбранные арты карт
+## (строка AltArts.clean_list в профиле, PlayerProfile.art_of).
 
 const TIERS: Array[String] = ["epic", "legendary", "ultra"]
 const TIER_TITLES := {"epic": "EPIC", "legendary": "LEGENDARY", "ultra": "ULTRA"}
@@ -247,3 +247,8 @@ static func set_art(cid: String, art: String) -> bool:
 		data["arts"][cid] = art
 	_save(data)
 	return true
+
+
+## Включённые арты одной строкой — они уходят в партию вместе с профилем.
+static func active_arts() -> String:
+	return AltArts.map_to_list(load_data()["arts"])

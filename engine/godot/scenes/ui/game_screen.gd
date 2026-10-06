@@ -1952,10 +1952,12 @@ func _fly_to_discard(from: Rect2, cid: String) -> void:
 	# Купленная карта стала своей: на лету она принимает образ покупателя
 	# (SkinCollection) — в маркете образов нет, они есть только у купленных карт.
 	var owned := CardView.skin_of(viewer_id, cid)
-	if owned != "":
+	var owned_art := CardView.art_of(viewer_id, cid)
+	if owned != "" or owned_art != "":
 		get_tree().create_timer(FLIGHT_TIME * SKIN_ON_FLIGHT).timeout.connect(func():
 			if is_instance_valid(ghost):
-				ghost.set_skin(owned))
+				ghost.set_skin(owned)
+				ghost.set_art(owned_art))
 
 
 ## Клик по троп-слоту двусмыслен: там может быть и Deploy в пустой слот, и

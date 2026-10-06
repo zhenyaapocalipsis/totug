@@ -134,3 +134,30 @@ static func full_texture(art: String) -> Texture2D:
 static func mini_texture(art: String) -> Texture2D:
 	var path := MINI_DIR + art + ".png"
 	return load(path) as Texture2D if TIER_OF.has(art) and ResourceLoader.exists(path) else null
+
+
+## Включённые арты игрока одной строкой, как они идут по сети и лежат в профиле
+## стола: ID через запятую, не больше одного на карту, только известные, по
+## порядку (одинаковые наборы — одинаковые строки). Чужое и лишнее отбрасывается.
+static func clean_list(value: Variant) -> String:
+	var by_card := {}
+	for item in (str(value).split(",") if value != null else PackedStringArray()):
+		var art := clean(item.strip_edges())
+		if art != "" and not by_card.has(card_of(art)):
+			by_card[card_of(art)] = art
+	var out: Array = by_card.values()
+	out.sort()
+	return ",".join(out)
+
+
+## Строка артов -> {card_id: арт}.
+static func list_to_map(list: String) -> Dictionary:
+	var map := {}
+	for art in clean_list(list).split(",", false):
+		map[card_of(art)] = art
+	return map
+
+
+## Словарь {card_id: арт} -> строка артов.
+static func map_to_list(map: Dictionary) -> String:
+	return clean_list(",".join(PackedStringArray(map.values())))

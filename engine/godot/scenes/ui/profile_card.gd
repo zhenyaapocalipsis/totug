@@ -52,7 +52,8 @@ func _init(pid: String = "", profile: Dictionary = {}) -> void:
 	name_label.add_theme_color_override("font_color", BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
 	head.add_child(name_label)
 	# Любимая карта игрока — справа, в его образе.
-	var fav := ProfileScreen.favourite_view(String(profile.get("favourite", "")), str(profile.get("shader", "")))
+	var fav := ProfileScreen.favourite_view(String(profile.get("favourite", "")), str(profile.get("shader", "")),
+		String(profile.get("arts", "")))
 	if fav != null:
 		var spacer := Control.new()
 		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL

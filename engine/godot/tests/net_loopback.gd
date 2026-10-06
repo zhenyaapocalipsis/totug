@@ -260,6 +260,8 @@ func _process(delta: float) -> bool:
 				check(room.matched, "[match] стол поиска игры помечен — за него будет награда")
 				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("shader", "")) == "gilded",
 					"[match] шейдер соперника дошёл")
+				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("arts", "")) == "48310_1,48403_2",
+					"[match] арты соперника дошли")
 				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("favourite", "")) == "48314",
 					"[match] любимая карта соперника дошла")
 				waiting.close()
@@ -569,7 +571,7 @@ func _track(p: NetSession) -> void:
 	_tracked += 1
 	# Все хотят purple: за столом он достаётся одному, остальные — другие цвета.
 	p.profile = {"name": "Player %d" % _tracked, "emblem": _emblem_for(_branches), "back": _back_for(_tracked),
-		"colour": "purple", "shader": "gilded", "favourite": "48314"}
+		"colour": "purple", "shader": "gilded", "arts": "48310_1,48403_2", "favourite": "48314"}
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	views[p] = {}

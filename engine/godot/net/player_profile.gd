@@ -163,6 +163,7 @@ static func clean(profile: Dictionary) -> Dictionary:
 		"back": clean_back(String(profile.get("back", ""))),
 		"colour": clean_colour(String(profile.get("colour", ""))),
 		"shader": SkinCollection.clean_shader(profile.get("shader", "")),
+		"arts": AltArts.clean_list(profile.get("arts", "")),
 		"favourite": clean_favourite(String(profile.get("favourite", ""))),
 	}
 
@@ -208,10 +209,11 @@ static func path() -> String:
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
-		return {"name": "", "emblem": "", "back": "", "colour": "", "shader": "", "favourite": ""}
+		return {"name": "", "emblem": "", "back": "", "colour": "", "shader": "", "arts": "", "favourite": ""}
 	return clean({"name": cfg.get_value("profile", "name", ""), "emblem": cfg.get_value("profile", "emblem", ""),
 		"back": cfg.get_value("profile", "back", ""), "colour": cfg.get_value("profile", "colour", ""),
-		"shader": SkinCollection.active_shader(), "favourite": cfg.get_value("profile", "favourite", "")})
+		"shader": SkinCollection.active_shader(), "arts": SkinCollection.active_arts(),
+		"favourite": cfg.get_value("profile", "favourite", "")})
 
 
 ## Профиль уже создан — есть имя. Файл сам по себе не в счёт: ключ рейтинга
@@ -499,3 +501,10 @@ static func back_of(seat: String) -> String:
 ## Включённый шейдер игрока за столом (SkinCollection.SHADERS, "" — нет).
 static func shader_of(seat: String) -> String:
 	return SkinCollection.clean_shader((seats.get(seat, {}) as Dictionary).get("shader", ""))
+
+
+## Включённый арт карты cid у игрока за столом ("" — оригинальный): тот, что
+## игрок выбрал в коллекции, пришёл с его профилем.
+static func art_of(seat: String, cid: String) -> String:
+	var list := String((seats.get(seat, {}) as Dictionary).get("arts", ""))
+	return String(AltArts.list_to_map(list).get(cid, ""))
