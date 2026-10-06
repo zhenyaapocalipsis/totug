@@ -60,6 +60,8 @@ const RING_P_MAX := 90
 const RING_CHECK := 50
 const RING_SAMPLES := 12
 const TIP_LEN := 80.0
+## Минимальная полуширина тела, пиксели: у самого острия щупальце не рвётся на пунктир.
+const MIN_HALF := 0.9
 ## Размах бегущей по телу волны сжатия: на сколько пикселей «перетекают» кольца.
 const RING_FLOW := 4.0
 ## Загиб кончика появляется после прихода: на сколько пикселей, на какой длине от
@@ -120,6 +122,8 @@ const FX := {
 }
 
 static var _cache: Dictionary = {}
+## Отладка (tests/ui_shot.gd --isolate): рисовать только щупальца на чёрном фоне.
+static var debug_isolate := false
 static var _spines: Dictionary = {}
 
 
@@ -170,6 +174,8 @@ static func card_shift(cid: String, t: float) -> Vector2:
 static func _draw_ring(c: CanvasItem, cid: String, card: Rect2, t: float, at: float, alpha: float,
 		grow: float) -> void:
 	var k := (t - at) / RING_TIME
+	if debug_isolate:
+		return
 	if k <= 0.0 or k >= 1.0:
 		return
 	var colour: Color = FX[cid]["tint"]
@@ -337,7 +343,8 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		# толщина: у корня полная, к дальнему концу тоньше, у самой головы — остриё
 		var profile := root_w * 0.5 * (1.0 - 0.55 * clampf(a / total, 0.0, 1.0))
 		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
-		halves.append(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)))
+		# не тоньше MIN_HALF: острие тоньше пикселя рисуется пунктиром и «рвётся»
+		halves.append(maxf(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)), MIN_HALF))
 		# текстура привязана к ГОЛОВЕ: кольца едут вместе с ней (щупальце движется, а не
 		# «открывается» из-под маски); по телу бегут волны сжатия, поэтому кольца
 		# перетекают и когда щупальце уже дошло.

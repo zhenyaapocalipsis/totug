@@ -52,6 +52,9 @@ func _initialize() -> void:
 			# Полуколоды, например demons,undead (с Demons в запасе есть изгои).
 			for name in arg.get_slice("=", 1).split(","):
 				decks.append(name)
+		elif arg == "--isolate":
+			# Отладка эффектов карт: только щупальца на чёрном (для подсчёта разрывов).
+			CardFx.debug_isolate = true
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
 		elif arg.begins_with("--bg="):

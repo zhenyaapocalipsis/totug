@@ -414,6 +414,12 @@ func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool
 	var fx_t := _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0)
 	var cid := String(_item["cid"])
 	var banner_rect := rect
+	if fx and CardFx.debug_isolate:
+		# отладка: только щупальца на чёрном (CardFx.debug_isolate)
+		c.draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
+		CardFx.draw_behind(c, cid, rect, fx_t)
+		CardFx.draw_front(c, cid, rect, fx_t)
+		return
 	if fx:
 		# одна и та же рамка карты для обоих слоёв: иначе на стыке щупальце «едет»
 		rect.position += CardFx.card_shift(cid, fx_t)
