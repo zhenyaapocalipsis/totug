@@ -63,6 +63,8 @@ var _dim := 0.0
 ## Шлейфы летящих мелких карт: по одному на каждую точку назначения.
 var _trails: Array = []
 var _card_rect := Rect2()
+## Слои карт ряда (SlotLayer): у каждого свой образ владельца.
+var _layers: Array[SlotLayer] = []
 ## Плашки над картами: по одной на каждую карту ряда (обычно одна).
 var _banners: Array[PanelContainer] = []
 ## Промежуток между картами ряда.
@@ -83,13 +85,15 @@ func _init() -> void:
 ##   face_down — взята вслепую: сначала рубашка, потом переворот;
 ##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
-		face_down: bool = false, back: String = "", art: String = "", morph: bool = false) -> void:
-	_enqueue(cid, [{"text": text, "colour": colour, "to": to}], from, face_down, back, art, morph)
+		face_down: bool = false, back: String = "", art: String = "", morph: bool = false,
+		shader: String = "") -> void:
+	_enqueue(cid, [{"text": text, "colour": colour, "to": to, "shader": shader}], from, face_down, back, art, morph)
 
 
 ## Одна карта сразу нескольким игрокам (изгои от Ghoul, Demogorgon): ряд
 ## крупных копий, над каждой своя плашка, и каждая улетает в свою точку.
-## slots — [{text, colour, to}], to — точка экрана (не null).
+## slots — [{text, colour, to, shader}], to — точка экрана (не null), shader —
+## образ получателя ("" — без образа).
 func show_row(cid: String, slots: Array[Dictionary]) -> void:
 	_enqueue(cid, slots, null, false, "")
 
@@ -254,6 +258,45 @@ func _input(event: InputEvent) -> void:
 
 
 # --- отрисовка ----------------------------------------------------------------
+#
+# Карты рисуют слои (SlotLayer) — по одному на карту ряда, каждый со своим
+# материалом: образ (шейдер) владельца карты ложится на неё и крупной, и в
+# полёте, и когда она рассыпается (решение владельца, 2026-10-06: образ
+# сопровождает карту везде). Пока карта летит с рынка (ещё ничья) и пока она
+# рубашкой вверх, образа нет — он появляется, когда карта становится своей.
+
+## Слой одной карты витрины: рисует её тем, что решит витрина (_draw_slot).
+class SlotLayer extends Control:
+	var host: CardShowcase
+	var index := 0
+	## Какой образ и на каком лице (мелком или полном) сейчас настроен.
+	var skin := ""
+	var mini := false
+
+	func _init(showcase: CardShowcase, slot: int) -> void:
+		host = showcase
+		index = slot
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	func _draw() -> void:
+		host._draw_slot(self, index)
+
+	## Образ shader (SkinCollection.SHADERS, "" — без образа) на лицо mini.
+	func set_skin(shader: String, small: bool) -> void:
+		if shader == skin and small == mini and (shader == "" or material != null):
+			return
+		skin = shader
+		mini = small
+		if shader == "":
+			material = null
+			return
+		var mat := material as ShaderMaterial
+		if mat == null:
+			mat = ShaderMaterial.new()
+			material = mat
+		CardView.configure_skin(mat, SkinCollection.SHADER_INDEX[shader], small)
+
 
 func _area() -> Rect2:
 	if board_area == null:
@@ -264,7 +307,6 @@ func _area() -> Rect2:
 
 
 func _draw() -> void:
-	var area := _area()
 	if _dim > 0.0:
 		# Затемняем весь экран, а не только доску: вокруг доски стоят сводка,
 		# рука и рынок, и тёмный прямоугольник обрывался бы посреди экрана.
@@ -272,40 +314,67 @@ func _draw() -> void:
 	for banner in _banners:
 		banner.visible = false
 	_card_rect = Rect2()
+	var slots := (_item["slots"] as Array).size() if not _item.is_empty() else 0
+	while _layers.size() < slots:
+		var layer := SlotLayer.new(self, _layers.size())
+		add_child(layer)
+		_layers.append(layer)
+	for i in _layers.size():
+		_layers[i].visible = i < slots
+		if i < slots:
+			_layers[i].queue_redraw()
+
+
+## Образ карты номер slot сейчас: у владельца он есть, карта уже его (не летит
+## с рынка) и показана лицом.
+func _slot_skin(slot: int) -> String:
+	var shader := SkinCollection.clean_shader((_item["slots"] as Array)[slot].get("shader", ""))
+	if shader == "":
+		return ""
+	if _phase == "back" or (_phase == "enter" and (_item["from"] != null or bool(_item["face_down"]))):
+		return ""
+	return shader
+
+
+## Рисует карту номер slot на слое c: крупную, в полёте или рассыпающуюся.
+func _draw_slot(c: SlotLayer, slot: int) -> void:
 	if _item.is_empty():
 		return
-
+	var area := _area()
 	var centre := area.get_center().round()
 	var rects := _row_rects(area)
 	var face: Texture2D = _face()
 	var slots: Array = _item["slots"]
+	var small := (_phase == "exit" and not _crumbles()) or (_phase == "enter" and _item["from"] != null)
+	c.set_skin(_slot_skin(slot), small)
 
 	match _phase:
 		"enter":
 			if _item["from"] == null:
-				_draw_row(rects, face, bool(_item["face_down"]))
-			else:
+				_draw_big(c, slot, rects[slot], face, bool(_item["face_down"]))
+			elif slot == 0:
 				var p := _ease_out(_t / ENTER_TIME)
-				_draw_small_at((_item["from"] as Vector2).lerp(centre, p))
+				_draw_small_at(c, (_item["from"] as Vector2).lerp(centre, p))
 		"back":
-			_draw_row(rects, face, true)
+			_draw_big(c, slot, rects[slot], face, true)
 		"morph":
-			_draw_row(rects, face, false)
-			_draw_morph(rects[0], _t / _morph_time())
+			_draw_big(c, slot, rects[slot], face, false)
+			if slot == 0:
+				_draw_morph(c, rects[0], _t / _morph_time())
 		"hold":
-			_draw_row(rects, face, false)
+			_draw_big(c, slot, rects[slot], face, false)
 		"exit":
 			if _crumbles():
-				_draw_crumble(rects[0], face, _t / CRUMBLE_TIME)
-				_show_banner(0, rects[0])
+				if slot == 0:
+					_draw_crumble(c, rects[0], face, _t / CRUMBLE_TIME)
+					_show_banner(0, rects[0])
 			else:
 				# Каждая копия улетает из своего места ряда в свою точку.
 				var p := _ease_in(_t / EXIT_TIME)
-				for i in slots.size():
-					var from: Vector2 = (rects[i] as Rect2).get_center().round()
-					var to: Vector2 = slots[i]["to"]
-					var mid := from.lerp(to, 0.5) + Vector2(0, -FLY_ARC)
-					_draw_small_at(from.lerp(mid, p).lerp(mid.lerp(to, p), p), i)
+				var from: Vector2 = (rects[slot] as Rect2).get_center().round()
+				var to: Vector2 = slots[slot]["to"]
+				var mid := from.lerp(to, 0.5) + Vector2(0, -FLY_ARC)
+				_draw_small_at(c, from.lerp(mid, p).lerp(mid.lerp(to, p), p), slot)
 
 
 ## Места крупных карт: одна — по центру зоны, несколько — рядом в ряд по
@@ -325,24 +394,22 @@ func _row_rects(area: Rect2) -> Array[Rect2]:
 	return rects
 
 
-## Ряд крупных карт: лицом или рубашкой, в первые мгновения — белая вспышка.
-func _draw_row(rects: Array[Rect2], face: Texture2D, down: bool) -> void:
-	for i in rects.size():
-		var rect := rects[i]
-		_card_rect = rect if i == 0 else _card_rect.merge(rect)
-		if down or face == null:
-			_draw_back(rect)
-		else:
-			draw_texture_rect(face, rect, false)
-		if _flash > 0.0:
-			draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
-		_draw_glow(rect)
-		_show_banner(i, rect)
+## Крупная карта ряда: лицом или рубашкой, в первые мгновения — вспышка.
+func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool) -> void:
+	_card_rect = rect if _card_rect == Rect2() else _card_rect.merge(rect)
+	if down or face == null:
+		_draw_back(c, rect)
+	else:
+		c.draw_texture_rect(face, rect, false)
+	if _flash > 0.0:
+		c.draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
+	_draw_glow(c, rect)
+	_show_banner(slot, rect)
 
 
 ## Обводка цвета ступени вокруг карты с артом: у EPIC вспыхивает и гаснет после
 ## превращения, у LEGENDARY пульсирует, пока карта висит.
-func _draw_glow(rect: Rect2) -> void:
+func _draw_glow(c: SlotLayer, rect: Rect2) -> void:
 	if String(_item["art"]) == "" or _phase != "hold" or not bool(_item["morph"]):
 		return
 	var a := 0.0
@@ -351,13 +418,13 @@ func _draw_glow(rect: Rect2) -> void:
 	else:
 		a = clampf(1.0 - _t / GLOW_TIME_EPIC, 0.0, 1.0)
 	if a > 0.0:
-		draw_rect(rect.grow(2.0), Color(_tier_colour(), a), false, 2.0)
+		c.draw_rect(rect.grow(2.0), Color(_tier_colour(), a), false, 2.0)
 
 
 ## Превращение: поверх оригинальной карты окно арта рассыпается на квадратики
 ## (старые уплывают вверх и гаснут) и собирается заново новым артом. Рамка и
 ## текст не трогаются. Порядок квадратиков случайный, но свой у каждой карты.
-func _draw_morph(rect: Rect2, t: float) -> void:
+func _draw_morph(c: SlotLayer, rect: Rect2, t: float) -> void:
 	var orig: Texture2D = _item["face"]
 	var alt: Texture2D = _item["alt_face"]
 	if orig == null or alt == null:
@@ -377,11 +444,11 @@ func _draw_morph(rect: Rect2, t: float) -> void:
 				var src := Rect2(ART_WINDOW.position + Vector2(x, y), size)
 				var home := rect.position + src.position
 				# новый блок проявляется на своём месте, старый уплывает и гаснет
-				draw_texture_rect_region(alt, Rect2(home, size), src, Color(1, 1, 1, k))
+				c.draw_texture_rect_region(alt, Rect2(home, size), src, Color(1, 1, 1, k))
 				var old_pos := (home + drift * k * k).round()
 				var col := Color(1, 1, 1).lerp(_tier_colour(), minf(1.0, k * 2.0))
 				col.a = 1.0 - k
-				draw_texture_rect_region(orig, Rect2(old_pos, size), src, col)
+				c.draw_texture_rect_region(orig, Rect2(old_pos, size), src, col)
 			x += b
 		y += b
 
@@ -396,7 +463,7 @@ func _show_banner(index: int, card: Rect2) -> void:
 
 ## Карта в полёте — мелкой картинкой 1:1 со шлейфом из прошлых позиций.
 ## trail — номер шлейфа: копии, летящие в разные места, тянут каждая свой.
-func _draw_small_at(pos: Vector2, trail: int = 0) -> void:
+func _draw_small_at(c: SlotLayer, pos: Vector2, trail: int = 0) -> void:
 	pos = pos.round()
 	while _trails.size() <= trail:
 		_trails.append([])
@@ -414,16 +481,16 @@ func _draw_small_at(pos: Vector2, trail: int = 0) -> void:
 		var a := 1.0 if last else 0.35 * float(i + 1) / points.size()
 		var r := Rect2((points[i] - s * 0.5).round(), s)
 		if tex != null:
-			draw_texture_rect(tex, r, false, Color(1, 1, 1, a))
+			c.draw_texture_rect(tex, r, false, Color(1, 1, 1, a))
 		else:
-			_draw_back(r, a)
+			_draw_back(c, r, a)
 		if last:
 			_card_rect = r
 
 
 ## Съеденная карта рассыпается: квадратики сползают вниз и в стороны,
 ## краснеют и гаснут; нижние уходят раньше верхних.
-func _draw_crumble(rect: Rect2, face: Texture2D, t: float) -> void:
+func _draw_crumble(c: SlotLayer, rect: Rect2, face: Texture2D, t: float) -> void:
 	if face == null:
 		return
 	var rng := RandomNumberGenerator.new()
@@ -440,15 +507,15 @@ func _draw_crumble(rect: Rect2, face: Texture2D, t: float) -> void:
 				var pos := (rect.position + Vector2(x, y) + drift * k * k).round()
 				var col := Color(1, 1, 1).lerp(Color(1, 0.3, 0.25), minf(1.0, k * 2.5))
 				col.a = 1.0 - k
-				draw_texture_rect_region(face, Rect2(pos, Vector2(b, b)),
+				c.draw_texture_rect_region(face, Rect2(pos, Vector2(b, b)),
 					Rect2(Vector2(x, y), Vector2(b, b)), col)
 			x += b
 		y += b
 
 
 ## Рубашка карты (CardBack) — с рисунком владельца карты.
-func _draw_back(r: Rect2, a: float = 1.0) -> void:
-	draw_texture_rect(_item["back"], r, false, Color(1, 1, 1, a))
+func _draw_back(c: SlotLayer, r: Rect2, a: float = 1.0) -> void:
+	c.draw_texture_rect(_item["back"], r, false, Color(1, 1, 1, a))
 
 
 static func _ease_out(x: float) -> float:

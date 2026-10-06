@@ -1328,6 +1328,43 @@ func test_skin_collection() -> void:
 	show._next()
 	show.show_card("48302", "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", "48310_1", true)
 	check(show._item["art"] == "" and show._item["morph"] == false, "арт чужой карты витрина не показывает")
+
+	# Образ владельца сопровождает карту и на витрине: не на рынке (карта ещё
+	# ничья) и не рубашкой, а лицом, когда она его.
+	show._queue.clear()
+	show._next()
+	show.show_card("48306", "RED RECRUITS", Color.RED, Vector2(5, 5), Vector2(10, 10), false, "", "", false, "prism")
+	check_eq(show._slot_skin(0), "", "карта летит с рынка — образа ещё нет")
+	show._set_phase("hold")
+	check_eq(show._slot_skin(0), "prism", "карта стала своей — с образом владельца")
+	show._set_phase("exit")
+	check_eq(show._slot_skin(0), "prism", "в полёте образ с картой")
+	show._set_phase("back")
+	check_eq(show._slot_skin(0), "", "рубашкой вверх образа нет")
+	var layer := CardShowcase.SlotLayer.new(show, 0)
+	layer.set_skin("prism", false)
+	var layer_mat := layer.material as ShaderMaterial
+	check(layer_mat != null and int(layer_mat.get_shader_parameter("tier")) == 3, "слой витрины рисует PRISM")
+	check_eq(layer_mat.get_shader_parameter("face_size"), CardView.PIXEL_SIZE, "на крупной карте лицо полное")
+	layer.set_skin("prism", true)
+	check_eq(layer_mat.get_shader_parameter("face_size"), CardView.MINI_SIZE, "в полёте лицо мелкое")
+	layer.set_skin("", true)
+	check(layer.material == null, "без образа слой без материала")
+	layer.free()
+	show._queue.clear()
+	show._next()
+	var row: Array[Dictionary] = [{"text": "A", "colour": Color.RED, "to": Vector2(1, 1), "shader": "gilded"},
+		{"text": "B", "colour": Color.BLUE, "to": Vector2(2, 2), "shader": ""}]
+	show.show_row("48342", row)
+	show._set_phase("hold")
+	check(show._slot_skin(0) == "gilded" and show._slot_skin(1) == "", "в ряду у каждой карты образ своего получателя")
+	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "shader": "prism", "arts": "48310_1"})}
+	var option := OptionCard.new("48310", "Infiltrate", "red")
+	var option_mat := option.material as ShaderMaterial
+	check(option_mat != null and int(option_mat.get_shader_parameter("tier")) == 3, "карта с вариантами — с образом владельца")
+	option.free()
+	check(OptionCard.new("48310", "Infiltrate").material == null, "без владельца карта с вариантами обычная")
+	PlayerProfile.seats = {}
 	show.free()
 	PlayerProfile.seats = {}
 

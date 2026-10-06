@@ -1174,6 +1174,7 @@ func _showcase_outcasts(gives: Array[Dictionary]) -> void:
 				+ (" ×%d" % count if count > 1 else ""),
 			"colour": BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD),
 			"to": _showcase_target(pid, "discard"),
+			"shader": PlayerProfile.shader_of(pid),
 		})
 	slots.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return (a["to"] as Vector2).x < (b["to"] as Vector2).x)
@@ -1308,7 +1309,8 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 	var to: Variant = _showcase_target(pid, dest) if dest != "" else null
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
-		colour, start, to, face_down, PlayerProfile.back_of(pid), PlayerProfile.art_of(pid, cid), morph)
+		colour, start, to, face_down, PlayerProfile.back_of(pid), PlayerProfile.art_of(pid, cid), morph,
+		PlayerProfile.shader_of(pid))
 
 
 ## Куда улетает карта витрины, взятая pid: для зрителя — в его стопку

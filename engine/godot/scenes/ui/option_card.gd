@@ -76,20 +76,26 @@ const NAMES := {
 var _tex: ImageTexture
 
 
-func _init(card_id: String, text: String) -> void:
+func _init(card_id: String, text: String, seat: String = "") -> void:
 	custom_minimum_size = Vector2(W, H)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_tex = ImageTexture.create_from_image(render(card_id, text))
+	_tex = ImageTexture.create_from_image(render(card_id, text, CardView.art_of(seat, card_id)))
+	# Образ владельца лежит и на карте с вариантами (решение владельца, 2026-10-06).
+	var skin := CardView.skin_of(seat, card_id)
+	if skin != "":
+		var mat := ShaderMaterial.new()
+		CardView.configure_skin(mat, SkinCollection.SHADER_INDEX[skin], false)
+		material = mat
 
 
 static func option_name(text: String) -> String:
 	return String(NAMES.get(text, ""))
 
 
-static func render(card_id: String, text: String) -> Image:
+static func render(card_id: String, text: String, art: String = "") -> Image:
 	var img: Image
-	var face: Texture2D = CardView.pixel_texture(card_id)
+	var face: Texture2D = CardView.pixel_texture(card_id, art)
 	if face != null:
 		img = face.get_image()
 		if img.is_compressed():

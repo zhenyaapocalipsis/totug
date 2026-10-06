@@ -2,6 +2,7 @@ extends SceneTree
 
 ## Кадры превращения карты в альтернативный арт (CardShowcase, фаза morph):
 ##   Godot --path . --script res://tools/morph_preview.gd -- --out=C:/path/morph.png
+## Витрина с образом GILDED (образ владельца карты сопровождает её).
 ## Верхний ряд — EPIC (Blackguard), нижний — LEGENDARY (Blue Dragon): оригинал,
 ## три момента распада, итог со вспышкой/обводкой.
 
@@ -33,7 +34,7 @@ func _start_row() -> void:
 	_show = CardShowcase.new()
 	_show.size = Vector2(960, 540)
 	root.add_child(_show)
-	_show.show_card(ROWS[_row][0], "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", ROWS[_row][1], true)
+	_show.show_card(ROWS[_row][0], "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", ROWS[_row][1], true, "gilded")
 	_show.set_process(false)
 
 

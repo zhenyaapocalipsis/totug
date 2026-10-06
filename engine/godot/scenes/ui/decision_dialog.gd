@@ -196,7 +196,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	elif choice_type == "confirm" and CardView.pixel_texture(String(pd.get("source_card", ""))) != null:
 		# "You may..." — как выбор карты для Promote: сама карта (щелчок —
 		# "да") и под ней Skip ("нет").
-		_add_card_grid([String(pd["source_card"])], [true])
+		_add_card_grid([String(pd["source_card"])], [true], decider)
 		cards_mode = true
 		_add_button("Skip", false)
 		make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
@@ -216,7 +216,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_add_button("Skip", -1)
 			make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 	elif choice_type == "target_card":
-		_add_card_grid(options)
+		_add_card_grid(options, [], decider)
 		cards_mode = true
 		if options.has(""):
 			_add_button("Skip", "")
@@ -310,7 +310,7 @@ func _add_note(text: String) -> void:
 ## "inner:<id>" — карта из Внутреннего круга: лицо то же, в ответ уходит
 ## исходная строка с префиксом. answers (если заданы) — ответ каждой карты по
 ## порядку: номер карты на рынке, true у окна "You may...".
-func _add_card_grid(options: Array, answers: Array = []) -> void:
+func _add_card_grid(options: Array, answers: Array = [], seat: String = "") -> void:
 	var ids: Array = options.filter(func(o): return typeof(o) == TYPE_STRING and String(o) != "")
 	if ids.is_empty():
 		return
@@ -324,6 +324,8 @@ func _add_card_grid(options: Array, answers: Array = []) -> void:
 		var value := String(raw)
 		var cid := value.substr(6) if value.begins_with("inner:") else value
 		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
+		if seat != "":
+			card.set_card_owner(seat)
 		card.highlight = false
 		card.set_clickable(true)
 		card.tooltip_text = _card_label(value)
@@ -422,6 +424,7 @@ static func _can_show_option_cards(pd: Dictionary) -> bool:
 func _add_option_cards(pd: Dictionary) -> void:
 	var options: Array = pd.get("legal_options", [])
 	var labels: Array = pd.get("option_labels", [])
+	var decider := String(pd.get("player_id", ""))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
@@ -436,7 +439,7 @@ func _add_option_cards(pd: Dictionary) -> void:
 			or_label.add_theme_constant_override("shadow_offset_y", 1)
 			or_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			row.add_child(or_label)
-		var card := OptionCard.new(String(pd.get("source_card", "")), String(labels[i]))
+		var card := OptionCard.new(String(pd.get("source_card", "")), String(labels[i]), decider)
 		var value: Variant = options[i]
 		card.pressed.connect(func(): option_chosen.emit(value))
 		row.add_child(card)
