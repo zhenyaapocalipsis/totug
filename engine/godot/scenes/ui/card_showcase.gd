@@ -38,6 +38,16 @@ const MAX_SPEED := 3.0
 ## Сторона квадратика, на которые рассыпается съеденная карта (пиксели карты).
 const CRUMBLE_BLOCK := 8
 const TRAIL := 3
+## Превращение в альтернативный арт: окно арта рассыпается на квадратики и
+## собирается заново уже новым артом. EPIC — быстро, LEGENDARY — дольше, с золотой
+## вспышкой и пульсирующей обводкой, пока карта висит.
+const MORPH_BLOCK := 8
+const MORPH_TIME := 0.55
+const MORPH_TIME_LEGENDARY := 0.95
+const HOLD_TIME_LEGENDARY := 1.4
+const GLOW_TIME_EPIC := 0.45
+## Окно арта на лице большой карты (CardView.FULL_ART) в пикселях карты.
+const ART_WINDOW := Rect2(6, 34, 164, 100)
 
 ## Зона, в центре которой витрина показывает карту (затемняется весь экран).
 var board_area: Control = null
@@ -47,6 +57,8 @@ var _item: Dictionary = {}
 var _phase := ""
 var _t := 0.0
 var _flash := 0.0
+## Цвет вспышки: белый, а после превращения в арт — оттенок ступени.
+var _flash_tint := Color.WHITE
 var _dim := 0.0
 ## Шлейфы летящих мелких карт: по одному на каждую точку назначения.
 var _trails: Array = []
@@ -71,8 +83,8 @@ func _init() -> void:
 ##   face_down — взята вслепую: сначала рубашка, потом переворот;
 ##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
-		face_down: bool = false, back: String = "") -> void:
-	_enqueue(cid, [{"text": text, "colour": colour, "to": to}], from, face_down, back)
+		face_down: bool = false, back: String = "", art: String = "", morph: bool = false) -> void:
+	_enqueue(cid, [{"text": text, "colour": colour, "to": to}], from, face_down, back, art, morph)
 
 
 ## Одна карта сразу нескольким игрокам (изгои от Ghoul, Demogorgon): ряд
@@ -82,10 +94,14 @@ func show_row(cid: String, slots: Array[Dictionary]) -> void:
 	_enqueue(cid, slots, null, false, "")
 
 
-func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: String) -> void:
+func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: String, art: String = "",
+		morph: bool = false) -> void:
+	var alt := art if art != "" and AltArts.card_of(art) == cid and AltArts.full_texture(art) != null else ""
 	_queue.append({"cid": cid, "slots": slots, "from": from,
 		"face_down": face_down, "back": CardBack.texture(back),
-		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid)})
+		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid),
+		"art": alt, "alt_face": AltArts.full_texture(alt), "alt_mini": AltArts.mini_texture(alt),
+		"morph": alt != "" and morph})
 	if _item.is_empty():
 		_next()
 	set_process(true)
@@ -107,7 +123,7 @@ func queued() -> int:
 
 ## Промотать текущую карту: сразу к уходу (рубашка — сразу лицом).
 func skip() -> void:
-	if _phase == "enter" or _phase == "back" or _phase == "hold":
+	if _phase == "enter" or _phase == "back" or _phase == "morph" or _phase == "hold":
 		_item["face_down"] = false
 		_set_phase("exit")
 
@@ -124,6 +140,7 @@ func _next() -> void:
 	_item = _queue.pop_front()
 	_set_phase("enter")
 	_flash = 0.0 if _item["from"] != null else FLASH_TIME
+	_flash_tint = Color.WHITE
 	var slots: Array = _item["slots"]
 	while _banners.size() < slots.size():
 		var banner := PanelContainer.new()
@@ -143,6 +160,46 @@ func _next() -> void:
 		banner.reset_size()
 
 
+## Что идёт после появления карты: превращение в арт (если покупка с артом) или
+## просто показ.
+func _after_reveal() -> String:
+	return "morph" if bool(_item["morph"]) else "hold"
+
+
+func _is_legendary() -> bool:
+	return AltArts.tier_of(String(_item["art"])) == "legendary"
+
+
+func _morph_time() -> float:
+	return MORPH_TIME_LEGENDARY if _is_legendary() else MORPH_TIME
+
+
+func _hold_time() -> float:
+	return HOLD_TIME_LEGENDARY if bool(_item["morph"]) and _is_legendary() else HOLD_TIME
+
+
+## Цвет ступени арта карты (SkinCollection.TIER_COLOURS).
+func _tier_colour() -> Color:
+	var tier := AltArts.tier_of(String(_item["art"]))
+	return Color(SkinCollection.TIER_COLOURS[tier]) if tier != "" else Color.WHITE
+
+
+## Лицо и мелкая картинка карты сейчас: оригинал, пока идёт превращение, потом
+## арт. Карта с артом без превращения (не покупка) сразу с артом.
+func _face() -> Texture2D:
+	return _item["alt_face"] if _shows_art() and _item["alt_face"] != null else _item["face"]
+
+
+func _mini() -> Texture2D:
+	return _item["alt_mini"] if _shows_art() and _item["alt_mini"] != null else _item["mini"]
+
+
+func _shows_art() -> bool:
+	if String(_item["art"]) == "":
+		return false
+	return not bool(_item["morph"]) or _phase == "hold" or _phase == "exit"
+
+
 func _set_phase(phase: String) -> void:
 	_phase = phase
 	_t = 0.0
@@ -160,15 +217,20 @@ func _process(delta: float) -> void:
 	match _phase:
 		"enter":
 			if _t >= ENTER_TIME:
-				_set_phase("back" if bool(_item["face_down"]) else "hold")
+				_set_phase("back" if bool(_item["face_down"]) else _after_reveal())
 				if _item["from"] != null:
 					_flash = FLASH_TIME
 		"back":
 			if _t >= BACK_TIME:
+				_set_phase(_after_reveal())
+				_flash = FLASH_TIME
+		"morph":
+			if _t >= _morph_time():
 				_set_phase("hold")
 				_flash = FLASH_TIME
+				_flash_tint = _tier_colour().lerp(Color.WHITE, 0.55)
 		"hold":
-			if _t >= HOLD_TIME:
+			if _t >= _hold_time():
 				_set_phase("exit")
 		"exit":
 			if _t >= (CRUMBLE_TIME if _crumbles() else EXIT_TIME):
@@ -215,7 +277,7 @@ func _draw() -> void:
 
 	var centre := area.get_center().round()
 	var rects := _row_rects(area)
-	var face: Texture2D = _item["face"]
+	var face: Texture2D = _face()
 	var slots: Array = _item["slots"]
 
 	match _phase:
@@ -227,6 +289,9 @@ func _draw() -> void:
 				_draw_small_at((_item["from"] as Vector2).lerp(centre, p))
 		"back":
 			_draw_row(rects, face, true)
+		"morph":
+			_draw_row(rects, face, false)
+			_draw_morph(rects[0], _t / _morph_time())
 		"hold":
 			_draw_row(rects, face, false)
 		"exit":
@@ -270,8 +335,55 @@ func _draw_row(rects: Array[Rect2], face: Texture2D, down: bool) -> void:
 		else:
 			draw_texture_rect(face, rect, false)
 		if _flash > 0.0:
-			draw_rect(rect, Color(1, 1, 1, 0.8 * _flash / FLASH_TIME))
+			draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
+		_draw_glow(rect)
 		_show_banner(i, rect)
+
+
+## Обводка цвета ступени вокруг карты с артом: у EPIC вспыхивает и гаснет после
+## превращения, у LEGENDARY пульсирует, пока карта висит.
+func _draw_glow(rect: Rect2) -> void:
+	if String(_item["art"]) == "" or _phase != "hold" or not bool(_item["morph"]):
+		return
+	var a := 0.0
+	if _is_legendary():
+		a = 0.55 + 0.45 * sin(_t * 9.0)
+	else:
+		a = clampf(1.0 - _t / GLOW_TIME_EPIC, 0.0, 1.0)
+	if a > 0.0:
+		draw_rect(rect.grow(2.0), Color(_tier_colour(), a), false, 2.0)
+
+
+## Превращение: поверх оригинальной карты окно арта рассыпается на квадратики
+## (старые уплывают вверх и гаснут) и собирается заново новым артом. Рамка и
+## текст не трогаются. Порядок квадратиков случайный, но свой у каждой карты.
+func _draw_morph(rect: Rect2, t: float) -> void:
+	var orig: Texture2D = _item["face"]
+	var alt: Texture2D = _item["alt_face"]
+	if orig == null or alt == null:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(String(_item["art"]))
+	var b := float(MORPH_BLOCK)
+	var y := 0.0
+	while y < ART_WINDOW.size.y:
+		var x := 0.0
+		while x < ART_WINDOW.size.x:
+			var size := Vector2(minf(b, ART_WINDOW.size.x - x), minf(b, ART_WINDOW.size.y - y))
+			var start := rng.randf() * 0.5
+			var drift := Vector2(rng.randf_range(-14.0, 14.0), rng.randf_range(-26.0, -6.0))
+			var k := clampf((t - start) / 0.5, 0.0, 1.0)
+			if k > 0.0:
+				var src := Rect2(ART_WINDOW.position + Vector2(x, y), size)
+				var home := rect.position + src.position
+				# новый блок проявляется на своём месте, старый уплывает и гаснет
+				draw_texture_rect_region(alt, Rect2(home, size), src, Color(1, 1, 1, k))
+				var old_pos := (home + drift * k * k).round()
+				var col := Color(1, 1, 1).lerp(_tier_colour(), minf(1.0, k * 2.0))
+				col.a = 1.0 - k
+				draw_texture_rect_region(orig, Rect2(old_pos, size), src, col)
+			x += b
+		y += b
 
 
 func _show_banner(index: int, card: Rect2) -> void:
@@ -293,10 +405,10 @@ func _draw_small_at(pos: Vector2, trail: int = 0) -> void:
 		points.append(pos)
 		if points.size() > TRAIL + 1:
 			points.pop_front()
-	var tex: Texture2D = _item["mini"]
+	var tex: Texture2D = _mini()
 	var s: Vector2 = CardView.MINI_SIZE if tex != null else CardView.PIXEL_SIZE * 0.5
 	if tex == null:
-		tex = _item["face"]
+		tex = _face()
 	for i in range(points.size()):
 		var last := i == points.size() - 1
 		var a := 1.0 if last else 0.35 * float(i + 1) / points.size()

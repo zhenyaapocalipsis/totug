@@ -1298,6 +1298,37 @@ func test_skin_collection() -> void:
 	red_blue.free()
 	market_dragon.free()
 	check_eq(String(PlayerProfile.clean({"arts": "48403_2"})["arts"]), "48403_2", "арты проходят PlayerProfile.clean")
+
+	# Витрина: покупка карты с артом — оригинал превращается в арт, потом улетает.
+	var show := CardShowcase.new()
+	var seen: Array[String] = []
+	var face_in_morph: Texture2D = null
+	var face_in_hold: Texture2D = null
+	show.show_card("48310", "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", "48310_1", true)
+	var plain_face := CardView.pixel_texture("48310")
+	var alt_face := AltArts.full_texture("48310_1")
+	for i in 600:
+		if seen.is_empty() or seen.back() != show._phase:
+			seen.append(show._phase)
+		if show._phase == "morph" and face_in_morph == null:
+			face_in_morph = show._face()
+		if show._phase == "hold" and face_in_hold == null:
+			face_in_hold = show._face()
+		if not show.is_busy():
+			break
+		show._process(0.02)
+	check_eq(seen.slice(0, 4), ["enter", "morph", "hold", "exit"] as Array[String],
+		"витрина: появление, превращение в арт, показ, уход")
+	check(face_in_morph == plain_face and face_in_hold == alt_face, "в превращении оригинал, после — арт")
+	check(not show.is_busy(), "витрина с превращением доигрывает до конца")
+	show.show_card("48310", "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", "48310_1", false)
+	check(show._face() == alt_face and show._item["morph"] == false, "карта с артом без покупки сразу с артом")
+	show.skip()
+	show._queue.clear()
+	show._next()
+	show.show_card("48302", "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", "48310_1", true)
+	check(show._item["art"] == "" and show._item["morph"] == false, "арт чужой карты витрина не показывает")
+	show.free()
 	PlayerProfile.seats = {}
 
 	# Вкладка COLLECTION профиля.

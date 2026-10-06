@@ -1106,18 +1106,24 @@ func _react_to_events(events: Array) -> void:
 				power = maxf(power, SHAKE_NUDGE)
 				started = _return_spy(pid, pid != viewer_id, String(evt.get("site_id", "")), launched)
 			# Свою покупку щелчком игрок и так видит (карта летит в сброс),
-			# чужую — только витриной.
+			# чужую — только витриной. Карта с альтернативным артом показывается
+			# витриной всем, и покупателю тоже: оригинал на глазах превращается в арт.
 			"recruit":
-				if pid != viewer_id:
-					_showcase_card(pid, String(evt.get("card_id", "")), "RECRUITS",
-						_market_panel.card_rect(int(evt.get("market_index", -1))), "barracks")
+				var bought := String(evt.get("card_id", ""))
+				var mine := pid == viewer_id
+				if not mine or PlayerProfile.art_of(pid, bought) != "":
+					_showcase_card(pid, bought, "RECRUITS",
+						_market_panel.card_rect(int(evt.get("market_index", -1))),
+						"discard" if mine else "barracks", false, true)
 			"recruit_supply":
-				if pid != viewer_id:
-					var cid := String(evt.get("card_id", ""))
-					_showcase_card(pid, cid, "RECRUITS", _market_panel.supply_rect(cid), "barracks")
+				var cid := String(evt.get("card_id", ""))
+				var mine := pid == viewer_id
+				if not mine or PlayerProfile.art_of(pid, cid) != "":
+					_showcase_card(pid, cid, "RECRUITS", _market_panel.supply_rect(cid),
+						"discard" if mine else "barracks", false, true)
 			"recruit_free":
 				_showcase_card(pid, String(evt.get("card_id", "")), "RECRUITS",
-					_market_panel.card_rect(int(evt.get("market_index", -1))), "discard")
+					_market_panel.card_rect(int(evt.get("market_index", -1))), "discard", false, true)
 			# «... recruits an Insane Outcast»: изгоя навязали эффектом карты,
 			# получатель сам его не брал — показываем всем, включая его самого.
 			# Выдачи одной карты (идут подряд) собираются в один показ.
@@ -1293,7 +1299,7 @@ const RECAP_STATS := {
 ##          зрителя — в его стопку, для соперника — в его барак) или "" —
 ##          рассыпается (съедена).
 func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest: String,
-		face_down: bool = false) -> void:
+		face_down: bool = false, morph: bool = false) -> void:
 	if cid == "":
 		return
 	var start: Variant = null
@@ -1302,7 +1308,7 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 	var to: Variant = _showcase_target(pid, dest) if dest != "" else null
 	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
-		colour, start, to, face_down, PlayerProfile.back_of(pid))
+		colour, start, to, face_down, PlayerProfile.back_of(pid), PlayerProfile.art_of(pid, cid), morph)
 
 
 ## Куда улетает карта витрины, взятая pid: для зрителя — в его стопку
@@ -1908,12 +1914,15 @@ func _on_hand_card_clicked(card_id: String) -> void:
 
 
 func _on_market_clicked(index: int) -> void:
-	_fly_to_discard(_market_panel.card_rect(index), _market_panel.card_id_at(index))
+	var bought := _market_panel.card_id_at(index)
+	if PlayerProfile.art_of(viewer_id, bought) == "":
+		_fly_to_discard(_market_panel.card_rect(index), bought)
 	send(Intent.recruit(viewer_id, index))
 
 
 func _on_supply_clicked(card_id: String) -> void:
-	_fly_to_discard(_market_panel.supply_rect(card_id), card_id)
+	if PlayerProfile.art_of(viewer_id, card_id) == "":
+		_fly_to_discard(_market_panel.supply_rect(card_id), card_id)
 	send(Intent.recruit_supply(viewer_id, card_id))
 
 
@@ -1952,12 +1961,10 @@ func _fly_to_discard(from: Rect2, cid: String) -> void:
 	# Купленная карта стала своей: на лету она принимает образ покупателя
 	# (SkinCollection) — в маркете образов нет, они есть только у купленных карт.
 	var owned := CardView.skin_of(viewer_id, cid)
-	var owned_art := CardView.art_of(viewer_id, cid)
-	if owned != "" or owned_art != "":
+	if owned != "":
 		get_tree().create_timer(FLIGHT_TIME * SKIN_ON_FLIGHT).timeout.connect(func():
 			if is_instance_valid(ghost):
-				ghost.set_skin(owned)
-				ghost.set_art(owned_art))
+				ghost.set_skin(owned))
 
 
 ## Клик по троп-слоту двусмыслен: там может быть и Deploy в пустой слот, и
