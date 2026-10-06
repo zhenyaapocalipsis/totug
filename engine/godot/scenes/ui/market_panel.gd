@@ -97,7 +97,6 @@ func _init() -> void:
 		box.get_child(0).visible = false
 		var card := CardView.new(cid, SLOT.x, SLOT.y)
 		card.hover_full = true   # полная карта по наведению, без Alt
-		card.show_cost = false  # на рынке цену не показываем (владелец, 2026-10-06)
 		card.set_anchors_preset(Control.PRESET_FULL_RECT)
 		card.refused.connect(func(_cid: String): card.shake_refusal())
 		card.pressed.connect(func(clicked: String): supply_card_clicked.emit(clicked))
@@ -202,7 +201,6 @@ func _ensure_card(i: int, cid: String) -> CardView:
 	if card == null:
 		card = CardView.new(cid, SLOT.x, SLOT.y)
 		card.hover_full = true   # полная карта по наведению, без Alt
-		card.show_cost = false  # на рынке цену не показываем (владелец, 2026-10-06)
 		card.set_anchors_preset(Control.PRESET_FULL_RECT)
 		# Не хватает Influence — карта дёргается и краснеет, вместо того чтобы
 		# молча ничего не сделать.

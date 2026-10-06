@@ -67,9 +67,6 @@ const SKIN_SHADER := preload("res://scenes/ui/card_skin.gdshader")
 const FULL_ART := Vector4(6, 34, 170, 134)
 const FULL_TEXT := Vector4(7, 139, 169, 232)
 const MINI_ART := Vector4(3, 28, 55, 81)
-## Плашка цены на мелком лице (show_cost): высота и базовая линия цифр.
-const COST_BOX_H := 9.0
-const COST_BASELINE := 8.0
 ## Как быстро карта с образом поворачивается к мыши и обратно (доля за кадр 60 Гц).
 const SKIN_TILT_EASE := 0.12
 
@@ -82,9 +79,6 @@ var hover_preview: bool = true
 var hover_full: bool = false
 ## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
 var highlight: bool = true
-## Цена в углу мелкого лица (на самом лице цены нет) — у всех миниатюр
-## (владелец, 2026-10-06).
-var show_cost := true
 var _pixel: Texture2D = null
 ## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
 var _mini := false
@@ -273,8 +267,6 @@ func _draw() -> void:
 	if texture_filter != filter:
 		texture_filter = filter
 	draw_texture_rect_region(_pixel, dest, rects[1])
-	if show_cost and _mini:
-		_draw_cost(dest)
 	if clickable and highlight:
 		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 1.0)
 	if _shake_left > 0.0:
@@ -286,29 +278,6 @@ func _draw() -> void:
 		# Белая вспышка, гаснущая быстрее, чем карта доезжает.
 		var a := _arrive_left / ARRIVE_TIME
 		draw_rect(dest, Color(1, 1, 1, 0.5 * a * a))
-
-
-## Цена в правом верхнем углу шапки мелкого лица (владелец, 2026-10-06; первая
-## строка имени там короче — tools/pixel_cards.gd, MINI_COST_W): золотые цифры
-## на тёмной плашке. Рисуется в пикселях лица, затем масштабом лица.
-func _draw_cost(dest: Rect2) -> void:
-	var cost: Variant = CardLibrary.card_data(card_id).get("cost")
-	if cost == null:
-		return
-	var text := str(int(cost))
-	var font := get_theme_font("font", "Label")
-	var font_size := get_theme_font_size("font_size", "Label")
-	var text_w := ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
-	var k := dest.size.x / face_size().x
-	# Цифра шрифта — 5 px глифа + 1 px отступа справа: плашка text_w + 1 даёт
-	# по пикселю поля с обеих сторон. Правый край — у внутреннего края рамки.
-	var box := Rect2(Vector2(MINI_SIZE.x - 2.0 - text_w, 1.0), Vector2(text_w + 1.0, COST_BOX_H))
-	var shift := _shake_offset() + _arrive_offset()
-	draw_set_transform(dest.position + shift, 0.0, Vector2(k, k))
-	draw_rect(box, PixelTheme.BG)
-	draw_string(font, Vector2(box.position.x + 1.0, box.position.y + COST_BASELINE), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.GOLD)
-	draw_set_transform(shift)
 
 
 ## Смещение отрисовки при тряске: только по горизонтали и только целыми

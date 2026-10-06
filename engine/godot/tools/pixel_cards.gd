@@ -19,10 +19,10 @@ const MINI_W := 58
 const MINI_H := 84
 ## Шапка — имя, до трёх строк по 9 букв: так влезают все имена, вплоть до
 ## WATER ELEMENTAL MYRMIDON. Аспекта и VP на мелкой карте нет (решение
-## владельца, 2026-10-03). Цену игра рисует поверх правого верхнего угла
-## шапки (2026-10-06), поэтому первая строка имени короче на MINI_COST_W.
+## владельца, 2026-10-03). Цена — в правом верхнем углу шапки (2026-10-06),
+## поэтому первая строка имени короче на MINI_COST_W.
 const MINI_HEAD := 26
-const MINI_COST_W := 6  # плашка 7 px (x 50..56) — 8 букв имени ещё влезают
+const MINI_COST_W := 6  # плашка цены x 51..56 и пиксель зазора — 8 букв имени ещё влезают
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
@@ -567,12 +567,20 @@ func render_mini(c: Dictionary) -> Image:
 	# Шапка цвета рамки карты, одна на все карты (решение владельца, 2026-09-24).
 	rect(1, 1, MINI_W - 2, MINI_HEAD, C_FRAME)
 	# Имя во всю ширину шапки: 9 букв (53 px) от x=2, тень уходит на x=55.
-	# Первая строка короче на MINI_COST_W: в правом верхнем углу шапки игра
-	# рисует цену (CardView._draw_cost).
+	# Первая строка короче на MINI_COST_W: в правом верхнем углу шапки цена.
 	var room := MINI_W - 5
 	var name_lines := wrap_name(clean(sv(c["name"])), room - MINI_COST_W, room, 1, MINI_NAME_LINES)
 	for i in name_lines.size():
 		text(2, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
+	# Цена — часть лица: золотая цифра на тёмной плашке в правом верхнем углу
+	# шапки (владелец, 2026-10-06). У стартовых карт цены нет — и плашки нет.
+	if c["cost"] != null:
+		var cost := str(int(c["cost"]))
+		# Плашка вплотную к контуру карты (x 51..56): между ней и тенью имени
+		# в 8 букв (до x=49) остаётся пиксель шапки.
+		var cw := text_width(cost, 1) + 1
+		rect(MINI_W - 1 - cw, 1, cw, 9, C_OUTLINE)
+		text(MINI_W - cw, 2, cost, C_GOLD, 1)
 
 	# арт: кусок 1:1 из арта большой карты
 	var art_y := 1 + MINI_HEAD + 1
