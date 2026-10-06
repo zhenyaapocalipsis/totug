@@ -33,7 +33,7 @@ const RING_GROW := 70.0
 const TIP_ROWS := 36
 const REPEAT_ROWS := 60
 ## Вздрагивание карты, когда щупальце выходит: сила (пиксели) и затухание.
-const JOLT := 2.0
+const JOLT := 1.0
 const JOLT_DECAY := 12.0
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
@@ -48,7 +48,7 @@ const SKETCH_CARD := Rect2(320, 234, 410, 596)
 ##   speed — скорость кадров (минус — назад); phase — сдвиг всего.
 const FX := {
 	"48701": {
-		"sprite": "anim", "frames": 17, "tint": Color("b05ad8"), "sound": "sink",
+		"sprite": "tentacle_illithid", "tint": Color("b05ad8"), "sound": "sink",
 		"tentacles": [
 			# большое: из-за верхнего края дугой налево, обратно диагональю ПОВЕРХ
 			# карты и вниз справа
@@ -60,29 +60,29 @@ const FX := {
 				Vector2(550, 466), Vector2(600, 479), Vector2(650, 492), Vector2(690, 502),
 				Vector2(730, 520), Vector2(770, 543), Vector2(805, 575), Vector2(835, 605),
 				Vector2(850, 632), Vector2(851, 680), Vector2(850, 720), Vector2(846, 750)],
-				"width": 0.55, "delay": 0.30, "dur": 1.0, "ease": "inout", "retract_at": 2.0,
-				"retract_dur": 0.55, "wave": 5.0, "wsp": 4.2, "speed": 1.0, "phase": 0.0},
+				"width": 0.7, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
+				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": 1.0, "phase": 0.0},
 			# короткое справа сверху: наружу и обратно на карту
 			{"path": [Vector2(725, 283), Vector2(750, 292), Vector2(768, 310), Vector2(775, 330),
 				Vector2(768, 352), Vector2(745, 378), Vector2(722, 402), Vector2(700, 420),
 				Vector2(688, 440), Vector2(682, 460)],
-				"width": 0.5, "delay": 0.00, "dur": 0.32, "ease": "back", "retract_at": 1.9,
-				"retract_dur": 0.22, "wave": 3.0, "wsp": 6.0, "speed": -1.4, "phase": 2.1},
+				"width": 0.46, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
+				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": -1.4, "phase": 2.1},
 			# слева посередине: наружу налево, обратно через край и вниз по карте
 			{"path": [Vector2(318, 486), Vector2(298, 505), Vector2(285, 530), Vector2(283, 555),
 				Vector2(292, 580), Vector2(310, 603), Vector2(335, 620), Vector2(360, 635),
 				Vector2(380, 655), Vector2(390, 685), Vector2(392, 712), Vector2(390, 744),
 				Vector2(375, 762), Vector2(358, 782)],
-				"width": 0.5, "delay": 0.12, "dur": 0.65, "ease": "out", "retract_at": 1.95,
-				"retract_dur": 0.35, "wave": 4.0, "wsp": 5.0, "speed": 0.8, "phase": 4.2},
+				"width": 0.55, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
+				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": 0.8, "phase": 4.2},
 			# длинное справа снизу: наружу, потом S-образно вниз-влево до низа экрана
 			{"path": [Vector2(735, 637), Vector2(758, 647), Vector2(775, 665), Vector2(781, 700),
 				Vector2(779, 738), Vector2(765, 775), Vector2(745, 800), Vector2(720, 815),
 				Vector2(690, 825), Vector2(650, 845), Vector2(600, 875), Vector2(560, 895),
 				Vector2(525, 918), Vector2(500, 945), Vector2(485, 975), Vector2(477, 1005),
 				Vector2(475, 1040), Vector2(483, 1066)],
-				"width": 0.6, "delay": 0.45, "dur": 1.3, "ease": "in", "retract_at": 2.15,
-				"retract_dur": 0.45, "wave": 6.0, "wsp": 3.4, "speed": 1.3, "phase": 3.3},
+				"width": 0.65, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
+				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": 1.3, "phase": 3.3},
 		],
 	},
 }
@@ -99,20 +99,13 @@ static func sound(cid: String) -> String:
 	return String(FX[cid]["sound"]) if FX.has(cid) else ""
 
 
-## Кадр index анимации карты cid (файлы <sprite>_<index>.png).
-static func _sprite(cid: String, index: int) -> Texture2D:
-	var name := "%s_%d" % [String(FX[cid]["sprite"]), index]
+## Спрайт щупальца карты cid: прямой, у основания толстый, к кончику тонкий.
+static func _sprite(cid: String) -> Texture2D:
+	var name := String(FX[cid]["sprite"])
 	var key := "%s/%s" % [cid, name]
 	if not _cache.has(key):
 		_cache[key] = load(SPRITE_PATH % [cid, name])
 	return _cache[key]
-
-
-## Номер кадра при движении туда-обратно: положение pos.
-static func _pingpong(pos: float, n: int) -> int:
-	var cycle := 2 * (n - 1)
-	var k := posmod(int(floorf(pos)), cycle)
-	return k if k < n else cycle - k
 
 
 ## Позади карты: ударная волна и те части щупалец, что под картой.
@@ -202,9 +195,11 @@ static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 	var out := false
 	for i in range(pts.size()):
 		var q := pts[i]
-		if not out and (q.x < -0.03 or q.x > 1.03 or q.y < -0.03 or q.y > 1.03):
+		var inside := q.x >= 0.0 and q.x <= 1.0 and q.y >= 0.0 and q.y <= 1.0
+		if not out and not inside:
 			out = true
-		elif out and q.x > 0.02 and q.x < 0.98 and q.y > 0.02 and q.y < 0.98:
+		elif out and inside:
+			# ровно у края карты: иначе тело «ныряет» под рамку и всплывает на ней
 			split = seg * float(i)
 			break
 	var res := {"pts": pts, "seg": seg, "split": split, "total": total}
@@ -262,26 +257,22 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var i0 := int(k)
 		body.append(pts[i0].lerp(pts[i0 + 1], k - float(i0)))
 
-	var tex := _sprite(cid, _pingpong(t * FPS * float(tent["speed"]) + phase * 5.0, int(FX[cid]["frames"])))
+	var tex := _sprite(cid)
 	if tex == null:
 		return
-	var s := float(tent["width"])
+	# толщина: у корня толстое, к кончику тонкое — это даёт сам спрайт; пока щупальце
+	# ещё короткое, оно и тоньше (иначе выходит толстый обрубок)
 	var w := float(tex.get_width())
-	var h := float(tex.get_height())
-	var hw := w * 0.5 * s
+	var hw := w * 0.5 * float(tent["width"]) * (0.4 + 0.6 * head / total)
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
 		if (head - float(j) * STEP >= split) != front:
 			continue
-		# строка спрайта: тонкое щупальце — спрайт уменьшен целиком (и по длине тоже)
-		var d := float(j) * STEP / s
-		var row := d
-		if d >= TIP_ROWS:
-			var m := fposmod(d - TIP_ROWS, 2.0 * REPEAT_ROWS)
-			row = TIP_ROWS + (m if m < REPEAT_ROWS else 2.0 * REPEAT_ROWS - m)
-		var v0 := row / h
-		var v1 := minf(row + STEP / s, h) / h
+		# весь спрайт растянут на всю видимую длину: кончик (v = 0) у головы,
+		# толстое основание (v = 1) у корня
+		var v0 := float(j) * STEP / head
+		var v1 := minf(float(j + 1) * STEP / head, 1.0)
 		var n0 := (body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized() * hw
 		var n1 := (body[mini(j + 2, count)] - body[j]).orthogonal().normalized() * hw
 		# draw_primitive, а не draw_polygon: тот отказывается рисовать «скрученный» кусок

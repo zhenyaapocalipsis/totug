@@ -415,8 +415,9 @@ func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool
 	var cid := String(_item["cid"])
 	var banner_rect := rect
 	if fx:
-		CardFx.draw_behind(c, cid, rect, fx_t)
+		# одна и та же рамка карты для обоих слоёв: иначе на стыке щупальце «едет»
 		rect.position += CardFx.card_shift(cid, fx_t)
+		CardFx.draw_behind(c, cid, rect, fx_t)
 	if down or face == null:
 		_draw_back(c, rect)
 	else:
