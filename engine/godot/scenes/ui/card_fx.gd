@@ -15,6 +15,8 @@ const SPRITE_PATH := "res://assets/card_fx/%s/%s.png"
 ## Сколько секунд висит карта с эффектом (обычная — CardShowcase.HOLD_TIME).
 const HOLD_TIME := 1.8
 const OUT_TIME := 0.5
+## Кадров анимации щупальца в секунду (при speed = 1).
+const FPS := 12.0
 const RETRACT_AT := 1.4
 const RETRACT_TIME := 0.28
 ## Высота полоски спрайта, которую сдвигает волна.
@@ -32,23 +34,33 @@ const JOLT_DECAY := 12.0
 ##   delay — задержка выхода; phase — сдвиг волны; amp — размах волны (пиксели);
 ##   front — рисуется поверх карты (цепляется за неё); reach — до какой доли
 ##   длины вылезает (у передних щупалец меньше).
+##   speed — скорость движения (минус — кадры идут назад), flip — зеркально,
+##   twitch — частота резких рывков. У каждого щупальца своё: движутся вразнобой.
 const FX := {
 	"48701": {
-		"sprite": "tentacle", "tint": Color("b05ad8"), "sound": "sink",
+		"sprite": "anim", "frames": 17, "tint": Color("b05ad8"), "sound": "sink",
 		"parts": [
-			{"base": Vector2(0.23, 0.14), "rot": 0, "delay": 0.00, "phase": 0.0, "amp": 7.0, "reach": 0.7},
-			{"base": Vector2(0.77, 0.18), "rot": 0, "delay": 0.08, "phase": 2.1, "amp": 8.0, "reach": 0.62},
-			{"base": Vector2(0.18, 0.30), "rot": -90, "delay": 0.04, "phase": 4.2, "amp": 8.0},
-			{"base": Vector2(0.18, 0.74), "rot": -90, "delay": 0.14, "phase": 1.0, "amp": 7.0},
-			{"base": Vector2(0.82, 0.42), "rot": 90, "delay": 0.10, "phase": 3.3, "amp": 8.0},
-			{"base": Vector2(0.82, 0.80), "rot": 90, "delay": 0.02, "phase": 5.5, "amp": 7.0},
-			{"base": Vector2(0.34, 0.86), "rot": 180, "delay": 0.16, "phase": 0.7, "amp": 7.0, "reach": 0.66},
-			{"base": Vector2(0.66, 0.84), "rot": 180, "delay": 0.06, "phase": 2.9, "amp": 8.0, "reach": 0.72},
+			{"base": Vector2(0.23, 0.14), "rot": 0, "delay": 0.00, "phase": 0.0, "amp": 4.0, "reach": 0.7,
+				"speed": 1.0, "flip": false, "twitch": 2.3},
+			{"base": Vector2(0.77, 0.18), "rot": 0, "delay": 0.08, "phase": 2.1, "amp": 5.0, "reach": 0.62,
+				"speed": -1.4, "flip": true, "twitch": 3.1},
+			{"base": Vector2(0.18, 0.30), "rot": -90, "delay": 0.04, "phase": 4.2, "amp": 5.0,
+				"speed": 0.7, "flip": true, "twitch": 2.7},
+			{"base": Vector2(0.18, 0.74), "rot": -90, "delay": 0.14, "phase": 1.0, "amp": 4.0,
+				"speed": -1.1, "flip": false, "twitch": 3.7},
+			{"base": Vector2(0.82, 0.42), "rot": 90, "delay": 0.10, "phase": 3.3, "amp": 5.0,
+				"speed": 1.5, "flip": false, "twitch": 2.1},
+			{"base": Vector2(0.82, 0.80), "rot": 90, "delay": 0.02, "phase": 5.5, "amp": 4.0,
+				"speed": -0.8, "flip": true, "twitch": 3.3},
+			{"base": Vector2(0.34, 0.86), "rot": 180, "delay": 0.16, "phase": 0.7, "amp": 4.0, "reach": 0.66,
+				"speed": 1.2, "flip": true, "twitch": 2.9},
+			{"base": Vector2(0.66, 0.84), "rot": 180, "delay": 0.06, "phase": 2.9, "amp": 5.0, "reach": 0.72,
+				"speed": -1.0, "flip": false, "twitch": 2.5},
 			# передние: вцепились в углы карты и покачиваются поверх неё
-			{"base": Vector2(0.03, 1.03), "rot": 0, "delay": 0.20, "phase": 1.7, "amp": 5.0,
-				"front": true, "reach": 0.3},
-			{"base": Vector2(0.97, -0.03), "rot": 180, "delay": 0.24, "phase": 4.6, "amp": 5.0,
-				"front": true, "reach": 0.3},
+			{"base": Vector2(0.03, 1.03), "rot": 0, "delay": 0.20, "phase": 1.7, "amp": 3.0,
+				"front": true, "reach": 0.3, "speed": 1.3, "flip": false, "twitch": 3.5},
+			{"base": Vector2(0.97, -0.03), "rot": 180, "delay": 0.24, "phase": 4.6, "amp": 3.0,
+				"front": true, "reach": 0.3, "speed": -0.9, "flip": true, "twitch": 2.2},
 		],
 	},
 }
@@ -64,12 +76,20 @@ static func sound(cid: String) -> String:
 	return String(FX[cid]["sound"]) if FX.has(cid) else ""
 
 
-static func _sprite(cid: String) -> Texture2D:
-	var name := String(FX[cid]["sprite"])
+## Кадр index анимации карты cid (файлы <sprite>_<index>.png).
+static func _sprite(cid: String, index: int) -> Texture2D:
+	var name := "%s_%d" % [String(FX[cid]["sprite"]), index]
 	var key := "%s/%s" % [cid, name]
 	if not _cache.has(key):
 		_cache[key] = load(SPRITE_PATH % [cid, name])
 	return _cache[key]
+
+
+## Номер кадра при движении туда-обратно: положение pos секунд*скорость.
+static func _pingpong(pos: float, n: int) -> int:
+	var cycle := 2 * (n - 1)
+	var k := posmod(int(floorf(pos)), cycle)
+	return k if k < n else cycle - k
 
 
 ## Позади карты (щупальца, что вылезают из-за неё) и ударная волна.
@@ -108,11 +128,7 @@ static func _draw_ring(c: CanvasItem, cid: String, card: Rect2, t: float) -> voi
 
 
 static func _draw_parts(c: CanvasItem, cid: String, card: Rect2, t: float, front: bool) -> void:
-	var tex := _sprite(cid)
-	if tex == null:
-		return
-	var w := int(tex.get_width())
-	var h := int(tex.get_height())
+	var frames := int(FX[cid]["frames"])
 	for part: Dictionary in FX[cid]["parts"]:
 		if bool(part.get("front", false)) != front:
 			continue
@@ -120,14 +136,25 @@ static func _draw_parts(c: CanvasItem, cid: String, card: Rect2, t: float, front
 		var out := _ease_out_back((t - delay) / OUT_TIME)
 		var gone := _ease_in((t - RETRACT_AT - delay * 0.5) / RETRACT_TIME)
 		var reach := float(part.get("reach", 1.0))
-		var length := out * (1.0 - gone) * reach
+		var phase := float(part["phase"])
+		var speed := float(part["speed"])
+		# щупальце то подаётся вперёд, то отдёргивается — «нащупывает»
+		var probe := 1.0 + 0.05 * sin(t * (2.0 + absf(speed)) + phase)
+		var length := out * (1.0 - gone) * reach * probe
 		if length <= 0.0:
 			continue
+		var tex := _sprite(cid, _pingpong(t * FPS * speed + phase * 5.0, frames))
+		if tex == null:
+			continue
+		var w := int(tex.get_width())
+		var h := int(tex.get_height())
+		var flip := -1.0 if bool(part["flip"]) else 1.0
 		var base := (card.position + card.size * (part["base"] as Vector2)).round()
-		var phase := float(part["phase"])
 		var amp := float(part["amp"])
-		# отдача: пока щупальце ещё выходит, оно изогнуто сильнее
-		var lash := 1.0 + 1.6 * clampf(1.0 - (t - delay) / OUT_TIME, 0.0, 1.0)
+		# отдача и рывки: пока щупальце выходит и в моменты внезапных судорог
+		# оно изогнуто сильнее, у каждого рывки в своё время
+		var spasm := pow(maxf(0.0, sin(t * float(part["twitch"]) + phase * 3.1)), 12.0)
+		var lash := 1.0 + 1.6 * clampf(1.0 - (t - delay) / OUT_TIME, 0.0, 1.0) + 2.2 * spasm
 		# спрайт сдвинут вдоль оси так, что наружу торчит доля length; ниже
 		# основания (y > 0) строки не рисуются — щупальце «растёт из точки»
 		var slide := roundf(h * (1.0 - length))
@@ -139,9 +166,11 @@ static func _draw_parts(c: CanvasItem, cid: String, card: Rect2, t: float, front
 				break
 			# d: 0 у корня, 1 у кончика — корень стоит, кончик гуляет
 			var d := 1.0 - float(r) / float(h)
-			var wave := sin(float(r) * 0.085 - t * 6.5 + phase) + 0.5 * sin(float(r) * 0.04 + t * 3.1 + phase * 1.7)
+			var wave := sin(float(r) * 0.085 - t * 4.0 * speed + phase) + 0.5 * sin(float(r) * 0.04 + t * 3.1 + phase * 1.7)
 			var dx := roundf(amp * lash * pow(d, 1.4) * wave)
-			c.draw_texture_rect_region(tex, Rect2(-w * 0.5 + dx, y, w, STRIP), Rect2(0, r, w, STRIP))
+			# flip — зеркало по горизонтали: отрицательная ширина
+			c.draw_texture_rect_region(tex, Rect2(-w * 0.5 + dx + (w if flip < 0.0 else 0), y, w * flip, STRIP),
+				Rect2(0, r, w, STRIP))
 			r += STRIP
 	c.draw_set_transform(Vector2.ZERO)
 
