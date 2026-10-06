@@ -30,6 +30,7 @@ const MINI := CardView.MINI_SIZE
 const FULL := Vector2(176, 254)
 const TAB_SIZE := Vector2(0, 16)
 const LIST_BUTTON := Vector2(150, 18)
+const ART_LIST_WIDTH := 112
 ## Примерка шейдера: стартовая карта и карта маркета рядом с любимой —
 ## видно, что шейдер ложится на всю колоду.
 const SAMPLE_CARDS: Array[String] = ["48342", "48306"]
@@ -51,6 +52,14 @@ var _preview: CardView
 var _tiles: Dictionary = {}
 var _selected := ""
 var _favourite_button: Button
+## Арты выбранной карты: кнопки ("" — оригинал), просмотренный арт, что второй
+## щелчок создаст за пыль, кнопка USE/CRAFT и подсказка.
+var _art_list: VBoxContainer
+var _art_buttons: Dictionary = {}
+var _art_selected := ""
+var _pending_art := ""
+var _art_action: Button
+var _art_hint: Label
 ## SHADERS: кнопки ("" — без шейдера), примерка, кнопка USE/CRAFT.
 var _shader_buttons: Dictionary = {}
 var _shader_views: Array[CardView] = []
@@ -82,7 +91,8 @@ func _init() -> void:
 	_open_button = _button("OPEN BOX", func(): open_box())
 	_open_button.custom_minimum_size = Vector2(70, 16)
 	top.add_child(_open_button)
-	top.add_child(_label("BOX: A SHADER (ULTRA) %d%%, OTHERWISE DUST" % SkinCollection.BOX_ODDS[SkinCollection.SHADER_TIER],
+	top.add_child(_label("BOX: ART EPIC %d%% / LEGENDARY %d%%, SHADER ULTRA %d%%; REPEAT = DUST" % [SkinCollection.BOX_ODDS["epic"],
+		SkinCollection.BOX_ODDS["legendary"], SkinCollection.BOX_ODDS[SkinCollection.SHADER_TIER]],
 		PixelTheme.TEXT_DIM))
 
 	var sections := HBoxContainer.new()
@@ -205,14 +215,90 @@ func _cards_page() -> Control:
 	_preview = CardView.new(faction_cards("drow")[0], int(FULL.x), int(FULL.y))
 	_preview.hover_preview = false
 	side.add_child(_preview)
-	var soon := _label("ALTERNATIVE ARTS\nCOMING SOON", PixelTheme.TEXT_DIM)
-	soon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	side.add_child(soon)
 	# Любимая карта — видна в профиле и в карточке игрока у соперников.
 	_favourite_button = _button("", func(): toggle_favourite())
 	_favourite_button.custom_minimum_size = Vector2(FULL.x, 16)
 	side.add_child(_favourite_button)
+
+	# Арты выбранной карты: оригинал и альтернативные (AltArts), открытые
+	# включаются, закрытые создаются за пыль.
+	var arts := VBoxContainer.new()
+	arts.add_theme_constant_override("separation", 3)
+	arts.custom_minimum_size = Vector2(ART_LIST_WIDTH, 0)
+	body.add_child(arts)
+	arts.add_child(_label("ART", PixelTheme.TEXT_DIM))
+	_art_list = VBoxContainer.new()
+	_art_list.add_theme_constant_override("separation", 3)
+	arts.add_child(_art_list)
+	_art_action = _button("", press_art)
+	_art_action.custom_minimum_size = Vector2(ART_LIST_WIDTH, 16)
+	arts.add_child(_art_action)
+	_art_hint = _label("", PixelTheme.TEXT_DIM)
+	arts.add_child(_art_hint)
 	return page
+
+
+## Карту выбрали: её арты — оригинал и альтернативные. Выбран тот, что включён.
+func _fill_art_list(cid: String) -> void:
+	for child in _art_list.get_children():
+		_art_list.remove_child(child)
+		child.queue_free()
+	_art_buttons.clear()
+	var choices: Array[String] = [""]
+	choices.append_array(AltArts.arts_of(cid))
+	for art in choices:
+		var b := _button("", select_art.bind(art))
+		b.custom_minimum_size = Vector2(ART_LIST_WIDTH, 18)
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_art_list.add_child(b)
+		_art_buttons[art] = b
+	_art_hint.text = "" if choices.size() > 1 else "No alternative\narts for this card."
+	_art_selected = SkinCollection.art_of(cid)
+	_pending_art = ""
+
+
+## Просмотр арта выбранной карты ("" — оригинал).
+func select_art(art: String) -> void:
+	_art_selected = art
+	_pending_art = ""
+	_set_note("")
+	refresh()
+
+
+func selected_art() -> String:
+	return _art_selected
+
+
+## USE — включить открытый арт (или оригинал); закрытый создать за пыль: первый
+## щелчок показывает цену, второй создаёт.
+func press_art() -> void:
+	var art := _art_selected
+	if art == "" or SkinCollection.owns_art(art):
+		_pending_art = ""
+		SkinCollection.set_art(_selected, art)
+		_set_note("")
+		Sfx.play("click")
+		refresh()
+		return
+	var tier := AltArts.tier_of(art)
+	var cost := SkinCollection.art_cost(art)
+	if int(SkinCollection.load_data()["dust"]) < cost:
+		_pending_art = ""
+		_set_note("Not enough dust: this %s art costs %d." % [SkinCollection.TIER_TITLES[tier], cost])
+		Sfx.play("error")
+		refresh()
+		return
+	if _pending_art != art:
+		_pending_art = art
+		_set_note("Craft this %s art for %d dust? Click again." % [SkinCollection.TIER_TITLES[tier], cost])
+		refresh()
+		return
+	_pending_art = ""
+	SkinCollection.craft_art(art)
+	_set_note("Crafted: %s art." % SkinCollection.TIER_TITLES[tier])
+	Sfx.play("coins")
+	refresh()
+	_preview.flash_arrival()
 
 
 ## Сделать выбранную карту любимой; она уже любимая — снять.
@@ -264,6 +350,7 @@ func show_faction(faction: String) -> void:
 
 func _add_tile(cid: String) -> void:
 	var card := CardView.new(cid, int(MINI.x), int(MINI.y))
+	card.set_art(SkinCollection.art_of(cid))
 	card.hover_preview = false
 	card.highlight = false
 	card.set_clickable(true)
@@ -276,7 +363,7 @@ func _add_tile(cid: String) -> void:
 func select(cid: String) -> void:
 	_selected = cid
 	_set_note("")
-	_preview.set_card(cid)
+	_fill_art_list(cid)
 	refresh()
 
 
@@ -442,6 +529,32 @@ func refresh() -> void:
 	_favourite_button.text = "YOUR FAVOURITE CARD" if is_favourite else "MAKE FAVOURITE"
 	_tint(_favourite_button, PixelTheme.GOLD if is_favourite else PixelTheme.TEXT)
 
+	# Арты выбранной карты: большая карта показывает просматриваемый, мини в
+	# сетке — включённые.
+	var worn_art := SkinCollection.art_of(_selected)
+	_preview.set_card(_selected)
+	_preview.set_art(_art_selected)
+	for cid: String in _tiles:
+		(_tiles[cid]["card"] as CardView).set_art(SkinCollection.art_of(cid))
+	for art: String in _art_buttons:
+		var b: Button = _art_buttons[art]
+		var has := art == "" or SkinCollection.owns_art(art)
+		var tier := AltArts.tier_of(art)
+		var title := "ORIGINAL" if art == "" else "%s %s" % [SkinCollection.TIER_TITLES[tier], art.get_slice("_", 1)]
+		var state := "  ON" if art == worn_art else ("" if has else "  %d" % SkinCollection.art_cost(art))
+		b.text = " %s%s" % [title, state]
+		var tint := PixelTheme.TEXT if art == "" else Color(SkinCollection.TIER_COLOURS[tier])
+		_tint(b, PixelTheme.GOLD if art == worn_art else (tint if has else tint.darkened(0.45)))
+		b.set_pressed_no_signal(art == _art_selected)
+	_art_action.visible = _art_buttons.size() > 1
+	if _art_selected == worn_art:
+		_art_action.text = "IN USE"
+	elif _art_selected == "" or SkinCollection.owns_art(_art_selected):
+		_art_action.text = "USE"
+	else:
+		_art_action.text = "CRAFT %d" % SkinCollection.art_cost(_art_selected)
+	_art_action.disabled = _art_selected == worn_art
+
 	var ultra := Color(SkinCollection.TIER_COLOURS[SkinCollection.SHADER_TIER])
 	var cost := int(SkinCollection.CRAFT_COST[SkinCollection.SHADER_TIER])
 	for shader: String in _shader_buttons:
@@ -480,6 +593,17 @@ func open_box() -> Dictionary:
 	var tier := String(got["tier"])
 	var colour := Color(SkinCollection.TIER_COLOURS[tier])
 	var shader := String(got["shader"])
+	var art := String(got["art"])
+	if art != "" and not got["duplicate"]:
+		var cid := AltArts.card_of(art)
+		show_section("CARDS")
+		show_faction(faction_of(cid))
+		select(cid)
+		select_art(art)
+		_set_note("New %s art: %s!" % [SkinCollection.TIER_TITLES[tier], EventLogPanel.card_name(cid)], colour)
+		Sfx.play("victory")
+		_preview.flash_arrival()
+		return got
 	if shader == "":
 		refresh()
 		_set_note("%s: +%d dust." % [SkinCollection.TIER_TITLES[tier], int(got["dust"])], colour)

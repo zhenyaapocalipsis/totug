@@ -55,16 +55,23 @@ func _initialize() -> void:
 		SkinCollection.grant({"boxes": 2, "dust": 450})
 		var cfg := ConfigFile.new()
 		cfg.load(PlayerProfile.path())
-		cfg.set_value("collection", "owned", ["shader:faerie", "shader:gilded"])
+		cfg.set_value("collection", "owned", ["shader:faerie", "shader:gilded", "alt:48403_1"])
+		cfg.set_value("collection", "arts", {"48403": "48403_1"})
 		cfg.set_value("collection", "shader", "gilded")
 		cfg.save(PlayerProfile.path())
 		var screen := ProfileScreen.new()
 		screen._page = "COLLECTION"
 		root.add_child(screen)
+		screen._show_tab("COLLECTION")
 		# --section=CARD BACKS / BACKGROUNDS — другой раздел коллекции.
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--section="):
 				screen._collection.show_section(arg.get_slice("=", 1))
+		# --card=ID — выбрать карту в CARDS (у 48403 два арта, один открыт).
+		if OS.get_cmdline_user_args().has("--card=48403"):
+			screen._collection.show_faction(CollectionPage.faction_of(card))
+			screen._collection.select(card)
+			screen._collection.select_art("48403_2")
 		return
 	for i in TIERS.size():
 		var mini := CardView.new(card, int(CardView.MINI_SIZE.x), int(CardView.MINI_SIZE.y))

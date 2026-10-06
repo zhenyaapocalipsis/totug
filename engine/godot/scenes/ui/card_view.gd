@@ -91,6 +91,9 @@ var _arrive_left := 0.0
 ## или "" (обычная карта).
 var owner_seat := ""
 var skin := ""
+## Альтернативный арт карты (AltArts) вместо оригинального; "" — оригинал.
+## Меняется set_art(); при смене карты, которой он не принадлежит, сбрасывается.
+var art := ""
 ## Мышь над картой с образом: наклон к ней (0..1) и сам наклон (-1..1).
 var _skin_hover := 0.0
 var _skin_tilt := Vector2.ZERO
@@ -214,12 +217,18 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 		set_card(card_id)
 
 
-static func pixel_texture(cid: String) -> Texture2D:
+static func pixel_texture(cid: String, art: String = "") -> Texture2D:
+	var alt := AltArts.full_texture(art) if art != "" and AltArts.card_of(art) == cid else null
+	if alt != null:
+		return alt
 	var path := PIXEL_DIR + cid + ".png"
 	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
 
 
-static func mini_texture(cid: String) -> Texture2D:
+static func mini_texture(cid: String, art: String = "") -> Texture2D:
+	var alt := AltArts.mini_texture(art) if art != "" and AltArts.card_of(art) == cid else null
+	if alt != null:
+		return alt
 	var path := MINI_DIR + cid + ".png"
 	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
 
@@ -424,10 +433,19 @@ static func _ignore_mouse(node: Node) -> void:
 		_ignore_mouse(child)
 
 
+## Показать карту с альтернативным артом ("" — с оригинальным). Чужой карте арт
+## не подходит — тогда оригинал.
+func set_art(new_art: String) -> void:
+	art = new_art
+	set_card(card_id)
+
+
 func set_card(cid: String) -> void:
 	card_id = cid
 	if _pixel != null:
-		_pixel = mini_texture(cid) if _mini else pixel_texture(cid)
+		if art != "" and AltArts.card_of(art) != cid:
+			art = ""
+		_pixel = mini_texture(cid, art) if _mini else pixel_texture(cid, art)
 		if owner_seat != "":
 			set_skin(skin_of(owner_seat, cid))
 		queue_redraw()

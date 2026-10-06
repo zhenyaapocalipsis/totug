@@ -1164,8 +1164,10 @@ func test_skin_collection() -> void:
 	SkinCollection.grant({"boxes": 300, "dust": 150})
 	SkinCollection.grant({"dust": 60})
 	check_eq(int(SkinCollection.load_data()["dust"]), 210, "награды копятся в профиле")
-	# Много лутбоксов: шейдер — только с ULTRA, остальное — пыль.
+	# Много лутбоксов: шейдер — только с ULTRA, арт — с EPIC и LEGENDARY (по
+	# ступени), повтор — пыль.
 	var shaders := 0
+	var new_arts := 0
 	var first := {}
 	var right := true
 	for i in 300:
@@ -1177,13 +1179,24 @@ func test_skin_collection() -> void:
 			if first.is_empty():
 				first = got
 		else:
-			right = right and int(got["dust"]) == int(SkinCollection.DUPLICATE_DUST[got["tier"]])
-	check(right, "шейдер выпадает только ступенью ULTRA, иначе пыль по ступени")
+			var art := String(got["art"])
+			right = right and art != "" and AltArts.tier_of(art) == String(got["tier"])
+			if got["duplicate"]:
+				right = right and int(got["dust"]) == int(SkinCollection.DUPLICATE_DUST[got["tier"]])
+			else:
+				new_arts += 1
+				right = right and int(got["dust"]) == 0
+	check(right, "арт выпадает ступенью своей редкости, повтор даёт пыль по ступени")
 	check(shaders > 0 and shaders < 30, "шейдеры редки, как ULTRA (%d из 300)" % shaders)
 	check(not first.is_empty() and not first["duplicate"] and SkinCollection.owns_shader(String(first["shader"])),
 		"первый выпавший шейдер лёг в коллекцию")
 	check_eq(SkinCollection.active_shader(), String(first["shader"]), "первый шейдер сразу включён")
 	check_eq(int(SkinCollection.load_data()["boxes"]), 0, "лутбоксы потрачены")
+	var owned_arts := 0
+	for item: String in SkinCollection.load_data()["owned"]:
+		owned_arts += 1 if item.begins_with("alt:") else 0
+	check(new_arts > 30 and owned_arts == new_arts, "новые арты легли в коллекцию (%d)" % new_arts)
+	check_eq((SkinCollection.load_data()["arts"] as Dictionary).size() > 0, true, "первый арт карты сразу включён")
 
 	# Создание за пыль и переключение.
 	var cfg := ConfigFile.new()
@@ -1202,6 +1215,40 @@ func test_skin_collection() -> void:
 	check(SkinCollection.set_shader("faerie"), "открытый шейдер включается")
 	check_eq(PlayerProfile.load_local()["shader"], "faerie", "включённый шейдер — в профиле для партии")
 	check_eq(SkinCollection.clean_shader("gold"), "", "чужой шейдер из сети проверяется")
+
+	# Альтернативные арты: данные, создание за пыль, выбор.
+	check(AltArts.TIER_OF.size() >= 60, "в игре есть альтернативные арты (%d)" % AltArts.TIER_OF.size())
+	var all_found := true
+	for art: String in AltArts.TIER_OF:
+		all_found = all_found and AltArts.full_texture(art) != null and AltArts.mini_texture(art) != null \
+			and not CardLibrary.card_data(AltArts.card_of(art)).is_empty() \
+			and SkinCollection.TIERS.has(AltArts.tier_of(art))
+	check(all_found, "у каждого арта есть полная и мини-картинка, карта и ступень")
+	check_eq(AltArts.arts_of("48310"), ["48310_1"] as Array[String], "арты карты — по её номеру")
+	check_eq(AltArts.clean("пусто"), "", "чужой арт из файла проверяется")
+	cfg = ConfigFile.new()
+	cfg.load(PlayerProfile.path())
+	cfg.set_value("collection", "owned", [SkinCollection.shader_key("faerie")])
+	cfg.set_value("collection", "arts", {"48310": "48310_1"})
+	cfg.set_value("collection", "dust", 250)
+	cfg.save(PlayerProfile.path())
+	check_eq(SkinCollection.art_of("48310"), "", "не открытый арт в файле не включается")
+	check(not SkinCollection.set_art("48310", "48310_1"), "не открытый арт не включается")
+	check(SkinCollection.craft_art("48310_1"), "арт создаётся за пыль своей ступени")
+	check_eq(int(SkinCollection.load_data()["dust"]), 250 - int(SkinCollection.CRAFT_COST[AltArts.tier_of("48310_1")]),
+		"списана цена ступени арта")
+	check_eq(SkinCollection.art_of("48310"), "48310_1", "созданный арт сразу включён")
+	check(not SkinCollection.craft_art("48310_1"), "второй раз арт не создаётся")
+	check(SkinCollection.set_art("48310", "") and SkinCollection.art_of("48310") == "", "арт можно снять — оригинал")
+	check(SkinCollection.set_art("48310", "48310_1"), "открытый арт включается")
+	check(not SkinCollection.set_art("48302", "48310_1"), "арт чужой карты не включается")
+	var art_view := CardView.new("48310", 176, 254)
+	var plain_tex := art_view._pixel
+	art_view.set_art("48310_1")
+	check(art_view._pixel != null and art_view._pixel != plain_tex, "карта показывает альтернативный арт")
+	art_view.set_card("48302")
+	check(art_view.art == "" and art_view._pixel != null, "арт другой карты сбрасывается")
+	art_view.free()
 
 	# Партия: шейдер владельца на любой его карте, стартовые — тоже.
 	PlayerProfile.seats = {"red": PlayerProfile.clean({"name": "Ann", "shader": "prism"})}
@@ -1256,6 +1303,24 @@ func test_skin_collection() -> void:
 	page.select_shader("gilded")
 	page.press_shader()
 	check_eq(SkinCollection.active_shader(), "gilded", "открытый шейдер включается одним щелчком")
+	# Вкладка CARDS: арты выбранной карты.
+	SkinCollection.grant({"dust": 1000})
+	page.show_faction(CollectionPage.faction_of("48310"))
+	page.select("48310")
+	check(_find_button(page, " ORIGINAL  ON") != null and AltArts.arts_of("48310").is_empty() == false,
+		"у карты с артом в списке оригинал и альтернативные")
+	var alt := AltArts.arts_of("48310")[0]
+	page.select_art(alt)
+	page.press_art()
+	check(_all_text(page).contains("Click again") and not SkinCollection.owns_art(alt), "первый щелчок по арту показывает цену")
+	page.press_art()
+	check(SkinCollection.owns_art(alt) and SkinCollection.art_of("48310") == alt, "второй щелчок создаёт и включает арт")
+	page.select_art("")
+	page.press_art()
+	check_eq(SkinCollection.art_of("48310"), "", "ORIGINAL — карта без альтернативного арта")
+	page.select_art(alt)
+	page.press_art()
+	check_eq(SkinCollection.art_of("48310"), alt, "открытый арт включается одним щелчком")
 	page.select(CollectionPage.faction_cards("drow")[3])
 	var other := page.selected()
 	page.toggle_favourite()

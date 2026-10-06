@@ -68,6 +68,7 @@ const MINI_FACE := {
 	48736: Vector2i(37, 0), 48737: Vector2i(63, 35), 48738: Vector2i(69, 0), 48739: Vector2i(33, 31),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
+const AltArts := preload("res://tools/alt_arts.gd")
 const W := 176
 const ART_H := 100
 const ART_COLORS := 28
@@ -192,6 +193,10 @@ const ICONS := {
 
 var img: Image
 var sheets_cache := {}
+## Режим "-- alt": арт карты берётся отсюда, а не из листа TTS.
+var alt_art: Image = null
+var alt_face := Vector2i(-1, -1)
+var full_png := OUT
 
 
 func _init() -> void:
@@ -219,6 +224,11 @@ func _init() -> void:
 	var text_h := max_text_px + 8
 	var H := text_top + text_h + 22
 	print("card size: ", W, "x", H)
+
+	# "-- alt [only=файл,файл]": альтернативные арты из tools/alt_arts.gd.
+	if OS.get_cmdline_user_args().has("alt"):
+		render_alt(all, H, text_top, text_h)
+		return
 
 	DirAccess.make_dir_recursive_absolute(PREVIEW)
 	var rendered: Array[Image] = []
@@ -287,7 +297,7 @@ func render(c: Dictionary, H: int, text_top: int, text_h: int) -> Image:
 
 	# art
 	var aw := W - 12
-	var art := pixelize(art_region(card_id, aw, ART_H), aw, ART_H, ART_COLORS)
+	var art := alt_art if alt_art != null else pixelize(art_region(card_id, aw, ART_H), aw, ART_H, ART_COLORS)
 	rect(5, 33, aw + 2, ART_H + 2, C_OUTLINE)
 	img.blit_rect(art, Rect2i(0, 0, aw, ART_H), Vector2i(6, 34))
 
@@ -583,9 +593,11 @@ func render_mini(c: Dictionary) -> Image:
 	# арт: кусок 1:1 из арта большой карты
 	var art_y := 1 + MINI_HEAD + 1
 	var aw := MINI_W - 6
-	var full := Image.load_from_file(OUT + "%d.png" % int(c["card_id"]))
+	var full := Image.load_from_file(full_png if alt_art != null else OUT + "%d.png" % int(c["card_id"]))
 	full.convert(Image.FORMAT_RGBA8)
 	var face: Vector2i = MINI_FACE.get(int(c["card_id"]), MINI_FACE_DEFAULT)
+	if alt_art != null:
+		face = alt_face
 	# Чёрная обводка в пиксель по всему периметру арта, как на большой карте.
 	rect(2, art_y - 1, aw + 2, MINI_ART_H + 2, C_OUTLINE)
 	img.blit_rect(full, Rect2i(FULL_ART_POS + face, Vector2i(aw, MINI_ART_H)), Vector2i(3, art_y))
@@ -660,6 +672,78 @@ func split_word(word: String, room: int) -> Array[String]:
 		cut = mini(fit, (word.length() + 1) / 2)
 		print("hyphenated: ", word, " -> ", word.substr(0, cut), "- ", word.substr(cut))
 	return [word.substr(0, cut) + "-", word.substr(cut)]
+
+
+## Альтернативные арты: полная карта и мелкое лицо на каждый арт, файлы
+## <card_id>_<n>.png, и листы превью (карта x2 + мини x2 + редкость под ними).
+func render_alt(all: Array, H: int, text_top: int, text_h: int) -> void:
+	var by_id := {}
+	for c: Dictionary in all:
+		by_id[int(c["card_id"])] = c
+	var only: Array = []
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("only="):
+			only = a.substr(5).split(",")
+	var rejected := OS.get_cmdline_user_args().has("rejected")
+	if rejected:
+		AltArts.min_zoom_keep = 0.12
+		AltArts.face_zoom_min = 0.25
+	var out := ROOT + ("Claude outputs/alt_arts_rejected/" if rejected else "Claude outputs/alt_arts/")
+	DirAccess.make_dir_recursive_absolute(out + "mini/")
+	var counts := {}
+	var tiles: Array[Image] = []
+	for e: Array in (AltArts.REJECTED if rejected else AltArts.ALT):
+		var id: int = e[0]
+		if not only.is_empty() and not only.has(String(e[1]).get_basename()):
+			continue
+		var aw := W - 12
+		var src := AltArts.source(e, aw, ART_H, 2)
+		if src == null:
+			print("DROPPED (too much background): ", e[1])
+			continue
+		counts[id] = counts.get(id, 0) + 1
+		alt_art = pixelize(src, aw, ART_H, ART_COLORS)
+		alt_face = e[4] if e[4] != AltArts.NO_FACE else MINI_FACE_DEFAULT
+		if AltArts.FACE_CROP.has(e[1]):
+			alt_face = Vector2i(56, 23)  # лицо в центре вырезa
+		var tag := "%d_%d" % [id, counts[id]]
+		var card := render(by_id[id], H, text_top, text_h)
+		full_png = out + tag + ".png"
+		card.save_png(full_png)
+		var mini := render_mini(by_id[id])
+		mini.save_png(out + "mini/" + tag + ".png")
+		print(tag, " ", e[1], " ", e[2])
+
+		# плитка превью: карта и мини в x2, под ними редкость и файл
+		var s := 2
+		img = Image.create(W * s + MINI_W * s + 6, H * s + 12, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0.04, 0.03, 0.07))
+		var big := card.duplicate() as Image
+		big.resize(W * s, H * s, Image.INTERPOLATE_NEAREST)
+		img.blit_rect(big, Rect2i(Vector2i.ZERO, big.get_size()), Vector2i.ZERO)
+		var small := mini.duplicate() as Image
+		small.resize(MINI_W * s, MINI_H * s, Image.INTERPOLATE_NEAREST)
+		img.blit_rect(small, Rect2i(Vector2i.ZERO, small.get_size()), Vector2i(W * s + 6, 0))
+		var rar_col := C_GOLD if e[2] == "LEGENDARY" else C_IC_HI
+		text(2, H * s + 2, String(e[2]) + "  " + clean(String(e[1]).get_basename().to_upper()), rar_col, 1)
+		tiles.append(img)
+	alt_art = null
+
+	var cols := 4
+	var rows := 2
+	var tw := tiles[0].get_width() if not tiles.is_empty() else 1
+	var th := tiles[0].get_height() if not tiles.is_empty() else 1
+	var gap := 8
+	for page in ceili(tiles.size() / float(cols * rows)):
+		var sheet := Image.create(cols * (tw + gap) + gap, rows * (th + gap) + gap, false, Image.FORMAT_RGBA8)
+		sheet.fill(Color(0.02, 0.02, 0.03))
+		for i in range(page * cols * rows, mini(tiles.size(), (page + 1) * cols * rows)):
+			var j := i - page * cols * rows
+			sheet.blit_rect(tiles[i], Rect2i(Vector2i.ZERO, tiles[i].get_size()),
+				Vector2i(gap + (j % cols) * (tw + gap), gap + (j / cols) * (th + gap)))
+		sheet.save_png(out + "sheet_%d.png" % (page + 1))
+	print("alt rendered: ", tiles.size())
+	quit()
 
 
 ## Мелкие лица в assets, а заодно листы в x4 для просмотра разметки глазом.
