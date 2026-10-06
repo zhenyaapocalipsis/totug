@@ -7,48 +7,60 @@ extends RefCounted
 ##
 ## Щупальца (Ulitharid) гибкие. Форма каждого — ломаная, снятая с рисунка
 ## владельца (2026-10-07; координаты в системе рисунка, SKETCH_CARD — где на нём
-## карта): корень спрятан под краем карты, щупальце выползает из-за неё и идёт по
-## своей кривой; где кривая возвращается на карту, оно идёт ПОВЕРХ неё. Тело —
-## цепочка полосок спрайта вдоль кривой, поверх лёгкая бегущая волна. У каждого
-## щупальца своя длина, скорость, плавность и время.
+## карта), сглаженная: корень спрятан под краем карты, щупальце выползает из-за
+## неё и идёт по своей кривой; где кривая возвращается на карту, оно идёт ПОВЕРХ
+## неё. Тело — цепочка полосок спрайта вдоль кривой.
+##
+## Сочность: при выстреле по телу бежит затухающая волна (тело запаздывает за
+## головой), голова перелетает цель и откатывается; по толщине пробегают
+## сокращения; все щупальца приходят к финишу одновременно — карта вздрагивает,
+## вторая ударная волна, брызги слизи. Вылезли — лёгкое дыхание кривой.
 ## Решение владельца: внутри эффектов полоски спрайта можно поворачивать на любой
 ## угол (общее пиксельное правило 1:1 здесь снято).
 
 const SPRITE_PATH := "res://assets/card_fx/%s/%s.png"
 ## Сколько секунд висит карта с эффектом (обычная — CardShowcase.HOLD_TIME).
 const HOLD_TIME := 2.8
-## Кадров анимации щупальца в секунду (при speed = 1) и шаг полосок тела.
-const FPS := 12.0
-const STEP := 4.0
-## Сколько отсчётов у кривой щупальца и сколько вставок на звено ломаной.
+## Шаг полосок тела.
+const STEP := 3.0
+## Сколько отсчётов у кривой щупальца, сколько вставок на звено ломаной, сколько
+## проходов сглаживания и сколько отсчётов продолжения за концом (для перелёта).
 const SPINE_N := 96
 const SMOOTH_N := 8
+const SMOOTH_PASSES := 14
+const EXT_N := 14
 ## На сколько пикселей карты корень уходит под её край (чтобы тело не торчало).
 const LEAD_IN := 26.0
-## Ударная волна: квадрат вокруг карты расширяется и гаснет.
+## Момент, когда все щупальца дошли до финиша, и силы удара.
+const IMPACT_T := 1.15
+const IMPACT_SHAKE := 2.5
+const IMPACT_DECAY := 9.0
+## Ударные волны: квадрат вокруг карты расширяется и гаснет.
 const RING_TIME := 0.45
 const RING_GROW := 70.0
-## Спрайт: строки 0..TIP_ROWS — сужающийся кончик, дальше строки идут туда-обратно
-## по REPEAT_ROWS (у спрайта оба конца сужаются, нужна только толстая середина).
-const TIP_ROWS := 36
-const REPEAT_ROWS := 60
-## Вздрагивание карты, когда щупальце выходит: сила (пиксели) и затухание.
-const JOLT := 1.0
-const JOLT_DECAY := 12.0
+## Затухающая волна при выстреле и лёгкое дыхание кривой (пиксели).
+const WHIP := 9.0
+const WHIP_DECAY := 3.5
+const IDLE := 2.5
+## Брызги слизи: сколько, сколько живут, сторона квадрата, ускорение вниз.
+const DROPS := 9
+const DROP_LIFE := 0.55
+const DROP_SIZE := 3.0
+const DROP_GRAVITY := 280.0
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
 
-## card_id -> сценарий. sprite/frames — спрайт и число его кадров, tint — цвет
-## ударной волны, sound — звук (см. Sfx), tentacles — щупальца:
+## card_id -> сценарий. sprite — спрайт щупальца (прямой, у основания толстый, к
+## кончику тонкий), tint — цвет ударной волны, sound — звук (см. Sfx), tentacles —
+## щупальца:
 ##   path — ломаная с рисунка, от корня (на краю карты) к кончику;
-##   width — толщина (доля спрайта; длинные тонкие, как на рисунке);
+##   width — толщина (доля спрайта);
 ##   delay — задержка; dur — сколько ползёт наружу; ease — как разгоняется
 ##   (out / inout / in / back); retract_at, retract_dur — когда и как быстро
-##   втягивается; wave, wsp — размах (пиксели) и скорость лёгкой волны;
-##   speed — скорость кадров (минус — назад); phase — сдвиг всего.
+##   втягивается; phase — сдвиг волн (у каждого своя).
 const FX := {
 	"48701": {
-		"sprite": "tentacle_illithid", "tint": Color("b05ad8"), "sound": "sink",
+		"sprite": "tentacle_illithid", "tint": Color("7f8cff"), "sound": "sink",
 		"tentacles": [
 			# большое: из-за верхнего края дугой налево, обратно диагональю ПОВЕРХ
 			# карты и вниз справа
@@ -60,29 +72,29 @@ const FX := {
 				Vector2(550, 466), Vector2(600, 479), Vector2(650, 492), Vector2(690, 502),
 				Vector2(730, 520), Vector2(770, 543), Vector2(805, 575), Vector2(835, 605),
 				Vector2(850, 632), Vector2(851, 680), Vector2(850, 720), Vector2(846, 750)],
-				"width": 0.7, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
-				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": 1.0, "phase": 0.0},
+				"width": 0.7, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"retract_dur": 0.45, "phase": 0.0},
 			# короткое справа сверху: наружу и обратно на карту
 			{"path": [Vector2(725, 283), Vector2(750, 292), Vector2(768, 310), Vector2(775, 330),
 				Vector2(768, 352), Vector2(745, 378), Vector2(722, 402), Vector2(700, 420),
 				Vector2(688, 440), Vector2(682, 460)],
-				"width": 0.46, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
-				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": -1.4, "phase": 2.1},
+				"width": 0.46, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"retract_dur": 0.45, "phase": 2.1},
 			# слева посередине: наружу налево, обратно через край и вниз по карте
 			{"path": [Vector2(318, 486), Vector2(298, 505), Vector2(285, 530), Vector2(283, 555),
 				Vector2(292, 580), Vector2(310, 603), Vector2(335, 620), Vector2(360, 635),
 				Vector2(380, 655), Vector2(390, 685), Vector2(392, 712), Vector2(390, 744),
 				Vector2(375, 762), Vector2(358, 782)],
-				"width": 0.55, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
-				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": 0.8, "phase": 4.2},
+				"width": 0.55, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"retract_dur": 0.45, "phase": 4.2},
 			# длинное справа снизу: наружу, потом S-образно вниз-влево до низа экрана
 			{"path": [Vector2(735, 637), Vector2(758, 647), Vector2(775, 665), Vector2(781, 700),
 				Vector2(779, 738), Vector2(765, 775), Vector2(745, 800), Vector2(720, 815),
 				Vector2(690, 825), Vector2(650, 845), Vector2(600, 875), Vector2(560, 895),
 				Vector2(525, 918), Vector2(500, 945), Vector2(485, 975), Vector2(477, 1005),
 				Vector2(475, 1040), Vector2(483, 1066)],
-				"width": 0.65, "delay": 0.0, "dur": 1.15, "ease": "out", "retract_at": 2.2,
-				"retract_dur": 0.45, "wave": 1.5, "wsp": 2.0, "speed": 1.3, "phase": 3.3},
+				"width": 0.65, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"retract_dur": 0.45, "phase": 3.3},
 		],
 	},
 }
@@ -99,7 +111,7 @@ static func sound(cid: String) -> String:
 	return String(FX[cid]["sound"]) if FX.has(cid) else ""
 
 
-## Спрайт щупальца карты cid: прямой, у основания толстый, к кончику тонкий.
+## Спрайт щупальца карты cid.
 static func _sprite(cid: String) -> Texture2D:
 	var name := String(FX[cid]["sprite"])
 	var key := "%s/%s" % [cid, name]
@@ -108,53 +120,48 @@ static func _sprite(cid: String) -> Texture2D:
 	return _cache[key]
 
 
-## Позади карты: ударная волна и те части щупалец, что под картой.
+## Позади карты: ударные волны и те части щупалец, что под картой.
 static func draw_behind(c: CanvasItem, cid: String, card: Rect2, t: float) -> void:
-	_draw_ring(c, cid, card, t)
+	_draw_ring(c, cid, card, t, 0.0, 1.0, RING_GROW)
+	_draw_ring(c, cid, card, t, IMPACT_T, 0.7, RING_GROW * 0.6)
 	var i := 0
 	for tent: Dictionary in FX[cid]["tentacles"]:
 		_draw_tentacle(c, cid, i, tent, card, t, false)
 		i += 1
 
 
-## Поверх карты: части щупалец, что лежат на ней.
+## Поверх карты: части щупалец, что лежат на ней, и брызги слизи.
 static func draw_front(c: CanvasItem, cid: String, card: Rect2, t: float) -> void:
 	var i := 0
 	for tent: Dictionary in FX[cid]["tentacles"]:
 		_draw_tentacle(c, cid, i, tent, card, t, true)
+		_draw_drops(c, cid, i, card, t)
 		i += 1
 
 
-## На сколько пикселей вздрагивает карта: каждое щупальце, вылезая, толкает её
-## в сторону, противоположную выходу.
+## На сколько пикселей вздрагивает карта: удар в момент, когда все щупальца дошли.
 static func card_shift(cid: String, t: float) -> Vector2:
-	if not FX.has(cid):
+	var dt := t - IMPACT_T
+	if not FX.has(cid) or dt <= 0.0:
 		return Vector2.ZERO
-	var shift := Vector2.ZERO
-	var i := 0
-	for tent: Dictionary in FX[cid]["tentacles"]:
-		var dt := t - float(tent["delay"]) - float(tent["dur"]) * 0.4
-		if dt > 0.0:
-			var path: Array = tent["path"]
-			var dir := ((path[1] as Vector2) - (path[0] as Vector2)).normalized()
-			shift -= dir * JOLT * exp(-dt * JOLT_DECAY) * sin(dt * 40.0 + float(tent["phase"]))
-		i += 1
-	return shift.round()
+	return (Vector2(sin(dt * 55.0), cos(dt * 47.0)) * IMPACT_SHAKE * exp(-dt * IMPACT_DECAY)).round()
 
 
-static func _draw_ring(c: CanvasItem, cid: String, card: Rect2, t: float) -> void:
-	var k := t / RING_TIME
+static func _draw_ring(c: CanvasItem, cid: String, card: Rect2, t: float, at: float, alpha: float,
+		grow: float) -> void:
+	var k := (t - at) / RING_TIME
 	if k <= 0.0 or k >= 1.0:
 		return
 	var colour: Color = FX[cid]["tint"]
-	colour.a = 0.7 * (1.0 - k)
-	c.draw_rect(card.grow(roundf(RING_GROW * _ease_out_cubic(k))), colour, false, 2.0)
+	colour.a = alpha * 0.7 * (1.0 - k)
+	c.draw_rect(card.grow(roundf(grow * (1.0 - pow(1.0 - k, 3.0)))), colour, false, 2.0)
 
 
 ## Кривая щупальца в долях карты, ровно по длине: ломаная с рисунка, сглаженная
-## и с заходом корня под край карты. Считается один раз на карту и размер.
-## Возвращает {pts (доли карты, SPINE_N+1 точек), seg (пиксели), split (длина
-## от корня, с которой тело идёт поверх карты, INF — никогда)}.
+## (рисунок рукодельный, в нём изломы), с заходом корня под край карты и
+## прямым продолжением за концом — туда голова перелетает цель. Считается один
+## раз на карту и размер. Возвращает {pts, seg (пиксели), split (длина от корня, с
+## которой тело идёт поверх карты, INF — никогда), total (длина до цели)}.
 static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 	var key := "%s/%d/%d" % [cid, index, int(size.x)]
 	if _spines.has(key):
@@ -189,11 +196,19 @@ static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 			j += 1
 		var span := maxf(cum[j] - cum[j - 1], 0.0001)
 		pts.append(dense[j - 1].lerp(dense[j], clampf((a - cum[j - 1]) / span, 0.0, 1.0)))
+	# убираем изломы: несколько проходов [1 2 1]/4, концы стоят на месте
+	for _pass in range(SMOOTH_PASSES):
+		for i in range(1, pts.size() - 1):
+			pts[i] = (pts[i - 1] + pts[i] * 2.0 + pts[i + 1]) * 0.25
+	# продолжение за концом по последнему направлению
+	var dir := ((pts[pts.size() - 1] - pts[pts.size() - 4]) * size).normalized()
+	for i in range(1, EXT_N + 1):
+		pts.append(pts[SPINE_N] + dir * seg * float(i) / size)
 	# с какой длины тело идёт поверх карты: первый заход обратно на карту после
 	# выхода за её край
 	var split := INF
 	var out := false
-	for i in range(pts.size()):
+	for i in range(SPINE_N + 1):
 		var q := pts[i]
 		var inside := q.x >= 0.0 and q.x <= 1.0 and q.y >= 0.0 and q.y <= 1.0
 		if not out and not inside:
@@ -215,6 +230,7 @@ static func _ease(kind: String, x: float) -> float:
 		"inout":
 			return x * x * (3.0 - 2.0 * x)
 		"back":
+			# перелёт ~10% за цель и возврат
 			var c1 := 1.70158
 			return 1.0 + (c1 + 1.0) * pow(x - 1.0, 3.0) + c1 * pow(x - 1.0, 2.0)
 	return 1.0 - pow(1.0 - x, 3.0)
@@ -227,33 +243,36 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	var total := float(sp["total"])
 	var split := float(sp["split"])
 	var delay := float(tent["delay"])
-	var out := _ease(String(tent["ease"]), (t - delay) / float(tent["dur"]))
+	var raw_t := (t - delay) / float(tent["dur"])
+	# перелёт ограничен: спрайт не вытягивается за продолжение кривой
+	var out := _ease_unclamped(String(tent["ease"]), raw_t)
 	var gone := _ease("in", (t - float(tent["retract_at"])) / float(tent["retract_dur"]))
 	var phase := float(tent["phase"])
-	# голова «нащупывает»: чуть подаётся вперёд и назад, пока щупальце снаружи
-	var progress := out * (1.0 - gone) * (1.0 + 0.012 * sin(t * 3.0 + phase) * out)
-	var head := minf(total * progress, total)
+	var head := minf(total * out * (1.0 - gone), seg * float(SPINE_N + EXT_N - 1))
 	var count := int(head / STEP)
 	if count < 2:
 		return
 	var fpts: PackedVector2Array = sp["pts"]
-	# точки кривой в пикселях со слабой бегущей волной (корень и кончик живут по-разному)
-	var wave := float(tent["wave"])
-	var wsp := float(tent["wsp"])
+	# точки кривой в пикселях; при выстреле по телу бежит затухающая волна (тело
+	# запаздывает за головой), потом остаётся лёгкое дыхание; при втягивании щупальце
+	# хлещет. Корень стоит на месте.
+	var since := maxf(t - delay, 0.0)
+	var amp := WHIP * exp(-WHIP_DECAY * since) + IDLE * clampf(out, 0.0, 1.0) \
+		+ WHIP * 1.3 * gone * (1.0 - gone) * 4.0
 	var pts := PackedVector2Array()
 	for i in range(fpts.size()):
 		var p := card.position + fpts[i] * card.size
 		var prev := card.position + fpts[maxi(i - 1, 0)] * card.size
 		var next := card.position + fpts[mini(i + 1, fpts.size() - 1)] * card.size
 		var u := float(i) / SPINE_N
-		var off := wave * sin(u * 9.0 - t * wsp + phase) * clampf(u * 4.0, 0.0, 1.0)
+		var off := amp * sin(u * 5.5 - t * 5.0 + phase) * clampf(u * 3.0, 0.0, 1.0)
 		pts.append(p + (next - prev).orthogonal().normalized() * off)
 
 	# точки тела от кончика к корню
 	var body := PackedVector2Array()
 	for j in range(count + 1):
 		var a := maxf(head - float(j) * STEP, 0.0)
-		var k := minf(a / seg, float(SPINE_N) - 0.001)
+		var k := minf(a / seg, float(fpts.size()) - 1.001)
 		var i0 := int(k)
 		body.append(pts[i0].lerp(pts[i0 + 1], k - float(i0)))
 
@@ -263,8 +282,10 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	# толщина: у корня толстое, к кончику тонкое — это даёт сам спрайт; пока щупальце
 	# ещё короткое, оно и тоньше (иначе выходит толстый обрубок)
 	var w := float(tex.get_width())
-	var hw := w * 0.5 * float(tent["width"]) * (0.4 + 0.6 * head / total)
+	var base_hw := w * 0.5 * float(tent["width"]) * (0.4 + 0.6 * minf(head / total, 1.0))
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
+	# пока щупальце в движении, по телу бегут сокращения (толщина пульсирует)
+	var pulse := 0.12 * (1.0 - clampf(out, 0.0, 1.0)) + 0.04 + 0.1 * gone
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
 		if (head - float(j) * STEP >= split) != front:
@@ -273,6 +294,7 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		# толстое основание (v = 1) у корня
 		var v0 := float(j) * STEP / head
 		var v1 := minf(float(j + 1) * STEP / head, 1.0)
+		var hw := base_hw * (1.0 + pulse * sin(float(j) * STEP * 0.07 - t * 9.0 + phase))
 		var n0 := (body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized() * hw
 		var n1 := (body[mini(j + 2, count)] - body[j]).orthogonal().normalized() * hw
 		# draw_primitive, а не draw_polygon: тот отказывается рисовать «скрученный» кусок
@@ -281,6 +303,36 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 			colours, PackedVector2Array([Vector2(0, v0), Vector2(1, v0), Vector2(1, v1), Vector2(0, v1)]), tex)
 
 
-static func _ease_out_cubic(x: float) -> float:
-	x = clampf(x, 0.0, 1.0)
-	return 1.0 - pow(1.0 - x, 3.0)
+## Как _ease, но «back» не обрезается сверху: перелёт — это значения больше 1.
+static func _ease_unclamped(kind: String, x: float) -> float:
+	if kind == "back":
+		x = clampf(x, 0.0, 1.0)
+		return 1.0 + 2.70158 * pow(x - 1.0, 3.0) + 1.70158 * pow(x - 1.0, 2.0)
+	return _ease(kind, x)
+
+
+## Брызги слизи: из-под края карты при выстреле и из головы щупальца при ударе.
+## Каждая капля летит по своей дуге; разброс детерминирован (одинаков у всех).
+static func _draw_drops(c: CanvasItem, cid: String, index: int, card: Rect2, t: float) -> void:
+	var sp := _spine_of(cid, index, card.size)
+	var fpts: PackedVector2Array = sp["pts"]
+	var colour: Color = FX[cid]["tint"]
+	colour = colour.lerp(Color.WHITE, 0.35)
+	var root := card.position + fpts[5] * card.size
+	var out_dir := ((fpts[6] - fpts[4]) * card.size).normalized()
+	var head := card.position + fpts[SPINE_N] * card.size
+	var rng := RandomNumberGenerator.new()
+	for src in range(2):
+		var at := 0.05 if src == 0 else IMPACT_T
+		var tau := t - at
+		if tau <= 0.0 or tau >= DROP_LIFE:
+			continue
+		var origin := root if src == 0 else head
+		for k in range(DROPS):
+			rng.seed = hash("%s/%d/%d/%d" % [cid, index, src, k])
+			var angle := out_dir.angle() + rng.randf_range(-0.9, 0.9) if src == 0 \
+				else rng.randf_range(0.0, TAU)
+			var speed := rng.randf_range(70.0, 170.0)
+			var pos := origin + Vector2.from_angle(angle) * speed * tau + Vector2(0, DROP_GRAVITY * tau * tau * 0.5)
+			colour.a = 1.0 - tau / DROP_LIFE
+			c.draw_rect(Rect2(pos.round(), Vector2(DROP_SIZE, DROP_SIZE)), colour)
