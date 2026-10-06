@@ -11,7 +11,7 @@ extends Control
 ##     PLAY     — столбец ONLINE / LOBBY / HOTSEAT / HOW TO PLAY слева, большая
 ##                кнопка в правом нижнем углу (SEARCH, CREATE ROOM / HOST, JOIN,
 ##                START); HOW TO PLAY — само обучение прямо в окне;
-##     SETTINGS — громкость звуков и музыки, полный экран;
+##     SETTINGS — звук, экран, клавиши, игровые мелочи (SettingsPanel);
 ##   EXIT закрывает игру.
 ##
 ## Подсказок при наведении нет (владелец, 2026-10-06): что нужно знать — сразу
@@ -67,11 +67,12 @@ const CORNER_BUTTON := Vector2(70, 16)
 const BUTTON_SIZE := Vector2(90, 16)
 const MENU_WIDTH := 400.0
 const DOT := 7.0
-## Задник и обучение подключены файлом, а не по глобальному имени класса:
+## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const HowToPlay := preload("res://scenes/ui/how_to_play_screen.gd")
+const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
 var _count: int = GameScreen.MIN_PLAYERS
@@ -508,54 +509,16 @@ func _refresh_dots() -> void:
 
 # --- SETTINGS ---------------------------------------------------------------
 
-## Все настройки игры: громкость (как в меню по Esc) и полный экран (как F11).
+## Все настройки игры (SettingsPanel — та же панель, что в меню по Esc).
 func _build_settings() -> Control:
 	var centre := CenterContainer.new()
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 2)
-	centre.add_child(col)
-	# Громкость: щелчок — следующая ступень (100 → 75 → 50 → 25 → OFF).
-	var sound := _setting_button(Sfx.volume_label())
-	sound.pressed.connect(func():
-		Sfx.cycle_volume()
-		sound.text = Sfx.volume_label())
-	col.add_child(sound)
-	var music := _setting_button(Music.volume_label())
-	music.pressed.connect(func():
-		Music.cycle_volume()
-		music.text = Music.volume_label())
-	col.add_child(music)
-	var screen := _setting_button(_screen_label())
-	screen.pressed.connect(func():
-		var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-		DisplayServer.window_set_mode(
-			DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
-		screen.text = _screen_label())
-	# F11 и Alt+Enter переключают экран и мимо этой кнопки.
-	screen.visibility_changed.connect(func(): screen.text = _screen_label())
-	col.add_child(screen)
-	col.add_child(HSeparator.new())
-	_add_dim_to(col, "Click a button for the next step.\nF11 or Alt+Enter: full screen or window.")
+	centre.add_child(SettingsPanel.new())
 	return centre
-
-
-static func _screen_label() -> String:
-	var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	return "SCREEN: FULL" if full else "SCREEN: WINDOW"
-
-
-func _setting_button(text: String) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size = Vector2(100, 16)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_style_button(b)
-	return b
 
 
 # --- мелкие детали вёрстки ---------------------------------------------------
 
-## Кнопка под названием: все пять одной ширины, вместе — во всю ширину меню.
+## Кнопка под названием: все четыре одной ширины, вместе — во всю ширину меню.
 func _tab_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text

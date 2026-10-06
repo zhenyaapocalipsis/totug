@@ -184,7 +184,9 @@ func _process(delta: float) -> void:
 	if not is_host:
 		return
 	for room: GameRoom in rooms.values():
-		var what := room.tick_pause(delta, abandon_seconds, pause_seconds)
+		# Настоящее время: скорость анимаций (Engine.time_scale) паузу не торопит.
+		var real := delta / Engine.time_scale if Engine.time_scale > 0.0 else 0.0
+		var what := room.tick_pause(real, abandon_seconds, pause_seconds)
 		if what.has("abandon"):
 			_abandon_room(room, String(what["abandon"]))
 		elif what.has("resumed"):

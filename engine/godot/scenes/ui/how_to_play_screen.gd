@@ -24,6 +24,8 @@ const SOLDIER := "48344"
 const PRIESTESS := "48343"
 const HOUSE_GUARD := "48340"
 const ADVOCATE := "48306"
+## Клавиши в подсказках — какие назначены в настройках.
+const GameSettings := preload("res://scenes/game_settings.gd")
 const MARKET_SAMPLE := ["48336", "48334", "48331", "48329", "48316", "48320"]
 
 ## Маленькие доски. Места — коробки как на настоящей схеме; ключи клеток:
@@ -267,11 +269,12 @@ func _build_pages() -> Array:
 			["CLICK CARD", "Play it from your hand"],
 			["CLICK MAP", "Deploy (green) / assassinate (orange)"],
 			["CLICK MARKET", "Recruit a card"],
-			["HOLD ALT", "Enlarge the card under the mouse"],
-			["TAB", "Ping the spot under the mouse"],
-			["HOLD TAB", "Chat wheel (phrases: PROFILE)"],
+			["HOLD " + GameSettings.key_name("zoom"), "Enlarge the card under the mouse"],
+			[GameSettings.key_name("ping"), "Ping the spot under the mouse"],
+			["HOLD " + GameSettings.key_name("ping"), "Chat wheel (phrases: PROFILE)"],
+			["HOLD " + GameSettings.key_name("end_turn"), "End turn"],
 			["ESC", "Pause menu"],
-			["F11", "Full screen"],
+			[GameSettings.key_name("fullscreen"), "Full screen (keys: SETTINGS)"],
 		], "CONTROLS"),
 		"text": "The game keeps the rules for you: it only allows legal moves and lights up "
 			+ "where you can act.\n\n"

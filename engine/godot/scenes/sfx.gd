@@ -9,10 +9,11 @@ extends Node
 ## скриптом) вызовы ничего не делают. Все кнопки (BaseButton) сами щёлкают
 ## при нажатии и чуть слышно — при наведении.
 ##
-## Громкость хранится в user://settings.cfg, меняется в меню по Esc.
+## Громкость хранится в user://settings.cfg, меняется в настройках (SettingsPanel).
 
 const BUS := "SFX"
-const SETTINGS_PATH := "user://settings.cfg"
+## Файл настроек (user://settings.cfg) — общий с GameSettings.
+const GameSettings := preload("res://scenes/game_settings.gd")
 const DIR := "res://assets/sfx/"
 const VOICES := 12
 ## Ходы соперника звучат тише своих.
@@ -80,9 +81,9 @@ static func set_volume(value: float) -> void:
 	volume = clampf(value, 0.0, 1.0)
 	_apply_volume()
 	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS_PATH)
+	cfg.load(GameSettings.path())
 	cfg.set_value("audio", "sfx_volume", volume)
-	cfg.save(SETTINGS_PATH)
+	cfg.save(GameSettings.path())
 
 
 ## Подпись для кнопки меню: «SOUND 75%» / «SOUND OFF».
@@ -104,7 +105,7 @@ func _ready() -> void:
 		AudioServer.add_bus()
 		AudioServer.set_bus_name(AudioServer.bus_count - 1, BUS)
 	var cfg := ConfigFile.new()
-	if cfg.load(SETTINGS_PATH) == OK:
+	if cfg.load(GameSettings.path()) == OK:
 		volume = float(cfg.get_value("audio", "sfx_volume", 1.0))
 	_apply_volume()
 	for i in VOICES:

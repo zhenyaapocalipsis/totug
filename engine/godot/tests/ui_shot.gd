@@ -163,6 +163,8 @@ func _run_scenario() -> void:
 		"esc_menu":
 			# Меню по Esc поверх партии (там же выбор фона).
 			_screen._pause_menu.visible = true
+			# --settings=1 — сразу с открытыми настройками.
+			_screen._pause_menu.show_settings(_arg("settings", "") != "")
 		"paused":
 			# Плашка паузы сетевой партии: один отключился, другой поставил
 			# общую паузу. Связь не нужна — экрану хватает того, что она есть.

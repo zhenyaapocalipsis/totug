@@ -1,15 +1,19 @@
 class_name PauseMenu
 extends Control
 
-## Меню по Esc во время партии: вернуться в главное меню или выйти из игры.
-## Повторный Esc (или RESUME) закрывает. Пока меню открыто, щелчки до игры под
-## ним не доходят, а таймер хода стоит (GameScreen._process).
+## Меню по Esc во время партии: настройки, вернуться в главное меню или выйти
+## из игры. Повторный Esc (или RESUME) закрывает, из настроек Esc — назад к
+## кнопкам. Пока меню открыто, щелчки до игры под ним не доходят, а таймер
+## хода стоит (GameScreen._process).
 
 signal main_menu_requested
 
 const BUTTON_SIZE := Vector2(110, 16)
+const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
 
 var _col: VBoxContainer
+## Настройки (SettingsPanel) с заголовком и BACK — на месте кнопок меню.
+var _settings: VBoxContainer
 
 
 func _init() -> void:
@@ -45,22 +49,44 @@ func _init() -> void:
 	col.add_child(title)
 
 	col.add_child(_button("RESUME", func(): visible = false))
-	# Громкость звуков: щелчок — следующая ступень (100 → 75 → 50 → 25 → OFF).
-	var sound := _button(Sfx.volume_label(), func(): pass)
-	sound.pressed.connect(func():
-		Sfx.cycle_volume()
-		sound.text = Sfx.volume_label())
-	col.add_child(sound)
-	var music := _button(Music.volume_label(), func(): pass)
-	music.pressed.connect(func():
-		Music.cycle_volume()
-		music.text = Music.volume_label())
-	col.add_child(music)
+	# Все настройки — та же панель, что во вкладке SETTINGS главного меню
+	# (владелец, 2026-10-06); громкость теперь там.
+	col.add_child(_button("SETTINGS", func(): show_settings(true)))
 	col.add_child(_button("MAIN MENU", func(): main_menu_requested.emit()))
 	col.add_child(_button("QUIT GAME", func(): get_tree().quit()))
 	_col = col
-	# Пока меню открыто, музыка звучит приглушённо, «за стеной».
-	visibility_changed.connect(func(): Music.set_muffled(is_visible_in_tree()))
+
+	_settings = VBoxContainer.new()
+	_settings.add_theme_constant_override("separation", 4)
+	_settings.visible = false
+	card.add_child(_settings)
+	var head := Label.new()
+	head.text = "SETTINGS"
+	head.add_theme_color_override("font_color", PixelTheme.GOLD)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_settings.add_child(head)
+	_settings.add_child(SettingsPanel.new())
+	_settings.add_child(HSeparator.new())
+	var back := _button("BACK", func(): show_settings(false))
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_settings.add_child(back)
+
+	# Пока меню открыто, музыка звучит приглушённо, «за стеной». Закрыли —
+	# в следующий раз оно открывается с кнопок, не с настроек.
+	visibility_changed.connect(func():
+		Music.set_muffled(is_visible_in_tree())
+		if not visible:
+			show_settings(false))
+
+
+## Настройки вместо кнопок меню (и обратно).
+func show_settings(on: bool) -> void:
+	_settings.visible = on
+	_col.visible = not on
+
+
+func settings_open() -> bool:
+	return _settings.visible
 
 
 ## Ещё одна кнопка — сразу под RESUME (сетевая партия: PAUSE FOR ALL).

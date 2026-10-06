@@ -29,6 +29,7 @@ const MAX_PLAYERS := 4
 ## командной строки, где нового имени ещё нет в кэше.
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
+const GameSettings := preload("res://scenes/game_settings.gd")
 
 # Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по макету владельца
@@ -144,9 +145,9 @@ var _attention_key := ""
 ## Цвет кнопки End turn и фаза её пульсации, пока ход свой.
 var _end_turn_colour := Color(0.6, 0.6, 0.6)
 var _pulse_time := 0.0
-## Ход заканчивается удержанием пробела SPACE_HOLD_SECONDS секунд; пока пробел
-## зажат, кнопку End turn слева направо заливает полоса _space_fill.
-const SPACE_HOLD_SECONDS := 3.0
+## Ход заканчивается удержанием клавиши конца хода (пробел; сколько секунд —
+## GameSettings.hold_seconds); пока она зажата, кнопку End turn слева направо
+## заливает полоса _space_fill.
 var _space_held := false
 var _space_hold := 0.0
 var _space_fill: ColorRect
@@ -836,16 +837,22 @@ func _input(event: InputEvent) -> void:
 	if key == null:
 		return
 	# Отпускание пробела сбрасывает удержание при любом состоянии экрана.
-	if key.keycode == KEY_SPACE and not key.pressed:
+	if GameSettings.is_key(key, "end_turn") and not key.pressed:
 		_space_held = false
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if _pause_menu.visible:
-		# Под меню паузы клавиши до игры не доходят; Esc его закрывает.
+		# Под меню паузы клавиши до игры не доходят; Esc его закрывает, из
+		# настроек — назад к кнопкам меню.
 		if key.keycode == KEY_ESCAPE and key.pressed and not key.echo:
-			_pause_menu.visible = false
+			if _pause_menu.settings_open():
+				_pause_menu.show_settings(false)
+			else:
+				_pause_menu.visible = false
 		_cancel_tab()
 		get_viewport().set_input_as_handled()
-	elif key.keycode == KEY_TAB:
+	elif GameSettings.is_key(key, "ping") and not (typing and key.keycode != KEY_TAB):
+		# Tab глотаем и при наборе (иначе он уводит фокус); буквенную клавишу
+		# пинга при наборе отдаём строке чата.
 		get_viewport().set_input_as_handled()
 		if key.echo:
 			return
@@ -855,9 +862,9 @@ func _input(event: InputEvent) -> void:
 		if key.keycode == KEY_ESCAPE and key.pressed:
 			get_viewport().gui_get_focus_owner().release_focus()
 			get_viewport().set_input_as_handled()
-	elif key.keycode == KEY_SPACE:
+	elif GameSettings.is_key(key, "end_turn"):
 		# Пробел глотаем целиком, чтобы он не жал кнопку в фокусе; сам конец
-		# хода — в _tick_space_hold, после 3 секунд удержания.
+		# хода — в _tick_space_hold, после удержания (GameSettings.hold_seconds).
 		if key.pressed and not key.echo:
 			_space_held = true
 		get_viewport().set_input_as_handled()
@@ -1493,11 +1500,12 @@ func _fly(token: FlyingToken, from: Vector2, to: Vector2, order: int,
 
 ## Стоп-кадр: вся игра замирает на seconds секунд настоящего времени.
 ## Таймер идёт мимо Engine.time_scale, иначе он замер бы вместе со всеми.
-## Сетевую логику не трогает: замирают только анимации и таймер хода.
+## Сетевую логику не трогает: замирают только анимации и таймер хода. Потом
+## время снова идёт со скоростью анимаций из настроек.
 func _hitstop(seconds: float) -> void:
 	Engine.time_scale = 0.0
 	get_tree().create_timer(seconds, true, false, true).timeout.connect(
-		func() -> void: Engine.time_scale = 1.0)
+		func() -> void: Engine.time_scale = GameSettings.anim_speed())
 
 
 func _exit_tree() -> void:
@@ -1525,12 +1533,18 @@ static func _error_name(err: int) -> String:
 ## ответа и завершает ход сразу после него. Если же отвечает не ходящий, а
 ## другой игрок, таймер ходящего стоит на паузе.
 func _process(delta: float) -> void:
+	# Скорость анимаций из настроек — это Engine.time_scale (0 — стоп-кадр).
+	# Таймеры хода и удержаний идут по настоящему времени: у всех игроков
+	# сети одинаково, какая бы скорость у кого ни стояла.
+	if Engine.time_scale > 0.0 and Engine.time_scale != GameSettings.anim_speed():
+		Engine.time_scale = GameSettings.anim_speed()
+	var real := delta / Engine.time_scale if Engine.time_scale > 0.0 else 0.0
 	if _timer_label == null or _view.is_empty():
 		return
 	_pulse_end_turn(delta)
-	_tick_space_hold(delta)
-	_tick_tab(delta)
-	_tick_pause(delta)
+	_tick_space_hold(real)
+	_tick_tab(real)
+	_tick_pause(real)
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
@@ -1556,12 +1570,12 @@ func _process(delta: float) -> void:
 	# Пока на вопрос карты отвечает другой игрок (например, сбрасывает карту
 	# по эффекту), время ходящего не тратится — идёт таймер ответа.
 	if not pending.is_empty() and String(pending.get("player_id", "")) != current:
-		_tick_decision_timer(pending, delta)
+		_tick_decision_timer(pending, real)
 		return
 	_decision_key = ""
 	# Пока открыто меню паузы или сетевая партия на паузе, таймер хода стоит.
 	if not _clock_stopped():
-		_time_left = maxf(0.0, _time_left - delta)
+		_time_left = maxf(0.0, _time_left - real)
 	_show_time(_time_left)
 
 	# Стартовая расстановка: End turn недоступна, по нулю локация выбирается сама.
@@ -1579,18 +1593,18 @@ func _process(delta: float) -> void:
 
 
 ## Удержание пробела: копится, пока пробел зажат и End turn доступна; через
-## SPACE_HOLD_SECONDS ход заканчивается, как от щелчка. Чтобы закончить и
+## GameSettings.hold_seconds() ход заканчивается, как от щелчка. Чтобы закончить и
 ## следующий ход, пробел надо отпустить и зажать снова.
 func _tick_space_hold(delta: float) -> void:
 	if _space_held and not _end_turn_button.disabled and not _pause_menu.visible:
 		_space_hold += delta
 	else:
 		_space_hold = 0.0
-	if _space_hold >= SPACE_HOLD_SECONDS:
+	if _space_hold >= GameSettings.hold_seconds():
 		_space_held = false
 		_space_hold = 0.0
 		_on_action_requested("end_turn")
-	var part := _space_hold / SPACE_HOLD_SECONDS
+	var part := _space_hold / GameSettings.hold_seconds()
 	_space_fill.position = _end_turn_button.position
 	_space_fill.size = Vector2(floorf(_end_turn_button.size.x * part), _end_turn_button.size.y)
 

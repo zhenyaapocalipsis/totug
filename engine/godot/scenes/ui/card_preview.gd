@@ -18,6 +18,7 @@ extends Control
 ## и растянутый масштабом текст получается мыльным. Копия собирается в нужном
 ## размере и остаётся чёткой.
 
+const GameSettings := preload("res://scenes/game_settings.gd")
 const GROW := 1.15
 const MIN_SIZE := Vector2(176, 254)
 const MARGIN := 4.0
@@ -79,16 +80,19 @@ func has_preview() -> bool:
 	return _card != null
 
 
-## Alt приходит двумя путями: событием самой клавиши и флагом alt_pressed на
-## любом другом событии (например, движении мыши с уже зажатым Alt).
+## Клавиша увеличения (Alt, переназначается в настройках) приходит двумя
+## путями: событием самой клавиши и — если это Alt, Shift или Ctrl — флагом на
+## любом другом событии (например, движении мыши с уже зажатой клавишей).
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var key := event as InputEventKey
-		if key.keycode == KEY_ALT or key.physical_keycode == KEY_ALT:
+		if GameSettings.is_key(key, "zoom") or key.physical_keycode == GameSettings.key("zoom"):
 			_set_alt(key.pressed)
 			return
 	if event is InputEventWithModifiers:
-		_set_alt((event as InputEventWithModifiers).alt_pressed)
+		var held: Variant = GameSettings.modifier_held(event as InputEventWithModifiers, "zoom")
+		if held != null:
+			_set_alt(bool(held))
 
 
 func _set_alt(value: bool) -> void:

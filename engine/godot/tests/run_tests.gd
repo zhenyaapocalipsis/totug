@@ -10,11 +10,16 @@ var _passed := 0
 var _failed := 0
 var _current := ""
 
+const GameSettings := preload("res://scenes/game_settings.gd")
+
 
 func _initialize() -> void:
 	print("\n=== тесты ядра ===\n")
 	# Свой файл профиля: тесты экрана профиля не должны трогать настоящий.
 	PlayerProfile.path_override = "user://profile_test.cfg"
+	# Настройки игрока (скорость анимаций, клавиши) тестам не указ.
+	GameSettings.path_override = "user://settings_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GameSettings.path_override))
 	# Свой файл запомненной онлайн-партии — не трогать настоящий.
 	NetSession.resume_path = "user://online_game_test.cfg"
 	NetSession.forget_game()
@@ -3370,10 +3375,12 @@ func test_main_menu() -> void:
 
 	_find_button(menu, "SETTINGS").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_SETTINGS, "SETTINGS открывает настройки")
-	check(_find_button(menu, Sfx.volume_label()) != null and _find_button(menu, Music.volume_label()) != null,
-		"в настройках громкость звуков и музыки")
-	check(_find_button(menu, "SCREEN: FULL") != null or _find_button(menu, "SCREEN: WINDOW") != null,
-		"в настройках полный экран")
+	var panel: Node = menu._tabs[SetupScreen.PAGE_SETTINGS].get_child(0)
+	check_eq(panel.find_children("*", "HSlider", true, false).size(), 3,
+		"в настройках три ползунка громкости: общая, эффекты, музыка")
+	for text in ["TAB", "SPACE", "ALT", "F11", "RESET KEYS", "x1", "3 S"]:
+		check(_find_button(panel, text) != null, "в настройках есть %s" % text)
+	_test_settings(panel)
 
 	var got := {}
 	menu.started.connect(func(ids: Array[String], m: String): got["start"] = [ids.size(), m])
@@ -3464,6 +3471,42 @@ func test_main_menu() -> void:
 
 
 ## Все надписи (Label) под узлом одной строкой — для проверки содержимого окон.
+## Настройки: значения по кругу, клавиши меняются местами, SETTINGS в меню по
+## Esc. Пишется в свой файл (GameSettings.path_override в _initialize).
+func _test_settings(panel: Node) -> void:
+	check_eq(GameSettings.hold_seconds(), 3.0, "конец хода — 3 секунды удержания по умолчанию")
+	_find_button(panel, "3 S").pressed.emit()
+	check_eq(GameSettings.hold_seconds(), 5.0, "END TURN HOLD: 3 S → 5 S")
+	check(_find_button(panel, "5 S") != null, "кнопка показывает новое значение")
+	_find_button(panel, "x1").pressed.emit()
+	check_eq(GameSettings.anim_speed(), 1.5, "ANIMATIONS: x1 → x1.5")
+	GameSettings.set_value("hold_seconds", 3.0)
+	GameSettings.set_value("anim_speed", 1.0)
+
+	panel._wait_key("ping")
+	check(_find_button(panel, "PRESS A KEY") != null, "щелчок по клавише — ждём новую")
+	panel._wait_key("")
+	GameSettings.set_key("ping", KEY_SPACE)
+	check_eq(GameSettings.key("ping"), KEY_SPACE, "пинг теперь на пробеле")
+	check_eq(GameSettings.key("end_turn"), KEY_TAB, "занятая клавиша поменялась местами с прежней")
+	var event := InputEventKey.new()
+	event.keycode = KEY_SPACE
+	check(GameSettings.is_key(event, "ping") and not GameSettings.is_key(event, "end_turn"),
+		"нажатие узнаётся по новой клавише")
+	GameSettings.reset_keys()
+	check(GameSettings.key("ping") == KEY_TAB and GameSettings.key("end_turn") == KEY_SPACE,
+		"RESET KEYS возвращает Tab и пробел")
+
+	var pause := PauseMenu.new()
+	check(_find_button(pause, "SETTINGS") != null, "в меню по Esc есть SETTINGS")
+	_find_button(pause, "SETTINGS").pressed.emit()
+	check(pause.settings_open() and _find_button(pause, "RESET KEYS") != null,
+		"SETTINGS в меню по Esc открывает те же настройки")
+	_find_button(pause, "BACK").pressed.emit()
+	check(not pause.settings_open(), "BACK — назад к кнопкам меню")
+	pause.free()
+
+
 func _all_text(node: Node) -> String:
 	var out := ""
 	for child in node.get_children():

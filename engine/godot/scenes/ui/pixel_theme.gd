@@ -144,6 +144,25 @@ static func _setup_scroll(t: Theme) -> void:
 	t.set_stylebox("panel", "ScrollContainer", StyleBoxEmpty.new())
 	t.set_stylebox("focus", "ScrollContainer", StyleBoxEmpty.new())
 
+	# Ползунок (громкость в настройках): желоб 6 пикселей, пройденная часть
+	# золотом, ручка — брусок 4x10 без скруглений.
+	var track := box(PANEL_LO, BORDER, 1, 0, 2)
+	t.set_stylebox("slider", "HSlider", track)
+	t.set_stylebox("grabber_area", "HSlider", box(GOLD.darkened(0.15), BORDER, 1, 0, 2))
+	t.set_stylebox("grabber_area_highlight", "HSlider", box(GOLD, BORDER, 1, 0, 2))
+	t.set_stylebox("focus", "HSlider", StyleBoxEmpty.new())
+	t.set_icon("grabber", "HSlider", _bar_icon(TEXT))
+	t.set_icon("grabber_highlight", "HSlider", _bar_icon(GOLD))
+	t.set_icon("grabber_disabled", "HSlider", _bar_icon(TEXT_OFF))
+
+
+## Ручка ползунка: брусок 4x10 с тёмной обводкой.
+static func _bar_icon(colour: Color) -> ImageTexture:
+	var img := Image.create(4, 10, false, Image.FORMAT_RGBA8)
+	img.fill(BG)
+	img.fill_rect(Rect2i(1, 1, 2, 8), colour)
+	return ImageTexture.create_from_image(img)
+
 
 static func _setup_misc(t: Theme) -> void:
 	t.set_stylebox("normal", "LineEdit", box(PANEL_LO, BORDER, 1, 2, 1))

@@ -42,6 +42,7 @@ const NEUTRAL_TROOP_COLOR := Color(0.55, 0.55, 0.58)
 const EMPTY_SLOT_COLOR := Color(0.0, 0.0, 0.0, 0.45)
 const DEPLOY_COLOR := Color(0.35, 0.95, 0.45)
 const KILL_COLOR := Color(1.0, 0.55, 0.15)
+const GameSettings := preload("res://scenes/game_settings.gd")
 ## Подсветка целей текущего pending-решения (assassinate/supplant/move/
 ## return/place spy и т.п.) — выбор цели делается кликом по доске, а не
 ## кнопкой в диалоге (см. decision_dialog.gd, game_screen.gd).
@@ -1158,6 +1159,7 @@ func _draw() -> void:
 	var radius: float = maxf(_slot_radius_world() * _zoom, 3.0)
 	var busy := _kill_slots()
 
+	var hints := GameSettings.move_hints()
 	for slot_id: String in slots.keys():
 		var pos := _to_screen(_slot_world(slot_id))
 		if pos.x < -radius or pos.y < -radius or pos.x > size.x + radius or pos.y > size.y + radius:
@@ -1172,6 +1174,9 @@ func _draw() -> void:
 		if owner != "":
 			_draw_troop(pos, owner)
 
+		# Подсказки ходов можно выключить в настройках (MOVE HINTS).
+		if not hints:
+			continue
 		if deployable.has(slot_id):
 			_mark_slot(pos, DEPLOY_COLOR, owner != "")
 		elif killable.has(slot_id):
@@ -1660,6 +1665,8 @@ func _draw_decision_targets() -> void:
 ## Вражеские шпионы, которых можно вернуть за 3 Power, — оранжевой рамкой
 ## вокруг самого ромбика (не всей локации: выбирают кликом по шпиону).
 func _draw_spy_targets() -> void:
+	if not GameSettings.move_hints():
+		return
 	var targets: Array = (_view.get("legal", {}) as Dictionary).get("return_spy", [])
 	for t in targets:
 		_ring_spy(String((t as Dictionary)["site_id"]), String((t as Dictionary)["spy_owner"]), KILL_COLOR)

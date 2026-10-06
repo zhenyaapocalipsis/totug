@@ -10,9 +10,10 @@ extends Node
 ## Автозагрузка MusicPlayer (project.godot). Вызовы: Music.set_mood("turn"),
 ## Music.set_muffled(true). Без автозагрузки (тесты) ничего не делают.
 ##
-## Громкость хранится в user://settings.cfg, меняется в меню по Esc.
+## Громкость хранится в user://settings.cfg, меняется в настройках (SettingsPanel).
 
 const BUS := "Music"
+const GameSettings := preload("res://scenes/game_settings.gd")
 const DIR := "res://assets/music/"
 const TRACKS := ["music1", "music2", "music3", "music4", "music5"]
 ## Какая версия звучит при каком настроении.
@@ -72,9 +73,9 @@ static func set_volume(value: float) -> void:
 	volume = clampf(value, 0.0, 1.0)
 	_apply_volume()
 	var cfg := ConfigFile.new()
-	cfg.load(Sfx.SETTINGS_PATH)
+	cfg.load(GameSettings.path())
 	cfg.set_value("audio", "music_volume", volume)
-	cfg.save(Sfx.SETTINGS_PATH)
+	cfg.save(GameSettings.path())
 
 
 static func volume_label() -> String:
@@ -100,7 +101,7 @@ func _ready() -> void:
 		_lowpass.cutoff_hz = OPEN_HZ
 		AudioServer.add_bus_effect(bus, _lowpass)
 	var cfg := ConfigFile.new()
-	if cfg.load(Sfx.SETTINGS_PATH) == OK:
+	if cfg.load(GameSettings.path()) == OK:
 		volume = float(cfg.get_value("audio", "music_volume", 1.0))
 	_apply_volume()
 

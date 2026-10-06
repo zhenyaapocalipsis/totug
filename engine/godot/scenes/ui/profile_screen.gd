@@ -40,6 +40,7 @@ const VP_PART_NAMES := {"sites": "SITES", "total_control": "TOTAL CONTROL", "tro
 	"deck": "DECK", "inner_circle": "INNER CIRCLE", "tokens": "VP TOKENS"}
 const BAR_W := 60
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
+const GameSettings := preload("res://scenes/game_settings.gd")
 ## Вкладки обычного профиля; STATS первой и открыта сразу (владелец, 2026-09-28).
 const TABS: Array[String] = ["STATS", "EMBLEM", "CHAT", "COLLECTION"]
 
@@ -484,7 +485,8 @@ func _show_tab(page: String) -> void:
 func _chat_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 4)
-	page.add_child(GameScreen.section_label("CHAT WHEEL: HOLD TAB IN A GAME, MOVE THE MOUSE, RELEASE"))
+	var key := GameSettings.key_name("ping")
+	page.add_child(GameScreen.section_label("CHAT WHEEL: HOLD %s IN A GAME, MOVE THE MOUSE, RELEASE" % key))
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 6)
@@ -506,8 +508,8 @@ func _chat_page() -> Control:
 		grid.add_child(edit)
 		_phrase_edits.append(edit)
 	var hint := Label.new()
-	hint.text = "Up to %d characters. An empty line gets the default phrase.\nTap TAB in a game to ping the spot under the mouse." \
-		% PlayerProfile.PHRASE_MAX
+	hint.text = "Up to %d characters. An empty line gets the default phrase.\nTap %s in a game to ping the spot under the mouse." \
+		% [PlayerProfile.PHRASE_MAX, key]
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)
