@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b3kdcncd3p4i2"
-path="res://.godot/imported/tentacle_8.png-69fa5246f2cfbe6aedb1a56f18d63312.ctex"
+uid="uid://c3oomh3e5wdbo"
+path="res://.godot/imported/tentacle.png-f7377a9c529f21d1151f08277b3addae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/card_fx/48701/tentacle_8.png"
-dest_files=["res://.godot/imported/tentacle_8.png-69fa5246f2cfbe6aedb1a56f18d63312.ctex"]
+source_file="res://assets/card_fx/48701/tentacle.png"
+dest_files=["res://.godot/imported/tentacle.png-f7377a9c529f21d1151f08277b3addae.ctex"]
 
 [params]
 

@@ -409,17 +409,24 @@ func _row_rects(area: Rect2) -> Array[Rect2]:
 ## Крупная карта ряда: лицом или рубашкой, в первые мгновения — вспышка.
 func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool) -> void:
 	_card_rect = rect if _card_rect == Rect2() else _card_rect.merge(rect)
-	if _has_fx() and slot == 0 and (_phase == "hold" or _phase == "exit"):
-		# эффект идёт от начала выдержки и дальше, пока карта тает
-		CardFx.draw_behind(c, String(_item["cid"]), rect, _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0))
+	var fx := _has_fx() and slot == 0 and (_phase == "hold" or _phase == "exit")
+	# эффект идёт от начала выдержки и дальше, пока карта тает
+	var fx_t := _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0)
+	var cid := String(_item["cid"])
+	var banner_rect := rect
+	if fx:
+		CardFx.draw_behind(c, cid, rect, fx_t)
+		rect.position += CardFx.card_shift(cid, fx_t)
 	if down or face == null:
 		_draw_back(c, rect)
 	else:
 		c.draw_texture_rect(face, rect, false)
+	if fx:
+		CardFx.draw_front(c, cid, rect, fx_t)
 	if _flash > 0.0:
 		c.draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
 	_draw_glow(c, rect)
-	_show_banner(slot, rect)
+	_show_banner(slot, banner_rect)
 
 
 ## Обводка цвета ступени вокруг карты с артом: у EPIC вспыхивает и гаснет после
