@@ -55,6 +55,8 @@ const BEHIND_GAP := 14.0
 const ROW_FROM := 0.2
 const ROW_TO := 0.88
 const TIP_LEN := 80.0
+## Размах бегущей по телу волны сжатия: на сколько пикселей «перетекают» кольца.
+const RING_FLOW := 4.0
 ## Загиб кончика появляется после прихода: на сколько пикселей, на какой длине от
 ## головы и за сколько секунд.
 const HOOK := 16.0
@@ -332,9 +334,12 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var profile := root_w * 0.5 * (1.0 - 0.55 * clampf(a / total, 0.0, 1.0))
 		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
 		halves.append(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)))
-		# строки идут от корня (низ спрайта) к кончику; дальше конца спрайта — туда-обратно
-		var m := fposmod(a * density, 2.0 * span)
-		rows.append(row_hi - (m if m < span else 2.0 * span - m))
+		# текстура привязана к ГОЛОВЕ: кольца едут вместе с ней (щупальце движется, а не
+		# «открывается» из-под маски); по телу бегут волны сжатия, поэтому кольца
+		# перетекают и когда щупальце уже дошло. Дальше конца спрайта — туда-обратно.
+		var flow := RING_FLOW * sin(dist * 0.045 - t * 4.5 + phase)
+		var m := fposmod(dist * density + flow * density, 2.0 * span)
+		rows.append(row_lo + (m if m < span else 2.0 * span - m))
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
