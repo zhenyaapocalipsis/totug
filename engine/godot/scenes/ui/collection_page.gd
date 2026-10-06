@@ -39,6 +39,9 @@ const DEFAULT_FAVOURITE := "48314"
 var _dust_label: Label
 var _boxes_label: Label
 var _open_button: Button
+var _open_all_button: Button
+## Окно раскрытия лутбокса (LootBoxReveal), пока открыто.
+var _reveal: LootBoxReveal
 var _note: Label
 var _section := "CARDS"
 var _section_buttons: Dictionary = {}
@@ -88,9 +91,12 @@ func _init() -> void:
 	top.add_child(_dust_label)
 	_boxes_label = _label("", PixelTheme.GOLD)
 	top.add_child(_boxes_label)
-	_open_button = _button("OPEN BOX", func(): open_box())
+	_open_button = _button("OPEN BOX", func(): open_boxes(1))
 	_open_button.custom_minimum_size = Vector2(70, 16)
 	top.add_child(_open_button)
+	_open_all_button = _button("OPEN ALL", func(): open_boxes(int(SkinCollection.load_data()["boxes"])))
+	_open_all_button.custom_minimum_size = Vector2(70, 16)
+	top.add_child(_open_all_button)
 	top.add_child(_label("BOX: ART EPIC %d%% / LEGENDARY %d%%, SHADER ULTRA %d%%; REPEAT = DUST" % [SkinCollection.BOX_ODDS["epic"],
 		SkinCollection.BOX_ODDS["legendary"], SkinCollection.BOX_ODDS[SkinCollection.SHADER_TIER]],
 		PixelTheme.TEXT_DIM))
@@ -518,7 +524,8 @@ func refresh() -> void:
 	var data := SkinCollection.load_data()
 	_dust_label.text = "DUST %d" % int(data["dust"])
 	_boxes_label.text = "LOOT BOXES %d" % int(data["boxes"])
-	_open_button.disabled = int(data["boxes"]) <= 0
+	_open_button.disabled = int(data["boxes"]) <= 0 or _reveal != null
+	_open_all_button.disabled = int(data["boxes"]) <= 1 or _reveal != null
 	var worn := String(data["shader"])
 
 	for cid: String in _tiles:
@@ -588,8 +595,69 @@ func refresh() -> void:
 ## просто строкой снизу.
 func open_box() -> Dictionary:
 	var got := SkinCollection.open_box(_rng)
-	if got.is_empty():
-		return got
+	if not got.is_empty():
+		_show_result(got, false)
+	return got
+
+
+## Открыть до count лутбоксов с раскруткой на весь экран (LootBoxReveal): боксы
+## списываются сразу, окно только показывает выпавшее. Закрыли — страница
+## переходит к лучшей новой награде, как после open_box(). Возвращает выпавшее.
+func open_boxes(count: int) -> Array[Dictionary]:
+	var results: Array[Dictionary] = []
+	if _reveal != null:
+		return results
+	for i in count:
+		var got := SkinCollection.open_box(_rng)
+		if got.is_empty():
+			break
+		results.append(got)
+	if results.is_empty():
+		return results
+	refresh()
+	_reveal = LootBoxReveal.new()
+	_reveal.setup(results, int(SkinCollection.load_data()["boxes"]), _showcase_card())
+	_reveal.closed.connect(func(again: bool):
+		_reveal = null
+		_show_results(results)
+		if again:
+			open_boxes(1))
+	add_child(_reveal)
+	refresh()
+	return results
+
+
+## Награда, к которой страница переходит после раскрытия: новая высшей ступени,
+## иначе последняя.
+static func best_result(results: Array[Dictionary]) -> Dictionary:
+	var best := results[results.size() - 1]
+	var rank := -1
+	for r in results:
+		var k := SkinCollection.TIERS.find(String(r["tier"])) + (10 if LootBoxReveal.is_new(r) else 0)
+		if k > rank:
+			rank = k
+			best = r
+	return best
+
+
+func _show_results(results: Array[Dictionary]) -> void:
+	if results.is_empty():
+		return
+	var best := best_result(results)
+	_show_result(best, true)
+	if results.size() > 1:
+		var new := 0
+		var dust := 0
+		for r in results:
+			new += 1 if LootBoxReveal.is_new(r) else 0
+			dust += int(r["dust"])
+		_set_note("Opened %d boxes: %d new, +%d dust." % [results.size(), new, dust],
+			Color(SkinCollection.TIER_COLOURS[String(best["tier"])]))
+
+
+## Страница показывает выпавшее: нужный раздел, примечание, звук и вспышка.
+## silent — звуки уже сыграло окно раскрытия.
+func _show_result(got: Dictionary, silent: bool) -> void:
 	var tier := String(got["tier"])
 	var colour := Color(SkinCollection.TIER_COLOURS[tier])
 	var shader := String(got["shader"])
@@ -601,23 +669,27 @@ func open_box() -> Dictionary:
 		select(cid)
 		select_art(art)
 		_set_note("New %s art: %s!" % [SkinCollection.TIER_TITLES[tier], EventLogPanel.card_name(cid)], colour)
-		Sfx.play("victory")
+		_play("victory", silent)
 		_preview.flash_arrival()
-		return got
+		return
 	if shader == "":
 		refresh()
 		_set_note("%s: +%d dust." % [SkinCollection.TIER_TITLES[tier], int(got["dust"])], colour)
-		Sfx.play("coins")
-		return got
+		_play("coins", silent)
+		return
 	show_section("SHADERS")
 	select_shader(shader)
 	var title := String(SkinCollection.SHADER_TITLES[shader])
 	if got["duplicate"]:
 		_set_note("Already had the %s shader: +%d dust." % [title, int(got["dust"])], colour)
-		Sfx.play("coins")
+		_play("coins", silent)
 	else:
 		_set_note("New shader: %s!" % title, colour)
-		Sfx.play("victory")
+		_play("victory", silent)
 		for view in _shader_views:
 			view.flash_arrival()
-	return got
+
+
+static func _play(sound: String, silent: bool) -> void:
+	if not silent:
+		Sfx.play(sound)

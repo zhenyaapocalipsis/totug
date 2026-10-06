@@ -1427,6 +1427,45 @@ func test_skin_collection() -> void:
 	check_eq(String(PlayerProfile.load_local()["favourite"]), other, "любимая карта уходит в партию с профилем")
 	page.toggle_favourite()
 	check_eq(PlayerProfile.favourite(), "", "второй щелчок снимает любимую карту")
+
+	# Раскрытие лутбокса (Loot-1): тряска, рулетка, вспышка, награда; несколько — итог.
+	SkinCollection.grant({"boxes": 5})
+	var one := page.open_boxes(1)
+	check(one.size() == 1 and page._reveal != null and page._reveal.phase() == "shake", "OPEN BOX запускает раскрытие с тряски")
+	check(page.open_boxes(1).is_empty() and int(SkinCollection.load_data()["boxes"]) == 4, "пока окно открыто, второй бокс не тратится")
+	var reveal: LootBoxReveal = page._reveal
+	reveal.step(LootBoxReveal.SHAKE_TIME)
+	check_eq(reveal.phase(), "roll", "после тряски — рулетка")
+	reveal.step(LootBoxReveal.ROLL_TIME)
+	check_eq(reveal.phase(), "flash", "после рулетки — вспышка")
+	reveal.step(LootBoxReveal.FLASH_TIME)
+	check_eq(reveal.phase(), "show", "после вспышки — награда")
+	for tier in SkinCollection.TIERS:
+		var probe := LootBoxReveal.new()
+		probe.setup([{"tier": tier, "shader": "", "art": "", "duplicate": false, "dust": 50}], 0, "48342")
+		probe._enter("roll")
+		check_eq(probe._roll_total() % 3, SkinCollection.TIERS.find(tier), "рулетка замирает на выпавшей ступени " + String(tier))
+		probe.step(LootBoxReveal.ROLL_TIME)
+		check_eq(probe.highlighted(), SkinCollection.TIERS.find(tier), "подсвечена выпавшая ступень " + String(tier))
+		probe.free()
+	var closed_again := []
+	reveal.closed.connect(func(again: bool): closed_again.append(again))
+	reveal.press_ok()
+	check(closed_again == [false] and page._reveal == null, "OK закрывает окно, страница свободна")
+	var five := page.open_boxes(4)
+	check(five.size() == 4 and page._reveal.batch() and int(SkinCollection.load_data()["boxes"]) == 0, "OPEN ALL открывает все боксы разом")
+	page._reveal.skip()
+	check_eq(page._reveal.phase(), "summary", "SKIP при пачке — сразу итоговая сетка")
+	check(_all_text(page._reveal).contains("OPENED 4 BOXES"), "итог пачки подписан")
+	page._reveal.press_ok()
+	check(page._reveal == null and _all_text(page).contains("Opened 4 boxes"), "после итога страница пишет сводку")
+	var sample: Array[Dictionary] = [
+		{"tier": "epic", "shader": "", "art": "", "duplicate": false, "dust": 50},
+		{"tier": "legendary", "shader": "", "art": "48310_1", "duplicate": true, "dust": 150},
+		{"tier": "ultra", "shader": "gilded", "art": "", "duplicate": false, "dust": 0}]
+	check_eq(CollectionPage.best_result(sample)["shader"], "gilded", "лучшая награда — новая высшей ступени")
+	check(not LootBoxReveal.is_new(sample[0]) and not LootBoxReveal.is_new(sample[1]) and LootBoxReveal.is_new(sample[2]),
+		"пыль и повтор — не новое")
 	page.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
 	PlayerProfile.path_override = old_path
