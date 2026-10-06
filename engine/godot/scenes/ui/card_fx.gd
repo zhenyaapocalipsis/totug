@@ -21,16 +21,16 @@ const FX := {
 	"48701": {
 		"sprite": "tentacle", "frames": 9, "tint": Color("b05ad8"), "sound": "sink",
 		# base — точка основания в долях карты, rot — куда смотрит (градусы,
-		# 0 = вверх), reach — доля длины спрайта, delay — задержка выхода.
+		# 0 = вверх), delay — задержка выхода, phase — сдвиг кадра анимации.
 		"parts": [
-			{"base": Vector2(0.23, 0.12), "rot": 0, "reach": 0.8, "delay": 0.00, "phase": 0},
-			{"base": Vector2(0.77, 0.16), "rot": 0, "reach": 0.7, "delay": 0.08, "phase": 4},
-			{"base": Vector2(0.17, 0.32), "rot": -90, "reach": 1.0, "delay": 0.04, "phase": 2},
-			{"base": Vector2(0.17, 0.76), "rot": -90, "reach": 0.9, "delay": 0.12, "phase": 6},
-			{"base": Vector2(0.83, 0.44), "rot": 90, "reach": 1.0, "delay": 0.10, "phase": 1},
-			{"base": Vector2(0.83, 0.80), "rot": 90, "reach": 0.9, "delay": 0.02, "phase": 5},
-			{"base": Vector2(0.34, 0.88), "rot": 180, "reach": 0.7, "delay": 0.14, "phase": 3},
-			{"base": Vector2(0.66, 0.86), "rot": 180, "reach": 0.8, "delay": 0.06, "phase": 7},
+			{"base": Vector2(0.23, 0.12), "rot": 0, "delay": 0.00, "phase": 0},
+			{"base": Vector2(0.77, 0.16), "rot": 0, "delay": 0.08, "phase": 4},
+			{"base": Vector2(0.17, 0.32), "rot": -90, "delay": 0.04, "phase": 2},
+			{"base": Vector2(0.17, 0.76), "rot": -90, "delay": 0.12, "phase": 6},
+			{"base": Vector2(0.83, 0.44), "rot": 90, "delay": 0.10, "phase": 1},
+			{"base": Vector2(0.83, 0.80), "rot": 90, "delay": 0.02, "phase": 5},
+			{"base": Vector2(0.34, 0.88), "rot": 180, "delay": 0.14, "phase": 3},
+			{"base": Vector2(0.66, 0.86), "rot": 180, "delay": 0.06, "phase": 7},
 		],
 	},
 }
@@ -68,17 +68,16 @@ static func draw_behind(c: CanvasItem, cid: String, card: Rect2, t: float) -> vo
 		var delay := float(part["delay"])
 		var grow := _ease_out((t - delay) / GROW_TIME)
 		var gone := _ease_in((t - RETRACT_AT - delay * 0.5) / GROW_TIME)
-		var visible := grow * (1.0 - gone) * float(part["reach"])
+		var out := grow * (1.0 - gone)
 		var tex := _frame(cid, (int(t * FPS) + int(part["phase"])) % frames)
-		if visible <= 0.0 or tex == null:
+		if out <= 0.0 or tex == null:
 			continue
 		var size := tex.get_size()
-		var rows := roundf(size.y * visible)
 		var base := (card.position + card.size * (part["base"] as Vector2)).round()
-		# спрайт растёт из основания: показываем нижние rows строк
+		# спрайт целиком выезжает из-под карты (карта рисуется поверх основания),
+		# а не обрезается: иначе пропадает кончик с завитком
 		c.draw_set_transform(base, deg_to_rad(float(part["rot"])))
-		c.draw_texture_rect_region(tex, Rect2(-size.x * 0.5, -rows, size.x, rows),
-			Rect2(0, size.y - rows, size.x, rows))
+		c.draw_texture(tex, Vector2(-size.x * 0.5, -size.y + roundf(size.y * (1.0 - out))))
 	c.draw_set_transform(Vector2.ZERO)
 
 

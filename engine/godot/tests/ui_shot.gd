@@ -354,6 +354,9 @@ func _run_scenario() -> void:
 				_screen.send(Intent.make_decision(pd12.player_id, pd12.legal_options[0]))
 			var st12 := _screen.server.state
 			var mover12: String = st12.current_player()
+			# --delay=N: подождать N кадров (баннер хода успевает уйти, как в игре).
+			for _i in _count_arg("delay", 0):
+				await process_frame
 			var cid12 := _arg("card", "48701")
 			st12.players[mover12].deck.hand.append(cid12)
 			_screen.send(Intent.play_card(mover12, cid12))
