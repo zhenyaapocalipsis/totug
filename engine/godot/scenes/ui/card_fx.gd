@@ -50,10 +50,15 @@ const DROP_GRAVITY := 280.0
 ## На сколько пикселей щупальце должно выйти за край карты, чтобы дальше идти ПОВЕРХ
 ## неё (не меньше половины ширины тела).
 const BEHIND_GAP := 14.0
-## Рабочие строки спрайта (доли высоты): выше у него запечён завиток,
-## ниже острый конец. Кончик заостряется кодом на TIP_LEN пикселей.
-const ROW_FROM := 0.2
-const ROW_TO := 0.88
+## Рабочие строки спрайта: с ROW_FROM (доля высоты; выше запечён завиток) берётся один
+## период колец (ищется сам, RING_P_*); ниже гладкий острый конец. Кончик заостряется
+## кодом на TIP_LEN пикселей.
+const ROW_FROM := 0.19
+const RING_P_MIN := 14
+const RING_P_MAX := 90
+## Сколько строк и точек поперёк тела сравниваем при поиске периода колец.
+const RING_CHECK := 50
+const RING_SAMPLES := 12
 const TIP_LEN := 80.0
 ## Размах бегущей по телу волны сжатия: на сколько пикселей «перетекают» кольца.
 const RING_FLOW := 4.0
@@ -310,9 +315,8 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	var rights: PackedFloat32Array = bounds["right"]
 	var h := float(tex.get_height())
 	var w := float(tex.get_width())
-	var row_lo := ROW_FROM * h
-	var row_hi := ROW_TO * h
-	var span := row_hi - row_lo
+	var row_lo := float(bounds["y0"])
+	var period := float(bounds["period"])
 	# плотность текстуры постоянна (пиксели квадратные) на любой длине: сколько строк
 	# спрайта приходится на пиксель вдоль щупальца. Тело спрайта (в среднем mean_w
 	# пикселей) должно уместиться в заданную ширину у корня.
@@ -338,8 +342,7 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		# «открывается» из-под маски); по телу бегут волны сжатия, поэтому кольца
 		# перетекают и когда щупальце уже дошло. Дальше конца спрайта — туда-обратно.
 		var flow := RING_FLOW * sin(dist * 0.045 - t * 4.5 + phase)
-		var m := fposmod(dist * density + flow * density, 2.0 * span)
-		rows.append(row_lo + (m if m < span else 2.0 * span - m))
+		rows.append(row_lo + fposmod(dist * density + flow * density, period))
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
@@ -360,7 +363,7 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 
 
 ## Границы тела спрайта по строкам (непрозрачные пиксели; левая и правая, в пикселях
-## от левого края) и средняя ширина тела на рабочих строках ROW_FROM..ROW_TO.
+## от левого края), начало и период колец и средняя ширина тела на этом периоде.
 ## Считается один раз: по ним полоска растягивается ровно на тело, а S-образный изгиб
 ## спрайта не уводит тело в сторону.
 static func _bounds(cid: String) -> Dictionary:
@@ -387,12 +390,29 @@ static func _bounds(cid: String) -> Dictionary:
 	for y in range(1, h - 1):
 		sl[y] = (lefts[y - 1] + lefts[y] + lefts[y + 1]) / 3.0
 		sr[y] = (rights[y - 1] + rights[y] + rights[y + 1]) / 3.0
+	# период колец: на сколько строк надо отступить, чтобы узор тела (в долях ширины
+	# тела, а не в пикселях) совпал сам с собой. Тогда кусок спрайта можно повторять
+	# встык без зеркала — кольца не меняют наклон.
+	var y0 := int(ROW_FROM * h)
+	var best_p := RING_P_MIN
+	var best_err := INF
+	for p in range(RING_P_MIN, RING_P_MAX + 1):
+		var err := 0.0
+		for y in range(y0, y0 + RING_CHECK):
+			for k in range(RING_SAMPLES):
+				var u := (float(k) + 0.5) / RING_SAMPLES
+				var a := img.get_pixel(int(lerpf(sl[y], sr[y], u)), y)
+				var b := img.get_pixel(int(lerpf(sl[y + p], sr[y + p], u)), y + p)
+				err += absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b)
+		# слабо предпочитаем короткий период (длинный лучше совпадает и выглядит живее)
+		err *= 1.0 + 0.0005 * float(p)
+		if err < best_err:
+			best_err = err
+			best_p = p
 	var total_w := 0.0
-	var from := int(ROW_FROM * h)
-	var to := int(ROW_TO * h)
-	for y in range(from, to):
+	for y in range(y0, y0 + best_p):
 		total_w += sr[y] - sl[y]
-	var res := {"left": sl, "right": sr, "mean": total_w / float(to - from)}
+	var res := {"left": sl, "right": sr, "mean": total_w / float(best_p), "y0": y0, "period": best_p}
 	_cache[key] = res
 	return res
 
