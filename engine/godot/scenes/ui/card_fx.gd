@@ -47,6 +47,19 @@ const DROPS := 9
 const DROP_LIFE := 0.55
 const DROP_SIZE := 3.0
 const DROP_GRAVITY := 280.0
+## На сколько пикселей щупальце должно выйти за край карты, чтобы дальше идти ПОВЕРХ
+## неё (не меньше половины ширины тела).
+const BEHIND_GAP := 14.0
+## Рабочие строки спрайта (доли высоты): выше у него запечён завиток,
+## ниже острый конец. Кончик заостряется кодом на TIP_LEN пикселей.
+const ROW_FROM := 0.2
+const ROW_TO := 0.88
+const TIP_LEN := 80.0
+## Загиб кончика появляется после прихода: на сколько пикселей, на какой длине от
+## головы и за сколько секунд.
+const HOOK := 16.0
+const HOOK_LEN := 70.0
+const HOOK_TIME := 0.5
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
 
@@ -54,9 +67,9 @@ const SKETCH_CARD := Rect2(320, 234, 410, 596)
 ## кончику тонкий), tint — цвет ударной волны, sound — звук (см. Sfx), tentacles —
 ## щупальца:
 ##   path — ломаная с рисунка, от корня (на краю карты) к кончику;
-##   width — толщина (доля спрайта);
+##   width — толщина у корня, пиксели (дальше тоньше);
 ##   delay — задержка; dur — сколько ползёт наружу; ease — как разгоняется
-##   (out / inout / in / back); retract_at, retract_dur — когда и как быстро
+##   (out / inout / in / back / launch); retract_at, retract_dur — когда и как быстро
 ##   втягивается; phase — сдвиг волн (у каждого своя).
 const FX := {
 	"48701": {
@@ -72,20 +85,20 @@ const FX := {
 				Vector2(550, 466), Vector2(600, 479), Vector2(650, 492), Vector2(690, 502),
 				Vector2(730, 520), Vector2(770, 543), Vector2(805, 575), Vector2(835, 605),
 				Vector2(850, 632), Vector2(851, 680), Vector2(850, 720), Vector2(846, 750)],
-				"width": 0.7, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"width": 22.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
 				"retract_dur": 0.45, "phase": 0.0},
 			# короткое справа сверху: наружу и обратно на карту
 			{"path": [Vector2(725, 283), Vector2(750, 292), Vector2(768, 310), Vector2(775, 330),
 				Vector2(768, 352), Vector2(745, 378), Vector2(722, 402), Vector2(700, 420),
 				Vector2(688, 440), Vector2(682, 460)],
-				"width": 0.46, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"width": 14.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
 				"retract_dur": 0.45, "phase": 2.1},
 			# слева посередине: наружу налево, обратно через край и вниз по карте
 			{"path": [Vector2(318, 486), Vector2(298, 505), Vector2(285, 530), Vector2(283, 555),
 				Vector2(292, 580), Vector2(310, 603), Vector2(335, 620), Vector2(360, 635),
 				Vector2(380, 655), Vector2(390, 685), Vector2(392, 712), Vector2(390, 744),
 				Vector2(375, 762), Vector2(358, 782)],
-				"width": 0.55, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"width": 17.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
 				"retract_dur": 0.45, "phase": 4.2},
 			# длинное справа снизу: наружу, потом S-образно вниз-влево до низа экрана
 			{"path": [Vector2(735, 637), Vector2(758, 647), Vector2(775, 665), Vector2(781, 700),
@@ -93,7 +106,7 @@ const FX := {
 				Vector2(690, 825), Vector2(650, 845), Vector2(600, 875), Vector2(560, 895),
 				Vector2(525, 918), Vector2(500, 945), Vector2(485, 975), Vector2(477, 1005),
 				Vector2(475, 1040), Vector2(483, 1066)],
-				"width": 0.65, "delay": 0.0, "dur": 1.15, "ease": "back", "retract_at": 2.2,
+				"width": 20.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
 				"retract_dur": 0.45, "phase": 3.3},
 		],
 	},
@@ -207,14 +220,14 @@ static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 	# с какой длины тело идёт поверх карты: первый заход обратно на карту после
 	# выхода за её край
 	var split := INF
-	var out := false
 	for i in range(SPINE_N + 1):
-		var q := pts[i]
-		var inside := q.x >= 0.0 and q.x <= 1.0 and q.y >= 0.0 and q.y <= 1.0
-		if not out and not inside:
-			out = true
-		elif out and inside:
-			# ровно у края карты: иначе тело «ныряет» под рамку и всплывает на ней
+		# расстояние (пиксели) от центра щупальца до прямоугольника карты
+		var q := pts[i] * size
+		var gap := Vector2(maxf(maxf(-q.x, q.x - size.x), 0.0), maxf(maxf(-q.y, q.y - size.y), 0.0)).length()
+		if gap >= BEHIND_GAP:
+			# позади карты — только корень, пока щупальце не вышло за край на ширину
+			# тела; дальше всё поверх карты (иначе на рамке тело режется: одна сторона
+			# ныряет под рамку, другая остаётся сверху)
 			split = seg * float(i)
 			break
 	var res := {"pts": pts, "seg": seg, "split": split, "total": total}
@@ -257,8 +270,9 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	# запаздывает за головой), потом остаётся лёгкое дыхание; при втягивании щупальце
 	# хлещет. Корень стоит на месте.
 	var since := maxf(t - delay, 0.0)
-	var amp := WHIP * exp(-WHIP_DECAY * since) + IDLE * clampf(out, 0.0, 1.0) \
-		+ WHIP * 1.3 * gone * (1.0 - gone) * 4.0
+	# короткое щупальце только выходит из-под карты — ему не до хлёста
+	var amp := (WHIP * exp(-WHIP_DECAY * since) + IDLE * clampf(out, 0.0, 1.0) \
+		+ WHIP * 1.3 * gone * (1.0 - gone) * 4.0) * smoothstep(0.0, 1.0, head / 140.0)
 	var pts := PackedVector2Array()
 	for i in range(fpts.size()):
 		var p := card.position + fpts[i] * card.size
@@ -276,35 +290,115 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var i0 := int(k)
 		body.append(pts[i0].lerp(pts[i0 + 1], k - float(i0)))
 
+	# загиб кончика: щупальце выходит прямым и закручивается, уже когда дошло
+	var hook := HOOK * smoothstep(0.0, 1.0, (t - delay - float(tent["dur"]) * 0.85) / HOOK_TIME) \
+		* (1.0 - gone) * (1.0 if sin(phase) >= 0.0 else -1.0)
+	if absf(hook) > 0.01:
+		var bent := body.duplicate()
+		for j in range(mini(int(HOOK_LEN / STEP) + 1, count + 1)):
+			var nrm := (body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized()
+			bent[j] = body[j] + nrm * hook * pow(1.0 - float(j) * STEP / HOOK_LEN, 2.0)
+		body = bent
+
 	var tex := _sprite(cid)
 	if tex == null:
 		return
-	# толщина: у корня толстое, к кончику тонкое — это даёт сам спрайт; пока щупальце
-	# ещё короткое, оно и тоньше (иначе выходит толстый обрубок)
+	var bounds := _bounds(cid)
+	var lefts: PackedFloat32Array = bounds["left"]
+	var rights: PackedFloat32Array = bounds["right"]
+	var h := float(tex.get_height())
 	var w := float(tex.get_width())
-	var base_hw := w * 0.5 * float(tent["width"]) * (0.4 + 0.6 * minf(head / total, 1.0))
-	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
+	var row_lo := ROW_FROM * h
+	var row_hi := ROW_TO * h
+	var span := row_hi - row_lo
+	# плотность текстуры постоянна (пиксели квадратные) на любой длине: сколько строк
+	# спрайта приходится на пиксель вдоль щупальца. Тело спрайта (в среднем mean_w
+	# пикселей) должно уместиться в заданную ширину у корня.
+	var root_w := float(tent["width"])
+	var density := float(bounds["mean"]) / root_w
 	# пока щупальце в движении, по телу бегут сокращения (толщина пульсирует)
 	var pulse := 0.12 * (1.0 - clampf(out, 0.0, 1.0)) + 0.04 + 0.1 * gone
+
+	# точки полосок от головы к корню: нормаль, полуширина, строка спрайта и границы
+	# тела в этой строке (чтобы тело всегда заполняло полоску, как бы ни гулял спрайт)
+	var normals := PackedVector2Array()
+	var halves := PackedFloat32Array()
+	var rows := PackedFloat32Array()
+	for j in range(count + 1):
+		normals.append((body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized())
+		var dist := float(j) * STEP
+		var a := maxf(head - dist, 0.0)
+		# толщина: у корня полная, к дальнему концу тоньше, у самой головы — остриё
+		var profile := root_w * 0.5 * (1.0 - 0.55 * clampf(a / total, 0.0, 1.0))
+		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
+		halves.append(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)))
+		# строки идут от корня (низ спрайта) к кончику; дальше конца спрайта — туда-обратно
+		var m := fposmod(a * density, 2.0 * span)
+		rows.append(row_hi - (m if m < span else 2.0 * span - m))
+	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
 		if (head - float(j) * STEP >= split) != front:
 			continue
-		# весь спрайт растянут на всю видимую длину: кончик (v = 0) у головы,
-		# толстое основание (v = 1) у корня
-		var v0 := float(j) * STEP / head
-		var v1 := minf(float(j + 1) * STEP / head, 1.0)
-		var hw := base_hw * (1.0 + pulse * sin(float(j) * STEP * 0.07 - t * 9.0 + phase))
-		var n0 := (body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized() * hw
-		var n1 := (body[mini(j + 2, count)] - body[j]).orthogonal().normalized() * hw
+		var r0 := rows[j]
+		var r1 := rows[j + 1]
+		var i0 := clampi(int(r0), 0, lefts.size() - 1)
+		var i1 := clampi(int(r1), 0, lefts.size() - 1)
+		var n0 := normals[j] * halves[j]
+		var n1 := normals[j + 1] * halves[j + 1]
 		# draw_primitive, а не draw_polygon: тот отказывается рисовать «скрученный» кусок
 		c.draw_primitive(
 			PackedVector2Array([body[j] - n0, body[j] + n0, body[j + 1] + n1, body[j + 1] - n1]),
-			colours, PackedVector2Array([Vector2(0, v0), Vector2(1, v0), Vector2(1, v1), Vector2(0, v1)]), tex)
+			colours, PackedVector2Array([
+				Vector2(lefts[i0] / w, r0 / h), Vector2(rights[i0] / w, r0 / h),
+				Vector2(rights[i1] / w, r1 / h), Vector2(lefts[i1] / w, r1 / h)]), tex)
+
+
+## Границы тела спрайта по строкам (непрозрачные пиксели; левая и правая, в пикселях
+## от левого края) и средняя ширина тела на рабочих строках ROW_FROM..ROW_TO.
+## Считается один раз: по ним полоска растягивается ровно на тело, а S-образный изгиб
+## спрайта не уводит тело в сторону.
+static func _bounds(cid: String) -> Dictionary:
+	var key := "bounds/" + cid
+	if _cache.has(key):
+		return _cache[key]
+	var img := _sprite(cid).get_image()
+	var h := img.get_height()
+	var w := img.get_width()
+	var lefts := PackedFloat32Array()
+	var rights := PackedFloat32Array()
+	for y in range(h):
+		var lo := w
+		var hi := 0
+		for x in range(w):
+			if img.get_pixel(x, y).a > 0.5:
+				lo = mini(lo, x)
+				hi = maxi(hi, x + 1)
+		lefts.append(float(lo) if hi > 0 else 0.0)
+		rights.append(float(hi) if hi > 0 else float(w))
+	# сглаживаем границы по соседним строкам: без дрожи краёв
+	var sl := lefts.duplicate()
+	var sr := rights.duplicate()
+	for y in range(1, h - 1):
+		sl[y] = (lefts[y - 1] + lefts[y] + lefts[y + 1]) / 3.0
+		sr[y] = (rights[y - 1] + rights[y] + rights[y + 1]) / 3.0
+	var total_w := 0.0
+	var from := int(ROW_FROM * h)
+	var to := int(ROW_TO * h)
+	for y in range(from, to):
+		total_w += sr[y] - sl[y]
+	var res := {"left": sl, "right": sr, "mean": total_w / float(to - from)}
+	_cache[key] = res
+	return res
 
 
 ## Как _ease, но «back» не обрезается сверху: перелёт — это значения больше 1.
 static func _ease_unclamped(kind: String, x: float) -> float:
+	if kind == "launch":
+		# плавный разгон из-под карты, на подходе лёгкий перелёт (до ~9%) и посадка
+		x = clampf(x, 0.0, 1.0)
+		var s := x * x * (3.0 - 2.0 * x)
+		return s * (1.0 + 0.09 * sin(clampf((x - 0.55) / 0.45, 0.0, 1.0) * PI))
 	if kind == "back":
 		x = clampf(x, 0.0, 1.0)
 		return 1.0 + 2.70158 * pow(x - 1.0, 3.0) + 1.70158 * pow(x - 1.0, 2.0)
