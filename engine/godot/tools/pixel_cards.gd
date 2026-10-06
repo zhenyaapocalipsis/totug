@@ -17,10 +17,12 @@ const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
 ## Размер один на все карты — иначе они не встанут ровным рядом в руке и маркете.
 const MINI_W := 58
 const MINI_H := 84
-## Шапка — только имя во всю ширину, до трёх строк по 9 букв: так влезают все
-## имена, вплоть до WATER ELEMENTAL MYRMIDON. Цены, аспекта и VP на мелкой
-## карте нет (решение владельца, 2026-10-03), их читают на большой.
+## Шапка — имя, до трёх строк по 9 букв: так влезают все имена, вплоть до
+## WATER ELEMENTAL MYRMIDON. Аспекта и VP на мелкой карте нет (решение
+## владельца, 2026-10-03). Цену игра рисует поверх правого верхнего угла
+## шапки (2026-10-06), поэтому первая строка имени короче на MINI_COST_W.
 const MINI_HEAD := 26
+const MINI_COST_W := 6  # плашка 7 px (x 50..56) — 8 букв имени ещё влезают
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
@@ -561,8 +563,10 @@ func render_mini(c: Dictionary) -> Image:
 	# Шапка цвета рамки карты, одна на все карты (решение владельца, 2026-09-24).
 	rect(1, 1, MINI_W - 2, MINI_HEAD, C_FRAME)
 	# Имя во всю ширину шапки: 9 букв (53 px) от x=2, тень уходит на x=55.
+	# Первая строка короче на MINI_COST_W: в правом верхнем углу шапки игра
+	# рисует цену (CardView._draw_cost).
 	var room := MINI_W - 5
-	var name_lines := wrap_name(clean(sv(c["name"])), room, room, MINI_NAME_LINES, MINI_NAME_LINES)
+	var name_lines := wrap_name(clean(sv(c["name"])), room - MINI_COST_W, room, 1, MINI_NAME_LINES)
 	for i in name_lines.size():
 		text(2, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
 
@@ -593,6 +597,16 @@ func mini_vp_badge(right: int, y: int, v: String, bg: Color, fg: Color) -> int:
 ## длиннее строки рвётся: по дефису, если он есть, иначе просто по месту с
 ## дефисом — иначе WEAPONMASTER и MELEE-MAGTHERE уезжают за край карты.
 func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) -> Array[String]:
+	# Слово, которое не влезает рядом с ценой, лучше начать со следующей строки
+	# (оставив строку у цены пустой), чем рвать: BEHOLDER, а не BEHO-LDER.
+	var skipped := _wrap_name(s, beside, free, blocked, max_lines, true)
+	if skipped.size() <= max_lines:
+		return skipped
+	return _wrap_name(s, beside, free, blocked, max_lines, false)
+
+
+func _wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int,
+		skip_blocked: bool) -> Array[String]:
 	var lines: Array[String] = []
 	var words: Array = Array(s.split(" ", false))
 	var cur := ""
@@ -604,16 +618,26 @@ func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) 
 		if text_width(joined, 1) <= room:
 			cur = joined
 			i += 1
+		elif cur != "" and word.contains("-") and text_width(word, 1) > free \
+				and text_width(cur + " " + word.get_slice("-", 0) + "-", 1) <= room:
+			# Слово с дефисом всё равно рвать — пусть первая часть доберёт строку:
+			# MASTER / OF MELEE- / MAGTHERE, а не четыре строки.
+			var parts := split_word(word, room - text_width(cur + " ", 1) - 1)
+			lines.append(cur + " " + parts[0])
+			cur = ""
+			words[i] = parts[1]
 		elif cur != "":
 			lines.append(cur)
 			cur = ""
+		elif skip_blocked and lines.size() < blocked and text_width(word, 1) <= free:
+			lines.append("")
 		else:
 			var parts := split_word(word, room)
 			lines.append(parts[0])
 			words[i] = parts[1]
 	if cur != "":
 		lines.append(cur)
-	if lines.size() > max_lines:
+	if lines.size() > max_lines and not skip_blocked:
 		print("name does not fit: ", s, " -> ", lines)
 		lines.resize(max_lines)
 		lines[max_lines - 1] = lines[max_lines - 1] + "."

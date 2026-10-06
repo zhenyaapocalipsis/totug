@@ -82,8 +82,9 @@ var hover_preview: bool = true
 var hover_full: bool = false
 ## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
 var highlight: bool = true
-## Цена в углу мелкого лица — у карт рынка (на самом лице цены нет).
-var show_cost := false
+## Цена в углу мелкого лица (на самом лице цены нет) — у всех миниатюр
+## (владелец, 2026-10-06).
+var show_cost := true
 var _pixel: Texture2D = null
 ## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
 var _mini := false
@@ -287,9 +288,9 @@ func _draw() -> void:
 		draw_rect(dest, Color(1, 1, 1, 0.5 * a * a))
 
 
-## Цена в правом нижнем углу арта мелкого лица (владелец, 2026-10-03: на
-## самой мелкой карте цены нет, а на рынке она нужна): золотые цифры на
-## тёмной плашке. Рисуется в пикселях лица, затем масштабом лица.
+## Цена в правом верхнем углу шапки мелкого лица (владелец, 2026-10-06; первая
+## строка имени там короче — tools/pixel_cards.gd, MINI_COST_W): золотые цифры
+## на тёмной плашке. Рисуется в пикселях лица, затем масштабом лица.
 func _draw_cost(dest: Rect2) -> void:
 	var cost: Variant = CardLibrary.card_data(card_id).get("cost")
 	if cost == null:
@@ -299,12 +300,13 @@ func _draw_cost(dest: Rect2) -> void:
 	var font_size := get_theme_font_size("font_size", "Label")
 	var text_w := ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 	var k := dest.size.x / face_size().x
-	var art_end := Vector2(MINI_ART.z, MINI_ART.w)
-	var box := Rect2(art_end - Vector2(text_w + 3.0, COST_BOX_H), Vector2(text_w + 3.0, COST_BOX_H))
+	# Цифра шрифта — 5 px глифа + 1 px отступа справа: плашка text_w + 1 даёт
+	# по пикселю поля с обеих сторон. Правый край — у внутреннего края рамки.
+	var box := Rect2(Vector2(MINI_SIZE.x - 2.0 - text_w, 1.0), Vector2(text_w + 1.0, COST_BOX_H))
 	var shift := _shake_offset() + _arrive_offset()
 	draw_set_transform(dest.position + shift, 0.0, Vector2(k, k))
 	draw_rect(box, PixelTheme.BG)
-	draw_string(font, Vector2(box.position.x + 2.0, box.position.y + COST_BASELINE), text,
+	draw_string(font, Vector2(box.position.x + 1.0, box.position.y + COST_BASELINE), text,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.GOLD)
 	draw_set_transform(shift)
 

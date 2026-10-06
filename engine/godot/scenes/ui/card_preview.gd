@@ -5,36 +5,27 @@ extends Control
 ## сыгранных карт, стопок и сводки ходов. Копия рисуется по центру экрана
 ## поверх всего и мышь не ловит, так что щелчок проходит к настоящей карте.
 ##
-## Два режима (решение владельца, 2026-09-26):
-##   - просто навёл мышь на карту рынка или сводки ходов (CardView.hover_full)
-##     — полная карта в родном размере 176x254, без
-##     анимации: не «увеличение», а полный формат вместо мелкого лица; в руке,
-##     на полосе сыгранных и в стопках наведение без Alt ничего не показывает;
-##   - зажат Alt — любая карта в наибольшем целом масштабе (на 960x540 это
-##     2x), с короткой анимацией роста. Alt можно зажать до наведения и
-##     отпустить после — копия растёт и сжимается следом.
+## Когда показывается (решение владельца, 2026-10-06):
+##   - навёл мышь на карту рынка или сводки ходов (CardView.hover_full);
+##   - зажат Alt — над любой картой. Alt можно зажать до наведения.
+## В обоих случаях это полная карта в родном размере 176x254, без увеличения
+## и без анимации: не «зум», а полный формат вместо мелкого лица.
 ##
 ## Почему копия, а не scale самой карты: карты в маркете и на полосах мелкие,
 ## и растянутый масштабом текст получается мыльным. Копия собирается в нужном
 ## размере и остаётся чёткой.
 
 const GameSettings := preload("res://scenes/game_settings.gd")
-const GROW := 1.15
 const MIN_SIZE := Vector2(176, 254)
 const MARGIN := 4.0
-const ANIM_TIME := 0.09
-## Полная карта 176x254 под Alt — в наибольшем целом масштабе, какой влезает
-## в экран. Целый масштаб обязателен: при дробном пиксели карты разъезжаются.
-const PIXEL_SCALE_MAX := 2.0
 
 static var active: CardPreview = null
 
 var _source: CardView
 var _card: CardView
-## Карта под курсором и состояние Alt; _big — копия показана в режиме Alt.
+## Карта под курсором и состояние Alt.
 var _hovered: CardView
 var _alt := false
-var _big := false
 
 
 func _init() -> void:
@@ -105,30 +96,22 @@ func _set_alt(value: bool) -> void:
 func _sync() -> void:
 	var hovered := _hovered != null and is_instance_valid(_hovered)
 	if hovered and (_alt or _hovered.hover_full):
-		if _source != _hovered or _big != _alt:
-			_show(_hovered, _alt)
+		if _source != _hovered:
+			_show(_hovered)
 	elif _card != null:
 		_hide()
 
 
-## Показать полную версию карты: big — под Alt, крупно и с ростом.
-func _show(card: CardView, big: bool) -> void:
-	# Растём от того, что было на экране: от полной копии (Alt зажали над
-	# уже показанной картой) или от самой мелкой карты.
-	var from_size: Vector2 = _card.size if _card != null and _source == card else card.size
+## Показать полную версию карты в родном размере.
+func _show(card: CardView) -> void:
 	_hide()
 	_source = card
-	_big = big
 	var room := get_viewport_rect().size - Vector2.ONE * MARGIN * 2
 	var s: Vector2
 	if CardView.pixel_texture(card.card_id) != null:
-		var k := 1.0
-		if big:
-			var fit := floorf(minf(room.x / CardView.PIXEL_SIZE.x, room.y / CardView.PIXEL_SIZE.y))
-			k = clampf(fit, 1.0, PIXEL_SCALE_MAX)  # целый масштаб — пиксели ровные
-		s = (CardView.PIXEL_SIZE * k).min(room)
+		s = CardView.PIXEL_SIZE.min(room)
 	else:
-		s = ((card.size * GROW).max(MIN_SIZE) if big else MIN_SIZE).round()
+		s = MIN_SIZE
 	_card = CardView.new(card.card_id, int(s.x), int(s.y))
 	_card.hover_preview = false
 	_card.set_skin(card.skin)
@@ -138,15 +121,10 @@ func _show(card: CardView, big: bool) -> void:
 	_card.size = s
 	_card.pivot_offset = s * 0.5
 	_place()
-	if big:
-		_card.scale = (from_size / s).clamp(Vector2(0.2, 0.2), Vector2.ONE)
-		create_tween().tween_property(_card, "scale", Vector2.ONE, ANIM_TIME) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _hide() -> void:
 	_source = null
-	_big = false
 	if _card != null:
 		_card.queue_free()
 		_card = null

@@ -169,8 +169,8 @@ func _step_alt_down() -> void:
 
 
 func _step_check_alt_preview() -> void:
-	check(CardPreview.active.preview_size().x > CardView.PIXEL_SIZE.x,
-		"с зажатым Alt карта руки показалась крупно (%s)" % CardPreview.active.preview_size())
+	check(CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
+		"с зажатым Alt карта руки показалась полной, без увеличения (%s)" % CardPreview.active.preview_size())
 
 
 func _step_alt_up() -> void:
