@@ -688,6 +688,18 @@ func _enter(version: int, code: String, key: String) -> void:
 		_refuse(peer, "There is no room %s" % code)
 		return
 	if room.started:
+		# Тот же игрок (тот же ключ) пришёл заново, а старое соединение ещё не
+		# отвалилось (Alt+F4): оно мёртвое — отключаем его и отдаём место новому.
+		# Раньше тут был отказ "already started", клиент стирал запись о партии,
+		# и кнопка RETURN TO GAME пропадала насовсем.
+		var stale := room.peer_with_key(key)
+		if stale != 0 and stale != peer and not (stale == 1 and not dedicated):
+			peer_room.erase(stale)
+			room.remove(stale)
+			var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+			if enet != null:
+				enet.disconnect_peer(stale, true)
+			_log("room %s: stale connection of a returning player dropped" % room.code)
 		var pid := room.claim(peer, key)
 		if pid == "":
 			_refuse(peer, "This game has already started")

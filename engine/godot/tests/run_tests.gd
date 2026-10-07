@@ -2683,6 +2683,13 @@ func test_return_troop_on_real_board_ids() -> void:
 
 	check_eq(state.troops.get(victim_slot, ""), "", "войско действительно снято с доски")
 	check_eq(blue.troops_in_barracks, 11, "и вернулось в барак владельца")
+	var ret_evt: Dictionary = resolver.events.back()
+	check_eq(String(ret_evt.get("player_id", "")), "red", "в журнале видно, кто вернул войско")
+	check(EventLogPanel.describe(ret_evt).contains(EventLogPanel.player_name("blue")),
+		"строка журнала называет хозяина войска: %s" % EventLogPanel.describe(ret_evt))
+	var trophy_line := EventLogPanel.describe({"type": "take_trophy", "player_id": "red", "hall": "blue", "color": "white"})
+	check(trophy_line.contains(EventLogPanel.player_name("blue") + "'s trophy hall"),
+		"взятие из зала трофеев называет, чей зал: %s" % trophy_line)
 	var phantom := 0
 	for slot_id: String in state.troops.keys():
 		if not state.graph.slots.has(slot_id):

@@ -1315,7 +1315,7 @@ const RECAP_STATS := {
 	"return_troop": ["return", "owner"],
 	"place_spy": ["spy", ""],
 	"return_spy": ["spy_back", "spy_owner"], "return_own_spy": ["spy_back", "player_id"],
-	"take_trophy": ["trophy", ""],
+	"take_trophy": ["trophy", "hall"],
 	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""],
 }
 

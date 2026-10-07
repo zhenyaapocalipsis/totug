@@ -203,7 +203,10 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 		"supplant":
 			return "%s supplants %s's troop at %s" % [who, player_name(String(e.get("victim", "?"))), slot]
 		"return_troop":
-			return "%s returns a troop from %s to its owner's barracks" % [who, slot]
+			var owner := String(e.get("owner", ""))
+			if owner == "":
+				return "%s returns a troop from %s to its owner's barracks" % [who, slot]
+			return "%s returns %s's troop from %s" % [who, player_name(owner), slot]
 		"return_own_spy":
 			return "%s returns own spy from %s" % [who, site]
 		"removed_to_supply":
@@ -234,7 +237,12 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 		"return_spy":
 			return "%s returns %s's spy from %s" % [who, player_name(String(e.get("spy_owner", "?"))), site]
 		"take_trophy":
-			return "%s takes a %s troop from a trophy hall" % [who, String(e.get("color", "?")).capitalize()]
+			# Чей зал — главное, о чём спрашивали игроки: "у кого взяли войско".
+			var hall := String(e.get("hall", ""))
+			var colour := String(e.get("color", "?")).capitalize()
+			if hall == "":
+				return "%s takes a %s troop from a trophy hall" % [who, colour]
+			return "%s takes a %s troop from %s's trophy hall" % [who, colour, player_name(hall)]
 		"choose_starting_site":
 			return "%s starts at %s" % [who, site]
 		"turn_income":

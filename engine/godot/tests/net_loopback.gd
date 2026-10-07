@@ -165,6 +165,30 @@ func _process(delta: float) -> bool:
 				check(rejoined.get(players[0], "") == _reconnect_seat,
 					"[server] первый игрок узнал, что второй вернулся")
 				check(server.rooms.size() == 1, "[server] после переподключения комната всё ещё одна")
+				# Alt+F4: старое соединение не попрощалось, сервер ещё считает его
+				# живым, а игрок уже входит заново тем же ключом.
+				var b3 := _session()
+				_track(b3)
+				b3.rating_key = _reconnect_key
+				var cfg := ConfigFile.new()
+				cfg.set_value("game", "address", "127.0.0.1")
+				cfg.set_value("game", "port", SERVER_PORT)
+				cfg.set_value("game", "code", _reconnect_code)
+				cfg.set_value("game", "by_code", true)
+				cfg.save(NetSession.resume_path)
+				b3.resume_saved()
+				players[1] = b3
+				_step = "stale_wait"
+		"stale_wait":
+			if not views[players[1]].is_empty():
+				check(players[1].seat == _reconnect_seat,
+					"[server] вход заново при живом старом соединении (Alt+F4) вернул тот же цвет")
+				check(not NetSession.saved_game().is_empty(),
+					"[server] после такого входа RETURN TO GAME не пропадает")
+				var room: GameRoom = server.rooms.get(_reconnect_code)
+				check(room != null and room.seats.values().count(_reconnect_seat) == 1,
+					"[server] старое соединение снято с места, цвет занят один раз")
+				NetSession.forget_game()
 				_start_server_restart()
 		"restarted_wait":
 			if not views[players[0]].is_empty() and not views[players[1]].is_empty():

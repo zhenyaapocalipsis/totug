@@ -81,9 +81,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				remaining -= 1
 				resolver.push(CallbackEffect.new(func(s, pid, r): me._continue(s, pid, r)), player_id)
 				resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
-					func(s, _pid, r): ReturnTroopOrSpy._resolve_choice(s, String(choice), r)), "the return"), player_id)
+					func(s, pid, r): ReturnTroopOrSpy._resolve_choice(s, String(choice), r, pid)), "the return"), player_id)
 				return
-			_resolve_choice(state, String(choice), resolver)
+			_resolve_choice(state, String(choice), resolver, player_id)
 			remaining -= 1
 		else:
 			remaining = 0
@@ -101,7 +101,9 @@ static func _owner_of(state: GameState, choice: String) -> String:
 	return parts[2] if parts.size() > 2 else ""
 
 
-static func _resolve_choice(state: GameState, choice: String, resolver: EffectResolver) -> void:
+## who — кто возвращает: без него журнал и сводка хода не знали, чьё это
+## действие ("? returns a troop").
+static func _resolve_choice(state: GameState, choice: String, resolver: EffectResolver, who: String) -> void:
 	var parts: PackedStringArray = choice.split(SEP)
 	if parts.size() < 2:
 		return
@@ -111,7 +113,7 @@ static func _resolve_choice(state: GameState, choice: String, resolver: EffectRe
 		state.troops[slot_id] = ""
 		if state.players.has(owner):
 			state.players[owner].troops_in_barracks += 1
-		resolver.log_event("return_troop", {"slot_id": slot_id, "owner": owner})
+		resolver.log_event("return_troop", {"player_id": who, "slot_id": slot_id, "owner": owner})
 	else:
 		var site_id: String = parts[1]
 		var owner: String = parts[2]
@@ -122,7 +124,7 @@ static func _resolve_choice(state: GameState, choice: String, resolver: EffectRe
 			state.spies[site_id] = site_spies
 		if state.players.has(owner):
 			state.players[owner].spies_in_barracks += 1
-		resolver.log_event("return_spy", {"site_id": site_id, "owner": owner})
+		resolver.log_event("return_spy", {"player_id": who, "site_id": site_id, "owner": owner, "spy_owner": owner})
 
 
 func _continue(state: GameState, player_id: String, resolver: EffectResolver) -> void:
