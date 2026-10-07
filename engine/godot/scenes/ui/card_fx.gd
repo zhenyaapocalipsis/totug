@@ -37,6 +37,8 @@ const MOTE_RISE := 40.0
 ## Обводка тела (пиксели) и тень на карте (смещение).
 const OUTLINE := 1.5
 const SHADOW := Vector2(3, 4)
+## Сколько пикселей поверх-слоя у стыка с задним слоем остаются без обводки и тени.
+const SEAM_SKIP := 9.0
 ## Шаг полосок тела.
 const STEP := 3.0
 ## Сколько отсчётов у кривой щупальца, сколько вставок на звено ломаной, сколько
@@ -463,6 +465,10 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var shift := SHADOW if pass_i == 0 else Vector2.ZERO
 		for j in range(count):
 			if (head - float(j) * STEP >= split) != front:
+				continue
+			# у стыка слоёв (поверх карты начинается за краем) обводку и тень не рисуем:
+			# иначе они ложатся серой полосой на конец заднего куска тела
+			if front and head - float(j) * STEP < split + SEAM_SKIP:
 				continue
 			var m0 := normals[j] * (halves[j] + OUTLINE)
 			var m1 := normals[j + 1] * (halves[j + 1] + OUTLINE)
