@@ -20,7 +20,23 @@ extends RefCounted
 
 const SPRITE_PATH := "res://assets/card_fx/%s/%s.png"
 ## Сколько секунд висит карта с эффектом (обычная — CardShowcase.HOLD_TIME).
-const HOLD_TIME := 2.8
+const HOLD_TIME := 3.1
+## Замах до выхода щупалец (карта дрожит, вокруг разгорается свечение, у корней искры),
+## остановка времени на ударе и вспышка.
+const ANTIC := 0.3
+const ANTIC_SHAKE := 1.5
+const HIT_STOP := 0.07
+const FLASH_T := 0.16
+const FLASH_ALPHA := 0.85
+## Свечение вокруг карты: слоёв и прозрачность слоя; пылинки после удара.
+const GLOW_LAYERS := 6
+const GLOW_ALPHA := 0.1
+const MOTES := 30
+const MOTE_LIFE := 1.0
+const MOTE_RISE := 40.0
+## Обводка тела (пиксели) и тень на карте (смещение).
+const OUTLINE := 1.5
+const SHADOW := Vector2(3, 4)
 ## Шаг полосок тела.
 const STEP := 3.0
 ## Сколько отсчётов у кривой щупальца, сколько вставок на звено ломаной, сколько
@@ -146,8 +162,30 @@ static func _sprite(cid: String) -> Texture2D:
 	return _cache[key]
 
 
-## Позади карты: ударные волны и те части щупалец, что под картой.
-static func draw_behind(c: CanvasItem, cid: String, card: Rect2, t: float) -> void:
+## Время эффекта: raw — секунды с начала выдержки. Первые ANTIC секунд — замах (щупальца
+## ещё не вышли), потом движение; в момент удара время замирает на HIT_STOP секунд.
+static func _warp(raw: float) -> float:
+	var t := raw - ANTIC
+	if t > IMPACT_T:
+		t = IMPACT_T + maxf(0.0, t - IMPACT_T - HIT_STOP)
+	return t
+
+
+## Сила свечения вокруг карты: нарастает в замахе, вспыхивает на ударе и гаснет.
+static func _glow_level(raw: float) -> float:
+	if raw < ANTIC:
+		var k := raw / ANTIC
+		return 0.45 * k * k
+	var t := _warp(raw)
+	if t < IMPACT_T:
+		return 0.45 + 0.2 * t / IMPACT_T
+	return 0.35 + 0.65 * exp(-(t - IMPACT_T) * 4.0)
+
+
+## Позади карты: свечение, ударные волны и те части щупалец, что под картой.
+static func draw_behind(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
+	var t := _warp(raw)
+	_draw_glow(c, cid, card, raw)
 	_draw_ring(c, cid, card, t, 0.0, 1.0, RING_GROW)
 	_draw_ring(c, cid, card, t, IMPACT_T, 0.7, RING_GROW * 0.6)
 	var i := 0
@@ -156,21 +194,85 @@ static func draw_behind(c: CanvasItem, cid: String, card: Rect2, t: float) -> vo
 		i += 1
 
 
-## Поверх карты: части щупалец, что лежат на ней, и брызги слизи.
-static func draw_front(c: CanvasItem, cid: String, card: Rect2, t: float) -> void:
+## Поверх карты: части щупалец, что лежат на ней, брызги слизи, пылинки, светящиеся
+## корни в замахе и белая вспышка удара.
+static func draw_front(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
+	var t := _warp(raw)
 	var i := 0
 	for tent: Dictionary in FX[cid]["tentacles"]:
 		_draw_tentacle(c, cid, i, tent, card, t, true)
 		_draw_drops(c, cid, i, card, t)
+		_draw_root_glow(c, cid, i, card, raw)
 		i += 1
+	if debug_isolate:
+		return
+	_draw_motes(c, cid, card, t)
+	var kf := (raw - ANTIC - IMPACT_T) / FLASH_T
+	if kf >= 0.0 and kf < 1.0:
+		c.draw_rect(card, Color(1, 1, 1, FLASH_ALPHA * (1.0 - kf)))
 
 
-## На сколько пикселей вздрагивает карта: удар в момент, когда все щупальца дошли.
-static func card_shift(cid: String, t: float) -> Vector2:
-	var dt := t - IMPACT_T
-	if not FX.has(cid) or dt <= 0.0:
+## На сколько пикселей вздрагивает карта: в замахе дрожит всё сильнее, на ударе — толчок
+## вниз и затухающая тряска.
+static func card_shift(cid: String, raw: float) -> Vector2:
+	if not FX.has(cid):
+		return Vector2.ZERO
+	if raw < ANTIC:
+		var k := raw / ANTIC
+		return (Vector2(sin(raw * 90.0), cos(raw * 77.0)) * ANTIC_SHAKE * k).round()
+	var dt := _warp(raw) - IMPACT_T
+	if dt < 0.0:
 		return Vector2.ZERO
 	return (Vector2(sin(dt * 55.0), cos(dt * 47.0)) * IMPACT_SHAKE * exp(-dt * IMPACT_DECAY)).round()
+
+
+## Ступенчатое свечение вокруг карты (слои-рамки, как «пиксельное» гало).
+static func _draw_glow(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
+	if debug_isolate:
+		return
+	var g := _glow_level(raw)
+	var colour: Color = FX[cid]["tint"]
+	for i in range(GLOW_LAYERS):
+		colour.a = g * GLOW_ALPHA * (1.0 - float(i) / GLOW_LAYERS)
+		c.draw_rect(card.grow(6.0 + 9.0 * float(i)), colour)
+
+
+## Светящаяся точка у корня каждого щупальца: в замахе разгорается, на старте гаснет.
+static func _draw_root_glow(c: CanvasItem, cid: String, index: int, card: Rect2, raw: float) -> void:
+	if debug_isolate or raw > ANTIC + 0.25:
+		return
+	var sp := _spine_of(cid, index, card.size)
+	var fpts: PackedVector2Array = sp["pts"]
+	var p := (card.position + fpts[4] * card.size).round()
+	var k := clampf(raw / ANTIC, 0.0, 1.0)
+	var fade := 1.0 - clampf((raw - ANTIC) / 0.25, 0.0, 1.0)
+	var colour: Color = (FX[cid]["tint"] as Color).lerp(Color.WHITE, 0.5)
+	for s in [10.0, 6.0, 3.0]:
+		colour.a = k * fade * (0.9 if s < 5.0 else 0.35)
+		c.draw_rect(Rect2(p - Vector2(s, s) * 0.5, Vector2(s, s)), colour)
+
+
+## Пылинки: после удара разлетаются от краёв карты, тянутся вверх и гаснут.
+static func _draw_motes(c: CanvasItem, cid: String, card: Rect2, t: float) -> void:
+	var tau := t - IMPACT_T
+	if tau <= 0.0 or tau >= MOTE_LIFE:
+		return
+	var colour: Color = (FX[cid]["tint"] as Color).lerp(Color.WHITE, 0.55)
+	var rng := RandomNumberGenerator.new()
+	var centre := card.get_center()
+	var half := card.size * 0.5
+	for k in range(MOTES):
+		rng.seed = hash("%s/mote/%d" % [cid, k])
+		var dir := Vector2.from_angle(rng.randf_range(0.0, TAU))
+		var reach := minf(half.x / maxf(absf(dir.x), 0.001), half.y / maxf(absf(dir.y), 0.001))
+		var start := centre + dir * reach
+		var speed := rng.randf_range(25.0, 110.0)
+		var pos := start + dir * speed * tau + Vector2(0, -MOTE_RISE * tau * tau)
+		var life := 1.0 - tau / MOTE_LIFE
+		# мерцание: часть пылинок гаснет раньше и вспыхивает
+		colour.a = life * (0.55 + 0.45 * sin(tau * 30.0 + float(k)))
+		var side := 2.0 if rng.randf() > 0.3 else 3.0
+		c.draw_rect(Rect2(pos.round(), Vector2(side, side)), colour)
 
 
 static func _draw_ring(c: CanvasItem, cid: String, card: Rect2, t: float, at: float, alpha: float,
@@ -353,6 +455,19 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var flow := RING_FLOW * sin(dist * 0.045 - t * 4.5 + phase)
 		rows.append(dist * density + flow * density)
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
+	# тень на карте и тёмная обводка: щупальце отделяется от синего арта
+	var no_uv := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+	for pass_i in range(2):
+		var shade := Color(0.02, 0.03, 0.08, 0.4 if pass_i == 0 else 1.0)
+		var shades := PackedColorArray([shade, shade, shade, shade])
+		var shift := SHADOW if pass_i == 0 else Vector2.ZERO
+		for j in range(count):
+			if (head - float(j) * STEP >= split) != front:
+				continue
+			var m0 := normals[j] * (halves[j] + OUTLINE)
+			var m1 := normals[j + 1] * (halves[j + 1] + OUTLINE)
+			c.draw_primitive(PackedVector2Array([body[j] - m0 + shift, body[j] + m0 + shift,
+				body[j + 1] + m1 + shift, body[j + 1] - m1 + shift]), shades, no_uv)
 	for j in range(count):
 		# длина от корня до этой полоски: дальше split — поверх карты
 		if (head - float(j) * STEP >= split) != front:
