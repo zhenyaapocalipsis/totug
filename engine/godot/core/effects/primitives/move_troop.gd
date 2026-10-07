@@ -55,15 +55,32 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			return
 		else:
 			if value != null and value != "":
-				var owner: String = state.troops.get(_picked_source, "")
-				state.troops[_picked_source] = ""
-				state.troops[value] = owner
-				resolver.log_event("move_troop", {"player_id": player_id, "from": _picked_source, "to": value, "owner": owner})
-			remaining -= 1
-			_stage = "pick_source"
-			_continue(state, player_id, resolver)
+				var from: String = _picked_source
+				var owner: String = state.troops.get(from, "")
+				if not own and ShieldGuard.can_react(state, player_id, owner):
+					# Сначала вопрос жертве (Shield Guardian), потом продолжение.
+					var me := self
+					resolver.push(CallbackEffect.new(func(s, pid, r): me._after_move(s, pid, r)), player_id)
+					resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
+						func(s, pid, r): MoveTroop._do_move(s, pid, r, from, String(value))), "the move"), player_id)
+					return
+				_do_move(state, player_id, resolver, from, String(value))
+			_after_move(state, player_id, resolver)
 			return
 	_continue(state, player_id, resolver)
+
+
+func _after_move(state: GameState, player_id: String, resolver: EffectResolver) -> void:
+	remaining -= 1
+	_stage = "pick_source"
+	_continue(state, player_id, resolver)
+
+
+static func _do_move(state: GameState, player_id: String, resolver: EffectResolver, from: String, to: String) -> void:
+	var owner: String = state.troops.get(from, "")
+	state.troops[from] = ""
+	state.troops[to] = owner
+	resolver.log_event("move_troop", {"player_id": player_id, "from": from, "to": to, "owner": owner})
 
 
 func _continue(state: GameState, player_id: String, resolver: EffectResolver) -> void:

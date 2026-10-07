@@ -74,6 +74,15 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		_answered = false
 		_answer = null
 		if choice != null and choice != "":
+			var owner := _owner_of(state, String(choice))
+			if ShieldGuard.can_react(state, player_id, owner):
+				# Сначала вопрос жертве (Shield Guardian), потом продолжение.
+				var me := self
+				remaining -= 1
+				resolver.push(CallbackEffect.new(func(s, pid, r): me._continue(s, pid, r)), player_id)
+				resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
+					func(s, _pid, r): ReturnTroopOrSpy._resolve_choice(s, String(choice), r)), "the return"), player_id)
+				return
 			_resolve_choice(state, String(choice), resolver)
 			remaining -= 1
 		else:
@@ -83,7 +92,16 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	_continue(state, player_id, resolver)
 
 
-func _resolve_choice(state: GameState, choice: String, resolver: EffectResolver) -> void:
+static func _owner_of(state: GameState, choice: String) -> String:
+	var parts: PackedStringArray = choice.split(SEP)
+	if parts.size() < 2:
+		return ""
+	if parts[0] == "troop":
+		return String(state.troops.get(parts[1], ""))
+	return parts[2] if parts.size() > 2 else ""
+
+
+static func _resolve_choice(state: GameState, choice: String, resolver: EffectResolver) -> void:
 	var parts: PackedStringArray = choice.split(SEP)
 	if parts.size() < 2:
 		return

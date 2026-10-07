@@ -14,7 +14,7 @@ extends RefCounted
 ## Упрощения (не в пользу игрока, партию не блокируют):
 ##   Deva — "spend 2 Influence: draw" предлагается сразу при розыгрыше
 ##     (сколько угодно раз подряд), а не в любой момент хода;
-##   Shield Guardian — пока только +5 Power (реакция в чужой ход — следующий этап).
+##   (Shield Guardian: +5 Power при розыгрыше; реакция из руки — ShieldGuard).
 
 const HOUSE_GUARD := "48340"
 const PRIESTESS := "48343"
@@ -153,7 +153,7 @@ static func build(card_id: String) -> CardEffect:
 				SequenceEffect.new([PutDeckIntoDiscard.new(), PromoteCard.new("discard")]),
 				GainPower.new(3),
 			], ["Put your deck into your discard pile, then promote a card from it", "+3 Power"])
-		"49021":  # Shield Guardian (Galio) — реакция в чужой ход будет отдельным этапом
+		"49021":  # Shield Guardian (Galio) — реакция из руки: core/effects/primitives/shield_guard.gd
 			return GainPower.new(5)
 		"49022":  # Gold Dragon (Shyvana)
 			var pick := func(): return ChooseEffect.new([GainPower.new(2), MoveTroop.new(1, false, true)],

@@ -59,11 +59,23 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		var slot_id = answer()
 		if slot_id == null or slot_id == "":
 			return
+		var owner: String = state.troops.get(slot_id, "")
+		if ShieldGuard.can_react(state, player_id, owner):
+			# Сначала вопрос жертве (Shield Guardian), потом продолжение.
+			var me := self
+			resolver.push(CallbackEffect.new(func(s, pid, r): me._after_hit(s, pid, r, slot_id)), player_id)
+			resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
+				func(s, pid, r): me._kill(s, pid, slot_id, r)), "the assassination"), player_id)
+			return
 		_kill(state, player_id, slot_id, resolver)
-		if single_site and locked_site == "":
-			locked_site = state.graph.site_of_slot(slot_id)
-		_continue(state, player_id, resolver)
+		_after_hit(state, player_id, resolver, slot_id)
 		return
+	_continue(state, player_id, resolver)
+
+
+func _after_hit(state: GameState, player_id: String, resolver: EffectResolver, slot_id: String) -> void:
+	if single_site and locked_site == "":
+		locked_site = state.graph.site_of_slot(slot_id)
 	_continue(state, player_id, resolver)
 
 

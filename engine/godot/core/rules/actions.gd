@@ -20,18 +20,27 @@ const WHITE := "white"
 ## (чужой игрок ИЛИ белое) в зоне Присутствия. Убитое войско уходит в
 ## трофи-холл ассасина (стр. 14: трофи-холл считает ЛЮБОЕ войско).
 static func assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
-	var p: PlayerState = state.players[player_id]
-	var kill_cost := assassinate_cost(state)
-	if p.power < kill_cost:
+	if not can_assassinate(state, player_id, slot_id):
 		return false
-	var legal: PackedStringArray = state.presence.assassinatable_slots(player_id, state.troops, state.spies)
-	if not legal.has(slot_id):
-		return false
-	p.power -= kill_cost
-	var victim: String = state.troops.get(slot_id, "")
-	state.troops[slot_id] = ""
-	p.add_trophy(victim)
+	state.players[player_id].power -= assassinate_cost(state)
+	kill_at(state, player_id, slot_id)
 	return true
+
+
+static func can_assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
+	var p: PlayerState = state.players[player_id]
+	if p.power < assassinate_cost(state):
+		return false
+	return state.presence.assassinatable_slots(player_id, state.troops, state.spies).has(slot_id)
+
+
+## Само убийство без платы и проверок (после реакции Shield Guardian).
+static func kill_at(state: GameState, player_id: String, slot_id: String) -> void:
+	var victim: String = state.troops.get(slot_id, "")
+	if victim == "":
+		return
+	state.troops[slot_id] = ""
+	state.players[player_id].add_trophy(victim)
 
 
 ## Deploy a troop (рулбук стр. 12): 1 Power. Если в бараке войск больше нет,
@@ -134,24 +143,34 @@ static func recruit_from_supply(state: GameState, player_id: String, card_id: St
 ## зоне Присутствия (белых шпионов не бывает). Шпион возвращается в барак
 ## владельца — не в трофи-холл, это не войско.
 static func return_enemy_spy(state: GameState, player_id: String, site_id: String, spy_owner: String) -> bool:
+	if not can_return_enemy_spy(state, player_id, site_id, spy_owner):
+		return false
+	state.players[player_id].power -= return_spy_cost(state)
+	remove_spy(state, site_id, spy_owner)
+	return true
+
+
+static func can_return_enemy_spy(state: GameState, player_id: String, site_id: String, spy_owner: String) -> bool:
 	var p: PlayerState = state.players[player_id]
-	var spy_cost := return_spy_cost(state)
-	if p.power < spy_cost:
+	if p.power < return_spy_cost(state):
 		return false
 	if spy_owner == player_id or spy_owner == WHITE:
 		return false
 	if not state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies):
 		return false
+	return (state.spies.get(site_id, []) as Array).has(spy_owner)
+
+
+## Снять шпиона в барак владельца без платы и проверок.
+static func remove_spy(state: GameState, site_id: String, spy_owner: String) -> void:
 	var site_spies: Array = state.spies.get(site_id, [])
 	var idx: int = site_spies.find(spy_owner)
 	if idx == -1:
-		return false
-	p.power -= spy_cost
+		return
 	site_spies.remove_at(idx)
 	state.spies[site_id] = site_spies
 	if state.players.has(spy_owner):
 		state.players[spy_owner].spies_in_barracks += 1
-	return true
 
 
 ## Цены базовых действий с учётом скидок хода (New Era, state.turn_discounts).

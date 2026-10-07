@@ -140,6 +140,18 @@ func _apply(intent: Intent) -> int:
 
 		Intent.Type.ACTION_ASSASSINATE:
 			var victim := String(state.troops.get(intent.slot_id, ""))
+			if ShieldGuard.can_react(state, intent.player_id, victim):
+				# Жертва может ответить Shield Guardian: Power тратится сразу,
+				# убийство — только если она откажется.
+				if not Actions.can_assassinate(state, intent.player_id, intent.slot_id):
+					return Error.INVALID_ACTION
+				state.players[intent.player_id].power -= Actions.assassinate_cost(state)
+				var slot := intent.slot_id
+				var hit := func(s, pid, r):
+					Actions.kill_at(s, pid, slot)
+					r.log_event("assassinate", {"player_id": pid, "slot_id": slot, "victim": victim})
+				resolver.apply(ShieldGuard.new(victim, CallbackEffect.new(hit), "the assassination"), intent.player_id, state)
+				return Error.OK
 			if not Actions.assassinate(state, intent.player_id, intent.slot_id):
 				return Error.INVALID_ACTION
 			resolver.log_event("assassinate", {"player_id": intent.player_id, "slot_id": intent.slot_id, "victim": victim})
@@ -176,6 +188,17 @@ func _apply(intent: Intent) -> int:
 			return Error.OK
 
 		Intent.Type.ACTION_RETURN_SPY:
+			if ShieldGuard.can_react(state, intent.player_id, intent.spy_owner):
+				if not Actions.can_return_enemy_spy(state, intent.player_id, intent.site_id, intent.spy_owner):
+					return Error.INVALID_ACTION
+				state.players[intent.player_id].power -= Actions.return_spy_cost(state)
+				var site := intent.site_id
+				var spy_owner := intent.spy_owner
+				var hit := func(s, pid, r):
+					Actions.remove_spy(s, site, spy_owner)
+					r.log_event("return_spy", {"player_id": pid, "site_id": site, "spy_owner": spy_owner})
+				resolver.apply(ShieldGuard.new(spy_owner, CallbackEffect.new(hit), "the spy's return"), intent.player_id, state)
+				return Error.OK
 			if not Actions.return_enemy_spy(state, intent.player_id, intent.site_id, intent.spy_owner):
 				return Error.INVALID_ACTION
 			resolver.log_event("return_spy", {"player_id": intent.player_id, "site_id": intent.site_id, "spy_owner": intent.spy_owner})

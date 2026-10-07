@@ -54,28 +54,45 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		_answered = false
 		_answer = null
 		if slot_id != null and slot_id != "":
-			var p: PlayerState = state.players[player_id]
-			var victim: String = state.troops.get(slot_id, "")
-			p.add_trophy(victim)
-			if p.troops_in_barracks > 0:
-				state.troops[slot_id] = player_id
-				p.troops_in_barracks -= 1
-				if p.troops_in_barracks == 0:
-					GameEnd.trigger(state, "last_troop")
-			else:
-				state.troops[slot_id] = ""
-			resolver.log_event("supplant", {"player_id": player_id, "slot_id": slot_id, "victim": victim})
-			if lock_after_first:
-				preset_site = state.graph.site_of_slot(slot_id)
-				lock_after_first = false
-			if _post_effect_factory.is_valid():
-				resolver.push(_post_effect_factory.call(slot_id), player_id)
-			remaining -= 1
+			var owner: String = state.troops.get(slot_id, "")
+			if ShieldGuard.can_react(state, player_id, owner):
+				# Сначала вопрос жертве (Shield Guardian), потом продолжение.
+				var me := self
+				resolver.push(CallbackEffect.new(func(s, pid, r): me._after_hit(s, pid, r)), player_id)
+				resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
+					func(s, pid, r): me._supplant(s, pid, r, slot_id)), "the supplant"), player_id)
+				return
+			_supplant(state, player_id, resolver, slot_id)
+			_after_hit(state, player_id, resolver)
 		else:
 			remaining = 0
-		_continue(state, player_id, resolver)
+			_continue(state, player_id, resolver)
 		return
 	_continue(state, player_id, resolver)
+
+
+func _after_hit(state: GameState, player_id: String, resolver: EffectResolver) -> void:
+	remaining -= 1
+	_continue(state, player_id, resolver)
+
+
+func _supplant(state: GameState, player_id: String, resolver: EffectResolver, slot_id: String) -> void:
+	var p: PlayerState = state.players[player_id]
+	var victim: String = state.troops.get(slot_id, "")
+	p.add_trophy(victim)
+	if p.troops_in_barracks > 0:
+		state.troops[slot_id] = player_id
+		p.troops_in_barracks -= 1
+		if p.troops_in_barracks == 0:
+			GameEnd.trigger(state, "last_troop")
+	else:
+		state.troops[slot_id] = ""
+	resolver.log_event("supplant", {"player_id": player_id, "slot_id": slot_id, "victim": victim})
+	if lock_after_first:
+		preset_site = state.graph.site_of_slot(slot_id)
+		lock_after_first = false
+	if _post_effect_factory.is_valid():
+		resolver.push(_post_effect_factory.call(slot_id), player_id)
 
 
 func _continue(state: GameState, player_id: String, resolver: EffectResolver) -> void:

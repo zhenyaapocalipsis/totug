@@ -58,6 +58,7 @@ func _initialize() -> void:
 	test_devour_and_promote_effects()
 	test_card_library_smoke_all_cards()
 	test_celestial_order()
+	test_shield_guardian_reaction()
 
 	# этап 6: сетевой слой
 	test_intent_factories()
@@ -4109,3 +4110,64 @@ func test_celestial_order() -> void:
 			_auto_resolve(st, res, prefer_last)
 			if res.is_waiting():
 				check(false, "%s завис (prefer_last=%s)" % [cid, prefer_last])
+
+
+func test_shield_guardian_reaction() -> void:
+	section("New Era: реакция Shield Guardian в чужой ход")
+	var state := _build_rich_state(31)
+	var server := GameServer.new(state)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	# blue-войско там, где у red есть Присутствие
+	var target := ""
+	for slot_id in state.presence.deployable_slots("red", state.troops, state.spies):
+		if state.troops.get(slot_id, "") == "":
+			target = slot_id
+			break
+	check(target != "", "нашли слот рядом с red")
+	state.troops[target] = "blue"
+	blue.deck.hand = ["49021", "48342"] as Array[String]
+	var blue_troops_before := blue.troops_in_barracks
+	red.power = 10
+
+	# базовое Assassinate: вопрос уходит blue, Power red уже потрачен
+	var res := server.apply_intent(Intent.assassinate("red", target))
+	check_eq(res["error"], GameServer.Error.OK, "Assassinate принят")
+	check(server.resolver.is_waiting() and server.resolver.pending.player_id == "blue", "решает blue (владелец войска)")
+	check_eq(red.power, 7, "red заплатил 3 Power")
+	res = server.apply_intent(Intent.make_decision("blue", true))
+	check_eq(res["error"], GameServer.Error.OK, "blue сбрасывает Shield Guardian")
+	check_eq(state.troops[target], "blue", "войско blue выжило")
+	check(not blue.deck.hand.has("49021") and blue.deck.discard_pile.has("49021"), "Shield Guardian ушёл из руки в сброс")
+	# дальше blue сам ставит 4 войска
+	var steps := 0
+	while server.resolver.is_waiting() and steps < 10:
+		steps += 1
+		var pd: PendingDecision = server.resolver.pending
+		check_eq(pd.player_id, "blue", "войска ставит blue")
+		server.apply_intent(Intent.make_decision("blue", pd.legal_options[0]))
+	check_eq(blue.troops_in_barracks, blue_troops_before - 4, "blue поставил 4 войска")
+	check_eq(blue.deck.hand.size(), 2, "и взял карту (в руке снова 2)")
+
+	# без Shield Guardian в руке удар проходит без вопроса
+	res = server.apply_intent(Intent.assassinate("red", target))
+	check(not server.resolver.is_waiting(), "без Shield Guardian вопроса нет")
+	check(state.troops[target] != "blue", "войско убито")
+
+	# карта: отказ от реакции — удар проходит
+	var s2 := _build_rich_state(32)
+	var target2 := ""
+	for slot_id in s2.presence.deployable_slots("red", s2.troops, s2.spies):
+		if s2.troops.get(slot_id, "") == "":
+			target2 = slot_id
+			break
+	s2.troops[target2] = "blue"
+	(s2.players["blue"] as PlayerState).deck.hand = ["49021"] as Array[String]
+	var r := EffectResolver.new()
+	r.apply(AssassinateTroop.new(1), "red", s2)
+	TurnEngine.resume_card(s2, target2, r)
+	check(r.is_waiting() and r.pending.player_id == "blue", "эффект карты тоже спрашивает blue")
+	TurnEngine.resume_card(s2, false, r)
+	check(not r.is_waiting(), "после отказа эффект закончился")
+	check_eq(s2.troops[target2], "", "войско blue убито")
+	check((s2.players["blue"] as PlayerState).deck.hand.has("49021"), "Shield Guardian остался в руке")
