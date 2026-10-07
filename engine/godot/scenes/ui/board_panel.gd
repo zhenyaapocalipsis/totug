@@ -1721,15 +1721,25 @@ func _click_at(screen_point: Vector2) -> void:
 	# Ромбик шпиона — самая мелкая цель, проверяем его первым, иначе клик
 	# уходил в ближайший слот или во всю локацию и нельзя было выбрать,
 	# ЧЕЙ шпион нужен.
-	var spy_reach: float = maxf(spy_half() * 1.3, 5.0)
+	# Зона клика — вся золотая рамка цели (_ring_spy: ромбик + 2 px) и чуть
+	# больше: раньше она была уже рамки, и клик по самой рамке уходил в
+	# соседний слот. Соседние шпионы ближе друг к другу — берём ближайшего.
+	var spy_reach: float = maxf(spy_half() + 3.0, 6.0)
 	var spies: Dictionary = _view.get("spies", {})
+	var spy_site := ""
+	var spy_owner := ""
+	var spy_dist := spy_reach
 	for site_id: String in spies.keys():
 		var owners: Array = spies[site_id]
 		for i in range(owners.size()):
 			var spot: Variant = _spy_spot(site_id, i, owners.size())
-			if spot != null and screen_point.distance_to(spot) <= spy_reach:
-				spy_clicked.emit(site_id, String(owners[i]))
-				return
+			if spot != null and screen_point.distance_to(spot) <= spy_dist:
+				spy_dist = screen_point.distance_to(spot)
+				spy_site = site_id
+				spy_owner = String(owners[i])
+	if spy_site != "":
+		spy_clicked.emit(spy_site, spy_owner)
+		return
 
 	var slots := _slots()
 	var reach: float = maxf(_slot_radius_world() * _zoom * 1.4, 10.0)

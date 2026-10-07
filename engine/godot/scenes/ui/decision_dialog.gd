@@ -238,6 +238,12 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
 	_set_cards_look(cards_mode or on_board or waiting, decider)
+	# Полоса вопроса над доской прозрачна, но клики ловила сама: шпион или
+	# войско у верхнего края доски оказывались под ней — рамка цели видна, а
+	# клик пропадал, и игрок, целясь ниже, попадал в локацию ("not a valid
+	# target"; Xith Idrana на 4 игрока). Теперь сквозь неё кликается доска,
+	# кнопка Skip ловит клики сама.
+	_pass_clicks(on_board or waiting)
 	_set_dim(not waiting and not on_board and _options_box.get_child_count() > 0 \
 		and (cards_mode or choice_type == "target_card"))
 	var rows: int = _options_box.get_child_count()
@@ -250,6 +256,13 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Вопрос с переносом слов знает свою высоту только после раскладки по новой
 	# ширине: до неё окно карт-вариантов выходило вдвое выше содержимого.
 	_place.call_deferred(on_board or decider != viewer_id)
+
+
+func _pass_clicks(through: bool) -> void:
+	var mode := Control.MOUSE_FILTER_IGNORE if through else Control.MOUSE_FILTER_STOP
+	mouse_filter = mode
+	for node: Control in [_who.get_parent(), _scroll, _options_box]:
+		node.mouse_filter = Control.MOUSE_FILTER_IGNORE if through else Control.MOUSE_FILTER_PASS
 
 
 ## Мерцание вопроса: плавно от полной яркости до трети, полтора раза в секунду.

@@ -2075,7 +2075,14 @@ func _try_resolve_board_decision(pending: Dictionary, slot_id: String, site_id: 
 					send(Intent.make_decision(viewer_id, composite))
 					return true
 			# Шпиона-цель выбирают кликом по самому ромбику (_on_spy_clicked),
-			# не по локации: на ней их может стоять несколько.
+			# не по локации: на ней их может стоять несколько. Но если цель
+			# там одна — клик по локации тоже её: ромбик мелкий, промах мимо
+			# него давал "not a valid target" при видимой золотой рамке.
+			elif site_id != "":
+				var spies_here: Array = options.filter(func(o): return String(o).begins_with("spy|%s|" % site_id))
+				if spies_here.size() == 1:
+					send(Intent.make_decision(viewer_id, spies_here[0]))
+					return true
 	return false
 
 
