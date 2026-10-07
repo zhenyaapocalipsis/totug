@@ -600,5 +600,14 @@ static func _build_effect(card_id: String) -> CardEffect:
 				SupplantTroop.new(1),
 				SequenceEffect.new([PromoteCard.new("discard"), GainVpPerN.new("vp", "inner_circle", 3, 1)]),
 			], ["Supplant a troop", "Promote a card from your discard pile, then gain VP per inner circle card"])
+	var celestial := CelestialCards.build(card_id)
+	if celestial != null:
+		return celestial
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
+
+
+## "When you gain this card" — карта попала к игроку покупкой или бесплатным
+## наймом (Actions.recruit, RecruitFree).
+static func on_gain(state: GameState, player_id: String, card_id: String) -> void:
+	CelestialCards.on_gain(state, player_id, card_id)

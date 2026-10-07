@@ -66,6 +66,13 @@ const MINI_FACE := {
 	48728: Vector2i(66, 0), 48729: Vector2i(21, 0), 48730: Vector2i(26, 0), 48731: Vector2i(64, 5),
 	48732: Vector2i(67, 5), 48733: Vector2i(84, 15), 48734: Vector2i(29, 0), 48735: Vector2i(64, 1),
 	48736: Vector2i(37, 0), 48737: Vector2i(63, 35), 48738: Vector2i(69, 0), 48739: Vector2i(33, 31),
+	49000: Vector2i(60, 25), 49001: Vector2i(52, 3), 49002: Vector2i(76, 35), 49003: Vector2i(66, 30),
+	49004: Vector2i(29, 16), 49005: Vector2i(46, 8), 49006: Vector2i(38, 14), 49007: Vector2i(31, 12),
+	49008: Vector2i(40, 16), 49009: Vector2i(42, 14), 49010: Vector2i(70, 34), 49011: Vector2i(52, 2),
+	49012: Vector2i(59, 24), 49013: Vector2i(52, 26), 49014: Vector2i(89, 18), 49015: Vector2i(78, 8),
+	49016: Vector2i(56, 20), 49017: Vector2i(37, 8), 49018: Vector2i(7, 0), 49019: Vector2i(38, 32),
+	49020: Vector2i(40, 20), 49021: Vector2i(52, 13), 49022: Vector2i(52, 5), 49023: Vector2i(62, 40),
+	49024: Vector2i(52, 21),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -125,6 +132,33 @@ const SHEETS := {
 ## Карты не из листов TTS: отдельная картинка карты и окно арта в ней.
 const SINGLE_ART := {
 	48345: ["conscription_officer.webp", Rect2i(148, 172, 587, 358)],
+	# Celestial Order (New Era): арты монстров с D&D Beyond в cards/celestial/,
+	# окно — вокруг лица (решение владельца: прозрачный фон -> чёрный, зум до лица).
+	49000: ["celestial/warrior_infantry.jpg", Rect2i(330, 220, 440, 268)],
+	49001: ["celestial/priest.jpg", Rect2i(330, 420, 440, 268)],
+	49002: ["celestial/sphinx_of_wonder.png", Rect2i(250, 200, 520, 317)],
+	49003: ["celestial/knight.png", Rect2i(60, 30, 400, 244)],
+	49004: ["celestial/deva.png", Rect2i(230, 110, 410, 250)],
+	49005: ["celestial/priest_acolyte.png", Rect2i(0, 0, 389, 237)],
+	49006: ["celestial/couatl.jpg", Rect2i(200, 170, 460, 280)],
+	49007: ["celestial/hippogriff.png", Rect2i(300, 80, 420, 256)],
+	49008: ["celestial/pegasus.png", Rect2i(180, 60, 520, 317)],
+	49009: ["celestial/druid.png", Rect2i(480, 60, 420, 256)],
+	49010: ["celestial/planetar.png", Rect2i(60, 40, 440, 268)],
+	49011: ["celestial/sphinx_of_lore.png", Rect2i(130, 40, 460, 280)],
+	49012: ["celestial/griffon.png", Rect2i(470, 470, 399, 243)],
+	49013: ["celestial/unicorn.png", Rect2i(200, 180, 460, 280)],
+	49014: ["celestial/lion.png", Rect2i(560, 20, 440, 268)],
+	49015: ["celestial/solar.png", Rect2i(40, 60, 460, 280)],
+	49016: ["celestial/erinyes.png", Rect2i(200, 90, 420, 256)],
+	49017: ["celestial/warrior_veteran.jpg", Rect2i(60, 140, 440, 268)],
+	49018: ["celestial/gladiator.png", Rect2i(180, 40, 360, 220)],
+	49019: ["celestial/scout.jpg", Rect2i(180, 250, 440, 268)],
+	49020: ["celestial/guard_captain.jpg", Rect2i(70, 50, 280, 171)],
+	49021: ["celestial/shield_guardian.png", Rect2i(0, 60, 550, 335)],
+	49022: ["celestial/gold_dragon.png", Rect2i(0, 460, 360, 220)],
+	49023: ["celestial/giant_eagle_2014.png", Rect2i(280, 120, 300, 183)],
+	49024: ["celestial/ancient_gold_dragon.jpg", Rect2i(130, 30, 520, 317)],
 }
 
 const FONT := {
@@ -220,6 +254,15 @@ func _init() -> void:
 			max_text_px = h
 			max_name = sv(c["name"])
 	print("tallest text: ", max_name, " ", max_text_px, "px")
+	# "-- measure": только высоты текстов (новые карты не должны раздувать
+	# рамку всего набора — предел 85px, как у самой длинной старой карты).
+	if OS.get_cmdline_user_args().has("measure"):
+		for c: Dictionary in all:
+			var th := text_block_height(layout_text(sv(c["ability_text"])))
+			if th > 70:
+				print("  ", th, "px ", c["card_id"], " ", c["name"])
+		quit()
+		return
 	var text_top := 34 + ART_H + 5
 	var text_h := max_text_px + 8
 	var H := text_top + text_h + 22
@@ -335,6 +378,7 @@ func set_name(card_id: int, type: String) -> String:
 		484: return "DRAGONS"
 		485: return "DEMONS"
 		486: return "ELEMENTAL"
+		490: return "CELESTIAL"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"
@@ -343,7 +387,15 @@ func set_name(card_id: int, type: String) -> String:
 func art_region(card_id: int, aw: int, ah: int) -> Image:
 	if SINGLE_ART.has(card_id):
 		var one: Array = SINGLE_ART[card_id]
-		return crop_to(Image.load_from_file(ROOT + "cards/" + String(one[0])), one[1], aw, ah)
+		var src := Image.load_from_file(ROOT + "cards/" + String(one[0]))
+		if src.detect_alpha() != Image.ALPHA_NONE:
+			# вырезанный персонаж на прозрачном фоне — подкладываем чёрный
+			src.convert(Image.FORMAT_RGBA8)
+			var flat := Image.create(src.get_width(), src.get_height(), false, Image.FORMAT_RGBA8)
+			flat.fill(Color.BLACK)
+			flat.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), Vector2i.ZERO)
+			src = flat
+		return crop_to(src, one[1], aw, ah)
 	var deck := card_id / 100
 	var idx := card_id % 100
 	var info: Array = SHEETS[deck]

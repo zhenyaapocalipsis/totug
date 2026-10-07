@@ -1258,5 +1258,255 @@
     "deck_vp": 4,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Supplant a troop.\n• Promote a card from your discard pile, then\ngain 1 VP for every 3 cards in your inner\ncircle."
+  },
+  {
+    "card_id": 49000,
+    "name": "Warrior Infantry",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• +3 Power\n• Look at the top 6 cards of your deck. Put every House Guard among them into your hand and the rest back on top."
+  },
+  {
+    "card_id": 49001,
+    "name": "Priest",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "CELESTIAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "If you have 6 or more cards in your inner circle, +2 Influence.\nAt end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49002,
+    "name": "Sphinx of Wonder",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "CELESTIAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Place a spy. +1 Power if another player's troop is at that site, +1 Power if the site is full, +1 Power if another player's spy is there."
+  },
+  {
+    "card_id": 49003,
+    "name": "Knight",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Put a House Guard or Priestess of Lolth into your hand and +4 Power.\n• Promote up to 2 Obedience cards from your hand or discard pile."
+  },
+  {
+    "card_id": 49004,
+    "name": "Deva",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "+5 Influence\nAny number of times: spend 2 Influence ► Draw a card."
+  },
+  {
+    "card_id": 49005,
+    "name": "Priest Acolyte",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "CELESTIAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +2 Influence\n• At end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49006,
+    "name": "Couatl",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "CELESTIAL",
+    "deck_vp": 0,
+    "inner_circle_vp": 2,
+    "ability_text": "Place 2 spies.\nThis card is worth 1 VP per spy you have on the board (+2 VP in your inner circle)."
+  },
+  {
+    "card_id": 49007,
+    "name": "Hippogriff",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "CELESTIAL",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "At end of turn, promote another card played this turn.\nReturn 2 of your troops ► Return another player's troop or spy, or +2 Influence and House Guards cost 1 less this turn."
+  },
+  {
+    "card_id": 49008,
+    "name": "Pegasus",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "CELESTIAL",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "+1 Power per House Guard played this turn.\nChoose one:\n• Assassinate 2 white troops.\n• Promote a card in your hand.\n• Move one of your troops."
+  },
+  {
+    "card_id": 49009,
+    "name": "Druid",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CELESTIAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Supplant a white troop.\nEnd of game: most cards in deck gains 5 VP, second most 2 VP (3 and 1 with 2 players)."
+  },
+  {
+    "card_id": 49010,
+    "name": "Planetar",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Deploy 2 troops and draw a card.\n• Return 2 of your troops ► Supplant a white troop anywhere on the board.\n• Draw a card per House Guard played this turn."
+  },
+  {
+    "card_id": 49011,
+    "name": "Sphinx of Lore",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, draw a card.\n• Return one of your spies ► Draw a card and +3 Power."
+  },
+  {
+    "card_id": 49012,
+    "name": "Griffon",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CELESTIAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Promote a card in your hand and deploy troops equal to its inner circle VP.\n• Supplant a white troop.\n• Move one of your troops."
+  },
+  {
+    "card_id": 49013,
+    "name": "Unicorn",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, draw a card.\n• Return one of your spies ► Supplant a troop at that spy's site.\n• +1 Influence per spy you have on the board."
+  },
+  {
+    "card_id": 49014,
+    "name": "Lion",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +2 Power\n• Assassinate a white troop.\n• Return a troop or spy.\n• Put a House Guard into your hand."
+  },
+  {
+    "card_id": 49015,
+    "name": "Solar",
+    "cost": 8,
+    "aspect": "CONQUEST",
+    "type": "CELESTIAL",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Deploy 3 troops. If 10+ of your troops have left your barracks, also assassinate a troop; 20+, also draw a card; 30+, also +4 Power."
+  },
+  {
+    "card_id": 49016,
+    "name": "Erinyes",
+    "cost": 8,
+    "aspect": "GUILE",
+    "type": "CELESTIAL",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Choose one:\n• Place a spy and return up to 2 troops at that site.\n• Return one of your spies ► Return up to 3 troops at that site, then deploy up to 3 troops there."
+  },
+  {
+    "card_id": 49017,
+    "name": "Warrior Veteran",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Move up to 2 enemy troops from one site. Return 3 of your troops ► Move 1 more troop from that site.\nPut every House Guard from your discard pile into your hand."
+  },
+  {
+    "card_id": 49018,
+    "name": "Gladiator",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Scry 2, then draw a card.\nReturn any number of your troops ► +1 Power each.\nThis turn, Assassinate costs 1 Power less and returning a spy 2 Power less."
+  },
+  {
+    "card_id": 49019,
+    "name": "Scout",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "When you gain this card, put Giant Eagle into your discard pile.\nGiant Eagle in your discard pile: place 2 spies and assassinate a troop. In your deck: draw 3, discard 3, +2 Power."
+  },
+  {
+    "card_id": 49020,
+    "name": "Guard Captain",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Put your deck into your discard pile, then promote a card from your discard pile.\n• +3 Power"
+  },
+  {
+    "card_id": 49021,
+    "name": "Shield Guardian",
+    "cost": 7,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "+5 Power\nWhen an opponent would assassinate, supplant, move or return your troop or spy, you may discard this card from hand to stop it, deploy 4 troops and draw a card."
+  },
+  {
+    "card_id": 49022,
+    "name": "Gold Dragon",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Choose 4 times: +2 Power or move a troop.\nTransform into Ancient Gold Dragon."
+  },
+  {
+    "card_id": 49023,
+    "name": "Giant Eagle",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Draw a card.\nReturn any number of your spies ► Assassinate a troop at each of their sites (supplant instead if you played or reveal Scout)."
+  },
+  {
+    "card_id": 49024,
+    "name": "Ancient Gold Dragon",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "CELESTIAL",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Assassinate up to 4 troops at one site, or return that many of your troops ► Supplant them instead.\nTransform into Gold Dragon."
   }
 ]

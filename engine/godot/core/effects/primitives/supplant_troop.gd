@@ -17,16 +17,19 @@ var anywhere: bool
 var up_to: bool
 var _post_effect_factory: Callable  # func(slot_id: String) -> CardEffect, опционально
 var preset_site: String = ""
+var lock_after_first: bool = false  # "up to N troops at one site": локация фиксируется первым выбором
 
 
 func _init(count: int = 1, is_white_only: bool = false, allow_anywhere: bool = false,
-		allow_fewer: bool = false, post_factory: Callable = Callable(), site: String = "") -> void:
+		allow_fewer: bool = false, post_factory: Callable = Callable(), site: String = "",
+		restrict_single_site: bool = false) -> void:
 	remaining = count
 	white_only = is_white_only
 	anywhere = allow_anywhere
 	up_to = allow_fewer
 	_post_effect_factory = post_factory
 	preset_site = site
+	lock_after_first = restrict_single_site and site == ""
 
 
 func _legal_targets(state: GameState, player_id: String) -> Array:
@@ -62,6 +65,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			else:
 				state.troops[slot_id] = ""
 			resolver.log_event("supplant", {"player_id": player_id, "slot_id": slot_id, "victim": victim})
+			if lock_after_first:
+				preset_site = state.graph.site_of_slot(slot_id)
+				lock_after_first = false
 			if _post_effect_factory.is_valid():
 				resolver.push(_post_effect_factory.call(slot_id), player_id)
 			remaining -= 1

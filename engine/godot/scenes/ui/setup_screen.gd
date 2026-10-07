@@ -36,6 +36,7 @@ const MODE_TITLES := {
 	"random3": "RANDOM 3",
 	"random4": "RANDOM 4",
 	"random6": "RANDOM 6",
+	"newera": "NEW ERA",
 }
 const MODE_NOTES := {
 	"standard": "Market: two random half-decks.",
@@ -43,6 +44,7 @@ const MODE_NOTES := {
 	"random3": "Market: 3 random half-decks, 20 cards of each aspect.",
 	"random4": "Market: 4 random half-decks, 20 cards of each aspect.",
 	"random6": "Market: 6 random half-decks, 20 cards of each aspect.",
+	"newera": "Market: the new Celestial Order half-deck + 1 random half-deck.",
 }
 
 ## Вкладки (кнопки под названием).

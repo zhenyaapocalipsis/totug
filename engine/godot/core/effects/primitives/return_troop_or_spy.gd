@@ -18,13 +18,18 @@ var remaining: int
 var up_to: bool
 var troop_only: bool
 var spy_only: bool
+## "return up to N troops at that site" — локацию назвала карта: только она,
+## без проверки Присутствия.
+var site: String = ""
 
 
-func _init(count: int = 1, allow_fewer: bool = false, only_troops: bool = false, only_spies: bool = false) -> void:
+func _init(count: int = 1, allow_fewer: bool = false, only_troops: bool = false, only_spies: bool = false,
+		at_site: String = "") -> void:
 	remaining = count
 	up_to = allow_fewer
 	troop_only = only_troops
 	spy_only = only_spies
+	site = at_site
 
 
 ## Опции кодируются строками "troop|<slot_id>" / "spy|<site_id>|<owner_id>",
@@ -46,11 +51,16 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 		for slot_id: String in state.graph.slots.keys():
 			var owner: String = state.troops.get(slot_id, "")
 			if owner != "" and owner != player_id and owner != "white":
-				if state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
+				if site != "":
+					if state.graph.site_of_slot(slot_id) == site:
+						result.append("troop%s%s" % [SEP, slot_id])
+				elif state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
 					result.append("troop%s%s" % [SEP, slot_id])
 	if not troop_only:
 		for site_id: String in state.spies.keys():
-			if not state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies):
+			if site != "" and site_id != site:
+				continue
+			if site == "" and not state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies):
 				continue
 			for owner: String in state.spies[site_id]:
 				if owner != player_id:

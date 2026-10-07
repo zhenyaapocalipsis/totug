@@ -57,6 +57,7 @@ func _initialize() -> void:
 	test_deploy_and_assassinate_effects()
 	test_devour_and_promote_effects()
 	test_card_library_smoke_all_cards()
+	test_celestial_order()
 
 	# этап 6: сетевой слой
 	test_intent_factories()
@@ -1868,10 +1869,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 126 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 151 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 126, "cards.json содержит 126 карт")
+	check_eq(all_ids.size(), 151, "cards.json содержит 151 карту (126 + 25 Celestial Order)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -2332,6 +2333,12 @@ func test_game_modes() -> void:
 	for mode: String in GameSetup.MODES:
 		var state := GameSetup.new_game(pids, 99, [], false, false, false, mode)
 		var total := state.market.deck.size() + state.market.display.size()
+		if mode == GameSetup.MODE_NEW_ERA:
+			# Полуколоды New Era — по 45 карт и не по 10 копий на аспект.
+			check_eq(total, 85, "newera: в маркете 45 + 40 карт")
+			check_eq(state.half_decks[0], "celestial", "newera: первая полуколода — Celestial Order")
+			check(state.half_decks[1] != "celestial", "newera: вторая — классическая")
+			continue
 		check_eq(total, 80, "%s: в маркете 80 карт" % mode)
 		check_eq(state.half_decks.size(), int(expected[mode]), "%s: число полуколод" % mode)
 		check_eq(state.game_mode, mode, "%s: режим записан в состояние" % mode)
@@ -4004,3 +4011,101 @@ func _trace_crossings(s: Dictionary) -> int:
 			if not hidden:
 				found += 1
 	return found
+
+
+func test_celestial_order() -> void:
+	section("New Era: полуколода Celestial Order")
+	var deck := GameSetup.expand_half_deck("celestial")
+	check_eq(deck.size(), 45, "Celestial Order: 45 карт в полуколоде")
+	check(not GameSetup.available_half_decks().has("celestial"), "пока не все эффекты готовы, колода не в выборе (wip)")
+	for cid: String in ["49000", "49010", "49019", "49022", "49023", "49024"]:
+		check(CardLibrary.card_data(cid).get("type") == "CELESTIAL", "%s — карта Celestial" % cid)
+
+	# Scout: при получении в сброс приходит Giant Eagle
+	var state := _build_rich_state(5)
+	var red: PlayerState = state.players["red"]
+	red.deck.discard_pile.clear()
+	state.market.display[0] = "49019"
+	red.influence = 10
+	check(Actions.recruit(state, "red", 0, 6), "Scout покупается с рынка")
+	check(red.deck.discard_pile.has("49023"), "вместе со Scout в сброс пришёл Giant Eagle")
+
+	# Gladiator: скидки на базовые действия до конца хода
+	TurnEngine.start_turn(state, "red")
+	check_eq(Actions.assassinate_cost(state), 3, "обычная цена Assassinate — 3")
+	var r := EffectResolver.new()
+	r.apply(CelestialCards.TurnDiscount.new("assassinate", 1), "red", state)
+	r.apply(CelestialCards.TurnDiscount.new("return_spy", 2), "red", state)
+	check_eq(Actions.assassinate_cost(state), 2, "после Gladiator Assassinate стоит 2")
+	check_eq(Actions.return_spy_cost(state), 1, "после Gladiator возврат шпиона стоит 1")
+	TurnEngine.start_turn(state, "red")
+	check_eq(Actions.assassinate_cost(state), 3, "в новом ходу скидка пропала")
+
+	# Hippogriff: House Guard дешевле на 1
+	r.apply(CelestialCards.TurnDiscount.new("supply:" + Supplies.HOUSE_GUARD, 1), "red", state)
+	check_eq(Actions.supply_cost(state, Supplies.HOUSE_GUARD), 2, "House Guard стоит 2 после Hippogriff")
+
+	# Gold Dragon превращается в Ancient Gold Dragon и обратно
+	red.deck.hand.append("49022")
+	red.deck.discard_pile.clear()
+	var r2 := EffectResolver.new()
+	TurnEngine.play_card(state, "red", "49022", r2)
+	_auto_resolve(state, r2, false)
+	check(not red.deck.played_pile.has("49022"), "Gold Dragon ушёл из игры")
+	check(red.deck.discard_pile.has("49024"), "Ancient Gold Dragon в сбросе")
+
+	# Warrior Infantry: House Guard из 6 верхних карт — в руку
+	red.deck.draw_pile = ["48342", "48340", "48342", "48340"] as Array[String]
+	var hand_before := red.deck.hand.count("48340")
+	var r3 := EffectResolver.new()
+	r3.apply(FetchFromTop.new(6, func(c): return c == "48340"), "red", state)
+	check_eq(red.deck.hand.count("48340"), hand_before + 2, "оба House Guard из верхних карт в руке")
+	check_eq(red.deck.draw_pile, ["48342", "48342"] as Array[String], "остальные карты остались в колоде")
+
+	# Scry 2: сбросить одну из двух верхних
+	red.deck.draw_pile = ["48344", "48342", "48343"] as Array[String]
+	red.deck.discard_pile.clear()
+	var r4 := EffectResolver.new()
+	r4.apply(ScryCards.new(2), "red", state)
+	check(r4.is_waiting() and (r4.pending.legal_options as Array).has("48343"), "Scry показывает верхнюю карту")
+	TurnEngine.resume_card(state, "48343", r4)
+	TurnEngine.resume_card(state, "", r4)
+	check_eq(red.deck.draw_pile, ["48344", "48342"] as Array[String], "сброшенная карта ушла с верха колоды")
+	check_eq(red.deck.discard_pile, ["48343"] as Array[String], "и попала в сброс")
+
+	# ReturnOwnTroops ровно 2: без двух своих войск вариант недоступен
+	var empty_state := _build_rich_state(6)
+	for slot_id: String in empty_state.troops.keys():
+		if empty_state.troops[slot_id] == "red":
+			empty_state.troops[slot_id] = ""
+	check(not ReturnOwnTroops.new(2, true, func(_k): return null).is_available(empty_state, "red"),
+		"Return 2 of your troops недоступен без своих войск")
+
+	# Couatl и Druid: VP в конце партии
+	var s2 := _build_rich_state(7)
+	var a: PlayerState = s2.players["red"]
+	var b: PlayerState = s2.players["blue"]
+	a.deck = Deck.new(["49006", "49009", "48342", "48342", "48342"] as Array[String])
+	b.deck = Deck.new(["48342"] as Array[String])
+	(s2.players["green"] as PlayerState).deck = Deck.new([] as Array[String])
+	s2.spies.clear()
+	s2.spies["x"] = ["red", "blue"]
+	s2.spies["y"] = ["red"]
+	var extra := Scoring.card_bonus_vp(s2, "red")
+	check_eq(int(extra["deck"]), 2 + 5, "Couatl = 2 VP за 2 шпиона, Druid = 5 VP втроём за самую большую колоду")
+	check_eq(int(Scoring.card_bonus_vp(s2, "blue")["deck"]), 0, "у соперника без этих карт бонуса нет")
+
+	# все карты колоды разыгрываются до конца
+	for cid: String in ["49000", "49001", "49002", "49003", "49004", "49005", "49006", "49007", "49008",
+			"49009", "49010", "49011", "49012", "49013", "49014", "49015", "49016", "49017", "49018",
+			"49019", "49020", "49021", "49022", "49023", "49024"]:
+		for prefer_last in [true, false]:
+			var st := _build_rich_state(hash(cid) % 1000)
+			var pl: PlayerState = st.players["red"]
+			pl.deck.hand.append(cid)
+			TurnEngine.start_turn(st, "red")
+			var res := EffectResolver.new()
+			TurnEngine.play_card(st, "red", cid, res)
+			_auto_resolve(st, res, prefer_last)
+			if res.is_waiting():
+				check(false, "%s завис (prefer_last=%s)" % [cid, prefer_last])

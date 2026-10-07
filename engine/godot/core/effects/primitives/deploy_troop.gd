@@ -13,11 +13,15 @@ extends CardEffect
 
 var remaining: int
 var up_to: bool
+## "deploy ... there" — локацию назвала карта: только её пустые слоты, без
+## проверки Присутствия (как у других эффектов с названной локацией).
+var site: String = ""
 
 
-func _init(count: int = 1, allow_fewer: bool = false) -> void:
+func _init(count: int = 1, allow_fewer: bool = false, at_site: String = "") -> void:
 	remaining = count
 	up_to = allow_fewer
+	site = at_site
 
 
 func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -41,10 +45,15 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		resolver.log_event("gain_vp", {"player_id": player_id, "amount": granted})
 		return
 	var legal: PackedStringArray = state.presence.deployable_slots(player_id, state.troops, state.spies)
+	if site != "":
+		legal = PackedStringArray()
+		for slot_id: String in state.graph.slots_of_site(site):
+			if state.troops.get(slot_id, "") == "":
+				legal.append(slot_id)
 	if legal.is_empty():
 		return
 
-	var next := DeployTroop.new(remaining - 1, up_to)
+	var next := DeployTroop.new(remaining - 1, up_to, site)
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
 	pd.prompt = "Deploy a troop"

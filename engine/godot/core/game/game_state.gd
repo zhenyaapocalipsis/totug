@@ -52,6 +52,13 @@ var marker_influence_paid: Array[String] = []
 ## только разница. Сбрасывается в start_turn.
 var a2_paid := {"power": 0, "influence": 0}
 
+## New Era: скидки текущего хода от сыгранных карт (сбрасываются в start_turn).
+##   "assassinate"  — на сколько дешевле базовое Assassinate (Gladiator);
+##   "return_spy"   — на сколько дешевле базовый возврат шпиона (Gladiator);
+##   "supply:<id>"  — скидка на карту из запаса (Hippogriff: House Guard).
+## Цены считает Actions.*_cost(); интерфейс видит их через StateView.
+var turn_discounts: Dictionary = {}
+
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.
 var devoured_pile: Array[String] = []

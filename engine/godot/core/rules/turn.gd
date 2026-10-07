@@ -33,6 +33,7 @@ const HAND_SIZE := 5
 static func start_turn(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
 	state.played_aspects_this_turn.clear()
 	state.ghost_market_player = ""
+	state.turn_discounts.clear()
 	# Маркеры контроля (A1, A3, B1-B6): +1 Influence за каждую контролируемую
 	# локацию с маркером; бонус A2 — Power/Influence своего яруса. Тоже в начале
 	# хода — иначе сгорит, не успев пригодиться.

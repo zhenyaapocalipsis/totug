@@ -21,12 +21,13 @@ const WHITE := "white"
 ## трофи-холл ассасина (стр. 14: трофи-холл считает ЛЮБОЕ войско).
 static func assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
 	var p: PlayerState = state.players[player_id]
-	if p.power < COST_ASSASSINATE:
+	var kill_cost := assassinate_cost(state)
+	if p.power < kill_cost:
 		return false
 	var legal: PackedStringArray = state.presence.assassinatable_slots(player_id, state.troops, state.spies)
 	if not legal.has(slot_id):
 		return false
-	p.power -= COST_ASSASSINATE
+	p.power -= kill_cost
 	var victim: String = state.troops.get(slot_id, "")
 	state.troops[slot_id] = ""
 	p.add_trophy(victim)
@@ -83,6 +84,7 @@ static func recruit(state: GameState, player_id: String, market_index: int, card
 		return false
 	p.influence -= card_cost
 	p.deck.discard_pile.append(card_id)
+	CardLibrary.on_gain(state, player_id, card_id)
 	if state.market.is_deck_empty():
 		GameEnd.trigger(state, "market_empty")
 	return true
@@ -115,7 +117,7 @@ static func recruit_from_supply(state: GameState, player_id: String, card_id: St
 		return false
 	if not state.supplies.is_available(card_id):
 		return false
-	var cost: int = CardLibrary.card_cost(card_id)
+	var cost: int = supply_cost(state, card_id)
 	if cost < 0:
 		return false
 	var p: PlayerState = state.players[player_id]
@@ -133,7 +135,8 @@ static func recruit_from_supply(state: GameState, player_id: String, card_id: St
 ## владельца — не в трофи-холл, это не войско.
 static func return_enemy_spy(state: GameState, player_id: String, site_id: String, spy_owner: String) -> bool:
 	var p: PlayerState = state.players[player_id]
-	if p.power < COST_RETURN_SPY:
+	var spy_cost := return_spy_cost(state)
+	if p.power < spy_cost:
 		return false
 	if spy_owner == player_id or spy_owner == WHITE:
 		return false
@@ -143,9 +146,26 @@ static func return_enemy_spy(state: GameState, player_id: String, site_id: Strin
 	var idx: int = site_spies.find(spy_owner)
 	if idx == -1:
 		return false
-	p.power -= COST_RETURN_SPY
+	p.power -= spy_cost
 	site_spies.remove_at(idx)
 	state.spies[site_id] = site_spies
 	if state.players.has(spy_owner):
 		state.players[spy_owner].spies_in_barracks += 1
 	return true
+
+
+## Цены базовых действий с учётом скидок хода (New Era, state.turn_discounts).
+static func assassinate_cost(state: GameState) -> int:
+	return maxi(0, COST_ASSASSINATE - int(state.turn_discounts.get("assassinate", 0)))
+
+
+static func return_spy_cost(state: GameState) -> int:
+	return maxi(0, COST_RETURN_SPY - int(state.turn_discounts.get("return_spy", 0)))
+
+
+## Цена карты из запаса (House Guard / Priestess of Lolth); -1 — не продаётся.
+static func supply_cost(state: GameState, card_id: String) -> int:
+	var cost: int = CardLibrary.card_cost(card_id)
+	if cost < 0:
+		return cost
+	return maxi(0, cost - int(state.turn_discounts.get("supply:" + card_id, 0)))

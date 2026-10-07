@@ -37,6 +37,12 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
 		"ghost_market_card": Actions.ghost_market_card(state, state.current_player()),
+		# New Era: цены базовых действий и запаса с учётом скидок хода.
+		"costs": {
+			"assassinate": Actions.assassinate_cost(state),
+			"return_spy": Actions.return_spy_cost(state),
+			"house_guard": Actions.supply_cost(state, Supplies.HOUSE_GUARD),
+		},
 		"vp_bank": {
 			"ones": state.vp_bank.ones,
 			"fives": state.vp_bank.fives,
@@ -117,13 +123,13 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 			deploy_slots.append(slot_id)
 
 	var kill_slots: Array[String] = []
-	if p.power >= Actions.COST_ASSASSINATE:
+	if p.power >= Actions.assassinate_cost(state):
 		for slot_id in state.presence.assassinatable_slots(viewer_id, state.troops, state.spies):
 			kill_slots.append(slot_id)
 
 	# Вражеские шпионы там, где у зрителя есть Присутствие (3 Power).
 	var spy_targets: Array = []
-	if p.power >= Actions.COST_RETURN_SPY:
+	if p.power >= Actions.return_spy_cost(state):
 		for site_id in state.presence.sites_with_presence(viewer_id, state.troops, state.spies):
 			for owner in (state.spies.get(site_id, []) as Array):
 				if owner != viewer_id:
@@ -141,7 +147,7 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 
 	var supply_cards: Array[String] = []
 	for card_id: String in state.supplies.purchasable_available():
-		var scost: int = CardLibrary.card_cost(card_id)
+		var scost: int = Actions.supply_cost(state, card_id)
 		if scost >= 0 and scost <= p.influence:
 			supply_cards.append(card_id)
 

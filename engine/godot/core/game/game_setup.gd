@@ -42,7 +42,12 @@ const MODE_DOUBLE := "double"
 const MODE_RANDOM_3 := "random3"
 const MODE_RANDOM_4 := "random4"
 const MODE_RANDOM_6 := "random6"
-const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6]
+## New Era (проверка новых полуколод): Celestial Order + одна случайная
+## классическая полуколода. Новые колоды в обычный пул не входят, пока не
+## доделаны ("wip"), — иначе изменились бы сиды прежних партий.
+const MODE_NEW_ERA := "newera"
+const NEW_ERA_DECK := "celestial"
+const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
 
 static var _half_deck_data: Dictionary = {}
@@ -67,9 +72,14 @@ static func _load_half_decks() -> Dictionary:
 ## Названия всех доступных полуколод: drow, dragons, demons, elementals,
 ## aberrations, undead (Mercenaries/Siege исключены владельцем игры на этапе 4 —
 ## их изображений нет на диске).
+## Полуколоды с "wip": true (новые колоды New Era, пока не все эффекты готовы)
+## в выбор не попадают.
 static func available_half_decks() -> Array[String]:
 	var result: Array[String] = []
-	for key: String in (_load_half_decks().get("half_decks", {}) as Dictionary).keys():
+	var decks: Dictionary = _load_half_decks().get("half_decks", {})
+	for key: String in decks.keys():
+		if (decks[key] as Dictionary).get("wip", false):
+			continue
 		result.append(key)
 	result.sort()
 	return result
@@ -212,6 +222,9 @@ static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[S
 		MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6:
 			Deck.shuffle_array(pool, rng)
 			return pool.slice(0, mini(mode_deck_count(mode), pool.size()))
+		MODE_NEW_ERA:
+			var pair: Array[String] = [NEW_ERA_DECK, pool[rng.randi_range(0, pool.size() - 1)]]
+			return pair
 	return _pick_two_half_decks(rng)
 
 
