@@ -20,7 +20,7 @@ extends RefCounted
 
 const SPRITE_PATH := "res://assets/card_fx/%s/%s.png"
 ## Сколько секунд висит карта с эффектом (обычная — CardShowcase.HOLD_TIME).
-const HOLD_TIME := 4.0
+const HOLD_TIME := 4.8
 ## Замах до выхода щупалец (карта дрожит, вокруг разгорается свечение, у корней искры),
 ## остановка времени на ударе и вспышка.
 const ANTIC := 0.3
@@ -38,7 +38,7 @@ const MOTE_RISE := 40.0
 const OUTLINE := 1.5
 const SHADOW := Vector2(3, 4)
 ## Ширина тела у корня самого толстого щупальца, к которой подгоняется спрайт.
-const ROOT_REF := 22.0
+const ROOT_REF := 30.0
 ## Сколько пикселей поверх-слоя у стыка с задним слоем остаются без обводки и тени.
 const SEAM_SKIP := 9.0
 ## Шаг полосок тела.
@@ -47,7 +47,14 @@ const STEP := 3.0
 ## проходов сглаживания и сколько отсчётов продолжения за концом (для перелёта).
 const SPINE_N := 96
 const SMOOTH_N := 8
-const SMOOTH_PASSES := 14
+const SMOOTH_PASSES := 60
+## Золотое сечение и фильтр Таубина (пара проходов: сгладить, чуть растянуть обратно).
+const PHI := 1.618034
+## Рисунок линии движения: допуск упрощения и шаг выборки (пиксели рисунка).
+const FILLET_TOL := 9.0
+const FILLET_STEP := 8.0
+const TAUBIN_LAMBDA := 0.5
+const TAUBIN_MU := -0.53
 const EXT_N := 14
 ## На сколько пикселей карты корень уходит под её край (чтобы тело не торчало).
 const LEAD_IN := 26.0
@@ -81,17 +88,17 @@ const RING_CHECK := 50
 const RING_SAMPLES := 12
 ## Сколько строк спрайта перекрываются на шве плитки (примерно одно кольцо).
 const SEAM_ROWS := 18.0
-const TIP_LEN := 80.0
+const TIP_LEN := 100.0
 ## Минимальная полуширина тела, пиксели: у самого острия щупальце не рвётся на пунктир.
 const MIN_HALF := 0.9
 ## Какую долю корневой толщины имеет щупальце на цели (конус).
-const TAPER_END := 0.2
+const TAPER_END := 0.146
 ## Размах бегущей по телу волны сжатия: на сколько пикселей «перетекают» кольца.
 const RING_FLOW := 4.0
 ## Загиб кончика появляется после прихода: на сколько пикселей, на какой длине от
 ## головы и за сколько секунд.
-const HOOK := 24.0
-const HOOK_LEN := 100.0
+const HOOK := 16.0
+const HOOK_LEN := 70.0
 const HOOK_TIME := 0.5
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
@@ -118,29 +125,29 @@ const FX := {
 				Vector2(550, 466), Vector2(600, 479), Vector2(650, 492), Vector2(690, 502),
 				Vector2(730, 520), Vector2(770, 543), Vector2(805, 575), Vector2(835, 605),
 				Vector2(850, 632), Vector2(851, 680), Vector2(850, 720), Vector2(846, 750)],
-				"width": 22.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
-				"retract_dur": 0.5, "phase": 0.0},
+				"width": 30.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 1.3, "phase": 0.0},
 			# короткое справа сверху: наружу и обратно на карту
 			{"path": [Vector2(725, 283), Vector2(750, 292), Vector2(768, 310), Vector2(775, 330),
 				Vector2(768, 352), Vector2(745, 378), Vector2(722, 402), Vector2(700, 420),
 				Vector2(688, 440), Vector2(682, 460)],
-				"width": 14.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
-				"retract_dur": 0.5, "phase": 2.1},
+				"width": 20.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 1.3, "phase": 2.1},
 			# слева посередине: наружу налево, обратно через край и вниз по карте
 			{"path": [Vector2(318, 486), Vector2(298, 505), Vector2(285, 530), Vector2(283, 555),
 				Vector2(292, 580), Vector2(310, 603), Vector2(335, 620), Vector2(360, 635),
 				Vector2(380, 655), Vector2(390, 685), Vector2(392, 712), Vector2(390, 744),
 				Vector2(375, 762), Vector2(358, 782)],
-				"width": 17.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
-				"retract_dur": 0.5, "phase": 4.2},
+				"width": 24.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 1.3, "phase": 4.2},
 			# длинное справа снизу: наружу, потом S-образно вниз-влево до низа экрана
 			{"path": [Vector2(735, 637), Vector2(758, 647), Vector2(775, 665), Vector2(781, 700),
 				Vector2(779, 738), Vector2(765, 775), Vector2(745, 800), Vector2(720, 815),
 				Vector2(690, 825), Vector2(650, 845), Vector2(600, 875), Vector2(560, 895),
 				Vector2(525, 918), Vector2(500, 945), Vector2(485, 975), Vector2(477, 1005),
 				Vector2(475, 1040), Vector2(483, 1066)],
-				"width": 20.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
-				"retract_dur": 0.5, "phase": 3.3},
+				"width": 28.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 1.3, "phase": 3.3},
 		],
 	},
 }
@@ -397,8 +404,10 @@ static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 		return _spines[key]
 	var tent: Dictionary = FX[cid]["tentacles"][index]
 	var path: Array = tent["path"]
+	# линия движения: рисунок сводится к нескольким прямым, а углы между ними
+	# сопрягаются дугами окружностей (_rounded) — круглые «выходы» без изломов
 	var raw: Array[Vector2] = []
-	for p: Vector2 in path:
+	for p: Vector2 in _rounded(path):
 		raw.append((p - SKETCH_CARD.position) / SKETCH_CARD.size)
 	# заход корня под карту: назад от первого звена
 	var back := (raw[0] - raw[1]).normalized()
@@ -426,9 +435,13 @@ static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 		var span := maxf(cum[j] - cum[j - 1], 0.0001)
 		pts.append(dense[j - 1].lerp(dense[j], clampf((a - cum[j - 1]) / span, 0.0, 1.0)))
 	# убираем изломы: несколько проходов [1 2 1]/4, концы стоят на месте
+	# (фильтр Таубина: сглаживает мелкие изломы рисунка, не съедая крупные дуги, —
+	# кривая получается круглой, с плавно меняющейся кривизной)
 	for _pass in range(SMOOTH_PASSES):
-		for i in range(1, pts.size() - 1):
-			pts[i] = (pts[i - 1] + pts[i] * 2.0 + pts[i + 1]) * 0.25
+		for f in [TAUBIN_LAMBDA, TAUBIN_MU]:
+			var old := pts.duplicate()
+			for i in range(1, pts.size() - 1):
+				pts[i] = old[i] + ((old[i - 1] + old[i + 1]) * 0.5 - old[i]) * f
 	# продолжение за концом по последнему направлению
 	var dir := ((pts[pts.size() - 1] - pts[pts.size() - 4]) * size).normalized()
 	for i in range(1, EXT_N + 1):
@@ -448,6 +461,81 @@ static func _spine_of(cid: String, index: int, size: Vector2) -> Dictionary:
 			break
 	var res := {"pts": pts, "seg": seg, "split": split, "total": total}
 	_spines[key] = res
+	return res
+
+
+## Упрощение ломаной (Дуглас — Пойкер): оставляет вершины, от которых рисунок отходит
+## дальше tol пикселей.
+static func _simplify(pts: Array, tol: float) -> Array[Vector2]:
+	var keep := PackedByteArray()
+	keep.resize(pts.size())
+	keep[0] = 1
+	keep[pts.size() - 1] = 1
+	var stack: Array[Vector2i] = [Vector2i(0, pts.size() - 1)]
+	while not stack.is_empty():
+		var range_i: Vector2i = stack.pop_back()
+		var a: Vector2 = pts[range_i.x]
+		var b: Vector2 = pts[range_i.y]
+		var far := -1
+		var far_d := tol
+		for i in range(range_i.x + 1, range_i.y):
+			var p: Vector2 = pts[i]
+			var d: float = (Geometry2D.get_closest_point_to_segment(p, a, b) - p).length()
+			if d > far_d:
+				far_d = d
+				far = i
+		if far >= 0:
+			keep[far] = 1
+			stack.append(Vector2i(range_i.x, far))
+			stack.append(Vector2i(far, range_i.y))
+	var res: Array[Vector2] = []
+	for i in range(pts.size()):
+		if keep[i] == 1:
+			res.append(pts[i])
+	return res
+
+
+## Линия движения из рисунка: прямые, углы сопряжены дугами окружностей. Дуга забирает
+## не больше 1/PHI от свободной части прилегающей прямой (остальное остаётся прямым —
+## дуги и прямые лежат в золотой пропорции). Возвращает точки через равные ~8 пикселей.
+static func _rounded(path: Array) -> Array[Vector2]:
+	var v := _simplify(path, FILLET_TOL)
+	var out: Array[Vector2] = [v[0]]
+	var used := 0.0
+	for i in range(1, v.size() - 1):
+		var d1 := (v[i] - v[i - 1]).normalized()
+		var d2 := (v[i + 1] - v[i]).normalized()
+		var turn := d1.angle_to(d2)
+		var len_prev := v[i].distance_to(v[i - 1]) - used
+		var len_next := v[i].distance_to(v[i + 1])
+		# последнему углу резервировать нечего, остальным — половину следующей прямой
+		var room := minf(len_prev, len_next * (1.0 if i == v.size() - 2 else 0.5))
+		var tang := room / PHI
+		if absf(turn) < 0.02 or tang < 2.0:
+			out.append(v[i])
+			used = 0.0
+			continue
+		var r := tang / tan(absf(turn) * 0.5)
+		var side := d1.rotated(PI * 0.5) * signf(turn)
+		var start := v[i] - d1 * tang
+		out.append(start)
+		var steps := maxi(int(absf(turn) / 0.1), 2)
+		for k in range(1, steps + 1):
+			var a := absf(turn) * float(k) / float(steps)
+			out.append(start + (d1 * sin(a) + side * (1.0 - cos(a))) * r)
+		used = tang
+	out.append(v[v.size() - 1])
+	# равномерная выборка по длине
+	var res: Array[Vector2] = [out[0]]
+	var next := FILLET_STEP
+	var acc := 0.0
+	for i in range(1, out.size()):
+		var seg_len := out[i].distance_to(out[i - 1])
+		while seg_len > 0.0 and next <= acc + seg_len:
+			res.append(out[i - 1].lerp(out[i], (next - acc) / seg_len))
+			next += FILLET_STEP
+		acc += seg_len
+	res.append(out[out.size() - 1])
 	return res
 
 
@@ -475,7 +563,9 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	var raw_t := (t - delay) / float(tent["dur"])
 	# перелёт ограничен: спрайт не вытягивается за продолжение кривой
 	var out := _ease_unclamped(String(tent["ease"]), raw_t)
-	var gone := _ease("in", (t - float(tent["retract_at"])) / float(tent["retract_dur"]))
+	# втягивание идёт назад по той же кривой и так же плавно, как выход: тело следует за
+	# головой по своей линии (боковые волны к концу втягивания гаснут)
+	var gone := _ease("inout", (t - float(tent["retract_at"])) / float(tent["retract_dur"]))
 	var phase := float(tent["phase"])
 	var head := minf(total * out * (1.0 - gone), seg * float(SPINE_N + EXT_N - 1))
 	var count := int(head / STEP)
@@ -487,15 +577,15 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	# хлещет. Корень стоит на месте.
 	var since := maxf(t - delay, 0.0)
 	# короткое щупальце только выходит из-под карты — ему не до хлёста
-	var amp := (WHIP * exp(-WHIP_DECAY * since) + IDLE * clampf(out, 0.0, 1.0) \
-		+ WHIP * 1.3 * gone * (1.0 - gone) * 4.0) * smoothstep(0.0, 1.0, head / 140.0)
+	var amp := (WHIP * exp(-WHIP_DECAY * since) + IDLE * clampf(out, 0.0, 1.0)) \
+		* (1.0 - gone) * smoothstep(0.0, 1.0, head / 140.0)
 	var pts := PackedVector2Array()
 	for i in range(fpts.size()):
 		var p := card.position + fpts[i] * card.size
 		var prev := card.position + fpts[maxi(i - 1, 0)] * card.size
 		var next := card.position + fpts[mini(i + 1, fpts.size() - 1)] * card.size
 		var u := float(i) / SPINE_N
-		var off := amp * sin(u * 5.5 - t * 5.0 + phase) * clampf(u * 3.0, 0.0, 1.0)
+		var off := amp * sin(u * 5.5 - t * 5.0 + phase) * smoothstep(0.0, 0.4, u)
 		pts.append(p + (next - prev).orthogonal().normalized() * off)
 
 	# точки тела от кончика к корню
@@ -504,7 +594,10 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var a := maxf(head - float(j) * STEP, 0.0)
 		var k := minf(a / seg, float(fpts.size()) - 1.001)
 		var i0 := int(k)
-		body.append(pts[i0].lerp(pts[i0 + 1], k - float(i0)))
+		# кубическая (Catmull-Rom), а не линейная вставка: между отсчётами кривой не
+		# остаётся изломов, которые бежали бы по телу вместе с головой
+		body.append(pts[i0].cubic_interpolate(pts[i0 + 1], pts[maxi(i0 - 1, 0)],
+			pts[mini(i0 + 2, pts.size() - 1)], k - float(i0)))
 
 	# загиб кончика: щупальце выходит прямым и закручивается, уже когда дошло
 	var hook := HOOK * smoothstep(0.0, 1.0, (t - delay - float(tent["dur"]) * 0.85) / HOOK_TIME) \
@@ -548,9 +641,11 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		# «дорисовывается»), на цели у корня тело имеет полную толщину
 		var profile := root_w * 0.5 * exp(-(total - dist) / taper_len)
 		# у самой головы — остриё
-		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
+		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.85)
 		# не тоньше MIN_HALF: острие тоньше пикселя рисуется пунктиром и «рвётся»
-		halves.append(maxf(profile * taper, maxf(MIN_HALF, 0.5 * float(grid))))
+		# последние три шага заостряются в точку (иначе конец — плоский срез)
+		var floor_half := maxf(MIN_HALF, 0.5 * float(grid)) * minf(float(j) / 3.0, 1.0)
+		halves.append(maxf(profile * taper, floor_half))
 		# строка спрайта: шаг колец пропорционален толщине (интеграл от плотности по
 		# длине тела), у головы строка 0 — узор привязан к голове, как раньше
 		rows.append(density * taper_len * (exp(total / taper_len) - exp((total - dist) / taper_len)))
@@ -569,8 +664,9 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 			# иначе они ложатся серой полосой на конец заднего куска тела
 			if front and head - float(j) * STEP < split + SEAM_SKIP:
 				continue
-			var m0 := normals[j] * (halves[j] + outline)
-			var m1 := normals[j + 1] * (halves[j + 1] + outline)
+			# обводка у острия сходится в точку вместе с телом
+			var m0 := normals[j] * (halves[j] + outline * minf(float(j) / 3.0, 1.0))
+			var m1 := normals[j + 1] * (halves[j + 1] + outline * minf(float(j + 1) / 3.0, 1.0))
 			c.draw_primitive(PackedVector2Array([body[j] - m0 + shift, body[j] + m0 + shift,
 				body[j + 1] + m1 + shift, body[j + 1] - m1 + shift]), shades, no_uv)
 	for j in range(count):
