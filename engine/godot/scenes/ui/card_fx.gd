@@ -149,7 +149,7 @@ static var debug_isolate := false
 static var _spines: Dictionary = {}
 ## Сетка эффекта: эффект рисуется на холсте в grid раз меньше экрана и растягивается
 ## без сглаживания — все точки эффекта одного размера. 1 — сетка экрана игры.
-static var grid := 2
+static var grid := 1
 
 
 static func has(cid: String) -> bool:
