@@ -105,7 +105,10 @@ func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: S
 		"face_down": face_down, "back": CardBack.texture(back),
 		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid),
 		"art": alt, "alt_face": AltArts.full_texture(alt), "alt_mini": AltArts.mini_texture(alt),
-		"morph": alt != "" and morph, "fx": fx and CardFx.has(cid)})
+		"morph": alt != "" and morph, "fx": fx and CardFx.has(cid),
+		# эффект карты: своё время (идёт от начала выдержки и дальше, пока карта тает),
+		# состояние постановки (CardFx.new_state) и было ли уже ожидание выбора
+		"fx_t": 0.0, "fx_state": CardFx.new_state(), "fx_waited": false})
 	if _item.is_empty():
 		_next()
 	set_process(true)
@@ -122,9 +125,41 @@ func _has_fx() -> bool:
 	return bool(_item.get("fx", false))
 
 
-## Для проверок и чтобы не показывать лишнего: идёт ли сейчас показ.
+## Для проверок и чтобы не показывать лишнего: идёт ли сейчас показ. Эффект, который
+## ждёт выбора карты рынка (Ulitharid), показ не держит: вопрос виден, рынок открыт.
 func is_busy() -> bool:
-	return not _item.is_empty()
+	return not _item.is_empty() and not fx_waiting()
+
+
+## Эффект карты ждёт выбора карты рынка (фаза 1 сыграна, щупальца живут).
+func fx_waiting() -> bool:
+	return not _item.is_empty() and _has_fx() and _phase == "hold" \
+		and CardFx.waiting(String(_item["cid"]), float(_item["fx_t"]), _item["fx_state"])
+
+
+## Фаза 2 эффекта: игрок выбрал карту рынка cid (rect — где она на экране, глобально) —
+## к ней тянется щупальце. Пустой rect — просто отпустить.
+func fx_reach(rect: Rect2, cid: String) -> void:
+	if _item.is_empty() or not _has_fx():
+		return
+	var st: Dictionary = _item["fx_state"]
+	if float(st["reach_at"]) < INF or float(st["release"]) < INF:
+		return
+	if rect.size.x < 1.0:
+		fx_release()
+		return
+	st["reach_at"] = maxf(CardFx.fx_time(float(_item["fx_t"])), CardFx.WAIT_T)
+	st["reach_rect"] = Rect2(rect.position - get_global_position(), rect.size)
+	st["reach_cid"] = cid
+
+
+## Выбора карты рынка не будет (нечего выбрать): щупальца уходят без фазы 2.
+func fx_release() -> void:
+	if _item.is_empty() or not _has_fx():
+		return
+	var st: Dictionary = _item["fx_state"]
+	if float(st["reach_at"]) == INF and float(st["release"]) == INF:
+		st["release"] = maxf(CardFx.fx_time(float(_item["fx_t"])), CardFx.WAIT_T)
 
 
 func queued() -> int:
@@ -186,7 +221,7 @@ func _morph_time() -> float:
 
 func _hold_time() -> float:
 	if _has_fx():
-		return CardFx.HOLD_TIME
+		return CardFx.hold_end(String(_item["cid"]), _item["fx_state"])
 	return HOLD_TIME_LEGENDARY if bool(_item["morph"]) and _is_legendary() else HOLD_TIME
 
 
@@ -219,11 +254,25 @@ func _set_phase(phase: String) -> void:
 
 
 func _process(delta: float) -> void:
-	var speed := minf(1.0 + SPEED_PER_QUEUED * _queue.size(), MAX_SPEED)
+	# эффект карты идёт в своём темпе: очередь (например, «съел карту» следом) его не торопит
+	var speed := 1.0 if _has_fx() else minf(1.0 + SPEED_PER_QUEUED * _queue.size(), MAX_SPEED)
 	var step := delta * speed
 	_t += step
 	_flash = maxf(0.0, _flash - step)
 	var want := 1.0 if not _item.is_empty() else 0.0
+	if _has_fx() and (_phase == "hold" or _phase == "exit"):
+		_item["fx_t"] = float(_item["fx_t"]) + step
+		var st: Dictionary = _item["fx_state"]
+		var waiting := fx_waiting()
+		if waiting and not bool(_item["fx_waited"]):
+			# фаза 1 сыграна: рынок открывается, вопрос «какую карту» можно показать
+			_item["fx_waited"] = true
+			finished.emit()
+		if waiting and CardFx.fx_time(float(_item["fx_t"])) > CardFx.WAIT_T + CardFx.WAIT_MAX:
+			fx_release()
+		# с начала ожидания и до конца — без затемнения: видно рынок и куда тянется щупальце
+		if bool(_item["fx_waited"]) or float(st["reach_at"]) < INF:
+			want = 0.0
 	_dim = move_toward(_dim, want, delta * DIM_SPEED)
 
 	match _phase:
@@ -320,10 +369,10 @@ func fx_view() -> Dictionary:
 			or not (_phase == "hold" or _phase == "exit"):
 		return {}
 	var cid := String(_item["cid"])
-	var t := _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0)
+	var t := float(_item["fx_t"])
 	var rect := _row_rects(_area())[0]
 	rect.position += CardFx.card_shift(cid, t)
-	return {"cid": cid, "rect": rect, "t": t}
+	return {"cid": cid, "rect": rect, "t": t, "st": _item["fx_state"]}
 
 
 func _area() -> Rect2:
@@ -436,14 +485,14 @@ func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool
 	_card_rect = rect if _card_rect == Rect2() else _card_rect.merge(rect)
 	var fx := _has_fx() and slot == 0 and (_phase == "hold" or _phase == "exit")
 	# эффект идёт от начала выдержки и дальше, пока карта тает
-	var fx_t := _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0)
+	var fx_t := float(_item.get("fx_t", 0.0))
 	var cid := String(_item["cid"])
 	var banner_rect := rect
 	if fx and CardFx.debug_isolate:
 		# отладка: только щупальца на чёрном, сразу на экране без сетки (CardFx.debug_isolate)
 		c.draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
-		CardFx.draw_behind(c, cid, rect, fx_t)
-		CardFx.draw_front(c, cid, rect, fx_t)
+		CardFx.draw_behind(c, cid, rect, fx_t, _item["fx_state"])
+		CardFx.draw_front(c, cid, rect, fx_t, _item["fx_state"])
 		return
 	if fx:
 		# эффект рисуют холсты слоя (на сетке эффекта): позади и поверх карты, с той же

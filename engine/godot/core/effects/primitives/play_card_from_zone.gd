@@ -35,6 +35,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		if zone == "market":
 			_chosen_index = int(choice)
 			card_id = state.market.display[_chosen_index]
+			# для анимации (щупальце Ulitharid тянется к выбранной карте рынка)
+			resolver.log_event("play_from_market", {"player_id": player_id, "card_id": card_id,
+				"market_index": _chosen_index})
 		else:
 			card_id = String(choice)
 		var inner_card_effect: CardEffect = CardLibrary.get_effect(card_id)

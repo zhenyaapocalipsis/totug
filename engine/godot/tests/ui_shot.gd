@@ -375,6 +375,14 @@ func _run_scenario() -> void:
 			st12.players[mover12].deck.hand.append(cid12)
 			_screen.send(Intent.play_card(mover12, cid12))
 			_screen._turn_banner.hide()
+			# --choose=N: через N кадров выбрать карту рынка (вопрос Ulitharid) — фаза 2
+			if _arg("choose", "") != "":
+				for _i in int(_arg("choose", "60")):
+					await process_frame
+				var pd13: PendingDecision = _screen.server.resolver.pending
+				if pd13 != null and pd13.tag == "market":
+					_screen.send(Intent.make_decision(pd13.player_id,
+						pd13.legal_options[mini(1, pd13.legal_options.size() - 1)]))
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
 			# сопернику, чужой сброс, действия и VP. События подаём прямо в
