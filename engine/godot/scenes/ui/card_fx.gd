@@ -9,10 +9,10 @@ extends RefCounted
 ##   1. Карта сыграна: короткий замах, щупальца рывком вылезают из-за карты, удар
 ##      (остановка времени, вспышка), дальше они живут — шарят, дышат — пока игрок
 ##      выбирает карту рынка (витрина в это время не держит вопрос, см. waiting).
-##   2. Карта выбрана: из-за правого края Ulitharid к ней тянется новое щупальце
-##      (reach) и обвивает её.
-##   3. Все щупальца рывком уходят назад по своим линиям, обвитая карта едет с
-##      последним и затягивается под Ulitharid; дальше — обычный розыгрыш.
+##   2. Карта выбрана: из-за правого края Ulitharid к ней бьёт новое щупальце (reach) и
+##      протыкает её насквозь (решение владельца: без обвивания).
+##   3. Все щупальца рывком уходят назад по своим линиям; дальше — розыгрыш выбранной
+##      карты (витрина показывает её вылетом с её места на рынке).
 ##
 ## Форма щупалец — линии движения с рисунка владельца (SKETCH_CARD — где на нём
 ## карта): прямые, сопряжённые дугами окружностей. Корень спрятан под картой; где
@@ -38,10 +38,10 @@ const FLASH_ALPHA := 0.8
 ## С какого момента можно выбирать карту рынка; сколько щупальца живут без выбора.
 const WAIT_T := 0.85
 const LIVE_MIN := 0.9
-## Фаза 2: щупальце тянется к карте, обвивает её, сжимает; фаза 3 — рывок назад.
-const REACH_T := 0.45
-const WRAP_T := 0.7
-const GRAB_T := 0.3
+## Фаза 2: щупальце бьёт в выбранную карту и протыкает её насквозь, держит; фаза 3 —
+## рывок назад.
+const REACH_T := 0.32
+const PIERCE_HOLD := 0.4
 const RETRACT_T := 0.45
 const END_PAD := 0.1
 ## Сколько ждать выбора карты рынка, прежде чем отпустить щупальца самим (страховка).
@@ -116,14 +116,14 @@ const MIN_HALF := 0.9
 const HOOK := 12.0
 const HOOK_LEN := 70.0
 const HOOK_TIME := 0.4
-## Щупальце к карте рынка: выход за правый край, винт вокруг карты (зазор до её края,
-## сколько оборотов), насколько винт сжимает карту на захвате.
+## Щупальце к карте рынка: выход за правый край Ulitharid; точка удара на карте (доли
+## карты) и насколько остриё выходит дальше за карту (доля её ширины от точки удара).
 const REACH_OUT := 24.0
-const COIL_GAP := 3.0
-## Шаг винта — доля корневой толщины щупальца (витки ложатся рядом).
-const COIL_PITCH := 0.7
-const COIL_TURNS := 3.0
-const GRAB_SQUEEZE := 2.0
+const PIERCE_AT := Vector2(0.38, 0.45)
+const PIERCE_THROUGH := 0.95
+## Удар по карте: тряска (пиксели), вспышка (секунды).
+const PIERCE_SHAKE := 2.5
+const PIERCE_FLASH := 0.15
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
 
@@ -208,7 +208,7 @@ static func fx_time(raw: float) -> float:
 static func _retract_at(cid: String, st: Dictionary) -> float:
 	var reach_at := float(st.get("reach_at", INF))
 	if reach_at < INF:
-		return reach_at + REACH_T + WRAP_T + GRAB_T
+		return reach_at + REACH_T + PIERCE_HOLD
 	var release := float(st.get("release", INF))
 	if not FX[cid].has("reach"):
 		release = minf(release, 0.0)
@@ -388,7 +388,7 @@ static func _glow_level(raw: float) -> float:
 	return 0.35 + 0.65 * exp(-(t - IMPACT_T) * 4.0)
 
 
-## Позади карты: ударная волна, обвитая карта рынка и те части щупалец, что под картой.
+## Позади карты: ударная волна, проткнутая карта рынка и те части щупалец, что под картой.
 static func draw_behind(c: CanvasItem, cid: String, card: Rect2, raw: float, st: Dictionary) -> void:
 	var t := fx_time(raw)
 	_draw_ring(c, cid, card, t, IMPACT_T, 0.8, RING_GROW)
@@ -396,7 +396,7 @@ static func draw_behind(c: CanvasItem, cid: String, card: Rect2, raw: float, st:
 	for tent: Dictionary in FX[cid]["tentacles"]:
 		_draw_tentacle(c, cid, i, tent, card, t, st, false)
 		i += 1
-	# щупальце к карте рынка: задние половины витков, карта, передние половины
+	# щупальце к карте рынка: остриё внутри карты (за ней), сама карта, тело перед ней
 	if FX[cid].has("reach"):
 		_draw_reach(c, cid, card, t, st, 0)
 		_draw_grabbed(c, cid, card, t, st)
@@ -777,39 +777,32 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 
 
 ## Линия щупальца фазы 2 (пиксели витрины): из-под середины карты вправо, за край,
-## дугой к левому краю выбранной карты рынка, снизу вверх — и кольцом вокруг карты.
-## Возвращает {line, coil, anchor}: line — до точки захвата, coil — кольцо от неё.
-static func _reach_geom(cid: String, card: Rect2, st: Dictionary, tight: float) -> Dictionary:
+## дугой к выбранной карте рынка и прямо сквозь неё — остриё выходит с другой стороны.
+## Возвращает {path, z, hit}: z — глубина точек (больше 0 — перед картой рынка, до точки
+## удара; за ней — тело уже внутри карты, за ней), hit — точка удара.
+static func _reach_geom(cid: String, card: Rect2, st: Dictionary) -> Dictionary:
 	var rd: Dictionary = FX[cid]["reach"]
 	var r: Rect2 = st["reach_rect"]
 	var root := card.position + (rd["from"] as Vector2) * card.size
-	var centre := r.get_center()
-	var anchor := Vector2.ZERO
+	var hit := r.position + PIERCE_AT * r.size
 	var exit := Vector2(card.end.x + REACH_OUT, root.y)
-	# к точке захвата — снизу вверх, чтобы линия плавно перешла в кольцо
-	# Кольца — винтом поперёк карты (вокруг её вертикальной оси), шаг — с запасом на
-	# толщину тела, чтобы витки ложились рядом, а не друг на друга. Спереди виток
-	# проходит по лицу карты слева направо, сзади — прячется за ней; на краях карты
-	# тело огибает её ребро. z — глубина (больше 0 — перед картой).
-	var pitch := float(rd["width"]) * COIL_PITCH
-	var a := r.size.x * 0.5 + COIL_GAP - tight
-	var top := centre.y - pitch * COIL_TURNS * 0.5
-	anchor = Vector2(centre.x - a, top)
-	# к началу винта — сверху: линия плавно переходит в первый виток
-	var above := anchor + Vector2(-6.0, -maxf(pitch * 2.0, 24.0))
-	# между выходом и картой — дуга вверх, а не прямая палка
-	var mid := (exit + above) * 0.5 + Vector2(0, -0.22 * exit.distance_to(above))
-	var line := _resample(PackedVector2Array(_rounded([root, exit, mid, above, anchor])), 2.0)
+	# удар чуть сверху-слева: последний отрезок прямой — щупальце бьёт, а не гнётся
+	var dir := Vector2(1.0, 0.28).normalized()
+	var approach := hit - dir * maxf(r.size.x * 0.9, 40.0)
+	var beyond := hit + dir * r.size.x * PIERCE_THROUGH
+	# между выходом и замахом — дуга вверх, а не прямая палка
+	var mid := (exit + approach) * 0.5 + Vector2(0, -0.22 * exit.distance_to(approach))
+	var line := _resample(PackedVector2Array(_rounded([root, exit, mid, approach, hit])), 2.0)
 	line = _taubin(line, 40)
-	var coil := PackedVector2Array()
-	var coil_z := PackedFloat32Array()
-	var steps := int(COIL_TURNS * 64.0)
-	for k in range(steps + 1):
-		var f := float(k) / steps
-		var ang := PI + f * COIL_TURNS * TAU
-		coil.append(Vector2(centre.x + a * cos(ang), top + pitch * COIL_TURNS * f))
-		coil_z.append(-sin(ang))
-	return {"line": line, "coil": coil, "coil_z": coil_z, "anchor": anchor}
+	var path := line.duplicate()
+	var zs := PackedFloat32Array()
+	for i in range(path.size()):
+		zs.append(1.0)
+	var n := int(hit.distance_to(beyond) / 2.0)
+	for k in range(1, n + 1):
+		path.append(hit.lerp(beyond, float(k) / n))
+		zs.append(-1.0)
+	return {"path": path, "z": zs, "hit": hit}
 
 
 ## Длина ломаной.
@@ -831,59 +824,24 @@ static func _point_at(pts: PackedVector2Array, a: float) -> Vector2:
 	return pts[pts.size() - 1]
 
 
-
-## Фазы 2–3 для щупальца к карте рынка: где сейчас его линия (на фазе 3 винт с картой
-## едет назад по линии), глубина каждой точки линии (z: -2 — подход, у винта больше 0 —
-## перед картой) и голова. {} — щупальца ещё нет.
+## Фазы 2–3 для щупальца к карте рынка: линия, глубина точек, голова и сколько секунд
+## прошло с удара (since — меньше 0, пока не ударило). {} — щупальца ещё нет.
 static func _reach_now(cid: String, card: Rect2, t: float, st: Dictionary) -> Dictionary:
 	var reach_at := float(st.get("reach_at", INF))
 	if reach_at == INF or t < reach_at or (st["reach_rect"] as Rect2).size.x < 1.0:
 		return {}
-	var tr := t - reach_at
-	var grab_k := smoothstep(0.0, 1.0, (tr - REACH_T - WRAP_T) / GRAB_T)
-	var geom := _reach_geom(cid, card, st, GRAB_SQUEEZE * grab_k)
-	var line: PackedVector2Array = geom["line"]
-	var coil: PackedVector2Array = geom["coil"]
-	var coil_z: PackedFloat32Array = geom["coil_z"]
-	var line_len := _length(line)
-	var coil_len := _length(coil)
+	var geom := _reach_geom(cid, card, st)
+	var path: PackedVector2Array = geom["path"]
+	var total := _length(path)
 	var gone := _ease("inout", (t - _retract_at(cid, st)) / RETRACT_T)
-	var shift := Vector2.ZERO
-	var path := PackedVector2Array()
-	var zs := PackedFloat32Array()
-	var head := 0.0
-	var cut := line
-	if gone > 0.0:
-		# винт с картой едет назад по линии; тело, что было на линии, уходит под карту
-		var keep := line_len * (1.0 - gone)
-		cut = PackedVector2Array([line[0]])
-		var acc := 0.0
-		for i in range(1, line.size()):
-			var l := line[i].distance_to(line[i - 1])
-			if acc + l > keep:
-				break
-			acc += l
-			cut.append(line[i])
-		var end := _point_at(line, keep)
-		cut.append(end)
-		shift = end - (geom["anchor"] as Vector2)
-	path = cut.duplicate()
-	for i in range(path.size()):
-		zs.append(-2.0)
-	for k in range(1, coil.size()):
-		path.append(coil[k] + shift)
-		zs.append(coil_z[k])
-	if gone > 0.0:
-		head = _length(path)
-	else:
-		head = line_len * _ease("out", tr / REACH_T) + coil_len * _ease("inout", (tr - REACH_T) / WRAP_T)
-	return {"path": path, "z": zs, "head": head, "total": line_len + coil_len, "shift": shift,
-		"grab": grab_k, "anchor": (geom["anchor"] as Vector2) + shift}
+	var head := total * _ease("snap", (t - reach_at) / REACH_T) * (1.0 - gone)
+	return {"path": path, "z": geom["z"], "head": head, "total": total, "hit": geom["hit"],
+		"since": t - reach_at - REACH_T}
 
 
 ## Щупальце к карте рынка (рисуется целиком позади Ulitharid — за его край оно не
-## заходит, а на фазе 3 вместе с картой уходит под него). Слой 0 — подход и задние
-## половины витков (за картой рынка), слой 1 — передние половины витков (поверх неё).
+## заходит). Слой 0 — то, что за картой рынка (тело внутри неё, остриё), слой 1 — то,
+## что перед ней (до точки удара).
 static func _draw_reach(c: CanvasItem, cid: String, card: Rect2, t: float, st: Dictionary,
 		layer: int) -> void:
 	var now := _reach_now(cid, card, t, st)
@@ -895,7 +853,6 @@ static func _draw_reach(c: CanvasItem, cid: String, card: Rect2, t: float, st: D
 	var count := int(head / STEP)
 	if count < 2:
 		return
-	# точки тела и их глубина — по длине линии
 	var cum := PackedFloat32Array([0.0])
 	for i in range(1, path.size()):
 		cum.append(cum[i - 1] + path[i].distance_to(path[i - 1]))
@@ -918,17 +875,17 @@ static func _draw_reach(c: CanvasItem, cid: String, card: Rect2, t: float, st: D
 	_draw_body(c, cid, body, float(FX[cid]["reach"]["width"]), float(now["total"]), mask, layer == 1)
 
 
-## Брызги, когда винт сжимает карту.
+## Удар по карте рынка: брызги из точки удара.
 static func _draw_grab_burst(c: CanvasItem, cid: String, card: Rect2, t: float, st: Dictionary) -> void:
 	var now := _reach_now(cid, card, t, st)
 	if now.is_empty():
 		return
-	_burst(c, cid, "grab", (st["reach_rect"] as Rect2).get_center() + (now["shift"] as Vector2), t,
-		float(st["reach_at"]) + REACH_T + WRAP_T)
+	_burst(c, cid, "pierce", now["hit"], t, float(st["reach_at"]) + REACH_T)
 
 
-## Обвитая карта рынка: лежит на своём месте (под ней на рынке уже следующая), на захвате
-## дрожит, на фазе 3 едет с винтом и уходит под Ulitharid.
+## Выбранная карта рынка: лежит на своём месте (под ней на рынке уже следующая); от
+## удара вздрагивает и вспыхивает. Её розыгрыш начинается после эффекта (витрина
+## показывает её следом, вылетом с этого места).
 static func _draw_grabbed(c: CanvasItem, cid: String, card: Rect2, t: float, st: Dictionary) -> void:
 	var now := _reach_now(cid, card, t, st)
 	if now.is_empty() or String(st["reach_cid"]) == "":
@@ -937,11 +894,14 @@ static func _draw_grabbed(c: CanvasItem, cid: String, card: Rect2, t: float, st:
 	if tex == null:
 		return
 	var r: Rect2 = st["reach_rect"]
-	var jitter := Vector2.ZERO
-	var grab := float(now["grab"])
-	if grab > 0.0 and grab < 1.0:
-		jitter = Vector2(sin(t * 70.0), cos(t * 63.0)) * 1.2
-	c.draw_texture_rect(tex, Rect2((r.position + (now["shift"] as Vector2) + jitter).round(), r.size), false)
+	var since := float(now["since"])
+	var jolt := Vector2.ZERO
+	if since > 0.0:
+		jolt = (Vector2(sin(since * 60.0), cos(since * 53.0)) * PIERCE_SHAKE * exp(-since * 9.0)).round()
+	var at := Rect2(r.position + jolt, r.size)
+	c.draw_texture_rect(tex, at, false)
+	if since > 0.0 and since < PIERCE_FLASH:
+		c.draw_rect(at, Color(1, 1, 1, 0.85 * (1.0 - since / PIERCE_FLASH)))
 
 
 ## Тело щупальца по точкам body (от головы к корню): тень, обводка и кожа. Полоска j

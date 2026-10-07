@@ -1149,14 +1149,19 @@ func _react_to_events(events: Array) -> void:
 			# Ulitharid: выбрана карта рынка — к ней тянется щупальце (фаза 2 эффекта)
 			"play_from_market":
 				var idx := int(evt.get("market_index", -1))
-				_showcase.fx_reach(_market_panel.card_rect(idx), String(evt.get("card_id", "")))
+				_pierced_rect = _market_panel.card_rect(idx)
+				_showcase.fx_reach(_pierced_rect, String(evt.get("card_id", "")))
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
 			"devour":
 				# Свою карту из руки или из игры игрок съел сам и знает об этом.
 				if pid != viewer_id or String(evt.get("source", "")) == "market":
-					_showcase_card(pid, String(evt.get("card_id", "")), "DEVOURS", null, "")
+					# карта, проткнутая щупальцем Ulitharid, вылетает со своего места на рынке
+					var from: Variant = _pierced_rect if String(evt.get("source", "")) == "market" \
+						and _pierced_rect.size.x > 0.0 else null
+					_pierced_rect = Rect2()
+					_showcase_card(pid, String(evt.get("card_id", "")), "DEVOURS", from, "")
 		if started:
 			launched += 1
 	if not outcasts.is_empty():
@@ -1319,6 +1324,9 @@ const RECAP_STATS := {
 ## аргументом --debug-keys): F9 — показать эффект следующей карты (по кругу),
 ## F10 — сменить сетку эффекта (1 / 2) и показать ту же карту ещё раз.
 var _fx_test_i := -1
+## Где на рынке лежала карта, которую проткнуло щупальце Ulitharid (её показ — вылетом
+## оттуда).
+var _pierced_rect := Rect2()
 
 
 func _fx_test_key(keycode: Key) -> bool:
