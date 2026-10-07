@@ -40,7 +40,7 @@ const WAIT_T := 0.85
 const LIVE_MIN := 0.9
 ## Фаза 2: щупальце тянется к карте, обвивает её, сжимает; фаза 3 — рывок назад.
 const REACH_T := 0.45
-const WRAP_T := 0.4
+const WRAP_T := 0.7
 const GRAB_T := 0.3
 const RETRACT_T := 0.45
 const END_PAD := 0.1
@@ -57,6 +57,8 @@ const OUTLINE := 1.5
 const SHADOW := Vector2(3, 4)
 ## Ширина тела у корня самого толстого щупальца, к которой подгоняется спрайт.
 const ROOT_REF := 30.0
+## Ступеней яркости в палитре тела.
+const LUT_SIZE := 64
 ## Шаг полосок тела.
 const STEP := 3.0
 ## Отсчёты линии щупальца, вставки на звено, проходы сглаживания, отсчёты продолжения
@@ -114,12 +116,13 @@ const MIN_HALF := 0.9
 const HOOK := 12.0
 const HOOK_LEN := 70.0
 const HOOK_TIME := 0.4
-## Щупальце к карте рынка: выход за правый край, кольцо вокруг карты (зазор, сжатие к
-## концу, сколько оборотов), насколько сжимает карту на захвате.
+## Щупальце к карте рынка: выход за правый край, винт вокруг карты (зазор до её края,
+## сколько оборотов), насколько винт сжимает карту на захвате.
 const REACH_OUT := 24.0
 const COIL_GAP := 3.0
-const COIL_SHRINK := 3.0
-const COIL_TURNS := 1.15
+## Шаг винта — доля корневой толщины щупальца (витки ложатся рядом).
+const COIL_PITCH := 0.7
+const COIL_TURNS := 3.0
 const GRAB_SQUEEZE := 2.0
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
@@ -270,13 +273,49 @@ static func _fit(tex: Texture2D, key: String) -> Texture2D:
 			var p := img.get_pixel(x, y)
 			p.a = 1.0 if p.a > 0.5 else 0.0
 			img.set_pixel(x, y, p)
-	_flatten(img)
+	var lut := _palette_lut(img)
+	_cache[key + "/lut"] = ImageTexture.create_from_image(lut)
+	_flatten(img, lut)
 	return ImageTexture.create_from_image(img)
 
 
-## Снимает со спрайта запечённый свет (слева светло, справа темно): средняя яркость
-## каждой доли поперёк тела выравнивается, рисунок колец остаётся.
-static func _flatten(img: Image) -> void:
+## Палитра спрайта по яркости: 64 ступени яркости -> ближайший по яркости цвет самого
+## спрайта. Свет (и выравнивание) меняют яркость, а цвет берут отсюда — тело остаётся
+## в своих цветах, как у рисованного пиксель-арта, без пересвеченной синевы.
+static func _palette_lut(img: Image) -> Image:
+	var colours: Array[Color] = []
+	var seen := {}
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			var p := img.get_pixel(x, y)
+			if p.a <= 0.5:
+				continue
+			var key := p.to_html(false)
+			if not seen.has(key):
+				seen[key] = true
+				colours.append(Color(p.r, p.g, p.b, 1.0))
+	var lut := Image.create(LUT_SIZE, 1, false, Image.FORMAT_RGBA8)
+	for i in range(LUT_SIZE):
+		var want := (float(i) + 0.5) / float(LUT_SIZE)
+		var best := Color.BLACK
+		var best_d := INF
+		for col in colours:
+			var d := absf(col.get_luminance() - want)
+			if d < best_d:
+				best_d = d
+				best = col
+		lut.set_pixel(i, 0, best)
+	return lut
+
+
+## Цвет палитры lut для яркости lum.
+static func _lut_at(lut: Image, lum: float) -> Color:
+	return lut.get_pixel(clampi(int(lum * float(LUT_SIZE)), 0, LUT_SIZE - 1), 0)
+
+
+## Снимает со спрайта запечённый свет (слева светло, справа темно): яркость каждой доли
+## поперёк тела выравнивается к общей, рисунок колец остаётся; цвет берётся из палитры.
+static func _flatten(img: Image, lut: Image) -> void:
 	const B := 10
 	var w := img.get_width()
 	var h := img.get_height()
@@ -297,7 +336,7 @@ static func _flatten(img: Image) -> void:
 		var sp := spans[y]
 		if sp.y - sp.x < 3:
 			continue
-		for x in range(sp.x, sp.y):
+		for x in range(sp.x + 1, sp.y - 1):
 			var b := clampi(int((float(x - sp.x) + 0.5) / float(sp.y - sp.x) * B), 0, B - 1)
 			sums[b] += img.get_pixel(x, y).get_luminance()
 			cnts[b] += 1.0
@@ -309,11 +348,15 @@ static func _flatten(img: Image) -> void:
 			mean += sums[b]
 			used += 1.0
 	mean /= maxf(used, 1.0)
+	for b in range(B):
+		if cnts[b] <= 0.0:
+			sums[b] = mean
 	for y in range(h):
 		var sp := spans[y]
-		if sp.y - sp.x < 2:
+		if sp.y - sp.x < 3:
 			continue
-		for x in range(sp.x, sp.y):
+		# крайние точки — свой контур спрайта, их не трогаем
+		for x in range(sp.x + 1, sp.y - 1):
 			var p := img.get_pixel(x, y)
 			if p.a <= 0.5:
 				continue
@@ -321,8 +364,17 @@ static func _flatten(img: Image) -> void:
 			var b0 := clampi(int(floorf(u)), 0, B - 1)
 			var b1 := clampi(b0 + 1, 0, B - 1)
 			var m := lerpf(sums[b0], sums[b1], clampf(u - floorf(u), 0.0, 1.0))
-			var f := clampf(mean / maxf(m, 0.02), 0.6, 2.2)
-			img.set_pixel(x, y, Color(minf(p.r * f, 1.0), minf(p.g * f, 1.0), minf(p.b * f, 1.0), p.a))
+			var lum := p.get_luminance() * clampf(mean / maxf(m, 0.02), 0.6, 2.2)
+			var col := _lut_at(lut, lum)
+			col.a = p.a
+			img.set_pixel(x, y, col)
+
+
+## Палитра тела карты cid для шейдера света.
+static func palette_of(cid: String) -> Texture2D:
+	_sprite(cid)
+	return _cache["%s/%s/%d/lut" % [cid, FX[cid]["sprite"], grid]]
+
 
 
 ## Сила свечения вокруг карты: нарастает в замахе, вспыхивает на ударе и гаснет.
@@ -340,15 +392,15 @@ static func _glow_level(raw: float) -> float:
 static func draw_behind(c: CanvasItem, cid: String, card: Rect2, raw: float, st: Dictionary) -> void:
 	var t := fx_time(raw)
 	_draw_ring(c, cid, card, t, IMPACT_T, 0.8, RING_GROW)
-	var reach: bool = FX[cid].has("reach")
-	if reach:
-		_draw_grabbed(c, cid, card, t, st)
 	var i := 0
 	for tent: Dictionary in FX[cid]["tentacles"]:
 		_draw_tentacle(c, cid, i, tent, card, t, st, false)
 		i += 1
-	if reach:
-		_draw_reach(c, cid, card, t, st, false)
+	# щупальце к карте рынка: задние половины витков, карта, передние половины
+	if FX[cid].has("reach"):
+		_draw_reach(c, cid, card, t, st, 0)
+		_draw_grabbed(c, cid, card, t, st)
+		_draw_reach(c, cid, card, t, st, 1)
 
 
 ## Поверх карты: части щупалец, что лежат на ней, брызги слизи, пылинки, светящиеся
@@ -362,7 +414,7 @@ static func draw_front(c: CanvasItem, cid: String, card: Rect2, raw: float, st: 
 		_draw_root_glow(c, cid, i, card, raw)
 		i += 1
 	if FX[cid].has("reach"):
-		_draw_reach(c, cid, card, t, st, true)
+		_draw_grab_burst(c, cid, card, t, st)
 	if debug_isolate:
 		return
 	_draw_motes(c, cid, card, t)
@@ -421,6 +473,7 @@ class Canvas extends Control:
 		if v.is_empty():
 			return
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE / float(CardFx.grid))
+		(material as ShaderMaterial).set_shader_parameter("palette", CardFx.palette_of(v["cid"]))
 		if front:
 			CardFx.draw_front(self, v["cid"], v["rect"], v["t"], v["st"])
 		else:
@@ -731,30 +784,32 @@ static func _reach_geom(cid: String, card: Rect2, st: Dictionary, tight: float) 
 	var r: Rect2 = st["reach_rect"]
 	var root := card.position + (rd["from"] as Vector2) * card.size
 	var centre := r.get_center()
-	var a0 := r.size.x * 0.5 + COIL_GAP
-	var anchor := Vector2(centre.x - a0, centre.y)
+	var anchor := Vector2.ZERO
 	var exit := Vector2(card.end.x + REACH_OUT, root.y)
 	# к точке захвата — снизу вверх, чтобы линия плавно перешла в кольцо
-	var below := anchor + Vector2(0, maxf(r.size.y * 0.5, 24.0))
-	# между ними — дуга вверх, а не прямая палка
-	var mid := (exit + below) * 0.5 + Vector2(0, -0.22 * exit.distance_to(below))
-	var line := _resample(PackedVector2Array(_rounded([root, exit, mid, below, anchor])), 2.0)
+	# Кольца — винтом поперёк карты (вокруг её вертикальной оси), шаг — с запасом на
+	# толщину тела, чтобы витки ложились рядом, а не друг на друга. Спереди виток
+	# проходит по лицу карты слева направо, сзади — прячется за ней; на краях карты
+	# тело огибает её ребро. z — глубина (больше 0 — перед картой).
+	var pitch := float(rd["width"]) * COIL_PITCH
+	var a := r.size.x * 0.5 + COIL_GAP - tight
+	var top := centre.y - pitch * COIL_TURNS * 0.5
+	anchor = Vector2(centre.x - a, top)
+	# к началу винта — сверху: линия плавно переходит в первый виток
+	var above := anchor + Vector2(-6.0, -maxf(pitch * 2.0, 24.0))
+	# между выходом и картой — дуга вверх, а не прямая палка
+	var mid := (exit + above) * 0.5 + Vector2(0, -0.22 * exit.distance_to(above))
+	var line := _resample(PackedVector2Array(_rounded([root, exit, mid, above, anchor])), 2.0)
 	line = _taubin(line, 40)
 	var coil := PackedVector2Array()
-	var steps := 120
+	var coil_z := PackedFloat32Array()
+	var steps := int(COIL_TURNS * 64.0)
 	for k in range(steps + 1):
 		var f := float(k) / steps
-		# от левого края по часовой (на экране y вниз): вверх, вправо, вниз, влево
 		var ang := PI + f * COIL_TURNS * TAU
-		var shrink := COIL_SHRINK * f + tight
-		var a := a0 - shrink
-		var b := r.size.y * 0.5 + COIL_GAP - shrink
-		var cs := cos(ang)
-		var sn := sin(ang)
-		# суперэллипс: прямоугольник со скруглёнными углами
-		coil.append(centre + Vector2(a * signf(cs) * sqrt(absf(cs)), b * signf(sn) * sqrt(absf(sn))))
-	coil = _resample(coil, 2.0)
-	return {"line": line, "coil": coil, "anchor": anchor}
+		coil.append(Vector2(centre.x + a * cos(ang), top + pitch * COIL_TURNS * f))
+		coil_z.append(-sin(ang))
+	return {"line": line, "coil": coil, "coil_z": coil_z, "anchor": anchor}
 
 
 ## Длина ломаной.
@@ -776,8 +831,10 @@ static func _point_at(pts: PackedVector2Array, a: float) -> Vector2:
 	return pts[pts.size() - 1]
 
 
-## Фазы 2–3 для щупальца к карте рынка: где сейчас его линия (с учётом того, что на
-## фазе 3 кольцо с картой едет назад по линии) и голова. {} — щупальца ещё нет.
+
+## Фазы 2–3 для щупальца к карте рынка: где сейчас его линия (на фазе 3 винт с картой
+## едет назад по линии), глубина каждой точки линии (z: -2 — подход, у винта больше 0 —
+## перед картой) и голова. {} — щупальца ещё нет.
 static func _reach_now(cid: String, card: Rect2, t: float, st: Dictionary) -> Dictionary:
 	var reach_at := float(st.get("reach_at", INF))
 	if reach_at == INF or t < reach_at or (st["reach_rect"] as Rect2).size.x < 1.0:
@@ -787,20 +844,19 @@ static func _reach_now(cid: String, card: Rect2, t: float, st: Dictionary) -> Di
 	var geom := _reach_geom(cid, card, st, GRAB_SQUEEZE * grab_k)
 	var line: PackedVector2Array = geom["line"]
 	var coil: PackedVector2Array = geom["coil"]
+	var coil_z: PackedFloat32Array = geom["coil_z"]
 	var line_len := _length(line)
 	var coil_len := _length(coil)
 	var gone := _ease("inout", (t - _retract_at(cid, st)) / RETRACT_T)
 	var shift := Vector2.ZERO
 	var path := PackedVector2Array()
+	var zs := PackedFloat32Array()
 	var head := 0.0
-	if gone <= 0.0:
-		path = line.duplicate()
-		path.append_array(coil.slice(1))
-		head = line_len * _ease("out", tr / REACH_T) + coil_len * _ease("inout", (tr - REACH_T) / WRAP_T)
-	else:
-		# кольцо с картой едет назад по линии; тело, что было на линии, уходит под карту
+	var cut := line
+	if gone > 0.0:
+		# винт с картой едет назад по линии; тело, что было на линии, уходит под карту
 		var keep := line_len * (1.0 - gone)
-		var cut := PackedVector2Array([line[0]])
+		cut = PackedVector2Array([line[0]])
 		var acc := 0.0
 		for i in range(1, line.size()):
 			var l := line[i].distance_to(line[i - 1])
@@ -811,43 +867,68 @@ static func _reach_now(cid: String, card: Rect2, t: float, st: Dictionary) -> Di
 		var end := _point_at(line, keep)
 		cut.append(end)
 		shift = end - (geom["anchor"] as Vector2)
-		path = cut
-		for k in range(1, coil.size()):
-			path.append(coil[k] + shift)
+	path = cut.duplicate()
+	for i in range(path.size()):
+		zs.append(-2.0)
+	for k in range(1, coil.size()):
+		path.append(coil[k] + shift)
+		zs.append(coil_z[k])
+	if gone > 0.0:
 		head = _length(path)
-	return {"path": path, "head": head, "total": line_len + coil_len, "shift": shift,
-		"grab": grab_k, "gone": gone}
+	else:
+		head = line_len * _ease("out", tr / REACH_T) + coil_len * _ease("inout", (tr - REACH_T) / WRAP_T)
+	return {"path": path, "z": zs, "head": head, "total": line_len + coil_len, "shift": shift,
+		"grab": grab_k, "anchor": (geom["anchor"] as Vector2) + shift}
 
 
-## Щупальце к карте рынка: тело по текущей линии; позади карты — то, что внутри неё.
+## Щупальце к карте рынка (рисуется целиком позади Ulitharid — за его край оно не
+## заходит, а на фазе 3 вместе с картой уходит под него). Слой 0 — подход и задние
+## половины витков (за картой рынка), слой 1 — передние половины витков (поверх неё).
 static func _draw_reach(c: CanvasItem, cid: String, card: Rect2, t: float, st: Dictionary,
-		front: bool) -> void:
+		layer: int) -> void:
 	var now := _reach_now(cid, card, t, st)
 	if now.is_empty():
 		return
 	var path: PackedVector2Array = now["path"]
+	var zs: PackedFloat32Array = now["z"]
 	var head := float(now["head"])
 	var count := int(head / STEP)
 	if count < 2:
 		return
+	# точки тела и их глубина — по длине линии
+	var cum := PackedFloat32Array([0.0])
+	for i in range(1, path.size()):
+		cum.append(cum[i - 1] + path[i].distance_to(path[i - 1]))
 	var body := PackedVector2Array()
-	for j in range(count + 1):
-		body.append(_point_at(path, maxf(head - float(j) * STEP, 0.0)))
-	var inside := card.grow(BEHIND_GAP)
+	var bz := PackedFloat32Array()
+	var i := 1
+	for j in range(count, -1, -1):
+		var a := maxf(head - float(j) * STEP, 0.0)
+		while i < path.size() - 1 and cum[i] < a:
+			i += 1
+		var f := clampf((a - cum[i - 1]) / maxf(cum[i] - cum[i - 1], 0.0001), 0.0, 1.0)
+		body.append(path[i - 1].lerp(path[i], f))
+		bz.append(lerpf(zs[i - 1], zs[i], f))
+	body.reverse()
+	bz.reverse()
 	var mask := PackedByteArray()
 	mask.resize(count)
 	for j in range(count):
-		mask[j] = 0 if inside.has_point((body[j] + body[j + 1]) * 0.5) else 1
-	_draw_body(c, cid, body, float(FX[cid]["reach"]["width"]), float(now["total"]), mask, front)
-	# брызги на захвате
-	if front:
-		var r: Rect2 = st["reach_rect"]
-		_burst(c, cid, "grab", Vector2(r.position.x, r.get_center().y), t,
-			float(st["reach_at"]) + REACH_T + WRAP_T)
+		mask[j] = 1 if (bz[j] + bz[j + 1]) * 0.5 >= 0.0 else 0
+	_draw_body(c, cid, body, float(FX[cid]["reach"]["width"]), float(now["total"]), mask, layer == 1)
+
+
+## Брызги, когда винт сжимает карту.
+static func _draw_grab_burst(c: CanvasItem, cid: String, card: Rect2, t: float, st: Dictionary) -> void:
+	var now := _reach_now(cid, card, t, st)
+	if now.is_empty():
+		return
+	_burst(c, cid, "grab", (st["reach_rect"] as Rect2).get_center() + (now["shift"] as Vector2), t,
+		float(st["reach_at"]) + REACH_T + WRAP_T)
 
 
 ## Обвитая карта рынка: лежит на своём месте (под ней на рынке уже следующая), на захвате
-## дрожит, на фазе 3 едет с кольцом и уходит под Ulitharid.
+## дрожит, на фазе 3 едет с винтом и уходит под Ulitharid.
 static func _draw_grabbed(c: CanvasItem, cid: String, card: Rect2, t: float, st: Dictionary) -> void:
 	var now := _reach_now(cid, card, t, st)
 	if now.is_empty() or String(st["reach_cid"]) == "":
