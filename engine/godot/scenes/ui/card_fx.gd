@@ -538,23 +538,22 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	var rows := PackedFloat32Array()
 	# Конус: толщина падает по экспоненте от корня до TAPER_END доли на цели (а не почти
 	# ровная труба, как у червя). Кольца мельчают вместе с толщиной, поэтому узор не
-	# растягивается. Длина дуги a считается от КОРНЯ: кожа сидит на теле и не ползёт
-	# по нему — щупальце выходит из-за карты и втягивается обратно, а гнётся оно само.
+	# растягивается.
 	var taper_len := total / log(1.0 / TAPER_END)
-	var row_base := density * taper_len * (exp(seg * float(SPINE_N + EXT_N) / taper_len) - 1.0)
 	for j in range(count + 1):
 		normals.append((body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized())
 		var dist := float(j) * STEP
-		var a := maxf(head - dist, 0.0)
-		var profile := root_w * 0.5 * exp(-a / taper_len)
+		# dist — расстояние от головы вдоль тела: форма и узор принадлежат самому телу и
+		# едут по кривой вместе с головой (щупальце вытягивается из-за карты, а не
+		# «дорисовывается»), на цели у корня тело имеет полную толщину
+		var profile := root_w * 0.5 * exp(-(total - dist) / taper_len)
 		# у самой головы — остриё
 		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
 		# не тоньше MIN_HALF: острие тоньше пикселя рисуется пунктиром и «рвётся»
 		halves.append(maxf(profile * taper, maxf(MIN_HALF, 0.5 * float(grid))))
-		# строка спрайта по длине дуги: ширина растёт вдоль тела так же, как толщина, а
-		# строки идут с ней в ногу (интеграл от плотности / относительной толщины);
-		# к голове (j меньше) строка меньше — узор лежит так же, как раньше
-		rows.append(row_base - density * taper_len * (exp(a / taper_len) - 1.0))
+		# строка спрайта: шаг колец пропорционален толщине (интеграл от плотности по
+		# длине тела), у головы строка 0 — узор привязан к голове, как раньше
+		rows.append(density * taper_len * (exp(total / taper_len) - exp((total - dist) / taper_len)))
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	# тень на карте и тёмная обводка: щупальце отделяется от синего арта
 	var no_uv := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
