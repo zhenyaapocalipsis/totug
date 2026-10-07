@@ -839,6 +839,9 @@ func _input(event: InputEvent) -> void:
 	# Отпускание пробела сбрасывает удержание при любом состоянии экрана.
 	if GameSettings.is_key(key, "end_turn") and not key.pressed:
 		_space_held = false
+	if key.pressed and not key.echo and _fx_test_key(key.keycode):
+		get_viewport().set_input_as_handled()
+		return
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if _pause_menu.visible:
 		# Под меню паузы клавиши до игры не доходят; Esc его закрывает, из
@@ -1299,6 +1302,30 @@ const RECAP_STATS := {
 	"take_trophy": ["trophy", ""],
 	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""],
 }
+
+
+## Проверка эффектов уникальных карт прямо в партии (только из редактора или с
+## аргументом --debug-keys): F9 — показать эффект следующей карты (по кругу),
+## F10 — сменить сетку эффекта (1 / 2) и показать ту же карту ещё раз.
+var _fx_test_i := -1
+
+
+func _fx_test_key(keycode: Key) -> bool:
+	if keycode != KEY_F9 and keycode != KEY_F10:
+		return false
+	if not (OS.is_debug_build() or "--debug-keys" in OS.get_cmdline_user_args()):
+		return false
+	var ids: Array = CardFx.FX.keys()
+	if ids.is_empty():
+		return false
+	if keycode == KEY_F9 or _fx_test_i < 0:
+		_fx_test_i = (_fx_test_i + 1) % ids.size()
+	else:
+		CardFx.grid = 3 - CardFx.grid if CardFx.grid <= 2 else 1
+	var cid := String(ids[_fx_test_i])
+	_showcase_card(viewer_id, cid, "PLAYS (TEST GRID %d)" % CardFx.grid, null, "", false, false, true)
+	Sfx.play(CardFx.sound(cid), false)
+	return true
 
 
 ## Крупный показ карты cid, которую взял pid (см. CardShowcase).

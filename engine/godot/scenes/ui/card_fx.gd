@@ -290,6 +290,9 @@ class Canvas extends Control:
 		layer.add_child(holder)
 
 	func _process(_delta: float) -> void:
+		# сетку можно сменить на лету (F10 в игре)
+		if holder.stretch_shrink != CardFx.grid:
+			holder.stretch_shrink = CardFx.grid
 		var v: Dictionary = host.call("fx_view")
 		holder.visible = not v.is_empty()
 		if holder.visible:
@@ -605,7 +608,7 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 ## Считается один раз: по ним полоска растягивается ровно на тело, а S-образный изгиб
 ## спрайта не уводит тело в сторону.
 static func _bounds(cid: String) -> Dictionary:
-	var key := "bounds/" + cid
+	var key := "bounds/%s/%d" % [cid, grid]
 	if _cache.has(key):
 		return _cache[key]
 	var img := _sprite(cid).get_image()
