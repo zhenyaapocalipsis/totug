@@ -1291,7 +1291,7 @@
   },
   {
     "card_id": 49003,
-    "name": "Knight",
+    "name": "Sphinx of Valor",
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
@@ -1301,7 +1301,7 @@
   },
   {
     "card_id": 49004,
-    "name": "Deva",
+    "name": "Djinni",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
@@ -1311,7 +1311,7 @@
   },
   {
     "card_id": 49005,
-    "name": "Priest Acolyte",
+    "name": "Satyr",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
@@ -1401,7 +1401,7 @@
   },
   {
     "card_id": 49014,
-    "name": "Lion",
+    "name": "Werebear",
     "cost": 3,
     "aspect": "MALICE",
     "type": "CELESTIAL",
@@ -1441,7 +1441,7 @@
   },
   {
     "card_id": 49018,
-    "name": "Gladiator",
+    "name": "Berserker",
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
@@ -1461,7 +1461,7 @@
   },
   {
     "card_id": 49020,
-    "name": "Guard Captain",
+    "name": "Silver Dragon",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CELESTIAL",

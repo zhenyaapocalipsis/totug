@@ -7,31 +7,34 @@
 
 ---
 
-## 1. Demacia → Небесный орден (ангелы, рыцари, пегасы)
-**Что делает:** работает со стартовыми картами Obedience (Promote, бонусы за кавалерию), много Promote, шпионы-разведчики, защита своих войск (сбросить карту и отменить атаку). Медленная, устойчивая колода.
+## 1. Demacia → Celestial Order (в игре, этапы NE-1..NE-3)
+**Что делает:** работает со стартовыми картами Obedience (Promote, бонусы за House Guard — бывшая кавалерия), много Promote, шпионы-разведчики, защита своих войск (Shield Guardian отменяет атаку). Медленная, устойчивая колода.
 
-| Карта | Существо D&D |
+| Карта мода | Существо (id) |
 |---|---|
-| Garen | Knight |
-| Lux | Deva |
-| Kayle | Solar |
-| Morgana | Erinyes (падший ангел) |
-| Lucian | Planetar |
-| Galio | Shield Guardian |
-| Shyvana / Dragon Shyvana | Gold Dragon (превращение) |
-| Quinn / Valor | Giant Eagle (пара) |
-| Jarvan IV | Warlord |
-| Xin Zhao | Champion |
-| Fiora | Swashbuckler |
-| Poppy | Veteran |
-| Vayne | Archer |
-| Sona | Bard |
-| Sylas | Gladiator |
-| Silverwing Diver | Pegasus |
-| Radiant Guardian, Dauntless Reinforcements | Couatl |
-| Mageseeker Inquisitor / Investigator / Conservator | Priest, Acolyte |
-| Zealous Ranger-Knight, Grizzled Ranger, Greenfang Warden | Unicorn, Hippogriff |
-| Laurent Protégé, Dawnspeakers, Durand Architect | Aarakocra, Scout |
+| Laurent Protégé | Warrior Infantry (49000) |
+| Dawnspeakers | Priest (49001) |
+| Insightful Investigator | Sphinx of Wonder (49002) |
+| Garen | Sphinx of Valor (49003) |
+| Lux | Djinni (49004) |
+| Durand Architect | Satyr (49005) |
+| Mageseeker Conservator | Couatl (49006) |
+| Zealous Ranger-Knight | Hippogriff (49007) |
+| Silverwing Diver | Pegasus (49008) |
+| Greenfang Warden | Druid (49009) |
+| Radiant Guardian | Planetar (49010) |
+| Mageseeker Inquisitor | Sphinx of Lore (49011) |
+| Dauntless Reinforcements | Griffon (49012) |
+| Mageseeker Investigator | Unicorn (49013) |
+| Grizzled Ranger | Werebear (49014) |
+| Kayle | Solar (49015) |
+| Morgana | Erinyes (49016) |
+| Poppy | Warrior Veteran (49017) |
+| Fiora | Berserker (49018) |
+| Quinn / Valor | Scout (49019) / Giant Eagle (49023) |
+| Jarvan IV | Silver Dragon (49020) |
+| Galio | Shield Guardian (49021) |
+| Shyvana / Dragon Shyvana | Gold Dragon (49022) / Ancient Gold Dragon (49024) |
 
 ## 2. Shadow Isles → Туманная нежить (новые виды)
 **Что делает:** раздаёт соперникам проклятие Cursed Wanderer (−1 VP), а сама усиливается от каждого проклятия: мощь, шпионы, убийства. Execute своих карт ради эффекта. Портит чужие колоды.

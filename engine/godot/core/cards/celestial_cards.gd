@@ -12,7 +12,7 @@ extends RefCounted
 ##   "Scry N"           -> ScryCards (посмотреть N верхних, сбросить любые).
 ##
 ## Упрощения (не в пользу игрока, партию не блокируют):
-##   Deva — "spend 2 Influence: draw" предлагается сразу при розыгрыше
+##   Djinni — "spend 2 Influence: draw" предлагается сразу при розыгрыше
 ##     (сколько угодно раз подряд), а не в любой момент хода;
 ##   (Shield Guardian: +5 Power при розыгрыше; реакция из руки — ShieldGuard).
 
@@ -42,14 +42,14 @@ static func build(card_id: String) -> CardEffect:
 				ConditionalEffect.new(func(state, _pid): return site_is_full(state, site), GainPower.new(1)),
 				ConditionalEffect.new(func(state, pid): return CardLibrary._site_has_enemy_spy(state, pid, site), GainPower.new(1)),
 			]))
-		"49003":  # Knight (Garen)
+		"49003":  # Sphinx of Valor (Garen)
 			return ChooseEffect.new([
 				SequenceEffect.new([GainSupplyToHand.new([HOUSE_GUARD, PRIESTESS] as Array[String]), GainPower.new(4)]),
 				PromoteCard.new("hand_or_discard", "", func(c): return CardLibrary.card_aspect(c) == "OBEDIENCE", 2, true),
 			], ["House Guard or Priestess into your hand, +4 Power", "Promote up to 2 Obedience cards from hand or discard"])
-		"49004":  # Deva (Lux)
+		"49004":  # Djinni (Lux)
 			return SequenceEffect.new([GainInfluence.new(5), _DevaDrawLoop.new()])
-		"49005":  # Priest Acolyte (Durand Architect)
+		"49005":  # Satyr (Durand Architect)
 			return ChooseEffect.new([
 				GainInfluence.new(2),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
@@ -103,7 +103,7 @@ static func build(card_id: String) -> CardEffect:
 				_InfluencePerSpy.new(),
 			], ["Place a spy (full site: draw a card)", "Return one of your spies -> Supplant a troop at that spy's site",
 				"+1 Influence per spy you have on the board"])
-		"49014":  # Lion (Grizzled Ranger)
+		"49014":  # Werebear (Grizzled Ranger)
 			return ChooseEffect.new([
 				GainPower.new(2),
 				AssassinateTroop.new(1, true),
@@ -133,7 +133,7 @@ static func build(card_id: String) -> CardEffect:
 				MoveTroop.new(2, true, false, true, "", func(site): return _veteran_extra_move(site)),
 				_AllFromDiscardToHand.new(HOUSE_GUARD),
 			])
-		"49018":  # Gladiator (Fiora)
+		"49018":  # Berserker (Fiora)
 			return SequenceEffect.new([
 				ScryCards.new(2),
 				DrawCards.new(1),
@@ -148,7 +148,7 @@ static func build(card_id: String) -> CardEffect:
 				ConditionalEffect.new(func(state, pid): return state.players[pid].deck.draw_pile.has(GIANT_EAGLE),
 					SequenceEffect.new([DrawCards.new(3), DiscardCardEffect.new(3), GainPower.new(2)])),
 			])
-		"49020":  # Guard Captain (Jarvan IV)
+		"49020":  # Silver Dragon (Jarvan IV)
 			return ChooseEffect.new([
 				SequenceEffect.new([PutDeckIntoDiscard.new(), PromoteCard.new("discard")]),
 				GainPower.new(3),
@@ -239,7 +239,7 @@ class _InfluencePerSpy extends CardEffect:
 			resolver.push(GainInfluence.new(n), player_id)
 
 
-## Deva: после +5 Influence сколько угодно раз "заплати 2 Influence — возьми карту".
+## Djinni: после +5 Influence сколько угодно раз "заплати 2 Influence — возьми карту".
 class _DevaDrawLoop extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		if state.players[player_id].influence < 2:
