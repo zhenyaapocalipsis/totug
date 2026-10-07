@@ -280,6 +280,13 @@ class SlotLayer extends Control:
 	## Какой образ и на каком лице (мелком или полном) сейчас настроен.
 	var skin := ""
 	var mini := false
+	## Холсты эффекта (CardFx.Canvas): появляются, когда карта с эффектом.
+	var fx_canvases: Array[Control] = []
+
+	func ensure_fx() -> void:
+		if fx_canvases.is_empty() and index == 0:
+			fx_canvases.append(CardFx.Canvas.new(self, host, false))
+			fx_canvases.append(CardFx.Canvas.new(self, host, true))
 
 	func _init(showcase: CardShowcase, slot: int) -> void:
 		host = showcase
@@ -306,6 +313,19 @@ class SlotLayer extends Control:
 		CardView.configure_skin(mat, SkinCollection.SHADER_INDEX[shader], small)
 
 
+## Что рисовать холстам эффекта (CardFx.Canvas) сейчас: карта, её рамка (со сдвигом от
+## ударов) и время эффекта; пусто — эффект не идёт.
+func fx_view() -> Dictionary:
+	if _item.is_empty() or not _has_fx() or CardFx.debug_isolate \
+			or not (_phase == "hold" or _phase == "exit"):
+		return {}
+	var cid := String(_item["cid"])
+	var t := _t + (CardFx.HOLD_TIME if _phase == "exit" else 0.0)
+	var rect := _row_rects(_area())[0]
+	rect.position += CardFx.card_shift(cid, t)
+	return {"cid": cid, "rect": rect, "t": t}
+
+
 func _area() -> Rect2:
 	if board_area == null:
 		return Rect2(Vector2.ZERO, size)
@@ -319,6 +339,11 @@ func _draw() -> void:
 		# Затемняем весь экран, а не только доску: вокруг доски стоят сводка,
 		# рука и рынок, и тёмный прямоугольник обрывался бы посреди экрана.
 		draw_rect(Rect2(Vector2.ZERO, size), Color(PixelTheme.DIM, PixelTheme.DIM.a * _dim))
+	# свечение эффекта карты — под слоями (там же холсты эффекта); полупрозрачные слои
+	# на прозрачном холсте SubViewport темнеют, поэтому рисуем его здесь, на экране
+	var view := fx_view()
+	if not view.is_empty():
+		CardFx.draw_glow(self, view["cid"], view["rect"], view["t"])
 	for banner in _banners:
 		banner.visible = false
 	_card_rect = Rect2()
@@ -415,21 +440,22 @@ func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool
 	var cid := String(_item["cid"])
 	var banner_rect := rect
 	if fx and CardFx.debug_isolate:
-		# отладка: только щупальца на чёрном (CardFx.debug_isolate)
+		# отладка: только щупальца на чёрном, сразу на экране без сетки (CardFx.debug_isolate)
 		c.draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
 		CardFx.draw_behind(c, cid, rect, fx_t)
 		CardFx.draw_front(c, cid, rect, fx_t)
 		return
 	if fx:
-		# одна и та же рамка карты для обоих слоёв: иначе на стыке щупальце «едет»
+		# эффект рисуют холсты слоя (на сетке эффекта): позади и поверх карты, с той же
+		# рамкой, что и у карты (fx_view)
+		c.ensure_fx()
 		rect.position += CardFx.card_shift(cid, fx_t)
-		CardFx.draw_behind(c, cid, rect, fx_t)
 	if down or face == null:
 		_draw_back(c, rect)
 	else:
 		c.draw_texture_rect(face, rect, false)
 	if fx:
-		CardFx.draw_front(c, cid, rect, fx_t)
+		CardFx.draw_flash(c, rect, fx_t)
 	if _flash > 0.0:
 		c.draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
 	_draw_glow(c, rect)

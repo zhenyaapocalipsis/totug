@@ -52,6 +52,9 @@ func _initialize() -> void:
 			# Полуколоды, например demons,undead (с Demons в запасе есть изгои).
 			for name in arg.get_slice("=", 1).split(","):
 				decks.append(name)
+		elif arg.begins_with("--fxgrid="):
+			# Сетка эффекта карты: 1 — как экран игры, 2 — вдвое крупнее.
+			CardFx.grid = maxi(int(arg.get_slice("=", 1)), 1)
 		elif arg == "--isolate":
 			# Отладка эффектов карт: только щупальца на чёрном (для подсчёта разрывов).
 			CardFx.debug_isolate = true

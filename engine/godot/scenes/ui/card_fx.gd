@@ -37,6 +37,8 @@ const MOTE_RISE := 40.0
 ## Обводка тела (пиксели) и тень на карте (смещение).
 const OUTLINE := 1.5
 const SHADOW := Vector2(3, 4)
+## Ширина тела у корня самого толстого щупальца, к которой подгоняется спрайт.
+const ROOT_REF := 22.0
 ## Сколько пикселей поверх-слоя у стыка с задним слоем остаются без обводки и тени.
 const SEAM_SKIP := 9.0
 ## Шаг полосок тела.
@@ -145,6 +147,9 @@ static var _cache: Dictionary = {}
 ## Отладка (tests/ui_shot.gd --isolate): рисовать только щупальца на чёрном фоне.
 static var debug_isolate := false
 static var _spines: Dictionary = {}
+## Сетка эффекта: эффект рисуется на холсте в grid раз меньше экрана и растягивается
+## без сглаживания — все точки эффекта одного размера. 1 — сетка экрана игры.
+static var grid := 2
 
 
 static func has(cid: String) -> bool:
@@ -158,10 +163,48 @@ static func sound(cid: String) -> String:
 ## Спрайт щупальца карты cid.
 static func _sprite(cid: String) -> Texture2D:
 	var name := String(FX[cid]["sprite"])
-	var key := "%s/%s" % [cid, name]
+	var key := "%s/%s/%d" % [cid, name, grid]
 	if not _cache.has(key):
-		_cache[key] = load(SPRITE_PATH % [cid, name])
+		_cache[key] = _fit(load(SPRITE_PATH % [cid, name]), key)
 	return _cache[key]
+
+
+## Во сколько раз спрайт уменьшен под сетку (1 — как есть); строки спрайта и периоды
+## колец считаются в строках уменьшенного спрайта.
+static func _scale(cid: String) -> float:
+	_sprite(cid)
+	return float(_cache["%s/%s/%d/scale" % [cid, FX[cid]["sprite"], grid]])
+
+
+## Спрайт, подогнанный под сетку: одна точка спрайта — одна точка сетки (ширина тела
+## ROOT_REF пикселей экрана = ROOT_REF / grid точек). Уменьшаем один раз и честно
+## (Lanczos), а не на лету по ближайшему соседу — иначе тело зернит. Край альфы
+## делаем чётким (пиксель-арт без полупрозрачных краёв).
+static func _fit(tex: Texture2D, key: String) -> Texture2D:
+	var img := tex.get_image()
+	var w := img.get_width()
+	var h := img.get_height()
+	var sum := 0.0
+	var n := 0
+	for y in range(int(ROW_FROM * float(h)), int(0.8 * float(h))):
+		var cnt := 0
+		for x in range(w):
+			if img.get_pixel(x, y).a > 0.5:
+				cnt += 1
+		sum += float(cnt)
+		n += 1
+	var s := minf(ROOT_REF / float(grid) / maxf(sum / float(maxi(n, 1)), 1.0), 1.0)
+	_cache[key + "/scale"] = s
+	if s > 0.97:
+		return tex
+	img.fix_alpha_edges()
+	img.resize(maxi(int(roundf(float(w) * s)), 4), maxi(int(roundf(float(h) * s)), 8), Image.INTERPOLATE_LANCZOS)
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			var p := img.get_pixel(x, y)
+			p.a = 1.0 if p.a > 0.5 else 0.0
+			img.set_pixel(x, y, p)
+	return ImageTexture.create_from_image(img)
 
 
 ## Время эффекта: raw — секунды с начала выдержки. Первые ANTIC секунд — замах (щупальца
@@ -184,10 +227,9 @@ static func _glow_level(raw: float) -> float:
 	return 0.35 + 0.65 * exp(-(t - IMPACT_T) * 4.0)
 
 
-## Позади карты: свечение, ударные волны и те части щупалец, что под картой.
+## Позади карты: ударные волны и те части щупалец, что под картой.
 static func draw_behind(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
 	var t := _warp(raw)
-	_draw_glow(c, cid, card, raw)
 	_draw_ring(c, cid, card, t, 0.0, 1.0, RING_GROW)
 	_draw_ring(c, cid, card, t, IMPACT_T, 0.7, RING_GROW * 0.6)
 	var i := 0
@@ -209,9 +251,59 @@ static func draw_front(c: CanvasItem, cid: String, card: Rect2, raw: float) -> v
 	if debug_isolate:
 		return
 	_draw_motes(c, cid, card, t)
+
+
+## Белая вспышка на карте в момент удара (рисуется в полном разрешении, не на сетке
+## эффекта: края карты должны остаться резкими).
+static func draw_flash(c: CanvasItem, card: Rect2, raw: float) -> void:
 	var kf := (raw - ANTIC - IMPACT_T) / FLASH_T
 	if kf >= 0.0 and kf < 1.0:
 		c.draw_rect(card, Color(1, 1, 1, FLASH_ALPHA * (1.0 - kf)))
+
+
+## Холст эффекта: рисует его в SubViewport в grid раз меньше экрана (front — поверх карты,
+## иначе позади) и растягивает без сглаживания. Состояние берёт у хозяина:
+## host.fx_view() -> {cid, rect, t} (пусто, если эффект не идёт).
+class Canvas extends Control:
+	var host: Control
+	var front := false
+	var holder: SubViewportContainer
+
+	func _init(layer: Control, source: Control, in_front: bool) -> void:
+		host = source
+		front = in_front
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		holder = SubViewportContainer.new()
+		holder.stretch = true
+		holder.stretch_shrink = CardFx.grid
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		holder.show_behind_parent = not in_front
+		holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var port := SubViewport.new()
+		port.transparent_bg = true
+		port.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+		port.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		holder.add_child(port)
+		port.add_child(self)
+		layer.add_child(holder)
+
+	func _process(_delta: float) -> void:
+		var v: Dictionary = host.call("fx_view")
+		holder.visible = not v.is_empty()
+		if holder.visible:
+			queue_redraw()
+
+	func _draw() -> void:
+		var v: Dictionary = host.call("fx_view")
+		if v.is_empty():
+			return
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE / float(CardFx.grid))
+		if front:
+			CardFx.draw_front(self, v["cid"], v["rect"], v["t"])
+		else:
+			CardFx.draw_behind(self, v["cid"], v["rect"], v["t"])
 
 
 ## На сколько пикселей вздрагивает карта: в замахе дрожит всё сильнее, на ударе — толчок
@@ -229,7 +321,7 @@ static func card_shift(cid: String, raw: float) -> Vector2:
 
 
 ## Ступенчатое свечение вокруг карты (слои-рамки, как «пиксельное» гало).
-static func _draw_glow(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
+static func draw_glow(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
 	if debug_isolate:
 		return
 	var g := _glow_level(raw)
@@ -273,7 +365,7 @@ static func _draw_motes(c: CanvasItem, cid: String, card: Rect2, t: float) -> vo
 		var life := 1.0 - tau / MOTE_LIFE
 		# мерцание: часть пылинок гаснет раньше и вспыхивает
 		colour.a = life * (0.55 + 0.45 * sin(tau * 30.0 + float(k)))
-		var side := 2.0 if rng.randf() > 0.3 else 3.0
+		var side := float(grid) * (2.0 if rng.randf() > 0.3 else 3.0)
 		c.draw_rect(Rect2(pos.round(), Vector2(side, side)), colour)
 
 
@@ -286,7 +378,7 @@ static func _draw_ring(c: CanvasItem, cid: String, card: Rect2, t: float, at: fl
 		return
 	var colour: Color = FX[cid]["tint"]
 	colour.a = alpha * 0.7 * (1.0 - k)
-	c.draw_rect(card.grow(roundf(grow * (1.0 - pow(1.0 - k, 3.0)))), colour, false, 2.0)
+	c.draw_rect(card.grow(roundf(grow * (1.0 - pow(1.0 - k, 3.0)))), colour, false, maxf(2.0, float(grid)))
 
 
 ## Кривая щупальца в долях карты, ровно по длине: ломаная с рисунка, сглаженная
@@ -450,7 +542,8 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		var profile := root_w * 0.5 * (1.0 - 0.55 * clampf(a / total, 0.0, 1.0))
 		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
 		# не тоньше MIN_HALF: острие тоньше пикселя рисуется пунктиром и «рвётся»
-		halves.append(maxf(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)), MIN_HALF))
+		halves.append(maxf(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)),
+			maxf(MIN_HALF, 0.5 * float(grid))))
 		# текстура привязана к ГОЛОВЕ: кольца едут вместе с ней (щупальце движется, а не
 		# «открывается» из-под маски); по телу бегут волны сжатия, поэтому кольца
 		# перетекают и когда щупальце уже дошло.
@@ -462,7 +555,8 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	for pass_i in range(2):
 		var shade := Color(0.02, 0.03, 0.08, 0.4 if pass_i == 0 else 1.0)
 		var shades := PackedColorArray([shade, shade, shade, shade])
-		var shift := SHADOW if pass_i == 0 else Vector2.ZERO
+		var shift := ((SHADOW / float(grid)).round() * float(grid)) if pass_i == 0 else Vector2.ZERO
+		var outline := maxf(OUTLINE, float(grid))
 		for j in range(count):
 			if (head - float(j) * STEP >= split) != front:
 				continue
@@ -470,8 +564,8 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 			# иначе они ложатся серой полосой на конец заднего куска тела
 			if front and head - float(j) * STEP < split + SEAM_SKIP:
 				continue
-			var m0 := normals[j] * (halves[j] + OUTLINE)
-			var m1 := normals[j + 1] * (halves[j + 1] + OUTLINE)
+			var m0 := normals[j] * (halves[j] + outline)
+			var m1 := normals[j + 1] * (halves[j + 1] + outline)
 			c.draw_primitive(PackedVector2Array([body[j] - m0 + shift, body[j] + m0 + shift,
 				body[j + 1] + m1 + shift, body[j + 1] - m1 + shift]), shades, no_uv)
 	for j in range(count):
@@ -496,8 +590,9 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 		# предыдущей плитки (строки спрайта на период ниже), затухая за SEAM_ROWS строк —
 		# узор и яркость перетекают без ступеньки
 		var phase_row := r0 - row_lo
-		if phase_row < SEAM_ROWS:
-			var fade := Color(1, 1, 1, 1.0 - phase_row / SEAM_ROWS)
+		var seam_rows := SEAM_ROWS * float(bounds["scale"])
+		if phase_row < seam_rows:
+			var fade := Color(1, 1, 1, 1.0 - phase_row / seam_rows)
 			var j0 := clampi(int(r0 + period), 0, lefts.size() - 1)
 			var j1 := clampi(int(r1 + period), 0, lefts.size() - 1)
 			c.draw_primitive(quad, PackedColorArray([fade, fade, fade, fade]), PackedVector2Array([
@@ -537,25 +632,30 @@ static func _bounds(cid: String) -> Dictionary:
 	# тела, а не в пикселях) совпал сам с собой. Тогда кусок спрайта можно повторять
 	# встык без зеркала — кольца не меняют наклон.
 	var y0 := int(ROW_FROM * h)
-	var best_p := RING_P_MIN
+	var sc := _scale(cid)
+	var p_min := maxi(int(float(RING_P_MIN) * sc), 3)
+	var p_max := maxi(int(float(RING_P_MAX) * sc), p_min + 2)
+	var check := maxi(int(float(RING_CHECK) * sc), 8)
+	var best_p := p_min
 	var best_err := INF
-	for p in range(RING_P_MIN, RING_P_MAX + 1):
+	for p in range(p_min, p_max + 1):
 		var err := 0.0
-		for y in range(y0, y0 + RING_CHECK):
+		for y in range(y0, y0 + check):
 			for k in range(RING_SAMPLES):
 				var u := (float(k) + 0.5) / RING_SAMPLES
 				var a := img.get_pixel(int(lerpf(sl[y], sr[y], u)), y)
 				var b := img.get_pixel(int(lerpf(sl[y + p], sr[y + p], u)), y + p)
 				err += absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b)
 		# слабо предпочитаем короткий период (длинный лучше совпадает и выглядит живее)
-		err *= 1.0 + 0.0005 * float(p)
+		err *= 1.0 + 0.0005 / sc * float(p)
 		if err < best_err:
 			best_err = err
 			best_p = p
 	var total_w := 0.0
 	for y in range(y0, y0 + best_p):
 		total_w += sr[y] - sl[y]
-	var res := {"left": sl, "right": sr, "mean": total_w / float(best_p), "y0": y0, "period": best_p}
+	var res := {"left": sl, "right": sr, "mean": total_w / float(best_p), "y0": y0, "period": best_p,
+		"scale": sc}
 	_cache[key] = res
 	return res
 
@@ -597,4 +697,5 @@ static func _draw_drops(c: CanvasItem, cid: String, index: int, card: Rect2, t: 
 			var speed := rng.randf_range(70.0, 170.0)
 			var pos := origin + Vector2.from_angle(angle) * speed * tau + Vector2(0, DROP_GRAVITY * tau * tau * 0.5)
 			colour.a = 1.0 - tau / DROP_LIFE
-			c.draw_rect(Rect2(pos.round(), Vector2(DROP_SIZE, DROP_SIZE)), colour)
+			var side := maxf(DROP_SIZE, 2.0 * float(grid))
+			c.draw_rect(Rect2(pos.round(), Vector2(side, side)), colour)
