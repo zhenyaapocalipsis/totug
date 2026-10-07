@@ -20,7 +20,7 @@ extends RefCounted
 
 const SPRITE_PATH := "res://assets/card_fx/%s/%s.png"
 ## Сколько секунд висит карта с эффектом (обычная — CardShowcase.HOLD_TIME).
-const HOLD_TIME := 3.1
+const HOLD_TIME := 4.0
 ## Замах до выхода щупалец (карта дрожит, вокруг разгорается свечение, у корней искры),
 ## остановка времени на ударе и вспышка.
 const ANTIC := 0.3
@@ -52,16 +52,16 @@ const EXT_N := 14
 ## На сколько пикселей карты корень уходит под её край (чтобы тело не торчало).
 const LEAD_IN := 26.0
 ## Момент, когда все щупальца дошли до финиша, и силы удара.
-const IMPACT_T := 1.15
+const IMPACT_T := 1.85
 const IMPACT_SHAKE := 2.5
 const IMPACT_DECAY := 9.0
 ## Ударные волны: квадрат вокруг карты расширяется и гаснет.
 const RING_TIME := 0.45
 const RING_GROW := 70.0
 ## Затухающая волна при выстреле и лёгкое дыхание кривой (пиксели).
-const WHIP := 9.0
-const WHIP_DECAY := 3.5
-const IDLE := 2.5
+const WHIP := 14.0
+const WHIP_DECAY := 2.2
+const IDLE := 4.0
 ## Брызги слизи: сколько, сколько живут, сторона квадрата, ускорение вниз.
 const DROPS := 9
 const DROP_LIFE := 0.55
@@ -84,12 +84,14 @@ const SEAM_ROWS := 18.0
 const TIP_LEN := 80.0
 ## Минимальная полуширина тела, пиксели: у самого острия щупальце не рвётся на пунктир.
 const MIN_HALF := 0.9
+## Какую долю корневой толщины имеет щупальце на цели (конус).
+const TAPER_END := 0.2
 ## Размах бегущей по телу волны сжатия: на сколько пикселей «перетекают» кольца.
 const RING_FLOW := 4.0
 ## Загиб кончика появляется после прихода: на сколько пикселей, на какой длине от
 ## головы и за сколько секунд.
-const HOOK := 16.0
-const HOOK_LEN := 70.0
+const HOOK := 24.0
+const HOOK_LEN := 100.0
 const HOOK_TIME := 0.5
 ## Где на рисунке владельца лежит карта (x, y, ширина, высота).
 const SKETCH_CARD := Rect2(320, 234, 410, 596)
@@ -116,29 +118,29 @@ const FX := {
 				Vector2(550, 466), Vector2(600, 479), Vector2(650, 492), Vector2(690, 502),
 				Vector2(730, 520), Vector2(770, 543), Vector2(805, 575), Vector2(835, 605),
 				Vector2(850, 632), Vector2(851, 680), Vector2(850, 720), Vector2(846, 750)],
-				"width": 22.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
-				"retract_dur": 0.45, "phase": 0.0},
+				"width": 22.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 0.5, "phase": 0.0},
 			# короткое справа сверху: наружу и обратно на карту
 			{"path": [Vector2(725, 283), Vector2(750, 292), Vector2(768, 310), Vector2(775, 330),
 				Vector2(768, 352), Vector2(745, 378), Vector2(722, 402), Vector2(700, 420),
 				Vector2(688, 440), Vector2(682, 460)],
-				"width": 14.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
-				"retract_dur": 0.45, "phase": 2.1},
+				"width": 14.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 0.5, "phase": 2.1},
 			# слева посередине: наружу налево, обратно через край и вниз по карте
 			{"path": [Vector2(318, 486), Vector2(298, 505), Vector2(285, 530), Vector2(283, 555),
 				Vector2(292, 580), Vector2(310, 603), Vector2(335, 620), Vector2(360, 635),
 				Vector2(380, 655), Vector2(390, 685), Vector2(392, 712), Vector2(390, 744),
 				Vector2(375, 762), Vector2(358, 782)],
-				"width": 17.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
-				"retract_dur": 0.45, "phase": 4.2},
+				"width": 17.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 0.5, "phase": 4.2},
 			# длинное справа снизу: наружу, потом S-образно вниз-влево до низа экрана
 			{"path": [Vector2(735, 637), Vector2(758, 647), Vector2(775, 665), Vector2(781, 700),
 				Vector2(779, 738), Vector2(765, 775), Vector2(745, 800), Vector2(720, 815),
 				Vector2(690, 825), Vector2(650, 845), Vector2(600, 875), Vector2(560, 895),
 				Vector2(525, 918), Vector2(500, 945), Vector2(485, 975), Vector2(477, 1005),
 				Vector2(475, 1040), Vector2(483, 1066)],
-				"width": 20.0, "delay": 0.0, "dur": 1.15, "ease": "launch", "retract_at": 2.2,
-				"retract_dur": 0.45, "phase": 3.3},
+				"width": 20.0, "delay": 0.0, "dur": 1.85, "ease": "launch", "retract_at": 3.0,
+				"retract_dur": 0.5, "phase": 3.3},
 		],
 	},
 }
@@ -529,29 +531,30 @@ static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Diction
 	# пикселей) должно уместиться в заданную ширину у корня.
 	var root_w := float(tent["width"])
 	var density := float(bounds["mean"]) / root_w
-	# пока щупальце в движении, по телу бегут сокращения (толщина пульсирует)
-	var pulse := 0.12 * (1.0 - clampf(out, 0.0, 1.0)) + 0.04 + 0.1 * gone
-
 	# точки полосок от головы к корню: нормаль, полуширина и строка спрайта (без зацикливания;
 	# зацикливание — ниже, при рисовании каждой полоски)
 	var normals := PackedVector2Array()
 	var halves := PackedFloat32Array()
 	var rows := PackedFloat32Array()
+	# Конус: толщина падает по экспоненте от корня до TAPER_END доли на цели (а не почти
+	# ровная труба, как у червя). Кольца мельчают вместе с толщиной, поэтому узор не
+	# растягивается. Длина дуги a считается от КОРНЯ: кожа сидит на теле и не ползёт
+	# по нему — щупальце выходит из-за карты и втягивается обратно, а гнётся оно само.
+	var taper_len := total / log(1.0 / TAPER_END)
+	var row_base := density * taper_len * (exp(seg * float(SPINE_N + EXT_N) / taper_len) - 1.0)
 	for j in range(count + 1):
 		normals.append((body[mini(j + 1, count)] - body[maxi(j - 1, 0)]).orthogonal().normalized())
 		var dist := float(j) * STEP
 		var a := maxf(head - dist, 0.0)
-		# толщина: у корня полная, к дальнему концу тоньше, у самой головы — остриё
-		var profile := root_w * 0.5 * (1.0 - 0.55 * clampf(a / total, 0.0, 1.0))
+		var profile := root_w * 0.5 * exp(-a / taper_len)
+		# у самой головы — остриё
 		var taper := pow(clampf(dist / TIP_LEN, 0.0, 1.0), 0.6)
 		# не тоньше MIN_HALF: острие тоньше пикселя рисуется пунктиром и «рвётся»
-		halves.append(maxf(profile * taper * (1.0 + pulse * sin(dist * 0.07 - t * 9.0 + phase)),
-			maxf(MIN_HALF, 0.5 * float(grid))))
-		# текстура привязана к ГОЛОВЕ: кольца едут вместе с ней (щупальце движется, а не
-		# «открывается» из-под маски); по телу бегут волны сжатия, поэтому кольца
-		# перетекают и когда щупальце уже дошло.
-		var flow := RING_FLOW * sin(dist * 0.045 - t * 4.5 + phase)
-		rows.append(dist * density + flow * density)
+		halves.append(maxf(profile * taper, maxf(MIN_HALF, 0.5 * float(grid))))
+		# строка спрайта по длине дуги: ширина растёт вдоль тела так же, как толщина, а
+		# строки идут с ней в ногу (интеграл от плотности / относительной толщины);
+		# к голове (j меньше) строка меньше — узор лежит так же, как раньше
+		rows.append(row_base - density * taper_len * (exp(a / taper_len) - 1.0))
 	var colours := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
 	# тень на карте и тёмная обводка: щупальце отделяется от синего арта
 	var no_uv := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
