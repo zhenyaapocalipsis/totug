@@ -4,7 +4,7 @@ extends PanelContainer
 ## сама партия реплея. Экран партии (GameScreen в режиме реплея) только
 ## показывает — партию двигает эта полоса (ReplayBook.step / seek).
 ##
-##   |<  <<  <  PLAY  >  >>  >|   TURN 12/48   x1 x2 x4   AUTO ■ ■ ■ ■   EXIT
+##   |<  <<  <  PLAY  >  >>  >|   TURN 12/48   x1 x2 x4   AUTO ■ ■ ■ ■   STATS EXIT
 ##   [=====шкала: отрезок на ход, цветом ходившего; щелчок/тяга — перемотка===]
 ##
 ## <, > — один ход реплея (действие или ответ на вопрос карты); <<, >> — к
@@ -17,6 +17,8 @@ extends PanelContainer
 ## событий последних RECAP_TURNS ходов.
 
 signal exit_requested
+## STATS — экран статистики партии (Replay-3); воспроизведение встаёт на паузу.
+signal stats_requested
 
 const SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 ## Секунд на один ход реплея при x1.
@@ -101,6 +103,10 @@ func _init(replay_data: Dictionary) -> void:
 		_eye_buttons[String(pid)] = b
 		row.add_child(b)
 	row.add_child(VSeparator.new())
+	row.add_child(_button("STATS", func():
+		playing = false
+		_sync()
+		stats_requested.emit(), 34))
 	row.add_child(_button("EXIT", func(): exit_requested.emit(), 30))
 
 	_timeline = Control.new()

@@ -31,6 +31,7 @@ const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 const ReplayBar := preload("res://scenes/ui/replay_bar.gd")
+const ReplayStatsPanel := preload("res://scenes/ui/replay_stats_panel.gd")
 
 # Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по макету владельца
@@ -117,6 +118,8 @@ var net: NetSession
 ## Просмотр реплея (Replay-2): партию двигает полоса ReplayBar, щелчки по
 ## игре ничего не делают, таймеров нет. null — обычная партия.
 var replay_bar: ReplayBar
+## Экран STATS реплея (Replay-3); собирается при первом открытии.
+var stats_panel: ReplayStatsPanel
 
 ## Tab (решение владельца, 2026-09-29): короткое нажатие — пинг под курсором,
 ## зажатие дольше WHEEL_HOLD — колесо чата с фразами из профиля.
@@ -240,6 +243,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		replay_bar = ReplayBar.new(online["replay"])
 		replay_bar.screen = self
 		replay_bar.exit_requested.connect(func(): main_menu_requested.emit())
+		replay_bar.stats_requested.connect(open_stats)
 		server = replay_bar.server
 		player_ids = []
 		for pid in replay_bar.ids():
@@ -248,6 +252,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		viewer_id = replay_bar.viewer()
 		_build_layout()
 		add_child(replay_bar)
+		_game_over_panel.add_button("STATS", open_stats)
 		refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
 		_note("Replay. Space: play or pause, arrows: step, Shift+arrows: turn.")
 		return
@@ -867,7 +872,7 @@ func _input(event: InputEvent) -> void:
 		return
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if replay_bar != null and not _pause_menu.visible and not _game_over_panel.visible \
-			and replay_bar.handle_key(key):
+			and not (stats_panel != null and stats_panel.visible) and replay_bar.handle_key(key):
 		get_viewport().set_input_as_handled()
 		return
 	if _pause_menu.visible:
@@ -1112,6 +1117,16 @@ func replay_seeked(recap: Array) -> void:
 	_feed.clear()
 	show_replay([], false)
 	_note_recap(recap)
+
+
+## Экран статистики партии реплея (ReplayStats). Считается один раз — партия
+## проигрывается целиком, это доли секунды. Щелчок по графику VP — перемотка.
+func open_stats() -> void:
+	if stats_panel == null:
+		stats_panel = ReplayStatsPanel.new(ReplayStats.collect(replay_bar.replay))
+		stats_panel.turn_chosen.connect(func(p: int): replay_bar.seek(p))
+		add_child(stats_panel)
+	stats_panel.visible = true
 
 
 ## Идёт показ (витрина карты): следующий шаг реплея подождёт.

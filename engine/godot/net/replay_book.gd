@@ -142,13 +142,28 @@ static func seek(replay: Dictionary, position: int) -> GameServer:
 
 
 ## Где начинаются ходы игроков: позиции (сколько ходов реплея применено) —
-## 0 и каждая сразу после END_TURN. Последняя — конец реплея.
+## 0 (раздача: муллиган и стартовые локации, одни ответы на вопросы), первое
+## действие первого игрока и каждая сразу после END_TURN. Последняя — конец
+## реплея.
 static func turn_starts(replay: Dictionary) -> Array[int]:
 	var starts: Array[int] = [0]
 	var intents: Array = replay["intents"]
+	var first := 0
+	while first < intents.size() and int((intents[first] as Dictionary).get("type", -1)) == Intent.Type.MAKE_DECISION:
+		first += 1
+	if first > 0 and first < intents.size():
+		starts.append(first)
 	for i in intents.size():
-		if int((intents[i] as Dictionary).get("type", -1)) == Intent.Type.END_TURN and i + 1 < intents.size():
-			starts.append(i + 1)
+		var d: Dictionary = intents[i]
+		if int(d.get("type", -1)) != Intent.Type.END_TURN:
+			continue
+		# Вопросы конца хода (promote и т. п.) — ещё ход того же игрока.
+		var next := i + 1
+		while next < intents.size() and int((intents[next] as Dictionary).get("type", -1)) == Intent.Type.MAKE_DECISION \
+				and String((intents[next] as Dictionary).get("player_id", "")) == String(d.get("player_id", "")):
+			next += 1
+		if next < intents.size():
+			starts.append(next)
 	starts.append(intents.size())
 	return starts
 

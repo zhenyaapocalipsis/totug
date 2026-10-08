@@ -37,6 +37,8 @@ var _head: Label
 var _title: Label
 var _grid: GridContainer
 var _decks: Control
+## Строка кнопок внизу (VIEW BOARD, MAIN MENU; реплей добавляет STATS).
+var _buttons: HBoxContainer
 var _shown_once := false
 ## Рейтинг после онлайн-партии (NetSession.rating_changed): место -> {rating, delta}.
 var _ratings: Dictionary = {}
@@ -96,7 +98,8 @@ func _init() -> void:
 	_grid.add_theme_constant_override("v_separation", 3)
 	col.add_child(_grid)
 
-	var buttons := HBoxContainer.new()
+	_buttons = HBoxContainer.new()
+	var buttons := _buttons
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 6)
 	col.add_child(buttons)
@@ -285,3 +288,10 @@ func _rating_cell(pid: String) -> Control:
 	if int(reward.get("dust", 0)) > 0:
 		col.add_child(_cell("+%d DUST" % int(reward["dust"]), PixelTheme.TEXT_DIM, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	return col
+
+
+## Ещё одна кнопка в начало строки (реплей: STATS — экран статистики).
+func add_button(text: String, action: Callable) -> void:
+	var button := _button(text, action)
+	_buttons.add_child(button)
+	_buttons.move_child(button, 0)

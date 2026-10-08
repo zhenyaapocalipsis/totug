@@ -3973,7 +3973,65 @@ func test_replay_viewer() -> void:
 	bar.seek(0)
 	check(not screen._game_over_panel.visible, "назад с конца — итоги спрятаны")
 	check(screen._end_turn_button.disabled, "End turn в реплее не нажать")
+
+	# Replay-3: статистика партии по реплею.
+	var stats := ReplayStats.collect(replay)
+	var turns: Array = stats["turns"]
+	check_eq(turns.size(), starts.size() - 1, "срез статистики на каждый ход (и раздачу)")
+	check_eq(String(turns[0]["player"]), "", "нулевой срез — раздача")
+	check_eq(int(turns[1]["round"]), 1, "первый ход — первый раунд")
+	check_eq(int(turns[5]["round"]), 2, "пятый ход на четверых — второй раунд")
+	var per_player := {}
+	var order_ok := true
+	for t in range(1, turns.size()):
+		var who := String(turns[t]["player"])
+		per_player[who] = int(per_player.get(who, 0)) + 1
+		order_ok = order_ok and who == String(turns[1 + (t - 1) % 4]["player"])
+	check(order_ok and per_player.size() == 4 and per_player.values().max() - per_player.values().min() <= 1,
+		"ходы игроков по кругу, у всех поровну: %s" % str(per_player))
+	var final_ok := true
+	for pid in ids:
+		final_ok = final_ok and int(turns[-1]["vp"][pid]) == int(header["scores"][pid]) \
+			and int(stats["parts"][pid]["total"]) == int(header["scores"][pid])
+	check(final_ok, "график VP кончается записанным итогом партии")
+	var buys_ok := true
+	var power_seen := false
+	for pid in ids:
+		buys_ok = buys_ok and (stats["buys"][pid] as Array).size() == int(stats["counts"][pid]["bought"])
+		power_seen = power_seen or _power_sum(turns, pid) > 0.0
+	check(buys_ok, "покупки сходятся со счётчиком действий")
+	check(power_seen, "Power за ход посчитан")
+	var held_ok := true
+	for s in stats["sites"]:
+		var sum := 0
+		for pid in (s["turns"] as Dictionary):
+			sum += int(s["turns"][pid])
+		held_ok = held_ok and sum <= turns.size()
+	check(held_ok and (stats["sites"] as Array).size() > 10, "контроль сайтов по ходам: не больше ходов, чем было")
+	check(int(stats["best"]["gain"]) > 0 and String(stats["best"]["player"]) != "", "лучший ход найден")
+	check_eq(ReplayStats.lead_changes([{"vp": {"red": 1, "blue": 0}}, {"vp": {"red": 1, "blue": 1}},
+		{"vp": {"red": 1, "blue": 2}}, {"vp": {"red": 3, "blue": 2}}], ["red", "blue"] as Array[String]),
+		[2, 3] as Array[int], "смены лидера: ничья лидера не меняет")
+
+	screen.open_stats()
+	var panel = screen.stats_panel
+	check(panel != null and panel.visible, "STATS открывает экран статистики")
+	for tab in panel.TABS:
+		panel.show_tab(tab)
+		check_eq(panel.current_tab(), tab, "вкладка %s строится" % tab)
+	panel.turn_chosen.emit(int(turns[10]["start"]))
+	check_eq(bar.cursor, int(turns[10]["start"]), "щелчок по графику — реплей на этом ходу")
+	panel.close()
+	check(not panel.visible, "CLOSE закрывает статистику")
 	screen.queue_free()
+
+
+func _power_sum(turns: Array, pid: String) -> float:
+	var sum := 0.0
+	for t in turns:
+		if String(t["player"]) == pid:
+			sum += float(t["power"])
+	return sum
 
 
 func _acting_of(bar) -> String:
