@@ -79,6 +79,7 @@ func _initialize() -> void:
 	test_game_modes()
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
+	test_market_mulligan()
 	test_auto_decision_answer()
 	test_recruit_from_supply()
 	test_insane_outcast_supply()
@@ -2285,6 +2286,48 @@ func test_auto_decision_answer() -> void:
 	check_eq(GameScreen.acting_player(card), "red", "вопрос карты: действует ходящий")
 
 
+## Муллиган рынка (2026-10-08): по очереди хода, по одной карте или пропуск,
+## убранные карты и их копии не выходят на рынок до конца муллигана, потом
+## вмешиваются в колоду; после муллигана — выбор стартовых сайтов.
+func test_market_mulligan() -> void:
+	section("Муллиган рынка")
+	var ids: Array[String] = ["red", "blue", "green"]
+	var state := GameSetup.new_game(ids, 99, ["drow", "dragons"], false, true, false)
+	var total := state.market.deck.size() + state.market.available_cards().size()
+	var server := GameServer.new(state)
+	var pd: PendingDecision = server.resolver.pending
+	check(pd != null and pd.tag == "market" and pd.player_id == "red", "первым меняет карту первый игрок")
+	check(pd.legal_options.has(-1), "можно пропустить")
+	var res: Dictionary = server.apply_intent(Intent.make_decision("blue", 0))
+	check_eq(int(res["error"]), GameServer.Error.NOT_YOUR_TURN, "чужой ход муллигана отклонён")
+
+	var first: String = state.market.display[0]
+	server.apply_intent(Intent.make_decision("red", 0))
+	check(state.market.display[0] != first, "на место убранной карты не вышла её копия")
+	pd = server.resolver.pending
+	check(pd.tag == "market" and pd.player_id == "blue", "дальше меняет второй игрок")
+	var second: String = state.market.display[0]
+	server.apply_intent(Intent.make_decision("blue", 0))
+	check(state.market.display[0] != first and state.market.display[0] != second,
+		"обе убранные карты в чёрном списке")
+	check_eq(state.market.deck_size() + state.market.available_cards().size(), total,
+		"карты не теряются во время муллигана")
+	server.apply_intent(Intent.make_decision("green", -1))
+	check(state.market.mulligan_blacklist.is_empty(), "после муллигана чёрный список пуст")
+	check(state.market.deck.has(first) and state.market.deck.has(second), "убранные карты вмешаны в колоду")
+	check_eq(state.market.deck.size() + state.market.available_cards().size(), total, "размер колоды сходится")
+	pd = server.resolver.pending
+	check(pd != null and pd.tag == "starting_site" and pd.player_id == "red", "затем стартовый сайт, с первого игрока")
+
+	# Копии убранной карты сверху колоды пропускаются и остаются в колоде.
+	var m := Market.new()
+	m.display = ["A", "B", "C", "D", "E", "F"]
+	m.deck = ["A", "G", "A"]
+	m.mulligan_replace(0)
+	check_eq(m.display[0], "G", "копии убранной карты пропускаются, выходит первая подходящая")
+	check_eq(m.deck, ["A", "A"] as Array[String], "пропущенные копии остались в колоде")
+
+
 ## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный
 ## сетап должны работать не только вдвоём. Раньше экран всегда собирал партию
 ## на red/blue, и эти ветки pick_hexes не проверялись ни одним тестом.
@@ -2310,8 +2353,13 @@ func test_hotseat_three_and_four_players() -> void:
 		# интерактивный сетап: каждый сам выбирает стартовый сайт, по очереди
 		var server := GameServer.new(state)
 		var answered := 0
-		while server.resolver.is_waiting() and answered < count + 2:
+		var guard := 0
+		while server.resolver.is_waiting() and guard < 3 * count:
+			guard += 1
 			var pd: PendingDecision = server.resolver.pending
+			if pd.tag == "market":  # муллиган рынка — пропускаем
+				server.apply_intent(Intent.make_decision(pd.player_id, -1))
+				continue
 			var res: Dictionary = server.apply_intent(Intent.make_decision(pd.player_id, pd.legal_options[0]))
 			check_eq(int(res["error"]), GameServer.Error.OK, "%d игроков: выбор стартового сайта принят" % count)
 			answered += 1

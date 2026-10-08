@@ -245,6 +245,10 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s takes a %s troop from %s's trophy hall" % [who, colour, player_name(hall)]
 		"choose_starting_site":
 			return "%s starts at %s" % [who, site]
+		"market_mulligan":
+			var new_card := String(e.get("new_card_id", ""))
+			return "%s replaces %s in the market with %s" % [who, card,
+				card_name(new_card) if new_card != "" else "nothing"]
 		"turn_income":
 			var parts: Array[String] = []
 			if int(e.get("a2_power", 0)) + int(e.get("a2_influence", 0)) > 0:

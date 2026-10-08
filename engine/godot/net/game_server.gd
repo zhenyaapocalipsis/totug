@@ -60,13 +60,18 @@ func _start_first_turn_if_ready() -> void:
 ## резолвер), поэтому решает первым turn_order[0], как и полагается первому
 ## ходящему. Дальше это обычный pending decision — MAKE_DECISION проходит тем
 ## же путём, что и любой карточный выбор (см. _apply).
+## Перед сайтами — муллиган рынка (MulliganMarket) в том же порядке хода и
+## замыкающий его эффект, который вмешивает убранные карты в колоду.
 func _start_setup_if_needed() -> void:
 	if state.starting_site_candidates.is_empty():
 		return
 	var order: Array[String] = state.turn_order
-	for i in range(order.size() - 1, 0, -1):
+	for i in range(order.size() - 1, -1, -1):
 		resolver.push(ChooseStartingSite.new(), order[i])
-	resolver.apply(ChooseStartingSite.new(), order[0], state)
+	resolver.push(MulliganMarket.new(true), order[0])
+	for i in range(order.size() - 1, 0, -1):
+		resolver.push(MulliganMarket.new(), order[i])
+	resolver.apply(MulliganMarket.new(), order[0], state)
 
 
 ## Точка входа для сети/тестов. Возвращает:

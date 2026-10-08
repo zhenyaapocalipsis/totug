@@ -54,6 +54,45 @@ func recruit_at(index: int) -> String:
 	return card_id
 
 
+## Муллиган рынка в начале партии (решение владельца, 2026-10-08): игроки по
+## очереди хода могут заменить по одной карте рынка. Убранная карта уходит в
+## колоду маркета, но до конца муллигана она в чёрном списке — ни она, ни её
+## копии не могут выйти на рынок. Пока муллиган идёт, убранные карты лежат
+## отдельно, в конце finish_mulligan() вмешивает их обратно в колоду.
+var mulligan_blacklist: Array[String] = []
+var _mulligan_aside: Array[String] = []
+
+
+## Заменить карту в слоте index. Возвращает убранную карту ("" при неверном
+## индексе или пустом слоте). На её место — верхняя карта колоды, которой нет
+## в чёрном списке (пропущенные остаются в колоде на своих местах).
+func mulligan_replace(index: int) -> String:
+	if index < 0 or index >= display.size() or display[index] == "":
+		return ""
+	var removed: String = display[index]
+	if not mulligan_blacklist.has(removed):
+		mulligan_blacklist.append(removed)
+	_mulligan_aside.append(removed)
+	display[index] = ""
+	for i in range(deck.size() - 1, -1, -1):
+		if not mulligan_blacklist.has(deck[i]):
+			display[index] = deck[i]
+			deck.remove_at(i)
+			break
+	return removed
+
+
+## Конец муллигана: убранные карты — обратно в колоду, колоду перетасовать.
+func finish_mulligan(rng: RandomNumberGenerator) -> void:
+	if _mulligan_aside.is_empty():
+		mulligan_blacklist.clear()
+		return
+	deck.append_array(_mulligan_aside)
+	_mulligan_aside.clear()
+	mulligan_blacklist.clear()
+	Deck.shuffle_array(deck, rng)
+
+
 func is_deck_empty() -> bool:
 	return deck.is_empty()
 
@@ -61,7 +100,7 @@ func is_deck_empty() -> bool:
 ## Этап 6: сколько карт осталось в закрытой колоде маркета (открытая
 ## информация — на столе виден размер стопки, хоть и не содержимое).
 func deck_size() -> int:
-	return deck.size()
+	return deck.size() + _mulligan_aside.size()
 
 
 ## Этап 6: список реально доступных для найма карт дисплея (без пустых

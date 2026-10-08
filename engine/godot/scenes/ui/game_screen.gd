@@ -1645,7 +1645,8 @@ func _process(delta: float) -> void:
 	if _time_left <= 0.0 and _is_starting_pick(_view) and current == viewer_id \
 			and not _auto_answered and not (pending.get("legal_options", []) as Array).is_empty():
 		_auto_answered = true
-		_note("Time is up — a starting site was chosen automatically.")
+		_note("Time is up — the market is kept." if String(pending.get("tag", "")) == "market"
+			else "Time is up — a starting site was chosen automatically.")
 		_on_decision_answer(auto_decision_answer(pending["legal_options"]))
 	if _time_left <= 0.0 and not _auto_ending and current == viewer_id \
 			and not _end_turn_button.disabled:
@@ -1878,12 +1879,12 @@ func _refresh_played(view: Dictionary) -> void:
 	_popup_resource_change(current, power, influence)
 
 
-## Сейчас идёт стартовая расстановка: кто-то выбирает свою первую локацию.
-## Метку ставит сам эффект (ChooseStartingSite), а не угадывает интерфейс по
-## тексту вопроса.
+## Сейчас идёт подготовка партии: муллиган рынка или выбор первой локации.
+## Метку ставит сам эффект (MulliganMarket, ChooseStartingSite), а не
+## угадывает интерфейс по тексту вопроса.
 static func _is_starting_pick(view: Dictionary) -> bool:
 	var pd: Dictionary = view.get("pending_decision", {})
-	return String(pd.get("tag", "")) == "starting_site"
+	return bool(pd.get("setup", false)) or String(pd.get("tag", "")) == "starting_site"
 
 
 ## Кто сейчас действует — ему принадлежат таймер, надпись над ним и «>» в
