@@ -47,7 +47,9 @@
 - Cursed Wanderer = Insane Outcast; Execute = Devour; Sapling = Twig Blight (запас 4); Elise ↔ Spider Elise = Drider ↔ Phase Spider.
 - Режим NEW ERA теперь = Celestial + Shadow Isles (`GameSetup.NEW_ERA_DECKS`).
 - Новое в движке: `state.turn_flags` (счётчик Outcast за ход и т.п.), `ShadowCards.on_play` в `TurnEngine.play_card`, `ShadowCards.on_devour` в DevourCard, `Actions.market_cost` (Cursed Affinity), `PlayerState.start_of_turn_influence`, реакция Bone Naga в GiveInsaneOutcast.
-- **Не сделано: арты (NE-5).** Без арта `pixel_cards.gd` пропускает карту, у карт нет лица. Картинки карт мода для сверки: 29–52, 0, 321, 326 (извлечение — см. конвейер ниже). Цена со скидкой Cursed Affinity на карте рынка не рисуется (подсветка доступности её учитывает).
+- **NE-5 (`164a8e1`) — арты.** Состав существ заменён: черновая нежить почти вся в платных книгах D&D Beyond. Новые имена — в таблице `new_era_shadow_isles.md`, тип карт `SHADOW`. Картинки карт мода для сверки: 29–52, 0, 321, 326.
+- Не сделано: цена со скидкой Cursed Affinity на карте рынка не рисуется (подсветка доступности её учитывает); `cards/shadow/cand*` — неиспользованные кандидаты (не в git). Владелец ещё не проверял колоду живьём.
+- **Совет для поиска артов:** у закрытых монстров fetch страницы падает — ловить ошибку на каждую страницу отдельно; арт брать строго из `<img ... class="monster-image">`. Свободны почти только монстры SRD (Basic Rules 2014 и Free Rules 2024).
 
 ## Решения владельца (действуют для всех колод)
 - Стартовые карты мода не вводим. Vanguard Cavalry = House Guard, Battlefield Sergeant = Priestess of Lolth. Стартовая колода остаётся 7 Noble + 3 Soldier (у нас Conscription Officer вместо одного Noble).
