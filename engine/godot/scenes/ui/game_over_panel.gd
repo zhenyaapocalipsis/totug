@@ -8,14 +8,20 @@ extends Control
 signal main_menu_requested
 
 const BUTTON_SIZE := Vector2(90, 16)
-const COL_W := 31
+## Столбец счёта не уже трёх цифр, а шире — только по своей подписи: иначе
+## таблица с ником в 12 знаков и рейтингом не влезает в CENTRE_W и уходит
+## под колоды по бокам.
+const COL_W := 18
 ## Полоса посередине под таблицу итогов — колоды раскладываются по бокам от неё.
 const CENTRE_W := 340.0
 const MARGIN := 6.0
 const CARD := CardView.MINI_SIZE  # мелкое лицо карты
 const CARD_GAP := 2.0
 ## Шаг лесенки: видны имя, цена и VP карты. Если карт много — шаг меньше.
-const STEP_MAX := 18.0
+## Шаг 27 — вся шапка мелкой карты (рамка + MINI_HEAD из tools/pixel_cards.gd):
+## имя до трёх строк и цена. При меньшем шаге третья строка имени уходит
+## под следующую карту.
+const STEP_MAX := 27.0
 const STEP_MIN := 9.0
 ## Статьи подсчёта: ключ в view["final_scores"][игрок] и подпись столбца.
 const COLUMNS := [
@@ -78,6 +84,11 @@ func _init() -> void:
 	_title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_title)
+	# Длинные ники (ничья на четверых, кто-то не вернулся) переносятся в
+	# пределах средней полосы, а не уезжают под колоды.
+	for label in [_head, _title]:
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size.x = CENTRE_W - MARGIN * 2.0
 
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS.size() + 3
@@ -120,6 +131,7 @@ func update_from_view(view: Dictionary) -> void:
 		_grid.remove_child(child)
 		child.queue_free()
 	_grid.add_child(_cell("", PixelTheme.TEXT_DIM, 0))
+	_grid.add_theme_constant_override("v_separation", 3 if _ratings.is_empty() else 5)
 	for c in COLUMNS:
 		_grid.add_child(_cell(c[1], PixelTheme.TEXT_DIM, COL_W))
 	_grid.add_child(_cell("SUM", PixelTheme.GOLD, COL_W))
@@ -184,9 +196,19 @@ func _build_corner(pid: String, cards: Dictionary, area: Rect2) -> void:
 
 	var top := area.position.y + PixelTheme.LINE_H + 2.0
 	var columns := maxi(1, int((area.size.x + CARD_GAP) / (CARD.x + CARD_GAP)))
-	# Столбцы делятся между колодой и Внутренним кругом (у круга — свой,
-	# отмеченный золотом); в столбце карт поровну, шаг — чтобы влезло по высоте.
-	var inner_cols := 1 if not inner.is_empty() and columns > 1 else 0
+	# Столбцы делятся между колодой и Внутренним кругом (у круга — свои,
+	# отмеченные золотом) так, чтобы самый длинный столбец был короче всего:
+	# тогда шаг лесенки больше и имена карт видны целиком. В столбце карт
+	# поровну, шаг — чтобы влезло по высоте.
+	var inner_cols := 0
+	if not inner.is_empty() and columns > 1:
+		var best := 1 << 30
+		for ic in range(1, columns):
+			var longest := maxi(ceili(float(deck.size()) / float(columns - ic)),
+					ceili(float(inner.size()) / float(ic)))
+			if longest < best:
+				best = longest
+				inner_cols = ic
 	var deck_cols := columns - inner_cols
 	var groups := [[deck, deck_cols, ""]]
 	if inner_cols > 0:
