@@ -36,6 +36,9 @@ var _end_turn_pending_for: String = ""
 ## Муллиган рынка перед стартовой расстановкой. false — только для партий из
 ## журнала, начатых до муллигана (GameRoom.restore).
 var with_mulligan := true
+## false — apply_intent не собирает срезы игроков (views пустой). Реплей
+## перематывает сотни ходов подряд, а срез нужен только в конце (ReplayBook).
+var build_views := true
 
 
 func _init(game_state: GameState, mulligan: bool = true) -> void:
@@ -119,6 +122,8 @@ func abandon(player_id: String) -> Dictionary:
 
 func _build_views() -> Dictionary:
 	var views: Dictionary = {}
+	if not build_views:
+		return views
 	for pid: String in state.players.keys():
 		views[pid] = StateView.for_player_with_pending(state, pid, resolver.pending)
 	return views

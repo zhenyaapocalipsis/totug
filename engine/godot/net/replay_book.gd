@@ -126,7 +126,31 @@ static func start(replay: Dictionary) -> GameServer:
 		ids.append(String(pid))
 	var state := GameSetup.new_game(ids, int(header.get("seed", 0)), [], false, true, true,
 		String(header.get("mode", GameSetup.MODE_STANDARD)))
-	return GameServer.new(state, bool(header.get("mulligan", true)))
+	var server := GameServer.new(state, bool(header.get("mulligan", true)))
+	# Срезы собирает тот, кто смотрит (StateView), и только для своего зрителя.
+	server.build_views = false
+	return server
+
+
+## Партия после первых position ходов реплея (0 — раздача). Назад реплей не
+## отматывается — перемотка назад собирает партию заново с начала.
+static func seek(replay: Dictionary, position: int) -> GameServer:
+	var server := start(replay)
+	for i in clampi(position, 0, (replay["intents"] as Array).size()):
+		step(server, replay, i)
+	return server
+
+
+## Где начинаются ходы игроков: позиции (сколько ходов реплея применено) —
+## 0 и каждая сразу после END_TURN. Последняя — конец реплея.
+static func turn_starts(replay: Dictionary) -> Array[int]:
+	var starts: Array[int] = [0]
+	var intents: Array = replay["intents"]
+	for i in intents.size():
+		if int((intents[i] as Dictionary).get("type", -1)) == Intent.Type.END_TURN and i + 1 < intents.size():
+			starts.append(i + 1)
+	starts.append(intents.size())
+	return starts
 
 
 ## Применить ход номер index реплея к партии. За последним ходом досрочно

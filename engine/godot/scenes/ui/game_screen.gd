@@ -30,6 +30,7 @@ const MAX_PLAYERS := 4
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
+const ReplayBar := preload("res://scenes/ui/replay_bar.gd")
 
 # Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по макету владельца
@@ -113,6 +114,9 @@ const PULSE_PERIOD := 1.6
 var server: GameServer
 ## Сетевая партия: через неё уходят намерения и чат. null — хотсит.
 var net: NetSession
+## Просмотр реплея (Replay-2): партию двигает полоса ReplayBar, щелчки по
+## игре ничего не делают, таймеров нет. null — обычная партия.
+var replay_bar: ReplayBar
 
 ## Tab (решение владельца, 2026-09-29): короткое нажатие — пинг под курсором,
 ## зажатие дольше WHEEL_HOLD — колесо чата с фразами из профиля.
@@ -225,12 +229,28 @@ static func player_ids_for(count: int) -> Array[String]:
 	return ids
 
 
-## online — сетевая партия: {session, seat, board, view} из NetSession.game_started.
+## online — сетевая партия: {session, seat, board, view} из NetSession.game_started,
+## или реплей: {replay} (ReplayBook.load_replay).
 ## Пустой — хотсит, партию собирает сам экран.
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
 		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {}) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
+	if online.has("replay"):
+		replay_bar = ReplayBar.new(online["replay"])
+		replay_bar.screen = self
+		replay_bar.exit_requested.connect(func(): main_menu_requested.emit())
+		server = replay_bar.server
+		player_ids = []
+		for pid in replay_bar.ids():
+			player_ids.append(String(pid))
+		board_data = StateView.board_snapshot(server.state)
+		viewer_id = replay_bar.viewer()
+		_build_layout()
+		add_child(replay_bar)
+		refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
+		_note("Replay. Space: play or pause, arrows: step, Shift+arrows: turn.")
+		return
 	if not online.is_empty():
 		net = online["session"]
 		viewer_id = String(online["seat"])
@@ -846,6 +866,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
+	if replay_bar != null and not _pause_menu.visible and not _game_over_panel.visible \
+			and replay_bar.handle_key(key):
+		get_viewport().set_input_as_handled()
+		return
 	if _pause_menu.visible:
 		# Под меню паузы клавиши до игры не доходят; Esc его закрывает, из
 		# настроек — назад к кнопкам меню.
@@ -943,6 +967,9 @@ func _layout() -> void:
 	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, h - MARGIN - top_y)
 	var board_x := tracker_x + TRACKER_W + GAP
 	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
+	if replay_bar != null and replay_bar.is_inside_tree():
+		# Полоса реплея — поверх верха доски, во всю её ширину.
+		_place(replay_bar, board_x, top_y, d_x - GAP - board_x, replay_bar.get_combined_minimum_size().y)
 
 	# Рука — под доской, без подложки; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
@@ -1003,6 +1030,8 @@ static func _place(control: Control, x: float, y: float, width: float, height: f
 ## журнале, а не глотаем: если UI предложил недопустимое действие, это его
 ## баг, и он должен быть виден.
 func send(intent: Intent) -> void:
+	if replay_bar != null:
+		return
 	if net != null:
 		# Ответ придёт позже сигналом result_received -> _on_result.
 		net.send_intent(intent)
@@ -1053,11 +1082,41 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 
 
 ## Окно вопроса по виду (или скрыть его). Пока идёт витрина — скрыто, его
-## покажет сигнал CardShowcase.finished.
+## покажет сигнал CardShowcase.finished. В реплее окна нет: оно закрывало бы
+## доску, а ответ всё равно придёт следующим шагом.
 func _show_decision(view: Dictionary) -> void:
 	_decision_dialog.update_from_view(view, viewer_id)
-	if _showcase.is_busy():
+	if _showcase.is_busy() or replay_bar != null:
 		_decision_dialog.visible = false
+
+
+# --- реплей ------------------------------------------------------------------
+
+## Реплей сделал шаг: срез глазами нужного игрока; animate — с полётами фишек,
+## витринами и сводкой, как в живой партии.
+func show_replay(events: Array, animate: bool) -> void:
+	server = replay_bar.server
+	viewer_id = replay_bar.viewer()
+	var view := StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
+	if animate:
+		_on_result(GameServer.Error.OK, events, view)
+	else:
+		refresh(view)
+	if not server.state.game_over:
+		_game_over_panel.visible = false
+
+
+## Реплей перемотали: партия собрана заново, сводка — из recap (события
+## последних ходов), без анимаций.
+func replay_seeked(recap: Array) -> void:
+	_feed.clear()
+	show_replay([], false)
+	_note_recap(recap)
+
+
+## Идёт показ (витрина карты): следующий шаг реплея подождёт.
+func replay_busy() -> bool:
+	return _showcase.is_busy()
 
 
 ## Чем громче событие на доске, тем сильнее её тряхнёт. Захват локации доска
@@ -1608,6 +1667,10 @@ func _process(delta: float) -> void:
 	_tick_space_hold(real)
 	_tick_tab(real)
 	_tick_pause(real)
+	if replay_bar != null:
+		# В реплее времени хода нет — партия идёт сама.
+		_timer_label.text = "--:--"
+		return
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
@@ -1808,6 +1871,10 @@ func _refresh_turn(view: Dictionary) -> void:
 		% EventLogPanel.player_name(current)
 	# Сетевая партия, ход чужой: кого ждём — полоской, сама кнопка серая
 	# (решение владельца, 2026-09-27).
+	if replay_bar != null:
+		_end_label.text = "REPLAY"
+		_end_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+		return
 	if net != null and current != viewer_id:
 		_end_label.text = "WAITING"
 		_end_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
@@ -1945,7 +2012,7 @@ func _open_pile(which: String) -> void:
 
 
 func _refresh_actions(view: Dictionary) -> void:
-	var legal: Dictionary = view.get("legal", {})
+	var legal: Dictionary = view.get("legal", {}) if replay_bar == null else {}
 	_end_turn_button.disabled = not bool(legal.get("end_turn", false))
 	_end_turn_colour = BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6))
 	_style_end_turn(_end_turn_colour)

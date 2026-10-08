@@ -207,6 +207,17 @@ func end_turn() -> void:
 	_turn_closed = true
 
 
+## Пустая сводка — реплей перемотали, и она соберётся заново.
+func clear() -> void:
+	for block in _blocks:
+		_list.remove_child(block)
+		block.queue_free()
+	_blocks.clear()
+	_turn_closed = true
+	_hovered = []
+	places_hovered.emit([])
+
+
 ## Для проверок: сколько карт в сводке.
 func card_count() -> int:
 	var n := 0

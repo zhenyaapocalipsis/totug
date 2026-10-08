@@ -20,6 +20,8 @@ extends Control
 
 ## Профиль сохранён (при первом запуске после этого открывается меню).
 signal closed
+## WATCH в истории партий: открыть реплей (файл ReplayBook).
+signal replay_requested(file: String)
 
 ## Палитра DawnBringer 32 — классический набор для пиксель-арта; любой другой
 ## цвет — щелчком по образцу кисти (ColorPickerButton).
@@ -630,11 +632,11 @@ func _stats_page() -> Control:
 		right.add_child(_cell("No games recorded yet.", PixelTheme.TEXT_DIM))
 		return page
 	var grid := GridContainer.new()
-	grid.columns = 5
+	grid.columns = 6
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 2)
 	right.add_child(grid)
-	for header in ["DATE", "PLAYERS", "PLACE", "VP", "RATING"]:
+	for header in ["DATE", "PLAYERS", "PLACE", "VP", "RATING", "REPLAY"]:
 		grid.add_child(_cell(header, PixelTheme.TEXT_DIM))
 	for game: Dictionary in list:
 		grid.add_child(_cell(_date(int(game.get("time", 0))), PixelTheme.TEXT_DIM))
@@ -650,7 +652,25 @@ func _stats_page() -> Control:
 		rating_row.add_child(_cell("%+d" % delta, Color("5fd36a") if delta > 0
 			else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
 		grid.add_child(rating_row)
+		grid.add_child(_replay_cell(String(game.get("replay", ""))))
 	return page
+
+
+## WATCH — реплей этой партии (ReplayBook). Партии до реплеев — прочерк;
+## реплей другой версии правил — OLD: его ходы могут не лечь на нынешние карты.
+func _replay_cell(file: String) -> Control:
+	var replay := ReplayBook.load_replay(file) if file != "" else {}
+	if replay.is_empty():
+		return _cell("-", PixelTheme.TEXT_OFF)
+	if not ReplayBook.same_version(replay):
+		return _cell("OLD", PixelTheme.TEXT_OFF)
+	var watch := Button.new()
+	watch.text = "WATCH"
+	watch.custom_minimum_size = Vector2(40, 12)
+	watch.focus_mode = Control.FOCUS_NONE
+	SetupScreen._style_button(watch)
+	watch.pressed.connect(func(): replay_requested.emit(file))
+	return watch
 
 
 ## Статистика по самой игре (PlayerProfile.totals): средние VP по статьям с

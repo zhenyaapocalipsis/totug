@@ -117,6 +117,7 @@ func _initialize() -> void:
 	# этап 7: сохранение партии и восстановление после перезапуска
 	test_game_journal_replay()
 	test_replay_book()
+	test_replay_viewer()
 	test_room_pause()
 	test_colour_preference()
 	test_resume_saved_game()
@@ -3913,6 +3914,72 @@ func test_replay_book() -> void:
 	check_eq(ReplayBook.list(dir), [keep] as Array[String], "keep_only оставляет только реплеи из истории")
 	ReplayBook.keep_only([], dir)
 	check(ReplayBook.list(dir).is_empty(), "пустая история — реплеев нет")
+
+
+## Просмотр реплея (Replay-2): экран партии в режиме реплея на четверых —
+## шаги, перемотка вперёд и назад, глаза игрока, щелчки не меняют партию.
+func test_replay_viewer() -> void:
+	section("реплеи: просмотр в экране партии")
+	var ids := GameScreen.player_ids_for(4)
+	var live := GameServer.new(GameSetup.new_game(ids, 4711, [], false, true, true, GameSetup.MODE_RANDOM_4))
+	var log := _autoplay(live)
+	var header := ReplayBook.header_for(live.state, ids, 4711, GameSetup.MODE_RANDOM_4, live.with_mulligan,
+		{}, "blue", "ABCD", log)
+	var replay: Dictionary = JSON.parse_string(JSON.stringify({"header": header, "intents": log}))
+
+	var started := Time.get_ticks_msec()
+	var whole := ReplayBook.seek(replay, log.size())
+	var seek_ms := Time.get_ticks_msec() - started
+	check(ReplayBook.matches(replay, whole), "seek до конца — тот же итог (%d ходов за %d мс)" % [log.size(), seek_ms])
+	check(seek_ms < 3000, "перемотка всей партии быстрая: %d мс" % seek_ms)
+	var starts := ReplayBook.turn_starts(replay)
+	check(starts[0] == 0 and starts[-1] == log.size() and starts.size() > 10, "границы ходов: %d" % (starts.size() - 2))
+
+	var screen := GameScreen.new(0, [], [], GameSetup.MODE_STANDARD, {"replay": replay})
+	screen.size = Vector2(960, 540)
+	root.add_child(screen)
+	var bar := screen.replay_bar
+	check(bar != null and bar.cursor == 0, "реплей открывается на раздаче")
+	check_eq(screen.player_ids.size(), 4, "за столом четверо")
+	check_eq(bar.watched, "blue", "по умолчанию — глазами того, чей это реплей")
+	for i in 5:
+		bar.step_forward(true)
+	check_eq(bar.cursor, 5, "пять шагов вперёд")
+	var played := bar.server
+	screen.send(Intent.end_turn(played.state.current_player()))
+	check_eq(bar.cursor, 5, "ход из интерфейса в реплее не применяется")
+
+	var middle := starts[starts.size() / 2]
+	bar.seek(middle)
+	check_eq(bar.cursor, middle, "перемотка вперёд на середину")
+	var hand_mid := Array(bar.server.state.players["green"].deck.hand)
+	bar.seek(middle + 7)
+	bar.seek(middle)
+	check_eq(Array(bar.server.state.players["green"].deck.hand), hand_mid, "назад и снова туда же — та же рука green")
+	check(screen._feed.card_count() > 0, "сводка ходов собрана заново после перемотки")
+	check_eq(bar.turn_at(middle), starts.size() / 2, "номер хода на шкале")
+
+	bar.set_eye("green")
+	check_eq(screen.viewer_id, "green", "глаза green")
+	check_eq(Array(screen._view["players"]["green"]["hand"]), hand_mid, "видна рука green")
+	check(not (screen._view["players"]["red"] as Dictionary).has("hand"), "руки остальных — как у green")
+	bar.set_eye("")
+	check_eq(screen.viewer_id, _acting_of(bar), "AUTO — глазами того, кто действует")
+
+	bar.seek(bar.total())
+	check(bar.server.state.game_over and bool(screen._view["game_over"]), "в конце реплея партия окончена")
+	bar.step_forward(true)
+	check_eq(bar.cursor, bar.total(), "за концом шагать некуда")
+	bar.seek(0)
+	check(not screen._game_over_panel.visible, "назад с конца — итоги спрятаны")
+	check(screen._end_turn_button.disabled, "End turn в реплее не нажать")
+	screen.queue_free()
+
+
+func _acting_of(bar) -> String:
+	if bar.server.resolver.is_waiting():
+		return bar.server.resolver.pending.player_id
+	return bar.server.state.current_player()
 
 
 ## Простой автоигрок для тестов: отвечает первым вариантом, разыгрывает всю

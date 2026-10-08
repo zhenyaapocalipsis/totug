@@ -66,6 +66,7 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	var setup := SetupScreen.new(page)
 	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
 	setup.online_requested.connect(_show_lobby)
+	setup.replay_requested.connect(_start_replay)
 	add_child(setup)
 
 
@@ -116,6 +117,22 @@ func _close_net() -> void:
 	(old as NetSession).close()
 	get_tree().root.remove_child(old)
 	old.queue_free()
+
+
+## Реплей из истории партий (Replay-2): тот же экран партии, но партию
+## двигает полоса реплея. Выход — обратно в профиль.
+func _start_replay(file: String) -> void:
+	var replay := ReplayBook.load_replay(file)
+	if replay.is_empty():
+		return
+	for child in get_children():
+		child.queue_free()
+	PlayerProfile.seats = ((replay["header"] as Dictionary).get("profiles", {}) as Dictionary).duplicate(true)
+	var screen := GameScreen.new(0, [], [], GameSetup.MODE_STANDARD, {"replay": replay})
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.main_menu_requested.connect(func():
+		_show_setup.call_deferred(int(Time.get_unix_time_from_system()), SetupScreen.PAGE_PROFILE))
+	add_child(screen)
 
 
 func _start_game(player_ids: Array[String], game_seed: int, mode: String) -> void:

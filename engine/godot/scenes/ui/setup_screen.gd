@@ -29,6 +29,8 @@ signal started(player_ids: Array[String], mode: String)
 ## "resume" — вернуться в незаконченную онлайн-партию (NetSession.saved_game).
 ## address — код комнаты (join_code) или IP хоста (join_ip), набранные в меню.
 signal online_requested(kind: String, player_count: int, mode: String, address: String)
+## WATCH в истории партий профиля — открыть реплей (файл ReplayBook).
+signal replay_requested(file: String)
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -228,7 +230,9 @@ func _show_tab(tab: String) -> void:
 		var content: Control
 		match tab:
 			PAGE_PROFILE:
-				content = ProfileScreen.new()
+				var profile := ProfileScreen.new()
+				profile.replay_requested.connect(func(file: String): replay_requested.emit(file))
+				content = profile
 			PAGE_SETTINGS:
 				content = _build_settings()
 			_:
