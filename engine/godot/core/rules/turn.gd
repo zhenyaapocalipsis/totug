@@ -34,6 +34,13 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.played_aspects_this_turn.clear()
 	state.ghost_market_player = ""
 	state.turn_discounts.clear()
+	state.turn_flags.clear()
+	var p: PlayerState = state.players[player_id]
+	if p.start_of_turn_influence > 0:
+		p.influence += p.start_of_turn_influence
+		if resolver != null:
+			resolver.log_event("start_of_turn_influence", {"player_id": player_id, "amount": p.start_of_turn_influence})
+		p.start_of_turn_influence = 0
 	# Маркеры контроля (A1, A3, B1-B6): +1 Influence за каждую контролируемую
 	# локацию с маркером; бонус A2 — Power/Influence своего яруса. Тоже в начале
 	# хода — иначе сгорит, не успев пригодиться.
@@ -108,7 +115,7 @@ static func play_card(state: GameState, player_id: String, card_id: String, reso
 	var aspect: String = CardLibrary.card_aspect(card_id)
 	if aspect != "":
 		state.played_aspects_this_turn.append(aspect)
-	var effect: CardEffect = CardLibrary.get_effect(card_id)
+	var effect: CardEffect = ShadowCards.on_play(state, player_id, card_id, CardLibrary.get_effect(card_id))
 	resolver.apply(effect, player_id, state)
 	return true
 

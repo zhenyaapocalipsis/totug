@@ -603,6 +603,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var celestial := CelestialCards.build(card_id)
 	if celestial != null:
 		return celestial
+	var shadow := ShadowCards.build(card_id)
+	if shadow != null:
+		return shadow
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
 

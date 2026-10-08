@@ -95,6 +95,24 @@ const NAMES := {
 	"Return troops -> supplant that many at one site": "Dragon's Due",
 	"Return another player's troop or spy": "Exile",
 	"+2 Influence, House Guards cost 1 less this turn": "Requisition",
+	# Shadow Isles (New Era)
+	"Place a spy (full site: each opponent recruits an Insane Outcast)": "Haunting",
+	"Return one of your spies -> Insane Outcasts from your top 5 cards into your hand, draw a card": "Soul Harvest",
+	"Deploy 3 troops, each opponent recruits an Insane Outcast": "Ride of Dread",
+	"Insane Outcasts from your top 6 cards into your hand": "Gather the Lost",
+	"Devour a card in your hand, then draw a card": "Rend",
+	"Scry 1, then draw a card per Insane Outcast played this turn": "Grim Harvest",
+	"Deploy 3 troops, Insane Outcasts from your top 6 cards into your hand": "Deathless March",
+	"Place a spy and draw a card": "Restless Watch",
+	"Return any number of your spies -> assassinate a troop for each": "Poltergeist Fury",
+	"Deploy 3 troops (next to another player's troop: each opponent recruits an Insane Outcast)": "Cursed Legion",
+	"Move a troop": "March",
+	"Place a spy, then scry 3": "Far Sight",
+	"Return one of your spies -> +3 Power": "Spirit Lash",
+	"An opponent splits your top 5 cards into two piles, keep one": "Gloom Choice",
+	"Supplant a troop anywhere": "Shadow Step",
+	"+4 Power": "Grave Strength",
+	"Recruit one of the top 3 devoured cards for free": "Grave Digging",
 }
 
 var _tex: ImageTexture

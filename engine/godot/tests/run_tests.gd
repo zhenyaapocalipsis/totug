@@ -59,6 +59,7 @@ func _initialize() -> void:
 	test_card_library_smoke_all_cards()
 	test_celestial_order()
 	test_shield_guardian_reaction()
+	test_shadow_isles()
 
 	# этап 6: сетевой слой
 	test_intent_factories()
@@ -1871,10 +1872,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 151 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 176 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 151, "cards.json содержит 151 карту (126 + 25 Celestial Order)")
+	check_eq(all_ids.size(), 176, "cards.json содержит 176 карт (126 + 25 Celestial Order + 25 Shadow Isles)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -2391,9 +2392,10 @@ func test_game_modes() -> void:
 		var total := state.market.deck.size() + state.market.display.size()
 		if mode == GameSetup.MODE_NEW_ERA:
 			# Полуколоды New Era — по 45 карт и не по 10 копий на аспект.
-			check_eq(total, 85, "newera: в маркете 45 + 40 карт")
-			check_eq(state.half_decks[0], "celestial", "newera: первая полуколода — Celestial Order")
-			check(state.half_decks[1] != "celestial", "newera: вторая — классическая")
+			check_eq(total, 90, "newera: в маркете 45 + 45 карт")
+			check_eq(state.half_decks, ["celestial", "shadow"] as Array[String], "newera: Celestial Order + Shadow Isles")
+			check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), 30, "newera: с Shadow Isles лежит стопка Insane Outcast")
+			check_eq(state.supplies.remaining(ShadowCards.TWIG_BLIGHT), 4, "newera: и 4 Twig Blight")
 			continue
 		check_eq(total, 80, "%s: в маркете 80 карт" % mode)
 		check_eq(state.half_decks.size(), int(expected[mode]), "%s: число полуколод" % mode)
@@ -4233,3 +4235,147 @@ func test_shield_guardian_reaction() -> void:
 	check(not r.is_waiting(), "после отказа эффект закончился")
 	check_eq(s2.troops[target2], "", "войско blue убито")
 	check((s2.players["blue"] as PlayerState).deck.hand.has("49021"), "Shield Guardian остался в руке")
+
+
+func test_shadow_isles() -> void:
+	section("New Era: полуколода Shadow Isles")
+	var deck := GameSetup.expand_half_deck("shadow")
+	check_eq(deck.size(), 45, "Shadow Isles: 45 карт в полуколоде")
+	check(not GameSetup.available_half_decks().has("shadow"), "колода пока не в обычном выборе (wip)")
+	for cid: String in ["49100", "49113", "49123", "49124"]:
+		check(CardLibrary.card_data(cid).get("type") == "UNDEAD", "%s — карта Shadow Isles" % cid)
+
+	var outcast := ShadowCards.OUTCAST
+	var state := _build_rich_state(11)
+	state.supplies = Supplies.standard(true, true)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	var green: PlayerState = state.players["green"]
+	TurnEngine.start_turn(state, "red")
+
+	# Insane Outcast считается, Specter получает +1 Power за каждый
+	red.deck.hand.append_array([outcast, outcast, "49100"] as Array[String])
+	for i in range(2):
+		var ro := EffectResolver.new()
+		TurnEngine.play_card(state, "red", outcast, ro)
+		if ro.is_waiting():
+			TurnEngine.resume_card(state, "", ro)  # не сбрасывать карту
+	check_eq(ShadowCards.outcasts_played(state), 2, "сыграно 2 Insane Outcast")
+	red.power = 0
+	var r1 := EffectResolver.new()
+	TurnEngine.play_card(state, "red", "49100", r1)
+	check_eq(red.power, 5, "Specter: 3 + 2 за Outcast")
+
+	# Cursed Affinity: Skull Lord дешевле на 2, обычная карта — нет, пока не сыгран Drider
+	state.market.display[0] = "49113"
+	state.market.display[1] = "49104"
+	check_eq(Actions.market_cost(state, 0), 6, "Skull Lord: 8 - 2 за Outcast")
+	check_eq(Actions.market_cost(state, 1), 4, "Needle Blight без скидки")
+	EffectResolver.new().apply(ShadowCards._SetFlag.new("market_affinity"), "red", state)
+	check_eq(Actions.market_cost(state, 1), 2, "после Drider скидка у всех карт рынка")
+	TurnEngine.start_turn(state, "red")
+	check_eq(Actions.market_cost(state, 0), 8, "в новом ходу скидка пропала")
+
+	# Sword Wraith Commander: Outcast даёт +2 Power и карту
+	EffectResolver.new().apply(ShadowCards._AddFlag.new("outcast_bonus"), "red", state)
+	red.power = 0
+	red.deck.hand.append(outcast)
+	var hand_size := red.deck.hand.size()
+	var r2 := EffectResolver.new()
+	TurnEngine.play_card(state, "red", outcast, r2)
+	if r2.is_waiting():
+		TurnEngine.resume_card(state, "", r2)
+	check_eq(red.power, 2, "Outcast под Sword Wraith Commander: +2 Power")
+	check_eq(red.deck.hand.size(), hand_size, "и взята карта (минус сыгранный Outcast)")
+
+	# Vine Blight: Flameskull разыгран дважды, в конце хода сожран, +3 Influence в начале следующего
+	TurnEngine.start_turn(state, "red")
+	red.influence = 0
+	red.deck.hand.append_array(["49103", "49108"] as Array[String])
+	TurnEngine.play_card(state, "red", "49103", EffectResolver.new())
+	TurnEngine.play_card(state, "red", "49108", EffectResolver.new())
+	check_eq(red.influence, 4, "Flameskull под Vine Blight: дважды по +2 Influence")
+	var r3 := EffectResolver.new()
+	TurnEngine.end_turn(state, "red", r3)
+	_auto_resolve(state, r3, false)
+	check(state.devoured_pile.has("49108"), "Flameskull сожран в конце хода")
+	check_eq(red.start_of_turn_influence, 3, "Flameskull: +3 Influence отложено на следующий ход")
+	TurnEngine.start_turn(state, "red")
+	check(red.influence >= 3, "в начале хода пришло 3 Influence (плюс доход маркеров)")
+	check_eq(red.start_of_turn_influence, 0, "и отложенное обнулилось")
+
+	# Twig Blight при Devour уходит в запас и даёт 2 карты
+	state.supplies.counts[ShadowCards.TWIG_BLIGHT] = 0
+	red.deck.hand = ["49124"] as Array[String]
+	red.deck.draw_pile = ["48342", "48342", "48342"] as Array[String]
+	var r4 := EffectResolver.new()
+	r4.apply(DevourCard.new("hand"), "red", state)
+	TurnEngine.resume_card(state, "49124", r4)
+	check_eq(state.supplies.remaining(ShadowCards.TWIG_BLIGHT), 1, "Twig Blight вернулся в запас")
+	check_eq(red.deck.hand.size(), 2, "и дал взять 2 карты")
+	check(not state.devoured_pile.has("49124"), "в стопку сожранных не попал")
+
+	# Bone Naga в руке у blue: Outcast можно взять в руку
+	blue.deck.hand = ["49109"] as Array[String]
+	var r5 := EffectResolver.new()
+	r5.apply(GiveInsaneOutcast.new("self"), "blue", state)
+	check(r5.is_waiting() and r5.pending.player_id == "blue", "Bone Naga: вопрос получателю")
+	TurnEngine.resume_card(state, true, r5)
+	check(blue.deck.hand.has(outcast), "Outcast пришёл в руку")
+	check(r5.is_waiting() and r5.pending.player_id == "blue", "затем Scry 1 у blue")
+	TurnEngine.resume_card(state, "", r5)
+	check(not r5.is_waiting(), "реакция закончилась")
+
+	# Will-o'-Wisp: Outcast получает только тот, у кого его нет в руке
+	var green_discard := green.deck.discard_pile.count(outcast)
+	var blue_discard := blue.deck.discard_pile.count(outcast)
+	var r6 := EffectResolver.new()
+	r6.apply(ShadowCards._OutcastUnlessHolding.new(), "red", state)
+	check_eq(blue.deck.discard_pile.count(outcast), blue_discard, "blue показал Outcast — ничего не получил")
+	check_eq(green.deck.discard_pile.count(outcast), green_discard + 1, "green получил Outcast")
+
+	# Allip: соперники могут сожрать карту из руки
+	var r7 := EffectResolver.new()
+	r7.apply(ShadowCards._OpponentsMayDevour.new(), "red", state)
+	check(r7.is_waiting() and r7.pending.player_id == "blue", "Allip: первым спрашивают blue")
+	TurnEngine.resume_card(state, "", r7)
+	check(r7.is_waiting() and r7.pending.player_id == "green", "затем green")
+	TurnEngine.resume_card(state, "", r7)
+
+	# Shadow: соперник делит 5 верхних карт, хозяин берёт одну стопку
+	red.deck.hand.clear()
+	red.deck.discard_pile.clear()
+	red.deck.draw_pile = ["48342", "48342", "48342", "48344", "48340"] as Array[String]
+	var r8 := EffectResolver.new()
+	r8.apply(ShadowCards._ShadowSplit.new(), "red", state)
+	check(r8.pending.choice_type == "target_player", "Shadow: выбор соперника")
+	TurnEngine.resume_card(state, "blue", r8)
+	check(r8.pending.player_id == "blue", "делит blue")
+	TurnEngine.resume_card(state, "48340", r8)
+	TurnEngine.resume_card(state, "", r8)
+	check(r8.pending.player_id == "red" and r8.pending.choice_type == "choose_option", "red выбирает стопку")
+	TurnEngine.resume_card(state, 0, r8)
+	check_eq(red.deck.hand, ["48340"] as Array[String], "открытая стопка в руке")
+	check_eq(red.deck.discard_pile.size(), 4, "закрытая в сбросе")
+
+	# Devourer: Outcast в колоде стоят 0 VP
+	var s2 := _build_rich_state(12)
+	(s2.players["red"] as PlayerState).deck = Deck.new(["49115", outcast, outcast] as Array[String])
+	check_eq(int(Scoring.card_bonus_vp(s2, "red")["deck"]), 2, "Devourer: два Outcast по 0 вместо -1")
+
+	# все карты колоды разыгрываются до конца
+	for cid: String in ["49100", "49101", "49102", "49103", "49104", "49105", "49106", "49107", "49108",
+			"49109", "49110", "49111", "49112", "49113", "49114", "49115", "49116", "49117", "49118",
+			"49119", "49120", "49121", "49122", "49123", "49124"]:
+		for prefer_last in [true, false]:
+			var st := _build_rich_state(hash(cid) % 1000)
+			st.supplies = Supplies.standard(true, true)
+			var pl: PlayerState = st.players["red"]
+			pl.deck.hand.append(cid)
+			(st.players["blue"] as PlayerState).deck.hand.append("49109")
+			TurnEngine.start_turn(st, "red")
+			var res := EffectResolver.new()
+			TurnEngine.play_card(st, "red", cid, res)
+			_auto_resolve(st, res, prefer_last)
+			if res.is_waiting():
+				check(false, "%s завис (prefer_last=%s)" % [cid, prefer_last])

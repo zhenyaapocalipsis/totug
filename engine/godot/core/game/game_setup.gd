@@ -42,11 +42,12 @@ const MODE_DOUBLE := "double"
 const MODE_RANDOM_3 := "random3"
 const MODE_RANDOM_4 := "random4"
 const MODE_RANDOM_6 := "random6"
-## New Era (проверка новых полуколод): Celestial Order + одна случайная
-## классическая полуколода. Новые колоды в обычный пул не входят, пока не
-## доделаны ("wip"), — иначе изменились бы сиды прежних партий.
+## New Era (проверка новых полуколод): Celestial Order + Shadow Isles
+## (решение владельца 2026-10-08; до этого — Celestial + случайная
+## классическая). Новые колоды в обычный пул не входят, пока не доделаны
+## ("wip"), — иначе изменились бы сиды прежних партий.
 const MODE_NEW_ERA := "newera"
-const NEW_ERA_DECK := "celestial"
+const NEW_ERA_DECKS := ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
 
@@ -158,9 +159,12 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 	state.game_mode = mode
 
 	# 3-4. общие стопки; Insane Outcast — только если в маркете есть карты Demons
+	# или Shadow Isles (New Era), Twig Blight — только с Shadow Isles
 	var demon_cards := expand_half_deck("demons")
+	var shadow_cards := expand_half_deck("shadow")
 	var with_demons := market_cards.any(func(cid: String) -> bool: return demon_cards.has(cid))
-	state.supplies = Supplies.standard(with_demons)
+	var with_shadow := market_cards.any(func(cid: String) -> bool: return shadow_cards.has(cid))
+	state.supplies = Supplies.standard(with_demons or with_shadow, with_shadow)
 
 	# 6. белые войска
 	state.setup_white_troops(data["sites"])
@@ -223,7 +227,8 @@ static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[S
 			Deck.shuffle_array(pool, rng)
 			return pool.slice(0, mini(mode_deck_count(mode), pool.size()))
 		MODE_NEW_ERA:
-			var pair: Array[String] = [NEW_ERA_DECK, pool[rng.randi_range(0, pool.size() - 1)]]
+			var pair: Array[String] = []
+			pair.assign(NEW_ERA_DECKS)
 			return pair
 	return _pick_two_half_decks(rng)
 

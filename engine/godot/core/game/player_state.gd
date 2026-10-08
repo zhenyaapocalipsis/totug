@@ -35,6 +35,9 @@ var pending_promotions: Array[String] = []
 ## сложены сюда AtEndOfTurn.apply() и прогоняются TurnEngine.end_turn() перед
 ## обычными шагами конца хода.
 var pending_end_of_turn: Array[CardEffect] = []
+## New Era (Flameskull): Influence, которое игрок получит в начале своего
+## следующего хода (TurnEngine.start_turn).
+var start_of_turn_influence: int = 0
 
 
 func _init(player_id: String, starting_deck_cards: Array[String] = []) -> void:

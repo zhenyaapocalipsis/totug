@@ -34,13 +34,17 @@ func _init(initial: Dictionary = {}) -> void:
 
 ## Стандартный набор по рулбуку. with_insane_outcasts — шаг 4 сетапа: стопка
 ## Insane Outcast выкладывается, только если играем с полуколодой Demons.
-static func standard(with_insane_outcasts: bool = true) -> Supplies:
+## with_twig_blights — New Era Shadow Isles: 4 Twig Blight (Sapling мода)
+## для Tree Blight.
+static func standard(with_insane_outcasts: bool = true, with_twig_blights: bool = false) -> Supplies:
 	var s := Supplies.new({
 		HOUSE_GUARD: 15,
 		PRIESTESS_OF_LOLTH: 15,
 	})
 	if with_insane_outcasts:
 		s.counts[INSANE_OUTCAST] = 30
+	if with_twig_blights:
+		s.counts[ShadowCards.TWIG_BLIGHT] = ShadowCards.TWIG_SUPPLY
 	return s
 
 
@@ -67,11 +71,14 @@ func give_back(card_id: String) -> void:
 
 ## Insane Outcast вместо пожирания/повышения возвращается в запас (текст карты).
 ## true — карта ушла в запас, вызывающему коду класть её никуда не нужно.
+## Twig Blight так же уходит в запас и даёт взять 2 карты (текст карты).
 static func redirect_outcast(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> bool:
-	if card_id != INSANE_OUTCAST:
+	if card_id != INSANE_OUTCAST and card_id != ShadowCards.TWIG_BLIGHT:
 		return false
 	state.supplies.give_back(card_id)
 	resolver.log_event("removed_to_supply", {"player_id": player_id, "card_id": card_id})
+	if card_id == ShadowCards.TWIG_BLIGHT:
+		resolver.push(DrawCards.new(2), player_id)
 	return true
 
 

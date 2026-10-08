@@ -187,7 +187,7 @@ func _apply(intent: Intent) -> int:
 			return Error.OK
 
 		Intent.Type.ACTION_RECRUIT:
-			var cost: int = CardLibrary.card_cost(Actions.ghost_market_card(state, intent.player_id)) if intent.market_index == Market.DEVOURED_TOP_INDEX else state.market.card_cost(intent.market_index)
+			var cost: int = CardLibrary.card_cost(Actions.ghost_market_card(state, intent.player_id)) if intent.market_index == Market.DEVOURED_TOP_INDEX else Actions.market_cost(state, intent.market_index)
 			if cost < 0:
 				return Error.INVALID_ACTION
 			var bought: String = Actions.ghost_market_card(state, intent.player_id) \

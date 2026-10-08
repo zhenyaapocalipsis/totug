@@ -173,6 +173,15 @@ static func remove_spy(state: GameState, site_id: String, spy_owner: String) -> 
 		state.players[spy_owner].spies_in_barracks += 1
 
 
+## Цена карты в слоте рынка с учётом Cursed Affinity (New Era, Shadow Isles).
+## -1 — слот пуст или индекс неверный.
+static func market_cost(state: GameState, index: int) -> int:
+	var cost: int = state.market.card_cost(index)
+	if cost < 0:
+		return cost
+	return maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index]))
+
+
 ## Цены базовых действий с учётом скидок хода (New Era, state.turn_discounts).
 static func assassinate_cost(state: GameState) -> int:
 	return maxi(0, COST_ASSASSINATE - int(state.turn_discounts.get("assassinate", 0)))

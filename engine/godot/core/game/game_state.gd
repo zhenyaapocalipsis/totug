@@ -58,6 +58,10 @@ var a2_paid := {"power": 0, "influence": 0}
 ##   "supply:<id>"  — скидка на карту из запаса (Hippogriff: House Guard).
 ## Цены считает Actions.*_cost(); интерфейс видит их через StateView.
 var turn_discounts: Dictionary = {}
+## New Era: счётчики и флаги текущего хода от карт Shadow Isles (сколько
+## сыграно Insane Outcast, повтор Vine Blight и т.п., см. ShadowCards).
+## Сбрасываются в start_turn.
+var turn_flags: Dictionary = {}
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.

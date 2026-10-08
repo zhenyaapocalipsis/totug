@@ -138,7 +138,7 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 	# Карты маркета, на которые хватает Influence.
 	var market_indices: Array[int] = []
 	for i in range(state.market.display.size()):
-		var cost: int = state.market.card_cost(i)
+		var cost: int = Actions.market_cost(state, i)
 		if cost >= 0 and cost <= p.influence:
 			market_indices.append(i)
 	var ghost_card := Actions.ghost_market_card(state, viewer_id)

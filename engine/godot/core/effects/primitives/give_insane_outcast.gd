@@ -33,6 +33,10 @@ func _init(m: String, n: int = 1) -> void:
 ## сколько есть и молча останавливаемся — это не ошибка.
 func _give(state: GameState, target_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[target_id]
+	# New Era, Bone Naga в руке получателя: он может взять Outcast в руку.
+	if p.deck.hand.has(ShadowCards.BONE_NAGA) and state.supplies.is_available(INSANE_OUTCAST_ID):
+		resolver.push(ShadowCards.NagaReaction.new(target_id, count), target_id)
+		return
 	var given := 0
 	for i in range(count):
 		if not state.supplies.take(INSANE_OUTCAST_ID):
