@@ -18,11 +18,23 @@ const OUT_MINI := ROOT + "engine/godot/assets/cards_mini/"
 const MINI_W := 58
 const MINI_H := 84
 ## Шапка — имя, до трёх строк по 9 букв: так влезают все имена, вплоть до
-## WATER ELEMENTAL MYRMIDON. Аспекта и VP на мелкой карте нет (решение
-## владельца, 2026-10-03). Цена — в правом верхнем углу шапки (2026-10-06),
-## поэтому первая строка имени короче на MINI_COST_W.
+## WATER ELEMENTAL MYRMIDON. VP на мелкой карте нет (решение владельца,
+## 2026-10-03). Справа в шапке колонка: цена, под ней значок аспекта, слева
+## от неё вертикальная черта (2026-10-08). Первые MINI_SIDE_LINES строк имени
+## стоят рядом с колонкой — в них 8 букв, остальные во всю ширину (9).
 const MINI_HEAD := 26
-const MINI_COST_W := 6  # цифра цены x 51..55 и пиксель зазора — 8 букв имени ещё влезают
+const MINI_SIDE_X := 50  # x черты; 8 букв имени (тень на x=49) ещё влезают
+const MINI_SIDE_LINES := 2
+## Имена, которые рядом с колонкой не влезают в три строки, на мелкой карте
+## сокращены; полное имя — на большой карте (владелец, 2026-10-08).
+const MINI_SHORT_NAMES := {
+	"CONSCRIPTION OFFICER": "CONSCR. OFFICER",
+	"MASTER OF MELEE-MAGTHERE": "MASTER OF M.-MAGTHERE",
+	"WATER ELEMENTAL MYRMIDON": "WATER ELEM. MYRMIDON",
+	"FIRE ELEMENTAL MYRMIDON": "FIRE ELEM. MYRMIDON",
+	"EARTH ELEMENTAL MYRMIDON": "EARTH ELEM. MYRMIDON",
+	"AIR ELEMENTAL MYRMIDON": "AIR ELEM. MYRMIDON",
+}
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
 const MINI_LINE_H := 8
 const MINI_NAME_LINES := 3
@@ -119,6 +131,8 @@ const NAME_BREAKS := {
 	"PRIESTESS": [6], "MERCENARY": [5], "UNDERDARK": [5], "ENCHANTER": [6],
 	"GIBBERING": [6], "SPECTATOR": [4], "INTELLECT": [5], "PUPPETEER": [6],
 	"ULITHARID": [3],
+	# Рядом с колонкой цены и аспекта (2026-10-08) тоже 8 букв.
+	"ELEMENTAL": [3, 6], "SOVEREIGN": [3], "HIPPOGRIFF": [5], "BERSERKER": [3],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -223,6 +237,15 @@ const ICONS := {
 	"AMBITION": ["0001000","1001001","1011101","1111111","1111111","0111110","0111110"],
 	"GUILE": ["0111110","1000001","1011101","1010101","1011001","1000010","0111100"],
 	"OBEDIENCE": ["0011100","0100010","0100010","1111111","1110111","1111111","0111110"],
+}
+## Те же значки шириной 5 — для колонки мелкой карты, иначе рядом с ней в
+## строке имени остаётся 7 букв вместо 8.
+const MINI_ICONS := {
+	"CONQUEST": ["10101","11111","01110","01010","01110","01110","11111"],
+	"MALICE": ["01110","11111","10101","11111","01010","01110","01010"],
+	"AMBITION": ["00100","10101","10101","11111","11111","01110","01110"],
+	"GUILE": ["01110","10001","10111","10101","10001","10010","01100"],
+	"OBEDIENCE": ["01110","10001","10001","11111","11011","11111","01110"],
 }
 
 var img: Image
@@ -613,7 +636,7 @@ func sv(v: Variant) -> String:
 
 
 ## Мелкое лицо карты 58x84 для руки, маркета и полос сыгранных карт: шапка с
-## именем, под ней арт — и всё. Ни цены, ни аспекта, ни текста способности, ни
+## именем, ценой и значком аспекта, под ней арт — и всё. Ни текста способности, ни
 ## VP здесь нет: их читают на большой карте под курсором. Большая карта должна
 ## быть уже нарисована — арт вырезается из неё.
 func render_mini(c: Dictionary) -> Image:
@@ -631,16 +654,24 @@ func render_mini(c: Dictionary) -> Image:
 	# Имя во всю ширину шапки: 9 букв (53 px) от x=2, тень уходит на x=55.
 	# Первая строка короче на MINI_COST_W: в правом верхнем углу шапки цена.
 	var room := MINI_W - 5
-	var name_lines := wrap_name(clean(sv(c["name"])), room - MINI_COST_W, room, 1, MINI_NAME_LINES)
+	var aspect := sv(c["aspect"])
+	var has_side := c["cost"] != null or MINI_ICONS.has(aspect)
+	var name := clean(sv(c["name"]))
+	var name_lines := wrap_name(MINI_SHORT_NAMES.get(name, name), MINI_SIDE_X - 3 if has_side else room, room,
+		MINI_SIDE_LINES, MINI_NAME_LINES)
 	for i in name_lines.size():
 		text(2, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
-	# Цена — часть лица: цифра в правом верхнем углу шапки, тем же цветом и с
-	# той же тенью, что имя, без плашки (владелец, 2026-10-06). Цифра на x 51..55,
-	# тень на 56; от тени имени в 8 букв (x=49) её отделяет пиксель шапки.
-	# У стартовых карт цены нет.
-	if c["cost"] != null:
-		var cost := str(int(c["cost"]))
-		text(MINI_W - 2 - text_width(cost, 1), 2, cost, C_LIGHT, 1, C_OUTLINE)
+	# Справа от имени колонка: цена, под ней значок аспекта, от имени их
+	# отделяет вертикальная черта (владелец, 2026-10-08). Цифра — тем же цветом
+	# и с той же тенью, что имя. У стартовых карт цены нет.
+	if has_side:
+		rect(MINI_SIDE_X, 2, 1, MINI_SIDE_LINES * MINI_LINE_H, C_FRAME_HI)
+		var x := MINI_SIDE_X + 2  # цифра и значок по 5 пикселей, до x=56
+		if c["cost"] != null:
+			text(x, 2, str(int(c["cost"])), C_LIGHT, 1, C_OUTLINE)
+		if MINI_ICONS.has(aspect):
+			glyph_rows(x + 1, 2 + MINI_LINE_H + 1, MINI_ICONS[aspect], C_OUTLINE)
+			glyph_rows(x, 2 + MINI_LINE_H, MINI_ICONS[aspect], ASPECT_COLOR[aspect])
 
 	# арт: кусок 1:1 из арта большой карты
 	var art_y := 1 + MINI_HEAD + 1
@@ -803,13 +834,29 @@ func render_mini_preview(all: Array) -> void:
 	var dir := PREVIEW + "mini/"
 	DirAccess.make_dir_recursive_absolute(dir)
 	var rendered: Array[Image] = []
+	var by_id := {}
 	for c: Dictionary in all:
 		if not SHEETS.has(int(c["card_id"]) / 100) and not SINGLE_ART.has(int(c["card_id"])):
 			continue
 		var m := render_mini(c)
 		m.save_png(OUT_MINI + "%d.png" % int(c["card_id"]))
 		rendered.append(m)
+		by_id[int(c["card_id"])] = m
 	print("mini rendered: ", rendered.size(), " ", MINI_W, "x", MINI_H)
+
+	# Мелкие лица альт-артов (<card_id>_<n>.png): шапка у них та же, что у
+	# обычного лица карты, — переносим её, арт под ней не трогаем.
+	var alt_dir := ROOT + "engine/godot/assets/cards_alt_mini/"
+	var alt_count := 0
+	for f in DirAccess.get_files_at(alt_dir):
+		if f.get_extension() != "png" or not by_id.has(int(f.get_slice("_", 0))):
+			continue
+		var alt := Image.load_from_file(alt_dir + f)
+		alt.convert(Image.FORMAT_RGBA8)
+		alt.blit_rect(by_id[int(f.get_slice("_", 0))], Rect2i(0, 0, MINI_W, 1 + MINI_HEAD), Vector2i.ZERO)
+		alt.save_png(alt_dir + f)
+		alt_count += 1
+	print("alt mini headers: ", alt_count)
 
 	var s := 4
 	var gap := 8
