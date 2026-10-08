@@ -116,6 +116,7 @@ func _initialize() -> void:
 
 	# этап 7: сохранение партии и восстановление после перезапуска
 	test_game_journal_replay()
+	test_replay_book()
 	test_room_pause()
 	test_colour_preference()
 	test_resume_saved_game()
@@ -3866,6 +3867,83 @@ func test_game_journal_replay() -> void:
 	check_eq(room.claim(5, "key-red"), "red", "переподключение по верному ключу находит цвет")
 	check_eq(room.claim(6, "key-red"), "", "тот же ключ второй раз — место уже занято")
 	check_eq(room.claim(7, "nope"), "", "чужой ключ — отказ")
+
+
+## Реплеи (Replay-1): полная партия на 2, 3 и 4 игрока простым автоигроком,
+## реплей на диск и обратно, пересборка по сиду и ходам — тот же итог.
+func test_replay_book() -> void:
+	section("реплеи: запись партии и пересборка по ходам")
+	var dir := "user://replay_test/"
+	for name in ReplayBook.list(dir):
+		ReplayBook.erase(name, dir)
+	var modes := {2: GameSetup.MODE_STANDARD, 3: GameSetup.MODE_RANDOM_3, 4: GameSetup.MODE_RANDOM_4}
+	for count: int in [2, 3, 4]:
+		var ids := GameScreen.player_ids_for(count)
+		var seed_value := 4242 + count
+		var live := GameServer.new(GameSetup.new_game(ids, seed_value, [], false, true, true, modes[count]))
+		var log := _autoplay(live)
+		check(live.state.game_over, "%d игрока: автоигрок доиграл партию до конца (%d ходов)" % [count, log.size()])
+		var header := ReplayBook.header_for(live.state, ids, seed_value, modes[count], live.with_mulligan,
+			{"red": {"name": "Ann", "emblem": "x"}}, "", "", log)
+		header["date"] = 1700000000 + count
+		var file := ReplayBook.save(header, log, dir)
+		var loaded := ReplayBook.load_replay(file, dir)
+		check(not loaded.is_empty() and ReplayBook.same_version(loaded), "%d игрока: реплей читается, версия своя" % count)
+		check_eq(String((loaded["header"]["profiles"] as Dictionary)["red"]["name"]), "Ann", "%d игрока: имена в реплее" % count)
+		var rebuilt := ReplayBook.rebuild(loaded)
+		check(ReplayBook.matches(loaded, rebuilt), "%d игрока: пересборка по ходам — те же очки" % count)
+		check_eq(Array(rebuilt.state.market.display), Array(live.state.market.display), "%d игрока: тот же рынок в конце" % count)
+		check_eq(rebuilt.state.troops, live.state.troops, "%d игрока: те же войска в конце" % count)
+	check_eq(ReplayBook.list(dir).size(), 3, "три реплея в папке")
+	check(ReplayBook.list(dir)[0].begins_with("20231114"), "новые первыми, имя файла — дата")
+
+	# Досрочный конец: игрок не вернулся — реплей кончается тем же abandon.
+	var ids2 := GameScreen.player_ids_for(2)
+	var quit := GameServer.new(GameSetup.new_game(ids2, 99, [], false, true, true, GameSetup.MODE_STANDARD))
+	var short := _autoplay(quit, 10)
+	quit.abandon("blue")
+	var gone := ReplayBook.header_for(quit.state, ids2, 99, GameSetup.MODE_STANDARD, true, {}, "", "", short)
+	check_eq(String(gone["abandoned_by"]), "blue", "в реплее записано, кто бросил партию")
+	check(ReplayBook.matches({"header": gone, "intents": short}, ReplayBook.rebuild({"header": gone, "intents": short})),
+		"брошенная партия пересобирается до того же конца")
+
+	# Реплей живёт, пока на него ссылается история.
+	var keep := ReplayBook.list(dir)[1]
+	ReplayBook.keep_only([keep, ""], dir)
+	check_eq(ReplayBook.list(dir), [keep] as Array[String], "keep_only оставляет только реплеи из истории")
+	ReplayBook.keep_only([], dir)
+	check(ReplayBook.list(dir).is_empty(), "пустая история — реплеев нет")
+
+
+## Простой автоигрок для тестов: отвечает первым вариантом, разыгрывает всю
+## руку, покупает что по карману, ставит войско, кончает ход. Возвращает
+## принятые ходы (как журнал комнаты). max_intents — остановиться раньше.
+func _autoplay(server: GameServer, max_intents: int = 20000) -> Array:
+	var log: Array = []
+	var state := server.state
+	var tries := 0
+	while not state.game_over and log.size() < max_intents and tries < 200000:
+		tries += 1
+		var intents: Array[Intent] = []
+		if server.resolver.is_waiting():
+			var pending := server.resolver.pending
+			intents.append(Intent.make_decision(pending.player_id, (pending.legal_options as Array)[0]))
+		else:
+			var pid := state.current_player()
+			var me: PlayerState = state.players[pid]
+			for card in me.deck.hand:
+				intents.append(Intent.play_card(pid, String(card)))
+			for i in state.market.display.size():
+				intents.append(Intent.recruit(pid, i))
+			var slots := state.presence.deployable_slots(pid, state.troops, state.spies)
+			if not slots.is_empty():
+				intents.append(Intent.deploy(pid, slots[0]))
+			intents.append(Intent.end_turn(pid))
+		for intent in intents:
+			if int(server.apply_intent(intent)["error"]) == GameServer.Error.OK:
+				log.append(intent.to_dict())
+				break
+	return log
 
 
 ## Любимый цвет из профиля (решение владельца, 2026-09-28).

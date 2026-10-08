@@ -61,7 +61,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 16
+const PROTOCOL := 17
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -108,6 +108,11 @@ var ratings: RatingBook
 ## Папка сохранений партий (GameJournal) — своя у сетевого теста, чтобы не
 ## трогать настоящие сохранения владельца.
 var saves_dir := GameJournal.DIR
+## Папка реплеев (ReplayBook) — тоже своя у сетевого теста.
+var replays_dir := ReplayBook.DIR
+## Клиент: файл реплея последней партии. Сервер шлёт реплей раньше итога
+## рейтинга (_rating), и строка истории запоминает этот файл.
+var last_replay := ""
 var rooms: Dictionary = {}      # code -> GameRoom
 var peer_room: Dictionary = {}  # peer id -> code
 ## Поиск игры: число игроков -> очередь peer id (по порядку прихода) и кто
@@ -961,6 +966,7 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 		return
 	if room.server.state.game_over:
 		GameJournal.erase(room.code, saves_dir)
+		_send_replay(room)
 		if not room.rated:
 			_rate_room(room)
 	else:
@@ -976,7 +982,26 @@ func _abandon_room(room: GameRoom, pid: String) -> void:
 	for peer: int in room.seats:
 		_send(peer, "_result", [GameServer.Error.OK, result["events"], views[room.seats[peer]]])
 	_broadcast_pause(room)
+	_send_replay(room)
 	_log("room %s: %s did not return, game over (not rated)" % [room.code, pid])
+
+
+## Партия окончена — каждому за столом её реплей (ReplayBook). Прятать уже
+## нечего: в реплее видны все руки и колоды. Кто в этот миг не за столом,
+## реплея не получит.
+func _send_replay(room: GameRoom) -> void:
+	var state := room.server.state
+	var header := ReplayBook.header_for(state, room.ids, room.game_seed, room.mode,
+		room.server.with_mulligan, room.profiles, "", room.code, room.log)
+	for peer: int in room.seats:
+		_send(peer, "_replay", [header, room.log])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _replay(header: Dictionary, intents: Array) -> void:
+	var own := header.duplicate(true)
+	own["seat"] = seat
+	last_replay = ReplayBook.save(own, intents, replays_dir)
 
 
 func _broadcast_pause(room: GameRoom) -> void:
@@ -1055,7 +1080,13 @@ func _rating(result: Dictionary) -> void:
 	if result.has(seat):
 		PlayerProfile.cache_stats(result[seat])
 		var entry := PlayerProfile.history_entry(seat, result, profiles)
+		entry["replay"] = last_replay
+		last_replay = ""
 		PlayerProfile.add_history(entry)
+		var kept := []
+		for game: Dictionary in PlayerProfile.history():
+			kept.append(String(game.get("replay", "")))
+		ReplayBook.keep_only(kept, replays_dir)
 		PlayerProfile.add_totals(entry)
 		SkinCollection.grant(result[seat].get("reward", {}))
 	rating_changed.emit(result)

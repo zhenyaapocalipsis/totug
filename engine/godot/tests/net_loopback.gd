@@ -70,6 +70,8 @@ const RATINGS_PATH := "user://ratings_nettest.json"
 const RATINGS_NAMES_PATH := "user://ratings_nettest_names.json"
 ## Своя папка сохранений партий — не трогает настоящие user://saves/ владельца.
 const SAVES_DIR := "user://saves_nettest/"
+## И своя папка реплеев (ReplayBook).
+const REPLAYS_DIR := "user://replays_nettest/"
 
 ## Переподключение и восстановление после «перезапуска» сервера (этап 7).
 var _reconnect_code := ""
@@ -212,6 +214,17 @@ func _process(delta: float) -> bool:
 				check(not mine.has("reward"), "[server] партия по коду комнаты — без награды")
 				check(not (views[players[0]] as Dictionary).get("final_scores", {}).is_empty(),
 					"[server] итоги партии пришли в срезе")
+				# Партия пережила «перезапуск» сервера — реплей всё равно цельный.
+				var file := String(PlayerProfile.history()[0].get("replay", ""))
+				var replay := ReplayBook.load_replay(file, REPLAYS_DIR)
+				check(file != "" and not replay.is_empty(), "[replay] строка истории знает свой реплей")
+				# Конец партии тест вызвал в обход ходов (_end_game) — его реплей
+				# не повторит; рынок и войска — от ходов, они должны сойтись.
+				var live: GameState = (server.rooms.values()[0] as GameRoom).server.state
+				var again := ReplayBook.rebuild(replay).state if not replay.is_empty() else null
+				check(again != null and Array(again.market.display) == Array(live.market.display)
+					and again.troops == live.troops,
+					"[replay] реплей партии после перезапуска сервера пересобирается до той же доски")
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
 				_start_server_four()
@@ -354,6 +367,15 @@ func _process(delta: float) -> bool:
 				check(NetSession.saved_game().is_empty(), "[pause] запомненная партия забыта")
 				check(((pause_seen[players[0]] as Dictionary)["absent"] as Dictionary).is_empty(),
 					"[pause] после конца партии паузы нет")
+				_step = "pause_replay_wait"
+		"pause_replay_wait":
+			# Реплей идёт следом за последним ходом.
+			if not ReplayBook.list(REPLAYS_DIR).is_empty():
+				var replay := ReplayBook.load_replay(ReplayBook.list(REPLAYS_DIR)[0], REPLAYS_DIR)
+				var header: Dictionary = replay.get("header", {})
+				check_eq_str(String(header.get("seat", "")), players[0].seat, "[replay] реплей пришёл оставшемуся, записан его глазами")
+				check_eq_str(String(header.get("abandoned_by", "")), _absent_seat, "[replay] в реплее — кто бросил партию")
+				check(ReplayBook.matches(replay, ReplayBook.rebuild(replay)), "[replay] реплей пересобирается до того же итога")
 				return _finish()
 	return false
 
@@ -587,6 +609,7 @@ func _session() -> NetSession:
 	set_multiplayer(SceneMultiplayer.new(), branch.get_path())
 	var net := NetSession.new()
 	net.name = "Net"
+	net.replays_dir = REPLAYS_DIR
 	branch.add_child(net)
 	return net
 
@@ -693,6 +716,8 @@ func _finish() -> bool:
 ## Тестовые сохранения (SAVES_DIR) обычно и так пустеют сами: игра завершается
 ## и GameJournal.erase() убирает файл. Здесь — на случай отказа/таймаута.
 func _clear_saves_dir() -> void:
+	for name in ReplayBook.list(REPLAYS_DIR):
+		ReplayBook.erase(name, REPLAYS_DIR)
 	var dir := DirAccess.open(SAVES_DIR)
 	if dir == null:
 		return
