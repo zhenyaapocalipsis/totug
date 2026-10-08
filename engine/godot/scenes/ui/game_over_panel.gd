@@ -15,6 +15,9 @@ const COL_W := 18
 ## Полоса посередине под таблицу итогов — колоды раскладываются по бокам от неё.
 const CENTRE_W := 340.0
 const MARGIN := 6.0
+## Высота графика VP под таблицей итогов.
+const CHART_H := 120.0
+const ReplayStatsPanelScript := preload("res://scenes/ui/replay_stats_panel.gd")
 const CARD := CardView.MINI_SIZE  # мелкое лицо карты
 const CARD_GAP := 2.0
 ## Шаг лесенки: видны имя, цена и VP карты. Если карт много — шаг меньше.
@@ -39,6 +42,9 @@ var _grid: GridContainer
 var _decks: Control
 ## Строка кнопок внизу (VIEW BOARD, MAIN MENU; реплей добавляет STATS).
 var _buttons: HBoxContainer
+## График VP и строка итогов (set_stats); пусто, пока данных нет.
+var _charts: VBoxContainer
+var _stats_button: Button
 var _shown_once := false
 ## Рейтинг после онлайн-партии (NetSession.rating_changed): место -> {rating, delta}.
 var _ratings: Dictionary = {}
@@ -97,6 +103,12 @@ func _init() -> void:
 	_grid.add_theme_constant_override("h_separation", 4)
 	_grid.add_theme_constant_override("v_separation", 3)
 	col.add_child(_grid)
+
+	# График VP по ходам — когда придут данные партии (set_stats).
+	_charts = VBoxContainer.new()
+	_charts.add_theme_constant_override("separation", 2)
+	_charts.visible = false
+	col.add_child(_charts)
 
 	_buttons = HBoxContainer.new()
 	var buttons := _buttons
@@ -295,3 +307,23 @@ func add_button(text: String, action: Callable) -> void:
 	var button := _button(text, action)
 	_buttons.add_child(button)
 	_buttons.move_child(button, 0)
+
+
+## Статистика партии пришла (ReplayStats.collect): под таблицей — график VP
+## всех игроков по ходам и строка итогов, в строке кнопок — STATS (open_full:
+## все вкладки статистики). Повторный вызов заменяет график.
+func set_stats(stats: Dictionary, open_full: Callable) -> void:
+	for child in _charts.get_children():
+		_charts.remove_child(child)
+		child.queue_free()
+	var chart := ReplayStatsPanelScript.vp_chart(stats, "VP AFTER EACH TURN")
+	chart.custom_minimum_size = Vector2(CENTRE_W - MARGIN * 2.0, CHART_H)
+	_charts.add_child(chart)
+	var line := _cell(ReplayStatsPanelScript.summary(stats), PixelTheme.TEXT_DIM, 0)
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line.custom_minimum_size.x = CENTRE_W - MARGIN * 2.0
+	_charts.add_child(line)
+	_charts.visible = true
+	if _stats_button == null and open_full.is_valid():
+		add_button("STATS", open_full)
+		_stats_button = _buttons.get_child(0)

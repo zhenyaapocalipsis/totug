@@ -136,19 +136,10 @@ func _build_vp() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	var turns: Array = stats["turns"]
-	var series: Array = []
-	for pid in ids():
-		var points: Array[float] = []
-		for t in turns:
-			points.append(float((t as Dictionary)["vp"].get(pid, 0)))
-		series.append({"colour": player_colour(pid), "points": points, "name": EventLogPanel.player_name(pid)})
-	var chart := LineChart.new(series, "VP AFTER EACH TURN (AS IF THE GAME ENDED THERE). CLICK TO JUMP",
-		func(i: int) -> String: return _turn_title(i))
+	var chart := vp_chart(stats, "VP AFTER EACH TURN (AS IF THE GAME ENDED THERE). CLICK TO JUMP")
 	chart.custom_minimum_size = Vector2(560, 0)
 	chart.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var best: Dictionary = stats.get("best", {})
-	if int(best.get("gain", 0)) > 0:
-		chart.marks[int(best["turn"])] = PixelTheme.GOLD
 	chart.clicked.connect(func(i: int):
 		turn_chosen.emit(int((turns[i] as Dictionary)["start"]))
 		close())
@@ -195,9 +186,41 @@ func _build_vp() -> Control:
 	return row
 
 
-## «TURN 34, ROUND 9, BOB» — для подписей и строки под графиком.
+## График VP всех игроков после каждого хода, лучший ход — золотой меткой.
+## Общий для этой вкладки и итогового экрана партии (GameOverPanel).
+static func vp_chart(data: Dictionary, caption: String) -> LineChart:
+	var series: Array = []
+	for pid in data.get("ids", []):
+		var points: Array[float] = []
+		for t in data["turns"]:
+			points.append(float((t as Dictionary)["vp"].get(pid, 0)))
+		series.append({"colour": player_colour(String(pid)), "points": points,
+			"name": EventLogPanel.player_name(String(pid))})
+	var chart := LineChart.new(series, caption, func(i: int) -> String: return turn_title(data, i))
+	var best: Dictionary = data.get("best", {})
+	if int(best.get("gain", 0)) > 0:
+		chart.marks[int(best["turn"])] = PixelTheme.GOLD
+	return chart
+
+
+## Итог партии одной строкой: лучший ход и сколько раз менялся лидер.
+static func summary(data: Dictionary) -> String:
+	var best: Dictionary = data.get("best", {})
+	var text := "LEAD CHANGES: %d" % (data.get("leads", []) as Array).size()
+	if int(best.get("gain", 0)) > 0:
+		text = "BEST TURN: %s +%d VP (ROUND %d).  %s" % [
+			EventLogPanel.player_name(String(best["player"])).to_upper(), int(best["gain"]),
+			int((data["turns"][int(best["turn"])] as Dictionary)["round"]), text]
+	return text
+
+
 func _turn_title(i: int) -> String:
-	var turns: Array = stats["turns"]
+	return turn_title(stats, i)
+
+
+## «TURN 34, ROUND 9, BOB» — для подписей и строки под графиком.
+static func turn_title(data: Dictionary, i: int) -> String:
+	var turns: Array = data["turns"]
 	if i <= 0 or i >= turns.size():
 		return "SETUP"
 	var t: Dictionary = turns[i]

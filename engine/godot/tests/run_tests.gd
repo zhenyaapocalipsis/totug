@@ -3968,6 +3968,8 @@ func test_replay_viewer() -> void:
 
 	bar.seek(bar.total())
 	check(bar.server.state.game_over and bool(screen._view["game_over"]), "в конце реплея партия окончена")
+	check(screen._game_over_panel._charts.visible and screen._game_over_panel._stats_button != null,
+		"итоги реплея: график VP и кнопка STATS")
 	bar.step_forward(true)
 	check_eq(bar.cursor, bar.total(), "за концом шагать некуда")
 	bar.seek(0)
@@ -4024,6 +4026,25 @@ func test_replay_viewer() -> void:
 	panel.close()
 	check(not panel.visible, "CLOSE закрывает статистику")
 	screen.queue_free()
+
+	# Итоговый экран живой партии (хотсит): ходы пишутся, в конце — график.
+	var hot := GameScreen.new(77, [], GameScreen.player_ids_for(3), GameSetup.MODE_RANDOM_3)
+	hot.size = Vector2(960, 540)
+	root.add_child(hot)
+	var pending := hot.server.resolver.pending
+	hot.send(Intent.make_decision(pending.player_id, (pending.legal_options as Array)[0]))
+	check_eq(hot._replay_log.size(), 1, "хотсит: принятый ход записан для статистики")
+	hot._replay_log.append_array(_autoplay(hot.server))
+	check(hot.server.state.game_over, "хотсит доигран до конца")
+	hot._collect_hotseat_stats()
+	var over := hot._game_over_panel
+	check(over._charts.visible and over._charts.get_child_count() == 2, "итоги хотсита: график VP и строка лучшего хода")
+	check(over._stats_button != null and over._stats_button.text == "STATS", "итоги хотсита: кнопка STATS")
+	check_eq(int(hot._stats["turns"][-1]["vp"]["red"]), int(Scoring.breakdown(hot.server.state, "red")["total"]),
+		"график кончается итоговыми очками")
+	over._stats_button.pressed.emit()
+	check(hot.stats_panel != null and hot.stats_panel.visible, "STATS с итогов открывает все вкладки")
+	hot.queue_free()
 
 
 func _power_sum(turns: Array, pid: String) -> float:

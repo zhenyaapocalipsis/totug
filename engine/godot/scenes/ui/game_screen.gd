@@ -120,6 +120,14 @@ var net: NetSession
 var replay_bar: ReplayBar
 ## Экран STATS реплея (Replay-3); собирается при первом открытии.
 var stats_panel: ReplayStatsPanel
+## Статистика окончившейся партии (ReplayStats.collect); пусто, пока не готова.
+var _stats: Dictionary = {}
+## Хотсит: для статистики в конце — сид, цвета в порядке раздачи, режим и
+## принятые ходы. Пусто — партию по ходам не повторить (полуколоды заданы).
+var _replay_seed := 0
+var _replay_ids: Array[String] = []
+var _replay_mode := GameSetup.MODE_STANDARD
+var _replay_log: Array = []
 
 ## Tab (решение владельца, 2026-09-29): короткое нажатие — пинг под курсором,
 ## зажатие дольше WHEEL_HOLD — колесо чата с фразами из профиля.
@@ -252,7 +260,6 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		viewer_id = replay_bar.viewer()
 		_build_layout()
 		add_child(replay_bar)
-		_game_over_panel.add_button("STATS", open_stats)
 		refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
 		_note("Replay. Space: play or pause, arrows: step, Shift+arrows: turn.")
 		return
@@ -270,6 +277,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 			_reconnect_banner.visible = true
 			_reconnect_status.text = reason + ".")
 		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
+		net.replay_received.connect(_on_replay_received)
 		net.pause_changed.connect(_on_pause_changed)
 		net.ping_received.connect(show_ping)
 		net.chat_received.connect(show_phrase)
@@ -282,6 +290,10 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		player_ids = ids.duplicate()
 	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode)
 	server = GameServer.new(state)
+	if half_decks.is_empty():
+		_replay_seed = game_seed
+		_replay_ids = player_ids.duplicate()
+		_replay_mode = mode
 	board_data = StateView.board_snapshot(state)
 	viewer_id = server.resolver.pending.player_id if server.resolver.is_waiting() else state.current_player()
 	_build_layout()
@@ -1042,6 +1054,8 @@ func send(intent: Intent) -> void:
 		net.send_intent(intent)
 		return
 	var result: Dictionary = server.apply_intent(intent)
+	if int(result["error"]) == GameServer.Error.OK:
+		_replay_log.append(intent.to_dict())
 
 	# Ход мог перейти к другому игроку — в локальном режиме зритель следует
 	# за ходом, кроме случая, когда решение ждут от кого-то конкретного.
@@ -1056,6 +1070,10 @@ func send(intent: Intent) -> void:
 	if view.is_empty():
 		view = StateView.for_player_with_pending(server.state, viewer_id, pending)
 	_on_result(int(result["error"]), result["events"], view)
+	# Статистика — после того, как итоги уже на экране: партия проигрывается
+	# заново целиком, это доли секунды.
+	if server.state.game_over and _stats.is_empty():
+		_collect_hotseat_stats.call_deferred()
 
 
 ## Подсказка или отказ — всплывающей строкой над счётчиками Power/Influence.
@@ -1109,6 +1127,8 @@ func show_replay(events: Array, animate: bool) -> void:
 		refresh(view)
 	if not server.state.game_over:
 		_game_over_panel.visible = false
+	elif _stats.is_empty():
+		_set_stats(ReplayStats.collect(replay_bar.replay))
 
 
 ## Реплей перемотали: партия собрана заново, сводка — из recap (события
@@ -1122,11 +1142,37 @@ func replay_seeked(recap: Array) -> void:
 ## Экран статистики партии реплея (ReplayStats). Считается один раз — партия
 ## проигрывается целиком, это доли секунды. Щелчок по графику VP — перемотка.
 func open_stats() -> void:
+	if _stats.is_empty() and replay_bar != null:
+		_set_stats(ReplayStats.collect(replay_bar.replay))
+	if _stats.is_empty():
+		return
 	if stats_panel == null:
-		stats_panel = ReplayStatsPanel.new(ReplayStats.collect(replay_bar.replay))
-		stats_panel.turn_chosen.connect(func(p: int): replay_bar.seek(p))
+		stats_panel = ReplayStatsPanel.new(_stats)
+		if replay_bar != null:
+			stats_panel.turn_chosen.connect(func(p: int): replay_bar.seek(p))
 		add_child(stats_panel)
 	stats_panel.visible = true
+
+
+## Статистика партии готова: график VP — на итоговом экране, STATS — там же.
+func _set_stats(stats: Dictionary) -> void:
+	_stats = stats
+	_game_over_panel.set_stats(stats, open_stats)
+
+
+## Партия кончилась — статистика по её ходам (хотсит: ходы записаны здесь же,
+## _replay_log). Сетевая партия ждёт реплей от сервера (_on_replay_received).
+func _collect_hotseat_stats() -> void:
+	if not _stats.is_empty() or _replay_ids.is_empty():
+		return
+	var header := ReplayBook.header_for(server.state, _replay_ids, _replay_seed, _replay_mode,
+		server.with_mulligan, PlayerProfile.seats, "", "", _replay_log)
+	_set_stats(ReplayStats.collect({"header": header, "intents": _replay_log}))
+
+
+func _on_replay_received(replay: Dictionary) -> void:
+	if _stats.is_empty():
+		_set_stats(ReplayStats.collect(replay))
 
 
 ## Идёт показ (витрина карты): следующий шаг реплея подождёт.

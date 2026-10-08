@@ -41,6 +41,9 @@ signal player_left(seat: String)
 signal player_rejoined(seat: String)
 ## Сервер пересчитал рейтинг после партии: место -> {rating, delta}.
 signal rating_changed(result: Dictionary)
+## Партия окончена, сервер прислал её реплей {header, intents} (ReplayBook) —
+## экран партии строит по нему графики итогов.
+signal replay_received(replay: Dictionary)
 ## Связь не установилась, оборвалась или сервер отказал (нет комнаты и т.п.).
 signal connection_lost(reason: String)
 ## Хост: чем кончилась попытка открыть порт на роутере (UPnP). address — внешний
@@ -1002,6 +1005,7 @@ func _replay(header: Dictionary, intents: Array) -> void:
 	var own := header.duplicate(true)
 	own["seat"] = seat
 	last_replay = ReplayBook.save(own, intents, replays_dir)
+	replay_received.emit({"header": own, "intents": intents})
 
 
 func _broadcast_pause(room: GameRoom) -> void:
