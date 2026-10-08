@@ -8,41 +8,43 @@
 - Elise ↔ Spider Elise = **Drider ↔ Phase Spider**.
 - Execute = наш **Devour** (стопка `devoured_pile`), Valor → MALICE, Sapling → **Twig Blight** (запас из 4 карт).
 
-## Карты (id 49100–49124, тип UNDEAD)
+## Карты (id 49100–49124, тип SHADOW)
+Состав поменян на этапе NE-5: почти вся нежить из черновика (Bodak, Boneclaw, Bone Naga, Skull Lord, Demilich, Allip, блайты и др.) на D&D Beyond в платных книгах, а свободная нежить с артом (Ghost, Ghoul, Lich, Wight, Wraith…) уже есть в игре. Поэтому взяты свободные существа с артом и фоном: нежить, растения, хаги, дьяволы, пауки. Арты — `cards/shadow/`, окна — `SINGLE_ART`/`MINI_FACE` в `tools/pixel_cards.gd`.
+
 | id | Существо | Карта мода | Цена | Аспект | VP | Копий |
 |---|---|---|---|---|---|---|
 | 49100 | Specter | Wraithcaller | 4 | MALICE | 2/4 | 3 |
-| 49101 | Bodak | Soulspinner | 3 | GUILE | 2/4 | 3 |
-| 49102 | Warhorse Skeleton | Duskrider | 2 | CONQUEST | 2/4 | 3 |
-| 49103 | Vine Blight | Invasive Hydravine | 3 | MALICE | 1/3 | 2 |
-| 49104 | Needle Blight | Moonlit Glenkeeper | 4 | AMBITION | 2/4 | 2 |
-| 49105 | Boneclaw | The Sunderer | 4 | AMBITION | 2/4 | 2 |
-| 49106 | Ghast | Deathless Knight | 3 | CONQUEST | 2/4 | 3 |
-| 49107 | Poltergeist | Spectral Matron | 5 | GUILE | 3/5 | 2 |
-| 49108 | Flameskull | The Etherfiend | 2 | AMBITION | 1/2 | 2 |
-| 49109 | Bone Naga | Corpse Commander | 5 | MALICE | 3/5 | 2 |
-| 49110 | Sword Wraith Warrior | Camavoran Soldier | 3 | CONQUEST | 2/4 | 4 |
+| 49101 | Vampire Familiar | Soulspinner | 3 | GUILE | 2/4 | 3 |
+| 49102 | Death Dog | Duskrider | 2 | CONQUEST | 2/4 | 3 |
+| 49103 | Shambling Mound | Invasive Hydravine | 3 | MALICE | 1/3 | 2 |
+| 49104 | Awakened Tree | Moonlit Glenkeeper | 4 | AMBITION | 2/4 | 2 |
+| 49105 | Grick | The Sunderer | 4 | AMBITION | 2/4 | 2 |
+| 49106 | Bearded Devil | Deathless Knight | 3 | CONQUEST | 2/4 | 3 |
+| 49107 | Sea Hag | Spectral Matron | 5 | GUILE | 3/5 | 2 |
+| 49108 | Gargoyle | The Etherfiend | 2 | AMBITION | 1/2 | 2 |
+| 49109 | Swarm of Crawling Claws | Corpse Commander | 5 | MALICE | 3/5 | 2 |
+| 49110 | Lemure | Camavoran Soldier | 3 | CONQUEST | 2/4 | 4 |
 | 49111 | Will-o'-Wisp | Soul Shepherd | 2 | AMBITION | 1/2 | 3 |
 | 49112 | Spirit Naga | Ethereal Remitter | 2 | GUILE | 2/4 | 4 |
-| 49113 | Skull Lord | Viego | 8 | AMBITION | 4/9 | 1 |
+| 49113 | Rakshasa | Viego | 8 | AMBITION | 4/9 | 1 |
 | 49114 | Nightmare | Hecarim | 7 | CONQUEST | 3/7 | 1 |
-| 49115 | Devourer | Thresh | 7 | GUILE | 3/7 | 1 |
-| 49116 | Shadow | Vex | 6 | GUILE | 3/6 | 1 |
-| 49117 | Deathlock | Yorick | 6 | AMBITION | 3/6 | 1 |
-| 49118 | Tree Blight | Maokai | 7 | MALICE | 3/7 | 1 |
-| 49119 | Demilich | Karthus | 8 | AMBITION | 4/9 | 1 |
+| 49115 | Chain Devil | Thresh | 7 | GUILE | 3/7 | 1 |
+| 49116 | Barbed Devil | Vex | 6 | GUILE | 3/6 | 1 |
+| 49117 | Ghast | Yorick | 6 | AMBITION | 3/6 | 1 |
+| 49118 | Treant | Maokai | 7 | MALICE | 3/7 | 1 |
+| 49119 | Bone Devil | Karthus | 8 | AMBITION | 4/9 | 1 |
 | 49120 | Drider | Elise | 7 | GUILE | 3/7 | 1 |
-| 49121 | Allip | Gwen | 6 | MALICE | 3/6 | 1 |
-| 49122 | Sword Wraith Commander | Kalista | 6 | CONQUEST | 3/6 | 1 |
+| 49121 | Green Hag | Gwen | 6 | MALICE | 3/6 | 1 |
+| 49122 | Shadow | Kalista | 6 | CONQUEST | 3/6 | 1 |
 | 49123 | Phase Spider | Spider Elise | 7 | GUILE | 3/7 | — (превращение) |
 | 49124 | Twig Blight | Sapling | — | — | 0/0 | — (запас 4) |
 
 ## Как истолкованы спорные места (можно поменять)
-- «Сыграно N Cursed Wanderer в этот ход» считает розыгрыши, даже если Outcast потом вернулся в запас. Под Vine Blight Outcast считается дважды.
-- Cursed Affinity (Skull Lord, Nightmare, Demilich, Drider): цена на рынке −1 за каждый сыгранный Outcast. Подсветка «хватает Influence» учитывает скидку, но цифра цены на карте рынка пока печатная.
-- Thresh/Kalista «Outcast в колоде стоят 0 VP»: действует, пока карта в колоде, руке или сбросе (не во Внутреннем круге).
+- «Сыграно N Cursed Wanderer в этот ход» считает розыгрыши, даже если Outcast потом вернулся в запас. Под Shambling Mound Outcast считается дважды.
+- Cursed Affinity (Rakshasa, Nightmare, Bone Devil, Drider): цена на рынке −1 за каждый сыгранный Outcast. Подсветка «хватает Influence» учитывает скидку, но цифра цены на карте рынка пока печатная.
+- Chain Devil и Shadow (Thresh/Kalista) «Outcast в колоде стоят 0 VP»: действует, пока карта в колоде, руке или сбросе (не во Внутреннем круге).
 - Will-o'-Wisp «unless they reveal»: показывать всегда выгодно, поэтому без вопроса — у кого Outcast в руке, тот не получает.
-- Bone Naga: реакция спрашивает получателя один раз на каждую раздачу.
-- Sword Wraith Warrior «рядом с войском игрока»: соседняя клетка пути или та же локация, войско другого игрока (не белое).
-- Shadow (Vex): соперник по одной отбирает карты в открытую стопку, остальные идут в закрытую; хозяин видит открытую и число карт в закрытой.
-- «If this card is Executed»: срабатывает при любом Devour этой карты (Boneclaw, Allip, Vine Blight, чужие эффекты).
+- Swarm of Crawling Claws: реакция спрашивает получателя один раз на каждую раздачу.
+- Lemure «рядом с войском игрока»: соседняя клетка пути или та же локация, войско другого игрока (не белое).
+- Barbed Devil (Vex): соперник по одной отбирает карты в открытую стопку, остальные идут в закрытую; хозяин видит открытую и число карт в закрытой.
+- «If this card is Executed»: срабатывает при любом Devour этой карты (Grick, Green Hag, Shambling Mound, чужие эффекты).

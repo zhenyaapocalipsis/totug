@@ -142,7 +142,7 @@ static func card_bonus_vp(state: GameState, player_id: String) -> Dictionary:
 		deck_extra += bonus * outside.count(DRUID)
 		inner_extra += bonus * p.deck.inner_circle.count(DRUID)
 
-	# Devourer / Sword Wraith Commander в колоде: Insane Outcast там стоят 0 VP
+	# Chain Devil / Shadow в колоде: Insane Outcast там стоят 0 VP
 	# вместо -1.
 	if ShadowCards.OUTCASTS_WORTHLESS.any(func(c): return outside.has(c)):
 		deck_extra += outside.count(ShadowCards.OUTCAST)

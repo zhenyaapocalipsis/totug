@@ -85,6 +85,13 @@ const MINI_FACE := {
 	49016: Vector2i(56, 20), 49017: Vector2i(37, 8), 49018: Vector2i(56, 32), 49019: Vector2i(38, 32),
 	49020: Vector2i(56, 22), 49021: Vector2i(52, 13), 49022: Vector2i(52, 5), 49023: Vector2i(56, 24),
 	49024: Vector2i(52, 21),
+	49100: Vector2i(81, 0), 49101: Vector2i(56, 24), 49102: Vector2i(19, 15), 49103: Vector2i(3, 37),
+	49104: Vector2i(49, 9), 49105: Vector2i(56, 24), 49106: Vector2i(52, 25), 49107: Vector2i(15, 5),
+	49108: Vector2i(61, 25), 49109: Vector2i(102, 19), 49110: Vector2i(58, 43), 49111: Vector2i(80, 9),
+	49112: Vector2i(75, 5), 49113: Vector2i(56, 5), 49114: Vector2i(111, 9), 49115: Vector2i(67, 0),
+	49116: Vector2i(47, 28), 49117: Vector2i(69, 21), 49118: Vector2i(56, 25), 49119: Vector2i(55, 37),
+	49120: Vector2i(54, 0), 49121: Vector2i(32, 9), 49122: Vector2i(56, 0), 49123: Vector2i(35, 36),
+	49124: Vector2i(70, 14),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -173,6 +180,32 @@ const SINGLE_ART := {
 	49022: ["celestial/gold_dragon.png", Rect2i(0, 460, 360, 220)],
 	49023: ["celestial/giant_eagle.jpg", Rect2i(279, 240, 520, 317)],
 	49024: ["celestial/ancient_gold_dragon.jpg", Rect2i(130, 30, 520, 317)],
+	# Shadow Isles (New Era): арты с фоном с D&D Beyond в cards/shadow/.
+	49100: ["shadow/specter.jpeg", Rect2i(390, 10, 480, 293)],
+	49101: ["shadow/vampire_familiar.jpeg", Rect2i(137, 79, 440, 268)],
+	49102: ["shadow/death_dog.png", Rect2i(80, 420, 600, 366)],
+	49103: ["shadow/shambling_mound.png", Rect2i(100, 0, 640, 390)],
+	49104: ["shadow/awakened_tree.jpeg", Rect2i(80, 200, 700, 427)],
+	49105: ["shadow/grick.png", Rect2i(50, 160, 560, 341)],
+	49106: ["shadow/bearded_devil.png", Rect2i(300, 60, 600, 366)],
+	49107: ["shadow/sea_hag.png", Rect2i(0, 0, 520, 317)],
+	49108: ["shadow/gargoyle.jpeg", Rect2i(170, 230, 560, 341)],
+	49109: ["shadow/crawling_claws.png", Rect2i(0, 120, 640, 390)],
+	49110: ["shadow/lemure.png", Rect2i(160, 380, 600, 366)],
+	49111: ["shadow/will_o_wisp.png", Rect2i(240, 0, 760, 463)],
+	49112: ["shadow/spirit_naga.png", Rect2i(0, 60, 760, 463)],
+	49113: ["shadow/rakshasa.png", Rect2i(180, 40, 640, 390)],
+	49114: ["shadow/nightmare.png", Rect2i(50, 40, 900, 549)],
+	49115: ["shadow/chain_devil.png", Rect2i(26, 0, 600, 366)],
+	49116: ["shadow/barbed_devil.png", Rect2i(0, 0, 700, 427)],
+	49117: ["shadow/ghast.png", Rect2i(60, 30, 520, 317)],
+	49118: ["shadow/treant.png", Rect2i(130, 30, 700, 427)],
+	49119: ["shadow/bone_devil.png", Rect2i(100, 200, 640, 390)],
+	49120: ["shadow/drider.png", Rect2i(40, 280, 520, 317)],
+	49121: ["shadow/green_hag.jpeg", Rect2i(20, 60, 600, 366)],
+	49122: ["shadow/shadow.png", Rect2i(0, 0, 700, 427)],
+	49123: ["shadow/phase_spider.png", Rect2i(60, 360, 500, 305)],
+	49124: ["shadow/twig_blight.png", Rect2i(120, 120, 520, 317)],
 }
 
 const FONT := {
@@ -402,6 +435,7 @@ func set_name(card_id: int, type: String) -> String:
 		485: return "DEMONS"
 		486: return "ELEMENTAL"
 		490: return "CELESTIAL"
+		491: return "SHADOW ISLES"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

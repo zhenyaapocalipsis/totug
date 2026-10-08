@@ -15,29 +15,29 @@ extends RefCounted
 ##
 ## Счётчики хода лежат в state.turn_flags (сбрасываются в start_turn):
 ##   "outcasts"       — сколько Insane Outcast текущий игрок сыграл в этот ход;
-##   "outcast_bonus"  — Sword Wraith Commander: +2 Power и карта за каждый Outcast;
-##   "echo"           — Vine Blight: следующая карта разыгрывается дважды;
+##   "outcast_bonus"  — Shadow: +2 Power и карта за каждый Outcast;
+##   "echo"           — Shambling Mound: следующая карта разыгрывается дважды;
 ##   "market_affinity"— Drider: скидка за Outcast и у всех карт рынка.
 
 const OUTCAST := "48341"
 const SPECTER := "49100"
-const VINE_BLIGHT := "49103"
-const FLAMESKULL := "49108"
-const BONE_NAGA := "49109"
+const SHAMBLING_MOUND := "49103"
+const GARGOYLE := "49108"
+const CRAWLING_CLAWS := "49109"
 const WISP := "49111"
-const SKULL_LORD := "49113"
+const RAKSHASA := "49113"
 const NIGHTMARE := "49114"
-const DEVOURER := "49115"
-const DEMILICH := "49119"
+const CHAIN_DEVIL := "49115"
+const BONE_DEVIL := "49119"
 const DRIDER := "49120"
-const WRAITH_COMMANDER := "49122"
+const SHADOW := "49122"
 const PHASE_SPIDER := "49123"
 const TWIG_BLIGHT := "49124"
 
 ## Cursed Affinity: дешевле на 1 за каждый сыгранный в этот ход Insane Outcast.
-const AFFINITY := [SKULL_LORD, NIGHTMARE, DEMILICH, DRIDER]
+const AFFINITY := [RAKSHASA, NIGHTMARE, BONE_DEVIL, DRIDER]
 ## "Insane Outcasts in your deck are worth 0 VP".
-const OUTCASTS_WORTHLESS := [DEVOURER, WRAITH_COMMANDER]
+const OUTCASTS_WORTHLESS := [CHAIN_DEVIL, SHADOW]
 const TWIG_SUPPLY := 4
 
 
@@ -50,7 +50,7 @@ static func build(card_id: String) -> CardEffect:
 	match card_id:
 		"49100":  # Specter (Wraithcaller) — при Devour: on_devour
 			return SequenceEffect.new([GainPower.new(3), _PerOutcast.new("power")])
-		"49101":  # Bodak (Soulspinner)
+		"49101":  # Vampire Familiar (Soulspinner)
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
 					func(state, _pid): return CelestialCards.site_is_full(state, site),
@@ -58,7 +58,7 @@ static func build(card_id: String) -> CardEffect:
 				ReturnOwnSpy.new(SequenceEffect.new([FetchFromTop.new(5, outcast_filter), DrawCards.new(1)])),
 			], ["Place a spy (full site: each opponent recruits an Insane Outcast)",
 				"Return one of your spies -> Insane Outcasts from your top 5 cards into your hand, draw a card"])
-		"49102":  # Warhorse Skeleton (Duskrider)
+		"49102":  # Death Dog (Duskrider)
 			return ConditionalEffect.new(func(state, _pid): return state.supplies.is_available(OUTCAST),
 				OptionalEffect.new(SequenceEffect.new([
 					GainSupplyToHand.new([OUTCAST] as Array[String]),
@@ -67,25 +67,25 @@ static func build(card_id: String) -> CardEffect:
 						SequenceEffect.new([DeployTroop.new(3), GiveInsaneOutcast.new("each_opponent")]),
 					], ["Supplant a troop", "Deploy 3 troops, each opponent recruits an Insane Outcast"]),
 				]), "Put an Insane Outcast into your hand to choose an effect?"))
-		"49103":  # Vine Blight (Invasive Hydravine)
+		"49103":  # Shambling Mound (Invasive Hydravine)
 			return _SetFlag.new("echo")
-		"49104":  # Needle Blight (Moonlit Glenkeeper)
+		"49104":  # Awakened Tree (Moonlit Glenkeeper)
 			return ChooseEffect.new([
 				FetchFromTop.new(6, outcast_filter),
 				GainInfluence.new(3),
 			], ["Insane Outcasts from your top 6 cards into your hand", "+3 Influence"])
-		"49105":  # Boneclaw (The Sunderer)
+		"49105":  # Grick (The Sunderer)
 			return ChooseEffect.new([
 				SequenceEffect.new([DevourCard.new("hand"), DrawCards.new(1)]),
 				SequenceEffect.new([ScryCards.new(1), _PerOutcast.new("draw")]),
 			], ["Devour a card in your hand, then draw a card",
 				"Scry 1, then draw a card per Insane Outcast played this turn"])
-		"49106":  # Ghast (Deathless Knight)
+		"49106":  # Bearded Devil (Deathless Knight)
 			return ChooseEffect.new([
 				SequenceEffect.new([DeployTroop.new(3), FetchFromTop.new(6, outcast_filter)]),
 				SupplantTroop.new(1, true),
 			], ["Deploy 3 troops, Insane Outcasts from your top 6 cards into your hand", "Supplant a white troop"])
-		"49107":  # Poltergeist (Spectral Matron)
+		"49107":  # Sea Hag (Spectral Matron)
 			return SequenceEffect.new([
 				_PerOutcast.new("spy"),
 				ChooseEffect.new([
@@ -93,11 +93,11 @@ static func build(card_id: String) -> CardEffect:
 					ReturnOwnSpy.new(null, Callable(), true, func(sites): return AssassinateTroop.new(sites.size(), false, true)),
 				], ["Place a spy and draw a card", "Return any number of your spies -> assassinate a troop for each"]),
 			])
-		"49108":  # Flameskull (The Etherfiend) — при Devour: on_devour
+		"49108":  # Gargoyle (The Etherfiend) — при Devour: on_devour
 			return SequenceEffect.new([GainInfluence.new(2), _PerOutcast.new("influence")])
-		"49109":  # Bone Naga (Corpse Commander) — реакция из руки: NagaReaction
+		"49109":  # Swarm of Crawling Claws (Corpse Commander) — реакция из руки: ClawsReaction
 			return _SupplantPlayerBonus.new()
-		"49110":  # Sword Wraith Warrior (Camavoran Soldier)
+		"49110":  # Lemure (Camavoran Soldier)
 			return SequenceEffect.new([
 				_PerOutcast.new("deploy"),
 				ChooseEffect.new([
@@ -118,7 +118,7 @@ static func build(card_id: String) -> CardEffect:
 					ReturnOwnSpy.new(GainPower.new(3)),
 				], ["Place a spy, then scry 3", "Return one of your spies -> +3 Power"]),
 			])
-		"49113":  # Skull Lord (Viego)
+		"49113":  # Rakshasa (Viego)
 			return SequenceEffect.new([
 				GainInfluence.new(2),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id, Callable(), 2, true)),
@@ -126,25 +126,25 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49114":  # Nightmare (Hecarim)
 			return SequenceEffect.new([DeployTroop.new(4), GainVpPerN.new("vp", "sites_controlled", 2, 1)])
-		"49115":  # Devourer (Thresh) — 0 VP за Outcast: Scoring.card_bonus_vp
+		"49115":  # Chain Devil (Thresh) — 0 VP за Outcast: Scoring.card_bonus_vp
 			return SequenceEffect.new([_CycleHand.new(), _PowerPerDiscardedOutcast.new(3)])
-		"49116":  # Shadow (Vex)
+		"49116":  # Barbed Devil (Vex)
 			return ChooseEffect.new([
 				_ShadowSplit.new(),
 				SupplantTroop.new(1, false, true),
 			], ["An opponent splits your top 5 cards into two piles, keep one", "Supplant a troop anywhere"])
-		"49117":  # Deathlock (Yorick)
+		"49117":  # Ghast (Yorick)
 			return ChooseEffect.new([
 				GainPower.new(4),
 				_RecruitFromDevoured.new(3),
 			], ["+4 Power", "Recruit one of the top 3 devoured cards for free"])
-		"49118":  # Tree Blight (Maokai)
+		"49118":  # Treant (Maokai)
 			return SequenceEffect.new([
 				_GainTwigBlight.new(),
 				GainVpPerN.new("vp", "sites_controlled_total", 1, 1),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
 			])
-		"49119":  # Demilich (Karthus)
+		"49119":  # Bone Devil (Karthus)
 			var strike := AssassinateTroop.new(2, false, true)
 			strike.site_given_by_card = true  # "anywhere": без Присутствия
 			return SequenceEffect.new([strike, GainVpPerN.new("vp", "trophy_hall", 3, 1)])
@@ -155,9 +155,9 @@ static func build(card_id: String) -> CardEffect:
 				_SetFlag.new("market_affinity"),
 				OptionalEffect.new(CelestialCards._Transform.new(DRIDER, PHASE_SPIDER), "Transform into Phase Spider?"),
 			])
-		"49121":  # Allip (Gwen)
-			return SequenceEffect.new([GainPower.new(3), _AllipDevour.new(), _OpponentsMayDevour.new()])
-		"49122":  # Sword Wraith Commander (Kalista) — 0 VP за Outcast: Scoring.card_bonus_vp
+		"49121":  # Green Hag (Gwen)
+			return SequenceEffect.new([GainPower.new(3), _HagDevour.new(), _OpponentsMayDevour.new()])
+		"49122":  # Shadow (Kalista) — 0 VP за Outcast: Scoring.card_bonus_vp
 			return SequenceEffect.new([_CycleHand.new(), _AddFlag.new("outcast_bonus")])
 		"49123":  # Phase Spider (Spider Elise)
 			return SequenceEffect.new([
@@ -172,7 +172,7 @@ static func build(card_id: String) -> CardEffect:
 
 
 ## Вызывается TurnEngine.play_card до запуска эффекта карты: считает сыгранные
-## Insane Outcast, добавляет бонус Sword Wraith Commander и повтор Vine Blight.
+## Insane Outcast, добавляет бонус Shadow и повтор Shambling Mound.
 static func on_play(state: GameState, player_id: String, card_id: String, effect: CardEffect) -> CardEffect:
 	var plays := 1
 	if state.turn_flags.get("echo", false):
@@ -188,13 +188,13 @@ static func on_play(state: GameState, player_id: String, card_id: String, effect
 	return effect
 
 
-## "If this card is devoured" — DevourCard и Allip после того, как карта ушла
+## "If this card is devoured" — DevourCard и Green Hag после того, как карта ушла
 ## в devoured_pile.
 static func on_devour(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> void:
 	match card_id:
 		SPECTER:
 			resolver.push(AssassinateTroop.new(1), player_id)
-		FLAMESKULL:
+		GARGOYLE:
 			state.players[player_id].start_of_turn_influence += 3
 		WISP:
 			resolver.push(PromoteCard.new("hand_or_discard", "", Callable(), 1, true), player_id)
@@ -272,7 +272,7 @@ class _PowerPerDiscardedOutcast extends CardEffect:
 			resolver.push(GainPower.new(n * per), player_id)
 
 
-## Bone Naga: "Supplant a troop. If it was a player troop, +1 Power" — чужое
+## Swarm of Crawling Claws: "Supplant a troop. If it was a player troop, +1 Power" — чужое
 ## войско игрока попадает в трофеи как player troop.
 class _SupplantPlayerBonus extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -283,7 +283,7 @@ class _SupplantPlayerBonus extends CardEffect:
 		resolver.push(SupplantTroop.new(1), player_id)
 
 
-## Sword Wraith Warrior: "Deploy 3 troops. If you deployed next to a player
+## Lemure: "Deploy 3 troops. If you deployed next to a player
 ## troop this way, each opponent gains an Insane Outcast". "Рядом" — соседняя
 ## клетка пути или та же локация.
 class _DeployNearEnemy extends CardEffect:
@@ -325,10 +325,10 @@ class _OutcastUnlessHolding extends CardEffect:
 				resolver.push(GiveInsaneOutcast.new("self"), opp)
 
 
-## Bone Naga в руке: "Whenever you would gain an Insane Outcast, you may reveal
+## Swarm of Crawling Claws в руке: "Whenever you would gain an Insane Outcast, you may reveal
 ## this card to gain it to your hand and scry 1". Вопрос задаётся получателю
 ## (как Shield Guardian) из GiveInsaneOutcast.
-class NagaReaction extends CardEffect:
+class ClawsReaction extends CardEffect:
 	var target: String
 	var count: int
 	func _init(t: String, n: int) -> void:
@@ -338,9 +338,9 @@ class NagaReaction extends CardEffect:
 		if not is_answered():
 			var pd := PendingDecision.new()
 			pd.player_id = target
-			pd.prompt = "Reveal Bone Naga to take the Insane Outcast into your hand and scry 1?"
+			pd.prompt = "Reveal Swarm of Crawling Claws to take the Insane Outcast into your hand and scry 1?"
 			pd.choice_type = "confirm"
-			pd.source_card = ShadowCards.BONE_NAGA
+			pd.source_card = ShadowCards.CRAWLING_CLAWS
 			pd.legal_options = [true, false]
 			pd.target_effect = self
 			resolver.request_decision(pd)
@@ -396,7 +396,7 @@ class _CycleHand extends CardEffect:
 			resolver.push(DrawCards.new(discarded), player_id)
 
 
-## Tree Blight: "Gain a Sapling card" — Twig Blight из запаса в сброс.
+## Treant: "Gain a Sapling card" — Twig Blight из запаса в сброс.
 class _GainTwigBlight extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		if not state.supplies.take(ShadowCards.TWIG_BLIGHT):
@@ -405,7 +405,7 @@ class _GainTwigBlight extends CardEffect:
 		resolver.log_event("gain_card", {"player_id": player_id, "card_id": ShadowCards.TWIG_BLIGHT})
 
 
-## Deathlock: "Look at the top 3 cards of the Execute pile. You may gain one of
+## Ghast: "Look at the top 3 cards of the Execute pile. You may gain one of
 ## them for free."
 class _RecruitFromDevoured extends CardEffect:
 	var depth: int
@@ -440,10 +440,10 @@ class _RecruitFromDevoured extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Allip: "You may Execute a card in your hand or discard pile. If you
+## Green Hag: "You may Execute a card in your hand or discard pile. If you
 ## Executed a Cursed Wanderer, gain 2 Power. Otherwise, gain VP equal to the
 ## Executed card's deck VP."
-class _AllipDevour extends CardEffect:
+class _HagDevour extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
 		if is_answered():
@@ -485,7 +485,7 @@ class _AllipDevour extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Allip: "Each other player may Execute a card from their hand" — вопрос
+## Green Hag: "Each other player may Execute a card from their hand" — вопрос
 ## каждому сопернику по очереди (как реакция Shield Guardian).
 class _OpponentsMayDevour extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -517,7 +517,7 @@ class _OpponentDevour extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = victim
-		pd.prompt = "Allip: you may devour a card from your hand"
+		pd.prompt = "Green Hag: you may devour a card from your hand"
 		pd.choice_type = "target_card"
 		pd.source_card = "49121"
 		pd.legal_options = d.hand.duplicate()
@@ -526,7 +526,7 @@ class _OpponentDevour extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Shadow (Vex): "Show an opponent the top 5 cards of your deck. They separate
+## Barbed Devil (Vex): "Show an opponent the top 5 cards of your deck. They separate
 ## it into a faceup and facedown pile and you choose one to keep and one to
 ## discard." Соперник по одной отбирает карты в открытую стопку, остальные
 ## идут в закрытую; хозяин выбирает, какую взять в руку.

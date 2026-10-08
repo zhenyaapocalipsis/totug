@@ -4243,7 +4243,7 @@ func test_shadow_isles() -> void:
 	check_eq(deck.size(), 45, "Shadow Isles: 45 карт в полуколоде")
 	check(not GameSetup.available_half_decks().has("shadow"), "колода пока не в обычном выборе (wip)")
 	for cid: String in ["49100", "49113", "49123", "49124"]:
-		check(CardLibrary.card_data(cid).get("type") == "UNDEAD", "%s — карта Shadow Isles" % cid)
+		check(CardLibrary.card_data(cid).get("type") == "SHADOW", "%s — карта Shadow Isles" % cid)
 
 	var outcast := ShadowCards.OUTCAST
 	var state := _build_rich_state(11)
@@ -4276,7 +4276,7 @@ func test_shadow_isles() -> void:
 	TurnEngine.start_turn(state, "red")
 	check_eq(Actions.market_cost(state, 0), 8, "в новом ходу скидка пропала")
 
-	# Sword Wraith Commander: Outcast даёт +2 Power и карту
+	# Shadow: Outcast даёт +2 Power и карту
 	EffectResolver.new().apply(ShadowCards._AddFlag.new("outcast_bonus"), "red", state)
 	red.power = 0
 	red.deck.hand.append(outcast)
@@ -4285,21 +4285,21 @@ func test_shadow_isles() -> void:
 	TurnEngine.play_card(state, "red", outcast, r2)
 	if r2.is_waiting():
 		TurnEngine.resume_card(state, "", r2)
-	check_eq(red.power, 2, "Outcast под Sword Wraith Commander: +2 Power")
+	check_eq(red.power, 2, "Outcast под Shadow: +2 Power")
 	check_eq(red.deck.hand.size(), hand_size, "и взята карта (минус сыгранный Outcast)")
 
-	# Vine Blight: Flameskull разыгран дважды, в конце хода сожран, +3 Influence в начале следующего
+	# Shambling Mound: Gargoyle разыгран дважды, в конце хода сожран, +3 Influence в начале следующего
 	TurnEngine.start_turn(state, "red")
 	red.influence = 0
 	red.deck.hand.append_array(["49103", "49108"] as Array[String])
 	TurnEngine.play_card(state, "red", "49103", EffectResolver.new())
 	TurnEngine.play_card(state, "red", "49108", EffectResolver.new())
-	check_eq(red.influence, 4, "Flameskull под Vine Blight: дважды по +2 Influence")
+	check_eq(red.influence, 4, "Gargoyle под Shambling Mound: дважды по +2 Influence")
 	var r3 := EffectResolver.new()
 	TurnEngine.end_turn(state, "red", r3)
 	_auto_resolve(state, r3, false)
-	check(state.devoured_pile.has("49108"), "Flameskull сожран в конце хода")
-	check_eq(red.start_of_turn_influence, 3, "Flameskull: +3 Influence отложено на следующий ход")
+	check(state.devoured_pile.has("49108"), "Gargoyle сожран в конце хода")
+	check_eq(red.start_of_turn_influence, 3, "Gargoyle: +3 Influence отложено на следующий ход")
 	TurnEngine.start_turn(state, "red")
 	check(red.influence >= 3, "в начале хода пришло 3 Influence (плюс доход маркеров)")
 	check_eq(red.start_of_turn_influence, 0, "и отложенное обнулилось")
@@ -4315,11 +4315,11 @@ func test_shadow_isles() -> void:
 	check_eq(red.deck.hand.size(), 2, "и дал взять 2 карты")
 	check(not state.devoured_pile.has("49124"), "в стопку сожранных не попал")
 
-	# Bone Naga в руке у blue: Outcast можно взять в руку
+	# Swarm of Crawling Claws в руке у blue: Outcast можно взять в руку
 	blue.deck.hand = ["49109"] as Array[String]
 	var r5 := EffectResolver.new()
 	r5.apply(GiveInsaneOutcast.new("self"), "blue", state)
-	check(r5.is_waiting() and r5.pending.player_id == "blue", "Bone Naga: вопрос получателю")
+	check(r5.is_waiting() and r5.pending.player_id == "blue", "Swarm of Crawling Claws: вопрос получателю")
 	TurnEngine.resume_card(state, true, r5)
 	check(blue.deck.hand.has(outcast), "Outcast пришёл в руку")
 	check(r5.is_waiting() and r5.pending.player_id == "blue", "затем Scry 1 у blue")
@@ -4334,21 +4334,21 @@ func test_shadow_isles() -> void:
 	check_eq(blue.deck.discard_pile.count(outcast), blue_discard, "blue показал Outcast — ничего не получил")
 	check_eq(green.deck.discard_pile.count(outcast), green_discard + 1, "green получил Outcast")
 
-	# Allip: соперники могут сожрать карту из руки
+	# Green Hag: соперники могут сожрать карту из руки
 	var r7 := EffectResolver.new()
 	r7.apply(ShadowCards._OpponentsMayDevour.new(), "red", state)
-	check(r7.is_waiting() and r7.pending.player_id == "blue", "Allip: первым спрашивают blue")
+	check(r7.is_waiting() and r7.pending.player_id == "blue", "Green Hag: первым спрашивают blue")
 	TurnEngine.resume_card(state, "", r7)
 	check(r7.is_waiting() and r7.pending.player_id == "green", "затем green")
 	TurnEngine.resume_card(state, "", r7)
 
-	# Shadow: соперник делит 5 верхних карт, хозяин берёт одну стопку
+	# Barbed Devil: соперник делит 5 верхних карт, хозяин берёт одну стопку
 	red.deck.hand.clear()
 	red.deck.discard_pile.clear()
 	red.deck.draw_pile = ["48342", "48342", "48342", "48344", "48340"] as Array[String]
 	var r8 := EffectResolver.new()
 	r8.apply(ShadowCards._ShadowSplit.new(), "red", state)
-	check(r8.pending.choice_type == "target_player", "Shadow: выбор соперника")
+	check(r8.pending.choice_type == "target_player", "Barbed Devil: выбор соперника")
 	TurnEngine.resume_card(state, "blue", r8)
 	check(r8.pending.player_id == "blue", "делит blue")
 	TurnEngine.resume_card(state, "48340", r8)
@@ -4358,10 +4358,10 @@ func test_shadow_isles() -> void:
 	check_eq(red.deck.hand, ["48340"] as Array[String], "открытая стопка в руке")
 	check_eq(red.deck.discard_pile.size(), 4, "закрытая в сбросе")
 
-	# Devourer: Outcast в колоде стоят 0 VP
+	# Chain Devil: Outcast в колоде стоят 0 VP
 	var s2 := _build_rich_state(12)
 	(s2.players["red"] as PlayerState).deck = Deck.new(["49115", outcast, outcast] as Array[String])
-	check_eq(int(Scoring.card_bonus_vp(s2, "red")["deck"]), 2, "Devourer: два Outcast по 0 вместо -1")
+	check_eq(int(Scoring.card_bonus_vp(s2, "red")["deck"]), 2, "Chain Devil: два Outcast по 0 вместо -1")
 
 	# все карты колоды разыгрываются до конца
 	for cid: String in ["49100", "49101", "49102", "49103", "49104", "49105", "49106", "49107", "49108",
