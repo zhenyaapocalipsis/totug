@@ -33,8 +33,14 @@ var resolver: EffectResolver
 var _end_turn_pending_for: String = ""
 
 
-func _init(game_state: GameState) -> void:
+## Муллиган рынка перед стартовой расстановкой. false — только для партий из
+## журнала, начатых до муллигана (GameRoom.restore).
+var with_mulligan := true
+
+
+func _init(game_state: GameState, mulligan: bool = true) -> void:
 	state = game_state
+	with_mulligan = mulligan
 	resolver = EffectResolver.new()
 	_start_setup_if_needed()
 	_start_first_turn_if_ready()
@@ -66,6 +72,11 @@ func _start_setup_if_needed() -> void:
 	if state.starting_site_candidates.is_empty():
 		return
 	var order: Array[String] = state.turn_order
+	if not with_mulligan:
+		for i in range(order.size() - 1, 0, -1):
+			resolver.push(ChooseStartingSite.new(), order[i])
+		resolver.apply(ChooseStartingSite.new(), order[0], state)
+		return
 	for i in range(order.size() - 1, -1, -1):
 		resolver.push(ChooseStartingSite.new(), order[i])
 	resolver.push(MulliganMarket.new(true), order[0])

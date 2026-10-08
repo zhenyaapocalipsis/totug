@@ -2319,6 +2319,13 @@ func test_market_mulligan() -> void:
 	pd = server.resolver.pending
 	check(pd != null and pd.tag == "starting_site" and pd.player_id == "red", "затем стартовый сайт, с первого игрока")
 
+	# Сохранённые до муллигана сетевые партии переигрываются без него.
+	var old_state := GameSetup.new_game(ids, 99, ["drow", "dragons"], false, true, false)
+	var old_server := GameServer.new(old_state, false)
+	check(old_server.resolver.pending.tag == "starting_site", "без муллигана сразу стартовый сайт")
+	var room := GameRoom.restore({"code": "T", "ids": ids, "seed": 99}, [])
+	check(room.server.resolver.pending.tag == "starting_site", "старый журнал (без \"mulligan\") — без муллигана")
+
 	# Копии убранной карты сверху колоды пропускаются и остаются в колоде.
 	var m := Market.new()
 	m.display = ["A", "B", "C", "D", "E", "F"]
@@ -3827,7 +3834,7 @@ func test_game_journal_replay() -> void:
 	log.append(end_intent.to_dict())
 
 	var header := {"code": code, "ids": ids, "mode": GameSetup.MODE_STANDARD, "seed": seed_value,
-		"profiles": {}, "accounts": {}, "keys": {}, "matched": true}
+		"profiles": {}, "accounts": {}, "keys": {}, "matched": true, "mulligan": true}
 	GameJournal.save(code, header, log, dir)
 	var loaded := GameJournal.load_game(code, dir)
 	check(not loaded.is_empty(), "журнал читается обратно")

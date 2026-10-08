@@ -304,7 +304,9 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	room.keys = (header.get("keys", {}) as Dictionary).duplicate(true)
 	room.matched = bool(header.get("matched", false))
 	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode)
-	room.server = GameServer.new(state)
+	# Партии, начатые до муллигана рынка (в заголовке нет "mulligan"),
+	# переигрываются без него — иначе их ходы лягут не на те вопросы.
+	room.server = GameServer.new(state, bool(header.get("mulligan", false)))
 	room.started = true
 	for d in intents:
 		room.server.apply_intent(Intent.from_dict(d as Dictionary))

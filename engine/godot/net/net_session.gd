@@ -874,6 +874,7 @@ func _save_room(room: GameRoom) -> void:
 		"accounts": room.accounts,
 		"keys": room.keys,
 		"matched": room.matched,
+		"mulligan": room.server.with_mulligan,
 	}, room.log, saves_dir)
 
 
