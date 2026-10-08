@@ -41,6 +41,14 @@
 
 Соответствие «карта мода → существо (id)»: Laurent→Warrior Infantry 49000, Dawnspeakers→Priest 49001, Insightful Investigator→Sphinx of Wonder 49002, Garen→Sphinx of Valor 49003, Lux→Djinni 49004, Durand→Satyr 49005, Conservator→Couatl 49006, Ranger-Knight→Hippogriff 49007, Silverwing→Pegasus 49008, Greenfang→Druid 49009, Radiant Guardian→Planetar 49010, Inquisitor→Sphinx of Lore 49011, Dauntless→Griffon 49012, Investigator→Unicorn 49013, Grizzled Ranger→Werebear 49014, Kayle→Solar 49015, Morgana→Erinyes 49016, Poppy→Warrior Veteran 49017, Fiora→Berserker 49018, Quinn→Scout 49019 + Valor→Giant Eagle 49023 (не в маркете), Jarvan→Silver Dragon 49020, Galio→Shield Guardian 49021, Shyvana→Gold Dragon 49022 ↔ Ancient Gold Dragon 49024 (не в маркете).
 
+## Готово: Shadow Isles — правила (NE-4, `412727e`)
+Тесты 1258/0, сеть 108/0. Всё по колоде — в `Claude outputs/new_era_shadow_isles.md` (таблица id → существо → карта мода, толкования).
+- Карты 49100–49124, тип `UNDEAD`, полуколода `shadow` (wip), эффекты `core/cards/shadow_cards.gd`.
+- Cursed Wanderer = Insane Outcast; Execute = Devour; Sapling = Twig Blight (запас 4); Elise ↔ Spider Elise = Drider ↔ Phase Spider.
+- Режим NEW ERA теперь = Celestial + Shadow Isles (`GameSetup.NEW_ERA_DECKS`).
+- Новое в движке: `state.turn_flags` (счётчик Outcast за ход и т.п.), `ShadowCards.on_play` в `TurnEngine.play_card`, `ShadowCards.on_devour` в DevourCard, `Actions.market_cost` (Cursed Affinity), `PlayerState.start_of_turn_influence`, реакция Bone Naga в GiveInsaneOutcast.
+- **Не сделано: арты (NE-5).** Без арта `pixel_cards.gd` пропускает карту, у карт нет лица. Картинки карт мода для сверки: 29–52, 0, 321, 326 (извлечение — см. конвейер ниже). Цена со скидкой Cursed Affinity на карте рынка не рисуется (подсветка доступности её учитывает).
+
 ## Решения владельца (действуют для всех колод)
 - Стартовые карты мода не вводим. Vanguard Cavalry = House Guard, Battlefield Sergeant = Priestess of Lolth. Стартовая колода остаётся 7 Noble + 3 Soldier (у нас Conscription Officer вместо одного Noble).
 - Аспект Valor из мода → MALICE.
