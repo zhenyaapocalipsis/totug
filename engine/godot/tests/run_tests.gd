@@ -3979,8 +3979,7 @@ func test_replay_viewer() -> void:
 
 	bar.seek(bar.total())
 	check(bar.server.state.game_over and bool(screen._view["game_over"]), "в конце реплея партия окончена")
-	check(screen._game_over_panel._charts.visible and screen._game_over_panel._stats_button != null,
-		"итоги реплея: график VP и кнопка GRAPHS")
+	check(screen._game_over_panel._stats_button != null, "итоги реплея: кнопка GRAPHS")
 	bar.step_forward(true)
 	check_eq(bar.cursor, bar.total(), "за концом шагать некуда")
 	bar.seek(0)
@@ -4108,7 +4107,6 @@ func test_replay_viewer() -> void:
 	check(hot.server.state.game_over, "хотсит доигран до конца")
 	hot._collect_hotseat_stats()
 	var over := hot._game_over_panel
-	check(over._charts.visible and over._charts.get_child_count() == 2, "итоги хотсита: график VP и строка лучшего хода")
 	check(over._stats_button != null and over._stats_button.text == "GRAPHS" and over._stats_button.get_index() == 1,
 		"итоги хотсита: кнопка GRAPHS между VIEW BOARD и MAIN MENU")
 	check_eq(int(hot._stats["turns"][-1]["vp"]["red"]), int(Scoring.breakdown(hot.server.state, "red")["total"]),

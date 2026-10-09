@@ -606,6 +606,8 @@ class LineChart extends VBoxContainer:
 			_update_readout())
 		add_child(_plot)
 		_readout = Label.new()
+		# Длинная строка обрезается, а не растягивает график.
+		_readout.clip_text = true
 		_readout.add_theme_color_override("font_color", PixelTheme.TEXT)
 		add_child(_readout)
 		_update_readout()
