@@ -122,6 +122,7 @@ func _initialize() -> void:
 	test_colour_preference()
 	test_resume_saved_game()
 	test_music_stems_and_moods()
+	test_bot_player()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -3659,7 +3660,7 @@ func test_main_menu() -> void:
 	_test_settings(panel)
 
 	var got := {}
-	menu.started.connect(func(ids: Array[String], m: String): got["start"] = [ids.size(), m])
+	menu.started.connect(func(ids: Array[String], m: String, b: bool): got["start"] = [ids.size(), m, b])
 	menu.online_requested.connect(func(k: String, c: int, m: String, a: String): got["online"] = [k, c, m, a])
 	_find_button(menu, "PLAY").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY возвращает в последний раздел")
@@ -3668,7 +3669,11 @@ func test_main_menu() -> void:
 	_find_button(menu, "3").pressed.emit()
 	_find_button(menu, "RANDOM 4").pressed.emit()
 	_find_button(menu, "START").pressed.emit()
-	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4], "START в углу: 3 игрока, режим RANDOM 4")
+	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4, false], "START в углу: 3 игрока, режим RANDOM 4")
+	_find_button(menu, "BOTS").pressed.emit()
+	_find_button(menu, "START").pressed.emit()
+	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4, true], "BOTS: соперники — боты")
+	_find_button(menu, "PEOPLE").pressed.emit()
 
 	_find_button(menu, "ONLINE").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "ONLINE открывает поиск игры")
@@ -4134,6 +4139,61 @@ func _acting_of(bar) -> String:
 ## Простой автоигрок для тестов: отвечает первым вариантом, разыгрывает всю
 ## руку, покупает что по карману, ставит войско, кончает ход. Возвращает
 ## принятые ходы (как журнал комнаты). max_intents — остановиться раньше.
+func test_bot_player() -> void:
+	section("Bot-1: бот доигрывает партии и сильнее простого автоигрока")
+	for setup: Array in [[2, GameSetup.MODE_STANDARD, 3], [4, GameSetup.MODE_RANDOM_6, 4]]:
+		var state := GameSetup.new_game(GameScreen.player_ids_for(setup[0]), setup[2], [], false, true, true, setup[1])
+		var server := GameServer.new(state)
+		server.build_views = false
+		var res := BotPlayer.play_out(server)
+		check(bool(res["finished"]), "%d игрока, %s: боты доиграли партию" % [setup[0], setup[1]])
+		check_eq(int(res["rejected"]), 0, "%d игрока, %s: сервер не отклонил ни одного хода бота" % [setup[0], setup[1]])
+
+	# Бот за red против простого автоигрока (первый допустимый вариант везде).
+	var bot_wins := 0
+	var games := 4
+	for g in range(games):
+		var state := GameSetup.new_game(["red", "blue"], 100 + g, [], false, true, true)
+		var server := GameServer.new(state)
+		server.build_views = false
+		var guard := 0
+		while not state.game_over and guard < 20000:
+			guard += 1
+			if BotPlayer.acting_player(server) == "red":
+				server.apply_intent(BotPlayer.next_intent(server, "red"))
+			else:
+				_autoplay(server, 1)
+		var vp := Scoring.library_card_vp(state)
+		if Scoring.winners(state, vp[0], vp[1]) == ["red"]:
+			bot_wins += 1
+	check_eq(bot_wins, games, "бот выиграл все %d партии у простого автоигрока" % games)
+
+	# Ответы на вопросы — всегда из допустимых.
+	var st := GameSetup.new_game(["red", "blue"], 5, [], false, true, true)
+	var srv := GameServer.new(st)
+	var pd := srv.resolver.pending
+	check(pd.legal_options.has(BotPlayer.answer(st, pd, pd.player_id)), "ответ бота на муллиган — из допустимых")
+
+	# Хотсит против ботов: экран всегда глазами человека, боты ходят сами.
+	var screen := GameScreen.new(9, [], ["red", "blue", "green"], GameSetup.MODE_STANDARD, {}, ["blue", "green"] as Array[String])
+	screen.size = Vector2(960, 540)
+	root.add_child(screen)
+	var steps := 0
+	var seen_viewers := {}
+	while steps < 3000 and not screen.server.state.game_over:
+		steps += 1
+		var actor := BotPlayer.acting_player(screen.server)
+		if actor == "red":
+			screen.send(BotPlayer.next_intent(screen.server, "red"))
+		else:
+			screen._tick_bots(GameScreen.BOT_DELAY + 0.01)
+		seen_viewers[screen.viewer_id] = true
+	check(screen.server.state.game_over, "хотсит с ботами доигран (за человека — тоже бот)")
+	check_eq(seen_viewers.keys(), ["red"], "экран всё время показывает партию глазами человека")
+	check(screen._replay_log.size() > 100, "ходы ботов пишутся в журнал партии (для реплея и графиков)")
+	screen.queue_free()
+
+
 func _autoplay(server: GameServer, max_intents: int = 20000) -> Array:
 	var log: Array = []
 	var state := server.state

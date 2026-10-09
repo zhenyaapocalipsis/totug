@@ -17,6 +17,7 @@ func _ready() -> void:
 	var game_seed := int(Time.get_unix_time_from_system())
 	var players := 0
 	var mode := GameSetup.MODE_STANDARD
+	var bots := false
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			game_seed = int(arg.get_slice("=", 1))
@@ -24,9 +25,11 @@ func _ready() -> void:
 			players = int(arg.get_slice("=", 1))
 		elif arg.begins_with("--mode="):
 			mode = arg.get_slice("=", 1)
+		elif arg == "--bots":
+			bots = true
 
 	if players >= GameScreen.MIN_PLAYERS:
-		_start_game(GameScreen.player_ids_for(players), game_seed, mode)
+		_start_game(GameScreen.player_ids_for(players), game_seed, mode, bots)
 		return
 
 	# Первый запуск: профиля ещё нет — сначала создать его, потом спросить,
@@ -64,7 +67,7 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	PlayerProfile.seats = {}
 	_clear()
 	var setup := SetupScreen.new(page)
-	setup.started.connect(func(ids: Array[String], m: String): _start_game(ids, game_seed, m))
+	setup.started.connect(func(ids: Array[String], m: String, bots: bool): _start_game(ids, game_seed, m, bots))
 	setup.online_requested.connect(_show_lobby)
 	setup.replay_requested.connect(_start_replay)
 	add_child(setup)
@@ -135,7 +138,7 @@ func _start_replay(file: String) -> void:
 	add_child(screen)
 
 
-func _start_game(player_ids: Array[String], game_seed: int, mode: String) -> void:
+func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: bool = false) -> void:
 	for child in get_children():
 		child.queue_free()
 	# За одним экраном профиль на компьютере один — он у первого цвета, и этот
@@ -143,7 +146,10 @@ func _start_game(player_ids: Array[String], game_seed: int, mode: String) -> voi
 	var local := PlayerProfile.load_local()
 	player_ids = PlayerProfile.seat_first(player_ids, String(local["colour"]))
 	PlayerProfile.seats = {player_ids[0]: local}
-	var screen := GameScreen.new(game_seed, [], player_ids, mode)
+	var bot_ids: Array[String] = []
+	if bots:
+		bot_ids = player_ids.slice(1)
+	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids)
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():
 		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))

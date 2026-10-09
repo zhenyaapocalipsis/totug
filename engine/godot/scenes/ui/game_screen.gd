@@ -233,6 +233,47 @@ var _decision_key := ""
 var _decision_left := DECISION_SECONDS
 var _auto_answered := false
 
+## Хотсит против ботов: за эти цвета ходит BotPlayer, экран всё время
+## показывает партию глазами человека.
+var bots: Array[String] = []
+## Пауза перед каждым действием бота (игровые секунды: скорость анимаций
+## из настроек ускоряет и ботов), чтобы за ним можно было уследить.
+const BOT_DELAY := 0.6
+var _bot_wait := BOT_DELAY
+## Сколько намерений бота подряд сервер отклонил (тогда — запасной ход).
+var _bot_rejects := 0
+
+
+## Чьими глазами смотреть в локальной партии: того, кто сейчас действует
+## (решает вопрос карты или ходит), а если действует бот — человека.
+func _local_viewer() -> String:
+	var actor := BotPlayer.acting_player(server)
+	if actor == "" or bots.has(actor):
+		for pid: String in player_ids:
+			if not bots.has(pid):
+				return pid
+		return viewer_id
+	return actor
+
+
+## Ход бота: одно намерение раз в BOT_DELAY, пока действует бот.
+func _tick_bots(delta: float) -> void:
+	var actor := BotPlayer.acting_player(server)
+	if not bots.has(actor) or _clock_stopped():
+		_bot_wait = BOT_DELAY
+		return
+	_bot_wait -= delta
+	if _bot_wait > 0.0:
+		return
+	_bot_wait = BOT_DELAY
+	var intent: Intent = BotPlayer.next_intent(server, actor) if _bot_rejects == 0 \
+		else BotPlayer.fallback_intent(server, actor)
+	if _bot_rejects > 2:
+		intent = Intent.end_turn(actor)
+	var logged := _replay_log.size()
+	send(intent)
+	_bot_rejects = 0 if _replay_log.size() > logged else _bot_rejects + 1
+
 
 ## Какие цвета раздать на партию из count человек.
 static func player_ids_for(count: int) -> Array[String]:
@@ -243,8 +284,11 @@ static func player_ids_for(count: int) -> Array[String]:
 ## online — сетевая партия: {session, seat, board, view} из NetSession.game_started,
 ## или реплей: {replay} (ReplayBook.load_replay).
 ## Пустой — хотсит, партию собирает сам экран.
+## bot_ids — цвета, за которые в хотсите играет BotPlayer.
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
-		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {}) -> void:
+		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {},
+		bot_ids: Array[String] = []) -> void:
+	bots = bot_ids.duplicate()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 	if online.has("replay"):
@@ -295,7 +339,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		_replay_ids = player_ids.duplicate()
 		_replay_mode = mode
 	board_data = StateView.board_snapshot(state)
-	viewer_id = server.resolver.pending.player_id if server.resolver.is_waiting() else state.current_player()
+	viewer_id = _local_viewer()
 	_build_layout()
 	refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
 
@@ -1060,10 +1104,8 @@ func send(intent: Intent) -> void:
 	# Ход мог перейти к другому игроку — в локальном режиме зритель следует
 	# за ходом, кроме случая, когда решение ждут от кого-то конкретного.
 	var pending: PendingDecision = server.resolver.pending
-	if pending != null:
-		viewer_id = pending.player_id
-	elif not server.state.game_over:
-		viewer_id = server.state.current_player()
+	if not server.state.game_over:
+		viewer_id = _local_viewer()
 
 	var views: Dictionary = result["views"]
 	var view: Dictionary = views.get(viewer_id, {})
@@ -1732,6 +1774,8 @@ func _process(delta: float) -> void:
 		# В реплее времени хода нет — партия идёт сама.
 		_timer_label.text = "--:--"
 		return
+	if not bots.is_empty() and not bool(_view["game_over"]):
+		_tick_bots(delta)
 	if bool(_view["game_over"]):
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))

@@ -22,7 +22,8 @@ extends Control
 ## знает про меню. Вёрстка кодом по той же причине, что и в game_screen.gd:
 ## .tscn в этом проекте правится вслепую, без редактора.
 
-signal started(player_ids: Array[String], mode: String)
+## bots — за всех, кроме первого цвета, играют боты (BotPlayer).
+signal started(player_ids: Array[String], mode: String, bots: bool)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
 ## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN),
 ## "find" — поиск игры на сервере (режим по размеру стола: NetSession.match_mode),
@@ -80,6 +81,9 @@ const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
 var _count: int = GameScreen.MIN_PLAYERS
+## HOTSEAT: соперники — боты (иначе люди за этим же компьютером).
+var _bots := false
+var _hotseat_note: Label
 ## На сколько человек искать стол (SEARCH) — отдельно от своей комнаты.
 var _match_count: int = GameScreen.MIN_PLAYERS
 ## LOBBY: войти к друзьям (иначе — своя игра), своя игра — напрямую по IP
@@ -439,10 +443,25 @@ func _build_lobby_join() -> void:
 
 
 func _build_hotseat() -> void:
-	_add_dim("Players take turns at this computer.\nThe first player is drawn at random.")
+	_col.add_child(_heading("OPPONENTS"))
+	var group := ButtonGroup.new()
+	var people := _toggle("PEOPLE", group, not _bots, 60)
+	var bots := _toggle("BOTS", group, _bots, 60)
+	people.pressed.connect(func(): _select_bots(false))
+	bots.pressed.connect(func(): _select_bots(true))
+	_col.add_child(_row([people, bots]))
+	_hotseat_note = _add_dim("")
+	_select_bots(_bots)
 	_col.add_child(HSeparator.new())
 	_add_game_options()
-	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _mode))
+	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _mode, _bots))
+
+
+func _select_bots(on: bool) -> void:
+	_bots = on
+	if _hotseat_note != null:
+		_hotseat_note.text = "You play against bots.\nThe first player is drawn at random." if on \
+			else "Players take turns at this computer.\nThe first player is drawn at random."
 
 
 ## Обучение — прямо в окне (владелец, 2026-10-06: без лишней кнопки OPEN),
