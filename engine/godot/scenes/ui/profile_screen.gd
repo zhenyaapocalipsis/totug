@@ -45,6 +45,9 @@ const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 ## Вкладки обычного профиля; STATS первой и открыта сразу (владелец, 2026-09-28).
 const TABS: Array[String] = ["STATS", "EMBLEM", "CHAT", "COLLECTION"]
+## Высота прокрутки истории онлайн-партий (до PlayerProfile.HISTORY_MAX строк).
+const HISTORY_H := 200.0
+const GamesAnalysisPanel := preload("res://scenes/ui/games_analysis_panel.gd")
 
 var _pixels: Array[Color] = []
 var _brush := Color("ffffff")
@@ -65,6 +68,10 @@ var _tab_buttons: Array[Button] = []
 var _chat: Control
 var _phrase_edits: Array[LineEdit] = []
 var _page := "STATS"
+## Папка реплеев (тест подменяет, чтобы не трогать реплеи владельца).
+var replays_dir := ReplayBook.DIR
+## Окно ALL GAMES — сводка по партиям истории (open_analysis).
+var analysis_panel: Control
 ## Вкладка COLLECTION: образы карт (CollectionPage).
 var _collection: CollectionPage
 ## Любимый цвет места ("" — любой, PlayerProfile.clean_colour) и рамки его выбора.
@@ -626,16 +633,29 @@ func _stats_page() -> Control:
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 4)
 	body.add_child(right)
-	right.add_child(GameScreen.section_label("LAST ONLINE GAMES"))
 	var list := PlayerProfile.history()
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 8)
+	right.add_child(title_row)
+	title_row.add_child(GameScreen.section_label("LAST ONLINE GAMES" if list.is_empty()
+		else "LAST %d ONLINE GAMES" % list.size()))
 	if list.is_empty():
 		right.add_child(_cell("No games recorded yet.", PixelTheme.TEXT_DIM))
 		return page
+	# Сводка по всем партиям истории с реплеями (Replay-4).
+	var analysis := _button("ALL GAMES", open_analysis)
+	analysis.custom_minimum_size = Vector2(56, 12)
+	title_row.add_child(analysis)
+	# История до PlayerProfile.HISTORY_MAX строк — в прокрутке.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size.y = HISTORY_H
+	right.add_child(scroll)
 	var grid := GridContainer.new()
 	grid.columns = 6
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 2)
-	right.add_child(grid)
+	scroll.add_child(grid)
 	for header in ["DATE", "PLAYERS", "PLACE", "VP", "RATING", "REPLAY"]:
 		grid.add_child(_cell(header, PixelTheme.TEXT_DIM))
 	for game: Dictionary in list:
@@ -652,17 +672,29 @@ func _stats_page() -> Control:
 		rating_row.add_child(_cell("%+d" % delta, Color("5fd36a") if delta > 0
 			else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
 		grid.add_child(rating_row)
-		grid.add_child(_replay_cell(String(game.get("replay", ""))))
+		grid.add_child(_replay_cell(game))
 	return page
+
+
+## Окно сводки по всем партиям истории (GamesAnalysisPanel) — поверх меню.
+func open_analysis() -> void:
+	if analysis_panel != null:
+		analysis_panel.queue_free()
+	analysis_panel = GamesAnalysisPanel.new(replays_dir)
+	add_child(analysis_panel)
 
 
 ## WATCH — реплей этой партии (ReplayBook). Партии до реплеев — прочерк;
 ## реплей другой версии правил — OLD: его ходы могут не лечь на нынешние карты.
-func _replay_cell(file: String) -> Control:
-	var replay := ReplayBook.load_replay(file) if file != "" else {}
-	if replay.is_empty():
+## Версия — в строке истории (protocol), файл открывается только у старых строк.
+func _replay_cell(game: Dictionary) -> Control:
+	var file := String(game.get("replay", ""))
+	if file == "" or not FileAccess.file_exists(replays_dir + file):
 		return _cell("-", PixelTheme.TEXT_OFF)
-	if not ReplayBook.same_version(replay):
+	var version := int(game.get("protocol", -1))
+	if version < 0:
+		version = int((ReplayBook.load_replay(file, replays_dir).get("header", {}) as Dictionary).get("protocol", -1))
+	if version != NetSession.PROTOCOL:
 		return _cell("OLD", PixelTheme.TEXT_OFF)
 	var watch := Button.new()
 	watch.text = "WATCH"

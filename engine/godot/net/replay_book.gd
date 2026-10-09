@@ -25,6 +25,9 @@ extends RefCounted
 
 const DIR := "user://replays/"
 const FORMAT := 1
+## Файл реплея — JSON, сжатый gzip (в ~25 раз меньше: партия на четверых
+## ~5 КБ вместо ~100 КБ). Первые реплеи (Replay-1) — несжатые .json, читаются тоже.
+const EXT := ".replay"
 
 
 ## Заголовок реплея из окончившейся партии. seat — чьими глазами партия
@@ -67,8 +70,8 @@ static func save(header: Dictionary, intents: Array, dir: String = DIR) -> Strin
 	DirAccess.make_dir_recursive_absolute(dir)
 	var stamp := Time.get_datetime_string_from_unix_time(int(header.get("date", 0))).replace(":", "").replace("-", "").replace("T", "_")
 	var tail := String(header.get("code", ""))
-	var file := "%s_%s.json" % [stamp, tail if tail != "" else "local"]
-	var f := FileAccess.open(dir + file, FileAccess.WRITE)
+	var file := "%s_%s%s" % [stamp, tail if tail != "" else "local", EXT]
+	var f := FileAccess.open_compressed(dir + file, FileAccess.WRITE, FileAccess.COMPRESSION_GZIP)
 	if f == null:
 		return ""
 	f.store_string(JSON.stringify({"header": header, "intents": intents}))
@@ -90,7 +93,7 @@ static func list(dir: String = DIR) -> Array[String]:
 	if d == null:
 		return names
 	for name in d.get_files():
-		if name.ends_with(".json"):
+		if name.ends_with(EXT) or name.ends_with(".json"):
 			names.append(name)
 	names.sort()
 	names.reverse()
@@ -99,7 +102,8 @@ static func list(dir: String = DIR) -> Array[String]:
 
 ## {} — файла нет или он повреждён.
 static func load_replay(file: String, dir: String = DIR) -> Dictionary:
-	var f := FileAccess.open(dir + file, FileAccess.READ)
+	var f := FileAccess.open(dir + file, FileAccess.READ) if file.ends_with(".json") \
+		else FileAccess.open_compressed(dir + file, FileAccess.READ, FileAccess.COMPRESSION_GZIP)
 	if f == null:
 		return {}
 	var parsed = JSON.parse_string(f.get_as_text())

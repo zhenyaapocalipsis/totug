@@ -385,7 +385,10 @@ static func rank_icon(rating: int) -> Image:
 
 # --- история онлайн-партий -----------------------------------------------------
 
-const HISTORY_MAX := 10
+## Replay-4 (владелец, 2026-10-09): история длиннее — по ней считается сводка
+## по многим партиям. Строка ~3 КБ (значки игроков), реплей ~5 КБ (gzip):
+## сто партий — около мегабайта.
+const HISTORY_MAX := 100
 
 
 ## Последние партии, новые первыми. Хранится у игрока (в файле профиля).
@@ -402,6 +405,22 @@ static func add_history(entry: Dictionary) -> void:
 	var list := history()
 	list.push_front(entry)
 	cfg.set_value("history", "games", list.slice(0, HISTORY_MAX))
+	cfg.save(path())
+
+
+## Выжимки партий для сводки (ReplayStats.summary_for): файл реплея -> выжимка;
+## дописываются в строки истории с этим реплеем.
+static func set_history_summaries(by_file: Dictionary) -> void:
+	if by_file.is_empty():
+		return
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	var list := history()
+	for game: Dictionary in list:
+		var file := String(game.get("replay", ""))
+		if file != "" and by_file.has(file):
+			game["summary"] = by_file[file]
+	cfg.set_value("history", "games", list)
 	cfg.save(path())
 
 

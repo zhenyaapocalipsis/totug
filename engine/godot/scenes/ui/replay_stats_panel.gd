@@ -17,6 +17,10 @@ signal closed
 
 const TABS: Array[String] = ["VP", "RESOURCES", "ACTIONS", "BUYS", "MAP"]
 const PANEL_SIZE := Vector2(900, 470)
+## Правая колонка вкладки VP (итог по статьям, лучший ход, лидерство).
+const SIDE_W := 310.0
+## Сколько последних смен лидера показать списком.
+const LEADS_SHOWN := 8
 const VP_PART_NAMES := {"sites": "SITES", "total_control": "TOTAL CONTROL", "trophies": "TROPHIES",
 	"deck": "DECK", "inner_circle": "INNER CIRCLE", "tokens": "VP TOKENS"}
 const ACTION_NAMES := {"played": "CARDS PLAYED", "bought": "CARDS BOUGHT", "deployed": "TROOPS DEPLOYED",
@@ -28,10 +32,14 @@ var _pages: Dictionary = {}
 var _tab_buttons: Dictionary = {}
 var _body: Control
 var _tab := ""
+## Щелчок по графику VP перематывает реплей (turn_chosen); на итогах живой
+## партии перематывать нечего.
+var can_jump := true
 
 
-func _init(stats_data: Dictionary) -> void:
+func _init(stats_data: Dictionary, jump := true) -> void:
 	stats = stats_data
+	can_jump = jump
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	z_index = 1060
 	var dim := ColorRect.new()
@@ -136,17 +144,20 @@ func _build_vp() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	var turns: Array = stats["turns"]
-	var chart := vp_chart(stats, "VP AFTER EACH TURN (AS IF THE GAME ENDED THERE). CLICK TO JUMP")
-	chart.custom_minimum_size = Vector2(560, 0)
+	var chart := vp_chart(stats, "VP AFTER EACH TURN (AS IF THE GAME ENDED THERE)" +
+		(". CLICK TO JUMP" if can_jump else ""))
+	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	chart.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var best: Dictionary = stats.get("best", {})
-	chart.clicked.connect(func(i: int):
-		turn_chosen.emit(int((turns[i] as Dictionary)["start"]))
-		close())
+	if can_jump:
+		chart.clicked.connect(func(i: int):
+			turn_chosen.emit(int((turns[i] as Dictionary)["start"]))
+			close())
 	row.add_child(chart)
 
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 3)
+	side.custom_minimum_size.x = SIDE_W
 	row.add_child(side)
 	side.add_child(_heading("FINAL VP"))
 	var grid := GridContainer.new()
@@ -167,23 +178,48 @@ func _build_vp() -> Control:
 		grid.add_child(_cell(str(int(parts[pid].get("total", 0))), PixelTheme.GOLD))
 
 	side.add_child(HSeparator.new())
-	side.add_child(_heading("TURNING POINTS"))
+	side.add_child(_heading("BEST TURN"))
 	if int(best.get("gain", 0)) > 0:
 		var pid := String(best["player"])
-		side.add_child(_cell("BEST TURN: %s +%d VP" % [EventLogPanel.player_name(pid).to_upper(), int(best["gain"])],
-			player_colour(pid)))
-		side.add_child(_cell("  (%s, GOLD MARK)" % _turn_title(int(best["turn"])), PixelTheme.TEXT_DIM))
+		side.add_child(_cell("%s +%d VP IN ROUND %d (GOLD MARK)" % [_short(pid), int(best["gain"]),
+			int((turns[int(best["turn"])] as Dictionary)["round"])], player_colour(pid)))
+
+	# Лидерство: полоса под графиком цвета лидера, здесь — сколько ходов
+	# каждый вёл и последние смены лидера (раунд и кто вышел вперёд).
 	var leads: Array = stats.get("leads", [])
-	side.add_child(_cell("LEAD CHANGES: %d" % leads.size(), PixelTheme.TEXT))
-	for t in leads.slice(maxi(0, leads.size() - 4)):
-		var vp: Dictionary = turns[int(t)]["vp"]
-		var top := ids()[0]
-		for pid in ids():
-			if int(vp[pid]) > int(vp[top]):
-				top = pid
-		side.add_child(_cell("  %s TAKES THE LEAD, %s" % [EventLogPanel.player_name(top).to_upper(),
-			_turn_title(int(t))], player_colour(top)))
+	var who: Array = leader_list(stats)
+	side.add_child(_heading("LEADER (STRIP UNDER THE CHART)"))
+	var lead_grid := GridContainer.new()
+	lead_grid.columns = 2
+	lead_grid.add_theme_constant_override("h_separation", 8)
+	lead_grid.add_theme_constant_override("v_separation", 2)
+	side.add_child(lead_grid)
+	for pid in ids():
+		lead_grid.add_child(_cell(_short(pid), player_colour(pid)))
+		lead_grid.add_child(_cell("LED %d TURNS" % who.count(pid), PixelTheme.TEXT))
+	side.add_child(_cell("LEAD CHANGED %d TIMES%s" % [leads.size(),
+		", LAST %d:" % LEADS_SHOWN if leads.size() > LEADS_SHOWN else (":" if leads.size() > 0 else "")],
+		PixelTheme.TEXT_DIM))
+	var change_grid := GridContainer.new()
+	change_grid.columns = 4
+	change_grid.add_theme_constant_override("h_separation", 6)
+	change_grid.add_theme_constant_override("v_separation", 2)
+	side.add_child(change_grid)
+	for t in leads.slice(maxi(0, leads.size() - LEADS_SHOWN)):
+		var pid := String(who[int(t)])
+		change_grid.add_child(_cell("R%d" % int((turns[int(t)] as Dictionary)["round"]), PixelTheme.TEXT_DIM))
+		change_grid.add_child(_cell(_short(pid), player_colour(pid)))
 	return row
+
+
+## Лидер после каждого хода (ReplayStats.leaders; старые данные — пересчёт).
+static func leader_list(data: Dictionary) -> Array:
+	if data.has("leaders"):
+		return data["leaders"]
+	var list: Array[String] = []
+	for pid in data.get("ids", []):
+		list.append(String(pid))
+	return ReplayStats.leaders(data["turns"], list)
 
 
 ## График VP всех игроков после каждого хода, лучший ход — золотой меткой.
@@ -200,6 +236,9 @@ static func vp_chart(data: Dictionary, caption: String) -> LineChart:
 	var best: Dictionary = data.get("best", {})
 	if int(best.get("gain", 0)) > 0:
 		chart.marks[int(best["turn"])] = PixelTheme.GOLD
+	# Полоса под графиком — цвет лидера после каждого хода.
+	for pid in leader_list(data):
+		chart.band.append(player_colour(String(pid)) if String(pid) != "" else Color(0, 0, 0, 0))
 	return chart
 
 
@@ -338,40 +377,160 @@ func _build_buys() -> Control:
 
 # --- MAP --------------------------------------------------------------------
 
+## Владение сайтами по ходу партии (владелец, 2026-10-09: таблица чисел была
+## непонятна): строка на сайт, слева направо — вся партия, клетка на ход
+## цвета того, кто контролировал сайт после этого хода; справа — кто держал
+## дольше всех.
 func _build_map() -> Control:
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	var centre := CenterContainer.new()
-	centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(centre)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
-	centre.add_child(col)
-	col.add_child(_cell("TURNS EACH PLAYER CONTROLLED EACH SITE", PixelTheme.TEXT_DIM))
-	var sites: Array = stats["sites"]
-	var columns := 2 if sites.size() > 12 else 1
-	var grid := GridContainer.new()
-	grid.columns = (ids().size() + 2) * columns
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 2)
-	col.add_child(grid)
-	for c in columns:
-		grid.add_child(_cell("SITE", PixelTheme.TEXT_DIM))
-		grid.add_child(_cell("VP", PixelTheme.TEXT_DIM))
-		for pid in ids():
-			grid.add_child(_cell(_short(pid), player_colour(pid)))
-	for s in sites:
-		var held: Dictionary = (s as Dictionary)["turns"]
-		grid.add_child(_cell(String(s["name"]).to_upper(), PixelTheme.TEXT))
-		grid.add_child(_cell(str(int(s["vp"])), PixelTheme.GOLD))
-		var top := 0
-		for pid in ids():
-			top = maxi(top, int(held.get(pid, 0)))
-		for pid in ids():
-			var n := int(held.get(pid, 0))
-			grid.add_child(_cell(str(n) if n > 0 else "-",
-				player_colour(pid) if n == top and n > 0 else PixelTheme.TEXT_DIM))
-	return scroll
+	var note := _cell("EACH ROW IS A SITE, MOST VP FIRST. LEFT TO RIGHT: THE WHOLE GAME, ONE STEP PER TURN. " +
+		"COLOUR: WHO CONTROLLED THE SITE AFTER THAT TURN, DARK: NOBODY. RIGHT: WHO HELD IT LONGEST.",
+		PixelTheme.TEXT_DIM)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(note)
+	var legend := HBoxContainer.new()
+	legend.add_theme_constant_override("separation", 10)
+	col.add_child(legend)
+	for pid in ids():
+		var chip := ColorRect.new()
+		chip.color = player_colour(pid)
+		chip.custom_minimum_size = Vector2(6, 6)
+		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		legend.add_child(chip)
+		legend.add_child(_cell(EventLogPanel.player_name(pid).to_upper(), player_colour(pid)))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(scroll)
+	var timeline := SiteTimeline.new(stats, func(i: int) -> String: return _turn_title(i))
+	timeline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(timeline)
+	var readout := _cell(" ", PixelTheme.TEXT)
+	col.add_child(readout)
+	timeline.hovered.connect(func(text: String): readout.text = text if text != "" else " ")
+	return col
+
+
+## Полосы владения сайтами (вкладка MAP), рисуются целиком: имя, VP, клетки
+## ходов, «кто дольше». Мышь над клеткой — hovered(строка: сайт, ход, чей).
+class SiteTimeline extends Control:
+	signal hovered(text: String)
+
+	const ROW_H := 12.0
+	const HEAD_H := 10.0
+	const NAME_W := 120.0
+	const VP_W := 18.0
+	const MOST_W := 110.0
+	const NOBODY := Color(0.16, 0.13, 0.2)
+
+	var sites: Array
+	var turns: Array
+	var label_of: Callable
+	var _hover := Vector2i(-1, -1)
+
+	func _init(data: Dictionary, labeler: Callable) -> void:
+		sites = data["sites"]
+		turns = data["turns"]
+		label_of = labeler
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		custom_minimum_size = Vector2(400, HEAD_H + ROW_H * sites.size())
+		mouse_exited.connect(func():
+			_hover = Vector2i(-1, -1)
+			queue_redraw()
+			hovered.emit(""))
+
+	func _strip() -> Rect2:
+		var x := NAME_W + VP_W
+		return Rect2(x, HEAD_H, maxf(1.0, size.x - x - MOST_W), ROW_H * sites.size())
+
+	func _cell_x(i: int) -> float:
+		var r := _strip()
+		return roundf(r.position.x + r.size.x * i / maxf(1.0, turns.size()))
+
+	func _draw() -> void:
+		var font := get_theme_font("font", "Label")
+		var font_size := get_theme_font_size("font_size", "Label")
+		var r := _strip()
+		draw_string(font, Vector2(0, HEAD_H - 2), "SITE", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.TEXT_DIM)
+		draw_string(font, Vector2(NAME_W, HEAD_H - 2), "VP", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.TEXT_DIM)
+		draw_string(font, Vector2(r.end.x + 6, HEAD_H - 2), "LONGEST", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+			PixelTheme.TEXT_DIM)
+		# Начало каждого пятого раунда — подпись сверху и черта через все строки.
+		for i in range(1, turns.size()):
+			var rnd := int((turns[i] as Dictionary)["round"])
+			if int((turns[i - 1] as Dictionary)["round"]) != rnd and (rnd == 1 or rnd % 5 == 0):
+				var x := _cell_x(i)
+				draw_line(Vector2(x, HEAD_H - 1), Vector2(x, r.end.y), PixelTheme.BORDER, 1.0)
+				draw_string(font, Vector2(x + 2, HEAD_H - 2), "R%d" % rnd, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+					PixelTheme.TEXT_DIM)
+		for row in sites.size():
+			var s: Dictionary = sites[row]
+			var y := HEAD_H + ROW_H * row
+			var name_text := String(s["name"]).to_upper()
+			if name_text.length() > 19:
+				name_text = name_text.substr(0, 19)
+			var base := y + ROW_H - 3
+			draw_string(font, Vector2(0, base), name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+				PixelTheme.GOLD if _hover.y == row else PixelTheme.TEXT)
+			draw_string(font, Vector2(NAME_W, base), str(int(s["vp"])), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+				PixelTheme.GOLD)
+			var held: Array = s.get("held", [])
+			for i in turns.size():
+				var owner := String(held[i]) if i < held.size() else ""
+				var x0 := _cell_x(i)
+				var x1 := _cell_x(i + 1)
+				draw_rect(Rect2(x0, y + 2, maxf(1.0, x1 - x0), ROW_H - 4),
+					EventLogPanel.player_color(owner) if owner != "" else NOBODY)
+			var most := ""
+			var most_n := 0
+			var counts: Dictionary = s.get("turns", {})
+			for pid: String in counts:
+				if int(counts[pid]) > most_n:
+					most = pid
+					most_n = int(counts[pid])
+			if most != "":
+				var who := EventLogPanel.player_name(most).to_upper()
+				draw_string(font, Vector2(r.end.x + 6, base), "%s %d" % [who.substr(0, 10), most_n],
+					HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, EventLogPanel.player_color(most))
+			else:
+				draw_string(font, Vector2(r.end.x + 6, base), "NOBODY", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+					PixelTheme.TEXT_OFF)
+		if _hover.x >= 0:
+			var hx0 := _cell_x(_hover.x)
+			var hx1 := _cell_x(_hover.x + 1)
+			draw_rect(Rect2(hx0, r.position.y, maxf(1.0, hx1 - hx0), r.size.y), Color(1, 1, 1, 0.25))
+
+	func _gui_input(event: InputEvent) -> void:
+		var motion := event as InputEventMouseMotion
+		if motion == null:
+			return
+		var r := _strip()
+		var p := motion.position
+		var cell := Vector2i(-1, -1)
+		if r.has_point(p) and not turns.is_empty():
+			cell = Vector2i(clampi(int((p.x - r.position.x) / r.size.x * turns.size()), 0, turns.size() - 1),
+				clampi(int((p.y - r.position.y) / ROW_H), 0, sites.size() - 1))
+		elif p.y >= r.position.y and p.y < r.end.y:
+			cell = Vector2i(-1, clampi(int((p.y - r.position.y) / ROW_H), 0, sites.size() - 1))
+		if cell == _hover:
+			return
+		_hover = cell
+		queue_redraw()
+		hovered.emit(text_at(cell))
+
+	## «BLINGDENSTONE, TURN 34, ROUND 9, BOB: HELD BY ALICE».
+	func text_at(cell: Vector2i) -> String:
+		if cell.y < 0:
+			return ""
+		var s: Dictionary = sites[cell.y]
+		var name_text := String(s["name"]).to_upper()
+		if cell.x < 0:
+			return "%s: %d VP" % [name_text, int(s["vp"])]
+		var held: Array = s.get("held", [])
+		var owner := String(held[cell.x]) if cell.x < held.size() else ""
+		return "%s, %s: %s" % [name_text, label_of.call(cell.x),
+			"HELD BY " + EventLogPanel.player_name(owner).to_upper() if owner != "" else "NOBODY HELD IT"]
 
 
 # --- мелочи -----------------------------------------------------------------
@@ -411,6 +570,7 @@ class LineChart extends VBoxContainer:
 
 	const LEFT := 22.0
 	const PAD := 3.0
+	const BAND_H := 4.0
 
 	## [{colour, points: Array[float], name}]
 	var series: Array
@@ -419,6 +579,9 @@ class LineChart extends VBoxContainer:
 	var label_of: Callable
 	## Отмеченные точки: номер -> цвет (черта снизу).
 	var marks: Dictionary = {}
+	## Полоса под графиком: цвет на каждую точку (прозрачный — пусто),
+	## например лидер по VP после каждого хода.
+	var band: Array = []
 	var _plot: Control
 	var _readout: Label
 	var _hover := -1
@@ -469,7 +632,8 @@ class LineChart extends VBoxContainer:
 
 	func _area() -> Rect2:
 		var s := _plot.size
-		return Rect2(LEFT, PAD, maxf(1.0, s.x - LEFT - PAD), maxf(1.0, s.y - PAD * 2.0))
+		var under := BAND_H + 2.0 if not band.is_empty() else 0.0
+		return Rect2(LEFT, PAD, maxf(1.0, s.x - LEFT - PAD), maxf(1.0, s.y - PAD * 2.0 - under))
 
 	func _point(i: int, value: float, n: int, top: float) -> Vector2:
 		var r := _area()
@@ -493,6 +657,15 @@ class LineChart extends VBoxContainer:
 			_plot.draw_string(font, Vector2(0, y + 3), str(int(v)), HORIZONTAL_ALIGNMENT_RIGHT, LEFT - 3,
 				font_size, PixelTheme.TEXT_DIM)
 			v += step
+		for i in band.size():
+			var colour: Color = band[i]
+			if colour.a <= 0.0:
+				continue
+			var x0 := _point(i - 1, 0.0, n, top).x if i > 0 else r.position.x
+			var x1 := _point(i + 1, 0.0, n, top).x if i + 1 < n else r.end.x
+			var a := roundf((x0 + _point(i, 0.0, n, top).x) / 2.0) if i > 0 else x0
+			var b := roundf((x1 + _point(i, 0.0, n, top).x) / 2.0) if i + 1 < n else x1
+			_plot.draw_rect(Rect2(a, r.end.y + 2.0, maxf(1.0, b - a), BAND_H), colour)
 		for i: int in marks:
 			var p := _point(i, 0.0, n, top)
 			_plot.draw_rect(Rect2(p.x - 1, r.end.y - 3, 3, 3), marks[i])

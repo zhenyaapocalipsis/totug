@@ -3897,6 +3897,17 @@ func test_replay_book() -> void:
 		check_eq(rebuilt.state.troops, live.state.troops, "%d игрока: те же войска в конце" % count)
 	check_eq(ReplayBook.list(dir).size(), 3, "три реплея в папке")
 	check(ReplayBook.list(dir)[0].begins_with("20231114"), "новые первыми, имя файла — дата")
+	var packed := ReplayBook.list(dir)[0]
+	var packed_size := FileAccess.get_file_as_bytes(dir + packed).size()
+	check(packed.ends_with(ReplayBook.EXT) and packed_size < 20000,
+		"реплей сжат: партия на четверых — %d байт" % packed_size)
+	# Первые реплеи (несжатый .json) читаются по-прежнему.
+	var legacy := FileAccess.open(dir + "20200101_000000_OLD.json", FileAccess.WRITE)
+	legacy.store_string(JSON.stringify(ReplayBook.load_replay(packed, dir)))
+	legacy.close()
+	check_eq(int(ReplayBook.load_replay("20200101_000000_OLD.json", dir)["header"]["seed"]), 4246,
+		"старый несжатый реплей читается")
+	ReplayBook.erase("20200101_000000_OLD.json", dir)
 
 	# Досрочный конец: игрок не вернулся — реплей кончается тем же abandon.
 	var ids2 := GameScreen.player_ids_for(2)
@@ -3969,7 +3980,7 @@ func test_replay_viewer() -> void:
 	bar.seek(bar.total())
 	check(bar.server.state.game_over and bool(screen._view["game_over"]), "в конце реплея партия окончена")
 	check(screen._game_over_panel._charts.visible and screen._game_over_panel._stats_button != null,
-		"итоги реплея: график VP и кнопка STATS")
+		"итоги реплея: график VP и кнопка GRAPHS")
 	bar.step_forward(true)
 	check_eq(bar.cursor, bar.total(), "за концом шагать некуда")
 	bar.seek(0)
@@ -4027,6 +4038,65 @@ func test_replay_viewer() -> void:
 	check(not panel.visible, "CLOSE закрывает статистику")
 	screen.queue_free()
 
+	# Лидер и владение сайтами по ходам (полоса под графиком, вкладка MAP).
+	var leaders: Array = stats["leaders"]
+	check_eq(leaders.size(), turns.size(), "лидер записан после каждого хода")
+	var changes_ok := true
+	for t in stats["leads"]:
+		changes_ok = changes_ok and leaders[int(t)] != leaders[int(t) - 1]
+	check(changes_ok, "смены лидера совпадают с полосой лидера")
+	var strip_ok := true
+	for s in stats["sites"]:
+		var held: Array = s["held"]
+		strip_ok = strip_ok and held.size() == turns.size()
+		for pid in (s["turns"] as Dictionary):
+			strip_ok = strip_ok and held.count(pid) == int(s["turns"][pid])
+	check(strip_ok, "полоса владения сайтом: клетка на ход, сходится со счётом ходов")
+	var timeline = preload("res://scenes/ui/replay_stats_panel.gd").SiteTimeline.new(stats, func(i: int) -> String: return "T%d" % i)
+	var owned := String(stats["sites"][0]["held"][-1])
+	check(timeline.text_at(Vector2i(turns.size() - 1, 0)).ends_with(
+		"HELD BY " + EventLogPanel.player_name(owned).to_upper() if owned != "" else "NOBODY HELD IT"),
+		"MAP: строка под полосами говорит, чей сайт на этом ходу")
+	timeline.free()
+
+	# Replay-4: выжимка партии глазами blue и сводка по многим партиям.
+	var summary := ReplayStats.summary_for(stats, header)
+	var rounds := int(turns[-1]["round"])
+	check_eq((summary["curve"] as Array).size(), rounds, "выжимка: VP в конце каждого раунда (%d)" % rounds)
+	check_eq(int(summary["curve"][-1]), int(header["scores"]["blue"]), "выжимка: последний раунд — итог blue")
+	check_eq((summary["buys"] as Array).size(), int(stats["counts"]["blue"]["bought"]), "выжимка: все покупки blue")
+	var won := summary.duplicate(true)
+	won["won"] = not bool(summary["won"])
+	var all := ReplayStats.aggregate([summary, won])
+	check(int(all["games"]) == 2 and int(all["wins"]) == 1 and int(all["groups"]["wins"]["games"]) == 1,
+		"сводка: две партии, одна победа")
+	var some_card := String(summary["buys"][0])
+	check(int(all["cards"][some_card]["games"]) == 2 and int(all["cards"][some_card]["wins"]) == 1,
+		"сводка: карта куплена в двух партиях, одна выиграна")
+	check_eq((all["curve"]["wins"] as Array).size(), rounds, "сводка: средние VP по раундам")
+
+	var dir := "user://replay_test/"
+	var old_path := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://profile_analysis_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	var file := ReplayBook.save(header, log, dir)
+	PlayerProfile.add_history({"replay": file, "protocol": NetSession.PROTOCOL, "players": []})
+	PlayerProfile.add_history({"replay": "", "players": []})
+	var started_a := Time.get_ticks_msec()
+	var summaries := ReplayStats.history_summaries(dir)
+	check(summaries.size() == 1 and int(summaries[0]["vp"]) == int(summary["vp"]),
+		"сводка по истории: выжимка посчитана по реплею (%d мс)" % (Time.get_ticks_msec() - started_a))
+	ReplayBook.erase(file, dir)
+	check_eq(ReplayStats.history_summaries(dir).size(), 1, "выжимка запомнена в истории — реплей уже не нужен")
+	var analysis = preload("res://scenes/ui/games_analysis_panel.gd").new(dir)
+	root.add_child(analysis)
+	for tab in analysis.TABS:
+		analysis.show_tab(tab)
+		check_eq(analysis.current_tab(), tab, "ALL GAMES: вкладка %s строится" % tab)
+	analysis.queue_free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path_override))
+	PlayerProfile.path_override = old_path
+
 	# Итоговый экран живой партии (хотсит): ходы пишутся, в конце — график.
 	var hot := GameScreen.new(77, [], GameScreen.player_ids_for(3), GameSetup.MODE_RANDOM_3)
 	hot.size = Vector2(960, 540)
@@ -4039,11 +4109,13 @@ func test_replay_viewer() -> void:
 	hot._collect_hotseat_stats()
 	var over := hot._game_over_panel
 	check(over._charts.visible and over._charts.get_child_count() == 2, "итоги хотсита: график VP и строка лучшего хода")
-	check(over._stats_button != null and over._stats_button.text == "STATS", "итоги хотсита: кнопка STATS")
+	check(over._stats_button != null and over._stats_button.text == "GRAPHS" and over._stats_button.get_index() == 1,
+		"итоги хотсита: кнопка GRAPHS между VIEW BOARD и MAIN MENU")
 	check_eq(int(hot._stats["turns"][-1]["vp"]["red"]), int(Scoring.breakdown(hot.server.state, "red")["total"]),
 		"график кончается итоговыми очками")
 	over._stats_button.pressed.emit()
-	check(hot.stats_panel != null and hot.stats_panel.visible, "STATS с итогов открывает все вкладки")
+	check(hot.stats_panel != null and hot.stats_panel.visible, "GRAPHS с итогов открывает все вкладки")
+	check(not hot.stats_panel.can_jump, "на итогах живой партии щелчок по графику не перематывает")
 	hot.queue_free()
 
 

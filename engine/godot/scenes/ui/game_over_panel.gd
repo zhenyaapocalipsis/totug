@@ -40,7 +40,7 @@ var _head: Label
 var _title: Label
 var _grid: GridContainer
 var _decks: Control
-## Строка кнопок внизу (VIEW BOARD, MAIN MENU; реплей добавляет STATS).
+## Строка кнопок внизу: VIEW BOARD, GRAPHS (когда пришла статистика), MAIN MENU.
 var _buttons: HBoxContainer
 ## График VP и строка итогов (set_stats); пусто, пока данных нет.
 var _charts: VBoxContainer
@@ -302,15 +302,8 @@ func _rating_cell(pid: String) -> Control:
 	return col
 
 
-## Ещё одна кнопка в начало строки (реплей: STATS — экран статистики).
-func add_button(text: String, action: Callable) -> void:
-	var button := _button(text, action)
-	_buttons.add_child(button)
-	_buttons.move_child(button, 0)
-
-
 ## Статистика партии пришла (ReplayStats.collect): под таблицей — график VP
-## всех игроков по ходам и строка итогов, в строке кнопок — STATS (open_full:
+## всех игроков по ходам и строка итогов, в строке кнопок — GRAPHS (open_full:
 ## все вкладки статистики). Повторный вызов заменяет график.
 func set_stats(stats: Dictionary, open_full: Callable) -> void:
 	for child in _charts.get_children():
@@ -325,5 +318,7 @@ func set_stats(stats: Dictionary, open_full: Callable) -> void:
 	_charts.add_child(line)
 	_charts.visible = true
 	if _stats_button == null and open_full.is_valid():
-		add_button("STATS", open_full)
-		_stats_button = _buttons.get_child(0)
+		# GRAPHS — между VIEW BOARD и MAIN MENU (владелец, 2026-10-09).
+		_stats_button = _button("GRAPHS", open_full)
+		_buttons.add_child(_stats_button)
+		_buttons.move_child(_stats_button, 1)

@@ -1085,6 +1085,8 @@ func _rating(result: Dictionary) -> void:
 		PlayerProfile.cache_stats(result[seat])
 		var entry := PlayerProfile.history_entry(seat, result, profiles)
 		entry["replay"] = last_replay
+		if last_replay != "":
+			entry["protocol"] = PROTOCOL
 		last_replay = ""
 		PlayerProfile.add_history(entry)
 		var kept := []

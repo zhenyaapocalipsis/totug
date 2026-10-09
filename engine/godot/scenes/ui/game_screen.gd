@@ -1147,14 +1147,14 @@ func open_stats() -> void:
 	if _stats.is_empty():
 		return
 	if stats_panel == null:
-		stats_panel = ReplayStatsPanel.new(_stats)
+		stats_panel = ReplayStatsPanel.new(_stats, replay_bar != null)
 		if replay_bar != null:
 			stats_panel.turn_chosen.connect(func(p: int): replay_bar.seek(p))
 		add_child(stats_panel)
 	stats_panel.visible = true
 
 
-## Статистика партии готова: график VP — на итоговом экране, STATS — там же.
+## Статистика партии готова: график VP — на итоговом экране, GRAPHS — там же.
 func _set_stats(stats: Dictionary) -> void:
 	_stats = stats
 	_game_over_panel.set_stats(stats, open_stats)
