@@ -204,6 +204,6 @@ static func _settle(sim: GameServer, me: String) -> void:
 	while sim.resolver.is_waiting() and sim.resolver.pending.player_id != me and guard < 50:
 		guard += 1
 		var who: String = sim.resolver.pending.player_id
-		var res := sim.apply_intent(BotPlayer.next_intent(sim, who, true))
+		var res := sim.apply_intent(BotPlayer.next_intent(sim, who, not BotSim.smart_opponents))
 		if int(res["error"]) != GameServer.Error.OK:
 			sim.apply_intent(BotPlayer.fallback_intent(sim, who))

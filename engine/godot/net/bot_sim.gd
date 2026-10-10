@@ -14,6 +14,12 @@ extends RefCounted
 ## Сколько намерений максимум на одну доигровку (защита от зацикливания).
 const MAX_INTENTS := 4000
 
+## Соперники в доигровке до своего хода (rollout_to_my_turn) — полный Bot-1,
+## а не быстрый: сильнее (55% у быстрого), но в 2-4 раза дольше думает.
+## Сам бот в доигровке всегда быстрый. Выключено: против Bot-4 — 42% побед,
+## −12.9 VP за 24 партии (проверок за то же время меньше, и это перевешивает).
+static var smart_opponents := false
+
 
 ## Копия партии глазами viewer: скрытое перемешано rng, будущее (RNG партии)
 ## — тоже другое, чтобы бот не "знал" следующих добор и маркет.
@@ -142,7 +148,7 @@ static func rollout_to_my_turn(sim: GameServer, me: String, times: int = 1) -> v
 				left_mine = false
 				continue
 			return
-		var intent: Intent = BotPlayer.next_intent(sim, pid, true) if rejected_in_row == 0 \
+		var intent: Intent = BotPlayer.next_intent(sim, pid, pid == me or not smart_opponents) if rejected_in_row == 0 \
 			else BotPlayer.fallback_intent(sim, pid)
 		if rejected_in_row > 2:
 			intent = Intent.end_turn(sim.state.current_player())
