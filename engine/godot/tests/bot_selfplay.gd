@@ -1,8 +1,8 @@
 extends SceneTree
 
 ## Партии бот против бота (Bot-1) — проверка бота и первые цифры баланса.
-## search=1 [budget= horizon= threads= cands= plan=0/1] — один игрок (по кругу мест) — искатель
-## Bot-3; vs=search [vs_threads= vs_budget= vs_cands= vs_plan=0/1] — соперники тоже искатели.
+## search=1 [budget= horizon= threads= cands= plan=0/1 hybrid=0/1] — один игрок (по кругу мест) — искатель
+## Bot-3; vs=search [vs_threads= vs_budget= vs_cands= vs_plan=0/1 vs_hybrid=0/1] — соперники тоже искатели.
 ## Запуск:
 ##   godot --headless --path engine/godot --script res://tests/bot_selfplay.gd -- games=20 players=2 mode=standard seed=1
 ## Печатает: победы по месту за столом, средние VP, длину партии, причины
@@ -61,6 +61,7 @@ func _initialize() -> void:
 				BotSearch.threads = int(args.get("threads", "0"))
 				BotSearch.candidates = int(args.get("cands", "5"))
 				BotSearch.plan_turns = args.get("plan", "0") == "1"
+				BotSearch.hybrid = args.get("hybrid", "0") == "1"
 				intent = BotSearch.next_intent(server, actor, int(args.get("budget", "300")))
 			elif args.get("vs", "bot1") == "search":
 				# соперники — тоже искатели (vs_threads потоков, по умолчанию 1:
@@ -68,6 +69,7 @@ func _initialize() -> void:
 				BotSearch.threads = int(args.get("vs_threads", "1"))
 				BotSearch.candidates = int(args.get("vs_cands", "4"))
 				BotSearch.plan_turns = args.get("vs_plan", "0") == "1"
+				BotSearch.hybrid = args.get("vs_hybrid", "0") == "1"
 				intent = BotSearch.next_intent(server, actor, int(args.get("vs_budget", args.get("budget", "300"))))
 			else:
 				intent = BotPlayer.next_intent(server, actor, actor == fast_pid)
@@ -116,10 +118,17 @@ func _initialize() -> void:
 				card_games[cid][0] += 1
 				if winners.has(pid):
 					card_games[cid][1] += 1.0 / winners.size()
-		print("игра %d (seed %d): раундов %d, конец %s, VP %s, победил %s, отклонено %d" % [
+		var line := "игра %d (seed %d): раундов %d, конец %s, VP %s, победил %s, отклонено %d" % [
 			g + 1, seed_value, int(float(turns) / n), state.game_end_reason,
 			str(state.turn_order.map(func(pid): return "%s=%d" % [pid, BotPlayer.final_vp(state, pid)])),
-			str(winners), int(res["rejected"])])
+			str(winners), int(res["rejected"])]
+		print(line)
+		# Вывод в файл Godot копит до конца — прогресс пишем сами, с flush.
+		if args.has("progress"):
+			var pf := FileAccess.open(String(args["progress"]), FileAccess.READ_WRITE if FileAccess.file_exists(String(args["progress"])) else FileAccess.WRITE)
+			pf.seek_end()
+			pf.store_line("%s | у героя побед %.1f из %d" % [line, fast_wins, g + 1])
+			pf.close()
 
 	var done := games - unfinished
 	print("\n=== итог: %d игр, %d игроков, режим %s, %.1f с ===" % [

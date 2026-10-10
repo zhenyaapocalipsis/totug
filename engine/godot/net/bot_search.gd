@@ -27,6 +27,10 @@ static var candidates := 5
 ## Выключено: в матче против поиска по одному решению план проиграл
 ## (42% побед, −3.4 VP за 24 партии) — пересчёт на каждом шаге сильнее.
 static var plan_turns := false
+## Гибрид (Bot-6): главная фаза — варианты с продолжением хода полным Bot-1.
+## Выключено: против Bot-4 — 4.5 из 18 партий (25%); продолжение, посчитанное
+## один раз в одной догадке, хуже быстрого бота, играющего в каждой догадке.
+static var hybrid := false
 ## Во сколько раз больше времени на поиск плана, чем на одно решение.
 const PLAN_BUDGET_FACTOR := 3
 
@@ -53,6 +57,22 @@ static func next_intent(server: GameServer, pid: String, budget_ms: int = DEFAUL
 	# Один поиск вместо нескольких, поэтому времени на него больше.
 	if plan_turns and BotPlan.is_plan_phase(server, pid):
 		return BotPlan.next_step(server, pid, budget_ms * PLAN_BUDGET_FACTOR, seed, max_rounds)
+	# Гибрид (Bot-6): в главной фазе каждый вариант проверяется вместе с
+	# продолжением хода полным Bot-1; выполняется только первый шаг.
+	if hybrid and BotPlan.is_plan_phase(server, pid):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed if seed != 0 else hash([pid, server.state.market.display, server.state.troops,
+			server.state.players[pid].power, server.state.players[pid].influence])
+		var plans := BotPlan.rooted_plans(server, pid, rng, candidates)
+		if plans.is_empty():
+			return BotPlayer.fallback_intent(server, pid)
+		if plans.size() == 1:
+			return plans[0][0]
+		var best := _search(server, pid, plans, budget_ms, rng.randi(), max_rounds)
+		searches += 1
+		if best != 0:
+			deviations += 1
+		return plans[best][0]
 	# Варианты — на копии: оценка Bot-1 на миг переставляет войска, а поиск
 	# может идти в отдельном потоке, пока экран читает настоящую партию.
 	var options := BotPlayer.ranked_intents(server.clone(), pid, candidates)

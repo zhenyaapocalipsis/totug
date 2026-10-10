@@ -92,10 +92,37 @@ static func generate(server: GameServer, me: String, rng: RandomNumberGenerator)
 	return out
 
 
+## Гибрид (Bot-6): k лучших первых шагов Bot-1, к каждому дописано
+## продолжение хода полным Bot-1 (не быстрым, как в доигровке). Поиск
+## сравнивает эти цепочки, а выполняется только первый шаг — на следующем
+## шаге всё считается заново. Возвращает [Array[Intent]], первый — Bot-1.
+static func rooted_plans(server: GameServer, me: String, rng: RandomNumberGenerator, k: int) -> Array:
+	var root := BotSim.determinize(server, me, rng)
+	var out: Array = []
+	for o: Intent in BotPlayer.ranked_intents(root, me, k):
+		if o.type == Intent.Type.END_TURN:
+			out.append([o])
+			continue
+		var child := root.copy_now()
+		if int(child.apply_intent(o)["error"]) != GameServer.Error.OK:
+			continue
+		BotSearch._settle(child, me)
+		var plan: Array = [o]
+		if is_plan_phase(child, me):
+			var blocked := {}
+			if o.type == Intent.Type.ACTION_RECRUIT:
+				blocked[o.market_index] = true
+			var rest: Array = _beam(child, me, 1, 1, blocked)
+			if not rest.is_empty():
+				plan.append_array(rest[0]["intents"])
+		out.append(plan)
+	return out
+
+
 ## Луч ширины width, на шаге — branch продолжений. Возвращает законченные
 ## планы, лучшие по быстрой оценке первыми.
-static func _beam(root: GameServer, me: String, width: int, branch: int) -> Array:
-	var beams: Array = [{"sim": root, "intents": [], "sigs": [], "blocked": {}}]
+static func _beam(root: GameServer, me: String, width: int, branch: int, start_blocked: Dictionary = {}) -> Array:
+	var beams: Array = [{"sim": root, "intents": [], "sigs": [], "blocked": start_blocked.duplicate()}]
 	var done: Array = []
 	for step in range(MAX_STEPS):
 		var grown: Array = []
