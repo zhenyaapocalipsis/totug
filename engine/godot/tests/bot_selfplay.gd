@@ -32,6 +32,8 @@ func _initialize() -> void:
 	var unfinished := 0
 	var card_games := {}   # card_id -> [игр куплено, из них побед]
 	var fast_wins := 0.0  # fast=1: победы быстрого бота
+	var fast_margin := 0.0  # сумма (VP героя − лучший VP остальных)
+	BotSearch.horizon = int(args.get("horizon", "2"))
 	var t0 := Time.get_ticks_msec()
 
 	for g in range(games):
@@ -39,8 +41,10 @@ func _initialize() -> void:
 		var state := GameSetup.new_game(pids, seed_value, [], false, true, true, String(args["mode"]))
 		var server := GameServer.new(state)
 		server.build_views = false
-		# fast=1: один игрок (по кругу) — бот в быстром режиме, остальные — полные.
-		var fast_pid: String = pids[g % n] if args.get("fast", "0") == "1" else ""
+		# fast=1 / search=1: один игрок (по кругу мест) — быстрый бот или
+		# искатель Bot-3 (budget=мс на решение), остальные — обычный Bot-1.
+		var hero_mode := "fast" if args.get("fast", "0") == "1" else ("search" if args.get("search", "0") == "1" else "")
+		var fast_pid: String = pids[g % n] if hero_mode != "" else ""
 		var bought := {}  # pid -> {card_id: true}
 		var turns := 0
 		# Ведём партию сами (а не play_out), чтобы видеть покупки.
@@ -48,7 +52,13 @@ func _initialize() -> void:
 		var in_row := 0
 		while not state.game_over and int(res["intents"]) < 20000:
 			var actor := BotPlayer.acting_player(server)
-			var intent: Intent = BotPlayer.next_intent(server, actor, actor == fast_pid) if in_row == 0 else BotPlayer.fallback_intent(server, actor)
+			var intent: Intent
+			if in_row > 0:
+				intent = BotPlayer.fallback_intent(server, actor)
+			elif actor == fast_pid and hero_mode == "search":
+				intent = BotSearch.next_intent(server, actor, int(args.get("budget", "300")))
+			else:
+				intent = BotPlayer.next_intent(server, actor, actor == fast_pid)
 			var out: Dictionary = server.apply_intent(intent)
 			res["intents"] += 1
 			if int(out["error"]) != GameServer.Error.OK:
@@ -75,6 +85,12 @@ func _initialize() -> void:
 		reasons[state.game_end_reason] = int(reasons.get(state.game_end_reason, 0)) + 1
 		var vp := Scoring.library_card_vp(state)
 		var winners := Scoring.winners(state, vp[0], vp[1])
+		if fast_pid != "":
+			var best_other := -INF
+			for pid: String in state.turn_order:
+				if pid != fast_pid:
+					best_other = maxf(best_other, BotPlayer.final_vp(state, pid))
+			fast_margin += BotPlayer.final_vp(state, fast_pid) - best_other
 		if fast_pid != "" and winners.has(fast_pid):
 			fast_wins += 1.0 / winners.size()
 		for seat in range(n):
@@ -106,6 +122,8 @@ func _initialize() -> void:
 	print("отклонено намерений всего: %d; не доиграно: %d" % [total_rejected, unfinished])
 	if args.get("fast", "0") == "1":
 		print("быстрый бот против полных: побед %.0f%% (ожидание %.0f%%)" % [100.0 * fast_wins / done, 100.0 / n])
+	if args.get("search", "0") == "1":
+		print("искатель Bot-3 против Bot-1: побед %.0f%% (ожидание %.0f%%), VP в среднем %+.1f к лучшему сопернику; поиск менял выбор Bot-1 в %d из %d решений" % [100.0 * fast_wins / done, 100.0 / n, fast_margin / done, BotSearch.deviations, BotSearch.searches])
 
 	var rows := []
 	for cid: String in card_games.keys():

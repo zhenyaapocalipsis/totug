@@ -242,6 +242,10 @@ const BOT_DELAY := 0.6
 var _bot_wait := BOT_DELAY
 ## Сколько намерений бота подряд сервер отклонил (тогда — запасной ход).
 var _bot_rejects := 0
+## Сколько бот думает над решением (BotSearch, мс); 0 — простой Bot-1 сразу.
+var bot_budget_ms := BotSearch.DEFAULT_BUDGET_MS
+## Поток, в котором бот ищет ход; null — не думает.
+var _bot_thread: Thread
 
 
 ## Чьими глазами смотреть в локальной партии: того, кто сейчас действует
@@ -256,20 +260,41 @@ func _local_viewer() -> String:
 	return actor
 
 
-## Ход бота: одно намерение раз в BOT_DELAY, пока действует бот.
+## Ход бота: одно намерение раз в BOT_DELAY, пока действует бот. С
+## bot_budget_ms > 0 решение ищет BotSearch (Bot-3) в отдельном потоке —
+## экран не замирает, пока бот думает; пауза BOT_DELAY идёт одновременно с
+## раздумьем. Пока поток работает, партию никто не меняет: ход бота, а
+## человеку сервер откажет (NOT_YOUR_TURN), ничего не тронув.
 func _tick_bots(delta: float) -> void:
 	var actor := BotPlayer.acting_player(server)
+	if _bot_thread != null:
+		_bot_wait -= delta
+		if _bot_thread.is_alive() or _bot_wait > 0.0:
+			return
+		var thought = _bot_thread.wait_to_finish()
+		_bot_thread = null
+		if thought is Intent and bots.has(actor) and (thought as Intent).player_id == actor:
+			_send_bot(thought)
+		return
 	if not bots.has(actor) or _clock_stopped():
 		_bot_wait = BOT_DELAY
+		return
+	if bot_budget_ms > 0 and _bot_rejects == 0:
+		var budget := bot_budget_ms
+		var srv := server
+		_bot_thread = Thread.new()
+		_bot_thread.start(func(): return BotSearch.next_intent(srv, actor, budget))
 		return
 	_bot_wait -= delta
 	if _bot_wait > 0.0:
 		return
+	_send_bot(BotPlayer.next_intent(server, actor) if _bot_rejects == 0 else BotPlayer.fallback_intent(server, actor))
+
+
+func _send_bot(intent: Intent) -> void:
 	_bot_wait = BOT_DELAY
-	var intent: Intent = BotPlayer.next_intent(server, actor) if _bot_rejects == 0 \
-		else BotPlayer.fallback_intent(server, actor)
 	if _bot_rejects > 2:
-		intent = Intent.end_turn(actor)
+		intent = Intent.end_turn(intent.player_id)
 	var logged := _replay_log.size()
 	send(intent)
 	_bot_rejects = 0 if _replay_log.size() > logged else _bot_rejects + 1
@@ -1736,6 +1761,11 @@ func _hitstop(seconds: float) -> void:
 func _exit_tree() -> void:
 	# Экран закрыли посреди стоп-кадра — время не должно остаться стоящим.
 	Engine.time_scale = 1.0
+	# Бот ещё думает — дождаться (не дольше его бюджета), иначе поток
+	# останется работать с партией, которой уже нет.
+	if _bot_thread != null:
+		_bot_thread.wait_to_finish()
+		_bot_thread = null
 	# Вышли из партии — музыка главного меню, без приглушения.
 	Music.set_mood("menu")
 	Music.set_muffled(false)

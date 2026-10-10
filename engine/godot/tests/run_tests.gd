@@ -124,6 +124,7 @@ func _initialize() -> void:
 	test_music_stems_and_moods()
 	test_bot_player()
 	test_bot_sim()
+	test_bot_search()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -4190,6 +4191,7 @@ func test_bot_player() -> void:
 	var screen := GameScreen.new(9, [], ["red", "blue", "green"], GameSetup.MODE_STANDARD, {}, ["blue", "green"] as Array[String])
 	screen.size = Vector2(960, 540)
 	root.add_child(screen)
+	screen.bot_budget_ms = 0  # здесь — простой Bot-1, без потока
 	var steps := 0
 	var seen_viewers := {}
 	while steps < 3000 and not screen.server.state.game_over:
@@ -4204,6 +4206,31 @@ func test_bot_player() -> void:
 	check_eq(seen_viewers.keys(), ["red"], "экран всё время показывает партию глазами человека")
 	check(screen._replay_log.size() > 100, "ходы ботов пишутся в журнал партии (для реплея и графиков)")
 	screen.queue_free()
+
+	# Бот-искатель думает в отдельном потоке: пока думает — хода нет, потом
+	# ход приходит сам; так до хода человека.
+	var think := GameScreen.new(4, [], ["red", "blue"], GameSetup.MODE_STANDARD, {}, ["blue"] as Array[String])
+	think.size = Vector2(960, 540)
+	root.add_child(think)
+	think.bot_budget_ms = 20
+	var bot_moves := 0
+	var thought_in_thread := false
+	var t_steps := 0
+	while t_steps < 20000 and bot_moves < 25 and not think.server.state.game_over:
+		t_steps += 1
+		var actor := BotPlayer.acting_player(think.server)
+		if actor == "red":
+			think.send(BotPlayer.next_intent(think.server, "red"))
+			continue
+		var before := think._replay_log.size()
+		think._tick_bots(0.05)
+		thought_in_thread = thought_in_thread or think._bot_thread != null
+		if think._replay_log.size() > before:
+			bot_moves += 1
+		OS.delay_msec(1)
+	check(thought_in_thread, "бот-искатель думает в отдельном потоке")
+	check(bot_moves >= 25, "ходы бота-искателя доходят до партии (%d)" % bot_moves)
+	think.queue_free()
 
 
 func test_bot_sim() -> void:
@@ -4293,6 +4320,67 @@ func test_bot_sim() -> void:
 	check(stall.state.game_over, "боты не зацикливают партию с тонкой колодой (seed 150 доигрывается)")
 	var p2_deck: int = stall.state.players["p2"].deck.cards_outside_inner_circle().size()
 	check(p2_deck >= 5, "бот не убирает карты из тонкой колоды по своей воле (у p2 осталось %d)" % p2_deck)
+
+
+func test_bot_search() -> void:
+	section("Bot-3: бот-искатель (ISMCTS на ход вглубь)")
+	var server := GameServer.new(GameSetup.new_game(["red", "blue"], 31, [], false, true, true))
+	var searched := 0
+	var accepted := true
+	var first_is_greedy := true
+	var buy_has_skip := true
+	var untouched := true
+	var steps := 0
+	while not server.state.game_over and steps < 400:
+		steps += 1
+		var actor := BotPlayer.acting_player(server)
+		var ranked := BotPlayer.ranked_intents(server, actor, 4)
+		first_is_greedy = first_is_greedy and str(ranked[0].to_dict()) == str(BotPlayer.next_intent(server, actor).to_dict())
+		if ranked.size() >= 2 and steps % 5 == 0:
+			for intent: Intent in ranked:
+				accepted = accepted and int(server.clone().apply_intent(intent)["error"]) == GameServer.Error.OK
+			if ranked[0].type in [Intent.Type.ACTION_RECRUIT, Intent.Type.ACTION_RECRUIT_SUPPLY]:
+				buy_has_skip = buy_has_skip and ranked[-1].type == Intent.Type.END_TURN
+			var before := StateCopy.fingerprint(server.state)
+			var pick := BotSearch.next_intent(server, actor, 0, 7, 2)
+			untouched = untouched and StateCopy.fingerprint(server.state) == before
+			searched += 1
+			server.apply_intent(pick)
+			continue
+		server.apply_intent(ranked[0])
+	check(searched >= 10, "поиск проверен в %d позициях" % searched)
+	check(first_is_greedy, "первый из вариантов Bot-1 — его собственный выбор")
+	check(accepted, "все предложенные варианты сервер принимает")
+	check(buy_has_skip, "при покупке среди вариантов есть \"ничего не покупать\"")
+	check(untouched, "поиск не меняет настоящую партию")
+
+	# Без подглядывания: другая раскладка скрытого (руки и колоды соперника,
+	# порядок своей колоды и колоды маркета) — то же решение.
+	var pos := GameServer.new(GameSetup.new_game(["red", "blue"], 32, [], false, true, true))
+	var guard := 0
+	while guard < 500 and not (BotPlayer.acting_player(pos) == "red" and pos.is_quiet() \
+			and BotPlayer.ranked_intents(pos, "red", 4).size() >= 3 and pos.state.players["blue"].deck.hand.size() > 0):
+		guard += 1
+		pos.apply_intent(BotPlayer.next_intent(pos, BotPlayer.acting_player(pos)))
+	var a := BotSearch.next_intent(pos, "red", 0, 99, 3)
+	var other := pos.clone()
+	var blue: Deck = other.state.players["blue"].deck
+	var pool: Array[String] = []
+	pool.append_array(blue.hand)
+	pool.append_array(blue.draw_pile)
+	pool.append_array(blue.discard_pile)
+	pool.reverse()
+	var h := blue.hand.size()
+	var dn := blue.draw_pile.size()
+	blue.hand = pool.slice(0, h)
+	blue.draw_pile = pool.slice(h, h + dn)
+	blue.discard_pile = pool.slice(h + dn)
+	other.state.players["red"].deck.draw_pile.reverse()
+	other.state.market.deck.reverse()
+	other.state.rng.seed = 12345
+	var b := BotSearch.next_intent(other, "red", 0, 99, 3)
+	check_eq(str(b.to_dict()), str(a.to_dict()), "другая раскладка скрытого — то же решение (бот не подглядывает)")
+	check_eq(str(BotSearch.next_intent(pos, "red", 0, 99, 3).to_dict()), str(a.to_dict()), "тот же сид — то же решение")
 
 
 func _sorted(cards: Array) -> Array:

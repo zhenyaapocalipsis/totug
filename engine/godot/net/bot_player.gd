@@ -56,6 +56,48 @@ static func next_intent(server: GameServer, pid: String, fast: bool = false) -> 
 	return _main_action(server.state, pid, fast)
 
 
+## Для поиска (BotSearch, Bot-3): пока _collect, функции выбора записывают в
+## _notes все рассмотренные варианты с оценками ([оценка, Intent или ответ]).
+## Каждая функция выбора начинает список заново, поэтому в нём остаются
+## варианты того выбора, который и дал ход.
+static var _collect := false
+static var _notes: Array = []
+
+
+## До k лучших по мнению бота вариантов следующего хода pid; первый — тот,
+## что выбрал бы сам бот (next_intent). Розыгрыш карты из руки — всегда
+## один вариант: карты разыгрываются все, порядок почти не важен. Покупка —
+## ещё и "ничего не покупать" (конец хода).
+static func ranked_intents(server: GameServer, pid: String, k: int = 4) -> Array[Intent]:
+	_collect = true
+	_notes.clear()
+	var chosen := next_intent(server, pid)
+	_collect = false
+	var out: Array[Intent] = []
+	if chosen == null:
+		return out
+	out.append(chosen)
+	if chosen.type == Intent.Type.PLAY_CARD:
+		return out
+	var notes := _notes.duplicate()
+	notes.sort_custom(func(a, b): return float(a[0]) > float(b[0]))
+	var seen := {str(chosen.to_dict()): true}
+	var deciding := server.resolver.is_waiting()
+	var buying := chosen.type in [Intent.Type.ACTION_RECRUIT, Intent.Type.ACTION_RECRUIT_SUPPLY]
+	for note: Array in notes:
+		if out.size() >= k:
+			break
+		var intent: Intent = Intent.make_decision(pid, note[1]) if deciding else note[1]
+		var key := str(intent.to_dict())
+		if seen.has(key):
+			continue
+		seen[key] = true
+		out.append(intent)
+	if buying:
+		out.append(Intent.end_turn(pid))
+	return out
+
+
 ## Запасной ход, если сервер отклонил выбор бота: первый допустимый ответ на
 ## вопрос или конец хода. Без него бот мог бы бесконечно слать одно и то же.
 static func fallback_intent(server: GameServer, pid: String) -> Intent:
@@ -123,6 +165,7 @@ static func _is_focus(cid: String) -> bool:
 
 
 static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -> Intent:
+	_notes.clear()
 	var p: PlayerState = state.players[pid]
 	if p.power <= 0:
 		return null
@@ -140,6 +183,8 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 				if p.troops_in_barracks == 1:
 					gain += _end_trigger_bonus(state, ctx)
 				var ratio := gain / float(Actions.COST_DEPLOY)
+				if _collect:
+					_notes.append([ratio, Intent.deploy(pid, slot)])
 				if ratio > best_ratio:
 					best_ratio = ratio
 					best = Intent.deploy(pid, slot)
@@ -149,6 +194,8 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 		for slot: String in state.presence.assassinatable_slots(pid, state.troops, state.spies):
 			var gain := _troops_eval(state, ctx, {slot: ""}, {pid: 1.0}) - base
 			var ratio := gain / maxf(0.5, float(kill_cost))
+			if _collect:
+				_notes.append([ratio, Intent.assassinate(pid, slot)])
 			if ratio > best_ratio:
 				best_ratio = ratio
 				best = Intent.assassinate(pid, slot)
@@ -161,6 +208,8 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 					continue
 				var gain := _spy_eval(state, ctx, site, owner, false) - base
 				var ratio := gain / maxf(0.5, float(spy_cost))
+				if _collect:
+					_notes.append([ratio, Intent.return_spy(pid, site, owner)])
 				if ratio > best_ratio:
 					best_ratio = ratio
 					best = Intent.return_spy(pid, site, owner)
@@ -170,6 +219,7 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 ## То же, что _best_power_action, но прирост считается по затронутой
 ## локации (_local_gain), а не по всей доске.
 static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictionary) -> Intent:
+	_notes.clear()
 	var p: PlayerState = state.players[pid]
 	if p.power <= 0:
 		return null
@@ -186,6 +236,8 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 			var gain := _local_gain(state, ctx, {slot: pid}) + W_PRESENCE * _new_reach(state, slot, reach)
 			if p.troops_in_barracks == 1:
 				gain += 2.0 if bool(ctx["leader"]) else -5.0
+			if _collect:
+				_notes.append([gain, Intent.deploy(pid, slot)])
 			if gain > best_ratio:
 				best_ratio = gain
 				best = Intent.deploy(pid, slot)
@@ -193,6 +245,8 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 	if p.power >= kill_cost:
 		for slot: String in state.presence.assassinatable_slots(pid, state.troops, state.spies):
 			var ratio := _local_gain(state, ctx, {slot: ""}, {pid: 1.0}) / maxf(0.5, float(kill_cost))
+			if _collect:
+				_notes.append([ratio, Intent.assassinate(pid, slot)])
 			if ratio > best_ratio:
 				best_ratio = ratio
 				best = Intent.assassinate(pid, slot)
@@ -203,6 +257,8 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 				if owner == pid:
 					continue
 				var ratio := _local_gain(state, ctx, {}, {}, [site, owner]) / maxf(0.5, float(spy_cost))
+				if _collect:
+					_notes.append([ratio, Intent.return_spy(pid, site, owner)])
 				if ratio > best_ratio:
 					best_ratio = ratio
 					best = Intent.return_spy(pid, site, owner)
@@ -317,6 +373,7 @@ static func final_vp(state: GameState, pid: String) -> int:
 
 
 static func _best_buy(state: GameState, pid: String, ctx: Dictionary) -> Intent:
+	_notes.clear()
 	var p: PlayerState = state.players[pid]
 	if p.influence <= 0:
 		return null
@@ -327,12 +384,16 @@ static func _best_buy(state: GameState, pid: String, ctx: Dictionary) -> Intent:
 		if cost < 0 or cost > p.influence:
 			continue
 		var v := card_value(String(state.market.display[i]), state, pid, ctx)
+		if _collect:
+			_notes.append([v, Intent.recruit(pid, i)])
 		if v > best_value:
 			best_value = v
 			best = Intent.recruit(pid, i)
 	var ghost := Actions.ghost_market_card(state, pid)
 	if ghost != "" and CardLibrary.card_cost(ghost) <= p.influence:
 		var gv := card_value(ghost, state, pid, ctx)
+		if _collect:
+			_notes.append([gv, Intent.recruit(pid, Market.DEVOURED_TOP_INDEX)])
 		if gv > best_value:
 			best_value = gv
 			best = Intent.recruit(pid, Market.DEVOURED_TOP_INDEX)
@@ -341,6 +402,8 @@ static func _best_buy(state: GameState, pid: String, ctx: Dictionary) -> Intent:
 		if scost < 0 or scost > p.influence:
 			continue
 		var sv := card_value(cid, state, pid, ctx)
+		if _collect:
+			_notes.append([sv, Intent.recruit_supply(pid, cid)])
 		if sv > best_value:
 			best_value = sv
 			best = Intent.recruit_supply(pid, cid)
@@ -573,10 +636,13 @@ static func _rival_value(state: GameState, ctx: Dictionary, pid: String) -> floa
 
 
 static func _best_by(options: Array, score: Callable):
+	_notes.clear()
 	var best = null
 	var best_score := -INF
 	for o in options:
 		var s := float(score.call(o))
+		if _collect:
+			_notes.append([s, o])
 		if best == null or s > best_score:
 			best = o
 			best_score = s
