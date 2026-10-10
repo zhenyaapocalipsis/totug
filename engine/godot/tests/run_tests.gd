@@ -123,6 +123,7 @@ func _initialize() -> void:
 	test_resume_saved_game()
 	test_music_stems_and_moods()
 	test_bot_player()
+	test_bot_sim()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -4192,6 +4193,101 @@ func test_bot_player() -> void:
 	check_eq(seen_viewers.keys(), ["red"], "экран всё время показывает партию глазами человека")
 	check(screen._replay_log.size() > 100, "ходы ботов пишутся в журнал партии (для реплея и графиков)")
 	screen.queue_free()
+
+
+func test_bot_sim() -> void:
+	section("Bot-2: копия партии и партия в уме")
+	for setup: Array in [[2, GameSetup.MODE_STANDARD, 11], [3, GameSetup.MODE_RANDOM_6, 12]]:
+		var server := GameServer.new(GameSetup.new_game(GameScreen.player_ids_for(setup[0]), setup[2], [], false, true, true, setup[1]))
+		var quiet_clones := 0
+		var replay_clones := 0
+		var copy_ok := true
+		var same_future := true
+		var original_untouched := true
+		var steps := 0
+		while not server.state.game_over and steps < 6000:
+			steps += 1
+			if steps % 23 == 0:
+				var before := StateCopy.fingerprint(server.state)
+				if server.is_quiet():
+					quiet_clones += 1
+				else:
+					replay_clones += 1
+				var copy := server.clone()
+				copy_ok = copy_ok and StateCopy.fingerprint(copy.state) == before \
+					and BotPlayer.acting_player(copy) == BotPlayer.acting_player(server)
+				# Те же ходы в копии и в оригинале — то же будущее (и RNG тоже).
+				var twin := server.clone()
+				for k in range(6):
+					if twin.state.game_over:
+						break
+					twin.apply_intent(BotPlayer.next_intent(twin, BotPlayer.acting_player(twin)))
+				# Копия доигрывается до конца — оригинал не меняется.
+				BotSim.rollout(copy)
+				original_untouched = original_untouched and StateCopy.fingerprint(server.state) == before
+				for k in range(6):
+					if server.state.game_over:
+						break
+					server.apply_intent(BotPlayer.next_intent(server, BotPlayer.acting_player(server)))
+				same_future = same_future and StateCopy.fingerprint(twin.state) == StateCopy.fingerprint(server.state)
+				continue
+			server.apply_intent(BotPlayer.next_intent(server, BotPlayer.acting_player(server)))
+		var tag := "%d игрока, %s" % [setup[0], setup[1]]
+		check(server.state.game_over, tag + ": партия доиграна")
+		check(quiet_clones > 5 and replay_clones > 5,
+			tag + ": копии и в спокойных точках, и посреди вопроса карты (%d / %d)" % [quiet_clones, replay_clones])
+		check(copy_ok, tag + ": копия совпадает с оригиналом во всём, включая руки, колоды и RNG")
+		check(same_future, tag + ": одинаковые ходы в копии и оригинале дают одинаковую партию")
+		check(original_untouched, tag + ": доигровка копии до конца не трогает настоящую партию")
+
+	# Догадка о скрытом: видимое то же, невидимое перемешано.
+	var srv := GameServer.new(GameSetup.new_game(["red", "blue"], 21, [], false, true, true))
+	for i in range(120):
+		srv.apply_intent(BotPlayer.next_intent(srv, BotPlayer.acting_player(srv)))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var before := StateCopy.fingerprint(srv.state)
+	var sim := BotSim.determinize(srv, "red", rng)
+	var red: Deck = srv.state.players["red"].deck
+	var blue: Deck = srv.state.players["blue"].deck
+	var s_red: Deck = sim.state.players["red"].deck
+	var s_blue: Deck = sim.state.players["blue"].deck
+	check_eq(s_red.hand, red.hand, "своя рука — та же")
+	check_eq(_sorted(s_red.draw_pile), _sorted(red.draw_pile), "своя колода — те же карты (порядок неизвестен)")
+	check_eq([s_blue.hand.size(), s_blue.draw_pile.size(), s_blue.discard_pile.size()],
+		[blue.hand.size(), blue.draw_pile.size(), blue.discard_pile.size()], "у соперника те же размеры руки, колоды, сброса")
+	check_eq(_sorted(s_blue.hand + s_blue.draw_pile + s_blue.discard_pile),
+		_sorted(blue.hand + blue.draw_pile + blue.discard_pile), "у соперника те же карты вообще")
+	check_eq(StateView.for_player(sim.state, "red").hash(), StateView.for_player(srv.state, "red").hash(),
+		"всё, что видит бот, не изменилось")
+	check(sim.state.rng.seed != srv.state.rng.seed, "будущее (RNG) у копии своё")
+	check_eq(StateCopy.fingerprint(srv.state), before, "догадка не трогает настоящую партию")
+	var ended := sim.state.current_player()
+	BotSim.rollout(sim, 1)
+	check(sim.state.current_player() != ended or sim.state.game_over, "доигровка на 1 ход передаёт ход")
+	var v := BotSim.value(sim, "red")
+	check(v > 0.0 and v < 1.0, "оценка недоигранной партии — между 0 и 1")
+	BotSim.rollout(sim)
+	check(sim.state.game_over, "доигровка до конца заканчивает партию")
+	check(BotSim.value(sim, "red") + BotSim.value(sim, "blue") == 1.0, "в конце: победа 1, поражение 0 (ничья — пополам)")
+
+	# Партия, где боты раньше переводили всю колоду во Внутренний круг
+	# (Promote в "Choose one") и зацикливались с колодой из одной карты.
+	var stall := GameServer.new(GameSetup.new_game(["p1", "p2"], 150, [], false, true, true), true, true, false)
+	var guard := 0
+	while not stall.state.game_over and guard < 3000:
+		guard += 1
+		var who := BotPlayer.acting_player(stall)
+		stall.apply_intent(BotPlayer.next_intent(stall, who, who == "p2"))
+	check(stall.state.game_over, "боты не зацикливают партию с тонкой колодой (seed 150 доигрывается)")
+	var p2_deck: int = stall.state.players["p2"].deck.cards_outside_inner_circle().size()
+	check(p2_deck >= 5, "бот не убирает карты из тонкой колоды по своей воле (у p2 осталось %d)" % p2_deck)
+
+
+func _sorted(cards: Array) -> Array:
+	var out := cards.duplicate()
+	out.sort()
+	return out
 
 
 func _autoplay(server: GameServer, max_intents: int = 20000) -> Array:

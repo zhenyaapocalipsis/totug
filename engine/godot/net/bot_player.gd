@@ -32,6 +32,7 @@ const W_RESOURCE := 0.4        # 1 Power/Influence дохода за ход ~ 0.
 const W_LEADER := 0.6          # в оценке соперников: доля лучшего, остальное — среднее
 const MIN_BUY_VALUE := 0.2     # дешевле этого карту не покупаем
 const OUTCAST := "48341"
+const MIN_DECK := 10           # меньше стартовой колоды карты из неё не убираем
 
 
 ## Кто сейчас должен действовать: тот, кому адресован вопрос, иначе ходящий.
@@ -45,12 +46,14 @@ static func acting_player(server: GameServer) -> String:
 
 
 ## Следующее намерение бота за игрока pid; null, если сейчас действует не он.
-static func next_intent(server: GameServer, pid: String) -> Intent:
+## fast — быстрый режим для партий в уме (BotSim): Power тратится по оценке
+## только затронутой локации, а не всей доски (в ~5 раз быстрее, чуть грубее).
+static func next_intent(server: GameServer, pid: String, fast: bool = false) -> Intent:
 	if acting_player(server) != pid:
 		return null
 	if server.resolver.is_waiting():
-		return Intent.make_decision(pid, answer(server.state, server.resolver.pending, pid))
-	return _main_action(server.state, pid)
+		return Intent.make_decision(pid, answer(server.state, server.resolver.pending, pid, fast))
+	return _main_action(server.state, pid, fast)
 
 
 ## Запасной ход, если сервер отклонил выбор бота: первый допустимый ответ на
@@ -92,12 +95,12 @@ static func play_out(server: GameServer, max_intents: int = 20000) -> Dictionary
 
 # --- основной ход ---------------------------------------------------------
 
-static func _main_action(state: GameState, pid: String) -> Intent:
+static func _main_action(state: GameState, pid: String, fast: bool = false) -> Intent:
 	var p: PlayerState = state.players[pid]
 	if not p.deck.hand.is_empty():
 		return Intent.play_card(pid, _card_to_play(p.deck.hand))
-	var ctx := _context(state, pid)
-	var power_act := _best_power_action(state, pid, ctx)
+	var ctx := _fast_context(state, pid) if fast else _context(state, pid)
+	var power_act := _best_power_action_fast(state, pid, ctx) if fast else _best_power_action(state, pid, ctx)
 	if power_act != null:
 		return power_act
 	var buy := _best_buy(state, pid, ctx)
@@ -162,6 +165,135 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 					best_ratio = ratio
 					best = Intent.return_spy(pid, site, owner)
 	return best
+
+
+## То же, что _best_power_action, но прирост считается по затронутой
+## локации (_local_gain), а не по всей доске.
+static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictionary) -> Intent:
+	var p: PlayerState = state.players[pid]
+	if p.power <= 0:
+		return null
+	var best: Intent = null
+	var best_ratio := -0.01
+	if p.power >= Actions.COST_DEPLOY:
+		if p.troops_in_barracks <= 0:
+			return Intent.deploy(pid, "")
+		var deployable := state.presence.deployable_slots(pid, state.troops, state.spies)
+		var reach := {}
+		for slot: String in deployable:
+			reach[slot] = true
+		for slot: String in deployable:
+			var gain := _local_gain(state, ctx, {slot: pid}) + W_PRESENCE * _new_reach(state, slot, reach)
+			if p.troops_in_barracks == 1:
+				gain += 2.0 if bool(ctx["leader"]) else -5.0
+			if gain > best_ratio:
+				best_ratio = gain
+				best = Intent.deploy(pid, slot)
+	var kill_cost := Actions.assassinate_cost(state)
+	if p.power >= kill_cost:
+		for slot: String in state.presence.assassinatable_slots(pid, state.troops, state.spies):
+			var ratio := _local_gain(state, ctx, {slot: ""}, {pid: 1.0}) / maxf(0.5, float(kill_cost))
+			if ratio > best_ratio:
+				best_ratio = ratio
+				best = Intent.assassinate(pid, slot)
+	var spy_cost := Actions.return_spy_cost(state)
+	if p.power >= spy_cost:
+		for site: String in state.presence.sites_with_presence(pid, state.troops, state.spies):
+			for owner: String in (state.spies.get(site, []) as Array):
+				if owner == pid:
+					continue
+				var ratio := _local_gain(state, ctx, {}, {}, [site, owner]) / maxf(0.5, float(spy_cost))
+				if ratio > best_ratio:
+					best_ratio = ratio
+					best = Intent.return_spy(pid, site, owner)
+	return best
+
+
+## Сколько пустых слотов рядом с новым войском станет доступно (грубо:
+## соседние слоты, слоты его локации и слоты рядом с ней).
+static func _new_reach(state: GameState, slot: String, reach: Dictionary) -> int:
+	var around := Array(state.graph.adjacent_slots(slot))
+	var site := state.graph.site_of_slot(slot)
+	if site != "":
+		around.append_array(state.graph.slots_of_site(site))
+		around.append_array(state.graph.slots_adjacent_to_site(site))
+	var seen := {}
+	for s: String in around:
+		if s != slot and not reach.has(s) and state.troops.get(s, "") == "":
+			seen[s] = true
+	return seen.size()
+
+
+## Прирост оценки от пробного изменения (войска troop_changes, снятый шпион
+## spy_off = [site, owner]) по одним затронутым локациям: их VP, тотальный
+## контроль, маркеры, бонус A2, плюс войска на доске и трофеи. Соперники
+## взвешены как в evaluate (лидер весомее).
+static func _local_gain(state: GameState, ctx: Dictionary, troop_changes: Dictionary,
+		trophies: Dictionary = {}, spy_off: Array = []) -> float:
+	var sites := {}
+	for slot: String in troop_changes.keys():
+		var site := state.graph.site_of_slot(slot)
+		if site != "":
+			sites[site] = true
+	if not spy_off.is_empty():
+		sites[spy_off[0]] = true
+	var cluster: bool = sites.keys().any(func(s): return (ctx["cluster"] as PackedStringArray).has(s))
+	var before := _sites_worth(state, ctx, sites.keys(), cluster)
+	# пробное изменение
+	var old := {}
+	for slot: String in troop_changes.keys():
+		old[slot] = state.troops[slot] if state.troops.has(slot) else null
+		state.troops[slot] = troop_changes[slot]
+	var old_spies: Array = []
+	if not spy_off.is_empty():
+		old_spies = (state.spies.get(spy_off[0], []) as Array).duplicate()
+		var left := old_spies.duplicate()
+		left.erase(spy_off[1])
+		state.spies[spy_off[0]] = left
+	var after := _sites_worth(state, ctx, sites.keys(), cluster)
+	# назад
+	for slot: String in old.keys():
+		if old[slot] == null:
+			state.troops.erase(slot)
+		else:
+			state.troops[slot] = old[slot]
+	if not spy_off.is_empty():
+		state.spies[spy_off[0]] = old_spies
+	var delta := {}
+	for pid: String in state.turn_order:
+		delta[pid] = float(after.get(pid, 0.0)) - float(before.get(pid, 0.0)) + float(trophies.get(pid, 0.0))
+	for slot: String in troop_changes.keys():
+		var was: String = old[slot] if old[slot] != null else ""
+		if delta.has(was):
+			delta[was] -= W_TROOP
+		if delta.has(troop_changes[slot]):
+			delta[troop_changes[slot]] += W_TROOP
+	var me: String = ctx["me"]
+	var gain: float = delta[me]
+	var weights: Dictionary = ctx["opp_w"]
+	for pid: String in weights.keys():
+		gain -= float(weights[pid]) * float(delta[pid])
+	return gain
+
+
+## Вклад локаций sites в оценку каждого игрока (pid -> VP-эквивалент).
+static func _sites_worth(state: GameState, ctx: Dictionary, sites: Array, cluster: bool) -> Dictionary:
+	var h: float = ctx["h"]
+	var worth := {}
+	for site: String in sites:
+		var owner := state.control.controller_of(site, state.troops)
+		if owner == "":
+			continue
+		var marker := ControlMarkers.marker_for(state, site)
+		var w := float(state.graph.sites[site]["vp"]) + h * W_RESOURCE * float(marker.get("control_influence", 0))
+		if state.control.has_total_control(owner, site, state.troops, state.spies):
+			w += 2.0 + h * float(marker.get("total_control_vp", 0))
+		worth[owner] = float(worth.get(owner, 0.0)) + w
+	if cluster:
+		for pid: String in state.turn_order:
+			var c := ClusterBonus.evaluate(state, pid)
+			worth[pid] = float(worth.get(pid, 0.0)) + h * (c.vp + W_RESOURCE * (c.influence + c.power))
+	return worth
 
 
 ## Развернуть последнее войско = запустить конец партии: хорошо лидеру,
@@ -248,15 +380,17 @@ static func _promote_value(cid: String, state: GameState, pid: String, ctx: Dict
 
 ## Ответ бота на вопрос pd (MAKE_DECISION). Всегда одно из legal_options,
 ## кроме confirm (true/false) и пустых списков (null — пропустить).
-static func answer(state: GameState, pd: PendingDecision, pid: String):
+static func answer(state: GameState, pd: PendingDecision, pid: String, fast: bool = false):
 	var opts: Array = pd.legal_options
-	var ctx := _context(state, pid)
+	var ctx := _fast_context(state, pid) if fast else _context(state, pid)
 	var prompt := pd.prompt.to_lower()
 	match pd.choice_type:
 		"confirm":
-			return true
+			# "Devour this card?" — не из тонкой колоды.
+			return not (prompt.contains("devour") and _deck_too_thin(state, pid))
 		"choose_option":
-			return _best_by(opts, func(o): return _label_value(_label_of(pd, o)))
+			var thin := _deck_too_thin(state, pid)
+			return _best_by(opts, func(o): return _label_value(_label_of(pd, o), thin))
 		"target_player":
 			return _best_by(opts, func(o): return _rival_value(state, ctx, String(o)))
 		"target_card":
@@ -264,7 +398,7 @@ static func answer(state: GameState, pd: PendingDecision, pid: String):
 		"target_market_index":
 			return _answer_market(state, pid, ctx, prompt, opts)
 		"target_slot":
-			return _answer_slot(state, pd, pid, ctx, prompt)
+			return _answer_slot(state, pd, pid, ctx, prompt, fast)
 		"target_site":
 			return _answer_site(state, pid, ctx, prompt, opts)
 		"target_return":
@@ -277,8 +411,9 @@ static func _label_of(pd: PendingDecision, option) -> String:
 	return pd.option_labels[i] if i >= 0 and i < pd.option_labels.size() else ""
 
 
-## Грубая цена варианта "Choose one" по его словам.
-static func _label_value(label: String) -> float:
+## Грубая цена варианта "Choose one" по его словам. thin — колода тонкая:
+## варианты, убирающие из неё карты (Promote, Devour), почти ничего не стоят.
+static func _label_value(label: String, thin: bool = false) -> float:
 	var l := label.to_lower()
 	var n := 1.0
 	var rx := RegEx.create_from_string("(\\d+)")
@@ -298,7 +433,7 @@ static func _label_value(label: String) -> float:
 		v = maxf(v, n * 0.9)
 	if l.contains("spy") and l.contains("place"):
 		v = maxf(v, 1.8)
-	if l.contains("promote"):
+	if l.contains("promote") and not thin:
 		v = maxf(v, 1.8)
 	if l.contains("draw"):
 		v = maxf(v, n * 1.0)
@@ -306,8 +441,10 @@ static func _label_value(label: String) -> float:
 		v = maxf(v, 1.2)
 	if l.contains("move"):
 		v = maxf(v, 1.0)
-	if l.contains("devour"):
+	if l.contains("devour") and not thin:
 		v = maxf(v, 0.8)
+	if thin and (l.contains("promote") or l.contains("devour")):
+		v = minf(v, 0.1)
 	return v
 
 
@@ -317,17 +454,29 @@ static func _answer_card(state: GameState, pd: PendingDecision, pid: String, ctx
 	var can_skip := opts.size() != cards.size()
 	if cards.is_empty():
 		return "" if can_skip else null
+	var thin := _deck_too_thin(state, pid)
 	if prompt.contains("promote"):
+		if can_skip and thin:
+			return ""
 		return _best_by(cards, func(o): return _promote_value(String(o), state, pid, ctx))
 	if prompt.contains("discard") or prompt.contains("devour"):
 		var worst = _best_by(cards, func(o): return -card_value(String(o), state, pid, ctx))
-		# Необязательный сброс/пожирание: хорошую карту не отдаём.
-		if can_skip and card_value(String(worst), state, pid, ctx) > 0.6:
+		# Необязательный сброс/пожирание: хорошую карту не отдаём, а из
+		# тонкой колоды не убираем вовсе.
+		if can_skip and (card_value(String(worst), state, pid, ctx) > 0.6 \
+				or (thin and prompt.contains("devour") and String(worst) != OUTCAST)):
 			return ""
 		return worst
 	if prompt.contains("face-up pile"):
 		return "" if can_skip else cards[0]
 	return _best_by(cards, func(o): return card_value(String(o), state, pid, ctx))
+
+
+## Колода (без Внутреннего круга) не больше стартовой: убирать из неё карты
+## (Devour, необязательный Promote) — путь к колоде из одной карты, с которой
+## не набрать ни Power, ни Influence (так два бота однажды зациклили партию).
+static func _deck_too_thin(state: GameState, pid: String) -> bool:
+	return state.players[pid].deck.cards_outside_inner_circle().size() <= MIN_DECK
 
 
 static func _answer_market(state: GameState, pid: String, ctx: Dictionary, prompt: String, opts: Array):
@@ -346,27 +495,42 @@ static func _answer_market(state: GameState, pid: String, ctx: Dictionary, promp
 	return _best_by(idxs, value)
 
 
-static func _answer_slot(state: GameState, pd: PendingDecision, pid: String, ctx: Dictionary, prompt: String):
+static func _answer_slot(state: GameState, pd: PendingDecision, pid: String, ctx: Dictionary, prompt: String, fast: bool = false):
 	var opts: Array = pd.legal_options
 	var slots: Array = opts.filter(func(o): return String(o) != "")
 	var can_skip := opts.size() != slots.size()
 	if slots.is_empty():
 		return "" if can_skip else null
-	var base := evaluate(state, ctx)
-	var value: Callable
+	# Что станет с доской при каждом ответе: slot -> новый владелец, и трофей.
+	var changes: Callable
+	var trophy := {}
 	if prompt.begins_with("move troop to"):
 		var source := String(pd.target_effect.get("_picked_source")) if pd.target_effect != null else ""
 		var owner := String(state.troops.get(source, ""))
-		value = func(o): return _troops_eval(state, ctx, {source: "", String(o): owner})
+		changes = func(o): return {source: "", String(o): owner}
 	elif prompt.contains("supplant"):
-		value = func(o): return _troops_eval(state, ctx, {String(o): pid}, {pid: 1.0})
+		changes = func(o): return {String(o): pid}
+		trophy = {pid: 1.0}
 	elif prompt.contains("assassinate"):
-		value = func(o): return _troops_eval(state, ctx, {String(o): ""}, {pid: 1.0})
+		changes = func(o): return {String(o): ""}
+		trophy = {pid: 1.0}
 	elif prompt.contains("deploy"):
-		value = func(o): return _troops_eval(state, ctx, {String(o): pid})
+		changes = func(o): return {String(o): pid}
 	else:
 		# Вернуть/сдвинуть войско: оцениваем, что будет без него на этом месте.
-		value = func(o): return _troops_eval(state, ctx, {String(o): ""})
+		changes = func(o): return {String(o): ""}
+	var base := 0.0
+	var value: Callable
+	if fast:
+		var reach := {}
+		if prompt.contains("deploy"):
+			for slot: String in state.presence.deployable_slots(pid, state.troops, state.spies):
+				reach[slot] = true
+		value = func(o): return _local_gain(state, ctx, changes.call(o), trophy) \
+			+ (W_PRESENCE * _new_reach(state, String(o), reach) if not reach.is_empty() else 0.0)
+	else:
+		base = evaluate(state, ctx)
+		value = func(o): return _troops_eval(state, ctx, changes.call(o), trophy)
 	var best = _best_by(slots, value)
 	# "Up to": отказываемся, если любой выбор хуже, чем ничего.
 	if can_skip and float(value.call(best)) < base - 0.01:
@@ -430,6 +594,33 @@ static func _context(state: GameState, me: String) -> Dictionary:
 		var b := Scoring.breakdown(state, pid)
 		card_vp[pid] = float(b["deck"]) + float(b["inner_circle"])
 	return {"me": me, "h": horizon(state), "card_vp": card_vp}
+
+
+## Контекст быстрого режима: без подсчёта VP карт (Scoring.breakdown на
+## каждое намерение — заметная доля времени). Лидера определяет грубая
+## мерка: VP-жетоны + трофеи + войска на доске.
+static func _fast_context(state: GameState, me: String) -> Dictionary:
+	var counts := _troop_counts(state)
+	var rough := {}
+	for pid: String in state.turn_order:
+		var p: PlayerState = state.players[pid]
+		rough[pid] = p.vp_tokens + p.trophy_hall_count + int(counts.get(pid, 0))
+	var leader_opp := ""
+	var opps := 0
+	for pid: String in state.turn_order:
+		if pid != me:
+			opps += 1
+			if leader_opp == "" or rough[pid] > rough[leader_opp]:
+				leader_opp = pid
+	var weights := {}
+	for pid: String in state.turn_order:
+		if pid != me:
+			weights[pid] = (1.0 - W_LEADER) / opps + (W_LEADER if pid == leader_opp else 0.0)
+	return {
+		"me": me, "h": horizon(state), "card_vp": {}, "opp_w": weights,
+		"leader": leader_opp == "" or rough[me] > rough[leader_opp],
+		"cluster": ClusterBonus.find_site_ids(state.graph),
+	}
 
 
 ## Сколько примерно кругов осталось до конца партии: конец наступает, когда у

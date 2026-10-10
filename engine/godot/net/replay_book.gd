@@ -130,7 +130,7 @@ static func start(replay: Dictionary) -> GameServer:
 		ids.append(String(pid))
 	var state := GameSetup.new_game(ids, int(header.get("seed", 0)), [], false, true, true,
 		String(header.get("mode", GameSetup.MODE_STANDARD)))
-	var server := GameServer.new(state, bool(header.get("mulligan", true)))
+	var server := GameServer.new(state, bool(header.get("mulligan", true)), true, false)
 	# Срезы собирает тот, кто смотрит (StateView), и только для своего зрителя.
 	server.build_views = false
 	return server

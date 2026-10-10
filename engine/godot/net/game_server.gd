@@ -23,6 +23,11 @@ enum Error {
 	PAUSED,                # сетевая партия на паузе (кто-то отключился или нажал паузу)
 }
 
+## Намерения, после которых партия может перестать быть спокойной (is_quiet).
+## Deploy и покупки вопросов не задают.
+const RISKY := [Intent.Type.PLAY_CARD, Intent.Type.END_TURN,
+	Intent.Type.ACTION_ASSASSINATE, Intent.Type.ACTION_RETURN_SPY]
+
 var state: GameState
 var resolver: EffectResolver
 
@@ -41,12 +46,58 @@ var with_mulligan := true
 var build_views := true
 
 
-func _init(game_state: GameState, mulligan: bool = true) -> void:
+## Для clone() (этап Bot-2): последняя "спокойная" точка партии (is_quiet)
+## и принятые после неё намерения. Копия посреди розыгрыша карты собирается
+## так: копия этой точки + повтор намерений (стек резолвера с объектами
+## эффектов скопировать напрямую нельзя). _checkpoint_fresh — точка снята
+## до подготовки партии (её сервер надо создавать обычным путём).
+## track=false — копии, на которых бот играет в уме: им точки не нужны.
+var _track := true
+var _checkpoint: GameState
+var _checkpoint_fresh := true
+var _since: Array[Intent] = []
+
+
+## fresh=false — сервер для копии из спокойной точки: подготовка и начало
+## первого хода уже были, повторять их нельзя (доход хода начислился бы дважды).
+func _init(game_state: GameState, mulligan: bool = true, fresh: bool = true, track: bool = true) -> void:
 	state = game_state
 	with_mulligan = mulligan
+	_track = track
 	resolver = EffectResolver.new()
+	if not fresh:
+		_first_turn_started = true
+		return
+	if _track:
+		_checkpoint = StateCopy.copy_state(state)
 	_start_setup_if_needed()
 	_start_first_turn_if_ready()
+
+
+## Ничего не отложено: нет вопроса, недоигранного конца хода и эффектов
+## "At end of turn" — состояние партии целиком лежит в GameState.
+func is_quiet() -> bool:
+	if not _first_turn_started or resolver.is_waiting() or _end_turn_pending_for != "":
+		return false
+	for pid: String in state.turn_order:
+		if not state.players[pid].pending_end_of_turn.is_empty():
+			return false
+	return true
+
+
+## Точная копия партии (вместе со скрытым: руки, порядок колод, RNG), на
+## которой можно играть дальше, не трогая эту. Без срезов игрокам и без
+## своих точек для копий — для скорости.
+func clone() -> GameServer:
+	if is_quiet():
+		var copy := GameServer.new(StateCopy.copy_state(state), with_mulligan, false, false)
+		copy.build_views = false
+		return copy
+	var replay := GameServer.new(StateCopy.copy_state(_checkpoint), with_mulligan, _checkpoint_fresh, false)
+	replay.build_views = false
+	for intent: Intent in _since:
+		replay.apply_intent(intent)
+	return replay
 
 
 ## Начало хода (TurnEngine.start_turn: бонус A2, Influence за маркеры, сброс
@@ -96,7 +147,15 @@ func _start_setup_if_needed() -> void:
 ## был отклонён).
 func apply_intent(intent: Intent) -> Dictionary:
 	resolver.events.clear()
+	# Спокойная точка перед намерением, которое может её нарушить (вопрос
+	# карты, отложенный эффект, реакция Shield Guardian, конец хода).
+	if _track and intent.type in RISKY and is_quiet():
+		_checkpoint = StateCopy.copy_state(state)
+		_checkpoint_fresh = false
+		_since.clear()
 	var err: int = _apply(intent)
+	if _track and err == Error.OK:
+		_since.append(intent)
 	# Контроль над локацией с маркером или ярус A2 мог появиться только что —
 	# Influence/Power сразу.
 	if err == Error.OK and _first_turn_started and not state.game_over:
