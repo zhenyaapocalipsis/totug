@@ -37,11 +37,21 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	resolver.request_decision(pd)
 
 
+## Рулбук стр. 4: "any starting site on the game map not already taken by
+## another player". Раньше годился любой стартовый сайт со свободным слотом —
+## второй игрок мог встать в тот же сайт, что и первый. Теперь сайт с войском
+## любого игрока занят; белые войска сайт не занимают.
 func _legal_sites(state: GameState) -> Array:
 	var result: Array = []
 	for site_id: String in state.starting_site_candidates:
+		var free := false
+		var taken := false
 		for slot_id: String in state.graph.slots_of_site(site_id):
-			if state.troops.get(slot_id, "") == "":
-				result.append(site_id)
-				break
+			var owner: String = state.troops.get(slot_id, "")
+			if owner == "":
+				free = true
+			elif owner != GameState.WHITE:
+				taken = true
+		if free and not taken:
+			result.append(site_id)
 	return result

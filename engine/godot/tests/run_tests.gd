@@ -2366,16 +2366,27 @@ func test_hotseat_three_and_four_players() -> void:
 		var server := GameServer.new(state)
 		var answered := 0
 		var guard := 0
+		var taken: Array = []
+		var offered_taken := false
 		while server.resolver.is_waiting() and guard < 3 * count:
 			guard += 1
 			var pd: PendingDecision = server.resolver.pending
 			if pd.tag == "market":  # муллиган рынка — пропускаем
 				server.apply_intent(Intent.make_decision(pd.player_id, -1))
 				continue
+			for site in taken:
+				offered_taken = offered_taken or pd.legal_options.has(site)
 			var res: Dictionary = server.apply_intent(Intent.make_decision(pd.player_id, pd.legal_options[0]))
 			check_eq(int(res["error"]), GameServer.Error.OK, "%d игроков: выбор стартового сайта принят" % count)
+			taken.append(pd.legal_options[0])
 			answered += 1
 		check_eq(answered, count, "%d игроков: стартовый сайт выбрал каждый" % count)
+		# Рулбук стр. 4: "not already taken by another player".
+		check(not offered_taken, "%d игроков: занятый другим игроком сайт следующим не предлагается" % count)
+		var distinct := {}
+		for site in taken:
+			distinct[site] = true
+		check_eq(distinct.size(), count, "%d игроков: все стартовые сайты разные" % count)
 
 		var on_board := {}
 		for slot_id: String in state.troops.keys():
@@ -4207,7 +4218,7 @@ func test_bot_sim() -> void:
 		var steps := 0
 		while not server.state.game_over and steps < 6000:
 			steps += 1
-			if steps % 23 == 0:
+			if steps % 23 == 0 or (not server.is_quiet() and steps % 7 == 0):
 				var before := StateCopy.fingerprint(server.state)
 				if server.is_quiet():
 					quiet_clones += 1
