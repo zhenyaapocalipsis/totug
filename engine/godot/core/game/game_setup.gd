@@ -52,6 +52,9 @@ const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_R
 const MARKET_PER_ASPECT := 20
 
 static var _half_deck_data: Dictionary = {}
+## Только для прогонов баланса (tests/balance_run.gd all_decks=1): брать в
+## случайный выбор и полуколоды "в работе" (New Era). Игра его не трогает.
+static var include_wip := false
 
 
 static func _load_half_decks() -> Dictionary:
@@ -79,7 +82,7 @@ static func available_half_decks() -> Array[String]:
 	var result: Array[String] = []
 	var decks: Dictionary = _load_half_decks().get("half_decks", {})
 	for key: String in decks.keys():
-		if (decks[key] as Dictionary).get("wip", false):
+		if (decks[key] as Dictionary).get("wip", false) and not include_wip:
 			continue
 		result.append(key)
 	result.sort()

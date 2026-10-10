@@ -38,6 +38,8 @@ func _worker(args: Dictionary) -> void:
 	var out := FileAccess.open(String(args["out"]), FileAccess.WRITE)
 	BotSearch.threads = 1
 	# Проверка гипотез: leader=0 — боты не выделяют лидера среди соперников.
+	if args.has("all_decks"):
+		GameSetup.include_wip = args["all_decks"] == "1"  # New Era тоже в случайном выборе
 	if args.has("leader"):
 		BotPlayer.W_LEADER = float(args["leader"])
 	for s in range(int(args["from"]), int(args["from"]) + int(args["count"])):
@@ -108,7 +110,7 @@ func _driver(args: Dictionary) -> void:
 			"--script", "res://tests/balance_run.gd", "--", "role=worker",
 			"players=" + String(args["players"]), "mode=" + String(args["mode"]),
 			"bot=" + String(args["bot"]), "budget=" + String(args["budget"]),
-			"from=%d" % start, "count=%d" % count, "out=" + part] + (["leader=" + String(args["leader"])] if args.has("leader") else []))
+			"from=%d" % start, "count=%d" % count, "out=" + part] + _pass_through(args))
 		jobs.append([pid, part])
 	var records: Array = []
 	var all := FileAccess.open(dir + "/%s_games.jsonl" % args["name"], FileAccess.WRITE)
@@ -150,6 +152,7 @@ static func summarize(records: Array) -> Dictionary:
 	var reasons := {}
 	var decks := {}   # полуколода -> {games, buys, win_buys}
 	var cards := {}   # карта -> {avail, bought_games, buyer_games, buyer_wins, copies}
+	var main := {}    # основная полуколода игрока -> [игроков, побед]
 	var all_buys := 0.0
 	var all_win_buys := 0.0
 	for rec: Dictionary in records:
@@ -184,6 +187,28 @@ static func summarize(records: Array) -> Dictionary:
 		for pid: String in order:
 			var share := 1.0 / winners.size() if winners.has(pid) else 0.0
 			var b: Dictionary = rec["bought"][pid]
+			# Основная полуколода игрока — та, чьих карт он купил больше всего
+			# (не меньше 3, без ничьих между полуколодами).
+			var per_deck := {}
+			for cid: String in b.keys():
+				var dk: String = deck_of.get(cid, "supply")
+				if dk != "supply":
+					per_deck[dk] = int(per_deck.get(dk, 0)) + int(b[cid])
+			var top := ""
+			var top_n := 0
+			var tie := false
+			for dk: String in per_deck.keys():
+				if per_deck[dk] > top_n:
+					top = dk
+					top_n = per_deck[dk]
+					tie = false
+				elif per_deck[dk] == top_n:
+					tie = true
+			if top != "" and top_n >= 3 and not tie:
+				if not main.has(top):
+					main[top] = [0, 0.0]
+				main[top][0] += 1
+				main[top][1] += share
 			for cid: String in b.keys():
 				var copies := int(b[cid])
 				if not cards.has(cid):
@@ -226,9 +251,15 @@ static func summarize(records: Array) -> Dictionary:
 			"buyer_games": c["buyer_games"], "win": win, "lo": ci[0], "hi": ci[1],
 			"copies": float(c["copies"]) / maxf(1.0, c["buyer_games"])})
 	card_rows.sort_custom(func(a, b): return a["win"] > b["win"])
+	var main_rows := []
+	for dk: String in main.keys():
+		var ci := _wilson(main[dk][1], main[dk][0])
+		main_rows.append({"deck": dk, "players": main[dk][0], "win": main[dk][1] / maxf(1.0, main[dk][0]), "lo": ci[0], "hi": ci[1]})
+	main_rows.sort_custom(func(a, b): return a["win"] > b["win"])
 	return {"games": games, "players": n, "mode": records[0]["mode"] if games > 0 else "",
 		"rounds": rounds / maxf(1.0, games), "reasons": reasons, "seats": seats,
-		"expected": 1.0 / n, "base_win_share": base_share, "decks": deck_rows, "cards": card_rows}
+		"expected": 1.0 / n, "base_win_share": base_share, "decks": deck_rows, "cards": card_rows,
+		"main_decks": main_rows}
 
 
 ## 95% интервал Уилсона для доли побед wins из total.
@@ -241,3 +272,12 @@ static func _wilson(wins: float, total: float) -> Array:
 	var centre := (p + z * z / (2.0 * total)) / denom
 	var half := z * sqrt(p * (1.0 - p) / total + z * z / (4.0 * total * total)) / denom
 	return [maxf(0.0, centre - half), minf(1.0, centre + half)]
+
+
+## Настройки проверки гипотез, которые подборщик передаёт рабочим процессам.
+static func _pass_through(args: Dictionary) -> Array:
+	var out := []
+	for key: String in ["leader", "all_decks"]:
+		if args.has(key):
+			out.append("%s=%s" % [key, args[key]])
+	return out
