@@ -4382,6 +4382,31 @@ func test_bot_search() -> void:
 	check_eq(str(b.to_dict()), str(a.to_dict()), "другая раскладка скрытого — то же решение (бот не подглядывает)")
 	check_eq(str(BotSearch.next_intent(pos, "red", 0, 99, 3).to_dict()), str(a.to_dict()), "тот же сид — то же решение")
 
+	# Bot-4: проверки идут в нескольких потоках. Раньше одновременная запись
+	# CardLibrary.building_card портила память — словари "теряли" ключи.
+	section("Bot-4: поиск в нескольких потоках")
+	var big := GameServer.new(GameSetup.new_game(["a", "b", "c", "d"], 41, [], false, true, true, GameSetup.MODE_RANDOM_6))
+	for i in range(150):
+		big.apply_intent(BotPlayer.next_intent(big, BotPlayer.acting_player(big)))
+	var job := func(k: int) -> void:
+		var r := RandomNumberGenerator.new()
+		r.seed = k
+		BotSim.rollout(BotSim.determinize(big, "a", r), 4)
+	for rep in range(3):
+		var g := WorkerThreadPool.add_group_task(job, 24, 8, true)
+		WorkerThreadPool.wait_for_group_task_completion(g)
+	var intact := true
+	for deck_name in ["drow", "dragons", "demons", "elementals", "aberrations", "undead", "celestial", "shadow"]:
+		intact = intact and not GameSetup.expand_half_deck(deck_name).is_empty()
+	for cid: String in CardLibrary.all_ids():
+		intact = intact and not CardLibrary.card_data(cid).is_empty()
+	check(intact, "после 72 параллельных доигровок данные карт и полуколод целы")
+	check(BotSearch.worker_count() >= 1 and BotSearch.worker_count() <= 8, "потоков поиска: %d (не больше 8)" % BotSearch.worker_count())
+	var threaded := BotSearch.next_intent(pos, "red", 0, 99, 4)
+	check(int(pos.clone().apply_intent(threaded)["error"]) == GameServer.Error.OK, "решение многопоточного поиска сервер принимает")
+	check_eq(str(BotSearch.next_intent(pos, "red", 0, 99, 4).to_dict()), str(threaded.to_dict()),
+		"многопоточный поиск с тем же сидом — то же решение")
+
 
 func _sorted(cards: Array) -> Array:
 	var out := cards.duplicate()

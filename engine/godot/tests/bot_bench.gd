@@ -41,6 +41,25 @@ func _initialize() -> void:
 		_bench("  из неё: ClusterBonus.evaluate", 300, func(): ClusterBonus.evaluate(st, ids[0]))
 		_bench("  из неё: Presence.deployable_slots", 300, func(): st.presence.deployable_slots(ids[0], st.troops, st.spies))
 		_bench("контекст оценки (_context)", 300, func(): BotPlayer._context(st, ids[0]))
+		# Bot-4: те же 30 кругов проверок на одном потоке и на всех ядрах.
+		# Позиция с выбором: доигрываем копию, пока у первого игрока не будет
+		# хотя бы двух вариантов.
+		var probe := server.clone()
+		probe._track = true  # чтобы копии probe работали и посреди вопроса карты
+		var cands: Array[Intent] = []
+		for k in range(300):
+			var who := BotPlayer.acting_player(probe)
+			if who == ids[0]:
+				cands = BotPlayer.ranked_intents(probe.clone(), who, BotSearch.candidates)
+				if cands.size() >= 2:
+					break
+			probe.apply_intent(BotPlayer.next_intent(probe, who))
+		if cands.size() >= 2:
+			for th in [1, 2, 4, 8, 15]:
+				BotSearch.threads = th
+				_bench("поиск, 30 кругов × %d вариантов, потоков %d" % [cands.size(), BotSearch.worker_count()], 1,
+					func(): BotSearch._search(probe, ids[0], cands, 0, 5, 30))
+			BotSearch.threads = 0
 		_bench("копия в спокойной точке", 200, func(): server.clone())
 		_bench("догадка о скрытом (копия + перемешивание)", 200, func(): BotSim.determinize(server, ids[0], rng))
 		_bench("доигровка 1 хода, полный бот", 20, func(): BotSim.rollout(BotSim.determinize(server, ids[0], rng), 1, false))

@@ -26,11 +26,50 @@ extends RefCounted
 ## за войска на доске и (только для себя) за ширину Присутствия. Итог —
 ## своя оценка минус смесь лучшего соперника и среднего соперника.
 
-const W_TROOP := 0.25          # войско на доске (сила и шаг к концу партии)
-const W_PRESENCE := 0.06       # каждый слот, куда можно развернуться
-const W_RESOURCE := 0.4        # 1 Power/Influence дохода за ход ~ 0.4 VP
-const W_LEADER := 0.6          # в оценке соперников: доля лучшего, остальное — среднее
-const MIN_BUY_VALUE := 0.2     # дешевле этого карту не покупаем
+## Веса оценки (Bot-5: подбираются партиями бот против бота, tests/bot_tune.gd;
+## поэтому static var, а не const — подборщик меняет их через set_weights).
+static var W_TROOP := 0.25          # войско на доске (сила и шаг к концу партии)
+static var W_PRESENCE := 0.06      # каждый слот, куда можно развернуться
+static var W_RESOURCE := 0.4      # 1 Power/Influence дохода за ход ~ 0.4 VP
+static var W_LEADER := 0.6      # в оценке соперников: доля лучшего, остальное — среднее
+static var MIN_BUY_VALUE := 0.2    # дешевле этого карту не покупаем
+static var STRENGTH_ROUNDS := 6.0   # за сколько кругов до конца сила карты ещё важна целиком
+static var BUY_INNER_VP := 0.3375   # доля VP Внутреннего круга в ценности покупки (Bot-5: 0.25 -> 0.3375, 54% побед)
+static var ASPECT_BONUS := 0.1      # за каждую карту того же аспекта в колоде
+static var PROMOTE_KEEP := 0.5      # сколько стоит потеря карты из колоды при Promote
+static var END_LEADER := 2.0        # лидеру — за запуск конца партии
+static var END_TRAILER := 5.0       # отстающему — штраф за запуск конца партии
+static var TROOPS_PER_ROUND := 3.0  # для оценки оставшихся кругов: войск за круг
+static var BUYS_PER_ROUND := 1.5    # и покупок за круг на игрока
+
+## Все подбираемые веса по именам (для подборщика и его отчёта).
+static func get_weights() -> Dictionary:
+	return {
+		"W_TROOP": W_TROOP, "W_PRESENCE": W_PRESENCE, "W_RESOURCE": W_RESOURCE,
+		"W_LEADER": W_LEADER, "MIN_BUY_VALUE": MIN_BUY_VALUE, "STRENGTH_ROUNDS": STRENGTH_ROUNDS,
+		"BUY_INNER_VP": BUY_INNER_VP, "ASPECT_BONUS": ASPECT_BONUS, "PROMOTE_KEEP": PROMOTE_KEEP,
+		"END_LEADER": END_LEADER, "END_TRAILER": END_TRAILER,
+		"TROOPS_PER_ROUND": TROOPS_PER_ROUND, "BUYS_PER_ROUND": BUYS_PER_ROUND,
+	}
+
+
+## Задать веса (любое подмножество get_weights; незнакомые имена — мимо).
+static func set_weights(w: Dictionary) -> void:
+	W_TROOP = float(w.get("W_TROOP", W_TROOP))
+	W_PRESENCE = float(w.get("W_PRESENCE", W_PRESENCE))
+	W_RESOURCE = float(w.get("W_RESOURCE", W_RESOURCE))
+	W_LEADER = float(w.get("W_LEADER", W_LEADER))
+	MIN_BUY_VALUE = float(w.get("MIN_BUY_VALUE", MIN_BUY_VALUE))
+	STRENGTH_ROUNDS = float(w.get("STRENGTH_ROUNDS", STRENGTH_ROUNDS))
+	BUY_INNER_VP = float(w.get("BUY_INNER_VP", BUY_INNER_VP))
+	ASPECT_BONUS = float(w.get("ASPECT_BONUS", ASPECT_BONUS))
+	PROMOTE_KEEP = float(w.get("PROMOTE_KEEP", PROMOTE_KEEP))
+	END_LEADER = float(w.get("END_LEADER", END_LEADER))
+	END_TRAILER = float(w.get("END_TRAILER", END_TRAILER))
+	TROOPS_PER_ROUND = float(w.get("TROOPS_PER_ROUND", TROOPS_PER_ROUND))
+	BUYS_PER_ROUND = float(w.get("BUYS_PER_ROUND", BUYS_PER_ROUND))
+
+
 const OUTCAST := "48341"
 const MIN_DECK := 10           # меньше стартовой колоды карты из неё не убираем
 
@@ -165,7 +204,8 @@ static func _is_focus(cid: String) -> bool:
 
 
 static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -> Intent:
-	_notes.clear()
+	if _collect:  # в проверках поиска бот работает в нескольких потоках сразу
+		_notes.clear()
 	var p: PlayerState = state.players[pid]
 	if p.power <= 0:
 		return null
@@ -219,7 +259,8 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 ## То же, что _best_power_action, но прирост считается по затронутой
 ## локации (_local_gain), а не по всей доске.
 static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictionary) -> Intent:
-	_notes.clear()
+	if _collect:
+		_notes.clear()
 	var p: PlayerState = state.players[pid]
 	if p.power <= 0:
 		return null
@@ -235,7 +276,7 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 		for slot: String in deployable:
 			var gain := _local_gain(state, ctx, {slot: pid}) + W_PRESENCE * _new_reach(state, slot, reach)
 			if p.troops_in_barracks == 1:
-				gain += 2.0 if bool(ctx["leader"]) else -5.0
+				gain += END_LEADER if bool(ctx["leader"]) else -END_TRAILER
 			if _collect:
 				_notes.append([gain, Intent.deploy(pid, slot)])
 			if gain > best_ratio:
@@ -355,7 +396,7 @@ static func _sites_worth(state: GameState, ctx: Dictionary, sites: Array, cluste
 ## Развернуть последнее войско = запустить конец партии: хорошо лидеру,
 ## плохо отстающему.
 static func _end_trigger_bonus(state: GameState, ctx: Dictionary) -> float:
-	return 2.0 if _is_leader(state, ctx) else -5.0
+	return END_LEADER if _is_leader(state, ctx) else -END_TRAILER
 
 
 static func _is_leader(state: GameState, ctx: Dictionary) -> bool:
@@ -373,7 +414,8 @@ static func final_vp(state: GameState, pid: String) -> int:
 
 
 static func _best_buy(state: GameState, pid: String, ctx: Dictionary) -> Intent:
-	_notes.clear()
+	if _collect:
+		_notes.clear()
 	var p: PlayerState = state.players[pid]
 	if p.influence <= 0:
 		return null
@@ -418,15 +460,15 @@ static func card_value(cid: String, state: GameState, pid: String, ctx: Dictiona
 	var cost := float(d.get("cost")) if d.get("cost") != null else 0.0
 	var dvp := float(d.get("deck_vp")) if d.get("deck_vp") != null else 0.0
 	var ivp := float(d.get("inner_circle_vp")) if d.get("inner_circle_vp") != null else 0.0
-	var strength_w := clampf(float(ctx["h"]) / 6.0, 0.2, 1.0)
-	var v := cost * strength_w + dvp + ivp * 0.25
+	var strength_w := clampf(float(ctx["h"]) / STRENGTH_ROUNDS, 0.2, 1.0)
+	var v := cost * strength_w + dvp + ivp * BUY_INNER_VP
 	var aspect = d.get("aspect")
 	if aspect != null and cost > 0.0:
 		var same := 0
 		for own: String in state.players[pid].deck.cards_outside_inner_circle():
 			if CardLibrary.card_aspect(own) == String(aspect) and CardLibrary.card_cost(own) > 0:
 				same += 1
-		v += minf(0.1 * same, 0.8)
+		v += minf(ASPECT_BONUS * same, 0.8)
 	return v
 
 
@@ -436,7 +478,7 @@ static func _promote_value(cid: String, state: GameState, pid: String, ctx: Dict
 	var d := CardLibrary.card_data(cid)
 	var ivp := float(d.get("inner_circle_vp")) if d.get("inner_circle_vp") != null else 0.0
 	var dvp := float(d.get("deck_vp")) if d.get("deck_vp") != null else 0.0
-	return ivp - dvp - 0.5 * maxf(0.0, card_value(cid, state, pid, ctx) - dvp)
+	return ivp - dvp - PROMOTE_KEEP * maxf(0.0, card_value(cid, state, pid, ctx) - dvp)
 
 
 # --- ответы на вопросы карт ---------------------------------------------
@@ -636,7 +678,8 @@ static func _rival_value(state: GameState, ctx: Dictionary, pid: String) -> floa
 
 
 static func _best_by(options: Array, score: Callable):
-	_notes.clear()
+	if _collect:
+		_notes.clear()
 	var best = null
 	var best_score := -INF
 	for o in options:
@@ -698,8 +741,8 @@ static func horizon(state: GameState) -> float:
 	var min_barracks := PlayerState.STARTING_TROOPS
 	for pid: String in state.turn_order:
 		min_barracks = mini(min_barracks, state.players[pid].troops_in_barracks)
-	var by_troops := float(min_barracks) / 3.0
-	var by_market := float(state.market.deck_size()) / (1.5 * float(maxi(1, n)))
+	var by_troops := float(min_barracks) / TROOPS_PER_ROUND
+	var by_market := float(state.market.deck_size()) / (BUYS_PER_ROUND * float(maxi(1, n)))
 	return clampf(minf(by_troops, by_market), 0.5, 8.0)
 
 

@@ -243,13 +243,20 @@ class _LichEffect extends CardEffect:
 ## Карта, чьё дерево эффектов сейчас строится. ChooseEffect запоминает её при
 ## создании, чтобы интерфейс мог нарисовать варианты артом этой карты.
 static var building_card := ""
+## Бот (Bot-4) разыгрывает карты в копиях партии сразу в нескольких потоках.
+## Одновременная запись в building_card из разных потоков портила память
+## (словари "теряли" ключи), поэтому сборка дерева — под замком. Mutex в
+## Godot рекурсивный: вложенный get_effect в том же потоке не зависнет.
+static var _build_lock := Mutex.new()
 
 
 static func get_effect(card_id: String) -> CardEffect:
+	_build_lock.lock()
 	var outer := building_card
 	building_card = card_id
 	var effect := _build_effect(card_id)
 	building_card = outer
+	_build_lock.unlock()
 	return effect
 
 
