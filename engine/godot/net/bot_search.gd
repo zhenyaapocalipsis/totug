@@ -23,6 +23,12 @@ extends RefCounted
 const DEFAULT_BUDGET_MS := 800
 ## Сколько вариантов Bot-1 проверять на решение (без "ничего не покупать").
 static var candidates := 5
+## Главная фаза хода — планом целиком (BotPlan); false — по одному решению.
+## Выключено: в матче против поиска по одному решению план проиграл
+## (42% побед, −3.4 VP за 24 партии) — пересчёт на каждом шаге сильнее.
+static var plan_turns := false
+## Во сколько раз больше времени на поиск плана, чем на одно решение.
+const PLAN_BUDGET_FACTOR := 3
 
 ## Сколько своих следующих ходов доигрывать в уме (1 — до начала следующего).
 ## 2 заметно сильнее 1: 88% побед у Bot-1 против 63% (24 партии на двоих).
@@ -43,12 +49,16 @@ static var deviations := 0
 static func next_intent(server: GameServer, pid: String, budget_ms: int = DEFAULT_BUDGET_MS, seed: int = 0, max_rounds: int = 0) -> Intent:
 	if BotPlayer.acting_player(server) != pid:
 		return null
+	# Главная фаза (карты разыграны) — планом на весь остаток хода (Bot-5).
+	# Один поиск вместо нескольких, поэтому времени на него больше.
+	if plan_turns and BotPlan.is_plan_phase(server, pid):
+		return BotPlan.next_step(server, pid, budget_ms * PLAN_BUDGET_FACTOR, seed, max_rounds)
 	# Варианты — на копии: оценка Bot-1 на миг переставляет войска, а поиск
 	# может идти в отдельном потоке, пока экран читает настоящую партию.
 	var options := BotPlayer.ranked_intents(server.clone(), pid, candidates)
 	if options.size() <= 1:
 		return options[0] if not options.is_empty() else BotPlayer.fallback_intent(server, pid)
-	var pick := _search(server, pid, options, budget_ms, seed, max_rounds)
+	var pick := _search(server, pid, options.map(func(o): return [o]), budget_ms, seed, max_rounds)
 	searches += 1
 	if pick != 0:
 		deviations += 1
@@ -58,7 +68,7 @@ static func next_intent(server: GameServer, pid: String, budget_ms: int = DEFAUL
 ## Номер лучшего варианта. Круги: в каждом круге каждый живой вариант
 ## проверяется на одной общей догадке; после каждого раунда отсева худшая
 ## половина выбывает. Минимум 2 круга, даже если время вышло.
-static func _search(server: GameServer, me: String, candidates: Array[Intent], budget_ms: int, seed: int, max_rounds: int = 0) -> int:
+static func _search(server: GameServer, me: String, candidates: Array, budget_ms: int, seed: int, max_rounds: int = 0) -> int:
 	var start := Time.get_ticks_msec()
 	var alive: Array[int] = []
 	for i in range(candidates.size()):
@@ -129,7 +139,7 @@ static func worker_count() -> int:
 
 ## Проверки tasks ([номер варианта, сид]) — в пуле потоков движка, каждая
 ## на своей копии партии. Результат — в том же порядке, что tasks.
-static func _run_tasks(server: GameServer, me: String, candidates: Array[Intent], tasks: Array, workers: int) -> Array:
+static func _run_tasks(server: GameServer, me: String, candidates: Array, tasks: Array, workers: int) -> Array:
 	var results := []
 	results.resize(tasks.size())
 	if workers <= 1 or tasks.size() == 1:
@@ -147,13 +157,33 @@ static func _run_tasks(server: GameServer, me: String, candidates: Array[Intent]
 	return results
 
 
-## Одна проверка хода intent в одной догадке о скрытом (seed): 0..1.
-## Ход, который в этой догадке невозможен, — 0.
-static func simulate(server: GameServer, me: String, intent: Intent, seed: int) -> float:
+## Одна проверка плана (ходы plan подряд) в одной догадке о скрытом (seed):
+## 0..1. Вопросы, которые план вызвал у других (Shield Guardian), решают
+## быстрые боты; если план перестал подходить (ход отклонён, ход ушёл),
+## остаток хода доигрывает быстрый бот. Первый ход плана невозможен — 0.
+static func simulate(server: GameServer, me: String, plan: Array, seed: int) -> float:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	var sim := BotSim.determinize(server, me, rng)
-	if int(sim.apply_intent(intent)["error"]) != GameServer.Error.OK:
-		return 0.0
+	for k in range(plan.size()):
+		if k > 0:
+			_settle(sim, me)
+			if sim.state.game_over or sim.state.current_player() != me or sim.resolver.is_waiting():
+				break
+		if int(sim.apply_intent(plan[k])["error"]) != GameServer.Error.OK:
+			if k == 0:
+				return 0.0
+			break
 	BotSim.rollout_to_my_turn(sim, me, horizon)
 	return BotSim.value(sim, me)
+
+
+## Ответить быстрыми ботами на вопросы других игроков, пока они есть.
+static func _settle(sim: GameServer, me: String) -> void:
+	var guard := 0
+	while sim.resolver.is_waiting() and sim.resolver.pending.player_id != me and guard < 50:
+		guard += 1
+		var who: String = sim.resolver.pending.player_id
+		var res := sim.apply_intent(BotPlayer.next_intent(sim, who, true))
+		if int(res["error"]) != GameServer.Error.OK:
+			sim.apply_intent(BotPlayer.fallback_intent(sim, who))

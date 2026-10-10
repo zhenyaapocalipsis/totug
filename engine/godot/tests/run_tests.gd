@@ -125,6 +125,7 @@ func _initialize() -> void:
 	test_bot_player()
 	test_bot_sim()
 	test_bot_search()
+	test_bot_plan()
 
 	print("\n=== пройдено: %d, провалено: %d ===\n" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)
@@ -4406,6 +4407,79 @@ func test_bot_search() -> void:
 	check(int(pos.clone().apply_intent(threaded)["error"]) == GameServer.Error.OK, "решение многопоточного поиска сервер принимает")
 	check_eq(str(BotSearch.next_intent(pos, "red", 0, 99, 4).to_dict()), str(threaded.to_dict()),
 		"многопоточный поиск с тем же сидом — то же решение")
+
+
+func test_bot_plan() -> void:
+	section("Bot-5: планирование хода целиком")
+	# Позиции главной фазы (карты разыграны) у red.
+	var server := GameServer.new(GameSetup.new_game(["red", "blue"], 51, [], false, true, true))
+	var phases := 0
+	var plans_ok := true
+	var steps_accepted := true
+	var no_unseen_buys := true
+	var first_is_bot1 := true
+	var guard := 0
+	while not server.state.game_over and guard < 1500 and phases < 8:
+		guard += 1
+		var actor := BotPlayer.acting_player(server)
+		if actor == "red" and BotPlan.is_plan_phase(server, "red") \
+				and BotPlayer.ranked_intents(server.clone(), "red", 3).size() >= 2:
+			phases += 1
+			var rng := RandomNumberGenerator.new()
+			rng.seed = phases
+			var plans := BotPlan.generate(server, "red", rng)
+			plans_ok = plans_ok and plans.size() >= 2
+			for plan: Dictionary in plans:
+				var intents: Array = plan["intents"]
+				plans_ok = plans_ok and (plan["sigs"] as Array).size() == intents.size()
+				# Каждое место рынка покупается не больше раза: после покупки там
+				# лежит карта, которой бот ещё не видел.
+				var bought := {}
+				for it: Intent in intents:
+					if it.type == Intent.Type.ACTION_RECRUIT:
+						no_unseen_buys = no_unseen_buys and not bought.has(it.market_index)
+						bought[it.market_index] = true
+				# План проходит в настоящей копии партии шаг за шагом.
+				var sim := server.clone()
+				for it: Intent in intents:
+					if not BotPlan.is_plan_phase(sim, "red"):
+						break
+					steps_accepted = steps_accepted and int(sim.apply_intent(it)["error"]) == GameServer.Error.OK
+			first_is_bot1 = first_is_bot1 and str((plans[0]["intents"] as Array)[0].to_dict()) \
+				== str(BotPlayer.next_intent(server.clone(), "red").to_dict())
+		server.apply_intent(BotPlayer.next_intent(server, actor))
+	check(phases >= 5, "проверено главных фаз: %d" % phases)
+	check(plans_ok, "у каждой — несколько полных планов, у каждого шага — подпись")
+	check(first_is_bot1, "первый план начинается с хода Bot-1")
+	check(no_unseen_buys, "план не покупает карту, вышедшую на рынок после его же покупки")
+	check(steps_accepted, "все шаги планов сервер принимает")
+
+	# Бот с планами доигрывает партию: ни одного отклонённого хода, планы
+	# выполняются по шагам, а не ищутся заново на каждом.
+	var game := GameServer.new(GameSetup.new_game(["red", "blue"], 52, [], false, true, true))
+	var searched_before := BotPlan.plans_searched
+	BotSearch.plan_turns = true  # по умолчанию выключено, здесь проверяем сам планировщик
+	var rejected := 0
+	var red_steps := 0
+	var turns := 0
+	while not game.state.game_over and turns < 2000:
+		turns += 1
+		var who := BotPlayer.acting_player(game)
+		var it: Intent
+		if who == "red":
+			it = BotSearch.next_intent(game, "red", 0, 0, 2)
+			if BotPlan.is_plan_phase(game, "red"):
+				red_steps += 1
+		else:
+			it = BotPlayer.next_intent(game, who)
+		if int(game.apply_intent(it)["error"]) != GameServer.Error.OK:
+			rejected += 1
+			game.apply_intent(BotPlayer.fallback_intent(game, who))
+	BotSearch.plan_turns = false
+	check(game.state.game_over, "партия с планирующим ботом доиграна")
+	check_eq(rejected, 0, "ни одного отклонённого хода")
+	var plans_made := BotPlan.plans_searched - searched_before
+	check(plans_made > 0 and red_steps > plans_made, "планов %d на %d шагов главной фазы: шаги идут по плану" % [plans_made, red_steps])
 
 
 func _sorted(cards: Array) -> Array:

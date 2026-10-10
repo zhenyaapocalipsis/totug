@@ -1,8 +1,8 @@
 extends SceneTree
 
 ## Партии бот против бота (Bot-1) — проверка бота и первые цифры баланса.
-## search=1 [budget= horizon= threads= cands=] — один игрок (по кругу мест) — искатель
-## Bot-3; vs=search [vs_threads= vs_budget= vs_cands=] — соперники тоже искатели.
+## search=1 [budget= horizon= threads= cands= plan=0/1] — один игрок (по кругу мест) — искатель
+## Bot-3; vs=search [vs_threads= vs_budget= vs_cands= vs_plan=0/1] — соперники тоже искатели.
 ## Запуск:
 ##   godot --headless --path engine/godot --script res://tests/bot_selfplay.gd -- games=20 players=2 mode=standard seed=1
 ## Печатает: победы по месту за столом, средние VP, длину партии, причины
@@ -60,12 +60,14 @@ func _initialize() -> void:
 			elif actor == fast_pid and hero_mode == "search":
 				BotSearch.threads = int(args.get("threads", "0"))
 				BotSearch.candidates = int(args.get("cands", "5"))
+				BotSearch.plan_turns = args.get("plan", "0") == "1"
 				intent = BotSearch.next_intent(server, actor, int(args.get("budget", "300")))
 			elif args.get("vs", "bot1") == "search":
 				# соперники — тоже искатели (vs_threads потоков, по умолчанию 1:
 				# прежний Bot-3), чтобы мерить новую версию против старой
 				BotSearch.threads = int(args.get("vs_threads", "1"))
 				BotSearch.candidates = int(args.get("vs_cands", "4"))
+				BotSearch.plan_turns = args.get("vs_plan", "0") == "1"
 				intent = BotSearch.next_intent(server, actor, int(args.get("vs_budget", args.get("budget", "300"))))
 			else:
 				intent = BotPlayer.next_intent(server, actor, actor == fast_pid)
@@ -134,6 +136,7 @@ func _initialize() -> void:
 		print("быстрый бот против полных: побед %.0f%% (ожидание %.0f%%)" % [100.0 * fast_wins / done, 100.0 / n])
 	if args.get("search", "0") == "1":
 		print("искатель против соперников (%s): побед %.0f%% (ожидание %.0f%%), VP в среднем %+.1f к лучшему сопернику; поиск менял выбор Bot-1 в %d из %d решений" % [args.get("vs", "bot1"), 100.0 * fast_wins / done, 100.0 / n, fast_margin / done, BotSearch.deviations, BotSearch.searches])
+		print("планов хода: %d, перепланирований посреди хода: %d" % [BotPlan.plans_searched, BotPlan.replans])
 
 	var rows := []
 	for cid: String in card_games.keys():
