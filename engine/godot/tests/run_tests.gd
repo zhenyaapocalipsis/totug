@@ -4182,6 +4182,25 @@ func test_bot_player() -> void:
 			bot_wins += 1
 	check_eq(bot_wins, games, "бот выиграл все %d партии у простого автоигрока" % games)
 
+	# Bot-8: покупка по замеренной силе карты против средней карты колоды.
+	check(absf(BotPlayer.strength("48342") - 1.0) < 0.25, "сила Noble ~ 1 ресурс (таблица data/bot/card_strength.json загружена)")
+	var cv := GameSetup.new_game(["red", "blue"], 21, [], false, true, true)
+	var cctx := BotPlayer._context(cv, "red")
+	var priestess := BotPlayer.card_value(Supplies.PRIESTESS_OF_LOLTH, cv, "red", cctx)
+	check(BotPlayer.card_value("48738", cv, "red", cctx) > 2.0 * priestess,
+		"в начале партии Revenant (4) ценнее двух жриц (2+2)")
+	check(BotPlayer.card_value("49022", cv, "red", cctx) > BotPlayer.card_value("48738", cv, "red", cctx),
+		"Gold Dragon ценнее Revenant")
+	cv.game_end_triggered = true
+	var late := BotPlayer._context(cv, "red")
+	check(BotPlayer.card_value(Supplies.PRIESTESS_OF_LOLTH, cv, "red", late) < priestess,
+		"к концу партии сила карты почти не важна — жрица дешевеет")
+	cv.game_end_triggered = false
+	# Порядок розыгрыша: "Devour a card in your hand ►" — пока есть что отдать,
+	# Focus — после остальных.
+	check_eq(BotPlayer._card_to_play(["48342", "48521"] as Array[String]), "48521", "Marilith играется до Noble (ей нужна карта в руке)")
+	check_eq(BotPlayer._card_to_play(["48636", "48342"] as Array[String]), "48342", "карта с Focus — после обычных")
+
 	# Ответы на вопросы — всегда из допустимых.
 	var st := GameSetup.new_game(["red", "blue"], 5, [], false, true, true)
 	var srv := GameServer.new(st)
@@ -4193,6 +4212,10 @@ func test_bot_player() -> void:
 	screen.size = Vector2(960, 540)
 	root.add_child(screen)
 	screen.bot_budget_ms = 0  # здесь — простой Bot-1, без потока
+	var games_dir := "user://test_bot_games/"
+	for old: String in ReplayBook.list(games_dir):
+		ReplayBook.erase(old, games_dir)
+	screen.bot_games_dir = games_dir
 	var steps := 0
 	var seen_viewers := {}
 	while steps < 3000 and not screen.server.state.game_over:
@@ -4206,6 +4229,14 @@ func test_bot_player() -> void:
 	check(screen.server.state.game_over, "хотсит с ботами доигран (за человека — тоже бот)")
 	check_eq(seen_viewers.keys(), ["red"], "экран всё время показывает партию глазами человека")
 	check(screen._replay_log.size() > 100, "ходы ботов пишутся в журнал партии (для реплея и графиков)")
+	screen._collect_hotseat_stats()
+	var saved := ReplayBook.list(games_dir)
+	check_eq(saved.size(), 1, "партия против ботов сохранена для разбора (Bot-8)")
+	if saved.size() == 1:
+		var rep := ReplayBook.load_replay(saved[0], games_dir)
+		check_eq((rep["header"] as Dictionary).get("bots", []), ["blue", "green"], "в записи помечено, кто боты")
+		var again := ReplayBook.rebuild(rep)
+		check(again != null and again.state.game_over, "запись партии с ботами переигрывается до конца")
 	screen.queue_free()
 
 	# Бот-искатель думает в отдельном потоке: пока думает — хода нет, потом
@@ -4214,6 +4245,7 @@ func test_bot_player() -> void:
 	think.size = Vector2(960, 540)
 	root.add_child(think)
 	think.bot_budget_ms = 20
+	think.bot_games_dir = games_dir
 	var bot_moves := 0
 	var thought_in_thread := false
 	var t_steps := 0

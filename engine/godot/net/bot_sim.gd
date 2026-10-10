@@ -104,8 +104,8 @@ static func value(sim: GameServer, me: String) -> float:
 	return 1.0 / (1.0 + exp(-ev / 10.0))
 
 
-## Сила колоды против соперников, в VP-эквиваленте. Карта даёт примерно
-## 1 + цена/2 ресурса (Noble — 1 Influence, карта за 4 — около 3 ресурсов);
+## Сила колоды против соперников, в VP-эквиваленте. Карта даёт
+## BotPlayer.strength ресурсов (замер Bot-8; раньше 1 + цена/2);
 ## за ход тянется 5 карт; ресурс за ход стоит W_RESOURCE VP за круг до
 ## конца партии. Без этого поиск не видел пользы от покупки сильной карты,
 ## пока её не вытянули, и от чистки колоды.
@@ -114,8 +114,9 @@ static func deck_edge(state: GameState, me: String, h: float) -> float:
 	for pid: String in state.turn_order:
 		var cards: Array[String] = state.players[pid].deck.cards_outside_inner_circle()
 		var sum := 0.0
+		var measured := BotPlayer.CARD_STRENGTH > 0.0  # Bot-8: замеренная сила карт
 		for cid: String in cards:
-			sum += 1.0 + 0.5 * float(maxi(0, CardLibrary.card_cost(cid)))
+			sum += BotPlayer.strength(cid) if measured else 1.0 + 0.5 * float(maxi(0, CardLibrary.card_cost(cid)))
 		per_turn[pid] = GameSetup.HAND_SIZE * sum / maxf(1.0, float(cards.size()))
 	var best := -INF
 	var total := 0.0

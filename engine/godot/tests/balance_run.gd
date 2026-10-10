@@ -43,7 +43,7 @@ func _worker(args: Dictionary) -> void:
 	if args.has("leader"):
 		BotPlayer.W_LEADER = float(args["leader"])
 	for s in range(int(args["from"]), int(args["from"]) + int(args["count"])):
-		var state := GameSetup.new_game(ids, s, [], false, true, true, String(args["mode"]))
+		var state := GameSetup.new_game(ids, s, _forced_decks(args, s), false, true, true, String(args["mode"]))
 		var server := GameServer.new(state, true, true, args["bot"] == "search")
 		server.build_views = false
 		var bought := {}
@@ -274,10 +274,26 @@ static func _wilson(wins: float, total: float) -> Array:
 	return [maxf(0.0, centre - half), minf(1.0, centre + half)]
 
 
+## must=<полуколода>: она есть в каждой партии, остальные случайные из прочих
+## (вдвое больше партий с ней — для медленного бота). Пусто — обычный выбор.
+static func _forced_decks(args: Dictionary, s: int) -> Array[String]:
+	var chosen: Array[String] = []
+	if not args.has("must"):
+		return chosen
+	var rng := RandomNumberGenerator.new()
+	rng.seed = s * 7919 + 13
+	var pool := GameSetup.available_half_decks()
+	pool.erase(String(args["must"]))
+	Deck.shuffle_array(pool, rng)
+	chosen.append(String(args["must"]))
+	chosen.append_array(pool.slice(0, GameSetup.mode_deck_count(String(args["mode"])) - 1))
+	return chosen
+
+
 ## Настройки проверки гипотез, которые подборщик передаёт рабочим процессам.
 static func _pass_through(args: Dictionary) -> Array:
 	var out := []
-	for key: String in ["leader", "all_decks"]:
+	for key: String in ["leader", "all_decks", "must"]:
 		if args.has(key):
 			out.append("%s=%s" % [key, args[key]])
 	return out

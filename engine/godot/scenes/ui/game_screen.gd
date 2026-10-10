@@ -1235,6 +1235,25 @@ func _collect_hotseat_stats() -> void:
 	var header := ReplayBook.header_for(server.state, _replay_ids, _replay_seed, _replay_mode,
 		server.with_mulligan, PlayerProfile.seats, "", "", _replay_log)
 	_set_stats(ReplayStats.collect({"header": header, "intents": _replay_log}))
+	_save_bot_game()
+
+
+## Партия против ботов — в user://bot_games/ (реплей ReplayBook): по ним
+## разбираются ошибки ботов. Пишется в конце партии и при выходе из неё.
+var bot_games_dir := "user://bot_games/"
+var _bot_game_file := ""
+
+
+func _save_bot_game() -> void:
+	if bots.is_empty() or _replay_ids.is_empty() or _replay_log.is_empty() or server == null:
+		return
+	var header := ReplayBook.header_for(server.state, _replay_ids, _replay_seed, _replay_mode,
+		server.with_mulligan, {}, viewer_id, "", _replay_log)
+	header["bots"] = bots.duplicate()
+	header["bot_budget_ms"] = bot_budget_ms
+	if _bot_game_file != "":
+		ReplayBook.erase(_bot_game_file, bot_games_dir)
+	_bot_game_file = ReplayBook.save(header, _replay_log, bot_games_dir)
 
 
 func _on_replay_received(replay: Dictionary) -> void:
@@ -1766,6 +1785,7 @@ func _exit_tree() -> void:
 	if _bot_thread != null:
 		_bot_thread.wait_to_finish()
 		_bot_thread = null
+	_save_bot_game()
 	# Вышли из партии — музыка главного меню, без приглушения.
 	Music.set_mood("menu")
 	Music.set_muffled(false)

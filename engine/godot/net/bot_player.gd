@@ -14,8 +14,9 @@ extends RefCounted
 ##   2. тратит Power: для каждого возможного действия (Deploy, Assassinate,
 ##      возврат шпиона) на минуту меняет доску, оценивает позицию и
 ##      возвращает доску обратно; берёт лучшее по приросту оценки на 1 Power;
-##   3. тратит Influence на карту с лучшей ценностью (сила карты в начале
-##      партии, VP карты в конце);
+##   3. тратит Influence на карту с лучшей ценностью: VP карты плюс (Bot-8)
+##      её замеренная сила сверх средней карты своей колоды, умноженная на
+##      число будущих розыгрышей — слабая карта колоду портит;
 ##   4. заканчивает ход.
 ## Вопросы карт решает так же: цели на доске — пробной расстановкой и
 ## оценкой, карты — по ценности, "Choose one" — по словам варианта.
@@ -41,6 +42,11 @@ static var END_LEADER := 2.0        # лидеру — за запуск кон�
 static var END_TRAILER := 5.0       # отстающему — штраф за запуск конца партии
 static var TROOPS_PER_ROUND := 3.0  # для оценки оставшихся кругов: войск за круг
 static var BUYS_PER_ROUND := 1.5    # и покупок за круг на игрока
+## Bot-8: ценность покупки по силе карты (data/bot/card_strength.json — что
+## карта реально даёт за розыгрыш, в ресурсах; Noble = 1) против средней силы
+## колоды, умноженной на число будущих розыгрышей. 0 — по-старому, по цене.
+static var CARD_STRENGTH := 1.0
+static var RES_VP := 0.8            # 1 ресурс за розыгрыш ~ столько VP к концу партии
 
 ## Все подбираемые веса по именам (для подборщика и его отчёта).
 static func get_weights() -> Dictionary:
@@ -50,6 +56,7 @@ static func get_weights() -> Dictionary:
 		"BUY_INNER_VP": BUY_INNER_VP, "ASPECT_BONUS": ASPECT_BONUS, "PROMOTE_KEEP": PROMOTE_KEEP,
 		"END_LEADER": END_LEADER, "END_TRAILER": END_TRAILER,
 		"TROOPS_PER_ROUND": TROOPS_PER_ROUND, "BUYS_PER_ROUND": BUYS_PER_ROUND,
+		"CARD_STRENGTH": CARD_STRENGTH, "RES_VP": RES_VP,
 	}
 
 
@@ -68,6 +75,43 @@ static func set_weights(w: Dictionary) -> void:
 	END_TRAILER = float(w.get("END_TRAILER", END_TRAILER))
 	TROOPS_PER_ROUND = float(w.get("TROOPS_PER_ROUND", TROOPS_PER_ROUND))
 	BUYS_PER_ROUND = float(w.get("BUYS_PER_ROUND", BUYS_PER_ROUND))
+	CARD_STRENGTH = float(w.get("CARD_STRENGTH", CARD_STRENGTH))
+	RES_VP = float(w.get("RES_VP", RES_VP))
+
+
+const STRENGTH_PATH := "res://data/bot/card_strength.json"
+## card_id -> сила в ресурсах за розыгрыш (tests/card_strength.gd). Грузится
+## при загрузке класса, до потоков поиска.
+static var _strength: Dictionary = _load_strength()
+
+
+static func _load_strength() -> Dictionary:
+	var out := {}
+	if not FileAccess.file_exists(STRENGTH_PATH):
+		return out
+	var data = JSON.parse_string(FileAccess.get_file_as_string(STRENGTH_PATH))
+	if data is Dictionary:
+		var cards: Dictionary = data.get("cards", {})
+		for cid: String in cards.keys():
+			out[cid] = float((cards[cid] as Dictionary).get("r", 1.0))
+	return out
+
+
+## Сила карты в ресурсах за розыгрыш (Noble = Soldier = 1). Карты без замера —
+## по цене, как прежде считала оценка колоды.
+static func strength(cid: String) -> float:
+	if _strength.has(cid):
+		return float(_strength[cid])
+	return 1.0 + 0.5 * float(maxi(0, CardLibrary.card_cost(cid)))
+
+
+## Средняя сила карты в колоде pid (без Внутреннего круга) и размер колоды.
+static func deck_strength(state: GameState, pid: String) -> Array:
+	var cards: Array[String] = state.players[pid].deck.cards_outside_inner_circle()
+	var sum := 0.0
+	for cid: String in cards:
+		sum += strength(cid)
+	return [sum / maxf(1.0, float(cards.size())), cards.size()]
 
 
 const OUTCAST := "48341"
@@ -190,13 +234,32 @@ static func _main_action(state: GameState, pid: String, fast: bool = false) -> I
 	return Intent.end_turn(pid)
 
 
+## Порядок розыгрыша (Bot-8): сначала карты, которым нужна другая карта в
+## руке как плата ("Devour/Discard a card in your hand ► ..." — пока есть
+## что отдать), потом добор (больше выбора), потом обычные, в конце Focus и
+## "...played this turn" (им нужны уже сыгранные карты).
 static func _card_to_play(hand: Array[String]) -> String:
-	if hand.has(OUTCAST) and hand.size() > 1:
-		return OUTCAST
+	var best := hand[0]
+	var best_rank := 99
 	for cid: String in hand:
-		if not _is_focus(cid) and cid != OUTCAST:
-			return cid
-	return hand[0]
+		var rank := _play_rank(cid, hand.size())
+		if rank < best_rank:
+			best_rank = rank
+			best = cid
+	return best
+
+
+static func _play_rank(cid: String, hand_size: int) -> int:
+	if cid == OUTCAST:
+		return 0 if hand_size > 1 else 5
+	var text := String(CardLibrary.card_data(cid).get("ability_text", "")).to_lower()
+	if text.contains("focus") or text.contains("played this turn"):
+		return 4
+	if hand_size > 1 and (text.contains("in your hand ►") or text.contains("from your hand ►")):
+		return 1
+	if text.contains("draw"):
+		return 2
+	return 3
 
 
 static func _is_focus(cid: String) -> bool:
@@ -460,8 +523,18 @@ static func card_value(cid: String, state: GameState, pid: String, ctx: Dictiona
 	var cost := float(d.get("cost")) if d.get("cost") != null else 0.0
 	var dvp := float(d.get("deck_vp")) if d.get("deck_vp") != null else 0.0
 	var ivp := float(d.get("inner_circle_vp")) if d.get("inner_circle_vp") != null else 0.0
-	var strength_w := clampf(float(ctx["h"]) / STRENGTH_ROUNDS, 0.2, 1.0)
-	var v := cost * strength_w + dvp + ivp * BUY_INNER_VP
+	var v := dvp + ivp * BUY_INNER_VP
+	if CARD_STRENGTH > 0.0:
+		# Сколько раз карта ещё сыграет (5 карт за ход из колоды n+1) и на
+		# сколько она сильнее средней карты колоды: слабая карта колоду портит.
+		if not ctx.has("deck_s"):
+			ctx["deck_s"] = deck_strength(state, pid)
+			ctx["rounds"] = rounds_left(state)
+		var ds: Array = ctx["deck_s"]
+		var plays := float(ctx["rounds"]) * GameSetup.HAND_SIZE / (float(ds[1]) + 1.0)
+		v += CARD_STRENGTH * RES_VP * (strength(cid) - float(ds[0])) * plays
+	else:
+		v += cost * clampf(float(ctx["h"]) / STRENGTH_ROUNDS, 0.2, 1.0)
 	var aspect = d.get("aspect")
 	if aspect != null and cost > 0.0:
 		var same := 0
@@ -744,6 +817,20 @@ static func horizon(state: GameState) -> float:
 	var by_troops := float(min_barracks) / TROOPS_PER_ROUND
 	var by_market := float(state.market.deck_size()) / (BUYS_PER_ROUND * float(maxi(1, n)))
 	return clampf(minf(by_troops, by_market), 0.5, 8.0)
+
+
+## То же без потолка в 8 кругов: для покупок важно, сколько раз карта ещё
+## придёт в руку до конца партии (вчетвером партия идёт ~20 кругов).
+static func rounds_left(state: GameState) -> float:
+	if state.game_end_triggered:
+		return 0.5
+	var n := state.turn_order.size()
+	var min_barracks := PlayerState.STARTING_TROOPS
+	for pid: String in state.turn_order:
+		min_barracks = mini(min_barracks, state.players[pid].troops_in_barracks)
+	var by_troops := float(min_barracks) / TROOPS_PER_ROUND
+	var by_market := float(state.market.deck_size()) / (BUYS_PER_ROUND * float(maxi(1, n)))
+	return clampf(minf(by_troops, by_market), 0.5, 30.0)
 
 
 ## Оценка позиции глазами ctx.me (больше — лучше). extra_trophies: pid ->

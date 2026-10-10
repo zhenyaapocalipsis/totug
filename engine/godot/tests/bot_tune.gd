@@ -30,6 +30,8 @@ func _initialize() -> void:
 			args[a.substr(0, i)] = a.substr(i + 1)
 	if args["mode"] == "worker":
 		_worker(args)
+	elif args["mode"] == "match":
+		_one_match(args)
 	else:
 		_driver(args)
 	quit(0)
@@ -117,6 +119,30 @@ func _driver(args: Dictionary) -> void:
 		step *= 0.6
 		_save(current)
 	_say("\nитог: %s" % JSON.stringify(current))
+	_log.close()
+
+
+## Один матч: текущие веса с правками a против текущих с правками b.
+##   ... -- mode=match a=CARD_STRENGTH:1 b=CARD_STRENGTH:0 seeds=200 players=2
+## (правки через запятую: a=CARD_STRENGTH:1,RES_VP:0.6)
+func _one_match(args: Dictionary) -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
+	_log = FileAccess.open(DIR + "/match.txt", FileAccess.WRITE)
+	var sets := []
+	for key: String in ["a", "b"]:
+		var w := BotPlayer.get_weights()
+		for pair: String in String(args.get(key, "")).split(",", false):
+			var kv := pair.split(":")
+			w[kv[0]] = float(kv[1])
+		sets.append(w)
+	var t0 := Time.get_ticks_msec()
+	var r := _match(sets[0], sets[1], int(args["seed"]), int(args["seeds"]), args)
+	var games: float = maxf(1.0, r["games"])
+	var p: float = r["wins"] / games
+	_say("%s против %s, %d игроков: %d партий за %.0f с — побед A %.1f%% (±%.1f), VP %+.1f" % [
+		args.get("a", ""), args.get("b", ""), int(args["players"]), int(r["games"]),
+		(Time.get_ticks_msec() - t0) / 1000.0, 100.0 * p, 196.0 * sqrt(p * (1.0 - p) / games),
+		r["margin"] / games])
 	_log.close()
 
 
