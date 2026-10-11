@@ -64,6 +64,10 @@ var _board_data: Dictionary = {}
 ## Друзья: последний снимок и переписка у каждой связи.
 var _friends: Dictionary = {}
 var _threads: Dictionary = {}
+## Зритель: от чьего лица, первый срез, дошёл ли конец партии.
+var _watch_seat := ""
+var _watch_view: Dictionary = {}
+var _watch_over := false
 var _answered_at := -1
 var _spoof_sent := false
 var _turn_player := ""
@@ -226,7 +230,8 @@ func _process(delta: float) -> bool:
 				for p: NetSession in [players[0], _watcher]:
 					_friends[p] = {}
 					_threads[p] = []
-					p.friends_received.connect(func(d: Dictionary): _friends[p] = d)
+					p.friends_received.connect(func(d: Dictionary):
+						_friends[p] = d)
 					p.thread_received.connect(func(_n: String, m: Array): _threads[p] = m)
 				players[0].friends_action("add", ["watcher wu"])
 				_step = "friends_request"
@@ -266,10 +271,29 @@ func _process(delta: float) -> bool:
 			if not (_friends[players[0]] as Dictionary).is_empty():
 				check(String(_friends[players[0]]["note"]).contains("lobby first"),
 					"[friends] из начатой партии в лобби не позвать: %s" % _friends[players[0]]["note"])
-				_watcher.close()
+				# Друг смотрит партию: от лица игрока, без чьих-либо рук.
+				_watcher.watch_started.connect(func(s: String, _b: Dictionary, v: Dictionary):
+					_watch_seat = s
+					_watch_view = v)
+				_watcher.result_received.connect(func(_e: int, _ev: Array, v: Dictionary):
+					if bool(v.get("game_over", false)):
+						_watch_over = true)
+				_watcher.friends_action("watch", [players[0].profile["name"]])
+				_step = "watch_start"
+		"watch_start":
+			if _watch_seat != "":
+				check(_watch_seat == players[0].seat and _watcher.seat == "", "[watch] зритель смотрит от лица друга")
+				var hands := 0
+				for pv: Dictionary in (_watch_view["players"] as Dictionary).values():
+					hands += 1 if pv.has("hand") or pv.has("deck_cards") else 0
+				check(hands == 0 and (_watch_view.get("legal", {}) as Dictionary).is_empty(),
+					"[watch] зрителю не видно ни рук, ни колод, ходить нечем")
+				check(server.rooms.values()[0].watchers.size() == 1, "[watch] сервер знает зрителя")
 				_end_game()
 		"rated":
-			if ratings.has(players[0]) and ratings.has(players[1]):
+			if ratings.has(players[0]) and ratings.has(players[1]) and _watch_over:
+				check(true, "[watch] конец партии дошёл до зрителя")
+				_watcher.close()
 				var r: Dictionary = ratings[players[0]]
 				check(r == ratings[players[1]], "[server] рейтинг пришёл обоим одинаковый")
 				check(r.has(players[0].seat) and r.has(players[1].seat), "[server] рейтинг обоих мест")
@@ -309,6 +333,8 @@ func _process(delta: float) -> bool:
 					"[replay] реплей партии после перезапуска сервера пересобирается до той же доски")
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+				for extra in ["_friends", "_records"]:
+					DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH.get_basename() + extra + ".json"))
 				_start_server_four()
 		"server4_wait_code":
 			if players[0].room_code != "":
@@ -478,6 +504,8 @@ func _start_match() -> void:
 	# Своя книга рейтингов и имён, как у server4 (имена проверяются и в очереди).
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	for extra in ["_friends", "_records"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH.get_basename() + extra + ".json"))
 	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(MATCH_PORT, true) == OK, "[match] сервер открыл порт")
@@ -508,6 +536,8 @@ func _start_pause() -> void:
 	server = _session()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	for extra in ["_friends", "_records"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH.get_basename() + extra + ".json"))
 	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	server.abandon_seconds = 1.5
@@ -590,6 +620,8 @@ func _start_server_four() -> void:
 	# книги завёл бы её там, и имена «Player N» копились бы между прогонами).
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	for extra in ["_friends", "_records"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH.get_basename() + extra + ".json"))
 	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(SERVER4_PORT, true) == OK, "[server4] сервер открыл порт")
@@ -653,6 +685,8 @@ func _start_server() -> void:
 	server = _session()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	for extra in ["_friends", "_records"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH.get_basename() + extra + ".json"))
 	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(SERVER_PORT, true) == OK, "[server] сервер открыл порт")

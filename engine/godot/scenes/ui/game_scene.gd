@@ -121,6 +121,7 @@ func _open_net() -> NetSession:
 	net.name = "Net"
 	net.profile = PlayerProfile.load_local()
 	net.invite_received.connect(_on_invite)
+	net.watch_started.connect(_start_watch)
 	get_tree().root.add_child(net)
 	return net
 
@@ -210,6 +211,24 @@ func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: 
 	add_child(screen)
 
 
-## WATCH во вкладке FRIENDS — режим зрителя (этап Spectate-1).
-func _watch_friend(_friend_name: String) -> void:
-	pass
+## WATCH во вкладке FRIENDS — режим зрителя: просим сервер по связи меню,
+## партия придёт сигналом watch_started (_start_watch).
+func _watch_friend(friend_name: String) -> void:
+	var net := get_tree().root.get_node_or_null("Net") as NetSession
+	if net != null:
+		net.friends_action("watch", [friend_name])
+
+
+## Партия друга пришла — тот же экран партии, но только смотреть (от лица
+## друга, без его руки). Выход — MAIN MENU в меню по Esc.
+func _start_watch(friend_seat: String, board: Dictionary, view: Dictionary) -> void:
+	var net: NetSession = get_tree().root.get_node("Net")
+	for child in get_children():
+		child.queue_free()
+	PlayerProfile.seats = net.profiles
+	var screen := GameScreen.new(0, [], [], GameSetup.MODE_STANDARD,
+		{"session": net, "seat": friend_seat, "board": board, "view": view, "watch": true})
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.main_menu_requested.connect(func():
+		_show_setup.call_deferred(int(Time.get_unix_time_from_system()), SetupScreen.PAGE_FRIENDS))
+	add_child(screen)

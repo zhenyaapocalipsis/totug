@@ -53,6 +53,16 @@ var cached_board: Dictionary = {}
 ## GameJournal.save() и для restore() после перезапуска сервера.
 var log: Array = []
 
+## Зрители (друзья игроков; владелец, 2026-10-11): peer id -> true. Видят только
+## открытое (StateView для "") и с задержкой в ход: шаги идущего хода копятся
+## в watch_buffer ([события, срез]) и уходят зрителям, когда ход сменился.
+## watch_view — срез на последней такой отсечке (с него начинает новый зритель),
+## watch_player — чей ход идёт за отсечкой.
+var watchers: Dictionary = {}
+var watch_buffer: Array = []
+var watch_view: Dictionary = {}
+var watch_player := ""
+
 ## Пауза: партия стоит, ходы не принимаются (NetSession._room_apply). Две
 ## причины. absent — кто отключился посреди партии: цвет -> сколько секунд
 ## его уже нет (не вернулся за NetSession.abandon_seconds — партия кончается).

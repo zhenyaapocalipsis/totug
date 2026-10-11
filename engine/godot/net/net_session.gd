@@ -62,6 +62,8 @@ signal friends_received(data: Dictionary)
 signal thread_received(friend_name: String, messages: Array)
 ## Друг зовёт в своё лобби (код комнаты).
 signal invite_received(from_name: String, code: String)
+## Смотрим партию друга: экран партии от его лица (friend_seat), без руки.
+signal watch_started(friend_seat: String, board: Dictionary, view: Dictionary)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -204,6 +206,7 @@ func _on_peer_connected(id: int) -> void:
 ## Сервер: время пауз во всех комнатах.
 func _process(delta: float) -> void:
 	if not is_host:
+		_tick_watch(delta)
 		return
 	for room: GameRoom in rooms.values():
 		# Настоящее время: скорость анимаций (Engine.time_scale) паузу не торопит.
@@ -777,6 +780,8 @@ func _refused(reason: String) -> void:
 func _on_peer_disconnected(id: int) -> void:
 	_said.erase(id)
 	peer_account.erase(id)
+	for room: GameRoom in rooms.values():
+		room.watchers.erase(id)
 	if queued.has(id):
 		_leave_queue(id)
 		return
@@ -879,6 +884,8 @@ func _board_ready(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
 
 func _deliver(room: GameRoom, board: Dictionary, views: Dictionary) -> void:
 	room.cached_board = board
+	room.watch_view = _public_view(room)
+	room.watch_player = room.server.state.current_player()
 	_save_room(room)
 	for peer: int in room.seats:
 		_send(peer, "_start", [board, views[room.seats[peer]], room.profiles])
@@ -983,6 +990,7 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 		_send(peer, "_result", [own_err, result["events"], views[room.seats[peer]]])
 	if err != GameServer.Error.OK:
 		return
+	_feed_watchers(room, result["events"])
 	if room.server.state.game_over:
 		GameJournal.erase(room.code, saves_dir)
 		_send_replay(room)
@@ -1000,6 +1008,7 @@ func _abandon_room(room: GameRoom, pid: String) -> void:
 	var views: Dictionary = result["views"]
 	for peer: int in room.seats:
 		_send(peer, "_result", [GameServer.Error.OK, result["events"], views[room.seats[peer]]])
+	_feed_watchers(room, result["events"])
 	_broadcast_pause(room)
 	_send_replay(room)
 	_log("room %s: %s did not return, game over (not rated)" % [room.code, pid])
@@ -1350,7 +1359,90 @@ func _friends_up(version: int, key: String, action: String, args: Array) -> void
 			_send(peer, "_thread_down", [shown, book.read_thread(me, other)])
 		"invite":
 			note = _invite(peer, me, other, shown)
+		"watch":
+			note = _start_watching(peer, me, other, shown)
+			if note == "":
+				return
 	_send(peer, "_friends_down", [friends_data(me, note)])
+
+
+# --- зрители (владелец, 2026-10-11) -----------------------------------------
+
+## Срез партии для зрителя: только открытое (ничьих рук, сбросов, колод).
+func _public_view(room: GameRoom) -> Dictionary:
+	return StateView.for_player_with_pending(room.server.state, "", room.server.resolver.pending)
+
+
+## Смотреть партию друга. "" — пошла партия зрителю, иначе — почему нет.
+func _start_watching(peer: int, me: String, other: String, shown: String) -> String:
+	if not ratings.friends.are_friends(me, other):
+		return "%s is not your friend." % shown
+	if _room_of(peer) != null:
+		return "Leave your lobby first."
+	var status := status_of(other)
+	var room: GameRoom = rooms.get(String(status[1]))
+	if status[0] != "IN GAME" or room == null:
+		return "%s is not in a game now." % shown
+	var friend_seat := ""
+	for pid: String in room.accounts:
+		if room.accounts[pid] == other:
+			friend_seat = pid
+	if room.watch_view.is_empty():
+		room.watch_view = _public_view(room)
+		room.watch_player = room.server.state.current_player()
+	room.watchers[peer] = true
+	_send(peer, "_watch_start", [friend_seat, room.cached_board, room.watch_view, room.profiles])
+	_log("room %s: %s watches" % [room.code, ratings.friends.name_of(me)])
+	return ""
+
+
+## После каждого принятого хода: шаг — в копилку; ход сменился (или партия
+## кончилась) — всё накопленное уходит зрителям, отсечка сдвигается.
+func _feed_watchers(room: GameRoom, events: Array) -> void:
+	var state := room.server.state
+	room.watch_buffer.append([events, _public_view(room)])
+	var now := state.current_player()
+	if not state.game_over and now == room.watch_player:
+		return
+	for peer: int in room.watchers:
+		_send(peer, "_watch_feed", [room.watch_buffer])
+	room.watch_view = (room.watch_buffer.back() as Array)[1]
+	room.watch_buffer = []
+	room.watch_player = now
+
+
+## Клиент-зритель: шаги, пришедшие пачкой за ход, — показываем по одному.
+var _watch_queue: Array = []
+var _watch_wait := 0.0
+const WATCH_STEP := 0.9
+const WATCH_STEP_FAST := 0.35
+
+
+@rpc("authority", "call_remote", "reliable")
+func _watch_start(friend_seat: String, board: Dictionary, view: Dictionary, seat_profiles: Dictionary) -> void:
+	seat = ""
+	started = true
+	profiles = seat_profiles.duplicate(true)
+	_watch_queue.clear()
+	watch_started.emit(friend_seat, board, view)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _watch_feed(steps: Array) -> void:
+	_watch_queue.append_array(steps)
+
+
+## Клиент-зритель: следующий шаг из очереди. Отстали больше чем на десяток
+## шагов — играем быстрее, чтобы не уползать от партии.
+func _tick_watch(delta: float) -> void:
+	if _watch_queue.is_empty():
+		return
+	_watch_wait -= delta
+	if _watch_wait > 0.0:
+		return
+	_watch_wait = WATCH_STEP_FAST if _watch_queue.size() > 10 else WATCH_STEP
+	var step: Array = _watch_queue.pop_front()
+	result_received.emit(GameServer.Error.OK, step[0], step[1])
 
 
 ## Позвать друга в свою комнату (её лобби ещё не началось).

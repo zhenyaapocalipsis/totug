@@ -95,7 +95,6 @@ func _init(session: NetSession = null) -> void:
 	_actions.add_child(_invite)
 	_watch = _button("WATCH", 70, func(): watch_requested.emit(_selected))
 	_actions.add_child(_watch)
-	_watch.visible = false  # режим зрителя — следующим этапом
 	_actions.add_child(_button("REMOVE", 70, func():
 		net.friends_action("remove", [_selected])
 		_selected = ""))

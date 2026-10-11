@@ -121,6 +121,9 @@ var net: NetSession
 ## Просмотр реплея (Replay-2): партию двигает полоса ReplayBar, щелчки по
 ## игре ничего не делают, таймеров нет. null — обычная партия.
 var replay_bar: ReplayBar
+## Зритель чужой сетевой партии (друг; NetSession.watch_started): только
+## смотрит — без руки, без ходов и вопросов, с задержкой в ход.
+var watching := false
 ## Экран STATS реплея (Replay-3); собирается при первом открытии.
 var stats_panel: ReplayStatsPanel
 ## Статистика окончившейся партии (ReplayStats.collect); пусто, пока не готова.
@@ -340,6 +343,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 	if not online.is_empty():
 		net = online["session"]
 		viewer_id = String(online["seat"])
+		watching = bool(online.get("watch", false))
 		board_data = online["board"]
 		net.result_received.connect(_on_result)
 		net.player_left.connect(func(who: String):
@@ -358,7 +362,10 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		_build_layout()
 		refresh(online["view"])
 		_on_pause_changed(net.pause_status)
-		_note("Online game started. You play %s." % EventLogPanel.player_name(viewer_id))
+		if watching:
+			_note("Watching %s. One turn behind, hands hidden. Esc: leave." % EventLogPanel.player_name(viewer_id))
+		else:
+			_note("Online game started. You play %s." % EventLogPanel.player_name(viewer_id))
 		return
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
@@ -1123,7 +1130,7 @@ static func _place(control: Control, x: float, y: float, width: float, height: f
 ## журнале, а не глотаем: если UI предложил недопустимое действие, это его
 ## баг, и он должен быть виден.
 func send(intent: Intent) -> void:
-	if replay_bar != null:
+	if replay_bar != null or watching:
 		return
 	if net != null:
 		# Ответ придёт позже сигналом result_received -> _on_result.
@@ -1183,7 +1190,7 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 ## доску, а ответ всё равно придёт следующим шагом.
 func _show_decision(view: Dictionary) -> void:
 	_decision_dialog.update_from_view(view, viewer_id)
-	if _showcase.is_busy() or replay_bar != null:
+	if _showcase.is_busy() or replay_bar != null or watching:
 		_decision_dialog.visible = false
 
 
@@ -1827,8 +1834,8 @@ func _process(delta: float) -> void:
 	_tick_space_hold(real)
 	_tick_tab(real)
 	_tick_pause(real)
-	if replay_bar != null:
-		# В реплее времени хода нет — партия идёт сама.
+	if replay_bar != null or watching:
+		# В реплее времени хода нет — партия идёт сама; зритель отстаёт на ход.
 		_timer_label.text = "--:--"
 		return
 	if not bots.is_empty() and not bool(_view["game_over"]):
@@ -2037,8 +2044,8 @@ func _refresh_turn(view: Dictionary) -> void:
 		% EventLogPanel.player_name(current)
 	# Сетевая партия, ход чужой: кого ждём — полоской, сама кнопка серая
 	# (решение владельца, 2026-09-27).
-	if replay_bar != null:
-		_end_label.text = "REPLAY"
+	if replay_bar != null or watching:
+		_end_label.text = "REPLAY" if replay_bar != null else "WATCHING"
 		_end_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		return
 	if net != null and current != viewer_id:
@@ -2061,29 +2068,30 @@ func _announce_turn(view: Dictionary) -> void:
 	if not _is_starting_pick(view) and current != _banner_player:
 		_banner_player = current
 		Sfx.reset_combo()
-		if net == null or current == viewer_id:
-			var text := "YOUR TURN" if net != null \
+		if net == null or watching or current == viewer_id:
+			var text := "YOUR TURN" if net != null and not watching \
 				else "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
 			# Отложенно: в самом первом срезе экран ещё не разложен, и центра
 			# доски пока нет.
 			_show_banner.call_deferred(text, EventLogPanel.player_color(current))
 			Sfx.play("turn")
-			_request_attention()
+			if not watching:
+				_request_attention()
 	var pending: Dictionary = view.get("pending_decision", {})
 	var decider := String(pending.get("player_id", ""))
 	var key := "%s|%s" % [decider, String(pending.get("prompt", ""))]
-	if not pending.is_empty() and decider == viewer_id \
+	if not pending.is_empty() and decider == viewer_id and not watching \
 			and current != viewer_id and key != _attention_key:
 		_request_attention()
 	# Чужая карта заставляет отвечать (сброс, Ambassador...): звук, баннер
 	# «FORCED BY RED» и рамка экрана цветом отвечающего, пока он не ответит
 	# (владелец, 2026-10-11: это было незаметно). В сети — только ему самому,
 	# в хотсите — всем: за экран садится он.
-	var forced := is_forced(view) and (net == null or decider == viewer_id)
+	var forced := is_forced(view) and (net == null or watching or decider == viewer_id)
 	if forced and key != _attention_key:
 		Sfx.play("forced")
 		var by := EventLogPanel.player_name(current).to_upper()
-		var text := "FORCED BY %s" % by if net != null \
+		var text := "FORCED BY %s" % by if net != null and not watching \
 			else "%s: FORCED BY %s" % [EventLogPanel.player_name(decider).to_upper(), by]
 		_show_banner.call_deferred(text, EventLogPanel.player_color(decider))
 	_forced_glow.set_active(forced, EventLogPanel.player_color(decider))
