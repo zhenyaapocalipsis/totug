@@ -187,7 +187,7 @@
       }
     },
     "shadow": {
-      "name": "Shadow Isles Half-Deck",
+      "name": "Ravenloft Half-Deck",
       "total": 45,
       "wip": true,
       "copies": {
@@ -217,7 +217,7 @@
       }
     },
     "piltover": {
-      "name": "Piltover & Zaun Half-Deck",
+      "name": "Waterdeep Half-Deck",
       "total": 42,
       "wip": true,
       "copies": {

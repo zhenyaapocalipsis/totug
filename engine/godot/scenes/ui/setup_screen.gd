@@ -54,8 +54,8 @@ const MODE_NOTES := {
 ## Колоды New Era на кнопках переключателя.
 const NEW_ERA_TITLES := {
 	"celestial": "CELESTIAL",
-	"shadow": "SHADOW",
-	"piltover": "PILTOVER",
+	"shadow": "RAVENLOFT",
+	"piltover": "WATERDEEP",
 }
 
 

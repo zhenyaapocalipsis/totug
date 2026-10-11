@@ -4972,7 +4972,7 @@ func test_piltover_zaun() -> void:
 	check_eq(deck.size(), 42, "Piltover & Zaun: 42 карты (копии по кружкам на картах мода)")
 	check(not GameSetup.available_half_decks().has("piltover"), "колода пока не в обычном выборе (wip)")
 	for cid: String in ["49200", "49211", "49220"]:
-		check(CardLibrary.card_data(cid).get("type") == "PILTOVER", "%s — карта Piltover & Zaun" % cid)
+		check(CardLibrary.card_data(cid).get("type") == "WATERDEEP", "%s — карта Waterdeep (бывшая Piltover & Zaun)" % cid)
 
 	# режим NEW ERA: пара колод выбирается, старая запись "newera" = прежняя пара
 	check_eq(GameSetup.new_era_pair("newera"), GameSetup.NEW_ERA_DEFAULT, "newera — Celestial + Shadow Isles")
@@ -5179,7 +5179,7 @@ func test_shadow_isles() -> void:
 	check_eq(deck.size(), 45, "Shadow Isles: 45 карт в полуколоде")
 	check(not GameSetup.available_half_decks().has("shadow"), "колода пока не в обычном выборе (wip)")
 	for cid: String in ["49100", "49113", "49123", "49124"]:
-		check(CardLibrary.card_data(cid).get("type") == "SHADOW", "%s — карта Shadow Isles" % cid)
+		check(CardLibrary.card_data(cid).get("type") == "RAVENLOFT", "%s — карта Ravenloft (бывшая Shadow Isles)" % cid)
 
 	var outcast := ShadowCards.OUTCAST
 	var state := _build_rich_state(11)

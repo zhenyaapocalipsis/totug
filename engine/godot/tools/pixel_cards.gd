@@ -464,8 +464,8 @@ func set_name(card_id: int, type: String) -> String:
 		485: return "DEMONS"
 		486: return "ELEMENTAL"
 		490: return "CELESTIAL"
-		491: return "SHADOW ISLES"
-		492: return "PILTOVER & ZAUN"
+		491: return "RAVENLOFT"
+		492: return "WATERDEEP"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"
