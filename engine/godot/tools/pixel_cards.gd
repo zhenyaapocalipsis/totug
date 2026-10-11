@@ -329,6 +329,9 @@ func _init() -> void:
 	if OS.get_cmdline_user_args().has("mini"):
 		render_mini_preview(all)
 		return
+	if OS.get_cmdline_user_args().has("copies"):
+		patch_footers(all)
+		return
 
 	# One layout for the whole set: the text box fits the longest card text.
 	var max_text_px := 0
@@ -448,13 +451,59 @@ func render(c: Dictionary, H: int, text_top: int, text_h: int) -> Image:
 			y += LINE_H
 		y += PARA_GAP
 
-	# footer: set name + VP
+	draw_footer(c, H)
+	return img
+
+
+## Нижняя строка: полуколода, число её копий в полуколоде (владелец,
+## 2026-10-11: "3 COPIES"; у стартовых и карт запаса копий нет) и VP справа.
+func draw_footer(c: Dictionary, H: int) -> void:
 	var by := H - 19
+	rect(2, by, W - 4, 17, C_FRAME)
+	var card_id := int(c["card_id"])
 	# Плашки VP такие же, как на мелкой карте (решение владельца, 2026-09-24).
 	var ic_x := mini_vp_badge(W - 7, by + 3, str(int(c["inner_circle_vp"])), C_IC_HI, C_LIGHT)
 	mini_vp_badge(ic_x - 1, by + 3, str(int(c["deck_vp"])), C_PARCH, C_INK)
-	text(9, by + 4, set_name(card_id, sv(c["type"])), C_GREY, 1)
-	return img
+	var set_str := set_name(card_id, sv(c["type"]))
+	text(9, by + 4, set_str, C_GREY, 1)
+	var n := int(copies_of().get(str(card_id), 0))
+	if n > 0:
+		text(9 + text_width(set_str, 1) + 8, by + 4, ("%d COPIES" if n > 1 else "%d COPY") % n, C_LIGHT, 1, C_OUTLINE)
+
+
+var _copies := {}
+
+## card_id -> копий в полуколоде (data/cards/half_decks.json).
+func copies_of() -> Dictionary:
+	if _copies.is_empty():
+		var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ROOT + "engine/godot/data/cards/half_decks.json"))
+		for deck: Dictionary in (data["half_decks"] as Dictionary).values():
+			for id: String in (deck.get("copies", {}) as Dictionary):
+				_copies[id] = int(deck["copies"][id])
+	return _copies
+
+
+## "-- copies": перерисовать только нижнюю строку у готовых больших карт
+## (assets/cards_pixel и альт-арты assets/cards_alt) — арты не трогаются.
+func patch_footers(all: Array) -> void:
+	var by_id := {}
+	for c: Dictionary in all:
+		by_id[int(c["card_id"])] = c
+	var n := 0
+	for dir: String in [OUT, ROOT + "engine/godot/assets/cards_alt/"]:
+		for f: String in DirAccess.get_files_at(dir):
+			if f.get_extension() != "png":
+				continue
+			var id := int(f.get_basename().get_slice("_", 0))
+			if not by_id.has(id):
+				continue
+			img = Image.load_from_file(dir + f)
+			img.convert(Image.FORMAT_RGBA8)
+			draw_footer(by_id[id], img.get_height())
+			img.save_png(dir + f)
+			n += 1
+	print("footers patched: ", n)
+	quit()
 
 
 func set_name(card_id: int, type: String) -> String:
