@@ -1073,6 +1073,11 @@ func test_rating() -> void:
 	check(int(lobby["red"]["delta"]) == 0 and int(lobby["red"]["rating"]) == 1016 and lobby["red"]["unrated"],
 		"партия из лобби: рейтинг не меняется")
 	check_eq(book.stats_of(a), {"rating": 1016, "games": 1, "wins": 1}, "партия из лобби не считается в партиях и победах")
+	var board := book.leaderboard(1, b)
+	check(int(board["registered"]) == 2 and (board["top"] as Array).size() == 1
+		and board["top"][0]["name"] == "Ann" and not board["top"][0]["me"],
+		"таблица лидеров: первым — больший рейтинг, тиранов двое")
+	check_eq(int(board["mine"]["rank"]), 2, "таблица лидеров: своё место за пределами показанных")
 
 	# Звания и история партий в профиле.
 	check_eq(PlayerProfile.rank_title(-1), "UNRANKED", "без рейтинга — без звания")

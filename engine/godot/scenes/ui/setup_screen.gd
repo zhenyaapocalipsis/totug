@@ -4,13 +4,15 @@ extends Control
 ## Главное меню по образцу Dota 2 (макет владельца, 2026-10-06):
 ##
 ##   сверху полоса с названием игры;
-##   под ней строка кнопок PROFILE, PLAY, SETTINGS, EXIT;
+##   под ней строка кнопок PROFILE, PLAY, LEADERBOARD, SETTINGS, EXIT;
 ##   ниже окно с тем, что открыла кнопка:
 ##     PROFILE  — профиль (ProfileScreen): столбец STATS / EMBLEM / CHAT /
 ##                COLLECTION слева;
 ##     PLAY     — столбец ONLINE / LOBBY / HOTSEAT / HOW TO PLAY слева, большая
 ##                кнопка в правом нижнем углу (SEARCH, CREATE ROOM / HOST, JOIN,
 ##                START); HOW TO PLAY — само обучение прямо в окне;
+##     LEADERBOARD — первые 100 по рейтингу, тираны, онлайн, в партиях
+##                (LeaderboardPage, данные по связи меню — presence);
 ##     SETTINGS — звук, экран, клавиши, игровые мелочи (SettingsPanel);
 ##   EXIT закрывает игру.
 ##
@@ -53,8 +55,9 @@ const MODE_NOTES := {
 ## Вкладки (кнопки под названием).
 const PAGE_PROFILE := "profile"
 const PAGE_PLAY := "play"
+const PAGE_LEADERBOARD := "leaderboard"
 const PAGE_SETTINGS := "settings"
-const TABS: Array[String] = [PAGE_PROFILE, PAGE_PLAY, PAGE_SETTINGS]
+const TABS: Array[String] = [PAGE_PROFILE, PAGE_PLAY, PAGE_LEADERBOARD, PAGE_SETTINGS]
 ## Разделы PLAY (столбец слева в окне).
 const PAGE_ONLINE := "online"
 const PAGE_LOBBY := "lobby"
@@ -78,6 +81,7 @@ const DOT := 7.0
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const HowToPlay := preload("res://scenes/ui/how_to_play_screen.gd")
 const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
+const LeaderboardPage := preload("res://scenes/ui/leaderboard_page.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
 var _count: int = GameScreen.MIN_PLAYERS
@@ -112,6 +116,8 @@ var _action_call := Callable()
 var _mode_note: Label
 var _dots: HBoxContainer
 var _learn: HowToPlay
+## Связь меню с сервером (NetSession.watch) — для LEADERBOARD; null без сети.
+var presence: NetSession
 
 
 ## page — какую вкладку или раздел PLAY открыть (возврат из лобби).
@@ -239,6 +245,8 @@ func _show_tab(tab: String) -> void:
 				content = profile
 			PAGE_SETTINGS:
 				content = _build_settings()
+			PAGE_LEADERBOARD:
+				content = LeaderboardPage.new(presence)
 			_:
 				content = _build_play()
 		_tabs[tab] = content

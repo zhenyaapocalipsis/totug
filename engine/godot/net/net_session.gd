@@ -54,6 +54,8 @@ signal queue_changed(waiting: int, needed: int)
 ## Пауза партии изменилась: {absent: {цвет: секунд до конца партии}, by: кто
 ## поставил общую паузу, left: секунд до её конца} (GameRoom.pause_status).
 signal pause_changed(status: Dictionary)
+## Главное меню: пришла таблица лидеров (RatingBook.leaderboard + online, in_game).
+signal leaderboard_received(data: Dictionary)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -64,7 +66,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 17
+const PROTOCOL := 18
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -1194,6 +1196,58 @@ static func rate_ok(times: Array, now: int, window: int = RATE_WINDOW_MS) -> boo
 		return false
 	times.append(now)
 	return true
+
+
+# --- главное меню: онлайн и таблица лидеров ---------------------------------
+
+## Сколько строк в таблице лидеров.
+const LEADERBOARD_SIZE := 100
+
+
+## Клиент в главном меню держит лёгкую связь с сервером (владелец, 2026-10-11):
+## сервер считает его онлайн, по ней же приходит таблица лидеров. Ни в комнату,
+## ни в очередь он не встаёт; профиль после входа сервер без комнаты пропускает.
+func watch(address: String, port: int) -> int:
+	return _connect(address, port, request_leaderboard)
+
+
+func is_connected_to_server() -> bool:
+	var peer := multiplayer.multiplayer_peer
+	return peer != null and not is_host \
+		and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+
+
+func request_leaderboard() -> void:
+	if is_connected_to_server():
+		_leaderboard_up.rpc_id(1, PROTOCOL, _client_key())
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _leaderboard_up(version: int, key: String) -> void:
+	if not dedicated:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	if not _check_newcomer(peer, version):
+		return
+	_send(peer, "_leaderboard_down", [leaderboard(RatingBook.account_of(key))])
+
+
+## Сервер: таблица лидеров, сколько всего на связи (меню, поиск, лобби, партии)
+## и сколько сидят в идущих партиях.
+func leaderboard(account: String = "") -> Dictionary:
+	var data := ratings.leaderboard(LEADERBOARD_SIZE, account)
+	var in_game := 0
+	for room: GameRoom in rooms.values():
+		if room.started and room.server != null and not room.server.state.game_over:
+			in_game += room.seats.size()
+	data["online"] = multiplayer.get_peers().size()
+	data["in_game"] = in_game
+	return data
+
+
+@rpc("authority", "call_remote", "reliable")
+func _leaderboard_down(data: Dictionary) -> void:
+	leaderboard_received.emit(data)
 
 
 func _log(text: String) -> void:

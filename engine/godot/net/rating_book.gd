@@ -102,6 +102,31 @@ func stats_of(account: String) -> Dictionary:
 		"wins": int(entry.get("wins", 0))}
 
 
+## Таблица лидеров (владелец, 2026-10-11): первые n по рейтингу (при равенстве —
+## больше партий), registered — сколько тиранов сыграли хоть одну рейтинговую
+## партию (только они и есть в accounts), mine — место account, если он там есть.
+func leaderboard(n: int, account: String = "") -> Dictionary:
+	var order: Array = accounts.keys()
+	order.sort_custom(func(a: String, b: String) -> bool:
+		var ra := rating_of(a)
+		var rb := rating_of(b)
+		if ra != rb:
+			return ra > rb
+		return int(accounts[a].get("games", 0)) > int(accounts[b].get("games", 0)))
+	var top := []
+	for i in mini(n, order.size()):
+		var row := stats_of(order[i])
+		row["name"] = String((accounts[order[i]] as Dictionary).get("name", ""))
+		row["me"] = order[i] == account
+		top.append(row)
+	var out := {"top": top, "registered": order.size()}
+	var rank := order.find(account)
+	if rank >= 0:
+		out["mine"] = stats_of(account)
+		out["mine"]["rank"] = rank + 1
+	return out
+
+
 ## Изменения рейтинга по итогам партии: ratings и scores — место -> число.
 static func elo_deltas(ratings: Dictionary, scores: Dictionary) -> Dictionary:
 	var seats: Array = ratings.keys()

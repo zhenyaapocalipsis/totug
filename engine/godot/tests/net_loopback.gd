@@ -58,6 +58,9 @@ var queue_seen: Dictionary = {}
 ## Последняя пауза от сервера у каждого (NetSession.pause_changed).
 var pause_seen: Dictionary = {}
 var server: NetSession
+## Главное меню (NetSession.watch) и пришедшая ему таблица лидеров.
+var _watcher: NetSession
+var _board_data: Dictionary = {}
 var _answered_at := -1
 var _spoof_sent := false
 var _turn_player := ""
@@ -199,6 +202,23 @@ func _process(delta: float) -> bool:
 					"[server] после «перезапуска» сервера оба вернулись на свои цвета")
 				check(views[players[0]]["current_player"] == views[players[1]]["current_player"],
 					"[server] восстановленная из журнала партия согласована у обоих")
+				# Главное меню третьего игрока: связь без комнаты и таблица лидеров.
+				server.ratings.accounts["zed"] = {"name": "Zed", "rating": 1200, "games": 3, "wins": 2}
+				_watcher = _session()
+				_watcher.rating_key = "%032d" % 7
+				_watcher.leaderboard_received.connect(func(d: Dictionary): _board_data = d)
+				_watcher.watch("127.0.0.1", SERVER_PORT)
+				_step = "leaderboard_wait"
+		"leaderboard_wait":
+			if not _board_data.is_empty():
+				check(int(_board_data["online"]) == 3 and int(_board_data["in_game"]) == 2,
+					"[leaderboard] на связи трое (двое в партии, один в меню)")
+				var top: Array = _board_data["top"]
+				check(int(_board_data["registered"]) == 1 and top.size() == 1 and top[0]["name"] == "Zed"
+					and int(top[0]["rating"]) == 1200 and not _board_data.has("mine"),
+					"[leaderboard] таблица: один тиран, своего места нет")
+				server.ratings.accounts.clear()
+				_watcher.close()
 				_end_game()
 		"rated":
 			if ratings.has(players[0]) and ratings.has(players[1]):

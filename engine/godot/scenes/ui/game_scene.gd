@@ -67,6 +67,10 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	PlayerProfile.seats = {}
 	_clear()
 	var setup := SetupScreen.new(page)
+	# Пока открыто меню, игра на связи с сервером: она видна в ONLINE, по этой
+	# связи приходит LEADERBOARD (владелец, 2026-10-11).
+	setup.presence = _open_net()
+	setup.presence.watch(SetupScreen.LeaderboardPage.server_address(), NetSession.SERVER_PORT)
 	setup.started.connect(func(ids: Array[String], m: String, bots: bool): _start_game(ids, game_seed, m, bots))
 	setup.online_requested.connect(_show_lobby)
 	setup.replay_requested.connect(_start_replay)
@@ -87,10 +91,7 @@ func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STA
 	for child in get_children():
 		child.queue_free()
 	_close_net()
-	var net := NetSession.new()
-	net.name = "Net"
-	net.profile = PlayerProfile.load_local()
-	get_tree().root.add_child(net)
+	var net := _open_net()
 	net.game_started.connect(_start_net_game)
 	var lobby := LobbyScreen.new(net, kind, count, mode, address)
 	var back_page: String = SetupScreen.PAGE_ONLINE if kind in ["find", "resume"] else SetupScreen.PAGE_LOBBY
@@ -109,6 +110,15 @@ func _start_net_game(seat: String, board: Dictionary, view: Dictionary) -> void:
 	screen.main_menu_requested.connect(func():
 		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))
 	add_child(screen)
+
+
+## Новый узел связи в /root/Net (прежний должен быть уже закрыт: _close_net).
+func _open_net() -> NetSession:
+	var net := NetSession.new()
+	net.name = "Net"
+	net.profile = PlayerProfile.load_local()
+	get_tree().root.add_child(net)
+	return net
 
 
 ## Закрыть связь. Узел снимаем с дерева сразу: новый NetSession должен
