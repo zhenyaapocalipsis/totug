@@ -9,20 +9,26 @@ extends RefCounted
 ## сообщениями — явный стек сериализуется (как список кадров), обычный
 ## вызов стека GDScript — нет.
 ##
-## Кадр стека — Dictionary {"effect": CardEffect, "player_id": String}.
+## Кадр стека — Dictionary {"effect": CardEffect, "player_id": String,
+## "card": String}. card — карта, чей эффект идёт (сыгранная из руки, с рынка
+## и т.п.); кадры, положенные изнутри эффекта, наследуют её. По ней окно
+## вопроса показывает, какая карта спрашивает (PendingDecision.source_card).
 
 var _stack: Array = []
+## Карта кадра, который сейчас применяется.
+var _card := ""
 var pending: PendingDecision = null
 var events: Array[Dictionary] = []
 
 
-func push(effect: CardEffect, player_id: String) -> void:
-	_stack.append({"effect": effect, "player_id": player_id})
+func push(effect: CardEffect, player_id: String, card: String = "") -> void:
+	_stack.append({"effect": effect, "player_id": player_id, "card": card if card != "" else _card})
 
 
 ## Точка входа: положить эффект на стек и прогнать резолвер до конца или до
 ## первого запроса решения.
-func apply(effect: CardEffect, player_id: String, state: GameState) -> void:
+func apply(effect: CardEffect, player_id: String, state: GameState, card: String = "") -> void:
+	_card = card
 	push(effect, player_id)
 	_run(state)
 
@@ -32,6 +38,7 @@ func _run(state: GameState) -> void:
 		var frame: Dictionary = _stack.pop_back()
 		var effect: CardEffect = frame["effect"]
 		var player_id: String = frame["player_id"]
+		_card = String(frame.get("card", ""))
 		effect.apply(state, player_id, self)
 
 
@@ -41,6 +48,9 @@ func _run(state: GameState) -> void:
 ## же вызвал request_decision (см. предупреждение про double-push в
 ## card_effect.gd) — ЕГО САМОГО в стек класть не нужно, resume() сделает это.
 func request_decision(pd: PendingDecision) -> void:
+	if pd.source_card == "":
+		pd.source_card = _card
+	pd.frame_card = _card
 	pd.stack = _stack.duplicate()
 	_stack.clear()
 	pending = pd
@@ -54,6 +64,7 @@ func resume(state: GameState, answer) -> void:
 	pending = null
 	_stack = pd.stack.duplicate()
 	pd.target_effect.set_answer(answer)
+	_card = pd.frame_card
 	push(pd.target_effect, pd.player_id)
 	_run(state)
 

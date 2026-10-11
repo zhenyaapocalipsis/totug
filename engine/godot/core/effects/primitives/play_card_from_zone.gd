@@ -43,7 +43,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		var inner_card_effect: CardEffect = CardLibrary.get_effect(card_id)
 		var finish := _FinishPlayFromZone.new(zone, after, card_id, _chosen_index)
 		resolver.push(finish, player_id)
-		resolver.push(inner_card_effect, player_id)
+		resolver.push(inner_card_effect, player_id, card_id)
 		return
 
 	if zone == "market":

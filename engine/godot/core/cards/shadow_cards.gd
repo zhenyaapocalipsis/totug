@@ -468,18 +468,17 @@ class _HagDevour extends CardEffect:
 			if vp > 0:
 				resolver.push(GainVP.new(vp), player_id)
 			return
-		var pool: Array = d.hand + d.discard_pile
-		if pool.is_empty():
+		# Все копии, как у Matron Mother: ряд руки внизу (hand_panel.gd) золотит
+		# карты руки, а сброс ставит справа от неё — по копии на карту.
+		var options: Array = d.hand + d.discard_pile
+		if options.is_empty():
 			return
-		var options: Array = []
-		for cid in pool:
-			if not options.has(cid):
-				options.append(cid)
 		options.append("")
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
 		pd.prompt = "You may devour a card from your hand or discard pile"
 		pd.choice_type = "target_card"
+		pd.tag = "hand_or_discard"
 		pd.legal_options = options
 		pd.target_effect = self
 		resolver.request_decision(pd)
@@ -519,6 +518,7 @@ class _OpponentDevour extends CardEffect:
 		pd.player_id = victim
 		pd.prompt = "Green Hag: you may devour a card from your hand"
 		pd.choice_type = "target_card"
+		pd.tag = "hand"  # выбор в своём ряду руки, как сброс карты
 		pd.source_card = "49121"
 		pd.legal_options = d.hand.duplicate()
 		pd.legal_options.append("")

@@ -116,7 +116,7 @@ static func play_card(state: GameState, player_id: String, card_id: String, reso
 	if aspect != "":
 		state.played_aspects_this_turn.append(aspect)
 	var effect: CardEffect = ShadowCards.on_play(state, player_id, card_id, CardLibrary.get_effect(card_id))
-	resolver.apply(effect, player_id, state)
+	resolver.apply(effect, player_id, state, card_id)
 	return true
 
 

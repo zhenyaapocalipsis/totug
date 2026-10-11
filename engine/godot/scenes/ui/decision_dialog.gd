@@ -25,8 +25,12 @@ const WIDTH := 300.0
 ## Выбор карты (promote, discard, devour...) — сетка мелких лиц карт вместо
 ## строк с названиями: карту узнают по арту, а полную читают через Alt.
 const CARD_SIZE := CardView.MINI_SIZE
-const CARD_COLUMNS_MAX := 6
-const CARD_LIST_MAX_HEIGHT := 240
+## Вопрос справа от карты, которая спрашивает, переносится не шире этого;
+## если правее ещё и карты-варианты — не шире второго.
+const ASKER_TEXT_MAX_WIDTH := 420.0
+const STAIRS_TEXT_MAX_WIDTH := 220.0
+## Промежуток между частями полосы: карта | вопрос | карты-варианты.
+const HEAD_GAP := 6
 
 ## Статический снимок доски (StateView.board_snapshot) — нужен, чтобы
 ## подписывать цели по-человечески: "Caer Sidi · space 2" вместо "c_n1:C4_0_1".
@@ -36,6 +40,8 @@ var _prompt: Label
 var _who: Label
 var _options_box: VBoxContainer
 var _scroll: ScrollContainer
+var _asker_slot: HBoxContainer
+var _cards_slot: CardStairs
 var _style: StyleBoxFlat
 ## Плашка сейчас у верхнего края (выбор цели на доске) — доске нужно отступить.
 var at_top := false
@@ -89,9 +95,23 @@ func _init() -> void:
 	_dim.z_index = 999
 	add_child(_dim)
 
+	# Полоса в один ряд: карта, которая спрашивает | вопрос и кнопки под ним |
+	# карты-варианты (пустые части скрыты).
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", HEAD_GAP)
+	add_child(head)
+	_asker_slot = HBoxContainer.new()
+	_asker_slot.visible = false
+	head.add_child(_asker_slot)
+
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
-	add_child(col)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(col)
+
+	_cards_slot = CardStairs.new()
+	_cards_slot.visible = false
+	head.add_child(_cards_slot)
 
 	_who = Label.new()
 	col.add_child(_who)
@@ -153,11 +173,16 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_prompt.remove_theme_color_override("font_color")
 		_prompt.modulate.a = 1.0
 
-	for child in _options_box.get_children():
-		_options_box.remove_child(child)
-		child.queue_free()
+	for box in [_options_box, _asker_slot, _cards_slot]:
+		for child in box.get_children():
+			box.remove_child(child)
+			child.queue_free()
+	_asker_slot.visible = false
+	_cards_slot.visible = false
 	var cards_mode := false
-	var strip := false   # вопрос полосой сверху, без затемнения (confirm без карты)
+	# Вопрос полосой сверху, без затемнения: "You may..." и выбор карты
+	# (решение владельца, 2026-10-11; "Choose one" остаётся окном по центру).
+	var strip := false
 	var waiting := decider != viewer_id
 
 	if waiting:
@@ -197,32 +222,17 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 				_add_button("Skip", o)
 				make_plain(_options_box.get_child(0) as Button)
 				break
-	elif choice_type == "confirm" and CardView.pixel_texture(String(pd.get("source_card", ""))) != null:
-		# "You may..." — как выбор карты для Promote: сама карта (щелчок —
-		# "да") и под ней Skip ("нет").
-		_add_card_grid([String(pd["source_card"])], [true], decider)
-		cards_mode = true
-		_add_button("Skip", false)
-		make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
 	elif choice_type == "confirm":
-		# "You may..." без лица карты (вопрос задан уже в розыгрыше, Djinni):
-		# полоса сверху, как у цели на доске, — Yes / No в строку, доска и
-		# рука видны и не затемнены.
+		# "You may..." — слева карта, которая спрашивает (щелчок по ней —
+		# "да"), под вопросом Yes / No.
 		strip = true
-		var row := HBoxContainer.new()
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override("separation", 16)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		for o in options:
-			var b := Button.new()
-			b.text = _board_label(o, choice_type)
-			b.pressed.connect(func(): option_chosen.emit(o))
-			make_plain(b)
-			row.add_child(b)
-		_options_box.add_child(row)
+		_add_asker(pd, decider, true)
+		_add_strip_buttons(options.map(func(o): return [_board_label(o, choice_type), o]))
 	elif choice_type == "target_market_index":
-		# Карты рынка — такой же сеткой, как выбор для Promote; в ответ уходит
-		# номер карты на рынке. -1 — отказ ("You may devour..."), это Skip.
+		# Карты рынка — справа от вопроса; в ответ уходит номер карты на
+		# рынке. -1 — отказ ("You may devour..."), это Skip.
+		strip = true
+		_add_asker(pd, decider)
 		var ids: Array = []
 		var indices: Array = []
 		for value in options:
@@ -230,19 +240,15 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			if cid != "":
 				ids.append(cid)
 				indices.append(int(value))
-		_add_card_grid(ids, indices)
-		cards_mode = true
+		_add_stairs(ids, indices)
 		if options.has(-1):
-			_add_button("Skip", -1)
-			make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+			_add_strip_buttons([["Skip", -1]])
 	elif choice_type == "target_card":
-		_add_card_grid(options, [], decider)
-		cards_mode = true
+		strip = true
+		_add_asker(pd, decider)
+		_add_stairs(options, [], decider)
 		if options.has(""):
-			_add_button("Skip", "")
-			# без окна вокруг кнопка во всю ширину — просто полоса; ставим по центру
-			var skip := _options_box.get_child(_options_box.get_child_count() - 1) as Button
-			make_plain(skip)
+			_add_strip_buttons([["Skip", ""]])
 	elif _can_show_option_cards(pd):
 		_add_option_cards(pd)
 		cards_mode = true
@@ -258,16 +264,16 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
 	_set_cards_look(cards_mode or on_board or waiting or strip, decider)
+	_fit_strip()
 	# Полоса вопроса над доской прозрачна, но клики ловила сама: шпион или
 	# войско у верхнего края доски оказывались под ней — рамка цели видна, а
 	# клик пропадал, и игрок, целясь ниже, попадал в локацию ("not a valid
 	# target"; Xith Idrana на 4 игрока). Теперь сквозь неё кликается доска,
 	# кнопка Skip ловит клики сама.
 	_pass_clicks(on_board or waiting or strip)
-	_set_dim(not waiting and not on_board and _options_box.get_child_count() > 0 \
-		and (cards_mode or choice_type == "target_card"))
+	_set_dim(not waiting and not on_board and not strip and cards_mode)
 	var rows: int = _options_box.get_child_count()
-	var max_h: float = CARD_LIST_MAX_HEIGHT if choice_type == "target_card" else MAX_LIST_HEIGHT
+	var max_h: float = MAX_LIST_HEIGHT
 	if _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
 		max_h = INF  # карты-варианты не прокручиваются: их всего два-три
 	_scroll.custom_minimum_size = Vector2(0, minf(_options_box.get_combined_minimum_size().y, max_h))
@@ -278,10 +284,71 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_place.call_deferred(on_board or strip or decider != viewer_id)
 
 
+## Полоса с картой слева или картами-вариантами справа: всё компактной
+## группой по центру доски, текст прижат к карте. Без карт столбец вопроса
+## во всю ширину. Карты-варианты получают остаток ширины доски и, если не
+## влезают, ложатся лесенкой внахлёст.
+func _fit_strip() -> void:
+	var col := _who.get_parent() as Control
+	(col.get_parent() as HBoxContainer).alignment = BoxContainer.ALIGNMENT_CENTER
+	if not _asker_slot.visible and not _cards_slot.visible:
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_prompt.custom_minimum_size.x = 0
+		return
+	for label: Label in [_who, _prompt]:
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	col.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	# Ширина доски минус поля полосы (_place: по 2 с краёв), рамка и карта слева.
+	var room := _board_width() - 4.0 - _style.get_minimum_size().x
+	if _asker_slot.visible:
+		room -= CARD_SIZE.x + HEAD_GAP
+	# Тексту — всё, что не нужно картам-вариантам без нахлёста, но не уже
+	# STAIRS_TEXT_MAX_WIDTH: дальше пусть лучше карты лягут лесенкой.
+	var cap := ASKER_TEXT_MAX_WIDTH
+	if _cards_slot.visible:
+		var cards_w := _cards_slot.natural_width()
+		cap = clampf(room - cards_w - HEAD_GAP, STAIRS_TEXT_MAX_WIDTH, ASKER_TEXT_MAX_WIDTH)
+	var width := _prompt_width(cap)
+	# Вопрос выше карты (Barbed Devil в пять строк) — обычным шрифтом.
+	var font := _prompt.get_theme_font("font")
+	var lines_h := font.get_multiline_string_size(_prompt.text, HORIZONTAL_ALIGNMENT_LEFT, width,
+		_prompt.get_theme_font_size("font_size")).y
+	var rest_h := _who.get_combined_minimum_size().y + _options_box.get_combined_minimum_size().y + 4.0
+	if (_asker_slot.visible or _cards_slot.visible) and lines_h + rest_h > CARD_SIZE.y:
+		_prompt.remove_theme_font_size_override("font_size")
+		width = _prompt_width(cap)
+	# Ширина у самой подписи: иначе на первой раскладке (ширина 0) она
+	# ложится по букве в строку и столбец остаётся в тысячу пикселей высотой.
+	_prompt.custom_minimum_size.x = width
+	_prompt.size = Vector2(width, 0)
+	col.queue_sort()
+	if _cards_slot.visible:
+		# Ширину столбца считаем сами: его минимум в этот миг ещё старый.
+		var col_w := maxf(width, maxf(_who.get_combined_minimum_size().x,
+			_options_box.get_combined_minimum_size().x))
+		_cards_slot.arrange(room - col_w - HEAD_GAP)
+
+
+## Ширина зоны доски, над которой висит полоса (get_parent_area_size у
+## Control-родителя без контейнера бывает нулём).
+func _board_width() -> float:
+	var parent := get_parent() as Control
+	return parent.size.x if parent != null else get_viewport_rect().size.x
+
+
+## Ширина вопроса одной строкой, но не шире cap. Перенос слов не даёт
+## подписи своей ширины — меряем строку сами.
+func _prompt_width(cap: float) -> float:
+	var font := _prompt.get_theme_font("font")
+	var text_w := font.get_string_size(_prompt.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		_prompt.get_theme_font_size("font_size")).x
+	return minf(ceilf(text_w) + 2.0, cap)
+
+
 func _pass_clicks(through: bool) -> void:
 	var mode := Control.MOUSE_FILTER_IGNORE if through else Control.MOUSE_FILTER_STOP
 	mouse_filter = mode
-	for node: Control in [_who.get_parent(), _scroll, _options_box]:
+	for node: Control in [_who.get_parent(), _who.get_parent().get_parent(), _asker_slot, _cards_slot, _scroll, _options_box]:
 		node.mouse_filter = Control.MOUSE_FILTER_IGNORE if through else Control.MOUSE_FILTER_PASS
 
 
@@ -338,23 +405,15 @@ func _add_note(text: String) -> void:
 	_options_box.add_child(label)
 
 
-## Мелкие карты-кнопки. Одинаковые карты (два Soldier в руке) показываются
-## каждая отдельно — ответ у них один и тот же id, серверу это безразлично.
-## "inner:<id>" — карта из Внутреннего круга: лицо то же, в ответ уходит
-## исходная строка с префиксом. answers (если заданы) — ответ каждой карты по
-## порядку: номер карты на рынке, true у окна "You may...".
-func _add_card_grid(options: Array, answers: Array = [], seat: String = "") -> void:
+## Мелкие карты-варианты справа от вопроса. Одинаковые карты (два Soldier в
+## руке) показываются каждая отдельно — ответ у них один и тот же id, серверу
+## это безразлично. "inner:<id>" — карта из Внутреннего круга: лицо то же, в
+## ответ уходит исходная строка с префиксом. answers (если заданы) — ответ
+## каждой карты по порядку (номер карты на рынке).
+func _add_stairs(options: Array, answers: Array = [], seat: String = "") -> void:
 	var ids: Array = options.filter(func(o): return typeof(o) == TYPE_STRING and String(o) != "")
-	if ids.is_empty():
-		return
-	var grid := GridContainer.new()
-	grid.columns = mini(ids.size(), CARD_COLUMNS_MAX)
-	grid.add_theme_constant_override("h_separation", 2)
-	grid.add_theme_constant_override("v_separation", 2)
-	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	for i in ids.size():
-		var raw = ids[i]
-		var value := String(raw)
+		var value := String(ids[i])
 		var cid := value.substr(6) if value.begins_with("inner:") else value
 		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
 		if seat != "":
@@ -364,8 +423,44 @@ func _add_card_grid(options: Array, answers: Array = [], seat: String = "") -> v
 		card.tooltip_text = _card_label(value)
 		var reply: Variant = answers[i] if i < answers.size() else value
 		card.pressed.connect(func(_id): option_chosen.emit(reply))
-		grid.add_child(card)
-	_options_box.add_child(grid)
+		_cards_slot.add_child(card)
+	_cards_slot.visible = not ids.is_empty()
+
+
+## Карта, которая задала вопрос, — слева от него. yes_on_click: щелчок по
+## ней отвечает "да" ("You may..."); у выбора карты она только для вида.
+func _add_asker(pd: Dictionary, decider: String, yes_on_click: bool = false) -> void:
+	var asker := String(pd.get("source_card", ""))
+	if CardView.pixel_texture(asker) == null:
+		return
+	var card := CardView.new(asker, int(CARD_SIZE.x), int(CARD_SIZE.y))
+	card.set_card_owner(decider)
+	card.highlight = false
+	card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	if yes_on_click:
+		card.set_clickable(true)
+		card.pressed.connect(func(_id): option_chosen.emit(true))
+	_asker_slot.add_child(card)
+	_asker_slot.visible = true
+
+
+## Кнопки под вопросом в строку: [[подпись, ответ], ...]. Обычные кнопки
+## темы, с подложкой: надпись без фона терялась на белых табличках локаций
+## у верхнего края доски.
+func _add_strip_buttons(pairs: Array) -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN if _asker_slot.visible or _cards_slot.visible \
+		else BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for pair: Array in pairs:
+		var b := Button.new()
+		b.text = String(pair[0])
+		var value: Variant = pair[1]
+		b.pressed.connect(func(): option_chosen.emit(value))
+		b.custom_minimum_size = Vector2(40, OPTION_HEIGHT - 1)
+		row.add_child(b)
+	_options_box.add_child(row)
 
 
 ## Кнопка — одна надпись по центру: без фона и рамки, с тенью; под курсором
@@ -566,3 +661,32 @@ static func _card_label(raw: String) -> String:
 	if data.is_empty():
 		return raw
 	return String(data.get("name", card_id)) + suffix
+
+
+## Карты-варианты в ряд. Если не влезают в отведённую ширину — внахлёст
+## лесенкой: каждая следующая ложится на предыдущую, от той остаётся видна
+## левая полоска с названием (решение владельца, 2026-10-11).
+class CardStairs extends Control:
+	const GAP := 2.0
+	## Уже этого полоска карты не бывает, даже если лесенка вылезет за край.
+	const MIN_STEP := 8.0
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+	func natural_width() -> float:
+		var n := get_child_count()
+		return CARD_SIZE.x * n + GAP * maxi(n - 1, 0)
+
+	func arrange(max_width: float) -> void:
+		var n := get_child_count()
+		var w := CARD_SIZE.x
+		var step := w + GAP
+		if n > 1 and w + step * (n - 1) > max_width:
+			step = maxf(floorf((max_width - w) / float(n - 1)), MIN_STEP)
+		for i in n:
+			var card := get_child(i) as Control
+			card.position = Vector2(step * i, 0)
+			card.size = CARD_SIZE
+		custom_minimum_size = Vector2(w + step * maxi(n - 1, 0), CARD_SIZE.y) if n > 0 else Vector2.ZERO

@@ -147,7 +147,7 @@ const ZONE := Vector2(697, 456)
 ## две строки (DecisionDialog у верхнего края), низ во время хода — счётчик
 ## Power/Influence над рукой (владелец, 2026-10-04: доска на них не заходит).
 ## Доска раздвигается между ними, BoardPanel ставит её по центру этой части.
-const PROMPT_STRIP := 36.0
+const PROMPT_STRIP := 92.0
 const BOTTOM_STRIP := 26.0
 const SPREAD_PLAYERS := [4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.

@@ -33,8 +33,12 @@ var legal_options: Array = []
 ## присланное значение, всегда попадал бы в первый вариант, и молча, без
 ## ошибки. Подписи и значения ответа с тех пор разведены.
 var option_labels: Array[String] = []
-## Карта, задавшая вопрос "Choose one" (см. ChooseEffect.source_card).
+## Карта, задавшая вопрос: ChooseEffect и др. ставят её сами, иначе её
+## подставляет EffectResolver по кадру стека (карта, чей эффект идёт).
 var source_card: String = ""
+## Карта кадра стека, задавшего вопрос (EffectResolver), — ответ продолжает
+## эффект с ней же.
+var frame_card: String = ""
 var stack: Array = []             # снимок стека резолвера на момент запроса
 var target_effect: CardEffect = null
 var data: Dictionary = {}         # произвольный контекст, специфичный для эффекта
