@@ -253,8 +253,12 @@ static var _build_lock := Mutex.new()
 static func get_effect(card_id: String) -> CardEffect:
 	_build_lock.lock()
 	var outer := building_card
+	var outer_focus: Array = FocusEffect.registry
 	building_card = card_id
+	FocusEffect.registry = []
 	var effect := _build_effect(card_id)
+	FocusEffect.last_built = FocusEffect.registry
+	FocusEffect.registry = outer_focus
 	building_card = outer
 	_build_lock.unlock()
 	return effect
@@ -613,6 +617,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var shadow := ShadowCards.build(card_id)
 	if shadow != null:
 		return shadow
+	var piltover := PiltoverCards.build(card_id)
+	if piltover != null:
+		return piltover
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
 

@@ -269,12 +269,14 @@ func _apply(intent: Intent) -> int:
 			if not Actions.recruit(state, intent.player_id, intent.market_index, cost):
 				return Error.INVALID_ACTION
 			resolver.log_event("recruit", {"player_id": intent.player_id, "market_index": intent.market_index, "card_id": bought})
+			PiltoverCards.after_buy(state, intent.player_id, bought, resolver)
 			return Error.OK
 
 		Intent.Type.ACTION_RECRUIT_SUPPLY:
 			if not Actions.recruit_from_supply(state, intent.player_id, intent.card_id):
 				return Error.INVALID_ACTION
 			resolver.log_event("recruit_supply", {"player_id": intent.player_id, "card_id": intent.card_id})
+			PiltoverCards.after_buy(state, intent.player_id, intent.card_id, resolver)
 			return Error.OK
 
 		Intent.Type.ACTION_RETURN_SPY:

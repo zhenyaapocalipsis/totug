@@ -35,6 +35,13 @@ static func abandon(state: GameState, player_id: String) -> void:
 static func advance_turn(state: GameState) -> bool:
 	if state.game_over:
 		return true
+	# Basilisk: тот же игрок ходит ещё раз (даже в последнем круге).
+	if state.extra_turn_for != "" and state.extra_turn_for == state.current_player():
+		state.extra_turn_for = ""
+		state.in_extra_turn = true
+		return false
+	state.extra_turn_for = ""
+	state.in_extra_turn = false
 	var just_finished: int = state.current_player_index
 	if state.game_end_triggered and just_finished == state.final_round_ends_after_index:
 		state.game_over = true

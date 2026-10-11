@@ -113,6 +113,20 @@ const NAMES := {
 	"Supplant a troop anywhere": "Shadow Step",
 	"+4 Power": "Grave Strength",
 	"Recruit one of the top 3 devoured cards for free": "Grave Digging",
+	# Piltover & Zaun (New Era)
+	"Deploy 2 troops": "Patrol",
+	"Return 2 of your troops -> Draw a card": "Shift Change",
+	"Place a spy (full site: deploy 2 troops)": "Chem Deal",
+	"Return a spy": "Sweep the Streets",
+	"Draw a card": "Insight",
+	"Assassinate a troop anywhere": "Long Shot",
+	"+2 Influence, at end of turn promote a card you played": "Hextech Patent",
+	"Assassinate a troop and return a spy": "Mercury Hammer",
+	"This turn you may choose all options instead of one": "Grand Design",
+	"This turn Focus effects trigger an additional time": "Upgrade!!!",
+	"Focus cards from your top 6 into your hand, discard the rest": "Howling Gale",
+	"Recruit a market card for free, gain VP equal to its deck VP": "Zephyr",
+	"All of them": "Everything",  # ChooseEffect.ALL_LABEL (Homunculus)
 }
 
 var _tex: ImageTexture

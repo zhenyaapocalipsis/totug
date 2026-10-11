@@ -62,6 +62,11 @@ var turn_discounts: Dictionary = {}
 ## сыграно Insane Outcast, повтор Vine Blight и т.п., см. ShadowCards).
 ## Сбрасываются в start_turn.
 var turn_flags: Dictionary = {}
+## New Era, Basilisk (Ekko): этот игрок после своего хода ходит ещё раз
+## (GameEnd.advance_turn). in_extra_turn — идёт такой лишний ход: в нём можно
+## сыграть не больше 3 карт (TurnEngine.start_turn ставит turn_flags["card_limit"]).
+var extra_turn_for: String = ""
+var in_extra_turn: bool = false
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.

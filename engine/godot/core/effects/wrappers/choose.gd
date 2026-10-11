@@ -5,6 +5,9 @@ extends CardEffect
 ## выполняется. labels — то, что видит игрок (для UI/тестов), options — сами
 ## эффекты в том же порядке.
 
+## Homunculus (New Era): extra option "all of them" while state.turn_flags["choose_all"].
+const ALL_LABEL := "All of them"
+
 var options: Array[CardEffect] = []
 var labels: Array[String] = []
 var prompt: String = "Choose one:"
@@ -22,6 +25,12 @@ func _init(opts: Array[CardEffect], lbls: Array[String], p: String = "Choose one
 func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	if is_answered():
 		var idx: int = int(answer())
+		if idx == options.size():
+			# Homunculus: "choose all instead of choose one" — in card order (stack: last first).
+			for i in range(options.size() - 1, -1, -1):
+				if options[i].is_available(state, player_id):
+					resolver.push(options[i], player_id)
+			return
 		resolver.push(options[idx], player_id)
 		return
 
@@ -41,6 +50,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			continue
 		indices.append(i)
 		shown_labels.append(labels[i] if i < labels.size() else "")
+	if indices.size() > 1 and player_id == state.current_player() and state.turn_flags.get("choose_all", false):
+		indices.append(options.size())
+		shown_labels.append(ALL_LABEL)
 	pd.legal_options = indices
 	pd.option_labels = shown_labels
 	pd.source_card = source_card

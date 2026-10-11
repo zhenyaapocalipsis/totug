@@ -49,8 +49,24 @@ const MODE_NOTES := {
 	"random3": "Market: 3 random half-decks, 20 cards of each aspect.",
 	"random4": "Market: 4 random half-decks, 20 cards of each aspect.",
 	"random6": "Market: 6 random half-decks, 20 cards of each aspect.",
-	"newera": "Market: the new Celestial Order half-deck + 1 random half-deck.",
+	"newera": "Market: two New Era half-decks (pick them below).",
 }
+## Колоды New Era на кнопках переключателя.
+const NEW_ERA_TITLES := {
+	"celestial": "CELESTIAL",
+	"shadow": "SHADOW",
+	"piltover": "PILTOVER",
+}
+
+
+## Название режима для надписей (NEW ERA с парой колод — с их именами).
+static func mode_title(mode: String) -> String:
+	if GameSetup.is_new_era(mode):
+		var names: Array[String] = []
+		for deck: String in GameSetup.new_era_pair(mode):
+			names.append(String(NEW_ERA_TITLES.get(deck, deck)))
+		return "NEW ERA (%s)" % " + ".join(names)
+	return String(MODE_TITLES.get(mode, mode))
 
 ## Вкладки (кнопки под названием).
 const PAGE_PROFILE := "profile"
@@ -84,6 +100,10 @@ const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
 const LeaderboardPage := preload("res://scenes/ui/leaderboard_page.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
+## NEW ERA: какие две колоды New Era в рынке (переключатель под режимами).
+var _new_era_pair: Array[String] = GameSetup.NEW_ERA_DEFAULT.duplicate()
+var _new_era_row: HBoxContainer
+var _new_era_buttons := {}
 var _count: int = GameScreen.MIN_PLAYERS
 ## HOTSEAT: соперники — боты (иначе люди за этим же компьютером).
 var _bots := false
@@ -414,10 +434,10 @@ func _build_lobby_create() -> void:
 	_col.add_child(_row([server, direct]))
 	if _lobby_direct:
 		_add_dim("Friends join by your IP: home network or Radmin VPN.")
-		_set_action("HOST", func(): online_requested.emit("host", _count, _mode, ""))
+		_set_action("HOST", func(): online_requested.emit("host", _count, _chosen_mode(), ""))
 	else:
 		_add_dim("You get a room code on our server. Send it to friends.")
-		_set_action("CREATE ROOM", func(): online_requested.emit("create", _count, _mode, ""))
+		_set_action("CREATE ROOM", func(): online_requested.emit("create", _count, _chosen_mode(), ""))
 
 
 ## Войти к друзьям: по коду комнаты или по IP того, кто открыл игру (HOST).
@@ -462,7 +482,7 @@ func _build_hotseat() -> void:
 	_select_bots(_bots)
 	_col.add_child(HSeparator.new())
 	_add_game_options()
-	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _mode, _bots))
+	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _chosen_mode(), _bots))
 
 
 func _select_bots(on: bool) -> void:
@@ -490,6 +510,17 @@ func _add_game_options() -> void:
 		b.pressed.connect(func(): _select_mode(mode))
 		modes.append(b)
 	_col.add_child(_row(modes))
+	# NEW ERA: любые две колоды New Era — третья нажатая снимает самую старую.
+	var decks: Array[Button] = []
+	_new_era_buttons.clear()
+	for deck: String in GameSetup.NEW_ERA_DECKS:
+		var d := _toggle(NEW_ERA_TITLES[deck], null, _new_era_pair.has(deck), 70)
+		d.pressed.connect(func(): _toggle_new_era_deck(deck))
+		_new_era_buttons[deck] = d
+		decks.append(d)
+	_new_era_row = _row(decks)
+	_new_era_row.visible = _mode == GameSetup.MODE_NEW_ERA
+	_col.add_child(_new_era_row)
 	_mode_note = _add_dim(MODE_NOTES[_mode])
 	_mode_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	# С переносом слов надпись без ширины считает себя очень высокой (по
@@ -519,6 +550,26 @@ func _select_mode(mode: String) -> void:
 	_mode = mode
 	if _mode_note != null:
 		_mode_note.text = MODE_NOTES[mode]
+	if _new_era_row != null:
+		_new_era_row.visible = mode == GameSetup.MODE_NEW_ERA
+
+
+func _toggle_new_era_deck(deck: String) -> void:
+	if _new_era_pair.has(deck):
+		# Колод всегда две: снять можно, только выбрав другую.
+		(_new_era_buttons[deck] as Button).set_pressed_no_signal(true)
+		return
+	_new_era_pair.append(deck)
+	if _new_era_pair.size() > 2:
+		var dropped: String = _new_era_pair.pop_front()
+		(_new_era_buttons[dropped] as Button).set_pressed_no_signal(false)
+
+
+## Режим, который уходит в партию: NEW ERA — вместе с выбранной парой колод.
+func _chosen_mode() -> String:
+	if _mode == GameSetup.MODE_NEW_ERA:
+		return GameSetup.new_era_mode(_new_era_pair)
+	return _mode
 
 
 func _select_count(count: int) -> void:

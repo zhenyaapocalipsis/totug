@@ -60,6 +60,7 @@ func _initialize() -> void:
 	test_celestial_order()
 	test_shield_guardian_reaction()
 	test_shadow_isles()
+	test_piltover_zaun()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -1889,10 +1890,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 176 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 197 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 176, "cards.json содержит 176 карт (126 + 25 Celestial Order + 25 Shadow Isles)")
+	check_eq(all_ids.size(), 197, "cards.json содержит 197 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -4941,6 +4942,235 @@ func test_shield_guardian_reaction() -> void:
 	check(not r.is_waiting(), "после отказа эффект закончился")
 	check_eq(s2.troops[target2], "", "войско blue убито")
 	check((s2.players["blue"] as PlayerState).deck.hand.has("49021"), "Shield Guardian остался в руке")
+
+
+## Разыграть карту из руки red и ответить на вопросы по списку answers (по
+## порядку); вопросы сверх списка решает _auto_resolve "активно".
+func _play_with(state: GameState, card_id: String, answers: Array = []) -> EffectResolver:
+	var r := EffectResolver.new()
+	if not state.players["red"].deck.hand.has(card_id):
+		state.players["red"].deck.hand.append(card_id)
+	TurnEngine.play_card(state, "red", card_id, r)
+	for a in answers:
+		if not r.is_waiting():
+			break
+		TurnEngine.resume_card(state, a, r)
+	return r
+
+
+## Слот с войском owner среди вариантов вопроса (или "").
+func _slot_of(state: GameState, pd: PendingDecision, owner: String) -> String:
+	for opt in pd.legal_options:
+		if typeof(opt) == TYPE_STRING and String(state.troops.get(String(opt), "")) == owner:
+			return String(opt)
+	return ""
+
+
+func test_piltover_zaun() -> void:
+	section("New Era: полуколода Piltover & Zaun")
+	var deck := GameSetup.expand_half_deck("piltover")
+	check_eq(deck.size(), 42, "Piltover & Zaun: 42 карты (копии по кружкам на картах мода)")
+	check(not GameSetup.available_half_decks().has("piltover"), "колода пока не в обычном выборе (wip)")
+	for cid: String in ["49200", "49211", "49220"]:
+		check(CardLibrary.card_data(cid).get("type") == "PILTOVER", "%s — карта Piltover & Zaun" % cid)
+
+	# режим NEW ERA: пара колод выбирается, старая запись "newera" = прежняя пара
+	check_eq(GameSetup.new_era_pair("newera"), GameSetup.NEW_ERA_DEFAULT, "newera — Celestial + Shadow Isles")
+	var pz_mode := GameSetup.new_era_mode(["piltover", "celestial"])
+	check_eq(pz_mode, "newera:celestial,piltover", "пара записывается в режим в порядке колод")
+	check(GameSetup.is_mode(pz_mode), "такой режим принимает сетевая комната")
+	check(not GameSetup.is_mode("newera:celestial,drow"), "чужая колода в паре не принимается")
+	check_eq(GameSetup.new_era_mode(["shadow", "celestial"]), "newera", "прежняя пара — прежняя строка режима")
+	var pz_game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, pz_mode)
+	check_eq(pz_game.half_decks, ["celestial", "piltover"] as Array[String], "партия NEW ERA берёт выбранную пару")
+	check_eq(pz_game.market.deck_size() + pz_game.market.display.size(), 45 + 42, "рынок: 45 + 42 карты")
+
+	var state := _build_rich_state(21)
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+
+	# Focus и Double Focus: другие карты аспекта — сыгранные и в руке
+	red.deck.hand.clear()
+	red.deck.hand.append_array(["49218", "49201"] as Array[String])
+	check_eq(FocusEffect.support(state, "red", "MALICE"), 2, "две карты Malice в руке")
+	state.played_aspects_this_turn.append("MALICE")
+	check_eq(FocusEffect.support(state, "red", "MALICE"), 2, "сама разыгрываемая карта не считается")
+
+	# Basilisk: Double Malice Focus — лишний ход, в нём не больше 3 карт
+	red.deck.hand.clear()
+	red.deck.hand.append_array(["49201", "49202"] as Array[String])
+	state.played_aspects_this_turn.clear()
+	red.power = 0
+	_play_with(state, "49218")
+	check_eq(red.power, 4, "Basilisk: +4 Power")
+	check_eq(state.extra_turn_for, "red", "Basilisk с двумя Malice в руке: red ходит ещё раз")
+	check(not GameEnd.advance_turn(state), "партия продолжается")
+	check_eq(state.current_player(), "red", "после хода снова ходит red")
+	TurnEngine.start_turn(state, "red")
+	red.deck.hand.clear()
+	red.deck.hand.append_array(["48342", "48342", "48342", "48342"] as Array[String])
+	for i in range(3):
+		check(TurnEngine.play_card(state, "red", "48342", EffectResolver.new()), "лишний ход: карта %d сыграна" % (i + 1))
+	check(not TurnEngine.play_card(state, "red", "48342", EffectResolver.new()), "четвёртую карту в лишнем ходу сыграть нельзя")
+	check_eq(StateView.for_player(state, "red")["cards_left"], 0, "view: карт больше нельзя")
+	red.deck.hand.append_array(["49201", "49202"] as Array[String])
+	state.played_aspects_this_turn.append_array(["MALICE", "MALICE"] as Array[String])
+	EffectResolver.new().apply(PiltoverCards._ExtraTurn.new(), "red", state)
+	check_eq(state.extra_turn_for, "", "из лишнего хода ещё один не берётся")
+	check(not GameEnd.advance_turn(state), "лишний ход кончился")
+	check(state.current_player() != "red" and not state.in_extra_turn, "ход перешёл дальше")
+	state.current_player_index = state.turn_order.find("red")
+	TurnEngine.start_turn(state, "red")
+	check(TurnEngine.can_play_card(state, "red"), "в обычном ходу ограничения нет")
+
+	# Homunculus: "choose all" и повтор Focus
+	red.deck.hand.clear()
+	var rh := _play_with(state, "49215")
+	check(rh.is_waiting() and rh.pending.choice_type == "choose_option", "Homunculus спрашивает, что усилить")
+	TurnEngine.resume_card(state, 0, rh)
+	red.power = 0
+	red.influence = 0
+	var rw := _play_with(state, "49201")
+	check(rw.is_waiting() and rw.pending.option_labels.has(ChooseEffect.ALL_LABEL), "Wererat: появился вариант «All of them»")
+	TurnEngine.resume_card(state, rw.pending.legal_options[rw.pending.legal_options.size() - 1], rw)
+	check(red.power == 2 and red.influence == 2, "выбраны оба варианта: +2 Power и +2 Influence")
+	TurnEngine.start_turn(state, "red")
+	EffectResolver.new().apply(ShadowCards._AddFlag.new("focus_extra"), "red", state)
+	red.deck.hand.clear()
+	red.deck.hand.append("49210")  # Ambition в руке
+	red.influence = 0
+	_play_with(state, "49204")
+	check_eq(red.influence, 4, "Black Pudding с повтором Focus: дважды по +2 Influence")
+
+	# Gelatinous Cube: без Focus — выбор, с Focus — оба
+	TurnEngine.start_turn(state, "red")
+	red.deck.hand.clear()
+	var rc := _play_with(state, "49208")
+	check(rc.is_waiting() and rc.pending.choice_type == "choose_option", "Gelatinous Cube без Focus: выбор одного")
+	red.deck.hand.clear()
+	red.deck.hand.append("49210")
+	red.influence = 0
+	var rc2 := _play_with(state, "49208")
+	check_eq(red.influence, 2, "с Ambition в руке: +2 Influence сразу")
+	check(rc2.is_waiting() and rc2.pending.prompt.to_lower().contains("return"), "и затем вернуть шпиона")
+	_auto_resolve(state, rc2, false)
+
+	# Stone Golem: убил войско игрока — +3 Power, белое — ставит войско
+	TurnEngine.start_turn(state, "red")
+	red.deck.hand.clear()
+	red.power = 0
+	var rv := _play_with(state, "49211")
+	var blue_slot := _slot_of(state, rv.pending, "blue")
+	check(blue_slot != "", "Stone Golem: можно убить войско blue")
+	TurnEngine.resume_card(state, blue_slot, rv)
+	check_eq(red.power, 3, "убито войско игрока: +3 Power")
+	red.deck.hand.clear()
+	state.played_aspects_this_turn.clear()  # без Focus от первого Stone Golem
+	var barracks := red.troops_in_barracks
+	var rv2 := _play_with(state, "49211")
+	TurnEngine.resume_card(state, _slot_of(state, rv2.pending, "white"), rv2)
+	check(rv2.is_waiting() and rv2.pending.prompt.to_lower().contains("deploy"), "убито белое: вопрос, куда поставить войско")
+	_auto_resolve(state, rv2, false)
+	check_eq(red.troops_in_barracks, barracks - 1, "войско поставлено")
+
+	# Manticore: после каждого шпиона можно подвинуть войско
+	TurnEngine.start_turn(state, "red")
+	red.deck.hand.clear()
+	red.spies_in_barracks = 3
+	state.spies.clear()
+	var rm := _play_with(state, "49214")
+	check(rm.is_waiting() and rm.pending.choice_type == "target_site", "Manticore: ставит шпиона")
+	TurnEngine.resume_card(state, rm.pending.legal_options[0], rm)
+	TurnEngine.resume_card(state, rm.pending.legal_options[0], rm)
+	check(rm.is_waiting() and rm.pending.choice_type == "confirm" and rm.pending.prompt == "Move a troop?",
+		"после шпиона спрашивает, двигать ли войско")
+	_auto_resolve(state, rm, false)
+
+	# Archmage: Double Guile Focus добавляет шпиона, не больше 10
+	red.spies_in_barracks = 9
+	state.spies.clear()
+	EffectResolver.new().apply(PiltoverCards._GainSpy.new(), "red", state)
+	check_eq(red.spies_in_barracks, 10, "Archmage: +1 шпион в запас")
+	EffectResolver.new().apply(PiltoverCards._GainSpy.new(), "red", state)
+	check_eq(red.spies_in_barracks, 10, "больше 10 шпионов не бывает")
+	red.spies_in_barracks = 3
+
+	# Behir: Focus-карты из 6 верхних — в руку, остальные — в сброс
+	red.deck.hand.clear()
+	red.deck.draw_pile = ["48342", "49201", "48344", "49203", "48342", "48344", "49205"] as Array[String]
+	red.deck.discard_pile.clear()
+	var rb := _play_with(state, "49219")
+	TurnEngine.resume_card(state, 0, rb)
+	check_eq(red.deck.hand, ["49205", "49203", "49201"] as Array[String], "Behir: в руку три Focus-карты")
+	check_eq(red.deck.discard_pile.size(), 3, "остальные три — в сброс")
+	check_eq(red.deck.draw_pile, ["48342"] as Array[String], "седьмая карта осталась в колоде")
+	# вторая ветка: бесплатная карта рынка и VP за неё
+	state.market.display[0] = "49207"
+	var vp_before := red.vp_tokens
+	var rb2 := _play_with(state, "49219")
+	TurnEngine.resume_card(state, 1, rb2)
+	TurnEngine.resume_card(state, 0, rb2)
+	check(red.deck.discard_pile.has("49207"), "Behir: Clay Golem взят бесплатно")
+	check_eq(red.vp_tokens - vp_before, 2, "и 2 VP (его deck VP)")
+
+	# Assassin: смотрит 2 верхние карты каждого, сбросить можно одну
+	var blue: PlayerState = state.players["blue"]
+	blue.deck.draw_pile = ["48344", "48342", "49201"] as Array[String]
+	red.deck.draw_pile = ["48344", "48342"] as Array[String]
+	var ra := _play_with(state, "49212")
+	_auto_resolve_until(state, ra, "Top 2")
+	check(ra.is_waiting() and ra.pending.prompt.begins_with("Top 2 cards of your"), "Assassin: сначала свои 2 карты")
+	TurnEngine.resume_card(state, "", ra)
+	check(ra.is_waiting() and ra.pending.prompt.contains("Blue"), "затем карты Blue")
+	check_eq(ra.pending.legal_options, ["49201", "48342", ""], "видны 2 верхние карты Blue")
+	TurnEngine.resume_card(state, "49201", ra)
+	check_eq(blue.deck.draw_pile, ["48344", "48342"] as Array[String], "верхняя карта Blue сброшена")
+	check(not ra.is_waiting() or not ra.pending.prompt.begins_with("Top 2"), "после сброса green уже не спрашивают")
+	_auto_resolve(state, ra, false)
+
+	# Hydra: после покупки — бесплатная карта дешевле
+	TurnEngine.start_turn(state, "red")
+	EffectResolver.new().apply(ShadowCards._SetFlag.new("buy_echo"), "red", state)
+	state.market.display[0] = "49208"  # цена 2
+	state.market.display[1] = "49219"  # цена 9
+	var rhy := EffectResolver.new()
+	PiltoverCards.after_buy(state, "red", "49207", rhy)  # купил карту за 5
+	check(rhy.is_waiting() and rhy.pending.choice_type == "target_market_index", "Hydra: предлагает карту рынка")
+	check(rhy.pending.legal_options.has(0) and not rhy.pending.legal_options.has(1), "только дешевле купленной")
+
+	# Tough Boss: войско рядом с чужим — scry 1
+	var slot_ids: Array = state.graph.slots.keys()
+	slot_ids.sort()
+	var empty_next_to_blue := ""
+	for slot_id: String in slot_ids:
+		if state.troops.get(slot_id, "") != "":
+			continue
+		var t := state.troops.duplicate()
+		state.troops[slot_id] = "red"
+		if PiltoverCards._moved_next_to_other(state, "red", t):
+			empty_next_to_blue = slot_id
+		state.troops = t
+		if empty_next_to_blue != "":
+			break
+	check(empty_next_to_blue != "", "нашлось пустое место рядом с чужим войском")
+	var before := state.troops.duplicate()
+	check(not PiltoverCards._moved_next_to_other(state, "red", before), "ничего не поставлено — scry нет")
+
+
+## Отвечать «активно», пока вопрос не начнётся с prefix.
+func _auto_resolve_until(state: GameState, resolver: EffectResolver, prefix: String) -> void:
+	var steps := 0
+	while resolver.is_waiting() and not resolver.pending.prompt.begins_with(prefix) and steps < 20:
+		steps += 1
+		var pd := resolver.pending
+		var answer = pd.legal_options[0]
+		if pd.choice_type == "confirm":
+			answer = false
+		for opt in pd.legal_options:
+			if typeof(opt) == TYPE_STRING and opt != "":
+				answer = opt
+				break
+		TurnEngine.resume_card(state, answer, resolver)
 
 
 func test_shadow_isles() -> void:

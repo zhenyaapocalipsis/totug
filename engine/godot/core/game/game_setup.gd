@@ -46,8 +46,12 @@ const MODE_RANDOM_6 := "random6"
 ## (решение владельца 2026-10-08; до этого — Celestial + случайная
 ## классическая). Новые колоды в обычный пул не входят, пока не доделаны
 ## ("wip"), — иначе изменились бы сиды прежних партий.
+## С NE-6 (2026-10-11) пару колод New Era игрок выбирает в меню: режим
+## "newera:<колода>,<колода>"; просто "newera" — прежняя пара (старые
+## реплеи и комнаты).
 const MODE_NEW_ERA := "newera"
-const NEW_ERA_DECKS := ["celestial", "shadow"]
+const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover"]
+const NEW_ERA_DEFAULT: Array[String] = ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
 
@@ -229,11 +233,43 @@ static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[S
 		MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6:
 			Deck.shuffle_array(pool, rng)
 			return pool.slice(0, mini(mode_deck_count(mode), pool.size()))
-		MODE_NEW_ERA:
-			var pair: Array[String] = []
-			pair.assign(NEW_ERA_DECKS)
-			return pair
+	if is_new_era(mode):
+		return new_era_pair(mode)
 	return _pick_two_half_decks(rng)
+
+
+static func is_new_era(mode: String) -> bool:
+	return mode == MODE_NEW_ERA or mode.begins_with(MODE_NEW_ERA + ":")
+
+
+## Режим известен игре (меню, сетевая комната, реплей).
+static func is_mode(mode: String) -> bool:
+	if MODES.has(mode):
+		return true
+	return is_new_era(mode) and new_era_mode(new_era_pair(mode)) == mode
+
+
+## Две колоды режима New Era; непонятная запись — прежняя пара.
+static func new_era_pair(mode: String) -> Array[String]:
+	var pair: Array[String] = []
+	if mode.begins_with(MODE_NEW_ERA + ":"):
+		for deck: String in mode.substr(MODE_NEW_ERA.length() + 1).split(","):
+			if NEW_ERA_DECKS.has(deck) and not pair.has(deck):
+				pair.append(deck)
+	if pair.size() != 2:
+		pair.assign(NEW_ERA_DEFAULT)
+	return pair
+
+
+## Строка режима для пары колод (порядок как в NEW_ERA_DECKS).
+static func new_era_mode(pair: Array) -> String:
+	var sorted: Array[String] = []
+	for deck: String in NEW_ERA_DECKS:
+		if pair.has(deck):
+			sorted.append(deck)
+	if sorted == NEW_ERA_DEFAULT:
+		return MODE_NEW_ERA
+	return MODE_NEW_ERA + ":" + ",".join(sorted)
 
 
 ## Колода маркета из выбранных полуколод.

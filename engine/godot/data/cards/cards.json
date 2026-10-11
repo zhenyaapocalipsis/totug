@@ -1758,5 +1758,215 @@
     "deck_vp": 0,
     "inner_circle_vp": 0,
     "ability_text": "Deploy a troop and draw a card.\nIf this card would be promoted or devoured, return it to the supply and draw 2 cards instead."
+  },
+  {
+    "card_id": 49200,
+    "name": "Tough Boss",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "PILTOVER",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Deploy 3 troops.\n• Move a troop.\nIf you moved or deployed a troop next to another player's troop, scry 1.\nConquest Focus ► Draw a card."
+  },
+  {
+    "card_id": 49201,
+    "name": "Wererat",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "PILTOVER",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +2 Power\n• +2 Influence\nMalice Focus ► Draw a card, then discard a card."
+  },
+  {
+    "card_id": 49202,
+    "name": "Bandit Captain",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "PILTOVER",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Assassinate a troop.\n• Supplant a white troop.\nMalice Focus ► +2 Power"
+  },
+  {
+    "card_id": 49203,
+    "name": "Rust Monster",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "PILTOVER",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Deploy 2 troops.\n• Move one of your troops.\n• Return 2 of your troops ► Draw a card.\nConquest Focus ► Draw a card."
+  },
+  {
+    "card_id": 49204,
+    "name": "Black Pudding",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "PILTOVER",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "At end of turn, promote another card played this turn.\nAmbition Focus ► +2 Influence"
+  },
+  {
+    "card_id": 49205,
+    "name": "Spy",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "PILTOVER",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, deploy 2 troops.\n• Return one of your spies ► +3 Influence\nGuile Focus ► +2 Power"
+  },
+  {
+    "card_id": 49206,
+    "name": "Otyugh",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "PILTOVER",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Assassinate a troop. If it was a white troop, +1 Power.\nAt end of turn, promote an Obedience card played this turn.\nConquest Focus ► Move a troop."
+  },
+  {
+    "card_id": 49207,
+    "name": "Clay Golem",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "PILTOVER",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "+2 Power\nAt end of turn, promote an Obedience card played this turn."
+  },
+  {
+    "card_id": 49208,
+    "name": "Gelatinous Cube",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "PILTOVER",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• +2 Influence\n• Return a spy.\nAmbition Focus ► Choose both instead."
+  },
+  {
+    "card_id": 49209,
+    "name": "Ochre Jelly",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "PILTOVER",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Place a spy, +1 Power.\nAt end of turn, promote an Obedience card played this turn."
+  },
+  {
+    "card_id": 49210,
+    "name": "Mimic",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "PILTOVER",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+2 Influence\nAt end of turn, promote an Obedience card played this turn."
+  },
+  {
+    "card_id": 49211,
+    "name": "Stone Golem",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop. If it was another player's troop, +3 Power; otherwise deploy a troop.\nConquest Focus ► Deploy 4 troops or draw a card."
+  },
+  {
+    "card_id": 49212,
+    "name": "Assassin",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop anywhere.\nLook at the top 2 cards of each player's deck. You may discard 1 of them.\nMalice Focus ► Assassinate a troop anywhere or draw a card."
+  },
+  {
+    "card_id": 49213,
+    "name": "Iron Golem",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose one:\n• +2 Influence. At end of turn, promote a card you played this turn.\n• Assassinate a troop and return a spy.\nAmbition Focus ► +3 Influence or draw a card."
+  },
+  {
+    "card_id": 49214,
+    "name": "Manticore",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "This turn, whenever you place a spy, you may move a troop.\nPlace 2 spies.\nGuile Focus ► Place 2 spies or draw a card."
+  },
+  {
+    "card_id": 49215,
+    "name": "Homunculus",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Draw a card. Choose one for this turn:\n• You may choose all options instead of one.\n• Focus effects trigger an additional time."
+  },
+  {
+    "card_id": 49216,
+    "name": "Chimera",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Deploy 4 troops. If one is next to another player's troop, supplant a troop.\nDouble Conquest Focus ► Move one of your troops, supplant a troop. Deploy 2 troops per Power you spend."
+  },
+  {
+    "card_id": 49217,
+    "name": "Archmage",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Place a spy, assassinate a troop at its site, draw a card.\nDouble Guile Focus ► Gain a spy (up to 10). Place 2 spies, assassinate a troop at each of their sites."
+  },
+  {
+    "card_id": 49218,
+    "name": "Basilisk",
+    "cost": 7,
+    "aspect": "MALICE",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+4 Power\nDouble Malice Focus ► Take another turn, but play at most 3 cards in it."
+  },
+  {
+    "card_id": 49219,
+    "name": "Behir",
+    "cost": 9,
+    "aspect": "MALICE",
+    "type": "PILTOVER",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Choose one:\n• Look at your top 6 cards: Focus cards into your hand, discard the rest.\n• Recruit a card from the market for free, gain VP equal to its deck VP."
+  },
+  {
+    "card_id": 49220,
+    "name": "Hydra",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "PILTOVER",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+5 Influence\nDouble Ambition Focus ► +4 Influence. This turn, whenever you buy a card, you may recruit a cheaper one for free."
   }
 ]

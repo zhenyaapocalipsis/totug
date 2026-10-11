@@ -23,6 +23,8 @@ extends RefCounted
 ## тоже происходит на границе хода.
 
 const HAND_SIZE := 5
+## Basilisk (New Era): сколько карт можно сыграть в лишнем ходу.
+const EXTRA_TURN_CARDS := 3
 
 
 ## Вызывается ПЕРЕД тем, как игрок начнёт шаг 1 своего хода (до первого
@@ -35,6 +37,8 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.ghost_market_player = ""
 	state.turn_discounts.clear()
 	state.turn_flags.clear()
+	if state.in_extra_turn:
+		state.turn_flags["card_limit"] = EXTRA_TURN_CARDS
 	var p: PlayerState = state.players[player_id]
 	if p.start_of_turn_influence > 0:
 		p.influence += p.start_of_turn_influence
@@ -110,14 +114,25 @@ static func _pay_marker_influence(state: GameState, player_id: String, paid_site
 ## Возвращает false, если карты нет в руке (эффект в этом случае не трогается).
 static func play_card(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> bool:
 	var p: PlayerState = state.players[player_id]
+	if not can_play_card(state, player_id):
+		return false
 	if not p.deck.play_from_hand(card_id):
 		return false
+	state.turn_flags["cards_played"] = int(state.turn_flags.get("cards_played", 0)) + 1
 	var aspect: String = CardLibrary.card_aspect(card_id)
 	if aspect != "":
 		state.played_aspects_this_turn.append(aspect)
 	var effect: CardEffect = ShadowCards.on_play(state, player_id, card_id, CardLibrary.get_effect(card_id))
 	resolver.apply(effect, player_id, state, card_id)
 	return true
+
+
+## Можно ли сейчас сыграть ещё карту из руки: в лишнем ходу Basilisk — не
+## больше EXTRA_TURN_CARDS карт.
+static func can_play_card(state: GameState, player_id: String) -> bool:
+	if player_id != state.current_player() or not state.turn_flags.has("card_limit"):
+		return true
+	return int(state.turn_flags.get("cards_played", 0)) < int(state.turn_flags["card_limit"])
 
 
 ## Продолжение розыгрыша карты (или отложенного end-of-turn эффекта) после

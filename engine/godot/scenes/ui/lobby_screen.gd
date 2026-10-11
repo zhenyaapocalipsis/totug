@@ -143,7 +143,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 ## Сервер с комнатами: адрес сервера (запоминается), код комнаты.
 func _build_server_part(col: VBoxContainer) -> void:
 	if _kind == "create":
-		col.add_child(_dim("%d players, mode %s" % [_count, SetupScreen.MODE_TITLES.get(_mode, _mode)]))
+		col.add_child(_dim("%d players, mode %s" % [_count, SetupScreen.mode_title(_mode)]))
 	elif _kind == "find":
 		col.add_child(_dim("%d players, mode %s, random opponents" % [
 			_count, SetupScreen.MODE_TITLES[NetSession.match_mode(_count)]]))
@@ -183,7 +183,7 @@ func _build_server_part(col: VBoxContainer) -> void:
 
 func _build_host_part(col: VBoxContainer) -> void:
 	col.add_child(_dim("%d players, mode %s, port %d (UDP)" % [
-		_count, SetupScreen.MODE_TITLES.get(_mode, _mode), NetSession.DEFAULT_PORT]))
+		_count, SetupScreen.mode_title(_mode), NetSession.DEFAULT_PORT]))
 	col.add_child(GameScreen.section_label("OVER THE INTERNET"))
 	_internet = _centred("Asking your router to open the port (up to 10 s)...")
 	col.add_child(_internet)

@@ -36,6 +36,10 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"spies": _duplicate_spies(state.spies),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
+		# Basilisk: лишний ход, сколько карт ещё можно сыграть (-1 — без ограничения).
+		"extra_turn": state.in_extra_turn,
+		"cards_left": (int(state.turn_flags["card_limit"]) - int(state.turn_flags.get("cards_played", 0))) \
+			if state.turn_flags.has("card_limit") else -1,
 		"ghost_market_card": Actions.ghost_market_card(state, state.current_player()),
 		# New Era: цены базовых действий и запаса с учётом скидок хода.
 		"costs": {

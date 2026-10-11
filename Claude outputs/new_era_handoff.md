@@ -3,9 +3,9 @@
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
 ## Состояние сейчас (коротко)
-- Готовы две колоды: **Celestial Order** (бывшая Demacia, NE-1…3) и **Shadow Isles** (NE-4…5). Обе `wip`, играются в режиме рынка **NEW ERA = Celestial + Shadow Isles** (`GameSetup.NEW_ERA_DECKS`, меню HOTSEAT и LOBBY).
+- Готовы три колоды: **Celestial Order** (бывшая Demacia, NE-1…3), **Shadow Isles** (NE-4…5) и **Piltover & Zaun** (NE-6: правила, артов ещё нет). Все `wip`. Режим рынка **NEW ERA**: две колоды New Era выбираются переключателем под режимами (меню HOTSEAT и LOBBY), строка режима `newera:celestial,piltover`; просто `newera` = Celestial + Shadow Isles.
 - Всё закоммичено, запушено на GitHub и задеплоено на сервер (`bash server/deploy.sh`, сборка 1791467650 от 2026-10-08; позже деплоили другие сессии).
-- Тесты на 2026-10-11: `пройдено: 1479, провалено: 0`, сеть `118 / 0`. В тесте карт 176 (126 + 25 Celestial + 25 Shadow Isles).
+- Тесты на 2026-10-11 (после NE-6): `пройдено: 1535, провалено: 0`, сеть `118 / 0`. В тесте карт 197 (126 + 25 Celestial + 25 Shadow Isles + 21 Piltover & Zaun).
 - Не в git и не моё: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` — правки владельца, не трогать.
 - **Владелец ещё не проверял обе колоды живьём.** Чек-листы — в конце разделов ниже.
 
@@ -130,5 +130,18 @@
   - Swarm (не-Obedience карты стоимостью 2);
   - Hextech / Shimmer (колоды по 30);
   - Transform (уже сделан).
-- Следующая колода по порядку из mapping-файла — **Piltover & Zaun** (механика Focus уже есть в игре), затем Noxus. Владелец порядок не подтверждал. Черновые существа P&Z в mapping-файле тоже надо сначала проверить на свободный арт (см. совет выше).
-- Режим NEW ERA жёстко = Celestial + Shadow Isles. С третьей колодой нужно решить, как выбирать рынок (случайная пара New Era-колод или переключатель в меню).
+- Следующая колода по mapping-файлу — **Noxus** (Execute = Devour, Might). Владелец порядок не подтверждал.
+
+## Piltover & Zaun — правила (NE-6), арты — следующий этап NE-7
+Всё по колоде — в `Claude outputs/new_era_piltover.md` (таблица id → существо → карта мода, толкования).
+- Карты 49200–49220, тип `PILTOVER`, полуколода `piltover` (wip, **42 карты** — столько копий по кружкам), эффекты `core/cards/piltover_cards.gd`, тест `test_piltover_zaun`. Цвет фона — розовый (`UnderdarkBg.DECK_COLOURS["piltover"]`).
+- Новое в движке:
+  - `FocusEffect` с `need = 2` — Double Focus; `FocusEffect.support()` — сколько других карт аспекта (сыграно + в руке); флаг `focus_extra` повторяет Focus (копия эффекта пересобирается из карты по номеру Focus, `FocusEffect.registry`).
+  - `ChooseEffect`: флаг `choose_all` — вариант «All of them».
+  - `PlaceSpy`: флаг `spy_move` — после шпиона вопрос «Move a troop?».
+  - Лишний ход: `GameState.extra_turn_for / in_extra_turn`, `GameEnd.advance_turn`, `turn_flags["card_limit"]`, `TurnEngine.can_play_card` (бот это учитывает), в view — `extra_turn`, `cards_left`.
+  - Hydra: `PiltoverCards.after_buy` из GameServer после покупки.
+  - Режимы: `GameSetup.is_new_era / is_mode / new_era_pair / new_era_mode`, `SetupScreen.mode_title`.
+- **NE-7 (арты):** кандидаты уже скачаны в `cards/pz/cand` (2014 и 2024) и `cards/pz/cand2` — брать версии 2024 с фоном (`5195xxx-*`, `4904xxx-*`), список соответствий — в `new_era_piltover.md`. Подпись для `card_id/100 = 492` в `pixel_cards.gd set_name()` ещё не добавлена.
+- В интерфейсе пока нет отдельной надписи «лишний ход, осталось N карт» — сервер просто не даёт сыграть четвёртую карту.
+- Чек-лист для живой проверки: (1) NEW ERA → кнопки колод, выбрать CELESTIAL + PILTOVER, фон розово-золотой; (2) Homunculus «choose all», потом Wererat — есть вариант «All of them»; (3) Basilisk с двумя Malice в руке — лишний ход, четвёртая карта не играется; (4) Assassin показывает 2 верхние карты каждого; (5) Hydra с двумя Ambition — после покупки предлагает карту дешевле.

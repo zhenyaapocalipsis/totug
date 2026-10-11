@@ -222,7 +222,7 @@ static func play_out(server: GameServer, max_intents: int = 20000) -> Dictionary
 
 static func _main_action(state: GameState, pid: String, fast: bool = false) -> Intent:
 	var p: PlayerState = state.players[pid]
-	if not p.deck.hand.is_empty():
+	if not p.deck.hand.is_empty() and TurnEngine.can_play_card(state, pid):
 		return Intent.play_card(pid, _card_to_play(p.deck.hand))
 	var ctx := _fast_context(state, pid) if fast else _context(state, pid)
 	var power_act := _best_power_action_fast(state, pid, ctx) if fast else _best_power_action(state, pid, ctx)
@@ -599,6 +599,8 @@ static func _label_value(label: String, thin: bool = false) -> float:
 	if m != null:
 		n = float(m.get_string(1))
 	var v := 0.5
+	if label == ChooseEffect.ALL_LABEL:
+		return 6.0
 	if l.contains("vp"):
 		v = maxf(v, n * 1.3)
 	if l.contains("influence") or l.contains("power"):

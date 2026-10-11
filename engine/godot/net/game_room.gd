@@ -66,7 +66,7 @@ var pause_time := 0.0
 func _init(room_code: String, player_count: int, game_mode: String) -> void:
 	code = room_code
 	needed = clampi(player_count, MIN_PLAYERS, MAX_PLAYERS)
-	mode = game_mode if GameSetup.MODES.has(game_mode) else GameSetup.MODE_STANDARD
+	mode = game_mode if GameSetup.is_mode(game_mode) else GameSetup.MODE_STANDARD
 
 
 func is_full() -> bool:

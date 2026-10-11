@@ -42,7 +42,7 @@ static var replans := 0
 static func is_plan_phase(server: GameServer, me: String) -> bool:
 	var state := server.state
 	return not state.game_over and state.current_player() == me and not server.resolver.is_waiting() \
-		and state.players[me].deck.hand.is_empty()
+		and (state.players[me].deck.hand.is_empty() or not TurnEngine.can_play_card(state, me))
 
 
 ## Следующий шаг плана; новый план — если старого нет или партия пошла не
