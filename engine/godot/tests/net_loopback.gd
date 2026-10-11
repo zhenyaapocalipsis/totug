@@ -72,6 +72,7 @@ const RATINGS_NAMES_PATH := "user://ratings_nettest_names.json"
 const SAVES_DIR := "user://saves_nettest/"
 ## И своя папка реплеев (ReplayBook).
 const REPLAYS_DIR := "user://replays_nettest/"
+const RECORDS_DIR := "user://records_nettest/"
 
 ## Переподключение и восстановление после «перезапуска» сервера (этап 7).
 var _reconnect_code := ""
@@ -218,6 +219,12 @@ func _process(delta: float) -> bool:
 				var file := String(PlayerProfile.history()[0].get("replay", ""))
 				var replay := ReplayBook.load_replay(file, REPLAYS_DIR)
 				check(file != "" and not replay.is_empty(), "[replay] строка истории знает свой реплей")
+				var records := ReplayBook.list(RECORDS_DIR)
+				check(not records.is_empty(), "[server] сервер сохранил запись законченной партии")
+				if not records.is_empty():
+					var rec := ReplayBook.load_replay(records[records.size() - 1], RECORDS_DIR)
+					check((rec.get("intents", []) as Array).size() == (replay.get("intents", []) as Array).size(),
+						"[server] в записи сервера все ходы партии")
 				# Конец партии тест вызвал в обход ходов (_end_game) — его реплей
 				# не повторит; рынок и войска — от ходов, они должны сойтись.
 				var live: GameState = (server.rooms.values()[0] as GameRoom).server.state
@@ -610,6 +617,7 @@ func _session() -> NetSession:
 	var net := NetSession.new()
 	net.name = "Net"
 	net.replays_dir = REPLAYS_DIR
+	net.records_dir = RECORDS_DIR
 	branch.add_child(net)
 	return net
 
@@ -718,6 +726,8 @@ func _finish() -> bool:
 func _clear_saves_dir() -> void:
 	for name in ReplayBook.list(REPLAYS_DIR):
 		ReplayBook.erase(name, REPLAYS_DIR)
+	for name in ReplayBook.list(RECORDS_DIR):
+		ReplayBook.erase(name, RECORDS_DIR)
 	var dir := DirAccess.open(SAVES_DIR)
 	if dir == null:
 		return

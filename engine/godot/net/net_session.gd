@@ -113,6 +113,9 @@ var ratings: RatingBook
 var saves_dir := GameJournal.DIR
 ## Папка реплеев (ReplayBook) — тоже своя у сетевого теста.
 var replays_dir := ReplayBook.DIR
+## Выделенный сервер: запись каждой законченной партии (реплей с полным
+## итогом) — для статистики баланса и обучения ботов на партиях людей.
+var records_dir := "user://game_records/"
 ## Клиент: файл реплея последней партии. Сервер шлёт реплей раньше итога
 ## рейтинга (_rating), и строка истории запоминает этот файл.
 var last_replay := ""
@@ -996,6 +999,9 @@ func _send_replay(room: GameRoom) -> void:
 	var state := room.server.state
 	var header := ReplayBook.header_for(state, room.ids, room.game_seed, room.mode,
 		room.server.with_mulligan, room.profiles, "", room.code, room.log)
+	if dedicated:
+		var file := ReplayBook.save(header, room.log, records_dir)
+		_log("room %s: game record %s" % [room.code, file if file != "" else "NOT SAVED"])
 	for peer: int in room.seats:
 		_send(peer, "_replay", [header, room.log])
 
