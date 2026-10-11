@@ -127,11 +127,17 @@ static func player_name(player_id: String) -> String:
 	if player_id == GameState.WHITE:
 		return "White"
 	var own := PlayerProfile.name_of(player_id)
-	return own if own != "" else player_id.capitalize()
+	if own != "":
+		return own
+	# 2 на 2: цветов два, поэтому без ника — "Red 1", "Red 2" (не "Green").
+	var team := String(BoardPanel.team_of.get(player_id, ""))
+	if team != "":
+		return "%s %d" % [team.capitalize(), 1 if team == player_id else 2]
+	return player_id.capitalize()
 
 
 static func player_color(player_id: String) -> Color:
-	return BoardPanel.PLAYER_COLORS.get(player_id, Color(0.75, 0.75, 0.78)).lightened(0.25)
+	return BoardPanel.colour(player_id, Color(0.75, 0.75, 0.78)).lightened(0.25)
 
 
 static func card_name(card_id: String) -> String:

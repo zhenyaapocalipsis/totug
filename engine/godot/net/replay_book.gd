@@ -54,6 +54,7 @@ static func header_for(state: GameState, ids: Array[String], game_seed: int, mod
 		"seat": seat,
 		"ids": ids,
 		"mode": mode,
+		"teams": state.is_team_game(),
 		"seed": game_seed,
 		"mulligan": mulligan,
 		"profiles": names,
@@ -138,7 +139,7 @@ static func start(replay: Dictionary) -> GameServer:
 	for pid in (header.get("ids", []) as Array):
 		ids.append(String(pid))
 	var state := GameSetup.new_game(ids, int(header.get("seed", 0)), [], false, true, true,
-		String(header.get("mode", GameSetup.MODE_STANDARD)))
+		String(header.get("mode", GameSetup.MODE_STANDARD)), bool(header.get("teams", false)))
 	var server := GameServer.new(state, bool(header.get("mulligan", true)), true, false)
 	# Срезы собирает тот, кто смотрит (StateView), и только для своего зрителя.
 	server.build_views = false

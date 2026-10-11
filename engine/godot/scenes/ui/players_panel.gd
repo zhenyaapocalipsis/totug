@@ -107,7 +107,7 @@ static func _head(text: String, hint: String, width: float, align: HorizontalAli
 
 
 func _add_row(pid: String) -> void:
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT)
+	var colour: Color = BoardPanel.colour(pid, PixelTheme.TEXT)
 	var block := PanelContainer.new()
 	block.add_theme_stylebox_override("panel", _plain_style)
 	block.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -219,7 +219,7 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 			continue
 		var white := String(colour_id) == "white"
 		var digit := _digit(str(count), NEUTRAL_COLOR if white \
-			else BoardPanel.PLAYER_COLORS.get(String(colour_id), NEUTRAL_COLOR), small)
+			else BoardPanel.colour(String(colour_id), NEUTRAL_COLOR), small)
 		box.add_child(digit)
 		digits[String(colour_id)] = digit
 		parts.append("%s %d" % ["neutral" if white else EventLogPanel.player_name(String(colour_id)), count])

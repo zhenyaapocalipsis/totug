@@ -575,6 +575,26 @@ func test_team_mode() -> void:
 	check(not ForceDiscard.new("each_opponent", 0)._eligible_opponents(state, "red").has("green"),
 		"сброс «у соперников» не задевает союзника")
 
+	# Team-2: партия 2 на 2 ботами до конца — вид знает команды, побеждает команда
+	var server := GameServer.new(GameSetup.new_game(ids, 21, [], false, true, true, GameSetup.MODE_STANDARD, true))
+	var steps := 0
+	while not server.state.game_over and steps < 8000:
+		steps += 1
+		server.apply_intent(BotPlayer.next_intent(server, BotPlayer.acting_player(server)))
+	check(server.state.game_over, "партия 2 на 2 доиграна ботами (%d шагов)" % steps)
+	var view := StateView.for_player(server.state, "red")
+	check_eq(view.get("teams", {}).size(), 4, "вид партии знает команды")
+	check_eq(StateView.board_snapshot(server.state).get("teams", {}).size(), 4, "снимок доски знает команды")
+	var won: Array = view.get("winners", [])
+	check(not won.is_empty() and (won.size() == 4 or won.all(func(p): return server.state.is_ally(won[0], p))),
+		"победители — одна команда или ничья команд")
+	check_eq(int(view["final_scores"]["red"]["total"]), int(view["final_scores"]["green"]["total"]),
+		"в итогах у союзников один счёт")
+	var panel := GameOverPanel.new()
+	panel.update_from_view(view)
+	check(panel._title.text.contains("TEAM"), "итоги называют команду: " + panel._title.text)
+	panel.free()
+
 
 ## Прямая связь локаций проверяется на ОТДЕЛЬНОМ графе: подмешивать её в общий
 ## мини-граф нельзя — она меняет достижимость и ломает более ранние проверки
@@ -3799,7 +3819,8 @@ func test_main_menu() -> void:
 	_test_settings(panel)
 
 	var got := {}
-	menu.started.connect(func(ids: Array[String], m: String, b: bool): got["start"] = [ids.size(), m, b])
+	menu.started.connect(func(ids: Array[String], m: String, b: bool, t: bool):
+		got["start"] = [ids.size(), m, b] if not t else [ids.size(), m, b, "2v2"])
 	menu.online_requested.connect(func(k: String, c: int, m: String, a: String): got["online"] = [k, c, m, a])
 	_find_button(menu, "PLAY").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY возвращает в последний раздел")
@@ -3813,6 +3834,10 @@ func test_main_menu() -> void:
 	_find_button(menu, "START").pressed.emit()
 	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4, true], "BOTS: соперники — боты")
 	_find_button(menu, "PEOPLE").pressed.emit()
+	_find_button(menu, "2V2").pressed.emit()
+	_find_button(menu, "START").pressed.emit()
+	check_eq(got.get("start"), [4, GameSetup.MODE_RANDOM_4, false, "2v2"], "2V2: четверо, команды")
+	_find_button(menu, "3").pressed.emit()
 
 	_find_button(menu, "ONLINE").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "ONLINE открывает поиск игры")

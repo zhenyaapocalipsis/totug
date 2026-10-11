@@ -283,7 +283,7 @@ func _draw_timeline() -> void:
 		var colour := PixelTheme.TEXT_OFF
 		if i > 0:
 			var pid := String((intents[a] as Dictionary).get("player_id", ""))
-			colour = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT_OFF)
+			colour = BoardPanel.colour(pid, PixelTheme.TEXT_OFF)
 		if a >= _shown_cursor():
 			colour = colour.darkened(0.55)
 		# Между ходами — щель в пиксель, чтобы ходы читались по отдельности.
@@ -337,7 +337,7 @@ func _eye_button(pid: String) -> Button:
 	b.toggle_mode = true
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(BUTTON_H, BUTTON_H)
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, Color.GRAY)
+	var colour: Color = BoardPanel.colour(pid, Color.GRAY)
 	b.add_theme_stylebox_override("normal", PixelTheme.button_box(colour.darkened(0.3), PixelTheme.BORDER))
 	b.add_theme_stylebox_override("hover", PixelTheme.button_box(colour, PixelTheme.GOLD))
 	b.add_theme_stylebox_override("pressed", PixelTheme.button_box(colour, PixelTheme.GOLD, 2))

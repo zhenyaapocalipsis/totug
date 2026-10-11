@@ -27,7 +27,8 @@ extends Control
 ## .tscn в этом проекте правится вслепую, без редактора.
 
 ## bots — за всех, кроме первого цвета, играют боты (BotPlayer).
-signal started(player_ids: Array[String], mode: String, bots: bool)
+## teams — режим 2 на 2 (этап Team-2): четверо, красные против синих.
+signal started(player_ids: Array[String], mode: String, bots: bool, teams: bool)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
 ## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN),
 ## "find" — поиск игры на сервере (режим по размеру стола: NetSession.match_mode),
@@ -116,6 +117,10 @@ var _new_era_buttons := {}
 var _count: int = GameScreen.MIN_PLAYERS
 ## HOTSEAT: соперники — боты (иначе люди за этим же компьютером).
 var _bots := false
+## HOTSEAT: режим 2 на 2 (кнопка 2V2 рядом с числом игроков).
+var _teams := false
+## Кнопка 2V2 есть на текущей странице (её нет в LOBBY — пока только хотсит).
+var _teams_shown := false
 var _hotseat_note: Label
 ## На сколько человек искать стол (SEARCH) — отдельно от своей комнаты.
 var _match_count: int = GameScreen.MIN_PLAYERS
@@ -498,8 +503,8 @@ func _build_hotseat() -> void:
 	_hotseat_note = _add_dim("")
 	_select_bots(_bots)
 	_col.add_child(HSeparator.new())
-	_add_game_options()
-	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _chosen_mode(), _bots))
+	_add_game_options(true)
+	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _chosen_mode(), _bots, _teams))
 
 
 func _select_bots(on: bool) -> void:
@@ -518,7 +523,7 @@ func _build_how_to_play() -> void:
 
 
 ## Режим рынка и число игроков — общие для hotseat и новой сетевой партии.
-func _add_game_options() -> void:
+func _add_game_options(with_teams: bool = false) -> void:
 	_col.add_child(_heading("GAME MODE"))
 	var modes: Array[Button] = []
 	var group := ButtonGroup.new()
@@ -547,10 +552,16 @@ func _add_game_options() -> void:
 	_col.add_child(_heading("PLAYERS"))
 	var counts: Array[Button] = []
 	group = ButtonGroup.new()
+	_teams_shown = with_teams
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
-		var b := _toggle(str(count), group, count == _count, 24)
+		var b := _toggle(str(count), group, count == _count and not (with_teams and _teams), 24)
 		b.pressed.connect(func(): _select_count(count))
 		counts.append(b)
+	# 2V2 (этап Team-2): четверо, красные против синих — пока только хотсит.
+	if with_teams:
+		var duo := _toggle("2V2", group, _teams and _count == GameScreen.MAX_PLAYERS, 32)
+		duo.pressed.connect(func(): _select_count(GameScreen.MAX_PLAYERS, true))
+		counts.append(duo)
 	var row := _row(counts)
 	# Фишки тех, кто сядет за стол: блок постоянной ширины (место под все
 	# четыре), чтобы кнопки не прыгали при смене числа игроков.
@@ -589,8 +600,9 @@ func _chosen_mode() -> String:
 	return _mode
 
 
-func _select_count(count: int) -> void:
+func _select_count(count: int, teams: bool = false) -> void:
 	_count = count
+	_teams = teams
 	_refresh_dots()
 
 
@@ -600,9 +612,11 @@ func _refresh_dots() -> void:
 	for child in _dots.get_children():
 		_dots.remove_child(child)
 		child.queue_free()
-	for pid: String in GameScreen.player_ids_for(_count):
+	var ids := GameScreen.player_ids_for(_count)
+	var team_of: Dictionary = GameSetup.team_map(ids) if _teams and _teams_shown and ids.size() == 4 else {}
+	for pid: String in ids:
 		var dot := ColorRect.new()
-		dot.color = BoardPanel.PLAYER_COLORS.get(pid, Color.GRAY)
+		dot.color = BoardPanel.PLAYER_COLORS.get(String(team_of.get(pid, pid)), Color.GRAY)
 		dot.custom_minimum_size = Vector2(DOT, DOT)
 		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		_dots.add_child(dot)

@@ -318,9 +318,10 @@ static func player_ids_for(count: int) -> Array[String]:
 ## или реплей: {replay} (ReplayBook.load_replay).
 ## Пустой — хотсит, партию собирает сам экран.
 ## bot_ids — цвета, за которые в хотсите играет BotPlayer.
+## teams — хотсит 2 на 2 (этап Team-2).
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
 		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {},
-		bot_ids: Array[String] = []) -> void:
+		bot_ids: Array[String] = [], teams: bool = false) -> void:
 	bots = bot_ids.duplicate()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
@@ -369,7 +370,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		return
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
-	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode)
+	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode, teams)
 	server = GameServer.new(state)
 	if half_decks.is_empty():
 		_replay_seed = game_seed
@@ -407,6 +408,7 @@ static func band_label(text: String) -> Label:
 
 
 func _build_layout() -> void:
+	BoardPanel.team_of = board_data.get("teams", {})
 	# Тот же задник, что в меню, но приглушённый: за доской и картами он
 	# должен только слегка дышать, а не спорить с ними за внимание.
 	add_child(UnderdarkBg.make(UnderdarkBg.GAME_FADE, board_data.get("half_decks", [])))
@@ -877,7 +879,7 @@ func _speaker() -> String:
 
 
 func _speaker_colour() -> Color:
-	return BoardPanel.PLAYER_COLORS.get(_speaker(), PixelTheme.TEXT)
+	return BoardPanel.colour(_speaker(), PixelTheme.TEXT)
 
 
 ## Общие для всех игроков зоны, где можно пинговать: рука, колода и сводка у
@@ -918,7 +920,7 @@ func show_ping(pid: String, zone: String, pos: Vector2) -> void:
 		global = (zones[zone] as Control).get_global_transform() * pos
 	Sfx.play("ping")
 	_pings.ping(_pings.get_global_transform().affine_inverse() * global,
-		BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
+		BoardPanel.colour(pid, PixelTheme.TEXT))
 
 
 ## Фраза из колеса: в сети — всем через чат (своё облачко придёт эхом),
@@ -941,7 +943,7 @@ func show_phrase(pid: String, text: String) -> void:
 		return
 	Sfx.play("phrase")
 	var anchor: Rect2 = _bubbles.get_global_transform().affine_inverse() * (row as Rect2)
-	_bubbles.say(pid, clean, anchor, BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
+	_bubbles.say(pid, clean, anchor, BoardPanel.colour(pid, PixelTheme.TEXT))
 
 
 func bubble_text(pid: String) -> String:
@@ -1418,7 +1420,7 @@ func _showcase_outcasts(gives: Array[Dictionary]) -> void:
 		slots.append({
 			"text": EventLogPanel.player_name(pid).to_upper() + " RECRUITS" \
 				+ (" ×%d" % count if count > 1 else ""),
-			"colour": BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD),
+			"colour": BoardPanel.colour(pid, PixelTheme.GOLD),
 			"to": _showcase_target(pid, "discard"),
 			"shader": PlayerProfile.shader_of(pid),
 		})
@@ -1582,7 +1584,7 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 	if from != null and (from as Rect2).size.x >= 1.0:
 		start = (from as Rect2).get_center() - get_global_position()
 	var to: Variant = _showcase_target(pid, dest) if dest != "" else null
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.GOLD)
+	var colour: Color = BoardPanel.colour(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
 		colour, start, to, face_down, PlayerProfile.back_of(pid), PlayerProfile.art_of(pid, cid), morph,
 		PlayerProfile.shader_of(pid), fx)
@@ -2003,6 +2005,7 @@ func _sound_game_over(view: Dictionary) -> void:
 
 func refresh(view: Dictionary) -> void:
 	_view = view
+	BoardPanel.team_of = view.get("teams", BoardPanel.team_of)
 	# Живой текст карт: новые числа — и уже показанные живые карты перерисовываются.
 	CardView.live_data = view.get("live", {})
 	if is_inside_tree():
@@ -2209,7 +2212,7 @@ func _open_pile(which: String) -> void:
 func _refresh_actions(view: Dictionary) -> void:
 	var legal: Dictionary = view.get("legal", {}) if replay_bar == null else {}
 	_end_turn_button.disabled = not bool(legal.get("end_turn", false))
-	_end_turn_colour = BoardPanel.PLAYER_COLORS.get(viewer_id, Color(0.6, 0.6, 0.6))
+	_end_turn_colour = BoardPanel.colour(viewer_id, Color(0.6, 0.6, 0.6))
 	_style_end_turn(_end_turn_colour)
 	var show_deploy := bool(legal.get("deploy_for_vp", false))
 	if _deploy_vp_button.visible != show_deploy:

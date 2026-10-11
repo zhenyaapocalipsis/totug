@@ -243,7 +243,7 @@ func last_block_tags() -> Array[String]:
 
 
 func _open_block(pid: String) -> Block:
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT)
+	var colour: Color = BoardPanel.colour(pid, PixelTheme.TEXT)
 	var style := StyleBoxFlat.new()
 	style.bg_color = PixelTheme.PANEL.lerp(colour, FILL_TINT)
 	style.border_color = colour

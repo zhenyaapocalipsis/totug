@@ -18,6 +18,7 @@ func _ready() -> void:
 	var players := 0
 	var mode := GameSetup.MODE_STANDARD
 	var bots := false
+	var teams := false
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			game_seed = int(arg.get_slice("=", 1))
@@ -25,11 +26,13 @@ func _ready() -> void:
 			players = int(arg.get_slice("=", 1))
 		elif arg.begins_with("--mode="):
 			mode = arg.get_slice("=", 1)
+		elif arg == "--teams":
+			teams = true
 		elif arg == "--bots":
 			bots = true
 
 	if players >= GameScreen.MIN_PLAYERS:
-		_start_game(GameScreen.player_ids_for(players), game_seed, mode, bots)
+		_start_game(GameScreen.player_ids_for(players), game_seed, mode, bots, teams)
 		return
 
 	# Первый запуск: профиля ещё нет — сначала создать его, потом спросить,
@@ -65,13 +68,15 @@ func _show_tutorial_offer(game_seed: int) -> void:
 func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void:
 	_close_net()
 	PlayerProfile.seats = {}
+	BoardPanel.team_of = {}
 	_clear()
 	var setup := SetupScreen.new(page)
 	# Пока открыто меню, игра на связи с сервером: она видна в ONLINE, по этой
 	# связи приходит LEADERBOARD (владелец, 2026-10-11).
 	setup.presence = _open_net()
 	setup.presence.watch(SetupScreen.LeaderboardPage.server_address(), NetSession.SERVER_PORT)
-	setup.started.connect(func(ids: Array[String], m: String, bots: bool): _start_game(ids, game_seed, m, bots))
+	setup.started.connect(func(ids: Array[String], m: String, bots: bool, teams: bool):
+		_start_game(ids, game_seed, m, bots, teams))
 	setup.online_requested.connect(_show_lobby)
 	setup.replay_requested.connect(_start_replay)
 	setup.friend_invite_requested.connect(func(fname: String, count: int, m: String):
@@ -193,18 +198,21 @@ func _start_replay(file: String) -> void:
 	add_child(screen)
 
 
-func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: bool = false) -> void:
+func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: bool = false,
+		teams: bool = false) -> void:
 	for child in get_children():
 		child.queue_free()
 	# За одним экраном профиль на компьютере один — он у первого цвета, и этот
 	# цвет — любимый цвет профиля, если он выбран.
 	var local := PlayerProfile.load_local()
-	player_ids = PlayerProfile.seat_first(player_ids, String(local["colour"]))
+	# 2 на 2: места не переставляем — команды по местам (1+3 красные, 2+4 синие).
+	if not teams:
+		player_ids = PlayerProfile.seat_first(player_ids, String(local["colour"]))
 	PlayerProfile.seats = {player_ids[0]: local}
 	var bot_ids: Array[String] = []
 	if bots:
 		bot_ids = player_ids.slice(1)
-	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids)
+	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids, teams)
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():
 		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))

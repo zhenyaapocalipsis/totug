@@ -26,6 +26,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	var view: Dictionary = {
 		"current_player": state.current_player(),
 		"turn_order": state.turn_order.duplicate(),
+		"teams": state.teams.duplicate(),
 		"game_over": state.game_over,
 		"game_end_triggered": state.game_end_triggered,
 		"game_end_reason": state.game_end_reason,
@@ -221,6 +222,8 @@ static func board_snapshot(state: GameState) -> Dictionary:
 		"schematic": BoardSchematic.build(state),
 		# какие полуколоды собраны в маркет: по ним экран красит фон
 		"half_decks": state.half_decks.duplicate(),
+		# 2 на 2: player_id -> команда (пусто — каждый сам за себя)
+		"teams": state.teams.duplicate(),
 	}
 
 

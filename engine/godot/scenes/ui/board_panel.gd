@@ -38,6 +38,18 @@ const PLAYER_COLORS := {
 	"green": Color(0.28, 0.70, 0.34),
 	"purple": Color(0.62, 0.35, 0.78),
 }
+## Командная игра 2 на 2 (этап Team-2): player_id -> команда из вида партии
+## (GameScreen.refresh). Цветов всего два — союзник рисуется цветом команды:
+## green красным, purple синим. Пусто — у каждого свой цвет.
+static var team_of: Dictionary = {}
+
+
+## Цвет игрока (или контролёра локации) с учётом команд.
+static func colour(pid: Variant, fallback: Color) -> Color:
+	var key := String(pid)
+	return PLAYER_COLORS.get(String(team_of.get(key, key)), fallback)
+
+
 const NEUTRAL_TROOP_COLOR := Color(0.55, 0.55, 0.58)
 const EMPTY_SLOT_COLOR := Color(0.0, 0.0, 0.0, 0.45)
 const DEPLOY_COLOR := Color(0.35, 0.95, 0.45)
@@ -256,7 +268,7 @@ func _fire_captures(sites: Array[String]) -> void:
 			break
 	for site_id in sites:
 		_captures[site_id] = CAPTURE_TIME
-		spark_at_site(site_id, PLAYER_COLORS.get(String(_control.get(site_id, "")), Color(0.8, 0.8, 0.8)))
+		spark_at_site(site_id, colour(String(_control.get(site_id, "")), Color(0.8, 0.8, 0.8)))
 	shake(3.0)
 	set_process(true)
 
@@ -829,7 +841,7 @@ func spy_half() -> float:
 
 static func troop_colour(owner: String) -> Color:
 	return NEUTRAL_TROOP_COLOR if owner == GameState.WHITE \
-		else PLAYER_COLORS.get(owner, Color(0.6, 0.6, 0.6))
+		else colour(owner, Color(0.6, 0.6, 0.6))
 
 
 ## Для проверок: сколько локаций сейчас вспыхивает захватом.
@@ -1229,7 +1241,7 @@ func _draw_control_fills() -> void:
 		var rect: Variant = _site_rect(site_id)
 		if rect == null:
 			continue
-		var colour: Color = PLAYER_COLORS.get(String(control[site_id]), Color(0.8, 0.8, 0.8))
+		var colour: Color = colour(String(control[site_id]), Color(0.8, 0.8, 0.8))
 		var alpha: float = CONTROL_FILL_TOTAL if total.has(site_id) else CONTROL_FILL
 		var r := rect as Rect2
 		var top_left := (_to_screen(r.position) * scale).round() / scale
@@ -1256,7 +1268,7 @@ func _draw_marker_icons() -> void:
 		var at: Array = site["icons_at"]
 		var tl := (_to_screen(Vector2(float(at[0]), float(at[1]))) * scale).round() / scale
 		var owner := String(control.get(site_id, ""))
-		var lit: Color = PLAYER_COLORS.get(owner, SchematicPainter.INK)
+		var lit: Color = colour(owner, SchematicPainter.INK)
 		var inf: Color = lit if owner != "" else SchematicPainter.INK
 		var vp: Color = lit if total.has(site_id) else SchematicPainter.INK
 		_draw_bits(tl, INFLUENCE_WEB, inf, px)
@@ -1355,9 +1367,9 @@ func _draw_a2_plate() -> void:
 	for row in 3:
 		var ink := Color.WHITE
 		if row == 0 and troopers.size() == 1:
-			ink = PLAYER_COLORS.get(String(troopers[0]), ink)
+			ink = colour(String(troopers[0]), ink)
 		elif row > 0 and int(state["tier"]) == row + 1:
-			ink = PLAYER_COLORS.get(String(state["holder"]), ink)
+			ink = colour(String(state["holder"]), ink)
 		var at := tl + Vector2(3, 3 + row * 7) * px
 		_draw_bits(at, A2_DOTS[row], ink, px)
 		var x := 10
@@ -1373,7 +1385,7 @@ func _draw_a2_plate() -> void:
 		if row == 0 and troopers.size() > 1:
 			for i in troopers.size():
 				draw_rect(Rect2(at + Vector2(x + 1 + i * 4, 1) * px, Vector2(3, 3) * px),
-					PLAYER_COLORS.get(String(troopers[i]), Color.WHITE))
+					colour(String(troopers[i]), Color.WHITE))
 
 
 ## Кто сейчас что получает с A2:
@@ -1421,7 +1433,7 @@ func _draw_a2_frame() -> void:
 	var state := _a2_state()
 	var colour: Color = SchematicPainter.MARKER_EDGE
 	if int(state["tier"]) >= 2:
-		colour = PLAYER_COLORS.get(String(state["holder"]), colour)
+		colour = colour(String(state["holder"]), colour)
 	var px := _zoom
 	var scale := window_scale()
 	var tl := (_to_screen(r.position) * scale).round() / scale
@@ -1500,7 +1512,7 @@ func _draw_bits(tl: Vector2, rows: Array, colour: Color, px: float) -> void:
 func _draw_captures() -> void:
 	for site_id: String in _captures:
 		var owner := String(_control.get(site_id, ""))
-		var colour: Color = PLAYER_COLORS.get(owner, Color(0.8, 0.8, 0.8))
+		var colour: Color = colour(owner, Color(0.8, 0.8, 0.8))
 		var k: float = float(_captures[site_id]) / CAPTURE_TIME
 		_outline_site(site_id, Color(colour.lightened(0.25), k))
 
@@ -1596,7 +1608,7 @@ func _draw_spies() -> void:
 			var spot: Variant = _spy_spot(site_id, i, owners.size())
 			if spot == null:
 				continue
-			var colour: Color = PLAYER_COLORS.get(String(owners[i]), Color(0.7, 0.7, 0.7))
+			var colour: Color = colour(String(owners[i]), Color(0.7, 0.7, 0.7))
 			var at: Vector2 = spot
 			var diamond := PackedVector2Array([
 				at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0)])

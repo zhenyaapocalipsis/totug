@@ -75,7 +75,7 @@ static func fill(col: VBoxContainer, pid: String, profile: Dictionary) -> void:
 	var player_name := String(profile.get("name", ""))
 	name_label.text = player_name if player_name != "" else pid.capitalize()
 	name_label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
-	name_label.add_theme_color_override("font_color", BoardPanel.PLAYER_COLORS.get(pid, PixelTheme.TEXT))
+	name_label.add_theme_color_override("font_color", BoardPanel.colour(pid, PixelTheme.TEXT))
 	head.add_child(name_label)
 	# Любимая карта игрока — справа, в его образе.
 	var fav := ProfileScreen.favourite_view(String(profile.get("favourite", "")), str(profile.get("shader", "")),

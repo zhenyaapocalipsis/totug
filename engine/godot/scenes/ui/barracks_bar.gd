@@ -37,7 +37,7 @@ func _init() -> void:
 
 
 func _make_box(pid: String) -> Dictionary:
-	var colour: Color = BoardPanel.PLAYER_COLORS.get(pid, Color(0.6, 0.6, 0.6))
+	var colour: Color = BoardPanel.colour(pid, Color(0.6, 0.6, 0.6))
 	var style := PixelTheme.box(colour.darkened(0.7), colour, 1, 1, 1)
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", style)

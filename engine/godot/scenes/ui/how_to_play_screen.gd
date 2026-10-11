@@ -449,7 +449,7 @@ static func _texture(tex: Texture2D, zoom: int = 1) -> TextureRect:
 
 static func _colour(pid: String) -> Color:
 	return BoardPanel.NEUTRAL_TROOP_COLOR if pid == "white" \
-		else BoardPanel.PLAYER_COLORS.get(pid, Color.GRAY)
+		else BoardPanel.colour(pid, Color.GRAY)
 
 
 ## Маленькая доска в 1x: коробки мест и пути рисует SchematicPainter (как в

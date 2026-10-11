@@ -155,7 +155,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		or choice_type == "target_player" or tag == "trophy_hall"   # в таблице игроков (players_panel.gd)
 	var options: Array = pd.get("legal_options", [])
 	visible = true
-	_style.border_color = BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
+	_style.border_color = BoardPanel.colour(decider, Color(0.85, 0.65, 0.25))
 	# Схема доски занимает всю свою зону, поэтому вопрос про цель НА ДОСКЕ
 	# показываем одной узкой полосой сверху: имя ходящего и вопрос в строку.
 	_who.text = "%s decides" % EventLogPanel.player_name(decider)
@@ -539,7 +539,7 @@ func _notification(what: int) -> void:
 func _set_cards_look(on: bool, decider: String) -> void:
 	_style.bg_color = Color(PixelTheme.PANEL_HI, 0.0 if on else 0.97)
 	_style.border_color = Color(0, 0, 0, 0) if on \
-		else BoardPanel.PLAYER_COLORS.get(decider, Color(0.85, 0.65, 0.25))
+		else BoardPanel.colour(decider, Color(0.85, 0.65, 0.25))
 	for label: Label in [_who, _prompt]:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if on else HORIZONTAL_ALIGNMENT_LEFT
 		if on:

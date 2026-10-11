@@ -121,10 +121,20 @@ func update_from_view(view: Dictionary) -> void:
 	var scores: Dictionary = view["final_scores"]
 	var winners: Array = view.get("winners", [])
 
+	# 2 на 2 (этап Team-2): счёт у союзников общий — строка на команду.
+	var teams: Dictionary = view.get("teams", {})
+	var rows: Array = view["turn_order"].duplicate()
+	if not teams.is_empty():
+		rows = rows.filter(func(pid): return String(teams.get(pid, pid)) == String(pid))
+		winners = winners.filter(func(pid): return rows.has(pid))
+
 	var names: Array[String] = []
 	for pid in winners:
-		names.append(EventLogPanel.player_name(String(pid)).to_upper())
-	if winners.size() == 1:
+		names.append(_row_name(String(pid), teams))
+	if not teams.is_empty() and winners.size() == 1:
+		_title.text = "%s WINS" % names[0]
+		_title.add_theme_color_override("font_color", EventLogPanel.player_color(String(winners[0])))
+	elif winners.size() == 1:
 		_title.text = "%s WINS" % names[0]
 		_title.add_theme_color_override("font_color", EventLogPanel.player_color(String(winners[0])))
 	else:
@@ -142,13 +152,13 @@ func update_from_view(view: Dictionary) -> void:
 	_grid.add_child(_cell("RATING" if not _ratings.is_empty() else "", PixelTheme.TEXT_DIM, 0))
 
 	# Строки — по убыванию счёта, при равенстве в порядке хода.
-	var order: Array = view["turn_order"].duplicate()
+	var order: Array = rows
 	order.sort_custom(func(a, b):
 		return int(scores[a]["total"]) > int(scores[b]["total"]))
 	for pid in order:
 		var s: Dictionary = scores[pid]
 		var colour := EventLogPanel.player_color(String(pid))
-		_grid.add_child(_cell(EventLogPanel.player_name(String(pid)).to_upper(), colour, 0,
+		_grid.add_child(_cell(_row_name(String(pid), teams), colour, 0,
 				HORIZONTAL_ALIGNMENT_LEFT))
 		for c in COLUMNS:
 			_grid.add_child(_cell(str(int(s[c[0]])), PixelTheme.TEXT, COL_W))
@@ -240,6 +250,13 @@ func _build_corner(pid: String, cards: Dictionary, area: Rect2) -> void:
 					y0 + float(k % per_col) * step)
 			_decks.add_child(card)
 		col_x += float(n_cols) * (CARD.x + CARD_GAP)
+
+
+## Подпись строки итогов: ник игрока или, в 2 на 2, команда ("RED TEAM").
+static func _row_name(pid: String, teams: Dictionary) -> String:
+	if teams.is_empty():
+		return EventLogPanel.player_name(pid).to_upper()
+	return "%s TEAM" % String(teams.get(pid, pid)).to_upper()
 
 
 func _cell(text: String, colour: Color, width: int,
