@@ -257,6 +257,7 @@ static func _count_of(cards: Array[CardView], cid: String) -> int:
 func _make_card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
 	card.set_card_owner(_viewer)
+	card.set_live(true)
 	card.pressed.connect(func(clicked: String):
 		# Запомнить до отправки: сервер ответит новой рукой синхронно, прямо
 		# внутри card_clicked, и к тому моменту пометка уже нужна.

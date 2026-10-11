@@ -59,6 +59,15 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	for pid: String in state.players.keys():
 		view["players"][pid] = _player_view(state.players[pid], pid == viewer_id)
 	view["legal"] = _legal_actions(state, viewer_id)
+	# Живой текст карт (CardLive): у всех карт, которые зритель видит своими —
+	# рука, колода, сброс, сыгранные, рынок и запас.
+	if state.players.has(viewer_id):
+		var d: Deck = state.players[viewer_id].deck
+		var seen: Array = []
+		for pile: Array in [d.hand, d.draw_pile, d.discard_pile, d.played_pile, state.market.display,
+				Supplies.PURCHASABLE]:
+			seen.append_array(pile)
+		view["live"] = CardLive.for_view(state, viewer_id, seen)
 	# Партия окончена — итоговый счёт по статьям и победители (ничья — все
 	# с лучшим счётом). Колоды здесь уже не тайна: подсчёт открытый.
 	if state.game_over:

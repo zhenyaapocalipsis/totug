@@ -74,6 +74,7 @@ func set_cards(deck: Array, discard: Array, owner: String = "") -> void:
 	while _cards.size() < ids.size():
 		var card := CardView.new(String(ids[_cards.size()]), CARD.x, CARD.y)
 		card.set_card_owner(owner)
+		card.set_live(true)
 		card.set_clickable(false, false)
 		add_child(card)
 		_cards.append(card)

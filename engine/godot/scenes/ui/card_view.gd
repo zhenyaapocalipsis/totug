@@ -122,7 +122,7 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 	mouse_exited.connect(_on_mouse_exited)
 
 	_mini = card_width <= MINI_MAX_WIDTH
-	_pixel = mini_texture(cid) if _mini else pixel_texture(cid)
+	_pixel = _face(cid, "")
 	if _pixel != null:
 		add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		return
@@ -368,6 +368,41 @@ static func art_of(seat: String, cid: String) -> String:
 	return PlayerProfile.art_of(seat, cid)
 
 
+## Живой текст карт (CardLive): card_id -> {notes, cost} из среза зрителя
+## (view["live"]). Ставит экран партии; живыми показываются только карты с
+## live = true — своя рука, колода, рынок (у чужих карт в ленте числа были бы
+## чужими).
+static var live_data: Dictionary = {}
+var live := false
+
+
+## Показывать живой текст (числа по нынешнему положению зрителя).
+func set_live(on: bool) -> void:
+	live = on
+	if on:
+		add_to_group("live_cards")
+	elif is_in_group("live_cards"):
+		remove_from_group("live_cards")
+	refresh_live()
+
+
+## live_data поменялся (новый срез) — перерисовать лицо (группа live_cards).
+func refresh_live() -> void:
+	if _pixel == null:
+		return
+	_pixel = _face(card_id, art)
+	queue_redraw()
+
+
+func _face(cid: String, face_art: String) -> Texture2D:
+	if live and live_data.has(cid):
+		var entry: Dictionary = live_data[cid]
+		var tex := CardLiveFace.mini(cid, face_art, entry) if _mini else CardLiveFace.full(cid, face_art, entry)
+		if tex != null:
+			return tex
+	return mini_texture(cid, face_art) if _mini else pixel_texture(cid, face_art)
+
+
 ## Карта принадлежит игроку seat — показывать её с его шейдером и артом.
 func set_card_owner(seat: String) -> void:
 	owner_seat = seat
@@ -457,7 +492,7 @@ func set_card(cid: String) -> void:
 			art = art_of(owner_seat, cid)
 		if art != "" and AltArts.card_of(art) != cid:
 			art = ""
-		_pixel = mini_texture(cid, art) if _mini else pixel_texture(cid, art)
+		_pixel = _face(cid, art)
 		if owner_seat != "":
 			set_skin(skin_of(owner_seat, cid))
 		queue_redraw()

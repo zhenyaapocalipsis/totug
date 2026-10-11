@@ -116,6 +116,7 @@ func _show(card: CardView) -> void:
 	_card.hover_preview = false
 	_card.set_skin(card.skin)
 	_card.set_art(card.art)
+	_card.set_live(card.live)
 	_card.set_clickable(card.clickable, false)
 	CardView._ignore_mouse(_card)
 	add_child(_card)

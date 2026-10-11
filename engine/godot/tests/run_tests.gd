@@ -60,6 +60,7 @@ func _initialize() -> void:
 	test_celestial_order()
 	test_shield_guardian_reaction()
 	test_shadow_isles()
+	test_card_live()
 
 	# этап 6: сетевой слой
 	test_intent_factories()
@@ -5084,3 +5085,48 @@ func test_shadow_isles() -> void:
 			_auto_resolve(st, res, prefer_last)
 			if res.is_waiting():
 				check(false, "%s завис (prefer_last=%s)" % [cid, prefer_last])
+
+
+## Живой текст карт (CardLive + CardLiveFace, владелец 2026-10-11).
+func test_card_live() -> void:
+	print("\n[card live]")
+	var state := GameSetup.new_game(["red", "blue"] as Array[String], 4242, ["drow", "demons"])
+	var red: PlayerState = state.players["red"]
+	red.deck.inner_circle.assign(["48302", "48302"])
+	var negotiator := CardLive.entry(state, "red", "48320")
+	check_eq(negotiator["notes"][0]["text"], "(2/4)", "Drow Negotiator: 2 из 4 карт во Внутреннем круге")
+	check(not negotiator["notes"][0]["ok"], "Drow Negotiator: условие ещё не выполнено")
+	red.deck.inner_circle.assign(["48302", "48302", "48302", "48302"])
+	check(CardLive.entry(state, "red", "48320")["notes"][0]["ok"], "Drow Negotiator: 4 карты — условие выполнено")
+	var sites := 0
+	for site_id: String in state.graph.sites.keys():
+		if state.control.controller_of(site_id, state.troops) == "red":
+			sites += 1
+	check_eq(CardLive.entry(state, "red", "48711")["notes"][0]["text"], "(%d)" % sites, "Quaggoth: убьёт столько, сколько сайтов под контролем")
+	check(CardLive.entry(state, "red", "48302").is_empty(), "у обычной карты живого нет")
+	state.turn_flags["outcasts"] = 2
+	check_eq(int(CardLive.entry(state, "red", ShadowCards.RAKSHASA)["cost"]), CardLibrary.card_cost(ShadowCards.RAKSHASA) - 2,
+		"Rakshasa: на 2 дешевле после двух Insane Outcast")
+	var view := StateView.for_player(state, "red")
+	check(view.has("live") and (view["live"] as Dictionary).has("48320") == red.deck.hand.has("48320")
+		or not red.deck.hand.has("48320"), "срез игрока несёт живой текст своих карт")
+	# Каждая фраза найдена в тексте карты, и текст с самой длинной пометкой
+	# влезает в поле карты (поле общее, по самой длинной карте набора).
+	var text_h: int = 254 - 22 - CardLiveFace.TEXT_TOP
+	for cid: String in CardLive.RULES:
+		var notes: Array = []
+		for rule: Array in CardLive.RULES[cid]:
+			var widest := {"per": "(+9)", "count": "(9)", "need": "(15/%d)" % int(rule[-1]), "have": "(YES)", "less": "(-3)"}
+			notes.append({"phrase": rule[0], "text": widest[rule[1]], "ok": true})
+		var raw := String(CardLibrary.card_data(cid).get("ability_text", ""))
+		var paras := CardLiveFace.layout(raw, notes)
+		var marks := 0
+		for p: Dictionary in paras:
+			for line: Array in p["lines"]:
+				for word: String in line:
+					if word.begins_with(CardLiveFace.MARK_OK):
+						marks += 1
+		var raise: int = CardLiveFace.fit_box(paras, text_h)[1]
+		check(marks == notes.size() and raise <= 6,
+			"%s: пометки найдены (%d/%d), поле поднято на %d px (не больше 6)" % [CardLibrary.card_data(cid).get("name", cid),
+				marks, notes.size(), raise])

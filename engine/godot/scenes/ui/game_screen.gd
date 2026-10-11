@@ -1989,6 +1989,10 @@ func _sound_game_over(view: Dictionary) -> void:
 
 func refresh(view: Dictionary) -> void:
 	_view = view
+	# Живой текст карт: новые числа — и уже показанные живые карты перерисовываются.
+	CardView.live_data = view.get("live", {})
+	if is_inside_tree():
+		get_tree().call_group("live_cards", "refresh_live")
 	_refresh_turn(view)
 	_barracks.update_from_view(view)
 	_game_over_panel.update_from_view(view)
