@@ -1064,7 +1064,8 @@ func _rate_room(room: GameRoom) -> void:
 		scores[pid] = int(breakdowns[pid]["total"])
 	var vp := Scoring.library_card_vp(state)
 	var winners := Array(Scoring.winners(state, vp[0], vp[1]))
-	var result := ratings.record(players, scores, winners)
+	# Рейтинг меняют только партии поиска игры; лобби — без рейтинга.
+	var result := ratings.record(players, scores, winners, room.matched)
 	if result.is_empty():
 		_log("room %s: game over, not rated" % room.code)
 		return

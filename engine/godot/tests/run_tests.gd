@@ -1068,6 +1068,11 @@ func test_rating() -> void:
 	check_eq(int(r["red"]["games"]), 1, "итог партии несёт число партий")
 	check_eq(book.stats_of(b), {"rating": 984, "games": 1, "wins": 0}, "карточка игрока: рейтинг, партии, победы")
 	check_eq(book.stats_of("nobody"), {"rating": 1000, "games": 0, "wins": 0}, "карточка новичка")
+	var lobby := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": b, "name": "Bob"}},
+			{"red": 40, "blue": 30}, ["red"], false)
+	check(int(lobby["red"]["delta"]) == 0 and int(lobby["red"]["rating"]) == 1016 and lobby["red"]["unrated"],
+		"партия из лобби: рейтинг не меняется")
+	check_eq(book.stats_of(a), {"rating": 1016, "games": 1, "wins": 1}, "партия из лобби не считается в партиях и победах")
 
 	# Звания и история партий в профиле.
 	check_eq(PlayerProfile.rank_title(-1), "UNRANKED", "без рейтинга — без звания")

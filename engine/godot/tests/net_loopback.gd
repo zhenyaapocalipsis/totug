@@ -205,13 +205,15 @@ func _process(delta: float) -> bool:
 				var r: Dictionary = ratings[players[0]]
 				check(r == ratings[players[1]], "[server] рейтинг пришёл обоим одинаковый")
 				check(r.has(players[0].seat) and r.has(players[1].seat), "[server] рейтинг обоих мест")
-				check(int(r[players[0].seat]["delta"]) + int(r[players[1].seat]["delta"]) == 0,
-					"[server] рейтинг: сколько один получил, столько другой потерял")
+				check(int(r[players[0].seat]["delta"]) == 0 and int(r[players[1].seat]["delta"]) == 0
+					and r[players[0].seat].get("unrated", false),
+					"[server] партия по коду комнаты (лобби) рейтинг не меняет")
 				var mine: Dictionary = r[players[0].seat]
 				check(int((mine.get("breakdown", {}) as Dictionary).get("total", -1)) == int(mine["vp"])
 					and (mine.get("half_decks", []) as Array).size() > 0,
 					"[server] с итогом пришли разбивка VP и полуколоды партии")
-				check(server.ratings.accounts.size() == 2, "[server] на сервере две учётные записи")
+				check(server.ratings.accounts.is_empty(), "[server] партия из лобби не записана в рейтинги")
+				check(PlayerProfile.history()[0].get("unrated", false), "[server] в истории партия помечена LOBBY")
 				check(not mine.has("reward"), "[server] партия по коду комнаты — без награды")
 				check(not (views[players[0]] as Dictionary).get("final_scores", {}).is_empty(),
 					"[server] итоги партии пришли в срезе")

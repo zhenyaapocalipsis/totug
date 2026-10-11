@@ -454,7 +454,7 @@ static func history_entry(own_seat: String, result: Dictionary, profiles: Dictio
 		return a["won"] and not b["won"] or (a["won"] == b["won"] and a["vp"] > b["vp"]))
 	return {"time": int(Time.get_unix_time_from_system()), "seat": own_seat, "place": place,
 		"vp": int(mine.get("vp", 0)), "won": bool(mine.get("won", false)), "rating": int(mine["rating"]),
-		"delta": int(mine.get("delta", 0)), "players": players,
+		"delta": int(mine.get("delta", 0)), "unrated": bool(mine.get("unrated", false)), "players": players,
 		"breakdown": (mine.get("breakdown", {}) as Dictionary).duplicate(),
 		"half_decks": (mine.get("half_decks", []) as Array).duplicate(), "ic_cards": int(mine.get("ic_cards", 0))}
 

@@ -39,6 +39,8 @@ const GAP := 2.0
 const ZONE_GAP := 9.0
 ## Вопросы, чьи карты встают в ряд руки справа от неё: метка вопроса -> подпись.
 const ZONE_LABELS := {"inner_circle": "INNER CIRCLE", "discard": "DISCARD"}
+## Вопрос "карта из руки или сброса" (PromoteCard "hand_or_discard").
+const HAND_OR_DISCARD := "hand_or_discard"
 
 ## Жёсткость и затухание пружины. Затухание примерно вдвое меньше критического
 ## (2*sqrt(жёсткость) ≈ 41) — карта заметно проскакивает место и качнётся
@@ -123,10 +125,11 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var pd: Dictionary = view.get("pending_decision", {})
 	var mine := String(pd.get("player_id", "")) == viewer_id
 	var tag := String(pd.get("tag", ""))
-	_choosing = mine and (tag == "hand" or ZONE_LABELS.has(tag))
+	var both := tag == HAND_OR_DISCARD
+	_choosing = mine and (tag == "hand" or both or ZONE_LABELS.has(tag))
 	var options: Array = pd.get("legal_options", []) if _choosing else []
 	if _choosing:
-		playable = options if tag == "hand" else []
+		playable = options if tag == "hand" or both else []
 	# Выбор из Inner Circle или сброса: их карты встают в тот же ряд справа от
 	# руки, за промежутком с подписью. Рука видна, но тусклая и не кликается —
 	# без окна и затемнения видны и она, и доска с рынком (решение владельца,
@@ -134,6 +137,25 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var zone_ids: Array = options.filter(func(o): return String(o) != "") \
 		if ZONE_LABELS.has(tag) else []
 	_label.text = ZONE_LABELS.get(tag, "")
+	if both:
+		# Рука или сброс (Necromancer, Wisp...): карты руки — золотые в самой
+		# руке, сброс — справа, как у Matron Mother (владелец, 2026-10-11).
+		# Сама разыгранная карта (Necromancer: "promote this card") —
+		# первой в ряду сброса, подпись это говорит.
+		var played := []
+		var rest := options.filter(func(o): return String(o) != "")
+		for cid in hand:
+			rest.erase(cid)
+		var discard: Array = (p.get("discard_pile", []) as Array).duplicate()
+		zone_ids = []
+		for cid in rest:
+			if discard.has(cid):
+				discard.erase(cid)
+				zone_ids.append(cid)
+			else:
+				played.append(cid)
+		zone_ids = played + zone_ids
+		_label.text = "THIS + DISCARD" if not played.is_empty() else "DISCARD"
 	var entries: Array = []   # [card_id, карта из Inner Circle]
 	for cid in hand:
 		entries.append([String(cid), false])

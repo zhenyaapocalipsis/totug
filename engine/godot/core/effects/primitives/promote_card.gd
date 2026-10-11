@@ -131,7 +131,8 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	pd.prompt = "Promote a card"
 	pd.choice_type = "target_card"
 	# Рука, сброс — выбор в ряду руки внизу экрана (hand_panel.gd).
-	if source == "hand" or source == "discard":
+	# Рука или сброс — так же: сброс встаёт в ряд справа от руки.
+	if source == "hand" or source == "discard" or source == "hand_or_discard":
 		pd.tag = source
 	pd.legal_options = candidates
 	if up_to:

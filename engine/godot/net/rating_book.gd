@@ -126,7 +126,9 @@ static func elo_deltas(ratings: Dictionary, scores: Dictionary) -> Dictionary:
 ## wins}. Партия не
 ## идёт в рейтинг ({}), если у кого-то нет учётной записи или один человек
 ## сидит за двумя цветами (два окна на одном компьютере).
-func record(players: Dictionary, scores: Dictionary, winners: Array) -> Dictionary:
+## rated = false — партия из лобби (владелец, 2026-10-11): рейтинг, партии и
+## победы не меняются, файл не трогается; итог несёт delta 0 и unrated.
+func record(players: Dictionary, scores: Dictionary, winners: Array, rated := true) -> Dictionary:
 	var seen := {}
 	var ratings := {}
 	for seat in players:
@@ -135,6 +137,13 @@ func record(players: Dictionary, scores: Dictionary, winners: Array) -> Dictiona
 			return {}
 		seen[account] = true
 		ratings[seat] = rating_of(account)
+	if not rated:
+		var same := {}
+		for seat in players:
+			same[seat] = stats_of(String(players[seat]["account"]))
+			same[seat]["delta"] = 0
+			same[seat]["unrated"] = true
+		return same
 	var deltas := elo_deltas(ratings, scores)
 	var out := {}
 	for seat in players:

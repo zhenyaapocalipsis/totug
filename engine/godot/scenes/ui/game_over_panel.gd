@@ -281,7 +281,9 @@ func _rating_cell(pid: String) -> Control:
 	var delta := int(r["delta"])
 	row.add_child(_cell(str(int(r["rating"])), PixelTheme.TEXT, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	var colour := Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)
-	row.add_child(_cell("%+d" % delta, colour, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	# Партия из лобби рейтинг не меняет — вместо "+0" пишем LOBBY.
+	row.add_child(_cell("LOBBY" if r.get("unrated", false) else "%+d" % delta, colour, 0,
+		HORIZONTAL_ALIGNMENT_LEFT))
 	# Награда за место (только партии поиска игры): лутбокс за 1-е, пыль за остальные.
 	var reward: Dictionary = r.get("reward", {})
 	if int(reward.get("boxes", 0)) > 0:

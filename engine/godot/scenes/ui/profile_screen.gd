@@ -669,7 +669,8 @@ func _stats_page() -> Control:
 		var rating_row := HBoxContainer.new()
 		rating_row.add_theme_constant_override("separation", 4)
 		rating_row.add_child(_cell(str(int(game.get("rating", 0))), PixelTheme.TEXT))
-		rating_row.add_child(_cell("%+d" % delta, Color("5fd36a") if delta > 0
+		rating_row.add_child(_cell("LOBBY" if game.get("unrated", false) else "%+d" % delta,
+			Color("5fd36a") if delta > 0
 			else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
 		grid.add_child(rating_row)
 		grid.add_child(_replay_cell(game))
