@@ -4050,6 +4050,21 @@ func test_replay_viewer() -> void:
 		held_ok = held_ok and sum <= turns.size()
 	check(held_ok and (stats["sites"] as Array).size() > 10, "контроль сайтов по ходам: не больше ходов, чем было")
 	check(int(stats["best"]["gain"]) > 0 and String(stats["best"]["player"]) != "", "лучший ход найден")
+	# VERSUS: убийства и вытеснения игроков — часть всех убийств (там и белые).
+	var vs := ReplayStats.versus_matrix(stats)
+	var vs_ok := not (stats["versus"] as Array).is_empty()
+	for from in ids:
+		var hits := 0
+		for to in (vs.get(from, {}) as Dictionary):
+			vs_ok = vs_ok and to != from
+			hits += int(vs[from][to].get("kill", 0)) + int(vs[from][to].get("supplant", 0))
+		vs_ok = vs_ok and hits <= int(stats["counts"][from]["kills"])
+	check(vs_ok, "VERSUS: кто кого бил, не больше всех убийств, себя не бьёт")
+	check_eq(ReplayStats._hits([{"type": "give_insane_outcast", "player_id": "blue", "count": 2},
+		{"type": "force_discard", "player_id": "red"}, {"type": "assassinate", "player_id": "red", "victim": "white"},
+		{"type": "return_spy", "player_id": "red", "spy_owner": "blue"}], "red", {"red": 1, "blue": 1}),
+		[["red", "blue", "outcast", 2], ["red", "blue", "spy", 1]],
+		"VERSUS: изгоев и сброс вешаем на ходящего, белых и себя не считаем")
 	check_eq(ReplayStats.lead_changes([{"vp": {"red": 1, "blue": 0}}, {"vp": {"red": 1, "blue": 1}},
 		{"vp": {"red": 1, "blue": 2}}, {"vp": {"red": 3, "blue": 2}}], ["red", "blue"] as Array[String]),
 		[2, 3] as Array[int], "смены лидера: ничья лидера не меняет")

@@ -695,7 +695,7 @@ func _replay_cell(game: Dictionary) -> Control:
 	var version := int(game.get("protocol", -1))
 	if version < 0:
 		version = int((ReplayBook.load_replay(file, replays_dir).get("header", {}) as Dictionary).get("protocol", -1))
-	if version != NetSession.PROTOCOL:
+	if not ReplayBook.same_rules(version):
 		return _cell("OLD", PixelTheme.TEXT_OFF)
 	var watch := Button.new()
 	watch.text = "WATCH"

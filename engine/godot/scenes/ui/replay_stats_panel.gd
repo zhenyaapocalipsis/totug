@@ -4,6 +4,8 @@ extends Control
 ## Данные — ReplayStats.collect(). Вкладки:
 ##   VP        — график VP всех игроков по ходам (будь партия окончена в этот
 ##               момент), лучший ход, смены лидера, разбивка VP в конце;
+##   VERSUS    — кто кому что сделал: таблица за партию и метки атак на
+##               графике VP (владелец, 2026-10-11);
 ##   RESOURCES — Power и Influence, полученные за каждый свой ход, по раундам;
 ##   ACTIONS   — сколько чего сделал каждый за партию;
 ##   BUYS      — покупки по раундам;
@@ -15,7 +17,7 @@ extends Control
 signal turn_chosen(position: int)
 signal closed
 
-const TABS: Array[String] = ["VP", "RESOURCES", "ACTIONS", "BUYS", "MAP"]
+const TABS: Array[String] = ["VP", "VERSUS", "RESOURCES", "ACTIONS", "BUYS", "MAP"]
 const PANEL_SIZE := Vector2(900, 470)
 ## Правая колонка вкладки VP (итог по статьям, лучший ход, лидерство).
 const SIDE_W := 310.0
@@ -108,6 +110,8 @@ func show_tab(tab: String) -> void:
 	if not _pages.has(tab):
 		var page: Control
 		match tab:
+			"VERSUS":
+				page = _build_versus()
 			"RESOURCES":
 				page = _build_resources()
 			"ACTIONS":
@@ -264,6 +268,148 @@ static func turn_title(data: Dictionary, i: int) -> String:
 		return "SETUP"
 	var t: Dictionary = turns[i]
 	return "TURN %d, ROUND %d, %s" % [i, int(t["round"]), EventLogPanel.player_name(String(t["player"])).to_upper()]
+
+
+# --- VERSUS -----------------------------------------------------------------
+
+## Подписи видов вмешательства (ReplayStats.HIT_KINDS) и буквы меток на графике.
+const HIT_NAMES := {"kill": "KILL", "supplant": "SUPP", "site": "SITE", "outcast": "OUTC",
+	"discard": "DISC", "spy": "SPY", "return": "RET"}
+const HIT_LETTERS := {"kill": "K", "supplant": "S", "site": "T", "outcast": "O", "discard": "D",
+	"spy": "P", "return": "R"}
+const VERSUS_COL := 118.0
+
+
+## Кто против кого (вариант А + Б владельца): сверху таблица «кто → кому» за всю
+## партию (у каждого подсвечена главная жертва), под ней график VP с метками —
+## квадрат на линии атакующего в его ход, цвет — жертва, буква — что сделал.
+func _build_versus() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	var matrix := ReplayStats.versus_matrix(stats)
+	var grid := GridContainer.new()
+	grid.columns = ids().size() + 2
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 2)
+	col.add_child(grid)
+	grid.add_child(_cell("WHO \\ TO WHOM", PixelTheme.TEXT_DIM))
+	for pid in ids():
+		grid.add_child(_sized(_cell(_short(pid), player_colour(pid)), VERSUS_COL))
+	grid.add_child(_cell("TOTAL", PixelTheme.TEXT_DIM))
+	var received := {}
+	for from in ids():
+		grid.add_child(_cell(_short(from), player_colour(from)))
+		var row: Dictionary = matrix.get(from, {})
+		var main := ""
+		var main_n := 0
+		var total := 0
+		for to in ids():
+			var n := _hit_total(row.get(to, {}))
+			total += n
+			received[to] = int(received.get(to, 0)) + n
+			if n > main_n:
+				main = to
+				main_n = n
+		for to in ids():
+			if to == from:
+				grid.add_child(_cell("-", PixelTheme.TEXT_DIM))
+				continue
+			grid.add_child(_versus_cell(row.get(to, {}), to == main))
+		grid.add_child(_cell(str(total), PixelTheme.GOLD))
+	grid.add_child(_cell("RECEIVED", PixelTheme.TEXT_DIM))
+	for to in ids():
+		grid.add_child(_cell(str(int(received.get(to, 0))), PixelTheme.GOLD))
+	grid.add_child(_cell("", PixelTheme.TEXT_DIM))
+	var legend := _cell("KILL killed  SUPP supplanted  SITE took a site  OUTC gave Insane Outcasts  "
+		+ "DISC forced a discard  SPY returned a spy  RET returned a troop", PixelTheme.TEXT_DIM)
+	col.add_child(legend)
+	col.add_child(HSeparator.new())
+	var chart := vp_chart(stats, "VP EACH TURN.  SQUARE ON THE ATTACKER'S LINE, COLOUR = VICTIM:  "
+		+ "K KILL  S SUPP  T SITE  O OUTC  D DISC  P SPY  R RET")
+	chart.marks.clear()
+	chart.show_values = false
+	chart.label_of = func(i: int) -> String: return versus_line(stats, i)
+	chart.dots = versus_dots(stats)
+	chart.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(chart)
+	return col
+
+
+static func _hit_total(cell: Dictionary) -> int:
+	var n := 0
+	for kind in cell:
+		n += int(cell[kind])
+	return n
+
+
+## Клетка таблицы: по два вида в строке ("KILL 5  SUPP 2"); главная жертва — на подложке.
+func _versus_cell(cell: Dictionary, main: bool) -> Control:
+	var parts: Array[String] = []
+	for kind in ReplayStats.HIT_KINDS:
+		if int(cell.get(kind, 0)) > 0:
+			parts.append("%s %d" % [HIT_NAMES[kind], int(cell[kind])])
+	var lines: Array[String] = []
+	for i in range(0, parts.size(), 2):
+		lines.append("  ".join(parts.slice(i, i + 2)))
+	var label := _cell("\n".join(lines) if not lines.is_empty() else ".",
+		PixelTheme.TEXT if not lines.is_empty() else PixelTheme.TEXT_DIM)
+	var box := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = PixelTheme.PANEL_HI if main else Color(0, 0, 0, 0)
+	style.content_margin_left = 2
+	style.content_margin_right = 2
+	box.add_theme_stylebox_override("panel", style)
+	box.add_child(label)
+	return _sized(box, VERSUS_COL)
+
+
+static func _sized(control: Control, width: float) -> Control:
+	control.custom_minimum_size.x = width
+	return control
+
+
+## Метки графика: на каждый ход — по квадрату на пару «кто → кому»; буква —
+## самый заметный вид (порядок HIT_KINDS), несколько жертв — столбиком вверх.
+static func versus_dots(data: Dictionary) -> Array:
+	var turns: Array = data["turns"]
+	var by_pair := {}   # "ход/кто/кому" -> вид с наименьшим номером в HIT_KINDS
+	var order: Array = []
+	for v: Dictionary in data.get("versus", []):
+		var key := "%d/%s/%s" % [int(v["turn"]), v["from"], v["to"]]
+		if not by_pair.has(key):
+			order.append(key)
+			by_pair[key] = v["kind"]
+		elif ReplayStats.HIT_KINDS.find(v["kind"]) < ReplayStats.HIT_KINDS.find(by_pair[key]):
+			by_pair[key] = v["kind"]
+	var stack := {}
+	var dots: Array = []
+	for key: String in order:
+		var parts := key.split("/")
+		var t := int(parts[0])
+		var level := int(stack.get("%d/%s" % [t, parts[1]], 0))
+		stack["%d/%s" % [t, parts[1]]] = level + 1
+		dots.append({"i": t, "value": float((turns[t] as Dictionary)["vp"].get(parts[1], 0)),
+			"colour": player_colour(parts[2]), "letter": HIT_LETTERS[by_pair[key]], "level": level})
+	return dots
+
+
+## Строка под графиком: ход и что в нём было ("RED>BLUE KILL 2 SITE 1").
+static func versus_line(data: Dictionary, i: int) -> String:
+	var pairs := {}
+	var order: Array = []
+	for v: Dictionary in data.get("versus", []):
+		if int(v["turn"]) != i:
+			continue
+		var key := "%s>%s" % [EventLogPanel.player_name(v["from"]).to_upper(),
+			EventLogPanel.player_name(v["to"]).to_upper()]
+		if not pairs.has(key):
+			order.append(key)
+			pairs[key] = []
+		(pairs[key] as Array).append("%s %d" % [HIT_NAMES[v["kind"]], int(v["n"])])
+	var text := turn_title(data, i)
+	for key: String in order:
+		text += "%s  %s %s" % [":" if key == order[0] else ";", key, " ".join(pairs[key])]
+	return text
 
 
 # --- RESOURCES --------------------------------------------------------------
@@ -582,6 +728,11 @@ class LineChart extends VBoxContainer:
 	## Полоса под графиком: цвет на каждую точку (прозрачный — пусто),
 	## например лидер по VP после каждого хода.
 	var band: Array = []
+	## Метки на линиях (VERSUS): [{i, value, colour, letter, level}] — квадрат
+	## DOT в точке, буква внутри; level — сколько квадратов под ним в этом ходе.
+	var dots: Array = []
+	## Строка под графиком: подпись точки и числа всех линий (false — только подпись).
+	var show_values := true
 	var _plot: Control
 	var _readout: Label
 	var _hover := -1
@@ -682,6 +833,18 @@ class LineChart extends VBoxContainer:
 			if _hover >= 0 and _hover < points.size():
 				var p := _point(_hover, float(points[_hover]), n, top)
 				_plot.draw_rect(Rect2(p.x - 1, p.y - 1, 3, 3), s["colour"])
+		for dot: Dictionary in dots:
+			_draw_dot(dot, n, top, font, font_size)
+
+	const DOT := 9.0
+
+	func _draw_dot(dot: Dictionary, n: int, top: float, font: Font, font_size: int) -> void:
+		var p := _point(int(dot["i"]), float(dot["value"]), n, top)
+		var box := Rect2(p.x - 4, p.y - 4 - (DOT + 1) * int(dot.get("level", 0)), DOT, DOT)
+		_plot.draw_rect(box.grow(1), PixelTheme.PANEL_LO)
+		_plot.draw_rect(box, dot["colour"])
+		_plot.draw_string(font, Vector2(box.position.x + 2, box.position.y + 8), String(dot["letter"]),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.PANEL_LO)
 
 	func _on_input(event: InputEvent) -> void:
 		var motion := event as InputEventMouseMotion
@@ -706,6 +869,9 @@ class LineChart extends VBoxContainer:
 		_plot.queue_redraw()
 		if _hover < 0:
 			_readout.text = " "
+			return
+		if not show_values:
+			_readout.text = String(label_of.call(_hover))
 			return
 		var parts: Array[String] = [label_of.call(_hover)]
 		for s in series:

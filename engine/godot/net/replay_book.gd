@@ -119,7 +119,16 @@ static func erase(file: String, dir: String = DIR) -> void:
 
 ## Реплей записан той же версией правил, что сейчас в игре.
 static func same_version(replay: Dictionary) -> bool:
-	return int((replay.get("header", {}) as Dictionary).get("protocol", -1)) == NetSession.PROTOCOL
+	return same_rules(int((replay.get("header", {}) as Dictionary).get("protocol", -1)))
+
+
+## Версии сети, после которых правила не менялись (менялась только связь),
+## — их реплеи ложатся на нынешние карты так же (17: до LEADERBOARD).
+const SAME_RULES := [17]
+
+
+static func same_rules(protocol: int) -> bool:
+	return protocol == NetSession.PROTOCOL or SAME_RULES.has(protocol)
 
 
 ## Начало партии реплея: раздача тем же сидом, ни одного хода ещё.

@@ -64,6 +64,8 @@ static func collect(replay: Dictionary) -> Dictionary:
 		site_held[sid] = []
 
 	var turns: Array = []
+	var versus: Array = []
+	var owners := _site_owners(state, site_ids, counts)
 	for t in range(starts.size() - 1):
 		var a := starts[t]
 		var b := starts[t + 1]
@@ -84,6 +86,16 @@ static func collect(replay: Dictionary) -> Dictionary:
 				power += maxi(0, me.power - p_before)
 				influence += maxi(0, me.influence - i_before)
 			ended = ended or int((intents[i] as Dictionary).get("type", -1)) == Intent.Type.END_TURN
+			# Кто против кого: события шага и сайты, сменившие хозяина-игрока
+			# на другого игрока (раздача и стартовые сайты — не в счёт).
+			var now := _site_owners(state, site_ids, counts)
+			if t > 0:
+				for hit in _hits(result["events"], player, counts):
+					_add_hit(versus, t, hit[0], hit[1], hit[2], hit[3])
+				for sid in site_ids:
+					if now[sid] != "" and owners[sid] != "" and now[sid] != owners[sid]:
+						_add_hit(versus, t, now[sid], owners[sid], "site", 1)
+			owners = now
 			for e in result["events"]:
 				var evt: Dictionary = e
 				var type := String(evt.get("type", ""))
@@ -123,7 +135,70 @@ static func collect(replay: Dictionary) -> Dictionary:
 		return int(x["vp"]) > int(y["vp"]) or (int(x["vp"]) == int(y["vp"]) and String(x["name"]) < String(y["name"])))
 
 	return {"ids": ids, "turns": turns, "parts": parts, "buys": buys, "counts": counts, "sites": sites,
-		"best": best_turn(turns), "leads": lead_changes(turns, ids), "leaders": leaders(turns, ids)}
+		"best": best_turn(turns), "leads": lead_changes(turns, ids), "leaders": leaders(turns, ids),
+		"versus": versus}
+
+
+# --- кто против кого (VERSUS, владелец 2026-10-11) -----------------------------
+
+## Виды вмешательства в чужие дела, в порядке показа.
+const HIT_KINDS: Array[String] = ["kill", "supplant", "site", "outcast", "discard", "spy", "return"]
+
+
+## Кто кому что сделал в событиях одного шага: [кто, кому, вид, сколько].
+## Убийства, вытеснения, возвраты — по событию (player_id — кто); Insane
+## Outcast и вынужденный сброс пишутся на жертву, их виновник — ходящий.
+static func _hits(events: Array, mover: String, counts: Dictionary) -> Array:
+	var out: Array = []
+	for e in events:
+		var evt: Dictionary = e
+		var who := String(evt.get("player_id", ""))
+		match String(evt.get("type", "")):
+			"assassinate":
+				out.append([who, String(evt.get("victim", "")), "kill", 1])
+			"supplant":
+				out.append([who, String(evt.get("victim", "")), "supplant", 1])
+			"return_troop":
+				out.append([who, String(evt.get("owner", "")), "return", 1])
+			"return_spy":
+				out.append([who, String(evt.get("spy_owner", "")), "spy", 1])
+			"give_insane_outcast":
+				out.append([mover, who, "outcast", int(evt.get("count", 1))])
+			"force_discard":
+				out.append([mover, who, "discard", 1])
+	return out.filter(func(h: Array) -> bool:
+		return counts.has(h[0]) and counts.has(h[1]) and h[0] != h[1] and int(h[3]) > 0)
+
+
+## Запись в списке versus: {turn, from, to, kind, n}; тот же ход, пара и вид
+## складываются в одну запись.
+static func _add_hit(versus: Array, turn: int, from: String, to: String, kind: String, n: int) -> void:
+	for v: Dictionary in versus:
+		if int(v["turn"]) == turn and v["from"] == from and v["to"] == to and v["kind"] == kind:
+			v["n"] = int(v["n"]) + n
+			return
+	versus.append({"turn": turn, "from": from, "to": to, "kind": kind, "n": n})
+
+
+## Владелец каждого сайта (только игроки; "" — ничей).
+static func _site_owners(state: GameState, site_ids: Array, counts: Dictionary) -> Dictionary:
+	var out := {}
+	for sid in site_ids:
+		var owner := state.control.controller_of(String(sid), state.troops)
+		out[sid] = owner if counts.has(owner) else ""
+	return out
+
+
+## Сводка VERSUS за партию: кто -> кому -> вид -> сколько.
+static func versus_matrix(data: Dictionary) -> Dictionary:
+	var out := {}
+	for v: Dictionary in data.get("versus", []):
+		var row: Dictionary = out.get(v["from"], {})
+		var cell: Dictionary = row.get(v["to"], {})
+		cell[v["kind"]] = int(cell.get(v["kind"], 0)) + int(v["n"])
+		row[v["to"]] = cell
+		out[v["from"]] = row
+	return out
 
 
 ## Ход, за который ходивший прибавил больше всего VP.
