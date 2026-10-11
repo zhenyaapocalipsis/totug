@@ -74,6 +74,9 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	setup.started.connect(func(ids: Array[String], m: String, bots: bool): _start_game(ids, game_seed, m, bots))
 	setup.online_requested.connect(_show_lobby)
 	setup.replay_requested.connect(_start_replay)
+	setup.friend_invite_requested.connect(func(fname: String, count: int, m: String):
+		_show_lobby("create", count, m, "", fname))
+	setup.friend_watch_requested.connect(_watch_friend)
 	add_child(setup)
 
 
@@ -87,13 +90,13 @@ func _clear() -> void:
 ## address — код комнаты или IP, набранные в меню (вход сразу, без второго
 ## вопроса).
 func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STANDARD,
-		address: String = "") -> void:
+		address: String = "", invite: String = "") -> void:
 	for child in get_children():
 		child.queue_free()
 	_close_net()
 	var net := _open_net()
 	net.game_started.connect(_start_net_game)
-	var lobby := LobbyScreen.new(net, kind, count, mode, address)
+	var lobby := LobbyScreen.new(net, kind, count, mode, address, invite)
 	var back_page: String = SetupScreen.PAGE_ONLINE if kind in ["find", "resume"] else SetupScreen.PAGE_LOBBY
 	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system()), back_page))
 	add_child(lobby)
@@ -117,8 +120,49 @@ func _open_net() -> NetSession:
 	var net := NetSession.new()
 	net.name = "Net"
 	net.profile = PlayerProfile.load_local()
+	net.invite_received.connect(_on_invite)
 	get_tree().root.add_child(net)
 	return net
+
+
+## Друг зовёт в своё лобби: плашка сверху, JOIN — войти по коду его комнаты.
+## Сервер не зовёт тех, кто в партии, так что партию плашка не прервёт.
+func _on_invite(from_name: String, code: String) -> void:
+	var old := get_node_or_null("Invite")
+	if old != null:
+		old.free()
+	var layer := CanvasLayer.new()
+	layer.name = "Invite"
+	layer.layer = 50
+	add_child(layer)
+	var box := PanelContainer.new()
+	box.theme = PixelTheme.theme()
+	box.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.PANEL, PixelTheme.GOLD, 1, 6, 3))
+	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	box.position.y = 4
+	layer.add_child(box)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	box.add_child(row)
+	var text := Label.new()
+	text.text = "%s invites you to a lobby." % from_name
+	text.add_theme_color_override("font_color", PixelTheme.GOLD)
+	row.add_child(text)
+	for choice: String in ["JOIN", "NO"]:
+		var b := Button.new()
+		b.text = choice
+		b.custom_minimum_size = Vector2(40, 16)
+		SetupScreen._style_button(b)
+		b.pressed.connect(func():
+			layer.queue_free()
+			if choice == "JOIN":
+				_show_lobby.call_deferred("join_code", 0, "", code))
+		row.add_child(b)
+	# Сама гаснет через полминуты.
+	get_tree().create_timer(30.0).timeout.connect(func():
+		if is_instance_valid(layer):
+			layer.queue_free())
 
 
 ## Закрыть связь. Узел снимаем с дерева сразу: новый NetSession должен
@@ -164,3 +208,8 @@ func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: 
 	screen.main_menu_requested.connect(func():
 		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))
 	add_child(screen)
+
+
+## WATCH во вкладке FRIENDS — режим зрителя (этап Spectate-1).
+func _watch_friend(_friend_name: String) -> void:
+	pass

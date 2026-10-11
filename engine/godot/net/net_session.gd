@@ -56,6 +56,12 @@ signal queue_changed(waiting: int, needed: int)
 signal pause_changed(status: Dictionary)
 ## Главное меню: пришла таблица лидеров (RatingBook.leaderboard + online, in_game).
 signal leaderboard_received(data: Dictionary)
+## Друзья (FriendBook): снимок списка {friends, incoming, outgoing, note}.
+signal friends_received(data: Dictionary)
+## Переписка с другом: [{mine, text, time}].
+signal thread_received(friend_name: String, messages: Array)
+## Друг зовёт в своё лобби (код комнаты).
+signal invite_received(from_name: String, code: String)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -66,7 +72,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 18
+const PROTOCOL := 19
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -129,6 +135,9 @@ var queues: Dictionary = {}
 var queued: Dictionary = {}
 ## Когда игрок последний раз пинговал или писал: peer id -> [мс, ...] (rate_ok).
 var _said: Dictionary = {}
+## Выделенный сервер: чья учётная запись за каким подключением (друзья: кто
+## в сети, кому доставить заявку, сообщение, приглашение).
+var peer_account: Dictionary = {}
 var _lan_code := ""
 ## Что отправить серверу, как только связь установится (вход или создание).
 var _on_connected: Callable
@@ -566,6 +575,7 @@ func _profile_up(player_name: String, emblem: String, back: String, key: String,
 	if not is_host:
 		return
 	var peer := multiplayer.get_remote_sender_id()
+	_note_presence(peer, player_name, emblem, key, favourite)
 	var room := _room_of(peer)
 	if room == null or room.started or not room.seats.has(peer):
 		return
@@ -766,6 +776,7 @@ func _refused(reason: String) -> void:
 
 func _on_peer_disconnected(id: int) -> void:
 	_said.erase(id)
+	peer_account.erase(id)
 	if queued.has(id):
 		_leave_queue(id)
 		return
@@ -1265,6 +1276,179 @@ func leaderboard(account: String = "") -> Dictionary:
 @rpc("authority", "call_remote", "reliable")
 func _leaderboard_down(data: Dictionary) -> void:
 	leaderboard_received.emit(data)
+
+
+# --- друзья (FriendBook, владелец 2026-10-11) -------------------------------
+
+## Сервер: кто за этим подключением. Имя занимается и из меню (иначе игрока,
+## который пока только сидел в меню, не найти по нику); занятое чужим — не
+## записываем, отказ даст вход в комнату или очередь, как и раньше.
+func _note_presence(peer: int, player_name: String, emblem: String, key: String, favourite: String) -> void:
+	if ratings == null:
+		return
+	var account := RatingBook.account_of(key)
+	if account == "":
+		return
+	peer_account[peer] = account
+	var clean_name := PlayerProfile.clean_name(player_name)
+	if ratings.claim_name(account, clean_name):
+		ratings.friends.note_person(account, clean_name, PlayerProfile.clean_emblem(emblem),
+			PlayerProfile.clean_favourite(favourite))
+
+
+## Клиент: действие с друзьями. action: "list"; "add" [ник]; "answer" [ник,
+## принять?]; "remove" [ник]; "send" [ник, текст]; "thread" [ник];
+## "invite" [ник] — позвать в своё лобби (связь — комнатная, комната не начата).
+## Ответ — friends_received (и thread_received для "send"/"thread").
+func friends_action(action: String, args: Array = []) -> void:
+	if is_connected_to_server():
+		_friends_up.rpc_id(1, PROTOCOL, _client_key(), action, args)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _friends_up(version: int, key: String, action: String, args: Array) -> void:
+	if not dedicated or ratings == null or version != PROTOCOL:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	var me := RatingBook.account_of(key)
+	if me == "":
+		return
+	peer_account[peer] = me
+	var book := ratings.friends
+	var other_name := String(args[0]) if not args.is_empty() else ""
+	var other := String(ratings.names.get(RatingBook.name_id(other_name), ""))
+	var shown := book.name_of(other) if other != "" and book.name_of(other) != "" else other_name
+	var note := ""
+	if action != "list" and other == "":
+		note = "No player named %s." % PlayerProfile.clean_name(other_name)
+		action = "list"
+	match action:
+		"add":
+			match book.request(me, other):
+				"sent":
+					note = "Friend request sent to %s." % shown
+				"friends":
+					note = "%s is now your friend." % shown
+				"already":
+					note = "%s is already your friend or has your request." % shown
+				"self":
+					note = "That is you."
+			_push_friends(other)
+		"answer":
+			if book.answer(me, other, args.size() > 1 and bool(args[1])):
+				_push_friends(other)
+		"remove":
+			book.remove(me, other)
+			_push_friends(other)
+		"send":
+			if not _may_speak(peer):
+				note = "Too many messages. Wait a moment."
+			elif book.send(me, other, String(args[1]) if args.size() > 1 else "", int(Time.get_unix_time_from_system())):
+				_push_friends(other)
+			_send(peer, "_thread_down", [shown, book.read_thread(me, other)])
+		"thread":
+			_send(peer, "_thread_down", [shown, book.read_thread(me, other)])
+		"invite":
+			note = _invite(peer, me, other, shown)
+	_send(peer, "_friends_down", [friends_data(me, note)])
+
+
+## Позвать друга в свою комнату (её лобби ещё не началось).
+func _invite(peer: int, me: String, other: String, shown: String) -> String:
+	var room := _room_of(peer)
+	if room == null or room.started:
+		return "Create a lobby first (PLAY > LOBBY), then invite."
+	if not ratings.friends.are_friends(me, other):
+		return "%s is not your friend." % shown
+	var status := status_of(other)
+	if status[0] == "OFFLINE":
+		return "%s is offline." % shown
+	if status[0] == "IN GAME":
+		return "%s is in a game." % shown
+	for p: int in _peers_of(other):
+		_send(p, "_invite_down", [ratings.friends.name_of(me), room.code])
+	return "Invitation sent to %s." % shown
+
+
+func _peers_of(account: String) -> Array[int]:
+	var out: Array[int] = []
+	for p: int in peer_account:
+		if peer_account[p] == account:
+			out.append(p)
+	return out
+
+
+## Снимок друзей заново всем подключениям учётной записи (ей пришла заявка,
+## сообщение, ответ).
+func _push_friends(account: String) -> void:
+	if account == "":
+		return
+	var peers := _peers_of(account)
+	if peers.is_empty():
+		return
+	var data := friends_data(account, "")
+	for p: int in peers:
+		_send(p, "_friends_down", [data])
+
+
+## Где игрок: ["IN GAME", код комнаты] / ["IN LOBBY", ""] / ["ONLINE", ""] /
+## ["OFFLINE", ""].
+func status_of(account: String) -> Array:
+	for room: GameRoom in rooms.values():
+		for peer: int in room.seats:
+			if room.accounts.get(room.seats[peer], "") != account:
+				continue
+			if room.started and room.server != null and not room.server.state.game_over:
+				return ["IN GAME", room.code]
+			if not room.started:
+				return ["IN LOBBY", ""]
+	if peer_account.values().has(account):
+		return ["ONLINE", ""]
+	return ["OFFLINE", ""]
+
+
+const STATUS_ORDER := ["IN GAME", "IN LOBBY", "ONLINE", "OFFLINE"]
+
+
+## Сервер: друзья учётной записи для клиента — по имени, без учётных записей.
+func friends_data(account: String, note: String) -> Dictionary:
+	var book := ratings.friends
+	var list := []
+	for acc: String in book.friends_of(account):
+		var status := status_of(acc)
+		var person: Dictionary = book.people.get(acc, {})
+		var row := ratings.stats_of(acc)
+		row.merge({"name": String(person.get("name", "?")), "emblem": String(person.get("emblem", "")),
+			"favourite": String(person.get("favourite", "")), "status": status[0], "room": status[1],
+			"unread": book.unread_from(account, acc), "records": ratings.records.held_by(acc),
+			"rated": ratings.accounts.has(acc)})
+		list.append(row)
+	list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var sa := STATUS_ORDER.find(a["status"])
+		var sb := STATUS_ORDER.find(b["status"])
+		return sa < sb if sa != sb else String(a["name"]).nocasecmp_to(String(b["name"])) < 0)
+	var names_in := []
+	for acc: String in book.incoming(account):
+		names_in.append(book.name_of(acc))
+	var names_out := []
+	for acc: String in book.outgoing(account):
+		names_out.append(book.name_of(acc))
+	return {"friends": list, "incoming": names_in, "outgoing": names_out, "note": note}
+
+
+@rpc("authority", "call_remote", "reliable")
+func _friends_down(data: Dictionary) -> void:
+	friends_received.emit(data)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _thread_down(friend_name: String, messages: Array) -> void:
+	thread_received.emit(friend_name, messages)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _invite_down(from_name: String, code: String) -> void:
+	invite_received.emit(from_name, code)
 
 
 func _log(text: String) -> void:

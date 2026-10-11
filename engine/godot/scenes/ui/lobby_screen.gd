@@ -36,12 +36,19 @@ var _internet_note: Label
 ## строка про очередь от сервера.
 var _searching_since := -1
 var _queue_text := ""
+## Друзья в лобби (владелец, 2026-10-11): кого позвать сразу, как появится
+## код (INVITE во вкладке FRIENDS), и строка онлайн-друзей с кнопками.
+var _invite_first := ""
+var _invites: HFlowContainer
+var _invite_note: Label
+var _friends_wait := 0.0
+var _in_room := false
 
 
 ## address — код комнаты (join_code) или IP хоста (join_ip), набранные в
 ## главном меню: с ним вход начинается сразу.
 func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = "",
-		address: String = "") -> void:
+		address: String = "", invite: String = "") -> void:
 	_net = net
 	_kind = kind
 	_count = player_count
@@ -91,6 +98,18 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	col.add_child(_seats)
 	_status = _dim("")
 	col.add_child(_status)
+	_invite_first = invite
+	if kind == "create" or kind == "join_code":
+		var friends_head := GameScreen.section_label("INVITE FRIENDS")
+		col.add_child(friends_head)
+		_invites = HFlowContainer.new()
+		_invites.add_theme_constant_override("h_separation", 2)
+		_invites.add_theme_constant_override("v_separation", 2)
+		_invites.custom_minimum_size.x = 300
+		col.add_child(_invites)
+		_invite_note = _dim("Friends online will show up here.")
+		col.add_child(_invite_note)
+		net.friends_received.connect(_on_friends)
 
 	col.add_child(HSeparator.new())
 	var buttons := HBoxContainer.new()
@@ -278,6 +297,13 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 	if _code_label != null and _kind != "find":
 		_code_label.visible = true
 		_code_label.text = "ROOM  %s" % code
+	# В комнате — можно звать друзей (и того, ради кого комнату завели).
+	if _invites != null and not _in_room:
+		_in_room = true
+		_friends_wait = 0.0
+		if _invite_first != "":
+			_net.friends_action("invite", [_invite_first])
+			_invite_first = ""
 	for child in _seats.get_children():
 		child.queue_free()
 	PlayerProfile.seats = _net.profiles
@@ -327,9 +353,36 @@ func _on_queue_changed(waiting: int, needed: int) -> void:
 	_show_search_time()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _searching_since >= 0:
 		_show_search_time()
+	# Кто из друзей в сети — раз в несколько секунд, пока сидим в комнате.
+	if _in_room and not _net.started:
+		_friends_wait -= delta
+		if _friends_wait <= 0.0:
+			_friends_wait = 10.0
+			_net.friends_action("list")
+
+
+## Друзья в сети и в лобби — кнопками; нажал — приглашение ушло.
+func _on_friends(data: Dictionary) -> void:
+	if String(data.get("note", "")) != "":
+		_invite_note.text = String(data["note"])
+	for child in _invites.get_children():
+		child.queue_free()
+	var shown := 0
+	for f: Dictionary in data.get("friends", []):
+		if not ["ONLINE", "IN LOBBY"].has(String(f["status"])):
+			continue
+		var fname := String(f["name"])
+		var b := _button(fname)
+		b.pressed.connect(func():
+			_net.friends_action("invite", [fname])
+			b.disabled = true)
+		_invites.add_child(b)
+		shown += 1
+	if shown == 0 and String(data.get("note", "")) == "":
+		_invite_note.text = "No friends online. Add friends in the FRIENDS tab."
 
 
 func _show_search_time() -> void:

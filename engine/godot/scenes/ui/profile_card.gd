@@ -13,11 +13,17 @@ extends Control
 const GAP := Vector2(6, 6)
 
 var _panel: PanelContainer
+var _col: VBoxContainer
 
 
 ## Открыть карточку у мыши. profile — {name, emblem, rating?, games?, wins?}.
 static func open(anchor: Control, pid: String, profile: Dictionary) -> ProfileCard:
 	var card := ProfileCard.new(pid, profile)
+	# Чужой игрок в онлайне — его можно позвать в друзья прямо отсюда (в лобби
+	# и в партии; владелец, 2026-10-11).
+	var net := anchor.get_tree().root.get_node_or_null("Net") as NetSession
+	if net != null and net.is_connected_to_server() and pid != net.seat:
+		card._add_friend_button(net, String(profile.get("name", "")))
 	anchor.get_tree().root.add_child(card)
 	card._place.call_deferred(anchor.get_global_mouse_position())
 	return card
@@ -33,10 +39,30 @@ func _init(pid: String = "", profile: Dictionary = {}) -> void:
 	_panel.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_panel)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 4)
-	_panel.add_child(col)
+	_col = VBoxContainer.new()
+	_col.add_theme_constant_override("separation", 4)
+	_panel.add_child(_col)
+	fill(_col, pid, profile)
 
+
+func _add_friend_button(net: NetSession, player_name: String) -> void:
+	if player_name == "":
+		return
+	var add := Button.new()
+	add.text = "ADD FRIEND"
+	add.custom_minimum_size = Vector2(90, 16)
+	add.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	SetupScreen._style_button(add)
+	add.pressed.connect(func():
+		net.friends_action("add", [player_name])
+		add.text = "REQUEST SENT"
+		add.disabled = true)
+	_col.add_child(add)
+
+
+## Содержимое карточки: фишка, имя, любимая карта, звание, рейтинг, партии.
+## Та же карточка — у друга во вкладке FRIENDS.
+static func fill(col: VBoxContainer, pid: String, profile: Dictionary) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 6)
 	col.add_child(head)
@@ -76,7 +102,7 @@ func _init(pid: String = "", profile: Dictionary = {}) -> void:
 		("%d%%" % roundi(100.0 * wins / games)) if games > 0 else "-"], PixelTheme.TEXT_DIM))
 
 
-func _line(text: String, colour: Color) -> Label:
+static func _line(text: String, colour: Color) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", colour)

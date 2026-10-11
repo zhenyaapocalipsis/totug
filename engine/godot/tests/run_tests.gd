@@ -1096,6 +1096,26 @@ func test_rating() -> void:
 	var stats := {"counts": {"red": {"kills": 5, "spies": 2}, "blue": {}}, "supplants": {"red": 2},
 		"turns": [{"player": "", "round": 0, "vp": {"red": 0}}, {"player": "red", "round": 1, "vp": {"red": 7}},
 			{"player": "blue", "round": 1, "vp": {"red": 7}}, {"player": "red", "round": 2, "vp": {"red": 9}}]}
+	check_eq(rec.held_by(b), 2, "сколько рекордов держит игрок")
+
+	# Друзья: заявка, встречная заявка, почта.
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://friends_test.json"))
+	var fb := FriendBook.new("user://friends_test.json")
+	check_eq(fb.request("a", "b"), "sent", "заявка ушла")
+	check(fb.incoming("b") == ["a"] and fb.outgoing("a") == ["b"], "заявка видна у обоих")
+	check_eq(fb.request("a", "b"), "already", "вторая заявка — уже есть")
+	check(not fb.send("a", "b", "hi", 1), "до дружбы писать нельзя")
+	check(fb.answer("b", "a", true) and fb.are_friends("a", "b") and fb.are_friends("b", "a"), "заявка принята")
+	check_eq(fb.request("c", "a"), "sent", "заявка от третьего")
+	check_eq(fb.request("a", "c"), "friends", "встречная заявка — сразу дружба")
+	check(fb.send("a", "b", "  hello\nthere ", 5) and fb.unread_from("b", "a") == 1, "письмо дошло, непрочитанное")
+	var fb2 := FriendBook.new("user://friends_test.json")
+	var thread := fb2.read_thread("b", "a")
+	check(thread.size() == 1 and thread[0]["text"] == "hello there" and not thread[0]["mine"]
+		and fb2.unread_from("b", "a") == 0, "почта хранится в файле; прочитал — счётчик сброшен")
+	fb2.remove("b", "a")
+	check(not fb2.are_friends("a", "b") and fb2.read_thread("a", "b").size() == 1, "удалил из друзей — переписка осталась")
+
 	var m := RecordBook.measure(stats, "red", {"red": 30, "blue": 22})
 	check(m["kills"] == 3 and m["supplants"] == 2 and m["best_turn"] == 7 and m["rounds"] == 2 and m["margin"] == 8,
 		"показатели: убийства без вытеснений, лучший ход, раунды, отрыв")

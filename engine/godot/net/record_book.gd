@@ -99,6 +99,16 @@ func public_table() -> Dictionary:
 	return out
 
 
+## Сколько рекордов (по всем столам) сейчас держит учётная запись.
+func held_by(account: String) -> int:
+	var n := 0
+	for key: String in table:
+		for id: String in table[key]:
+			if String(table[key][id].get("account", "")) == account:
+				n += 1
+	return n
+
+
 static func label_of(id: String) -> String:
 	for kind: Array in KINDS:
 		if kind[0] == id:

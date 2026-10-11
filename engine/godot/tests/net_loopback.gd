@@ -61,6 +61,9 @@ var server: NetSession
 ## Главное меню (NetSession.watch) и пришедшая ему таблица лидеров.
 var _watcher: NetSession
 var _board_data: Dictionary = {}
+## Друзья: последний снимок и переписка у каждой связи.
+var _friends: Dictionary = {}
+var _threads: Dictionary = {}
 var _answered_at := -1
 var _spoof_sent := false
 var _turn_player := ""
@@ -206,6 +209,7 @@ func _process(delta: float) -> bool:
 				server.ratings.accounts["zed"] = {"name": "Zed", "rating": 1200, "games": 3, "wins": 2}
 				_watcher = _session()
 				_watcher.rating_key = "%032d" % 7
+				_watcher.profile = {"name": "Watcher Wu", "emblem": ""}
 				_watcher.leaderboard_received.connect(func(d: Dictionary): _board_data = d)
 				_watcher.watch("127.0.0.1", SERVER_PORT)
 				_step = "leaderboard_wait"
@@ -218,6 +222,50 @@ func _process(delta: float) -> bool:
 					and int(top[0]["rating"]) == 1200 and not _board_data.has("mine"),
 					"[leaderboard] таблица: один тиран, своего места нет")
 				server.ratings.accounts.clear()
+				# Друзья: игрок из партии зовёт того, кто сидит в меню (ник — другим регистром).
+				for p: NetSession in [players[0], _watcher]:
+					_friends[p] = {}
+					_threads[p] = []
+					p.friends_received.connect(func(d: Dictionary): _friends[p] = d)
+					p.thread_received.connect(func(_n: String, m: Array): _threads[p] = m)
+				players[0].friends_action("add", ["watcher wu"])
+				_step = "friends_request"
+		"friends_request":
+			if not (_watcher_friends().get("incoming", []) as Array).is_empty():
+				check(_watcher_friends()["incoming"] == [players[0].profile["name"]],
+					"[friends] заявка дошла до игрока в меню")
+				check(String(_friends[players[0]].get("note", "")).contains("request sent"),
+					"[friends] отправившему — «заявка ушла»: %s" % _friends[players[0]].get("note", ""))
+				_watcher.friends_action("answer", [players[0].profile["name"], true])
+				_step = "friends_accept"
+		"friends_accept":
+			var mine: Array = _friends[players[0]].get("friends", [])
+			var theirs: Array = _watcher_friends().get("friends", [])
+			if mine.size() == 1 and theirs.size() == 1:
+				check(mine[0]["name"] == "Watcher Wu" and mine[0]["status"] == "ONLINE",
+					"[friends] друг в списке, статус ONLINE")
+				check(theirs[0]["status"] == "IN GAME" and theirs[0]["room"] == players[0].room_code,
+					"[friends] второй видит: друг в партии, код комнаты для зрителя")
+				players[0].friends_action("send", ["Watcher Wu", "gg wp"])
+				_step = "friends_mail"
+		"friends_mail":
+			var theirs: Array = _watcher_friends().get("friends", [])
+			if not theirs.is_empty() and int(theirs[0]["unread"]) == 1:
+				check(_threads[players[0]].size() == 1 and _threads[players[0]][0]["mine"],
+					"[friends] отправившему вернулась переписка")
+				_watcher.friends_action("thread", [players[0].profile["name"]])
+				_step = "friends_read"
+		"friends_read":
+			if not (_threads[_watcher] as Array).is_empty():
+				check(_threads[_watcher][0]["text"] == "gg wp" and not _threads[_watcher][0]["mine"],
+					"[friends] сообщение дошло")
+				_friends[players[0]] = {}
+				players[0].friends_action("invite", ["Watcher Wu"])
+				_step = "friends_invite"
+		"friends_invite":
+			if not (_friends[players[0]] as Dictionary).is_empty():
+				check(String(_friends[players[0]]["note"]).contains("lobby first"),
+					"[friends] из начатой партии в лобби не позвать: %s" % _friends[players[0]]["note"])
 				_watcher.close()
 				_end_game()
 		"rated":
@@ -789,3 +837,7 @@ func _check_profiles() -> void:
 ## Рубашка у всех одна (CardBack.CLASSIC) — в профиле это "".
 func _back_for(_n: int) -> String:
 	return ""
+
+
+func _watcher_friends() -> Dictionary:
+	return _friends.get(_watcher, {})

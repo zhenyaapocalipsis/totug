@@ -4,7 +4,7 @@ extends Control
 ## Главное меню по образцу Dota 2 (макет владельца, 2026-10-06):
 ##
 ##   сверху полоса с названием игры;
-##   под ней строка кнопок PROFILE, PLAY, LEADERBOARD, SETTINGS, EXIT;
+##   под ней строка кнопок PROFILE, PLAY, LEADERBOARD, FRIENDS, SETTINGS, EXIT;
 ##   ниже окно с тем, что открыла кнопка:
 ##     PROFILE  — профиль (ProfileScreen): столбец STATS / EMBLEM / CHAT /
 ##                COLLECTION слева;
@@ -13,6 +13,8 @@ extends Control
 ##                START); HOW TO PLAY — само обучение прямо в окне;
 ##     LEADERBOARD — первые 100 по рейтингу, тираны, онлайн, в партиях
 ##                (LeaderboardPage, данные по связи меню — presence);
+##     FRIENDS  — друзья: заявки по нику, профиль, почта, позвать в лобби
+##                (FriendsPage, по той же связи меню);
 ##     SETTINGS — звук, экран, клавиши, игровые мелочи (SettingsPanel);
 ##   EXIT закрывает игру.
 ##
@@ -34,6 +36,11 @@ signal started(player_ids: Array[String], mode: String, bots: bool)
 signal online_requested(kind: String, player_count: int, mode: String, address: String)
 ## WATCH в истории партий профиля — открыть реплей (файл ReplayBook).
 signal replay_requested(file: String)
+## FRIENDS: завести своё лобби (размер и режим — как выбраны в PLAY > LOBBY)
+## и сразу позвать туда друга.
+signal friend_invite_requested(friend_name: String, player_count: int, mode: String)
+## FRIENDS: смотреть идущую партию друга.
+signal friend_watch_requested(friend_name: String)
 
 const MODE_TITLES := {
 	"standard": "STANDARD",
@@ -72,8 +79,9 @@ static func mode_title(mode: String) -> String:
 const PAGE_PROFILE := "profile"
 const PAGE_PLAY := "play"
 const PAGE_LEADERBOARD := "leaderboard"
+const PAGE_FRIENDS := "friends"
 const PAGE_SETTINGS := "settings"
-const TABS: Array[String] = [PAGE_PROFILE, PAGE_PLAY, PAGE_LEADERBOARD, PAGE_SETTINGS]
+const TABS: Array[String] = [PAGE_PROFILE, PAGE_PLAY, PAGE_LEADERBOARD, PAGE_FRIENDS, PAGE_SETTINGS]
 ## Разделы PLAY (столбец слева в окне).
 const PAGE_ONLINE := "online"
 const PAGE_LOBBY := "lobby"
@@ -98,6 +106,7 @@ const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const HowToPlay := preload("res://scenes/ui/how_to_play_screen.gd")
 const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
 const LeaderboardPage := preload("res://scenes/ui/leaderboard_page.gd")
+const FriendsPage := preload("res://scenes/ui/friends_page.gd")
 
 var _mode: String = GameSetup.MODE_STANDARD
 ## NEW ERA: какие две колоды New Era в рынке (переключатель под режимами).
@@ -267,6 +276,14 @@ func _show_tab(tab: String) -> void:
 				content = _build_settings()
 			PAGE_LEADERBOARD:
 				content = LeaderboardPage.new(presence)
+			PAGE_FRIENDS:
+				var friends := FriendsPage.new(presence)
+				friends.invite_requested.connect(func(fname: String):
+					friend_invite_requested.emit(fname, _count, _chosen_mode()))
+				friends.watch_requested.connect(func(fname: String): friend_watch_requested.emit(fname))
+				friends.badge_changed.connect(func(n: int):
+					(_tab_buttons[PAGE_FRIENDS] as Button).text = "FRIENDS" + (" %d" % n if n > 0 else ""))
+				content = friends
 			_:
 				content = _build_play()
 		_tabs[tab] = content
