@@ -157,6 +157,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_options_box.remove_child(child)
 		child.queue_free()
 	var cards_mode := false
+	var strip := false   # вопрос полосой сверху, без затемнения (confirm без карты)
 	var waiting := decider != viewer_id
 
 	if waiting:
@@ -203,6 +204,22 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		cards_mode = true
 		_add_button("Skip", false)
 		make_plain(_options_box.get_child(_options_box.get_child_count() - 1) as Button)
+	elif choice_type == "confirm":
+		# "You may..." без лица карты (вопрос задан уже в розыгрыше, Djinni):
+		# полоса сверху, как у цели на доске, — Yes / No в строку, доска и
+		# рука видны и не затемнены.
+		strip = true
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 16)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for o in options:
+			var b := Button.new()
+			b.text = _board_label(o, choice_type)
+			b.pressed.connect(func(): option_chosen.emit(o))
+			make_plain(b)
+			row.add_child(b)
+		_options_box.add_child(row)
 	elif choice_type == "target_market_index":
 		# Карты рынка — такой же сеткой, как выбор для Promote; в ответ уходит
 		# номер карты на рынке. -1 — отказ ("You may devour..."), это Skip.
@@ -240,13 +257,13 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
-	_set_cards_look(cards_mode or on_board or waiting, decider)
+	_set_cards_look(cards_mode or on_board or waiting or strip, decider)
 	# Полоса вопроса над доской прозрачна, но клики ловила сама: шпион или
 	# войско у верхнего края доски оказывались под ней — рамка цели видна, а
 	# клик пропадал, и игрок, целясь ниже, попадал в локацию ("not a valid
 	# target"; Xith Idrana на 4 игрока). Теперь сквозь неё кликается доска,
 	# кнопка Skip ловит клики сама.
-	_pass_clicks(on_board or waiting)
+	_pass_clicks(on_board or waiting or strip)
 	_set_dim(not waiting and not on_board and _options_box.get_child_count() > 0 \
 		and (cards_mode or choice_type == "target_card"))
 	var rows: int = _options_box.get_child_count()
@@ -255,10 +272,10 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		max_h = INF  # карты-варианты не прокручиваются: их всего два-три
 	_scroll.custom_minimum_size = Vector2(0, minf(_options_box.get_combined_minimum_size().y, max_h))
 	_scroll.visible = rows > 0
-	_place(on_board or decider != viewer_id)
+	_place(on_board or strip or decider != viewer_id)
 	# Вопрос с переносом слов знает свою высоту только после раскладки по новой
 	# ширине: до неё окно карт-вариантов выходило вдвое выше содержимого.
-	_place.call_deferred(on_board or decider != viewer_id)
+	_place.call_deferred(on_board or strip or decider != viewer_id)
 
 
 func _pass_clicks(through: bool) -> void:
