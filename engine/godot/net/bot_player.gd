@@ -144,6 +144,14 @@ static func next_intent(server: GameServer, pid: String, fast: bool = false) -> 
 ## Каждая функция выбора начинает список заново, поэтому в нём остаются
 ## варианты того выбора, который и дал ход.
 static var _collect := false
+## Стенд Team-4 (tests/team_bot_bench.gd): эти игроки в 2 на 2 играют по-старому —
+## союзник для них соперник. В игре всегда пусто.
+static var selfish: Dictionary = {}
+
+
+## Играет ли me за команду (2 на 2 и не стенд «по-старому»).
+static func team_play(state: GameState, me: String) -> bool:
+	return state.is_team_game() and not selfish.has(me)
 static var _notes: Array = []
 
 
@@ -307,7 +315,7 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 	if p.power >= spy_cost:
 		for site: String in state.presence.sites_with_presence(pid, state.troops, state.spies):
 			for owner: String in (state.spies.get(site, []) as Array):
-				if owner == pid:
+				if state.is_ally(pid, owner):
 					continue
 				var gain := _spy_eval(state, ctx, site, owner, false) - base
 				var ratio := gain / maxf(0.5, float(spy_cost))
@@ -358,7 +366,7 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 	if p.power >= spy_cost:
 		for site: String in state.presence.sites_with_presence(pid, state.troops, state.spies):
 			for owner: String in (state.spies.get(site, []) as Array):
-				if owner == pid:
+				if state.is_ally(pid, owner):
 					continue
 				var ratio := _local_gain(state, ctx, {}, {}, [site, owner]) / maxf(0.5, float(spy_cost))
 				if _collect:
@@ -466,7 +474,8 @@ static func _is_leader(state: GameState, ctx: Dictionary) -> bool:
 	var me: String = ctx["me"]
 	var mine := final_vp(state, me)
 	for pid: String in state.turn_order:
-		if pid != me and final_vp(state, pid) >= mine:
+		# 2 на 2: у союзника тот же счёт — он не соперник в гонке.
+		if not (team_play(state, me) and state.is_ally(me, pid)) and pid != me and final_vp(state, pid) >= mine:
 			return false
 	return true
 
@@ -775,8 +784,9 @@ static func _best_by(options: Array, score: Callable):
 static func _context(state: GameState, me: String) -> Dictionary:
 	var card_vp := {}
 	for pid: String in state.turn_order:
-		var b := Scoring.breakdown(state, pid)
-		card_vp[pid] = float(b["deck"]) + float(b["inner_circle"])
+		# Свои VP карт, не командные (breakdown в 2 на 2 отдаёт команду целиком —
+		# _team_value сложил бы их дважды).
+		card_vp[pid] = float(Scoring.player_card_vp(state, pid))
 	return {"me": me, "h": horizon(state), "card_vp": card_vp}
 
 
@@ -800,6 +810,23 @@ static func _fast_context(state: GameState, me: String) -> Dictionary:
 	for pid: String in state.turn_order:
 		if pid != me:
 			weights[pid] = (1.0 - W_LEADER) / opps + (W_LEADER if pid == leader_opp else 0.0)
+	if team_play(state, me):
+		# 2 на 2 (Team-4): прирост союзника — плюс (вес -1), соперников — минус
+		# целиком; лидер — команда с большей грубой меркой.
+		var team_rough := {}
+		for pid: String in state.turn_order:
+			team_rough[state.side_of(pid)] = int(team_rough.get(state.side_of(pid), 0)) + int(rough[pid])
+			if pid != me:
+				weights[pid] = -1.0 if state.is_ally(me, pid) else 1.0
+		var my_side := state.side_of(me)
+		var ahead := true
+		for side: String in team_rough:
+			if side != my_side and int(team_rough[side]) >= int(team_rough[my_side]):
+				ahead = false
+		return {
+			"me": me, "h": horizon(state), "card_vp": {}, "opp_w": weights, "leader": ahead,
+			"cluster": ClusterBonus.find_site_ids(state.graph),
+		}
 	return {
 		"me": me, "h": horizon(state), "card_vp": {}, "opp_w": weights,
 		"leader": leader_opp == "" or rough[me] > rough[leader_opp],
@@ -841,6 +868,14 @@ static func evaluate(state: GameState, ctx: Dictionary, extra_trophies: Dictiona
 	var me: String = ctx["me"]
 	var h: float = ctx["h"]
 	var counts := _troop_counts(state)
+	if team_play(state, me):
+		# 2 на 2 (этап Team-4): своя команда против команды соперников —
+		# успех союзника теперь плюс, а не минус.
+		var team_eval := W_PRESENCE * state.presence.deployable_slots(me, state.troops, state.spies).size()
+		for side: String in _sides(state):
+			var v := _team_value(state, side, h, counts, ctx, extra_trophies)
+			team_eval += v if side == state.side_of(me) else -v
+		return team_eval
 	var mine := _player_value(state, me, h, counts, ctx) + float(extra_trophies.get(me, 0.0))
 	mine += W_PRESENCE * state.presence.deployable_slots(me, state.troops, state.spies).size()
 	var best_opp := -INF
@@ -867,6 +902,32 @@ static func _player_value(state: GameState, pid: String, h: float, counts: Dicti
 	var c := ClusterBonus.evaluate(state, pid)
 	v += h * (m.vp + c.vp + W_RESOURCE * (m.influence + c.influence + c.power))
 	v += W_TROOP * int(counts.get(pid, 0))
+	return v
+
+
+## Стороны партии по порядку хода (2 на 2 — две команды).
+static func _sides(state: GameState) -> Array[String]:
+	var out: Array[String] = []
+	for pid: String in state.turn_order:
+		if not out.has(state.side_of(pid)):
+			out.append(state.side_of(pid))
+	return out
+
+
+## Оценка команды side: локации команды один раз (map_score у всех её игроков
+## одинаков) плюс личное каждого — трофеи, жетоны, карты, доход, войска.
+static func _team_value(state: GameState, side: String, h: float, counts: Dictionary, ctx: Dictionary,
+		extra_trophies: Dictionary = {}) -> float:
+	var members := state.members_of(side)
+	var v := float(state.control.map_score(members[0], state.troops, state.spies))
+	for pid: String in members:
+		var p: PlayerState = state.players[pid]
+		v += p.trophy_hall_count + p.vp_tokens + float(extra_trophies.get(pid, 0.0))
+		v += float((ctx["card_vp"] as Dictionary).get(pid, 0.0))
+		var m := ControlMarkers.evaluate(state, pid)
+		var c := ClusterBonus.evaluate(state, pid)
+		v += h * (m.vp + c.vp + W_RESOURCE * (m.influence + c.influence + c.power))
+		v += W_TROOP * int(counts.get(pid, 0))
 	return v
 
 

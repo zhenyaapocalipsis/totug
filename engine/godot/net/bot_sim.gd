@@ -37,7 +37,8 @@ static func hide_hidden(state: GameState, viewer: String, rng: RandomNumberGener
 		var d: Deck = state.players[pid].deck
 		# Перед перемешиванием — сортировка: иначе результат зависел бы от
 		# настоящего (скрытого) порядка карт, и решение бота — тоже.
-		if pid == viewer:
+		# 2 на 2: рука и колода союзника открыты (как у человека по клавише T).
+		if pid == viewer or state.is_ally(viewer, pid):
 			d.draw_pile.sort()
 			Deck.shuffle_array(d.draw_pile, rng)
 			continue
@@ -98,7 +99,13 @@ static func value(sim: GameServer, me: String) -> float:
 	if state.game_over:
 		var vp := Scoring.library_card_vp(state)
 		var winners := Scoring.winners(state, vp[0], vp[1])
-		return 1.0 / winners.size() if winners.has(me) else 0.0
+		if not winners.has(me):
+			return 0.0
+		# 2 на 2: побеждает команда целиком — делится между командами, не игроками.
+		var sides := {}
+		for w: String in winners:
+			sides[state.side_of(w)] = true
+		return 1.0 / sides.size()
 	var ctx := BotPlayer._context(state, me)
 	var ev := BotPlayer.evaluate(state, ctx) + deck_edge(state, me, float(ctx["h"]))
 	return 1.0 / (1.0 + exp(-ev / 10.0))
@@ -118,6 +125,12 @@ static func deck_edge(state: GameState, me: String, h: float) -> float:
 		for cid: String in cards:
 			sum += BotPlayer.strength(cid) if measured else 1.0 + 0.5 * float(maxi(0, CardLibrary.card_cost(cid)))
 		per_turn[pid] = GameSetup.HAND_SIZE * sum / maxf(1.0, float(cards.size()))
+	if BotPlayer.team_play(state, me):
+		# 2 на 2 (Team-4): колоды своей команды против колод соперников.
+		var edge := 0.0
+		for pid: String in state.turn_order:
+			edge += float(per_turn[pid]) * (1.0 if state.is_ally(me, pid) else -1.0)
+		return h * BotPlayer.W_RESOURCE * edge
 	var best := -INF
 	var total := 0.0
 	var opps := 0

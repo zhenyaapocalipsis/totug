@@ -83,6 +83,19 @@ static func breakdown(state: GameState, player_id: String) -> Dictionary:
 	return result
 
 
+## VP карт одного игрока (колода + Внутренний круг + бонусы карт) — в 2 на 2
+## тоже только его, не команды (breakdown там отдаёт командные статьи).
+static func player_card_vp(state: GameState, player_id: String) -> int:
+	var p: PlayerState = state.players[player_id]
+	var total := 0
+	for card_id: String in p.deck.cards_outside_inner_circle():
+		total += _card_vp(card_id, "deck_vp")
+	for card_id: String in p.deck.inner_circle:
+		total += _card_vp(card_id, "inner_circle_vp")
+	var extra := card_bonus_vp(state, player_id)
+	return total + int(extra["deck"]) + int(extra["inner"])
+
+
 static func _card_vp(card_id: String, key: String) -> int:
 	var v = CardLibrary.card_data(card_id).get(key)
 	return int(v) if v != null else 0
