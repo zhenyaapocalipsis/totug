@@ -296,7 +296,11 @@ func _rating_cell(pid: String) -> Control:
 		return col
 	var r: Dictionary = _ratings[pid]
 	var delta := int(r["delta"])
-	row.add_child(_cell(str(int(r["rating"])), PixelTheme.TEXT, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	# 2 на 2: строка — команда; у союзников одно изменение, своих рейтингов 2v2
+	# здесь не пишем (они в LEADERBOARD).
+	var teams: Dictionary = _view.get("teams", {})
+	row.add_child(_cell("2V2" if not teams.is_empty() else str(int(r["rating"])), PixelTheme.TEXT, 0,
+		HORIZONTAL_ALIGNMENT_LEFT))
 	var colour := Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)
 	# Партия из лобби рейтинг не меняет — вместо "+0" пишем LOBBY.
 	row.add_child(_cell("LOBBY" if r.get("unrated", false) else "%+d" % delta, colour, 0,
@@ -308,7 +312,11 @@ func _rating_cell(pid: String) -> Control:
 	if int(reward.get("dust", 0)) > 0:
 		col.add_child(_cell("+%d DUST" % int(reward["dust"]), PixelTheme.TEXT_DIM, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	# Побитые мировые рекорды (RecordBook) — по строке на каждый.
-	for id in r.get("records", []):
+	var records: Array = (r.get("records", []) as Array).duplicate()
+	for other in _ratings:
+		if other != pid and not teams.is_empty() and teams.get(other) == teams.get(pid):
+			records.append_array(_ratings[other].get("records", []))
+	for id in records:
 		col.add_child(_cell("RECORD: " + RecordBook.label_of(String(id)), PixelTheme.GOLD, 0,
 			HORIZONTAL_ALIGNMENT_LEFT))
 	return col

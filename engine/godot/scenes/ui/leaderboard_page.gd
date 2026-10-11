@@ -14,7 +14,10 @@ const COLUMNS := [["#", 26], ["NAME", 150], ["RANK", 80], ["RATING", 48], ["GAME
 
 ## Мировые рекорды (RecordBook, владелец 2026-10-11): кто первым поставил.
 const RECORD_COLUMNS := [["RECORD", 140], ["BEST", 40], ["HOLDER", 130], ["DATE", 70]]
-const MODES := {"players": "PLAYERS", "2": "RECORDS 2P", "3": "RECORDS 3P", "4": "RECORDS 4P"}
+const MODES := {"players": "PLAYERS", "team": "PLAYERS 2V2", "2": "RECORDS 2P", "3": "RECORDS 3P",
+	"4": "RECORDS 4P", "2v2": "RECORDS 2V2"}
+## Таблицы игроков (остальные режимы — рекорды): обычный рейтинг и 2v2 (Team-5).
+const PLAYER_MODES := ["players", "team"]
 
 var net: NetSession
 var _mode := "players"
@@ -46,7 +49,7 @@ func _init(session: NetSession = null) -> void:
 		b.toggle_mode = true
 		b.button_group = group
 		b.button_pressed = mode == _mode
-		b.custom_minimum_size = Vector2(76, 16)
+		b.custom_minimum_size = Vector2(70, 16)
 		SetupScreen._style_button(b)
 		b.pressed.connect(_set_mode.bind(mode))
 		modes.add_child(b)
@@ -116,7 +119,7 @@ func show_data(data: Dictionary) -> void:
 	_data = data
 	_counts.text = "TYRANTS %d   ONLINE %d   IN GAME %d" % [int(data.get("registered", 0)),
 		int(data.get("online", 0)), int(data.get("in_game", 0))]
-	var records := _mode != "players"
+	var records := not PLAYER_MODES.has(_mode)
 	_head.visible = not records
 	_grid.visible = not records
 	_rec_head.visible = records
@@ -129,7 +132,9 @@ func show_data(data: Dictionary) -> void:
 	for child in _grid.get_children():
 		_grid.remove_child(child)
 		child.queue_free()
-	var top: Array = data.get("top", [])
+	# PLAYERS 2V2 — таблица рейтинга 2v2 (data.team: {top, mine?}).
+	var table: Dictionary = data.get("team", {}) if _mode == "team" else data
+	var top: Array = table.get("top", [])
 	_status.visible = top.is_empty()
 	_status.text = "No rated games yet."
 	for i in top.size():
@@ -143,9 +148,10 @@ func show_data(data: Dictionary) -> void:
 		_grid.add_child(_cell(str(rating), colour, int(COLUMNS[3][1])))
 		_grid.add_child(_cell(str(int(row.get("games", 0))), colour, int(COLUMNS[4][1])))
 		_grid.add_child(_cell(str(int(row.get("wins", 0))), colour, int(COLUMNS[5][1])))
-	var mine: Dictionary = data.get("mine", {})
+	var mine: Dictionary = table.get("mine", {})
 	if mine.is_empty():
-		_mine.text = "Play a game from SEARCH to get on the board."
+		_mine.text = "Play a 2V2 game from SEARCH to get on the board." if _mode == "team" \
+			else "Play a game from SEARCH to get on the board."
 	elif int(mine["rank"]) > top.size():
 		_mine.text = "YOU: #%d   %d" % [int(mine["rank"]), int(mine["rating"])]
 	else:

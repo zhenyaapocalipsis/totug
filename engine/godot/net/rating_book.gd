@@ -97,39 +97,90 @@ static func account_of(key: String) -> String:
 	return key.sha256_text()
 
 
-func rating_of(account: String) -> int:
-	return int((accounts.get(account, {}) as Dictionary).get("rating", START))
+## kind: "" — обычный рейтинг, TEAM ("2v2") — отдельный рейтинг командных партий
+## (этап Team-5): поля rating_2v2, games_2v2, wins_2v2 той же учётной записи.
+const TEAM := "2v2"
+
+
+static func _field(name: String, kind: String) -> String:
+	return name if kind == "" else "%s_%s" % [name, kind]
+
+
+func rating_of(account: String, kind: String = "") -> int:
+	return int((accounts.get(account, {}) as Dictionary).get(_field("rating", kind), START))
 
 
 ## Для карточки игрока: {rating, games, wins}. Новичок — START и нули.
-func stats_of(account: String) -> Dictionary:
+func stats_of(account: String, kind: String = "") -> Dictionary:
 	var entry: Dictionary = accounts.get(account, {})
-	return {"rating": int(entry.get("rating", START)), "games": int(entry.get("games", 0)),
-		"wins": int(entry.get("wins", 0))}
+	return {"rating": int(entry.get(_field("rating", kind), START)), "games": int(entry.get(_field("games", kind), 0)),
+		"wins": int(entry.get(_field("wins", kind), 0))}
 
 
 ## Таблица лидеров (владелец, 2026-10-11): первые n по рейтингу (при равенстве —
 ## больше партий), registered — сколько тиранов сыграли хоть одну рейтинговую
 ## партию (только они и есть в accounts), mine — место account, если он там есть.
+## team — та же таблица по рейтингу 2v2 (этап Team-5).
 func leaderboard(n: int, account: String = "") -> Dictionary:
-	var order: Array = accounts.keys()
+	var out := _table(n, account, "")
+	out["registered"] = accounts.size()
+	out["records"] = records.public_table()
+	out["team"] = _table(n, account, TEAM)
+	return out
+
+
+## Первые n по рейтингу вида kind (только сыгравшие в нём хоть одну партию)
+## и место account: {top, mine?}.
+func _table(n: int, account: String, kind: String) -> Dictionary:
+	var games := _field("games", kind)
+	var order: Array = accounts.keys().filter(func(a): return int(accounts[a].get(games, 0)) > 0)
 	order.sort_custom(func(a: String, b: String) -> bool:
-		var ra := rating_of(a)
-		var rb := rating_of(b)
+		var ra := rating_of(a, kind)
+		var rb := rating_of(b, kind)
 		if ra != rb:
 			return ra > rb
-		return int(accounts[a].get("games", 0)) > int(accounts[b].get("games", 0)))
+		return int(accounts[a].get(games, 0)) > int(accounts[b].get(games, 0)))
 	var top := []
 	for i in mini(n, order.size()):
-		var row := stats_of(order[i])
+		var row := stats_of(order[i], kind)
 		row["name"] = String((accounts[order[i]] as Dictionary).get("name", ""))
 		row["me"] = order[i] == account
 		top.append(row)
-	var out := {"top": top, "registered": order.size(), "records": records.public_table()}
+	var out := {"top": top}
 	var rank := order.find(account)
 	if rank >= 0:
-		out["mine"] = stats_of(account)
+		out["mine"] = stats_of(account, kind)
 		out["mine"]["rank"] = rank + 1
+	return out
+
+
+## 2 на 2 (этап Team-5): Эло команда на команду — рейтинг команды = среднее её
+## игроков, оба союзника получают одно и то же изменение (K за партию, как
+## один на один). teams — место -> команда, scores у союзников одинаковые.
+static func team_elo_deltas(ratings: Dictionary, scores: Dictionary, teams: Dictionary) -> Dictionary:
+	var sum := {}
+	var count := {}
+	var score := {}
+	for seat in ratings:
+		var t := String(teams[seat])
+		sum[t] = float(sum.get(t, 0.0)) + float(ratings[seat])
+		count[t] = int(count.get(t, 0)) + 1
+		score[t] = int(scores[seat])
+	var change := {}
+	for t: String in sum:
+		var mine := float(sum[t]) / float(count[t])
+		var d := 0.0
+		for o: String in sum:
+			if o == t:
+				continue
+			var theirs := float(sum[o]) / float(count[o])
+			var expected := 1.0 / (1.0 + pow(10.0, (theirs - mine) / 400.0))
+			var actual := 0.5 if int(score[t]) == int(score[o]) else (1.0 if int(score[t]) > int(score[o]) else 0.0)
+			d += K * (actual - expected)
+		change[t] = roundi(d)
+	var out := {}
+	for seat in ratings:
+		out[seat] = change[String(teams[seat])]
 	return out
 
 
@@ -159,7 +210,10 @@ static func elo_deltas(ratings: Dictionary, scores: Dictionary) -> Dictionary:
 ## сидит за двумя цветами (два окна на одном компьютере).
 ## rated = false — партия из лобби (владелец, 2026-10-11): рейтинг, партии и
 ## победы не меняются, файл не трогается; итог несёт delta 0 и unrated.
-func record(players: Dictionary, scores: Dictionary, winners: Array, rated := true) -> Dictionary:
+func record(players: Dictionary, scores: Dictionary, winners: Array, rated := true,
+		teams: Dictionary = {}) -> Dictionary:
+	# 2 на 2 (этап Team-5): teams — место -> команда; свой рейтинг 2v2.
+	var kind := TEAM if not teams.is_empty() else ""
 	var seen := {}
 	var ratings := {}
 	for seat in players:
@@ -167,25 +221,29 @@ func record(players: Dictionary, scores: Dictionary, winners: Array, rated := tr
 		if account == "" or seen.has(account):
 			return {}
 		seen[account] = true
-		ratings[seat] = rating_of(account)
+		ratings[seat] = rating_of(account, kind)
 	if not rated:
 		var same := {}
 		for seat in players:
-			same[seat] = stats_of(String(players[seat]["account"]))
+			same[seat] = stats_of(String(players[seat]["account"]), kind)
 			same[seat]["delta"] = 0
 			same[seat]["unrated"] = true
+			if kind != "":
+				same[seat]["kind"] = kind
 		return same
-	var deltas := elo_deltas(ratings, scores)
+	var deltas := team_elo_deltas(ratings, scores, teams) if kind == TEAM else elo_deltas(ratings, scores)
 	var out := {}
 	for seat in players:
 		var account := String(players[seat]["account"])
 		var entry: Dictionary = accounts.get(account, {"rating": START, "games": 0, "wins": 0})
 		entry["name"] = String(players[seat]["name"])
-		entry["rating"] = int(ratings[seat]) + int(deltas[seat])
-		entry["games"] = int(entry.get("games", 0)) + 1
-		entry["wins"] = int(entry.get("wins", 0)) + (1 if winners.has(seat) else 0)
+		entry[_field("rating", kind)] = int(ratings[seat]) + int(deltas[seat])
+		entry[_field("games", kind)] = int(entry.get(_field("games", kind), 0)) + 1
+		entry[_field("wins", kind)] = int(entry.get(_field("wins", kind), 0)) + (1 if winners.has(seat) else 0)
 		accounts[account] = entry
-		out[seat] = {"rating": entry["rating"], "delta": deltas[seat], "games": entry["games"],
-			"wins": entry["wins"]}
+		out[seat] = stats_of(account, kind)
+		out[seat]["delta"] = deltas[seat]
+		if kind != "":
+			out[seat]["kind"] = kind
 	save()
 	return out

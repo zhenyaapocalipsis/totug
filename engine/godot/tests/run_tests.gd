@@ -1187,15 +1187,40 @@ func test_rating() -> void:
 	check_eq(int(r["red"]["games"]), 1, "итог партии несёт число партий")
 	check_eq(book.stats_of(b), {"rating": 984, "games": 1, "wins": 0}, "карточка игрока: рейтинг, партии, победы")
 	check_eq(book.stats_of("nobody"), {"rating": 1000, "games": 0, "wins": 0}, "карточка новичка")
+
+	# Team-5: рейтинг 2v2 — отдельный, Эло команда на команду
+	var team_seats := {"red": "red", "green": "red", "blue": "blue", "purple": "blue"}
+	var td := RatingBook.team_elo_deltas({"red": 1000, "green": 1000, "blue": 1000, "purple": 1000},
+		{"red": 70, "green": 70, "blue": 60, "purple": 60}, team_seats)
+	check(td["red"] == 16 and td["green"] == 16 and td["blue"] == -16 and td["purple"] == -16,
+		"2v2 равные: победители +16 оба, проигравшие -16 оба")
+	td = RatingBook.team_elo_deltas({"red": 1400, "green": 1000, "blue": 1200, "purple": 1200},
+		{"red": 60, "green": 60, "blue": 60, "purple": 60}, team_seats)
+	check(td["red"] == 0 and td["blue"] == 0, "2v2 ничья команд с равным средним — без изменений")
+	var c := RatingBook.account_of("c0123456789abcdef0123456789abcde")
+	var e := RatingBook.account_of("e0123456789abcdef0123456789abcde")
+	var duo := book.record({"red": {"account": a, "name": "Ann"}, "green": {"account": c, "name": "Cid"},
+			"blue": {"account": b, "name": "Bob"}, "purple": {"account": e, "name": "Eve"}},
+			{"red": 70, "green": 70, "blue": 60, "purple": 60}, ["red", "green"], true, team_seats)
+	check_eq(duo["green"]["kind"], RatingBook.TEAM, "итог 2v2 помечен kind")
+	check_eq(book.rating_of(a), 1016, "2v2 не трогает обычный рейтинг")
+	check_eq(book.stats_of(a, RatingBook.TEAM), {"rating": 1016, "games": 1, "wins": 1}, "рейтинг 2v2 записан")
+	var lb := book.leaderboard(10, c)
+	check_eq((lb["top"] as Array).size(), 2, "обычная таблица — только сыгравшие обычные партии")
+	check_eq((lb["team"]["top"] as Array).size(), 4, "таблица 2v2 — четверо")
+	check_eq(int(lb["team"]["mine"]["rank"]), 1 if lb["team"]["top"][0]["me"] else 2, "своё место в таблице 2v2")
+	check_eq(PlayerProfile.place_of("purple", {"red": duo["red"].merged({"won": true}),
+		"purple": duo["purple"].merged({"won": false, "vp": 60})}), 2, "2v2: проигравшая команда — второе место")
+	check(NetSession.queue_key(4, true) != NetSession.queue_key(4, false), "очередь SEARCH 2V2 — своя")
 	var lobby := book.record({"red": {"account": a, "name": "Ann"}, "blue": {"account": b, "name": "Bob"}},
 			{"red": 40, "blue": 30}, ["red"], false)
 	check(int(lobby["red"]["delta"]) == 0 and int(lobby["red"]["rating"]) == 1016 and lobby["red"]["unrated"],
 		"партия из лобби: рейтинг не меняется")
 	check_eq(book.stats_of(a), {"rating": 1016, "games": 1, "wins": 1}, "партия из лобби не считается в партиях и победах")
 	var board := book.leaderboard(1, b)
-	check(int(board["registered"]) == 2 and (board["top"] as Array).size() == 1
+	check(int(board["registered"]) == 4 and (board["top"] as Array).size() == 1
 		and board["top"][0]["name"] == "Ann" and not board["top"][0]["me"],
-		"таблица лидеров: первым — больший рейтинг, тиранов двое")
+		"таблица лидеров: первым — больший рейтинг, тиранов четверо (двое — только из 2v2)")
 	check_eq(int(board["mine"]["rank"]), 2, "таблица лидеров: своё место за пределами показанных")
 
 	# Мировые рекорды: первый держит, повтор не отбирает, бьёт только лучшее.

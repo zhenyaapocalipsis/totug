@@ -21,7 +21,7 @@ const KINDS := [
 	["margin", "BIGGEST LEAD, VP", false],
 ]
 
-## "2"/"3"/"4" -> ключ -> {value, name, account, date}.
+## "2"/"3"/"4" (и "2v2" — этап Team-5) -> ключ -> {value, name, account, date}.
 var table: Dictionary = {}
 var _path := ""
 
@@ -65,7 +65,7 @@ static func measure(stats: Dictionary, seat: String, scores: Dictionary) -> Dict
 
 ## Сверить показатели победителя с таблицей; вернуть ключи побитых рекордов.
 ## Нули рекордом не считаются (0 убийств — не достижение, 0 раундов не бывает).
-func submit(players: int, account: String, player_name: String, values: Dictionary) -> Array[String]:
+func submit(players: Variant, account: String, player_name: String, values: Dictionary) -> Array[String]:
 	var key := str(players)
 	var row: Dictionary = table.get(key, {})
 	var broken: Array[String] = []

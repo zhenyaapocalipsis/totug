@@ -183,8 +183,8 @@ func _build_server_part(col: VBoxContainer) -> void:
 	if _kind == "create":
 		col.add_child(_dim("%s, mode %s" % [_players_text(), SetupScreen.mode_title(_mode)]))
 	elif _kind == "find":
-		col.add_child(_dim("%d players, mode %s, random opponents" % [
-			_count, SetupScreen.MODE_TITLES[NetSession.match_mode(_count)]]))
+		col.add_child(_dim("%s, mode %s, random opponents" % [
+			_players_text(), SetupScreen.MODE_TITLES[NetSession.match_mode(_count)]]))
 	var server_row := _row(col)
 	server_row.add_child(_dim("SERVER"))
 	_server_edit = LineEdit.new()
@@ -278,7 +278,7 @@ func _on_go() -> void:
 			if _kind == "create":
 				err = _net.create_room(server, NetSession.SERVER_PORT, _count, _mode, _teams)
 			elif _kind == "find":
-				err = _net.find_match(server, NetSession.SERVER_PORT, _count)
+				err = _net.find_match(server, NetSession.SERVER_PORT, _count, _teams)
 			else:
 				var code := _code_edit.text.strip_edges().to_upper()
 				if code.length() != NetSession.CODE_LENGTH:

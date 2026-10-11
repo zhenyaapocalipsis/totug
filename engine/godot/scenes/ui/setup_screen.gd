@@ -124,6 +124,8 @@ var _teams_shown := false
 var _hotseat_note: Label
 ## На сколько человек искать стол (SEARCH) — отдельно от своей комнаты.
 var _match_count: int = GameScreen.MIN_PLAYERS
+## SEARCH 2V2 (этап Team-5).
+var _match_teams := false
 ## LOBBY: войти к друзьям (иначе — своя игра), своя игра — напрямую по IP
 ## (иначе через сервер с кодом комнаты), вход — по IP (иначе по коду).
 var _lobby_join := false
@@ -393,11 +395,19 @@ func _build_online() -> void:
 	var counts: Array = []
 	var group := ButtonGroup.new()
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
-		var b := _toggle(str(count), group, count == _match_count, 24)
+		var b := _toggle(str(count), group, count == _match_count and not _match_teams, 24)
 		b.pressed.connect(func():
 			_match_count = count
+			_match_teams = false
 			market.text = _match_market_text())
 		counts.append(b)
+	# SEARCH 2V2 (этап Team-5): своя очередь, рейтинг 2v2.
+	var duo := _toggle("2V2", group, _match_teams, 32)
+	duo.pressed.connect(func():
+		_match_count = GameScreen.MAX_PLAYERS
+		_match_teams = true
+		market.text = _match_market_text())
+	counts.append(duo)
 	_col.add_child(_heading("PLAYERS"))
 	_col.add_child(_row(counts))
 	_add_dim("The game starts as soon as the table is full.")
@@ -595,6 +605,8 @@ func _toggle_new_era_deck(deck: String) -> void:
 
 ## Своя комната (CREATE ROOM / HOST) или приглашение друга — 2 на 2 (Team-3).
 func wants_teams(kind: String) -> bool:
+	if kind == "find":
+		return _match_teams
 	return _teams and _count == GameScreen.MAX_PLAYERS and kind in ["create", "host", "invite"]
 
 

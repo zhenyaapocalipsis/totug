@@ -430,6 +430,9 @@ static func place_of(own_seat: String, result: Dictionary) -> int:
 	var mine: Dictionary = result[own_seat]
 	if bool(mine.get("won", false)):
 		return 1
+	# 2 на 2 (этап Team-5): проигравшая команда — вторая, оба её игрока.
+	if String(mine.get("kind", "")) == RatingBook.TEAM:
+		return 2
 	var place := 1
 	for pid: String in result:
 		var r: Dictionary = result[pid]
@@ -456,7 +459,8 @@ static func history_entry(own_seat: String, result: Dictionary, profiles: Dictio
 		"vp": int(mine.get("vp", 0)), "won": bool(mine.get("won", false)), "rating": int(mine["rating"]),
 		"delta": int(mine.get("delta", 0)), "unrated": bool(mine.get("unrated", false)), "players": players,
 		"breakdown": (mine.get("breakdown", {}) as Dictionary).duplicate(),
-		"half_decks": (mine.get("half_decks", []) as Array).duplicate(), "ic_cards": int(mine.get("ic_cards", 0))}
+		"half_decks": (mine.get("half_decks", []) as Array).duplicate(), "ic_cards": int(mine.get("ic_cards", 0)),
+		"kind": String(mine.get("kind", ""))}
 
 
 # --- статистика по самой игре -------------------------------------------------

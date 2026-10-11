@@ -86,6 +86,16 @@ static func match_mode(player_count: int) -> String:
 	return GameSetup.MODE_RANDOM_4
 
 
+## Очередь поиска 2 на 2 (этап Team-5) отдельно от обычной на четверых: ключ
+## очереди = размер стола + TEAM_QUEUE (размер — остаток от деления).
+const TEAM_QUEUE := 10
+
+
+static func queue_key(player_count: int, teams: bool) -> int:
+	var size := clampi(player_count, GameRoom.MIN_PLAYERS, GameRoom.MAX_PLAYERS)
+	return size + (TEAM_QUEUE if teams else 0)
+
+
 const MAX_ROOMS := 64
 const MAX_SERVER_PEERS := 128
 ## Без похожих друг на друга знаков (0/O, 1/I).
@@ -282,12 +292,12 @@ func create_room(address: String, port: int, player_count: int, mode: String, te
 
 ## Клиент: встать в очередь поиска игры на player_count человек. Профиль идёт
 ## прямо с просьбой: комнаты ещё нет, и _profile_up её бы не нашёл.
-func find_match(address: String, port: int, player_count: int) -> int:
+func find_match(address: String, port: int, player_count: int, teams: bool = false) -> int:
 	_remember_server(address, port)
 	return _connect(address, port, func():
 		var p := PlayerProfile.clean(profile)
 		_queue.rpc_id(1, PROTOCOL, player_count, p["name"], p["emblem"], p["back"], _client_key(), p["shader"], p["arts"], p["favourite"],
-			p["colour"]))
+			p["colour"], teams))
 
 
 ## Комнату на сервере завели не по коду (CREATE ROOM, поиск игры) — её код
@@ -640,7 +650,7 @@ func _create(version: int, player_count: int, mode: String, teams: bool) -> void
 ## Поиск игры: встать в очередь на player_count человек (только выделенный сервер).
 @rpc("any_peer", "call_remote", "reliable")
 func _queue(version: int, player_count: int, player_name: String, emblem: String, back: String,
-		key: String, shader: String, arts: String, favourite: String, colour: String) -> void:
+		key: String, shader: String, arts: String, favourite: String, colour: String, teams: bool) -> void:
 	if not dedicated:
 		return
 	var peer := multiplayer.get_remote_sender_id()
@@ -648,7 +658,8 @@ func _queue(version: int, player_count: int, player_name: String, emblem: String
 		return
 	if not _name_free(peer, player_name, key):
 		return
-	var needed := clampi(player_count, GameRoom.MIN_PLAYERS, GameRoom.MAX_PLAYERS)
+	# Очередь: ключ — размер стола, у 2 на 2 своя (queue_key).
+	var needed := queue_key(GameRoom.MAX_PLAYERS if teams else player_count, teams)
 	var line: Array = queues.get(needed, [])
 	line.append(peer)
 	queues[needed] = line
@@ -657,19 +668,21 @@ func _queue(version: int, player_count: int, player_name: String, emblem: String
 		"colour": PlayerProfile.clean_colour(colour)}
 	_log("queue %d: %d waiting" % [needed, line.size()])
 	# Сервер забит комнатами — стоят дальше; следующий пришедший проверит снова.
-	if line.size() >= needed and rooms.size() < MAX_ROOMS:
+	if line.size() >= needed % TEAM_QUEUE and rooms.size() < MAX_ROOMS:
 		_match(needed)
 	_broadcast_queue(needed)
 
 
 ## Первые needed из очереди садятся за новый стол, и партия сразу раздаётся.
 func _match(needed: int) -> void:
+	var teams := needed >= TEAM_QUEUE
+	var size := needed % TEAM_QUEUE
 	var line: Array = queues[needed]
-	var room := _new_room(needed, match_mode(needed))
+	var room := _new_room(size, match_mode(size), teams)
 	room.matched = true
 	# Сначала рассадка по любимым цветам (кто раньше встал в очередь, тому и
 	# цвет), профили — когда места уже окончательные.
-	var batch: Array = line.slice(0, needed)
+	var batch: Array = line.slice(0, size)
 	for peer: int in batch:
 		room.add(peer, String(queued[peer].get("colour", "")))
 		peer_room[peer] = room.code
@@ -678,7 +691,7 @@ func _match(needed: int) -> void:
 		queued.erase(peer)
 		_set_profile(room, String(room.seats[peer]), String(q["name"]), String(q["emblem"]), String(q["back"]),
 			String(q["key"]), String(q.get("shader", "")), String(q.get("arts", "")), String(q.get("favourite", "")))
-	queues[needed] = line.slice(needed)
+	queues[needed] = line.slice(size)
 	_log("room %s matched: %d players, %s" % [room.code, room.needed, room.mode])
 	_broadcast_lobby(room)
 	_start_room(room, _rng.randi())
@@ -687,7 +700,7 @@ func _match(needed: int) -> void:
 func _broadcast_queue(needed: int) -> void:
 	var line: Array = queues.get(needed, [])
 	for peer: int in line:
-		_send(peer, "_queue_status", [line.size(), needed])
+		_send(peer, "_queue_status", [line.size(), needed % TEAM_QUEUE])
 
 
 ## Ушёл из очереди (закрыл поиск или пропала связь).
@@ -1114,7 +1127,9 @@ func _rate_room(room: GameRoom) -> void:
 	var vp := Scoring.library_card_vp(state)
 	var winners := Array(Scoring.winners(state, vp[0], vp[1]))
 	# Рейтинг меняют только партии поиска игры; лобби — без рейтинга.
-	var result := ratings.record(players, scores, winners, room.matched)
+	# 2 на 2 (этап Team-5): свой рейтинг 2v2, Эло команда на команду.
+	var team_of: Dictionary = state.teams.duplicate()
+	var result := ratings.record(players, scores, winners, room.matched, team_of)
 	if result.is_empty():
 		_log("room %s: game over, not rated" % room.code)
 		return
@@ -1144,8 +1159,14 @@ func _check_records(room: GameRoom, players: Dictionary, scores: Dictionary, win
 		room.server.with_mulligan, room.profiles, "", room.code, room.log)
 	var stats := ReplayStats.collect({"header": header, "intents": room.log})
 	for pid: String in winners:
-		var values := RecordBook.measure(stats, pid, scores)
-		var broken := ratings.records.submit(players.size(), String(players[pid]["account"]),
+		# 2 на 2: перевес — над командой соперников (у союзника тот же счёт).
+		var rivals := scores.duplicate()
+		for other in scores:
+			if other != pid and room.server.state.is_ally(pid, other):
+				rivals.erase(other)
+		var values := RecordBook.measure(stats, pid, rivals)
+		var table := RatingBook.TEAM if room.teams else str(players.size())
+		var broken := ratings.records.submit(table, String(players[pid]["account"]),
 			String(players[pid]["name"]), values)
 		if not broken.is_empty():
 			result[pid]["records"] = broken
@@ -1155,7 +1176,9 @@ func _check_records(room: GameRoom, players: Dictionary, scores: Dictionary, win
 @rpc("authority", "call_remote", "reliable")
 func _rating(result: Dictionary) -> void:
 	if result.has(seat):
-		PlayerProfile.cache_stats(result[seat])
+		# Рейтинг 2v2 — отдельный: обычный в профиле он не трогает.
+		if String(result[seat].get("kind", "")) == "":
+			PlayerProfile.cache_stats(result[seat])
 		var entry := PlayerProfile.history_entry(seat, result, profiles)
 		entry["replay"] = last_replay
 		if last_replay != "":
