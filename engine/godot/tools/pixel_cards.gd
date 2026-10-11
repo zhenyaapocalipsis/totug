@@ -92,6 +92,12 @@ const MINI_FACE := {
 	49116: Vector2i(47, 28), 49117: Vector2i(69, 21), 49118: Vector2i(56, 25), 49119: Vector2i(55, 37),
 	49120: Vector2i(54, 0), 49121: Vector2i(32, 9), 49122: Vector2i(56, 0), 49123: Vector2i(35, 36),
 	49124: Vector2i(70, 14),
+	49200: Vector2i(59, 19), 49201: Vector2i(75, 14), 49202: Vector2i(89, 7), 49203: Vector2i(55, 35),
+	49204: Vector2i(86, 27), 49205: Vector2i(38, 18), 49206: Vector2i(66, 23), 49207: Vector2i(56, 35),
+	49208: Vector2i(90, 10), 49209: Vector2i(52, 14), 49210: Vector2i(49, 39), 49211: Vector2i(62, 0),
+	49212: Vector2i(49, 6), 49213: Vector2i(39, 19), 49214: Vector2i(33, 47), 49215: Vector2i(59, 29),
+	49216: Vector2i(62, 17), 49217: Vector2i(60, 28), 49218: Vector2i(49, 19), 49219: Vector2i(69, 21),
+	49220: Vector2i(56, 0),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -206,6 +212,28 @@ const SINGLE_ART := {
 	49122: ["shadow/shadow.png", Rect2i(0, 0, 700, 427)],
 	49123: ["shadow/phase_spider.png", Rect2i(60, 360, 500, 305)],
 	49124: ["shadow/twig_blight.png", Rect2i(120, 120, 520, 317)],
+	# Piltover & Zaun (New Era): арты 2024 года с фоном с D&D Beyond в cards/pz/.
+	49200: ["pz/tough_boss.jpeg", Rect2i(0, 20, 440, 268)],
+	49201: ["pz/wererat.jpeg", Rect2i(0, 60, 596, 363)],
+	49202: ["pz/bandit_captain.jpeg", Rect2i(0, 270, 326, 199)],
+	49203: ["pz/rust_monster.jpeg", Rect2i(0, 100, 700, 427)],
+	49204: ["pz/black_pudding.png", Rect2i(0, 300, 560, 341)],
+	49205: ["pz/spy.jpeg", Rect2i(0, 90, 446, 272)],
+	49206: ["pz/otyugh.jpeg", Rect2i(250, 60, 700, 427)],
+	49207: ["pz/clay_golem.png", Rect2i(133, 120, 540, 329)],
+	49208: ["pz/gelatinous_cube.jpeg", Rect2i(0, 330, 800, 488)],
+	49209: ["pz/ochre_jelly.png", Rect2i(150, 20, 700, 427)],
+	49210: ["pz/mimic.png", Rect2i(50, 100, 820, 500)],
+	49211: ["pz/stone_golem.jpeg", Rect2i(100, 0, 560, 341)],
+	49212: ["pz/assassin.png", Rect2i(237, 60, 440, 268)],
+	49213: ["pz/iron_golem.png", Rect2i(0, 0, 600, 366)],
+	49214: ["pz/manticore.jpeg", Rect2i(300, 0, 700, 427)],
+	49215: ["pz/homunculus.jpeg", Rect2i(0, 430, 495, 302)],
+	49216: ["pz/chimera.png", Rect2i(300, 0, 700, 427)],
+	49217: ["pz/archmage.png", Rect2i(100, 30, 700, 427)],
+	49218: ["pz/basilisk.png", Rect2i(24, 0, 700, 427)],
+	49219: ["pz/behir.png", Rect2i(0, 60, 554, 338)],
+	49220: ["pz/hydra.jpeg", Rect2i(0, 20, 1000, 610)],
 }
 
 const FONT := {
@@ -257,6 +285,7 @@ const FONT := {
 	"(": ["00010","00100","01000","01000","01000","00100","00010"],
 	")": ["01000","00100","00010","00010","00010","00100","01000"],
 	"/": ["00001","00010","00010","00100","01000","01000","10000"],
+	"&": ["01100","10010","10100","01000","10101","10010","01101"],
 	"!": ["00100","00100","00100","00100","00100","00000","00100"],
 	"?": ["01110","10001","00001","00010","00100","00000","00100"],
 	"•": ["00000","00000","01110","01110","01110","00000","00000"],
@@ -436,6 +465,7 @@ func set_name(card_id: int, type: String) -> String:
 		486: return "ELEMENTAL"
 		490: return "CELESTIAL"
 		491: return "SHADOW ISLES"
+		492: return "PILTOVER & ZAUN"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

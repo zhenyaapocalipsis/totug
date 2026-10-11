@@ -34,7 +34,7 @@
 | 49219 | Behir | Janna | 9 | MALICE | 4/9 | 1 |
 | 49220 | Hydra | Seraphine | 7 | AMBITION | 3/6 | 1 |
 
-Арты-кандидаты скачаны в `cards/pz/cand` и `cards/pz/cand2` (не в git). Нужны версии 2024 года с фоном — файлы `5195xxx-*` / `4904xxx-*`.
+Арты (NE-7) — `cards/pz/<существо>.png/jpeg`, версии 2024 года с фоном; окна — `SINGLE_ART`/`MINI_FACE` в `tools/pixel_cards.gd`, подпись PILTOVER & ZAUN (в шрифт карт добавлен знак &). Неиспользованные кандидаты — `cards/pz/cand`, `cand2` (не в git, можно удалить).
 
 ## Как истолкованы спорные места (можно поменять)
 - «Next to another player's troop» (Tough Boss, Chimera): новое войско стоит в соседнем слоте или в той же локации, что и войско другого игрока (не белое).
