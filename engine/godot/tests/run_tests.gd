@@ -3243,7 +3243,7 @@ func test_no_actions_while_decision_pending() -> void:
 ## графа есть трасса, рамки локаций не налезают друг на друга.
 func test_board_schematic() -> void:
 	section("Схема доски: трассы по правилам разводки")
-	for run: Array in [[2, 1], [2, 7], [2, 42], [4, 3], [4, 11]]:
+	for run: Array in [[2, 1], [2, 7], [2, 42], [3, 5], [3, 9], [4, 3], [4, 11]]:
 		var ids: Array[String] = []
 		ids.assign(["red", "blue", "green", "purple"].slice(0, int(run[0])))
 		var state := GameSetup.new_game(ids, int(run[1]))

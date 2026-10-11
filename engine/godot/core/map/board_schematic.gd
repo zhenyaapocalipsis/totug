@@ -139,9 +139,9 @@ const REPAIR_ROUNDS := 2
 ## Доска во всю свою зону (решение владельца, 2026-10-03): собранные гексы
 ## раздвигаются целиком — содержимое гекса не трогается, растут только щели
 ## между гексами, и туннели переходят через щель (см. _spread). ZONE — зона
-## доски на экране 960x540 (GameScreen, после Stage Mini-1), в пикселях схемы
-## при 1:1. Пока только на четверых: на 2-3 игроков щели вышли бы широкими,
-## это владелец решит по скриншотам.
+## доски на экране 960x540 (GameScreen), в пикселях схемы при 1:1; тест
+## проверяет, что она совпадает с зоной доски на экране. С 2026-10-11 и на
+## 2-3 игроков (сетка 5x3 с пустыми клетками, см. _grid_try).
 const ZONE := Vector2(655, 456)
 ## Верх зоны занимает вопрос «X decides — click a gold site on the board» в
 ## две строки (DecisionDialog у верхнего края), низ во время хода — счётчик
@@ -149,7 +149,7 @@ const ZONE := Vector2(655, 456)
 ## Доска раздвигается между ними, BoardPanel ставит её по центру этой части.
 const PROMPT_STRIP := 92.0
 const BOTTOM_STRIP := 26.0
-const SPREAD_PLAYERS := [4]
+const SPREAD_PLAYERS := [2, 3, 4]
 ## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
 const SPREAD_SLACK := 4.0
 ## Рамки городов разных гексов при раздвигании стремятся разойтись хотя бы на
@@ -1562,6 +1562,10 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 	# 2026-10-04); не легла — раздвигаем по-старому, мостиками-ступеньками.
 	if _grid_try(cell):
 		return _sp_off
+	# раздвигание мостиками-ступеньками сделано под 15 гексов четверых; на 2-3
+	# игроков без сетки доска остаётся собранной
+	if hexes.size() != 15:
+		return {}
 	var outer: Array = []
 	for hex: String in hexes:
 		if layer[hex] == max_layer:
@@ -1823,6 +1827,10 @@ func _sp_toward_line(hexes: Array, line: float) -> void:
 ## щели между ними равные. Верхний ряд — по верху рамок у верха доски, нижний —
 ## по низу у низа, средний — посередине. Трассы между гексами потом
 ## прокладываются заново (_grid_route). Не вышло — false, сдвиги нулевые.
+## На 2 и 3 игроков (владелец, 2026-10-11: «по аналогии с четырьмя») та же
+## сетка, только часть клеток пустая: на двоих крайние колонки — по одному
+## гексу (снизу слева, сверху справа), в средней — только центр; на троих
+## крайние — по гексу сверху, в средней — центр и низ.
 const GRID_MIN_GAP := 12.0   # щель между рядами под трассы
 ## Между колонками может быть и уже: трассы идут и сквозь гексы, где пусто.
 const GRID_MIN_GAP_X := 2.0
@@ -1840,8 +1848,11 @@ func _grid_try(cell: Dictionary) -> bool:
 		if slot.has(key):
 			return false
 		slot[key] = hex
-	if slot.size() != 15:
+	if not slot.has(Vector2i(2, 0)):
 		return false
+	for col in 5:
+		if not (slot.has(Vector2i(col, -1)) or slot.has(Vector2i(col, 0)) or slot.has(Vector2i(col, 1))):
+			return false
 	var room := _sp_zone - Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2 - Vector2(SPREAD_SLACK, SPREAD_SLACK)
 	var centre: Vector2 = (_sp_box[slot[Vector2i(2, 0)]] as Rect2).get_center()
 	var r := Rect2(((centre - room / 2.0) / 2.0).round() * 2.0, (room / 2.0).floor() * 2.0)
@@ -1861,10 +1872,22 @@ func _grid_try(cell: Dictionary) -> bool:
 	var last := 0.0
 	var need: Array[float] = [0.0, 0.0, 0.0, 0.0]
 	for row in [-1, 0, 1]:
-		first = maxf(first, float(lw[slot[Vector2i(0, row)]]))
-		last = maxf(last, float(rw[slot[Vector2i(4, row)]]))
-		for c in 4:
-			need[c] = maxf(need[c], float(rw[slot[Vector2i(c, row)]]) + float(lw[slot[Vector2i(c + 1, row)]]))
+		if slot.has(Vector2i(0, row)):
+			first = maxf(first, float(lw[slot[Vector2i(0, row)]]))
+		if slot.has(Vector2i(4, row)):
+			last = maxf(last, float(rw[slot[Vector2i(4, row)]]))
+	# соседи по колонкам — в своём ряду; на 2-3 игроков у колонки бывают пустые
+	# клетки, тогда и с соседями по диагонали (их ряды всё-таки рядом)
+	for c in 4:
+		for row in [-1, 0, 1]:
+			if not slot.has(Vector2i(c, row)):
+				continue
+			for row2 in [-1, 0, 1]:
+				if not slot.has(Vector2i(c + 1, row2)):
+					continue
+				if row2 != row and (slot.size() == 15 or absi(row2 - row) > 1):
+					continue
+				need[c] = maxf(need[c], float(rw[slot[Vector2i(c, row)]]) + float(lw[slot[Vector2i(c + 1, row2)]]))
 	var used := first + last
 	for c in 4:
 		used += need[c]
@@ -1890,14 +1913,18 @@ func _grid_try(cell: Dictionary) -> bool:
 	var min_a := INF   # щель над средним рядом = M + a
 	var min_b := INF   # щель под ним = b - M
 	for c in 5:
-		var top: String = slot[Vector2i(c, -1)]
+		if not slot.has(Vector2i(c, 0)):
+			continue
 		var mid: String = slot[Vector2i(c, 0)]
-		var bot: String = slot[Vector2i(c, 1)]
-		var top_bottom := top_line - float(ykey[top]) + (_sp_box[top] as Rect2).end.y
-		var bot_top := bottom_line - float(ykey[bot]) + (_sp_box[bot] as Rect2).position.y
-		min_a = minf(min_a, (_sp_box[mid] as Rect2).position.y - float(ykey[mid]) - top_bottom)
-		min_b = minf(min_b, bot_top - ((_sp_box[mid] as Rect2).end.y - float(ykey[mid])))
-	if (min_a + min_b) / 2.0 < GRID_MIN_GAP:
+		if slot.has(Vector2i(c, -1)):
+			var top: String = slot[Vector2i(c, -1)]
+			var top_bottom := top_line - float(ykey[top]) + (_sp_box[top] as Rect2).end.y
+			min_a = minf(min_a, (_sp_box[mid] as Rect2).position.y - float(ykey[mid]) - top_bottom)
+		if slot.has(Vector2i(c, 1)):
+			var bot: String = slot[Vector2i(c, 1)]
+			var bot_top := bottom_line - float(ykey[bot]) + (_sp_box[bot] as Rect2).position.y
+			min_b = minf(min_b, bot_top - ((_sp_box[mid] as Rect2).end.y - float(ykey[mid])))
+	if min_a == INF or min_b == INF or (min_a + min_b) / 2.0 < GRID_MIN_GAP:
 		return false
 	var mid_line := (min_b - min_a) / 2.0
 
