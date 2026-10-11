@@ -46,6 +46,7 @@ var _kill_slot := ""
 var _flights_before: Array = []
 var _feed_before := 0
 var _feed_cells_before := 0
+var _foe_played_label := ""
 var _foe_kills := 0
 var _foe_vp := 0
 var _foe_tags: Array[String] = []
@@ -567,6 +568,8 @@ func _step_recap() -> void:
 	# не нужно.
 	_screen._note_recap([
 		{"type": "force_discard", "player_id": me, "card_id": played},
+		# Ambassador повышен вместо сброса: в блок ходящего, VP после — ходящему.
+		{"type": "promote", "player_id": me, "card_id": played},
 		{"type": "give_insane_outcast", "player_id": me, "count": 1},
 		{"type": "removed_to_supply", "player_id": foe, "card_id": Supplies.INSANE_OUTCAST},
 		{"type": "assassinate", "player_id": foe, "slot_id": "x", "victim": GameState.WHITE},
@@ -576,6 +579,7 @@ func _step_recap() -> void:
 	_foe_tags = _screen._feed.last_block_tags()
 	_foe_kills = _screen._feed.last_stat("kill")
 	_foe_vp = _screen._feed.last_stat("vp")
+	_foe_played_label = (_screen._feed._blocks.back()._labels["PLAYED"] as Label).text
 	_screen._react_to_events([
 		{"type": "turn_ended", "player_id": foe, "game_over": false},
 		{"type": "recruit", "player_id": me, "market_index": 1, "card_id": cid}])
@@ -583,15 +587,29 @@ func _step_recap() -> void:
 
 func _step_check_recap() -> void:
 	var feed: TurnFeed = _screen._feed
-	check(feed.visible and feed.card_count() - _feed_before == 8,
-		"сводка слева пополнилась восемью картами (%d)" % (feed.card_count() - _feed_before))
-	check(feed.group_count() - _feed_cells_before == 7,
+	check(feed.visible and feed.card_count() - _feed_before == 9,
+		"сводка слева пополнилась девятью картами (%d)" % (feed.card_count() - _feed_before))
+	check(feed.group_count() - _feed_cells_before == 8,
 		"сыгранные за ход карты легли одной группой (%d групп)" % (feed.group_count() - _feed_cells_before))
 	var me_id := _screen.viewer_id
-	check(_foe_tags == (["PLAYED", "BOUGHT", "OUTCAST:" + me_id, "DEVOURED", "TO SUPPLY", "DISCARDED:" + me_id] as Array[String]),
+	check(_foe_tags == (["PLAYED", "PROMOTED:" + me_id, "BOUGHT", "OUTCAST:" + me_id, "DEVOURED", "TO SUPPLY", "DISCARDED:" + me_id] as Array[String]),
 		"группы хода не перемешаны, чужие сброс и изгой — в блоке ходящего: %s" % [_foe_tags])
 	check(_foe_kills == 2 and _foe_vp == 3,
 		"строки действий: KILL %d, +%d VP" % [_foe_kills, _foe_vp])
+	check(_foe_played_label == "PLAYED 2", "подпись группы с числом карт: %s" % _foe_played_label)
+	# Зал на четверых: четыре двузначных числа обычным шрифтом влезают.
+	var panel: PlayersPanel = _screen._players_panel
+	var hall := HBoxContainer.new()
+	panel.add_child(hall)
+	PlayersPanel._fill_trophies(hall, {"white": 12, "red": 10, "green": 11, "purple": 13},
+		["red", "green", "purple"])
+	var room := panel.size.x - 2.0 * PlayersPanel.TROPHY_RIGHT_PAD \
+		- (PlayersPanel.NUM_W + PlayersPanel.COL_GAP) * PlayersPanel.COLUMNS.size() - PlayersPanel.HALL_GAP
+	check(hall.get_combined_minimum_size().x <= room,
+		"четыре двузначных трофея влезают в HALL (%d из %d)" % [hall.get_combined_minimum_size().x, room])
+	hall.queue_free()
+	check(_screen._board_area.size == BoardSchematic.ZONE,
+		"BoardSchematic.ZONE = зона доски на экране (%s)" % _screen._board_area.size)
 	check(feed.get_global_rect().end.y >= _screen.size.y - GameScreen.MARGIN - 1.0,
 		"сводка слева идёт до низа экрана")
 	var fits := true
@@ -599,7 +617,7 @@ func _step_check_recap() -> void:
 		var label: Label = block.title
 		var w := label.get_theme_font("font").get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT,
 			-1, label.get_theme_font_size("font_size")).x
-		if w > TurnFeed.CARD.x and label.text.ends_with("'S TURN"):
+		if w > TurnFeed.INNER and label.text.ends_with("'S TURN"):
 			fits = false
 	check(fits, "длинное имя не обрезает заголовок хода — остаётся одно имя")
 	PlayerProfile.seats.clear()
@@ -669,6 +687,8 @@ func _step_forced_discard() -> void:
 		"вопрос — полоса сверху, экран не затемнён")
 	check(dlg._prompt.text.begins_with(EventLogPanel.player_name(_foe_discard)) and dlg._blink,
 		"вопрос крупно и мерцая называет сбрасывающего (%s)" % dlg._prompt.text)
+	check(dlg._forced and dlg._who.text.begins_with("Forced by") and _screen._forced_glow.is_active(),
+		"чужая карта: вопрос ярко мерцает, «%s», рамка экрана горит" % dlg._who.text)
 	var victim: PlayerState = state.players[_foe_discard]
 	_hand_before = victim.deck.hand.size()
 	_discard_before = victim.deck.discard_pile.size()
@@ -687,6 +707,7 @@ func _step_check_forced_discard() -> void:
 	check(victim.deck.hand.size() == _hand_before - 1 and victim.deck.discard_pile.size() == _discard_before + 1,
 		"щелчок по карте в руке сбросил её")
 	check(not _screen.server.resolver.is_waiting(), "вопрос закрыт")
+	check(not _screen._forced_glow.is_active(), "ответил — рамка экрана погасла")
 
 
 ## Devour с рынка (Cult Fanatic): карту выбирают прямо на рынке, без окна.

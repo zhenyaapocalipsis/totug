@@ -51,6 +51,9 @@ var _dim: ColorRect
 ## Вопрос мерцает (сброс карты — видно, кто сейчас сбрасывает).
 var _blink := false
 var _blink_time := 0.0
+## Вопрос задала чужая карта (GameScreen.is_forced): мерцает ярче, не тусклее.
+var _forced := false
+const FORCED_BRIGHT := 2.2
 
 
 ## Подпись карты маркета по индексу: название и цена. Публичная — для тестов.
@@ -164,14 +167,22 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# терялся (решение владельца, 2026-09-27).
 	var discard := in_hand and _prompt.text.begins_with("Discard")
 	var starting := tag == "starting_site"
-	_blink = discard or starting
-	if _blink:
+	# Чужая карта заставляет отвечать: вопрос не тускнеет, а вспыхивает ярче
+	# и называет, чья карта (владелец, 2026-10-11).
+	_forced = GameScreen.is_forced(view)
+	_blink = discard or starting or _forced
+	if _forced:
+		_who.text = "Forced by %s: %s decides" % [
+			EventLogPanel.player_name(String(view.get("current_player", ""))),
+			EventLogPanel.player_name(decider)]
+	if discard or starting:
 		_prompt.text = "%s: %s" % [EventLogPanel.player_name(decider),
 			"discard a card" if discard else "choose your starting site"]
+	if _blink:
 		_prompt.add_theme_color_override("font_color", EventLogPanel.player_color(decider))
 	else:
 		_prompt.remove_theme_color_override("font_color")
-		_prompt.modulate.a = 1.0
+	_prompt.modulate = Color.WHITE
 
 	for box in [_options_box, _asker_slot, _cards_slot]:
 		for child in box.get_children():
@@ -364,7 +375,12 @@ func _process(delta: float) -> void:
 	if not _blink or not visible:
 		return
 	_blink_time += delta
-	_prompt.modulate.a = 0.35 + 0.65 * (0.5 + 0.5 * cos(_blink_time * TAU * 1.5))
+	var wave := 0.5 + 0.5 * cos(_blink_time * TAU * 1.5)
+	if _forced:
+		# вспышка к белому и обратно к цвету игрока — без потускнения
+		_prompt.modulate = Color.WHITE.lerp(Color(FORCED_BRIGHT, FORCED_BRIGHT, FORCED_BRIGHT), wave)
+	else:
+		_prompt.modulate.a = 0.35 + 0.65 * wave
 
 
 ## Плашка у верхнего края (не закрывает доску) или окно по центру.

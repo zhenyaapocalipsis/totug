@@ -33,9 +33,12 @@ const CARD := CardView.MINI_SIZE
 ## Поле колонки и поле блока внутри рамки (рамка — 1 пиксель из него).
 const PAD := 1
 const BLOCK_PAD := 2
-## Ширина колонки: карта, поля блока и колонки. GameScreen отдаёт её слева
-## от доски.
-const WIDTH := CARD.x + (BLOCK_PAD + PAD) * 2
+## Ширина содержимого блока: шире карты, чтобы строка "SUPPLANT 12" влезала
+## с квадратиком (владелец, 2026-10-11); карты стоят по центру.
+const INNER := 80
+## Ширина колонки: содержимое, поля блока и колонки. GameScreen отдаёт её
+## слева от доски.
+const WIDTH := INNER + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
 const ORDER: Array[String] = [
 	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED"]
@@ -99,13 +102,11 @@ func _init() -> void:
 
 
 ## pid взял карту cid; tag — группа: PLAYED / PROMOTED / BOUGHT / DEVOURED.
+## Посреди чужого хода (Ambassador повышен вместо сброса, Green Hag) карта
+## ложится в блок ходящего своей группой: новый блок здесь перехватил бы и
+## всё, что ходящий получит дальше, — VP за контроль записывались не тому.
 func add(pid: String, cid: String, tag: String) -> void:
-	var follow := _at_bottom()
-	var block: Block = _blocks.back() if not _blocks.is_empty() else null
-	if block == null or block.pid != pid or _turn_closed:
-		block = _open_block(pid)
-	block.add_card(tag, _card(cid, pid, tag))
-	_after_add(follow)
+	add_to_turn(pid, cid, tag)
 
 
 ## pid сыграл карту cid.
@@ -125,7 +126,7 @@ func add_discard(pid: String, cid: String) -> void:
 func add_to_turn(pid: String, cid: String, tag: String) -> void:
 	var follow := _at_bottom()
 	var block := _current_block(pid)
-	if block.pid == pid:
+	if block.pid == pid or pid == "":
 		block.add_card(tag, _card(cid, pid, tag))
 	else:
 		block.add_card(tag + ":" + pid, _card(cid, pid, tag))
@@ -270,7 +271,7 @@ func _fit_header(title: Label, pid: String) -> void:
 	var text := "%s'S TURN" % who
 	var font := title.get_theme_font("font")
 	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
-			title.get_theme_font_size("font_size")).x > CARD.x:
+			title.get_theme_font_size("font_size")).x > INNER:
 		text = who
 	title.text = text
 
@@ -326,6 +327,8 @@ class Block extends PanelContainer:
 	var _order: Array[String] = []
 	var _col: VBoxContainer
 	var _cells: Dictionary = {}
+	## tag -> подпись группы под картами
+	var _labels: Dictionary = {}
 	## key -> [Label, HBoxContainer квадратиков]
 	var _rows: Dictionary = {}
 	var _stats_box: VBoxContainer
@@ -345,7 +348,10 @@ class Block extends PanelContainer:
 	func add_card(tag: String, card: CardView) -> void:
 		if not groups.has(tag):
 			_add_group(tag)
-		(groups[tag] as Ladder).add_card(card)
+		var ladder: Ladder = groups[tag]
+		ladder.add_card(card)
+		# Подпись с числом карт группы: "PLAYED 5" (владелец, 2026-10-11).
+		(_labels[tag] as Label).text = "%s %d" % [tag.get_slice(":", 0), ladder.get_child_count()]
 
 	func card_count() -> int:
 		var n := 0
@@ -404,7 +410,7 @@ class Block extends PanelContainer:
 		# в момент добавления строки тема до неё ещё не дошла, и мерился
 		# крупный шрифт по умолчанию — квадратиков влезало меньше, чем есть места.
 		var text_w := label.text.length() * 6 - 1
-		var room := int((TurnFeed.CARD.x - text_w - 2) / (MARK + 1))
+		var room := int((TurnFeed.INNER - text_w - 2) / (MARK + 1))
 		while marks.get_child_count() > maxi(room, 0):
 			var extra := marks.get_child(marks.get_child_count() - 1)
 			marks.remove_child(extra)
@@ -467,6 +473,8 @@ class Block extends PanelContainer:
 		cell.add_theme_constant_override("separation", 0)
 		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var ladder := Ladder.new()
+		# Блок шире карты — лесенка по центру.
+		ladder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		cell.add_child(ladder)
 		var label := Label.new()
 		label.text = base
@@ -486,6 +494,7 @@ class Block extends PanelContainer:
 		_col.move_child(cell, 1 + before)
 		groups[tag] = ladder
 		_cells[tag] = cell
+		_labels[tag] = label
 
 
 ## Карты одной группы — лесенкой сверху вниз, как стопка на столе: каждая

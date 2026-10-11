@@ -73,8 +73,11 @@ const SHAKE_NUDGE := 2.0
 const KILL_HITSTOP := 0.08
 ## Ширина правой колонки — ширина рынка в две мелкие карты; все зоны колонки
 ## той же ширины (макет владельца, 2026-09-24). Таблица игроков под эту
-## ширину — по две строки на игрока (трофеи второй строкой).
-const COL := float(MarketPanel.WIDTH)
+## ширину — по две строки на игрока (трофеи второй строкой). Колонка шире
+## рынка на HALL_EXTRA: четыре двузначных числа зала трофеев обычным шрифтом
+## (владелец, 2026-10-11: «не уменьшать цифры»); рынок — по центру.
+const HALL_EXTRA := 20.0
+const COL := float(MarketPanel.WIDTH) + HALL_EXTRA
 ## Дектрекер — полоса в мелкую карту и корешок шириной во всю высоту экрана между
 ## сводкой ходов и доской (владелец, 2026-09-28). Зона доски — 598 при самой
 ## широкой 4p-схеме 596, схема 1:1.
@@ -153,6 +156,8 @@ var _players_panel: PlayersPanel
 var _hand_panel: HandPanel
 var _showcase: CardShowcase
 var _turn_banner: TurnBanner
+## Рамка по краю экрана, пока чужая карта заставляет отвечать (см. _announce_turn).
+var _forced_glow: ForcedGlow
 ## Для кого баннер хода уже показан и на какой вопрос уже мигали в панели
 ## задач — чтобы не повторять на каждом обновлении среза.
 var _banner_player := ""
@@ -557,6 +562,8 @@ func _build_layout() -> void:
 			_show_decision(_view))
 	_turn_banner = TurnBanner.new()
 	add_child(_turn_banner)
+	_forced_glow = ForcedGlow.new()
+	add_child(_forced_glow)
 
 	# Сводка ходов — постоянная колонка у левого края, слева от доски.
 	_feed = TurnFeed.new()
@@ -1035,11 +1042,11 @@ func _layout() -> void:
 	var market_h := _market_panel.get_combined_minimum_size().y
 	var market_y := right_bottom_y - GAP - market_h
 	var market_x := d_x
-	_place(_market_panel, market_x, market_y, MarketPanel.WIDTH, market_h)
+	_place(_market_panel, market_x, market_y, COL, market_h)
 	var players_y := top_y + TOP_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
 	_place(_piles_column, market_x, right_bottom_y, PILES_W, RIGHT_BOTTOM_H)
-	var ew := MarketPanel.WIDTH - PILES_W - GAP
+	var ew := COL - PILES_W - GAP
 	_place(_end_turn_area, market_x + PILES_W + GAP, right_bottom_y, ew, RIGHT_BOTTOM_H)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
@@ -2063,11 +2070,32 @@ func _announce_turn(view: Dictionary) -> void:
 			Sfx.play("turn")
 			_request_attention()
 	var pending: Dictionary = view.get("pending_decision", {})
-	var key := "%s|%s" % [String(pending.get("player_id", "")), String(pending.get("prompt", ""))]
-	if not pending.is_empty() and String(pending.get("player_id", "")) == viewer_id \
+	var decider := String(pending.get("player_id", ""))
+	var key := "%s|%s" % [decider, String(pending.get("prompt", ""))]
+	if not pending.is_empty() and decider == viewer_id \
 			and current != viewer_id and key != _attention_key:
 		_request_attention()
+	# Чужая карта заставляет отвечать (сброс, Ambassador...): звук, баннер
+	# «FORCED BY RED» и рамка экрана цветом отвечающего, пока он не ответит
+	# (владелец, 2026-10-11: это было незаметно). В сети — только ему самому,
+	# в хотсите — всем: за экран садится он.
+	var forced := is_forced(view) and (net == null or decider == viewer_id)
+	if forced and key != _attention_key:
+		Sfx.play("forced")
+		var by := EventLogPanel.player_name(current).to_upper()
+		var text := "FORCED BY %s" % by if net != null \
+			else "%s: FORCED BY %s" % [EventLogPanel.player_name(decider).to_upper(), by]
+		_show_banner.call_deferred(text, EventLogPanel.player_color(decider))
+	_forced_glow.set_active(forced, EventLogPanel.player_color(decider))
 	_attention_key = key
+
+
+## Вопрос задан не ходящему: его заставляет чужая карта (сброс, Ambassador,
+## Green Hag...). Стартовая расстановка — не в счёт.
+static func is_forced(view: Dictionary) -> bool:
+	var pending: Dictionary = view.get("pending_decision", {})
+	return not pending.is_empty() and not _is_starting_pick(view) \
+		and String(pending.get("player_id", "")) != String(view.get("current_player", ""))
 
 
 func _show_banner(text: String, colour: Color) -> void:
