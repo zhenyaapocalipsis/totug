@@ -189,8 +189,10 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# Не наш вопрос: сам факт показываем (чтобы было видно, чего ждём),
 		# но вариантов у нас нет — сервер их и не прислал. Без рамки, по
 		# центру и без затемнения (решение владельца, 2026-09-27).
+		_add_asker(pd, decider)
 		_add_note("Waiting for %s." % EventLogPanel.player_name(decider))
-		(_options_box.get_child(0) as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		(_options_box.get_child(0) as Label).horizontal_alignment = \
+			HORIZONTAL_ALIGNMENT_LEFT if _asker_slot.visible else HORIZONTAL_ALIGNMENT_CENTER
 	elif options.is_empty():
 		_add_note("No options.")
 	elif on_board:
@@ -199,6 +201,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# только для "отказаться", если решение необязательное.
 		# Вопрос — крупный текст без рамки над доской (решение владельца,
 		# 2026-09-26), подсказка про подсветку — в мелкой строке над ним.
+		# Слева — карта, которая спрашивает (promote, deploy...; владелец, 2026-10-11).
+		_add_asker(pd, decider)
 		if in_hand:
 			_who.text += " — click a gold card in your hand"
 		elif hand_or_discard:
@@ -219,8 +223,11 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		# не has(): список карт руки типизирован строками, has(-1) там — ошибка.
 		for o in options:
 			if (typeof(o) == TYPE_STRING and o == "") or (typeof(o) == TYPE_INT and o == -1):
-				_add_button("Skip", o)
-				make_plain(_options_box.get_child(0) as Button)
+				if _asker_slot.visible:
+					_add_strip_buttons([["Skip", o]])
+				else:
+					_add_button("Skip", o)
+					make_plain(_options_box.get_child(0) as Button)
 				break
 	elif choice_type == "confirm":
 		# "You may..." — слева карта, которая спрашивает (щелчок по ней —

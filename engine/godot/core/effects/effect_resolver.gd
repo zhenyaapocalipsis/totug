@@ -21,6 +21,11 @@ var pending: PendingDecision = null
 var events: Array[Dictionary] = []
 
 
+## Карта, чей эффект сейчас применяется ("" — ничья: старт партии и т.п.).
+func current_card() -> String:
+	return _card
+
+
 func push(effect: CardEffect, player_id: String, card: String = "") -> void:
 	_stack.append({"effect": effect, "player_id": player_id, "card": card if card != "" else _card})
 
