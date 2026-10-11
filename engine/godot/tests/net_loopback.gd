@@ -241,6 +241,11 @@ func _process(delta: float) -> bool:
 				var file := String(PlayerProfile.history()[0].get("replay", ""))
 				var replay := ReplayBook.load_replay(file, REPLAYS_DIR)
 				check(file != "" and not replay.is_empty(), "[replay] строка истории знает свой реплей")
+				# Рекорды считаются по такому же реплею (NetSession._check_records).
+				var scores := {players[0].seat: int(mine["vp"]), players[1].seat: int(r[players[1].seat]["vp"])}
+				var m := RecordBook.measure(ReplayStats.collect(replay), players[0].seat, scores)
+				check(int(m["vp"]) == int(mine["vp"]) and int(m["rounds"]) >= 1 and m.size() == RecordBook.KINDS.size(),
+					"[records] показатели рекордов по реплею партии: %s" % m)
 				var records := ReplayBook.list(RECORDS_DIR)
 				check(not records.is_empty(), "[server] сервер сохранил запись законченной партии")
 				if not records.is_empty():

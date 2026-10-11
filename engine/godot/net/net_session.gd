@@ -1083,9 +1083,26 @@ func _rate_room(room: GameRoom) -> void:
 	if room.matched:
 		for pid: String in result:
 			result[pid]["reward"] = SkinCollection.reward_for_place(PlayerProfile.place_of(pid, result))
+		_check_records(room, players, scores, winners, result)
 	_log("room %s: rated %s" % [room.code, JSON.stringify(result)])
 	for peer: int in room.seats:
 		_send(peer, "_rating", [result])
+
+
+## Мировые рекорды (RecordBook): победитель рейтинговой партии сверяется с
+## таблицей своего размера стола; побитые попадают в итог — result[seat]["records"].
+func _check_records(room: GameRoom, players: Dictionary, scores: Dictionary, winners: Array,
+		result: Dictionary) -> void:
+	var header := ReplayBook.header_for(room.server.state, room.ids, room.game_seed, room.mode,
+		room.server.with_mulligan, room.profiles, "", room.code, room.log)
+	var stats := ReplayStats.collect({"header": header, "intents": room.log})
+	for pid: String in winners:
+		var values := RecordBook.measure(stats, pid, scores)
+		var broken := ratings.records.submit(players.size(), String(players[pid]["account"]),
+			String(players[pid]["name"]), values)
+		if not broken.is_empty():
+			result[pid]["records"] = broken
+			_log("room %s: world records %s by %s" % [room.code, broken, players[pid]["name"]])
 
 
 @rpc("authority", "call_remote", "reliable")

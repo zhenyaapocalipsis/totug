@@ -1081,6 +1081,25 @@ func test_rating() -> void:
 		"таблица лидеров: первым — больший рейтинг, тиранов двое")
 	check_eq(int(board["mine"]["rank"]), 2, "таблица лидеров: своё место за пределами показанных")
 
+	# Мировые рекорды: первый держит, повтор не отбирает, бьёт только лучшее.
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://ratings_test_records.json"))
+	var rec := RecordBook.new("user://ratings_test_records.json")
+	check_eq(rec.submit(2, a, "Ann", {"vp": 40, "kills": 0, "rounds": 9}), ["vp", "rounds"] as Array[String],
+		"первые значения — рекорды, ноль — нет")
+	check_eq(rec.submit(2, b, "Bob", {"vp": 40, "rounds": 10}), [] as Array[String], "повтор и худшее не отбирают")
+	check_eq(rec.submit(2, b, "Bob", {"vp": 41, "rounds": 8}), ["vp", "rounds"] as Array[String],
+		"строго лучше бьёт (раунды — меньше)")
+	check_eq(rec.submit(3, a, "Ann", {"vp": 20}), ["vp"] as Array[String], "у стола на 3 своя таблица")
+	var pub := RecordBook.new("user://ratings_test_records.json").public_table()
+	check(pub["2"]["vp"]["name"] == "Bob" and int(pub["2"]["vp"]["value"]) == 41
+		and not (pub["2"]["vp"] as Dictionary).has("account"), "рекорды в файле, клиенту — без учётных записей")
+	var stats := {"counts": {"red": {"kills": 5, "spies": 2}, "blue": {}}, "supplants": {"red": 2},
+		"turns": [{"player": "", "round": 0, "vp": {"red": 0}}, {"player": "red", "round": 1, "vp": {"red": 7}},
+			{"player": "blue", "round": 1, "vp": {"red": 7}}, {"player": "red", "round": 2, "vp": {"red": 9}}]}
+	var m := RecordBook.measure(stats, "red", {"red": 30, "blue": 22})
+	check(m["kills"] == 3 and m["supplants"] == 2 and m["best_turn"] == 7 and m["rounds"] == 2 and m["margin"] == 8,
+		"показатели: убийства без вытеснений, лучший ход, раунды, отрыв")
+
 	# Звания и история партий в профиле.
 	check_eq(PlayerProfile.rank_title(-1), "UNRANKED", "без рейтинга — без звания")
 	check_eq(PlayerProfile.rank_title(1000), "WARRIOR", "новичок — WARRIOR")

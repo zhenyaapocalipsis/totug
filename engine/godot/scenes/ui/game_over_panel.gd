@@ -290,6 +290,10 @@ func _rating_cell(pid: String) -> Control:
 		col.add_child(_cell("+%d BOX" % int(reward["boxes"]), PixelTheme.GOLD, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	if int(reward.get("dust", 0)) > 0:
 		col.add_child(_cell("+%d DUST" % int(reward["dust"]), PixelTheme.TEXT_DIM, 0, HORIZONTAL_ALIGNMENT_LEFT))
+	# Побитые мировые рекорды (RecordBook) — по строке на каждый.
+	for id in r.get("records", []):
+		col.add_child(_cell("RECORD: " + RecordBook.label_of(String(id)), PixelTheme.GOLD, 0,
+			HORIZONTAL_ALIGNMENT_LEFT))
 	return col
 
 

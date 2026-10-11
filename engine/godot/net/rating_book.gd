@@ -22,6 +22,8 @@ var accounts: Dictionary = {}
 var names: Dictionary = {}
 var _path := PATH
 var _names_path := ""
+## Мировые рекорды (RecordBook) — свой файл рядом (ratings_records.json).
+var records: RecordBook
 
 
 func _init(path: String = PATH) -> void:
@@ -29,6 +31,7 @@ func _init(path: String = PATH) -> void:
 	_names_path = path.get_basename() + "_names.json"
 	accounts = _read(_path)
 	names = _read(_names_path)
+	records = RecordBook.new(path.get_basename() + "_records.json")
 
 
 static func _read(file_path: String) -> Dictionary:
@@ -119,7 +122,7 @@ func leaderboard(n: int, account: String = "") -> Dictionary:
 		row["name"] = String((accounts[order[i]] as Dictionary).get("name", ""))
 		row["me"] = order[i] == account
 		top.append(row)
-	var out := {"top": top, "registered": order.size()}
+	var out := {"top": top, "registered": order.size(), "records": records.public_table()}
 	var rank := order.find(account)
 	if rank >= 0:
 		out["mine"] = stats_of(account)

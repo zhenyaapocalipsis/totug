@@ -51,7 +51,10 @@ static func collect(replay: Dictionary) -> Dictionary:
 			event_action[type] = action
 	var buys := {}
 	var counts := {}
+	# Вытеснения отдельно (в counts они вместе с убийствами — kills).
+	var supplants := {}
 	for pid in ids:
+		supplants[pid] = 0
 		buys[pid] = []
 		counts[pid] = {}
 		for action in ACTION_ORDER:
@@ -100,6 +103,8 @@ static func collect(replay: Dictionary) -> Dictionary:
 				var evt: Dictionary = e
 				var type := String(evt.get("type", ""))
 				var pid := String(evt.get("player_id", ""))
+				if type == "supplant" and counts.has(pid):
+					supplants[pid] = int(supplants[pid]) + 1
 				if not counts.has(pid) or not event_action.has(type):
 					continue
 				var action: String = event_action[type]
@@ -136,7 +141,7 @@ static func collect(replay: Dictionary) -> Dictionary:
 
 	return {"ids": ids, "turns": turns, "parts": parts, "buys": buys, "counts": counts, "sites": sites,
 		"best": best_turn(turns), "leads": lead_changes(turns, ids), "leaders": leaders(turns, ids),
-		"versus": versus}
+		"versus": versus, "supplants": supplants}
 
 
 # --- кто против кого (VERSUS, владелец 2026-10-11) -----------------------------

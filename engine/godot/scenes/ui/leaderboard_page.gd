@@ -12,7 +12,16 @@ const LIST_HEIGHT := 250.0
 ## Заголовки столбцов и их ширина.
 const COLUMNS := [["#", 26], ["NAME", 150], ["RANK", 80], ["RATING", 48], ["GAMES", 44], ["WINS", 40]]
 
+## Мировые рекорды (RecordBook, владелец 2026-10-11): кто первым поставил.
+const RECORD_COLUMNS := [["RECORD", 140], ["BEST", 40], ["HOLDER", 130], ["DATE", 70]]
+const MODES := {"players": "PLAYERS", "2": "RECORDS 2P", "3": "RECORDS 3P", "4": "RECORDS 4P"}
+
 var net: NetSession
+var _mode := "players"
+var _data := {}
+var _head: GridContainer
+var _rec_head: GridContainer
+var _rec_grid: GridContainer
 var _counts: Label
 var _status: Label
 var _grid: GridContainer
@@ -26,15 +35,28 @@ func _init(session: NetSession = null) -> void:
 	_counts = _label("", PixelTheme.GOLD)
 	_counts.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_counts)
+	# Что показать: игроков по рейтингу или мировые рекорды стола на 2/3/4.
+	var modes := HBoxContainer.new()
+	modes.add_theme_constant_override("separation", 2)
+	modes.alignment = BoxContainer.ALIGNMENT_CENTER
+	var group := ButtonGroup.new()
+	for mode: String in MODES:
+		var b := Button.new()
+		b.text = MODES[mode]
+		b.toggle_mode = true
+		b.button_group = group
+		b.button_pressed = mode == _mode
+		b.custom_minimum_size = Vector2(76, 16)
+		SetupScreen._style_button(b)
+		b.pressed.connect(_set_mode.bind(mode))
+		modes.add_child(b)
+	add_child(modes)
 	add_child(HSeparator.new())
-	var head := GridContainer.new()
-	head.columns = COLUMNS.size()
-	head.add_theme_constant_override("h_separation", 6)
-	head.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	head.custom_minimum_size.x = table_width() + 8   # как у списка ниже (полоса прокрутки)
-	for column: Array in COLUMNS:
-		head.add_child(_cell(String(column[0]), PixelTheme.TEXT_DIM, int(column[1])))
-	add_child(head)
+	_head = _header(COLUMNS)
+	add_child(_head)
+	_rec_head = _header(RECORD_COLUMNS)
+	_rec_head.visible = false
+	add_child(_rec_head)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(table_width() + 8, LIST_HEIGHT)
 	# Таблица по центру окна, список — на всю его высоту.
@@ -51,6 +73,12 @@ func _init(session: NetSession = null) -> void:
 	_grid.add_theme_constant_override("h_separation", 6)
 	_grid.add_theme_constant_override("v_separation", 1)
 	list.add_child(_grid)
+	_rec_grid = GridContainer.new()
+	_rec_grid.columns = RECORD_COLUMNS.size()
+	_rec_grid.add_theme_constant_override("h_separation", 6)
+	_rec_grid.add_theme_constant_override("v_separation", 1)
+	_rec_grid.visible = false
+	list.add_child(_rec_grid)
 	add_child(HSeparator.new())
 	# Своё место, если оно ниже первой сотни (или ещё нет рейтинговых партий).
 	_mine = _label("", PixelTheme.TEXT_DIM)
@@ -85,8 +113,19 @@ static func server_address() -> String:
 
 ## Ответ сервера (NetSession.leaderboard): {top, registered, online, in_game, mine?}.
 func show_data(data: Dictionary) -> void:
+	_data = data
 	_counts.text = "TYRANTS %d   ONLINE %d   IN GAME %d" % [int(data.get("registered", 0)),
 		int(data.get("online", 0)), int(data.get("in_game", 0))]
+	var records := _mode != "players"
+	_head.visible = not records
+	_grid.visible = not records
+	_rec_head.visible = records
+	_rec_grid.visible = records
+	if records:
+		_status.visible = false
+		_mine.text = "Records count only in SEARCH games you win. First to set a value keeps it."
+		_show_records(_mode)
+		return
 	for child in _grid.get_children():
 		_grid.remove_child(child)
 		child.queue_free()
@@ -111,6 +150,40 @@ func show_data(data: Dictionary) -> void:
 		_mine.text = "YOU: #%d   %d" % [int(mine["rank"]), int(mine["rating"])]
 	else:
 		_mine.text = "YOU: #%d" % int(mine["rank"])
+
+
+func _set_mode(mode: String) -> void:
+	_mode = mode
+	if not _data.is_empty():
+		show_data(_data)
+
+
+## Рекорды стола на n игроков: все виды по порядку, ещё не поставленные — прочерк.
+func _show_records(n: String) -> void:
+	for child in _rec_grid.get_children():
+		_rec_grid.remove_child(child)
+		child.queue_free()
+	var row: Dictionary = (_data.get("records", {}) as Dictionary).get(n, {})
+	var my_name := String(PlayerProfile.load_local().get("name", ""))
+	for kind: Array in RecordBook.KINDS:
+		var r: Dictionary = row.get(kind[0], {})
+		var holder := String(r.get("name", ""))
+		var colour := PixelTheme.GOLD if holder != "" and holder == my_name else PixelTheme.TEXT
+		_rec_grid.add_child(_cell(String(kind[1]), PixelTheme.TEXT_DIM, int(RECORD_COLUMNS[0][1])))
+		_rec_grid.add_child(_cell(str(int(r["value"])) if not r.is_empty() else "-", colour, int(RECORD_COLUMNS[1][1])))
+		_rec_grid.add_child(_cell(holder if holder != "" else "-", colour, int(RECORD_COLUMNS[2][1])))
+		_rec_grid.add_child(_cell(String(r.get("date", "")), PixelTheme.TEXT_DIM, int(RECORD_COLUMNS[3][1])))
+
+
+func _header(columns: Array) -> GridContainer:
+	var head := GridContainer.new()
+	head.columns = columns.size()
+	head.add_theme_constant_override("h_separation", 6)
+	head.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	head.custom_minimum_size.x = table_width() + 8   # как у списка ниже (полоса прокрутки)
+	for column: Array in columns:
+		head.add_child(_cell(String(column[0]), PixelTheme.TEXT_DIM, int(column[1])))
+	return head
 
 
 func _cell(text: String, colour: Color, width: int) -> Label:
