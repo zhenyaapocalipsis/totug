@@ -97,7 +97,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		var final_sites_vp: int = state.control.map_score(viewer_id, state.troops, state.spies)
 		var names: Array[String] = []
 		for site_id: String in state.graph.sites.keys():
-			if state.control.controller_of(site_id, state.troops) == viewer_id:
+			if state.control.controls(viewer_id, site_id, state.troops):
 				names.append(String(state.graph.sites[site_id]["name"]))
 		names.sort()
 		var marker_sites: Array[String] = marker_reward.sites.duplicate()

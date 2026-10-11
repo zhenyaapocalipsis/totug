@@ -75,7 +75,7 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 		var marker := marker_for(state, site_id)
 		if marker.is_empty():
 			continue
-		if state.control.controller_of(site_id, state.troops) != player_id:
+		if not state.control.controls(player_id, site_id, state.troops):
 			continue
 		var site_name := String(state.graph.sites[site_id]["name"])
 		reward.influence += int(marker.get("control_influence", 0))

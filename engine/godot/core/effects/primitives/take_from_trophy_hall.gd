@@ -37,7 +37,7 @@ func _collect(state: GameState, player_id: String) -> Array[String]:
 	# "any trophy hall" — только залы соперников, свой не в счёт (решение
 	# владельца, 2026-09-26).
 	var halls: Array = [specific_player_id] if specific_player_id != "" \
-		else state.turn_order.filter(func(pid): return pid != player_id)
+		else state.turn_order.filter(func(pid): return state.is_opponent(player_id, pid))
 	for hall: String in halls:
 		var p: PlayerState = state.players[hall]
 		var colors: Array = p.trophies.keys()

@@ -15,20 +15,35 @@ extends RefCounted
 const WHITE := "white"
 
 var _graph: MapGraph
+## Командная игра (этап Team-1): player_id -> команда (GameState.set_teams).
+## Войска союзников считаются вместе, контролирует команда.
+var sides: Dictionary = {}
 
 
 func _init(graph: MapGraph) -> void:
 	_graph = graph
 
 
-## Кто контролирует сайт: id игрока, либо "" если никто (пусто или ничья).
+func _side(owner: String) -> String:
+	return String(sides.get(owner, owner))
+
+
+## Контролирует ли игрок сайт (в командной игре — его команда).
+func controls(player: String, site_id: String, troops: Dictionary) -> bool:
+	var c := controller_of(site_id, troops)
+	return c != "" and c == _side(player)
+
+
+## Кто контролирует сайт: id игрока (в командной игре — id команды), либо ""
+## если никто (пусто или ничья).
 func controller_of(site_id: String, troops: Dictionary) -> String:
 	var counts: Dictionary = {}
 	for slot_id in _graph.slots_of_site(site_id):
 		var owner: String = troops.get(slot_id, "")
 		if owner == "":
 			continue
-		counts[owner] = int(counts.get(owner, 0)) + 1
+		var side: String = _side(owner)
+		counts[side] = int(counts.get(side, 0)) + 1
 
 	if counts.is_empty():
 		return ""
@@ -58,10 +73,10 @@ func has_total_control(player: String, site_id: String, troops: Dictionary, spie
 	if site_slots.is_empty():
 		return false
 	for slot_id in site_slots:
-		if troops.get(slot_id, "") != player:
+		if troops.get(slot_id, "") == "" or _side(troops.get(slot_id, "")) != _side(player):
 			return false
 	for spy_owner: String in spies.get(site_id, []):
-		if spy_owner != player:
+		if _side(spy_owner) != _side(player):
 			return false
 	return true
 
@@ -72,7 +87,7 @@ func has_total_control(player: String, site_id: String, troops: Dictionary, spie
 func map_score(player: String, troops: Dictionary, spies: Dictionary) -> int:
 	var total := 0
 	for site_id: String in _graph.sites.keys():
-		if controller_of(site_id, troops) != player:
+		if not controls(player, site_id, troops):
 			continue
 		total += int(_graph.sites[site_id]["vp"])
 		if has_total_control(player, site_id, troops, spies):

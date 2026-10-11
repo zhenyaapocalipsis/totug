@@ -33,6 +33,7 @@ func _initialize() -> void:
 	test_direct_site_links()
 	test_dead_ends_pruned()
 	test_control_rules()
+	test_team_mode()
 
 	# этап 2: базовый цикл хода
 	test_vp_bank()
@@ -500,6 +501,79 @@ func test_control_rules() -> void:
 	check_eq(control.map_score("red", {"s1": "red"}, {}), 5, "контроль = VP сайта")
 	check_eq(control.map_score("red", {"s1": "red", "s2": "red", "s3": "red"}, {}), 7,
 		"тотальный контроль = VP сайта + 2")
+
+	# этап Team-1: в командной игре войска союзников считаются вместе
+	control.sides = {"red": "red", "green": "red", "blue": "blue", "purple": "blue"}
+	check_eq(control.controller_of("site", {"s1": "red", "s2": "green", "s3": "blue"}), "red",
+		"2 на 2: красный + зелёный перевешивают синего")
+	check(control.controls("green", "site", {"s1": "red", "s2": "green", "s3": "blue"}),
+		"2 на 2: союзник тоже контролирует локацию команды")
+	check_eq(control.controller_of("site", {"s1": "red", "s2": "blue", "s3": "purple"}), "blue",
+		"2 на 2: синий + фиолетовый перевешивают красного")
+	check(control.has_total_control("red", "site", {"s1": "red", "s2": "green", "s3": "red"}, {"site": ["green"]}),
+		"2 на 2: тотальный контроль войсками и шпионом союзника")
+	check(not control.has_total_control("red", "site", {"s1": "red", "s2": "green", "s3": "red"}, {"site": ["purple"]}),
+		"2 на 2: шпион соперника снимает тотальный контроль")
+	check_eq(control.map_score("green", {"s1": "red", "s2": "green", "s3": "red"}, {}), 7,
+		"2 на 2: VP локации у обоих союзников")
+
+
+## Этап Team-1: режим 2 на 2 — очередь A1 → B1 → A2 → B2, общее Присутствие,
+## союзника нельзя атаковать, счёт команды общий.
+func test_team_mode() -> void:
+	section("режим 2 на 2")
+	var ids: Array[String] = ["red", "blue", "green", "purple"]
+	var state := GameSetup.new_game(ids, 5, [], false, false, false, GameSetup.MODE_STANDARD, true)
+	check(state.is_team_game(), "команды заданы")
+	check_eq(state.turn_order, ids, "без случайности очередь red, blue, green, purple")
+	check(state.is_ally("red", "green") and state.is_ally("blue", "purple"), "союзники: red+green, blue+purple")
+	check(state.is_opponent("red", "blue") and not state.is_opponent("red", "green"), "соперник — другая команда")
+	check(state.is_enemy("red", "white"), "белые войска вражеские")
+	for seed_value in [1, 2, 3, 4, 5, 6]:
+		var s := GameSetup.new_game(ids, seed_value, [], false, false, true, GameSetup.MODE_STANDARD, true)
+		var o := s.turn_order
+		check(not s.is_ally(o[0], o[1]) and s.is_ally(o[0], o[2]) and s.is_ally(o[1], o[3]),
+			"случайная очередь чередует команды (сид %d)" % seed_value)
+
+	# локация с 3+ слотами, очищенная от белых войск
+	var site := ""
+	for site_id: String in state.graph.sites.keys():
+		if state.graph.slots_of_site(site_id).size() >= 3:
+			site = site_id
+			break
+	var slots := state.graph.slots_of_site(site)
+	for slot_id: String in state.troops.keys():
+		state.troops[slot_id] = ""
+	state.spies.clear()
+	state.troops[slots[0]] = "green"
+	state.troops[slots[1]] = "blue"
+	check(state.presence.has_presence_at_site("red", site, state.troops, state.spies),
+		"войско союзника даёт Присутствие")
+	var targets := state.presence.assassinatable_slots("red", state.troops, state.spies)
+	check(targets.has(slots[1]) and not targets.has(slots[0]), "убить можно соперника, не союзника")
+	var strike := AssassinateTroop.new(1)
+	var legal: Array = strike._legal_targets(state, "red")
+	check(legal.has(slots[1]) and not legal.has(slots[0]), "эффект Assassinate не бьёт союзника")
+	check(not SupplantTroop.new(1)._legal_targets(state, "red").has(slots[0]), "Supplant не трогает союзника")
+	state.spies[site] = ["purple"]
+	state.players["red"].power = 10
+	check(Actions.can_return_enemy_spy(state, "red", site, "purple"), "шпиона соперника вернуть можно")
+	state.spies[site] = ["green"]
+	check(not Actions.can_return_enemy_spy(state, "red", site, "green"), "шпиона союзника вернуть нельзя")
+	check(state.presence.has_presence_at_site("red", site, {}, state.spies), "шпион союзника даёт Присутствие")
+
+	state.troops[slots[2]] = "red"
+	check(state.control.controls("red", site, state.troops) and state.control.controls("green", site, state.troops),
+		"локация команды контролируется обоими союзниками")
+	var vp := Scoring.library_card_vp(state)
+	check_eq(Scoring.final_score(state, "red", vp[0], vp[1]), Scoring.final_score(state, "green", vp[0], vp[1]),
+		"у союзников общий счёт")
+	check_eq(int(Scoring.breakdown(state, "green")["total"]), Scoring.final_score(state, "green", vp[0], vp[1]),
+		"разбивка команды = её счёт")
+	var winners := Scoring.winners(state, vp[0], vp[1])
+	check(winners.has("red") and winners.has("green") and not winners.has("blue"), "побеждает вся команда")
+	check(not ForceDiscard.new("each_opponent", 0)._eligible_opponents(state, "red").has("green"),
+		"сброс «у соперников» не задевает союзника")
 
 
 ## Прямая связь локаций проверяется на ОТДЕЛЬНОМ графе: подмешивать её в общий

@@ -39,14 +39,14 @@ static func hand_size(state: GameState, pid: String) -> int:
 func _eligible_opponents(state: GameState, player_id: String) -> Array:
 	var result: Array = []
 	for pid: String in state.turn_order:
-		if pid != player_id and hand_size(state, pid) > min_cards:
+		if state.is_opponent(player_id, pid) and hand_size(state, pid) > min_cards:
 			result.append(pid)
 	return result
 
 
 func is_available(state: GameState, player_id: String) -> bool:
 	if mode == "victim":
-		return victim_id != player_id and hand_size(state, victim_id) > min_cards
+		return state.is_opponent(player_id, victim_id) and hand_size(state, victim_id) > min_cards
 	return not _eligible_opponents(state, player_id).is_empty()
 
 

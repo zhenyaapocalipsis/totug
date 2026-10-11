@@ -98,7 +98,7 @@ static func _pay_marker_influence(state: GameState, player_id: String, paid_site
 	for site_id: String in ControlMarkers.marked_sites(state):
 		if state.marker_influence_paid.has(site_id):
 			continue
-		if state.control.controller_of(site_id, state.troops) != player_id:
+		if not state.control.controls(player_id, site_id, state.troops):
 			continue
 		state.marker_influence_paid.append(site_id)
 		paid_sites.append(site_id)

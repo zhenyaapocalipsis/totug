@@ -50,7 +50,7 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 	if not spy_only:
 		for slot_id: String in state.graph.slots.keys():
 			var owner: String = state.troops.get(slot_id, "")
-			if owner != "" and owner != player_id and owner != "white":
+			if owner != "white" and state.is_enemy(player_id, owner):
 				if site != "":
 					if state.graph.site_of_slot(slot_id) == site:
 						result.append("troop%s%s" % [SEP, slot_id])
@@ -63,7 +63,7 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 			if site == "" and not state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies):
 				continue
 			for owner: String in state.spies[site_id]:
-				if owner != player_id:
+				if state.is_enemy(player_id, owner):
 					result.append("spy%s%s%s%s" % [SEP, site_id, SEP, owner])
 	return result
 

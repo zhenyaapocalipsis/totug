@@ -21,52 +21,65 @@ static func final_score(
 	card_deck_vp: Dictionary = {},
 	card_inner_circle_vp: Dictionary = {}
 ) -> int:
-	var p: PlayerState = state.players[player_id]
+	# Командная игра (этап Team-1): счёт игрока = счёт его команды — локации
+	# команды один раз плюс трофеи, карты и токены каждого её игрока.
 	var total: int = state.control.map_score(player_id, state.troops, state.spies)
-	total += p.trophy_hall_count
-
-	for card_id: String in p.deck.cards_outside_inner_circle():
-		total += int(card_deck_vp.get(card_id, 0))
-	for card_id: String in p.deck.inner_circle:
-		total += int(card_inner_circle_vp.get(card_id, 0))
-
-	total += p.vp_tokens
-	var extra := card_bonus_vp(state, player_id)
-	total += int(extra["deck"]) + int(extra["inner"])
+	for member: String in _team(state, player_id):
+		var p: PlayerState = state.players[member]
+		total += p.trophy_hall_count
+		for card_id: String in p.deck.cards_outside_inner_circle():
+			total += int(card_deck_vp.get(card_id, 0))
+		for card_id: String in p.deck.inner_circle:
+			total += int(card_inner_circle_vp.get(card_id, 0))
+		total += p.vp_tokens
+		var extra := card_bonus_vp(state, member)
+		total += int(extra["deck"]) + int(extra["inner"])
 	return total
+
+
+## Игрок и его союзники (в обычной игре — только он сам).
+static func _team(state: GameState, player_id: String) -> Array[String]:
+	if not state.is_team_game():
+		return [player_id]
+	return state.members_of(state.side_of(player_id))
 
 
 ## Итоговый счёт по статьям — для экрана конца партии. VP карт берутся из
 ## CardLibrary (у карт без VP там null → 0). Сумма статей = final_score с теми
-## же VP карт (проверяет тест).
+## же VP карт (проверяет тест). В командной игре — статьи всей команды.
 static func breakdown(state: GameState, player_id: String) -> Dictionary:
-	var p: PlayerState = state.players[player_id]
 	var sites := 0
 	var total_control := 0
 	for site_id: String in state.graph.sites.keys():
-		if state.control.controller_of(site_id, state.troops) != player_id:
+		if not state.control.controls(player_id, site_id, state.troops):
 			continue
 		sites += int(state.graph.sites[site_id]["vp"])
 		if state.control.has_total_control(player_id, site_id, state.troops, state.spies):
 			total_control += 2
+	var trophies := 0
 	var deck := 0
-	for card_id: String in p.deck.cards_outside_inner_circle():
-		deck += _card_vp(card_id, "deck_vp")
 	var inner := 0
-	for card_id: String in p.deck.inner_circle:
-		inner += _card_vp(card_id, "inner_circle_vp")
-	var extra := card_bonus_vp(state, player_id)
-	deck += int(extra["deck"])
-	inner += int(extra["inner"])
+	var tokens := 0
+	for member: String in _team(state, player_id):
+		var p: PlayerState = state.players[member]
+		trophies += p.trophy_hall_count
+		tokens += p.vp_tokens
+		for card_id: String in p.deck.cards_outside_inner_circle():
+			deck += _card_vp(card_id, "deck_vp")
+		for card_id: String in p.deck.inner_circle:
+			inner += _card_vp(card_id, "inner_circle_vp")
+		var extra := card_bonus_vp(state, member)
+		deck += int(extra["deck"])
+		inner += int(extra["inner"])
 	var result := {
 		"sites": sites,
 		"total_control": total_control,
-		"trophies": p.trophy_hall_count,
+		"trophies": trophies,
 		"deck": deck,
 		"inner_circle": inner,
-		"tokens": p.vp_tokens,
+		"tokens": tokens,
 	}
-	result["total"] = sites + total_control + p.trophy_hall_count + deck + inner + p.vp_tokens
+	result["total"] = sites + total_control + trophies + deck + inner + tokens
 	return result
 
 

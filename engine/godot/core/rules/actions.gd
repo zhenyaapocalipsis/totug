@@ -154,7 +154,7 @@ static func can_return_enemy_spy(state: GameState, player_id: String, site_id: S
 	var p: PlayerState = state.players[player_id]
 	if p.power < return_spy_cost(state):
 		return false
-	if spy_owner == player_id or spy_owner == WHITE:
+	if not state.is_opponent(player_id, spy_owner):
 		return false
 	if not state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies):
 		return false

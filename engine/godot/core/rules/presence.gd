@@ -19,10 +19,20 @@ extends RefCounted
 const WHITE := "white"
 
 var _graph: MapGraph
+## Командная игра: player_id -> команда (GameState.set_teams). Войска и шпионы
+## союзника дают Присутствие так же, как свои.
+var sides: Dictionary = {}
 
 
 func _init(graph: MapGraph) -> void:
 	_graph = graph
+
+
+## Войско/шпион owner — своё или союзное для player.
+func _own(owner: String, player: String) -> bool:
+	if owner == "" or owner == WHITE:
+		return false
+	return owner == player or String(sides.get(owner, owner)) == String(sides.get(player, player))
 
 
 func has_presence_at_site(player: String, site_id: String, troops: Dictionary, spies: Dictionary) -> bool:
@@ -30,18 +40,18 @@ func has_presence_at_site(player: String, site_id: String, troops: Dictionary, s
 		return false
 
 	# шпион на сайте
-	var site_spies: Array = spies.get(site_id, [])
-	if site_spies.has(player):
-		return true
+	for spy_owner: String in spies.get(site_id, []):
+		if _own(spy_owner, player):
+			return true
 
 	# собственное войско в одном из слотов сайта
 	for slot_id in _graph.slots_of_site(site_id):
-		if troops.get(slot_id, "") == player:
+		if _own(troops.get(slot_id, ""), player):
 			return true
 
 	# войско в слоте, смежном с сайтом
 	for slot_id in _graph.slots_adjacent_to_site(site_id):
-		if troops.get(slot_id, "") == player:
+		if _own(troops.get(slot_id, ""), player):
 			return true
 
 	# войско в локации, соединённой с этой НАПРЯМУЮ (туннель без троп-слотов).
@@ -49,7 +59,7 @@ func has_presence_at_site(player: String, site_id: String, troops: Dictionary, s
 	# в соседней локации стоит «в слоте, смежном с этим сайтом».
 	for neighbour_site in _graph.adjacent_sites(site_id):
 		for slot_id in _graph.slots_of_site(neighbour_site):
-			if troops.get(slot_id, "") == player:
+			if _own(troops.get(slot_id, ""), player):
 				return true
 
 	return false
@@ -67,12 +77,12 @@ func has_presence_at_slot(player: String, slot_id: String, troops: Dictionary, s
 	# маршрутный слот: смежен с сайтом, где есть своё войско...
 	for adjacent_site in _graph.sites_adjacent_to_slot(slot_id):
 		for site_slot in _graph.slots_of_site(adjacent_site):
-			if troops.get(site_slot, "") == player:
+			if _own(troops.get(site_slot, ""), player):
 				return true
 
 	# ...или со слотом, где есть своё войско
 	for neighbour in _graph.adjacent_slots(slot_id):
-		if troops.get(neighbour, "") == player:
+		if _own(troops.get(neighbour, ""), player):
 			return true
 
 	return false
@@ -103,7 +113,7 @@ func assassinatable_slots(player: String, troops: Dictionary, spies: Dictionary)
 	var result := PackedStringArray()
 	for slot_id: String in _graph.slots.keys():
 		var owner: String = troops.get(slot_id, "")
-		if owner == "" or owner == player:
+		if owner == "" or _own(owner, player):
 			continue
 		if has_presence_at_slot(player, slot_id, troops, spies):
 			result.append(slot_id)

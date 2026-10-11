@@ -90,6 +90,11 @@ var starting_site_candidates: Array[String] = []
 var half_decks: Array[String] = []
 ## Режим сборки маркета (GameSetup.MODE_*), чтобы интерфейс мог его показать.
 var game_mode: String = "standard"
+## Командная игра 2 на 2 (этап Team-1): player_id -> id команды ("red" /
+## "blue"). Пусто — каждый сам за себя. Союзники вместе контролируют локации,
+## дают друг другу Присутствие и не могут атаковать друг друга. Ставить через
+## set_teams: Presence и SiteControl держат ссылку на тот же словарь.
+var teams: Dictionary = {}
 
 
 func _init(map_graph: MapGraph, seed_value: int = 0) -> void:
@@ -109,6 +114,47 @@ func add_player(player_id: String, starting_deck_cards: Array[String]) -> void:
 
 func current_player() -> String:
 	return turn_order[current_player_index]
+
+
+func set_teams(team_of: Dictionary) -> void:
+	teams = team_of
+	presence.sides = team_of
+	control.sides = team_of
+
+
+func is_team_game() -> bool:
+	return not teams.is_empty()
+
+
+## Сторона владельца: команда в командной игре, иначе сам владелец
+## ("white" и "" остаются как есть).
+func side_of(owner: String) -> String:
+	return String(teams.get(owner, owner))
+
+
+## Союзник (или сам игрок): его войска и шпионы — не вражеские.
+func is_ally(player_id: String, other: String) -> bool:
+	return other != "" and other != WHITE and side_of(other) == side_of(player_id)
+
+
+## Вражеский владелец войска или шпиона: не пусто, не свой и не союзный
+## (белые войска — вражеские).
+func is_enemy(player_id: String, owner: String) -> bool:
+	return owner != "" and not is_ally(player_id, owner)
+
+
+## Соперник-игрок (не союзник и не сам игрок).
+func is_opponent(player_id: String, other: String) -> bool:
+	return other != WHITE and other != "" and not is_ally(player_id, other)
+
+
+## Игроки команды team в порядке хода (в обычной игре — сам игрок).
+func members_of(side: String) -> Array[String]:
+	var out: Array[String] = []
+	for pid: String in turn_order:
+		if side_of(pid) == side:
+			out.append(pid)
+	return out
 
 
 ## Расставляет нейтральные белые войска по данным сайтов (рулбук стр. 4, шаг

@@ -67,7 +67,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			return
 		"each_opponent":
 			for pid: String in _clockwise_from_current(state):
-				if pid != player_id:
+				if state.is_opponent(player_id, pid):
 					_give(state, pid, resolver)
 			return
 
@@ -79,7 +79,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		return
 	var options: Array = []
 	for pid: String in state.turn_order:
-		if pid != player_id:
+		if state.is_opponent(player_id, pid):
 			options.append(pid)
 	if options.is_empty():
 		return

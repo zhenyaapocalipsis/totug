@@ -41,7 +41,7 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 	var result: Array = []
 	for slot_id: String in state.graph.slots.keys():
 		var owner: String = state.troops.get(slot_id, "")
-		if owner == "" or owner == player_id:
+		if not state.is_enemy(player_id, owner):
 			continue
 		if white_only and owner != "white":
 			continue

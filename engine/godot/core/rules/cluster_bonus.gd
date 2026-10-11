@@ -67,7 +67,7 @@ static func find_site_ids(graph: MapGraph) -> PackedStringArray:
 
 static func _player_has_troop_at(state: GameState, player_id: String, site_id: String) -> bool:
 	for slot_id in state.graph.slots_of_site(site_id):
-		if state.troops.get(slot_id, "") == player_id:
+		if state.is_ally(player_id, state.troops.get(slot_id, "")):
 			return true
 	return false
 
@@ -90,7 +90,7 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 	var controls_all := true
 	var totally_controls_all := true
 	for site_id: String in site_ids:
-		if state.control.controller_of(site_id, state.troops) != player_id:
+		if not state.control.controls(player_id, site_id, state.troops):
 			controls_all = false
 			totally_controls_all = false
 			break

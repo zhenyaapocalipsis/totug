@@ -217,7 +217,7 @@ static func _opponents_clockwise(state: GameState, player_id: String) -> Array[S
 	var n: int = state.turn_order.size()
 	for i in range(n):
 		var pid: String = state.turn_order[(state.current_player_index + i) % n]
-		if pid != player_id:
+		if state.is_opponent(player_id, pid):
 			order.append(pid)
 	return order
 
@@ -309,7 +309,7 @@ static func _next_to_enemy(state: GameState, player_id: String, slot_id: String)
 		near.append_array(state.graph.slots_of_site(site))
 	for other: String in near:
 		var owner: String = state.troops.get(other, "")
-		if owner != "" and owner != "white" and owner != player_id:
+		if owner != "white" and state.is_enemy(player_id, owner):
 			return true
 	return false
 

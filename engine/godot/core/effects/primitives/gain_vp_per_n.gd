@@ -48,7 +48,7 @@ func _count_source(state: GameState, player_id: String) -> int:
 		"sites_controlled":
 			var n := 0
 			for site_id: String in state.graph.sites.keys():
-				if state.control.controller_of(site_id, state.troops) == player_id:
+				if state.control.controls(player_id, site_id, state.troops):
 					n += 1
 			return n
 		"sites_controlled_total":
@@ -60,7 +60,7 @@ func _count_source(state: GameState, player_id: String) -> int:
 		"control_markers":
 			var n := 0
 			for site_id: String in ControlMarkers.marked_sites(state):
-				if state.control.controller_of(site_id, state.troops) == player_id:
+				if state.control.controls(player_id, site_id, state.troops):
 					n += 1
 			return n
 		"player_trophy":

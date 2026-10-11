@@ -136,7 +136,7 @@ static func starting_deck() -> Array[String]:
 static func new_game(player_ids: Array[String], seed_value: int = 0,
 		half_decks: Array[String] = [], with_x_hexes: bool = false,
 		interactive_start: bool = false, random_first_player: bool = false,
-		mode: String = MODE_STANDARD) -> GameState:
+		mode: String = MODE_STANDARD, team_game: bool = false) -> GameState:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 
@@ -178,7 +178,10 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 
 	# 7-10. колоды игроков
 	var ordered_ids: Array[String] = player_ids.duplicate()
-	if random_first_player:
+	if team_game and players == 4:
+		ordered_ids = team_order(player_ids, state.rng if random_first_player else null)
+		state.set_teams(team_map(player_ids))
+	elif random_first_player:
 		Deck.shuffle_array(ordered_ids, state.rng)
 	var base_deck := starting_deck()
 	for player_id: String in ordered_ids:
@@ -197,6 +200,32 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 				state.setup_deploy_starting_troop(player_ids[i], starting_sites[i])
 
 	return state
+
+
+## Команды 2 на 2 (этап Team-1): игроки 1 и 3 — команда первого (id
+## команды = id игрока 1, "red"), игроки 2 и 4 — команда второго ("blue").
+static func team_map(player_ids: Array[String]) -> Dictionary:
+	return {
+		player_ids[0]: player_ids[0], player_ids[2]: player_ids[0],
+		player_ids[1]: player_ids[1], player_ids[3]: player_ids[1],
+	}
+
+
+## Очередь хода 2 на 2: команды через одного (A1 → B1 → A2 → B2). С rng
+## случайно, какая команда ходит первой и в каком порядке игроки внутри команд.
+static func team_order(player_ids: Array[String], rng: RandomNumberGenerator = null) -> Array[String]:
+	var a: Array[String] = [player_ids[0], player_ids[2]]
+	var b: Array[String] = [player_ids[1], player_ids[3]]
+	if rng != null:
+		if rng.randi() % 2 == 1:
+			a.reverse()
+		if rng.randi() % 2 == 1:
+			b.reverse()
+		if rng.randi() % 2 == 1:
+			var t := a
+			a = b
+			b = t
+	return [a[0], b[0], a[1], b[1]]
 
 
 static func _pick_two_half_decks(rng: RandomNumberGenerator) -> Array[String]:

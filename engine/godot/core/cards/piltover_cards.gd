@@ -168,7 +168,7 @@ static func after_buy(state: GameState, player_id: String, bought: String, resol
 ## Stone Golem: "If it was a player troop, +3 Power. Otherwise, deploy a troop."
 static func _vi_follow(state: GameState, player_id: String, before: Dictionary) -> CardEffect:
 	for victim: String in _victims(state, before):
-		if victim != "white" and victim != player_id:
+		if victim != "white" and state.is_enemy(player_id, victim):
 			return GainPower.new(3)
 	return DeployTroop.new(1)
 
@@ -210,7 +210,7 @@ static func _moved_next_to_other(state: GameState, player_id: String, before: Di
 			if other == slot_id:
 				continue
 			var other_owner: String = state.troops.get(other, "")
-			if other_owner != "" and other_owner != "white" and other_owner != player_id:
+			if other_owner != "white" and state.is_enemy(player_id, other_owner):
 				return true
 	return false
 

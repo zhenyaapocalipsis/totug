@@ -127,7 +127,7 @@ func _legal_sources(state: GameState, player_id: String) -> Array:
 			if owner == player_id:
 				legal.append(slot_id)
 			continue
-		if owner == player_id:
+		if state.is_ally(player_id, owner):
 			continue
 		if state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
 			legal.append(slot_id)

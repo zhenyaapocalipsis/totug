@@ -85,14 +85,14 @@ static func _type_filter(type_name: String) -> Callable:
 static func _site_has_enemy_troop(state: GameState, player_id: String, site_id: String) -> bool:
 	for slot_id: String in state.graph.slots_of_site(site_id):
 		var owner: String = state.troops.get(slot_id, "")
-		if owner != "" and owner != player_id and owner != "white":
+		if owner != "white" and state.is_enemy(player_id, owner):
 			return true
 	return false
 
 
 static func _site_has_enemy_spy(state: GameState, player_id: String, site_id: String) -> bool:
 	for owner: String in state.spies.get(site_id, []):
-		if owner != player_id:
+		if state.is_enemy(player_id, owner):
 			return true
 	return false
 
@@ -104,7 +104,7 @@ static func _enemy_troop_owners_at_site(state: GameState, player_id: String, sit
 	var owners: Array[String] = []
 	for slot_id: String in state.graph.slots_of_site(site_id):
 		var owner: String = state.troops.get(slot_id, "")
-		if owner != "" and owner != player_id and owner != "white" and not owners.has(owner):
+		if owner != "white" and state.is_enemy(player_id, owner) and not owners.has(owner):
 			owners.append(owner)
 	owners.sort_custom(func(a, b): return state.turn_order.find(a) < state.turn_order.find(b))
 	return owners
@@ -141,7 +141,7 @@ class _ChuulDiscardEffect extends CardEffect:
 		var victims: Array[String] = []
 		for slot_id: String in state.graph.slots_of_site(site_id):
 			var owner: String = state.troops.get(slot_id, "")
-			if owner != "" and owner != player_id and owner != "white":
+			if owner != "white" and state.is_enemy(player_id, owner):
 				if not victims.has(owner):
 					victims.append(owner)
 		for pid: String in victims:
@@ -202,7 +202,7 @@ class _QuaggothEffect extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var count := 0
 		for site_id: String in state.graph.sites.keys():
-			if state.control.controller_of(site_id, state.troops) == player_id:
+			if state.control.controls(player_id, site_id, state.troops):
 				count += 1
 		if count > 0:
 			resolver.push(AssassinateTroop.new(count, true, true), player_id)
