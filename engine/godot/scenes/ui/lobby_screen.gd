@@ -21,8 +21,11 @@ var _net: NetSession
 var _kind := ""
 var _count := 2
 var _mode := ""
+## Своя комната 2 на 2 (этап Team-3); у вошедших — из лобби (NetSession.room_teams).
+var _teams := false
 var _status: Label
 var _seats: HBoxContainer
+var _team_row: HBoxContainer
 var _code_label: Label
 var _server_edit: LineEdit
 var _ip_edit: LineEdit
@@ -48,11 +51,12 @@ var _in_room := false
 ## address — код комнаты (join_code) или IP хоста (join_ip), набранные в
 ## главном меню: с ним вход начинается сразу.
 func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = "",
-		address: String = "", invite: String = "") -> void:
+		address: String = "", invite: String = "", teams: bool = false) -> void:
 	_net = net
 	_kind = kind
 	_count = player_count
 	_mode = mode
+	_teams = teams
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 	add_child(UnderdarkBg.make())
@@ -96,6 +100,17 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	_seats.add_theme_constant_override("separation", 6)
 	_seats.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_child(_seats)
+	# 2 на 2: в какую команду сесть (видно, когда комната командная).
+	_team_row = HBoxContainer.new()
+	_team_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_team_row.add_theme_constant_override("separation", 6)
+	_team_row.visible = false
+	for team: String in ["red", "blue"]:
+		var b := _button("JOIN %s TEAM" % team.to_upper())
+		b.add_theme_color_override("font_color", BoardPanel.PLAYER_COLORS[team])
+		b.pressed.connect(func(): _net.choose_team(team))
+		_team_row.add_child(b)
+	col.add_child(_team_row)
 	_status = _dim("")
 	col.add_child(_status)
 	_invite_first = invite
@@ -147,7 +162,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 			_on_go()
 		"host":
 			_status.text = "Waiting for players..."
-			var err := _net.host(NetSession.DEFAULT_PORT, player_count, mode)
+			var err := _net.host(NetSession.DEFAULT_PORT, player_count, mode, teams)
 			if err != OK:
 				_status.text = "Could not open port %d (error %d). Is another game already hosting?" % [
 					NetSession.DEFAULT_PORT, err]
@@ -159,10 +174,14 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 
 # --- части экрана ------------------------------------------------------------
 
+func _players_text() -> String:
+	return "2v2, red against blue" if _teams else "%d players" % _count
+
+
 ## Сервер с комнатами: адрес сервера (запоминается), код комнаты.
 func _build_server_part(col: VBoxContainer) -> void:
 	if _kind == "create":
-		col.add_child(_dim("%d players, mode %s" % [_count, SetupScreen.mode_title(_mode)]))
+		col.add_child(_dim("%s, mode %s" % [_players_text(), SetupScreen.mode_title(_mode)]))
 	elif _kind == "find":
 		col.add_child(_dim("%d players, mode %s, random opponents" % [
 			_count, SetupScreen.MODE_TITLES[NetSession.match_mode(_count)]]))
@@ -201,8 +220,8 @@ func _build_server_part(col: VBoxContainer) -> void:
 
 
 func _build_host_part(col: VBoxContainer) -> void:
-	col.add_child(_dim("%d players, mode %s, port %d (UDP)" % [
-		_count, SetupScreen.mode_title(_mode), NetSession.DEFAULT_PORT]))
+	col.add_child(_dim("%s, mode %s, port %d (UDP)" % [
+		_players_text(), SetupScreen.mode_title(_mode), NetSession.DEFAULT_PORT]))
 	col.add_child(GameScreen.section_label("OVER THE INTERNET"))
 	_internet = _centred("Asking your router to open the port (up to 10 s)...")
 	col.add_child(_internet)
@@ -257,7 +276,7 @@ func _on_go() -> void:
 				return
 			_save("server", server)
 			if _kind == "create":
-				err = _net.create_room(server, NetSession.SERVER_PORT, _count, _mode)
+				err = _net.create_room(server, NetSession.SERVER_PORT, _count, _mode, _teams)
 			elif _kind == "find":
 				err = _net.find_match(server, NetSession.SERVER_PORT, _count)
 			else:
@@ -307,8 +326,17 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 	for child in _seats.get_children():
 		child.queue_free()
 	PlayerProfile.seats = _net.profiles
+	# 2 на 2: два цвета — фишки и имена цветом команды, кнопки выбора команды.
+	_teams = _teams or _net.room_teams
+	BoardPanel.team_of = GameSetup.team_map(GameRoom.PLAYER_IDS) if _teams else {}
+	_team_row.visible = _teams and _kind != "find"
+	if _teams:
+		var order := ["red", "green", "blue", "purple"]
+		joined = joined.duplicate()
+		joined.sort_custom(func(a, b): return order.find(a) < order.find(b))
 	for pid in joined:
-		_seats.add_child(ProfileScreen.token_icon(String(pid), PlayerProfile.emblem_of(String(pid))))
+		_seats.add_child(ProfileScreen.token_icon(String(BoardPanel.team_of.get(pid, pid)),
+			PlayerProfile.emblem_of(String(pid))))
 		var name_label := Label.new()
 		name_label.text = EventLogPanel.player_name(String(pid)) + (" (you)" if String(pid) == _net.seat else "")
 		var seat_profile: Dictionary = _net.profiles.get(pid, {})

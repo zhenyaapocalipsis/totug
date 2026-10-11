@@ -11,13 +11,16 @@ const PATH := "user://settings.cfg"
 
 ## Клавиши, которые можно переназначить (владелец, 2026-10-06). Esc — всегда
 ## меню, его не трогаем.
-const ACTIONS: Array[String] = ["ping", "end_turn", "zoom", "fullscreen"]
-const DEFAULT_KEYS := {"ping": KEY_TAB, "end_turn": KEY_SPACE, "zoom": KEY_ALT, "fullscreen": KEY_F11}
+const ACTIONS: Array[String] = ["ping", "end_turn", "zoom", "fullscreen", "ally_hand"]
+const DEFAULT_KEYS := {"ping": KEY_TAB, "end_turn": KEY_SPACE, "zoom": KEY_ALT, "fullscreen": KEY_F11,
+	"ally_hand": KEY_T}
 const ACTION_TITLES := {
 	"ping": "PING / CHAT WHEEL",
 	"end_turn": "END TURN (HOLD)",
 	"zoom": "ENLARGE CARD (HOLD)",
 	"fullscreen": "FULL SCREEN",
+	# 2 на 2 (этап Team-3): рука и колода союзника вместо своих и обратно.
+	"ally_hand": "ALLY'S HAND (2V2)",
 }
 
 ## Экран: окно, во весь экран (без рамки) или монопольно (exclusive).

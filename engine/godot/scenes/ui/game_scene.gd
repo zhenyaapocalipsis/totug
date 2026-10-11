@@ -77,10 +77,11 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	setup.presence.watch(SetupScreen.LeaderboardPage.server_address(), NetSession.SERVER_PORT)
 	setup.started.connect(func(ids: Array[String], m: String, bots: bool, teams: bool):
 		_start_game(ids, game_seed, m, bots, teams))
-	setup.online_requested.connect(_show_lobby)
+	setup.online_requested.connect(func(k: String, c: int, m: String, a: String):
+		_show_lobby(k, c, m, a, "", setup.wants_teams(k)))
 	setup.replay_requested.connect(_start_replay)
 	setup.friend_invite_requested.connect(func(fname: String, count: int, m: String):
-		_show_lobby("create", count, m, "", fname))
+		_show_lobby("create", count, m, "", fname, setup.wants_teams("invite")))
 	setup.friend_watch_requested.connect(_watch_friend)
 	add_child(setup)
 
@@ -95,13 +96,13 @@ func _clear() -> void:
 ## address — код комнаты или IP, набранные в меню (вход сразу, без второго
 ## вопроса).
 func _show_lobby(kind: String, count: int = 2, mode: String = GameSetup.MODE_STANDARD,
-		address: String = "", invite: String = "") -> void:
+		address: String = "", invite: String = "", teams: bool = false) -> void:
 	for child in get_children():
 		child.queue_free()
 	_close_net()
 	var net := _open_net()
 	net.game_started.connect(_start_net_game)
-	var lobby := LobbyScreen.new(net, kind, count, mode, address, invite)
+	var lobby := LobbyScreen.new(net, kind, count, mode, address, invite, teams)
 	var back_page: String = SetupScreen.PAGE_ONLINE if kind in ["find", "resume"] else SetupScreen.PAGE_LOBBY
 	lobby.back_requested.connect(func(): _show_setup(int(Time.get_unix_time_from_system()), back_page))
 	add_child(lobby)

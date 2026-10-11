@@ -62,7 +62,8 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"pending_decision": _pending_decision_view(state, viewer_id),
 	}
 	for pid: String in state.players.keys():
-		view["players"][pid] = _player_view(state.players[pid], pid == viewer_id)
+		# 2 на 2: рука и колода союзника открыты (смотреть по T, играть нельзя).
+		view["players"][pid] = _player_view(state.players[pid], pid == viewer_id or state.is_ally(viewer_id, pid))
 	view["legal"] = _legal_actions(state, viewer_id)
 	# Живой текст карт (CardLive): у всех карт, которые зритель видит своими —
 	# рука, колода, сброс, сыгранные, рынок и запас.

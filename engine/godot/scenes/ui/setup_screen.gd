@@ -119,7 +119,7 @@ var _count: int = GameScreen.MIN_PLAYERS
 var _bots := false
 ## HOTSEAT: режим 2 на 2 (кнопка 2V2 рядом с числом игроков).
 var _teams := false
-## Кнопка 2V2 есть на текущей странице (её нет в LOBBY — пока только хотсит).
+## Кнопка 2V2 есть на текущей странице (HOTSEAT и своя комната в LOBBY).
 var _teams_shown := false
 var _hotseat_note: Label
 ## На сколько человек искать стол (SEARCH) — отдельно от своей комнаты.
@@ -446,7 +446,7 @@ func _set_lobby(join: bool, direct: bool, by_ip: bool) -> void:
 ## Своя игра: режим, игроки и как друзья войдут — по коду комнаты на нашем
 ## сервере или прямо по IP этого компьютера.
 func _build_lobby_create() -> void:
-	_add_game_options()
+	_add_game_options(true)
 	_col.add_child(_heading("CONNECTION"))
 	var group := ButtonGroup.new()
 	var server := _toggle("SERVER", group, not _lobby_direct, 70)
@@ -557,7 +557,7 @@ func _add_game_options(with_teams: bool = false) -> void:
 		var b := _toggle(str(count), group, count == _count and not (with_teams and _teams), 24)
 		b.pressed.connect(func(): _select_count(count))
 		counts.append(b)
-	# 2V2 (этап Team-2): четверо, красные против синих — пока только хотсит.
+	# 2V2 (этапы Team-2, Team-3): четверо, красные против синих — хотсит и своя комната.
 	if with_teams:
 		var duo := _toggle("2V2", group, _teams and _count == GameScreen.MAX_PLAYERS, 32)
 		duo.pressed.connect(func(): _select_count(GameScreen.MAX_PLAYERS, true))
@@ -591,6 +591,11 @@ func _toggle_new_era_deck(deck: String) -> void:
 	if _new_era_pair.size() > 2:
 		var dropped: String = _new_era_pair.pop_front()
 		(_new_era_buttons[dropped] as Button).set_pressed_no_signal(false)
+
+
+## Своя комната (CREATE ROOM / HOST) или приглашение друга — 2 на 2 (Team-3).
+func wants_teams(kind: String) -> bool:
+	return _teams and _count == GameScreen.MAX_PLAYERS and kind in ["create", "host", "invite"]
 
 
 ## Режим, который уходит в партию: NEW ERA — вместе с выбранной парой колод.

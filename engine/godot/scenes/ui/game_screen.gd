@@ -124,6 +124,8 @@ var replay_bar: ReplayBar
 ## Зритель чужой сетевой партии (друг; NetSession.watch_started): только
 ## смотрит — без руки, без ходов и вопросов, с задержкой в ход.
 var watching := false
+## 2 на 2 (этап Team-3): показаны рука и дектрекер союзника (клавиша ally_hand, T).
+var show_ally := false
 ## Экран STATS реплея (Replay-3); собирается при первом открытии.
 var stats_panel: ReplayStatsPanel
 ## Статистика окончившейся партии (ReplayStats.collect); пусто, пока не готова.
@@ -999,6 +1001,10 @@ func _input(event: InputEvent) -> void:
 		# хода — в _tick_space_hold, после удержания (GameSettings.hold_seconds).
 		if key.pressed and not key.echo:
 			_space_held = true
+		get_viewport().set_input_as_handled()
+	elif GameSettings.is_key(key, "ally_hand"):
+		if key.pressed and not key.echo:
+			toggle_ally_hand()
 		get_viewport().set_input_as_handled()
 	elif key.keycode == KEY_B and key.pressed and not key.echo:
 		# Stage 0 фонового арта гексов (PixelLab) — временная клавиша, пока
@@ -2015,7 +2021,7 @@ func refresh(view: Dictionary) -> void:
 	_game_over_panel.update_from_view(view)
 	_sound_game_over(view)
 	Music.set_mood(music_mood(view, viewer_id, net == null))
-	_hand_panel.update_from_view(view, viewer_id)
+	_refresh_hand(view)
 	_market_panel.update_from_view(view)
 	_board_panel.update_from_view(view, viewer_id, board_data)
 	_show_decision(view)
@@ -2186,13 +2192,60 @@ static func _signed(delta: int) -> String:
 	return ("+%d" % delta) if delta > 0 else str(delta)
 
 
+## Чья рука и дектрекер на экране: свои или, в 2 на 2 по клавише ally_hand,
+## союзника (его карты открыты, но играть их нельзя).
+func hand_owner() -> String:
+	if not show_ally:
+		return viewer_id
+	var ally := ally_of(_view, viewer_id)
+	return ally if ally != "" else viewer_id
+
+
+## Союзник игрока pid в 2 на 2 ("" — не командная игра).
+static func ally_of(view: Dictionary, pid: String) -> String:
+	var teams: Dictionary = view.get("teams", {})
+	for other in view.get("turn_order", []):
+		if String(other) != pid and teams.has(pid) and teams.get(other) == teams[pid]:
+			return String(other)
+	return ""
+
+
+func _refresh_hand(view: Dictionary) -> void:
+	# Вопрос ко мне (сбросить карту и т.п.) — сразу своя рука, иначе не ответить.
+	if show_ally and String((view.get("pending_decision", {}) as Dictionary).get("player_id", "")) == viewer_id:
+		show_ally = false
+	var shown := hand_owner()
+	if shown == viewer_id:
+		_hand_panel.update_from_view(view, viewer_id)
+		return
+	# Рука союзника: ни ходов, ни вопросов — всё тусклое и не кликается.
+	var look := view.duplicate()
+	look["legal"] = {}
+	look["pending_decision"] = {}
+	_hand_panel.update_from_view(look, shown)
+
+
+## Клавиша ally_hand: рука и дектрекер союзника, повторно — свои.
+func toggle_ally_hand() -> void:
+	if watching or ally_of(_view, viewer_id) == "":
+		return
+	show_ally = not show_ally
+	refresh(_view)
+	if show_ally:
+		_note("%s's hand. %s: your hand." % [EventLogPanel.player_name(hand_owner()),
+			OS.get_keycode_string(GameSettings.key("ally_hand"))])
+
+
 ## Стопки зрителя. Сброс и состав колоды видны только своему игроку
 ## (StateView их прячет), Внутренний круг открыт всем — здесь показываем
 ## всё равно только свой.
 func _refresh_piles(view: Dictionary) -> void:
 	var me: Dictionary = (view["players"] as Dictionary)[viewer_id]
 	_pile_inner.set_cards(me.get("inner_circle", []))
-	_deck_tracker.set_cards(me.get("deck_cards", []), me.get("discard_pile", []), viewer_id)
+	# 2 на 2: по клавише ally_hand — колода и сброс союзника.
+	var shown := hand_owner()
+	var deck_of: Dictionary = (view["players"] as Dictionary).get(shown, me)
+	_deck_tracker.set_cards(deck_of.get("deck_cards", []), deck_of.get("discard_pile", []), shown)
 	# Сожранные карты — стопка общая для всех, не своя у зрителя.
 	_pile_devour.set_cards(view.get("devoured_pile", []))
 
@@ -2233,6 +2286,8 @@ func _on_action_requested(kind: String) -> void:
 
 
 func _on_hand_card_clicked(card_id: String) -> void:
+	if hand_owner() != viewer_id:
+		return  # рука союзника — только смотреть
 	send(Intent.play_card(viewer_id, card_id))
 
 

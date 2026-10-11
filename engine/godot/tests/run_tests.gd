@@ -595,6 +595,29 @@ func test_team_mode() -> void:
 	check(panel._title.text.contains("TEAM"), "итоги называют команду: " + panel._title.text)
 	panel.free()
 
+	# Team-3: комната 2 на 2 — четверо, выбор команды, раздача с командами,
+	# рука союзника видна (смотреть), чужая — нет.
+	var room := GameRoom.new("TEAM", 2, GameSetup.MODE_STANDARD, true)
+	check_eq(room.needed, 4, "комната 2 на 2 ждёт четверых")
+	for peer in [11, 12]:
+		room.add(peer)
+	check_eq(room.seats[12], "blue", "второй сел за синих")
+	check_eq(room.choose_team(12, "red"), "green", "JOIN RED TEAM: второй пересел к красным (green)")
+	room.add(13)
+	check_eq(room.choose_team(13, "red"), "blue", "в полной команде места нет — остаётся где был")
+	room.add(14)
+	check(room.is_full(), "комната полна")
+	var team_views := room.deal(77)
+	check(room.server.state.is_team_game(), "раздача 2 на 2 с командами")
+	var red_view: Dictionary = team_views["red"]
+	check(red_view["players"]["green"].has("hand"), "красный видит руку союзника")
+	check(red_view["players"]["green"].has("deck_cards"), "красный видит колоду союзника")
+	check(not red_view["players"]["blue"].has("hand"), "красный не видит руку соперника")
+	check_eq(GameScreen.ally_of(red_view, "red"), "green", "союзник для клавиши T — green")
+	var restored := GameRoom.restore({"code": "TEAM", "ids": room.ids, "mode": room.mode,
+		"seed": room.game_seed, "teams": true}, [])
+	check(restored.server.state.is_team_game(), "восстановленная комната 2 на 2 — с командами")
+
 
 ## Прямая связь локаций проверяется на ОТДЕЛЬНОМ графе: подмешивать её в общий
 ## мини-граф нельзя — она меняет достижимость и ломает более ранние проверки

@@ -74,7 +74,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 19
+const PROTOCOL := 20
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -108,6 +108,8 @@ var dedicated := false
 ## Свой цвет за столом ("" — пока не рассадили) и код своей комнаты.
 var seat := ""
 var room_code := ""
+## Комната 2 на 2 (этап Team-3): красные (1+3) против синих (2+4).
+var room_teams := false
 var started := false
 ## Свой профиль {name, emblem} (PlayerProfile) — уходит в комнату при входе.
 var profile: Dictionary = {}
@@ -254,11 +256,11 @@ func _load_saved_rooms() -> void:
 
 
 ## Хост по IP: одна комната, хост сидит за первым цветом.
-func host(port: int, player_count: int, mode: String) -> int:
+func host(port: int, player_count: int, mode: String, teams: bool = false) -> int:
 	var err := serve(port)
 	if err != OK:
 		return err
-	var room := _new_room(player_count, mode)
+	var room := _new_room(player_count, mode, teams)
 	_lan_code = room.code
 	_seat_peer.call_deferred(room, 1)
 	return OK
@@ -273,9 +275,9 @@ func join(address: String, port: int) -> int:
 
 
 ## Клиент: на сервере завести новую комнату.
-func create_room(address: String, port: int, player_count: int, mode: String) -> int:
+func create_room(address: String, port: int, player_count: int, mode: String, teams: bool = false) -> int:
 	_remember_server(address, port)
-	return _connect(address, port, func(): _create.rpc_id(1, PROTOCOL, player_count, mode))
+	return _connect(address, port, func(): _create.rpc_id(1, PROTOCOL, player_count, mode, teams))
 
 
 ## Клиент: встать в очередь поиска игры на player_count человек. Профиль идёт
@@ -544,13 +546,13 @@ static func is_public_ipv4(address: String) -> bool:
 
 # --- комнаты (хост / сервер) -------------------------------------------------
 
-func _new_room(player_count: int, mode: String) -> GameRoom:
+func _new_room(player_count: int, mode: String, teams: bool = false) -> GameRoom:
 	var code := ""
 	while code == "" or rooms.has(code):
 		code = ""
 		for i in CODE_LENGTH:
 			code += CODE_CHARS[_rng.randi_range(0, CODE_CHARS.length() - 1)]
-	var room := GameRoom.new(code, player_count, mode)
+	var room := GameRoom.new(code, player_count, mode, teams)
 	rooms[code] = room
 	return room
 
@@ -620,7 +622,7 @@ func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: Stri
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _create(version: int, player_count: int, mode: String) -> void:
+func _create(version: int, player_count: int, mode: String, teams: bool) -> void:
 	# Заводить комнаты по сети можно только на выделенном сервере.
 	if not dedicated:
 		return
@@ -630,9 +632,9 @@ func _create(version: int, player_count: int, mode: String) -> void:
 	if rooms.size() >= MAX_ROOMS:
 		_refuse(peer, "The server is full, try again later")
 		return
-	var room := _new_room(player_count, mode)
+	var room := _new_room(player_count, mode, teams)
 	_seat_peer(room, peer)
-	_log("room %s created: %d players, %s" % [room.code, room.needed, room.mode])
+	_log("room %s created: %d players, %s%s" % [room.code, room.needed, room.mode, " 2v2" if room.teams else ""])
 
 
 ## Поиск игры: встать в очередь на player_count человек (только выделенный сервер).
@@ -816,14 +818,16 @@ func _on_peer_disconnected(id: int) -> void:
 func _broadcast_lobby(room: GameRoom) -> void:
 	for peer: int in room.seats:
 		_send(peer, "_lobby", [room.seats[peer], room.joined(), room.needed, room.code, room.owner_seat(),
+			room.teams,
 			room.profiles])
 
 
 @rpc("authority", "call_remote", "reliable")
-func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_seat: String,
+func _lobby(your_seat: String, joined: Array, needed: int, code: String, owner_seat: String, teams: bool,
 		seat_profiles: Dictionary) -> void:
 	seat = your_seat
 	room_code = code
+	room_teams = teams
 	if _last_by_code:
 		_last_code = code
 	profiles = seat_profiles.duplicate(true)
@@ -842,6 +846,28 @@ func start_game(game_seed: int) -> void:
 			_start_room(room, game_seed)
 	elif not is_host:
 		_start_request.rpc_id(1)
+
+
+## Лобби 2 на 2: пересесть в команду team ("red" / "blue"), если там есть
+## свободное место. У хоста по IP — сразу, у клиента — просьба серверу.
+func choose_team(team: String) -> void:
+	if is_host and not dedicated:
+		_room_team(1, team)
+	elif not is_host:
+		_team_up.rpc_id(1, team)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _team_up(team: String) -> void:
+	_room_team(multiplayer.get_remote_sender_id(), team)
+
+
+func _room_team(peer: int, team: String) -> void:
+	var room := _room_of(peer)
+	if room == null or room.started or not room.teams:
+		return
+	room.choose_team(peer, team)
+	_broadcast_lobby(room)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -900,6 +926,7 @@ func _save_room(room: GameRoom) -> void:
 		"code": room.code,
 		"ids": room.ids,
 		"mode": room.mode,
+		"teams": room.teams,
 		"seed": room.game_seed,
 		"profiles": room.profiles,
 		"accounts": room.accounts,

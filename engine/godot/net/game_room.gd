@@ -15,6 +15,8 @@ const MAX_PLAYERS := 4
 var code: String
 var needed: int
 var mode: String
+## 2 на 2 (этап Team-3): red+green против blue+purple (GameSetup.team_map).
+var teams := false
 ## Кто создал комнату (или сел первым, если создатель ушёл) — он жмёт START.
 var owner_peer := 0
 var seats: Dictionary = {}  # peer id -> player id
@@ -73,9 +75,10 @@ var paused_by := ""
 var pause_time := 0.0
 
 
-func _init(room_code: String, player_count: int, game_mode: String) -> void:
+func _init(room_code: String, player_count: int, game_mode: String, team_game: bool = false) -> void:
 	code = room_code
-	needed = clampi(player_count, MIN_PLAYERS, MAX_PLAYERS)
+	teams = team_game
+	needed = MAX_PLAYERS if teams else clampi(player_count, MIN_PLAYERS, MAX_PLAYERS)
 	mode = game_mode if GameSetup.is_mode(game_mode) else GameSetup.MODE_STANDARD
 
 
@@ -129,6 +132,36 @@ func prefer(peer: int, colour: String) -> String:
 	if holder != null:
 		seats[holder] = old
 	return colour
+
+
+## Цвета мест команды team в комнате 2 на 2: red -> red, green; blue -> blue, purple.
+static func team_seats(team: String) -> Array[String]:
+	var team_of := GameSetup.team_map(PLAYER_IDS)
+	var out: Array[String] = []
+	for pid: String in PLAYER_IDS:
+		if team_of[pid] == team:
+			out.append(pid)
+	return out
+
+
+## Лобби 2 на 2: пересесть на свободное место команды team. Место запоминается
+## как выбранное (wants) — любимый цвет опоздавшего его не отнимет. Мест в
+## команде нет или игрок уже в ней — остаётся где был. Возвращает цвет игрока.
+func choose_team(peer: int, team: String) -> String:
+	if not seats.has(peer):
+		return ""
+	var old := String(seats[peer])
+	var seats_of := team_seats(team)
+	if started or not teams or seats_of.is_empty() or seats_of.has(old):
+		return old
+	for colour: String in seats_of:
+		if not seats.values().has(colour):
+			for data: Dictionary in [profiles, accounts, keys]:
+				_swap(data, old, colour)
+			seats[peer] = colour
+			wants[peer] = colour
+			return colour
+	return old
 
 
 static func _swap(data: Dictionary, a: String, b: String) -> void:
@@ -249,7 +282,7 @@ func deal(seed_value: int) -> Dictionary:
 	ids = []
 	for pid in joined():
 		ids.append(String(pid))
-	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, mode)
+	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, mode, teams)
 	server = GameServer.new(state)
 	var views: Dictionary = {}
 	for pid: String in ids:
@@ -306,14 +339,14 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	for pid in (header.get("ids", []) as Array):
 		room_ids.append(String(pid))
 	var room := GameRoom.new(String(header.get("code", "")), room_ids.size(),
-		String(header.get("mode", GameSetup.MODE_STANDARD)))
+		String(header.get("mode", GameSetup.MODE_STANDARD)), bool(header.get("teams", false)))
 	room.ids = room_ids
 	room.game_seed = int(header.get("seed", 0))
 	room.profiles = (header.get("profiles", {}) as Dictionary).duplicate(true)
 	room.accounts = (header.get("accounts", {}) as Dictionary).duplicate(true)
 	room.keys = (header.get("keys", {}) as Dictionary).duplicate(true)
 	room.matched = bool(header.get("matched", false))
-	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode)
+	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode, room.teams)
 	# Партии, начатые до муллигана рынка (в заголовке нет "mulligan"),
 	# переигрываются без него — иначе их ходы лягут не на те вопросы.
 	room.server = GameServer.new(state, bool(header.get("mulligan", false)))
