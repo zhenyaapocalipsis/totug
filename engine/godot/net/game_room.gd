@@ -354,7 +354,8 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	for d in intents:
 		room.server.apply_intent(Intent.from_dict(d as Dictionary))
 		room.log.append(d)
-	room.cached_board = StateView.board_snapshot(state)
+	# только выделенный сервер: доска без лимита времени — та же, что до перезапуска
+	room.cached_board = StateView.board_snapshot(state, {}, BoardSchematic.NO_BUDGET)
 	# Никто ещё не вернулся: партия стоит, пока не соберутся все (время
 	# отсутствия пойдёт, когда за столом появится первый — tick_pause).
 	for pid: String in room.ids:

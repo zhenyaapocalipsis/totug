@@ -46,6 +46,11 @@ var _invites: HFlowContainer
 var _invite_note: Label
 var _friends_wait := 0.0
 var _in_room := false
+## Экран DEALING THE CARDS (этап Stock-2): сервер строит доску без лимита
+## времени, это может занять секунды. Висит поверх лобби до старта партии.
+var _dealing: Control
+var _dealing_dots: Label
+var _dealing_time := 0.0
 
 
 ## address — код комнаты (join_code) или IP хоста (join_ip), набранные в
@@ -143,6 +148,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	_net.lobby_changed.connect(_on_lobby_changed)
 	_net.connection_lost.connect(_on_connection_lost)
 	_net.queue_changed.connect(_on_queue_changed)
+	_net.dealing_started.connect(_show_dealing)
 	match kind:
 		# CREATE ROOM и SEARCH уже нажаты в главном меню — второй раз не просим;
 		# кнопка здесь — только повтор, если связь не удалась.
@@ -297,7 +303,47 @@ func _on_go() -> void:
 func _on_start() -> void:
 	_start_button.disabled = true
 	_status.text = "Dealing the cards, a few seconds..."
+	_show_dealing()
+	# хост по IP раздаёт у себя и на это время замирает — экран сначала рисуется
+	await get_tree().process_frame
+	await get_tree().process_frame
 	_net.start_game(int(Time.get_unix_time_from_system()))
+
+
+func _show_dealing() -> void:
+	if _dealing != null:
+		return
+	_dealing = ColorRect.new()
+	(_dealing as ColorRect).color = PixelTheme.BG
+	_dealing.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dealing.mouse_filter = Control.MOUSE_FILTER_STOP
+	_dealing.add_child(UnderdarkBg.make())
+	add_child(_dealing)
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dealing.add_child(centre)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", GameScreen.zone_style(10))
+	centre.add_child(plate)
+	plate.add_child(col)
+	var title := Label.new()
+	title.text = "DEALING THE CARDS"
+	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
+	title.add_theme_color_override("font_color", PixelTheme.GOLD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
+	_dealing_dots = _dim("Building the board")
+	_dealing_dots.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_dealing_dots)
+	_dealing_time = 0.0
+
+
+func _hide_dealing() -> void:
+	if _dealing != null:
+		_dealing.queue_free()
+		_dealing = null
 
 
 func _set_editable(on: bool) -> void:
@@ -382,6 +428,10 @@ func _on_queue_changed(waiting: int, needed: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if _dealing != null:
+		_dealing_time += delta
+		var dots := int(_dealing_time * 2.5) % 4
+		_dealing_dots.text = "Building the board" + ".".repeat(dots) + " ".repeat(3 - dots)
 	if _searching_since >= 0:
 		_show_search_time()
 	# Кто из друзей в сети — раз в несколько секунд, пока сидим в комнате.
@@ -419,6 +469,7 @@ func _show_search_time() -> void:
 
 
 func _on_connection_lost(reason: String) -> void:
+	_hide_dealing()
 	_searching_since = -1
 	_status.text = reason + "."
 	_set_editable(true)

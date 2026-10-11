@@ -191,8 +191,10 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 ## Статическое описание собранной доски: геометрия и названия не меняются за
 ## партию, поэтому клиенту достаточно получить это один раз при входе в игру
 ## (в локальном режиме — при старте сцены). schematic — готовый чертёж
-## (запас сервера, BoardStock); без него чертёж строится здесь.
-static func board_snapshot(state: GameState, schematic: Dictionary = {}) -> Dictionary:
+## (запас сервера, BoardStock); без него чертёж строится здесь, не дольше
+## budget_ms на прокладку трасс (сервер — BoardSchematic.NO_BUDGET).
+static func board_snapshot(state: GameState, schematic: Dictionary = {},
+		budget_ms := BoardSchematic.ROUTE_BUDGET_MS) -> Dictionary:
 	var sites: Dictionary = {}
 	for site_id: String in state.graph.sites.keys():
 		var s: Dictionary = state.graph.sites[site_id]
@@ -221,7 +223,7 @@ static func board_snapshot(state: GameState, schematic: Dictionary = {}) -> Dict
 		"tiles": geometry.get("tiles", []),
 		"hex_radius_px": geometry.get("hex_radius_px", 1.0),
 		# pixel-art schematic view of the same board (empty for synthetic test boards)
-		"schematic": schematic if not schematic.is_empty() else BoardSchematic.build(state),
+		"schematic": schematic if not schematic.is_empty() else BoardSchematic.build(state, true, budget_ms),
 		# какие полуколоды собраны в маркет: по ним экран красит фон
 		"half_decks": state.half_decks.duplicate(),
 		# 2 на 2: player_id -> команда (пусто — каждый сам за себя)

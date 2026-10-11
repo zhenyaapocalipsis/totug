@@ -2364,6 +2364,9 @@ func _grid_route_once(started: int) -> int:
 const ROUTE_RETRIES := 6
 const CHAIN_RETRIES := 2
 const ROUTE_BUDGET_MS := 4000
+## Без лимита: выделенный сервер (владелец, 2026-10-12) — доска всегда в сетке и
+## от сида всегда одна и та же; игроки на это время видят DEALING THE CARDS.
+const NO_BUDGET := 1 << 30
 var _budget_ms := ROUTE_BUDGET_MS   # build(budget_ms): запас доски на сервере строит без спешки
 var _grid_ok := false   # трассы легли в сетку 5x3 (иначе доска по-старому)
 

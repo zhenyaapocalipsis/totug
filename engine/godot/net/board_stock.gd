@@ -11,7 +11,7 @@ extends RefCounted
 
 const SIZE := 2                  # чертежей в запасе на каждое число игроков
 const COUNTS: Array[int] = [2, 3, 4]
-const BUDGET_MS := 60000         # на один чертёж в запас
+const BUDGET_MS := BoardSchematic.NO_BUDGET   # на один чертёж в запас — без спешки
 
 var _ready := {}       # число игроков -> [{"seed", "layout", "schematic"}]
 var _task := -1
@@ -49,7 +49,7 @@ func tick() -> void:
 			return
 		WorkerThreadPool.wait_for_task_completion(_task)
 		_task = -1
-		# не лёг в сетку и за минуту — такой доске в запасе не место
+		# не лёг в сетку и без лимита времени — такой доске в запасе не место
 		if bool(_result.get("grid", false)):
 			_ready[_building["players"]].append({"seed": _building["seed"],
 				"layout": _building["layout"], "schematic": _result})

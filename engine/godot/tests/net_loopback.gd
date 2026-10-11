@@ -55,6 +55,7 @@ var lost: Dictionary = {}
 var rejoined: Dictionary = {}
 ## Последнее «в очереди waiting из needed» у каждого (поиск игры).
 var queue_seen: Dictionary = {}
+var dealing_seen: Dictionary = {}   # NetSession -> true: пришёл экран DEALING THE CARDS
 ## Последняя пауза от сервера у каждого (NetSession.pause_changed).
 var pause_seen: Dictionary = {}
 var server: NetSession
@@ -148,6 +149,7 @@ func _process(delta: float) -> bool:
 						"[server] партия взяла доску из запаса сервера")
 					check(bool(boards[players[0]]["schematic"].get("grid", false)),
 						"[server] доска из запаса легла в сетку")
+					check(dealing_seen.is_empty(), "[server] доска из запаса — без экрана раздачи")
 					# дальше запас не нужен: фоновые чертежи только мешали бы по времени
 					server.board_stock.close()
 					server.board_stock = null
@@ -374,6 +376,9 @@ func _process(delta: float) -> bool:
 			if all_dealt:
 				check(not (boards[players[0]].get("schematic", {}) as Dictionary).is_empty(),
 					"[server4] чертёж доски на четверых пришёл")
+				check(dealing_seen.size() == 4, "[server4] без запаса все четверо видели DEALING THE CARDS")
+				check(bool(boards[players[0]]["schematic"].get("grid", false)),
+					"[server4] без лимита времени доска легла в сетку")
 				_check_hidden_hands_n()
 				_step = "server4_setup"
 		"server4_setup":
@@ -734,6 +739,7 @@ func _reset() -> void:
 	lost.clear()
 	rejoined.clear()
 	queue_seen.clear()
+	dealing_seen.clear()
 	pause_seen.clear()
 
 
@@ -758,6 +764,7 @@ func _track(p: NetSession) -> void:
 		"colour": "purple", "shader": "gilded", "arts": "48310_1,48403_2", "favourite": "48314"}
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
+	p.dealing_started.connect(func(): dealing_seen[p] = true)
 	views[p] = {}
 	errors[p] = []
 	chats[p] = []

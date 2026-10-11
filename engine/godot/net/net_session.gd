@@ -32,6 +32,8 @@ extends Node
 
 signal lobby_changed(joined: Array, needed: int, code: String, owner_seat: String)
 signal game_started(seat: String, board: Dictionary, view: Dictionary)
+## Сервер начал раздачу и строит доску (этап Stock-2): лобби — экран DEALING THE CARDS.
+signal dealing_started
 signal result_received(err: int, events: Array, view: Dictionary)
 signal chat_received(seat: String, text: String)
 ## Пинг игрока (Tab): зона экрана и точка в ней (PING_ZONES).
@@ -74,7 +76,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 20
+const PROTOCOL := 21
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -922,9 +924,13 @@ func _start_room(room: GameRoom, game_seed: int) -> void:
 		_log("room %s dealing (board from stock)" % room.code)
 		_deliver(room, StateView.board_snapshot(state, stocked["schematic"]), views)
 		return
+	# Запаса нет — доска строится без лимита времени (владелец, 2026-10-12:
+	# всегда в сетке), а игроки пока видят DEALING THE CARDS.
+	for peer: int in room.seats:
+		_send(peer, "_dealing", [])
 	BoardSchematic.warm_up(state)
 	room.board_task = WorkerThreadPool.add_task(func():
-		_board_ready.call_deferred(room, StateView.board_snapshot(state), views))
+		_board_ready.call_deferred(room, StateView.board_snapshot(state, {}, BoardSchematic.NO_BUDGET), views))
 	_log("room %s dealing" % room.code)
 
 
@@ -964,6 +970,13 @@ func _save_room(room: GameRoom) -> void:
 		"matched": room.matched,
 		"mulligan": room.server.with_mulligan,
 	}, room.log, saves_dir)
+
+
+## Сервер раздаёт и строит доску (без лимита времени, может занять секунды) —
+## лобби показывает экран DEALING THE CARDS до _start.
+@rpc("authority", "call_remote", "reliable")
+func _dealing() -> void:
+	dealing_started.emit()
 
 
 @rpc("authority", "call_remote", "reliable")
