@@ -142,6 +142,9 @@ var records_dir := "user://game_records/"
 ## рейтинга (_rating), и строка истории запоминает этот файл.
 var last_replay := ""
 var rooms: Dictionary = {}      # code -> GameRoom
+## Выделенный сервер: запас готовых чертежей доски (ставит launcher; в тестах
+## по желанию). close() его дожидается и убирает.
+var board_stock: BoardStock = null
 var peer_room: Dictionary = {}  # peer id -> code
 ## Поиск игры: число игроков -> очередь peer id (по порядку прихода) и кто
 ## стоит в очереди: peer id -> {needed, name, emblem, key}.
@@ -220,6 +223,8 @@ func _process(delta: float) -> void:
 	if not is_host:
 		_tick_watch(delta)
 		return
+	if board_stock != null and dedicated:
+		board_stock.tick()
 	for room: GameRoom in rooms.values():
 		# Настоящее время: скорость анимаций (Engine.time_scale) паузу не торопит.
 		var real := delta / Engine.time_scale if Engine.time_scale > 0.0 else 0.0
@@ -408,6 +413,9 @@ func close() -> void:
 		multiplayer.multiplayer_peer = null
 	is_host = false
 	dedicated = false
+	if board_stock != null:
+		board_stock.close()
+		board_stock = null
 	# Фоновые снимки доски (_start_room) дожидаемся: бросить поток нельзя.
 	for room: GameRoom in rooms.values():
 		if room.board_task >= 0:
@@ -903,8 +911,17 @@ func _start_room(room: GameRoom, game_seed: int) -> void:
 	# считается в фоне; раздача (колоды, первый ход) — здесь: она быстрая и
 	# трогает общие статические поля правил. Снимку нужны только данные этой
 	# партии и таблицы, которые читаются, но не пишутся (прогреваем их здесь).
+	# Есть готовый чертёж в запасе (BoardStock) — партия берёт его сид и
+	# стартует сразу.
+	var stocked: Dictionary = board_stock.take(room.needed) if board_stock != null else {}
+	if not stocked.is_empty():
+		game_seed = int(stocked["seed"])
 	var views := room.deal(game_seed)
 	var state := room.server.state
+	if not stocked.is_empty() and BoardStock.same_layout(stocked, state):
+		_log("room %s dealing (board from stock)" % room.code)
+		_deliver(room, StateView.board_snapshot(state, stocked["schematic"]), views)
+		return
 	BoardSchematic.warm_up(state)
 	room.board_task = WorkerThreadPool.add_task(func():
 		_board_ready.call_deferred(room, StateView.board_snapshot(state), views))

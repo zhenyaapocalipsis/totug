@@ -205,13 +205,14 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ## Takes ~0.4-0.9 s (was 2-4 s before the exact cuts in _cost_around and
 ## _choose_route), so it runs once per game (StateView.board_snapshot); the
 ## dedicated server runs it off the main thread (NetSession._start_room).
-static func build(state: GameState, polish := true) -> Dictionary:
+static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS) -> Dictionary:
 	var hex_by_slot: Dictionary = state.layout.get("hex_by_slot", {})
 	if hex_by_slot.is_empty():
 		return {}
 	var layouts: Dictionary = BoardData.load_all()["layouts"]
 	var players := int(state.layout.get("player_count", state.turn_order.size()))
 	var schematic := BoardSchematic.new()
+	schematic._budget_ms = budget_ms
 	schematic._collect(state.graph, layouts[str(players)], hex_by_slot)
 	schematic._index_neighbourhoods()
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
@@ -1561,6 +1562,7 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 	# Сетка 5x3 с трассами между гексами, проложенными заново (владелец,
 	# 2026-10-04); не легла — раздвигаем по-старому, мостиками-ступеньками.
 	if _grid_try(cell):
+		_grid_ok = true
 		return _sp_off
 	# раздвигание мостиками-ступеньками сделано под 15 гексов четверых; на 2-3
 	# игроков без сетки доска остаётся собранной
@@ -2342,7 +2344,7 @@ func _grid_route_once(started: int) -> int:
 	# не легла — она первой, остальные заново (ROUTE_RETRIES раз, не дольше
 	# ROUTE_BUDGET_MS: доска строится при старте партии)
 	for attempt in ROUTE_RETRIES:
-		if Time.get_ticks_msec() - started > ROUTE_BUDGET_MS:
+		if Time.get_ticks_msec() - started > _budget_ms:
 			return -2
 		var failed := _rt_route_all(order, ends)
 		_rt_round_failed.append(failed)
@@ -2362,6 +2364,8 @@ func _grid_route_once(started: int) -> int:
 const ROUTE_RETRIES := 6
 const CHAIN_RETRIES := 2
 const ROUTE_BUDGET_MS := 4000
+var _budget_ms := ROUTE_BUDGET_MS   # build(budget_ms): запас доски на сервере строит без спешки
+var _grid_ok := false   # трассы легли в сетку 5x3 (иначе доска по-старому)
 
 ## Прокладывает мостики по порядку; ответ — порт, что не лёг, или -1.
 func _rt_route_all(order: Array, ends: Dictionary) -> int:
@@ -4055,6 +4059,7 @@ func _export(state: GameState) -> Dictionary:
 		# for checks and debugging: which nodes each trace joins, edge midpoints, hex centres
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres, "hexes": hexes,
 		"fallback_routes": _fallback_routes,
+		"grid": _grid_ok,
 		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет
 		"a2_legend": a2_legend,
 	}

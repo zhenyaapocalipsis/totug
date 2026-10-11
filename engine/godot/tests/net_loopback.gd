@@ -88,6 +88,7 @@ const RECORDS_DIR := "user://records_nettest/"
 var _reconnect_code := ""
 var _reconnect_key := ""
 var _reconnect_seat := ""
+var _stock_seed := -1   # [server]: сид чертежа, что лежит в запасе сервера
 var _restart_seat0 := ""
 var _restart_seat1 := ""
 ## Сценарий pause: кто отключился и не вернулся.
@@ -141,6 +142,15 @@ func _process(delta: float) -> bool:
 			if not views[players[0]].is_empty() and not views[players[1]].is_empty():
 				check(not (boards[players[0]].get("schematic", {}) as Dictionary).is_empty(),
 					"[%s] чертёж доски пришёл" % _scenario)
+				if _scenario == "server" and server.board_stock != null:
+					var room: GameRoom = server.rooms.values()[0]
+					check(_stock_seed >= 0 and room.game_seed == _stock_seed,
+						"[server] партия взяла доску из запаса сервера")
+					check(bool(boards[players[0]]["schematic"].get("grid", false)),
+						"[server] доска из запаса легла в сетку")
+					# дальше запас не нужен: фоновые чертежи только мешали бы по времени
+					server.board_stock.close()
+					server.board_stock = null
 				_check_hidden_hands()
 				_check_profiles()
 				_step = "setup"
@@ -690,6 +700,16 @@ func _start_server() -> void:
 	server.ratings = RatingBook.new(RATINGS_PATH)
 	server.saves_dir = SAVES_DIR
 	check(server.serve(SERVER_PORT, true) == OK, "[server] сервер открыл порт")
+	# запас досок: один чертёж на двоих готов заранее — партия должна взять его
+	var stock := BoardStock.new()
+	var waited := Time.get_ticks_msec()
+	while stock.count(2) < 1 and Time.get_ticks_msec() - waited < 60000:
+		stock.tick()
+		OS.delay_msec(5)
+	stock.close()
+	var ready_stock: Array = stock._ready[2]
+	_stock_seed = int(ready_stock[0]["seed"]) if not ready_stock.is_empty() else -1
+	server.board_stock = stock
 	var a := _session()
 	var b := _session()
 	players = [a, b]

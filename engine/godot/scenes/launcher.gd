@@ -63,3 +63,5 @@ func _start_server(port: int) -> void:
 		get_tree().quit(1)
 		return
 	print("Tyrants server: listening on UDP port %d, protocol %d" % [port, NetSession.PROTOCOL])
+	# запас готовых досок: партия стартует сразу, доска всегда в сетке
+	net.board_stock = BoardStock.new()

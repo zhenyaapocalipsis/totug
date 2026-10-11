@@ -105,6 +105,7 @@ func _initialize() -> void:
 
 	# схема доски (pixel art, без гексов)
 	test_board_schematic()
+	test_board_stock()
 
 	# оформление экрана
 	test_background_palette()
@@ -5546,3 +5547,27 @@ func test_card_live() -> void:
 		check(marks == notes.size() and raise <= 6,
 			"%s: пометки найдены (%d/%d), поле поднято на %d px (не больше 6)" % [CardLibrary.card_data(cid).get("name", cid),
 				marks, notes.size(), raise])
+
+
+func test_board_stock() -> void:
+	section("Запас досок сервера (BoardStock)")
+	var stock := BoardStock.new()
+	var started := Time.get_ticks_msec()
+	while stock.count(2) < 1 and Time.get_ticks_msec() - started < 60000:
+		stock.tick()
+		OS.delay_msec(5)
+	var entry := stock.take(2)
+	stock.close()
+	check(not entry.is_empty(), "в запасе появился чертёж на 2 игроков")
+	if entry.is_empty():
+		return
+	check(bool(entry["schematic"].get("grid", false)), "в запасе только доски, что легли в сетку")
+	check_eq(stock.count(2), 0, "чертёж из запаса выдаётся один раз")
+	# комната раздаёт с этим сидом по-своему: другие цвета, режим, интерактивный старт
+	var ids: Array[String] = ["purple", "green"]
+	var state := GameSetup.new_game(ids, int(entry["seed"]), [], false, true, true, GameSetup.MODE_RANDOM_4)
+	check(BoardStock.same_layout(entry, state), "раздача с сидом из запаса даёт ту же доску")
+	check(not BoardStock.same_layout(entry, GameSetup.new_game(ids, int(entry["seed"]) + 1)),
+		"другой сид — другая доска (сверка раскладки работает)")
+	var board := StateView.board_snapshot(state, entry["schematic"])
+	check(board["schematic"] == entry["schematic"], "снимок доски берёт готовый чертёж")
