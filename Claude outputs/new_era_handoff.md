@@ -1,6 +1,20 @@
-# New Era — передача работы в новый чат (на 2026-10-08)
+# New Era — передача работы в новый чат (на 2026-10-11)
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
+
+## Состояние сейчас (коротко)
+- Готовы две колоды: **Celestial Order** (бывшая Demacia, NE-1…3) и **Shadow Isles** (NE-4…5). Обе `wip`, играются в режиме рынка **NEW ERA = Celestial + Shadow Isles** (`GameSetup.NEW_ERA_DECKS`, меню HOTSEAT и LOBBY).
+- Всё закоммичено, запушено на GitHub и задеплоено на сервер (`bash server/deploy.sh`, сборка 1791467650 от 2026-10-08; позже деплоили другие сессии).
+- Тесты на 2026-10-11: `пройдено: 1479, провалено: 0`, сеть `118 / 0`. В тесте карт 176 (126 + 25 Celestial + 25 Shadow Isles).
+- Не в git и не моё: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` — правки владельца, не трогать.
+- **Владелец ещё не проверял обе колоды живьём.** Чек-листы — в конце разделов ниже.
+
+### Что сделали другие сессии и касается New Era
+- **NE-UI-1…3** (`dfd82f0`, `9e6b3d5`, `f7814ca`): вопросы карт полосой сверху, без затемнения; слева показывается карта, которая спрашивает. Green Hag жрёт карту выбором в ряду руки, соперники выбирают в своей руке.
+- **Live-1** (`f64bef2`): «живой» текст карт — числа и условия на 35 картах (в том числе счётчики Insane Outcast) зелёные или красные по позиции смотрящего. **Цена со скидкой (Cursed Affinity, House Guard) теперь рисуется зелёным** — этот открытый пункт закрыт.
+- **Lobby-1** (`7362b9c`): Promote из руки или сброса (Will-o'-Wisp, Celestial) — выбором в ряду руки.
+- **Баланс** (`346dd2b`, отчёт `Claude outputs/balance/`, память `project_balance_findings`): 1600 игр вчетвером из всех 8 колод. Celestial как основная колода выигрывает 30,2% (интервал 26,7–33,9) при честных 25% — самая сильная. Shadow Isles — 26,6%, классические — 20,7–27,9%. По картам: Swarm of Crawling Claws сильная, Planetar и Grick слабые. Ослаблять или нет, владелец не решал.
+- Боты (Bot-1…8) играют и New Era: `tests/balance_run.gd`, флаг `all_decks=1`.
 
 ## Что это за работа
 Владелец переносит в игру полуколоды фан-мода **Runeterra Reforged**, но в сеттинге D&D:
@@ -19,7 +33,7 @@
 
 - **Карты:** id 49000–49024, тип `CELESTIAL`, данные в `engine/godot/data/cards/cards.json`.
 - **Полуколода:** `celestial` в `data/cards/half_decks.json`, 45 карт, флаг `"wip": true`, поэтому её нет в обычном пуле случайного выбора. Иначе бы поменялись сиды и журналы старых партий.
-- **Режим рынка NEW ERA** (`GameSetup.MODE_NEW_ERA`): Celestial плюс одна случайная классическая полуколода. Включается в меню HOTSEAT и LOBBY. Цвет фона партии — `UnderdarkBg.DECK_COLOURS["celestial"]`.
+- **Режим рынка NEW ERA** (`GameSetup.MODE_NEW_ERA`): сначала был Celestial + случайная классическая, с NE-4 — Celestial + Shadow Isles. Включается в меню HOTSEAT и LOBBY. Цвет фона партии — `UnderdarkBg.DECK_COLOURS["celestial"]`.
 - **Эффекты карт:** `engine/godot/core/cards/celestial_cards.gd`. CardLibrary берёт эффект оттуда, если своего нет. `CardLibrary.on_gain()` — триггер «когда получаешь карту» (Scout кладёт в сброс Giant Eagle).
 - **Новые примитивы** в `core/effects/primitives/`:
   - ReturnOwnTroops — вернуть свои войска как плату «стрелкой» или «сколько угодно»;
@@ -43,12 +57,12 @@
 
 ## Готово: Shadow Isles — правила (NE-4, `412727e`)
 Тесты 1258/0, сеть 108/0. Всё по колоде — в `Claude outputs/new_era_shadow_isles.md` (таблица id → существо → карта мода, толкования).
-- Карты 49100–49124, тип `UNDEAD`, полуколода `shadow` (wip), эффекты `core/cards/shadow_cards.gd`.
-- Cursed Wanderer = Insane Outcast; Execute = Devour; Sapling = Twig Blight (запас 4); Elise ↔ Spider Elise = Drider ↔ Phase Spider.
-- Режим NEW ERA теперь = Celestial + Shadow Isles (`GameSetup.NEW_ERA_DECKS`).
-- Новое в движке: `state.turn_flags` (счётчик Outcast за ход и т.п.), `ShadowCards.on_play` в `TurnEngine.play_card`, `ShadowCards.on_devour` в DevourCard, `Actions.market_cost` (Cursed Affinity), `PlayerState.start_of_turn_influence`, реакция Bone Naga в GiveInsaneOutcast.
-- **NE-5 (`164a8e1`) — арты.** Состав существ заменён: черновая нежить почти вся в платных книгах D&D Beyond. Новые имена — в таблице `new_era_shadow_isles.md`, тип карт `SHADOW`. Картинки карт мода для сверки: 29–52, 0, 321, 326.
-- Не сделано: цена со скидкой Cursed Affinity на карте рынка не рисуется (подсветка доступности её учитывает); `cards/shadow/cand*` — неиспользованные кандидаты (не в git). Владелец ещё не проверял колоду живьём.
+- Карты 49100–49124, тип `SHADOW` (подпись SHADOW ISLES), полуколода `shadow` (wip), эффекты `core/cards/shadow_cards.gd`, тест `test_shadow_isles`.
+- Решения владельца: Cursed Wanderer = Insane Outcast (стопка выкладывается и с Shadow Isles); Execute = Devour; Sapling = Twig Blight (запас 4); Elise ↔ Spider Elise = Drider ↔ Phase Spider; режим NEW ERA = Celestial + Shadow Isles.
+- Новое в движке: `state.turn_flags` (счётчик Outcast за ход и т.п.), `ShadowCards.on_play` в `TurnEngine.play_card`, `ShadowCards.on_devour` в DevourCard, `Actions.market_cost` (Cursed Affinity), `PlayerState.start_of_turn_influence`, реакция `ShadowCards.ClawsReaction` (Swarm of Crawling Claws в руке) в GiveInsaneOutcast.
+- **NE-5 (`164a8e1`) — арты.** Состав существ заменён без отдельного согласования (черновая нежить почти вся в платных книгах D&D Beyond, свободная нежить уже занята в игре): Rakshasa, Nightmare, Chain Devil, Barbed Devil, Ghast, Treant, Bone Devil, Drider ↔ Phase Spider, Green Hag, Shadow + 13 обычных. Таблица — `new_era_shadow_isles.md`. Владелец состав пока не комментировал. Картинки карт мода для сверки: 29–52, 0, 321, 326.
+- `cards/shadow/cand*` — неиспользованные кандидаты артов (не в git), можно удалить.
+- Чек-лист для живой проверки: (1) NEW ERA — на рынке обе колоды с артами, фон бирюзовый; (2) 2 Insane Outcast, затем Specter = +5 Power; (3) после двух Outcast Rakshasa на 2 дешевле (цена зелёная); (4) Shambling Mound, затем Gargoyle: +4 Influence, в конце хода Gargoyle сожран, в следующем ходу +3 Influence; (5) Swarm of Crawling Claws в руке соперника — ему предлагают взять раздаваемый Outcast в руку.
 - **Совет для поиска артов:** у закрытых монстров fetch страницы падает — ловить ошибку на каждую страницу отдельно; арт брать строго из `<img ... class="monster-image">`. Свободны почти только монстры SRD (Basic Rules 2014 и Free Rules 2024).
 
 ## Решения владельца (действуют для всех колод)
@@ -83,7 +97,7 @@
    | Poro | в конце |
 
    Демасия при извлечении (картинки 0000–0027): 0 Cursed Wanderer, 1 Battlefield Sergeant, 2 Vanguard Cavalry, 3 Captain, 4 Officer, 5 Bannerman, 6–27 карты Демасии, 28 Shyvana, 341 Sylas, 360 Lucian.
-2. **Найти арты.** Во встроенном браузере открыть dndbeyond.com/monsters/… и через javascript_tool сделать fetch(`/monsters?filter-search=Имя`). Затем fetch страницы монстра и в HTML найти регуляркой `avatars/thumbnails/.../1000/1000/....(png|jpeg)`. Скрипт запускать фоном (`window.R = …`), результат забирать через 40 с: у javascript_tool лимит 45 с. Скачивать curl'ом с `-A "Mozilla/5.0"`. Монстры из платных книг отдают `locked` — брать других. jpeg почти всегда с фоном, png бывает и с фоном, и без. Проверять контакт-листом с пурпурной подложкой (прозрачное видно сразу).
+2. **Найти арты.** Во встроенном браузере открыть dndbeyond.com/monsters/… и через javascript_tool сделать fetch(`/monsters?filter-search=Имя`). Затем fetch страницы монстра (каждую в своём try/catch: закрытая страница роняет fetch) и взять src из `<img ... class="monster-image">` — общая регулярка по `avatars/` ловит картинки оформления сайта. Скрипт запускать фоном (`window.R = …`), результат забирать через 40 с: у javascript_tool лимит 45 с. Скачивать curl'ом с `-A "Mozilla/5.0"`. Монстры из платных книг отдают `locked` — брать других. jpeg почти всегда с фоном, png бывает и с фоном, и без. Проверять контакт-листом с пурпурной подложкой (прозрачное видно сразу).
 3. **Положить данные.** Арты — в `cards/<колода>/`. Новые карты дописать в конец `cards.json` (следующий диапазон id, например 49100+), полуколоду — в `half_decks.json` с `"wip": true`, тип — для подписи. В `tools/pixel_cards.gd` добавить:
    - в `SINGLE_ART` — `id: ["папка/файл", Rect2i(окно арта)]`, пропорция 164:100;
    - в `MINI_FACE` — левый верхний угол выреза 52x53 в арте 164x100;
@@ -95,7 +109,9 @@
 
 ## Открытые вопросы и что не сделано
 - Владелец ещё не проверял Celestial живьём. Чек-лист был: режим NEW ERA, покупка Scout, Gladiator→Berserker со скидками, превращение Gold Dragon, реакция Shield Guardian.
-- Во вкладке CARDS коллекции (`scenes/ui/collection_page.gd`, FACTIONS) Celestial нет.
+- Во вкладке CARDS коллекции (`scenes/ui/collection_page.gd`, FACTIONS) нет ни Celestial, ни Shadow Isles.
+- Celestial по прогонам ботов сильнее остальных колод (30,2% побед основной колодой вчетвером) — вопрос владельцу, ослаблять ли.
+- Колоды всё ещё `wip`: не входят в обычные случайные режимы. Убрать флаг — решение владельца (изменит сиды обычных режимов).
 - Djinni (бывшая Deva) предлагает «2 Influence → карта» только при розыгрыше, а не в любой момент хода.
 - У Solar «развернул N войск» считается как «столько войск ушло из барака».
 - Возможная доводка кадров: Solar (лицо мелкое), Giant Eagle (голова слева).
@@ -114,4 +130,5 @@
   - Swarm (не-Obedience карты стоимостью 2);
   - Hextech / Shimmer (колоды по 30);
   - Transform (уже сделан).
-- Какую колоду делать следующей, владелец пока не сказал. В разговоре был порядок из mapping-файла: Shadow Isles → P&Z → Noxus → …
+- Следующая колода по порядку из mapping-файла — **Piltover & Zaun** (механика Focus уже есть в игре), затем Noxus. Владелец порядок не подтверждал. Черновые существа P&Z в mapping-файле тоже надо сначала проверить на свободный арт (см. совет выше).
+- Режим NEW ERA жёстко = Celestial + Shadow Isles. С третьей колодой нужно решить, как выбирать рынок (случайная пара New Era-колод или переключатель в меню).
