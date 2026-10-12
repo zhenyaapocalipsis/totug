@@ -132,13 +132,25 @@ func _run_scenario() -> void:
 			# ходами, у второго игрока немного VP-жетонов для разницы в счёте.
 			var st := _screen.server.state
 			st.players[st.turn_order[1]].vp_tokens = 9
+			# --names=A,B,C,D — ники игроков по порядку хода (проверка длинных имён).
+			if _arg("names", "") != "":
+				var names_go := _arg("names", "").split(",")
+				for i_n in mini(names_go.size(), st.turn_order.size()):
+					PlayerProfile.seats[st.turn_order[i_n]] = {"name": PlayerProfile.clean_name(names_go[i_n]), "emblem": ""}
 			# Колоды как в конце настоящей партии: докупленные карты и круг.
+			# На четверых колоды рынка не хватит — тогда карты берутся по кругу.
+			var pool_go: Array = st.market.deck.duplicate()
+			var next_go := func() -> String:
+				if st.market.deck.is_empty():
+					pool_go.push_front(pool_go.pop_back())
+					return String(pool_go[0])
+				return String(st.market.deck.pop_back())
 			for pid_go: String in st.turn_order:
 				var d_go: Deck = st.players[pid_go].deck
 				for n in _count_arg("discard", 14):
-					d_go.discard_pile.append(st.market.deck.pop_back())
+					d_go.discard_pile.append(next_go.call())
 				for n in _count_arg("circle", 3):
-					d_go.inner_circle.append(st.market.deck.pop_back())
+					d_go.inner_circle.append(next_go.call())
 			for guard in 40:
 				if st.game_over:
 					break
@@ -159,6 +171,10 @@ func _run_scenario() -> void:
 				for i_r in ranked.size():
 					fake[ranked[i_r]] = {"rating": 1016 - 11 * i_r, "delta": 16 - 11 * i_r,
 							"reward": SkinCollection.reward_for_place(i_r + 1)}
+				# --records=1 — побитые мировые рекорды: у победителя три, у второго один.
+				if _arg("records", "") != "":
+					fake[ranked[0]]["records"] = ["vp", "best_turn", "margin"]
+					fake[ranked[1]]["records"] = ["kills"]
 				_screen._game_over_panel.set_ratings(fake)
 		"background":
 			# Коллекция, раздел фонов (рисовалки фона больше нет). Отдельный файл профиля.

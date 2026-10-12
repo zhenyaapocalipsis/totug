@@ -44,6 +44,9 @@ var _shown_once := false
 ## Рейтинг после онлайн-партии (NetSession.rating_changed): место -> {rating, delta}.
 var _ratings: Dictionary = {}
 var _view: Dictionary = {}
+## Ширина средней полосы: не меньше CENTRE_W, а если таблица с длинными никами
+## и рекордами шире — по таблице, колоды по бокам тогда в меньше столбцов.
+var _centre_w := CENTRE_W
 
 
 func _init() -> void:
@@ -166,11 +169,23 @@ func update_from_view(view: Dictionary) -> void:
 				PixelTheme.GOLD if winners.has(pid) else PixelTheme.TEXT, COL_W))
 		_grid.add_child(_rating_cell(String(pid)))
 
-	_build_decks(view)
+	# Отложенно: сразу после добавления ячеек таблица меряет себя шире, чем
+	# выйдет (497 вместо 422 на четверых с рекордами) — колоды сжимались зря.
+	_layout_sides.call_deferred(view)
 
 	if not _shown_once:
 		_shown_once = true
 		visible = true
+
+
+## Средняя полоса по ширине таблицы итогов (не уже CENTRE_W), колоды — по бокам.
+func _layout_sides(view: Dictionary) -> void:
+	if not is_same(view, _view):
+		return  # за кадр пришёл новый срез — его вызов и разложит
+	_centre_w = maxf(CENTRE_W, _grid.get_combined_minimum_size().x + MARGIN * 2.0)
+	for label in [_head, _title]:
+		label.custom_minimum_size.x = _centre_w - MARGIN * 2.0
+	_build_decks(view)
 
 
 ## Угол на игрока по порядку хода: левый верх, правый верх, левый низ, правый
@@ -184,7 +199,7 @@ func _build_decks(view: Dictionary) -> void:
 	# Растяжение keep: экран партии всегда в расчётном размере проекта.
 	var screen := Vector2(ProjectSettings.get_setting("display/window/size/viewport_width", 960),
 			ProjectSettings.get_setting("display/window/size/viewport_height", 540))
-	var w := (screen.x - CENTRE_W) / 2.0 - MARGIN * 2.0
+	var w := (screen.x - _centre_w) / 2.0 - MARGIN * 2.0
 	var h := screen.y - MARGIN * 2.0 if order.size() <= 2 else screen.y / 2.0 - MARGIN * 1.5
 	for i in order.size():
 		var pid := String(order[i])
