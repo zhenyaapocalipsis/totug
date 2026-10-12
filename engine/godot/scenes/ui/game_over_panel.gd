@@ -168,6 +168,10 @@ func update_from_view(view: Dictionary) -> void:
 		_grid.add_child(_cell(str(int(s["total"])),
 				PixelTheme.GOLD if winners.has(pid) else PixelTheme.TEXT, COL_W))
 		_grid.add_child(_rating_cell(String(pid)))
+		# Строка прижата к верху: под рейтингом бывают награда и рекорды, а ник
+		# и очки должны стоять на одной линии с "1016 +16" (владелец, 2026-10-12).
+		for k in COLUMNS.size() + 3:
+			_grid.get_child(_grid.get_child_count() - 1 - k).size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	# Отложенно: сразу после добавления ячеек таблица меряет себя шире, чем
 	# выйдет (497 вместо 422 на четверых с рекордами) — колоды сжимались зря.
