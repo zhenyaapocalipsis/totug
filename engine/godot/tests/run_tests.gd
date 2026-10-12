@@ -35,6 +35,7 @@ func _initialize() -> void:
 	test_control_rules()
 	test_team_mode()
 	test_team_stock()
+	test_bot_names()
 
 	# этап 2: базовый цикл хода
 	test_vp_bank()
@@ -523,6 +524,17 @@ func test_control_rules() -> void:
 
 ## Этап Team-1: режим 2 на 2 — очередь A1 → B1 → A2 → B2, общее Присутствие,
 ## союзника нельзя атаковать, счёт команды общий.
+func test_bot_names() -> void:
+	section("имена и гербы ботов")
+	var names := {"red": "Azmodan", "green": "Belial", "blue": "Andariel", "purple": "Duriel"}
+	for pid: String in names:
+		var p := BotNames.profile(pid)
+		check_eq(String(p["name"]), names[pid], "бот %s — %s" % [pid, names[pid]])
+		var e := String(p["emblem"])
+		check(PlayerProfile.clean_emblem(e) == e and not PlayerProfile.is_blank(e),
+			"герб %s честный: внутри кружка, не больше max_painted" % names[pid])
+
+
 func test_team_stock() -> void:
 	section("2 на 2: общие бараки, трофеи и внутренний круг")
 	var ids: Array[String] = ["red", "blue", "green", "purple"]

@@ -213,6 +213,9 @@ func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: 
 	var bot_ids: Array[String] = []
 	if bots:
 		bot_ids = player_ids.slice(1)
+		for pid: String in bot_ids:  # у ботов свои имена и гербы (BotNames)
+			if BotNames.BOTS.has(pid):
+				PlayerProfile.seats[pid] = BotNames.profile(pid)
 	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids, teams)
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():
