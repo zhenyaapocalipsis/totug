@@ -36,7 +36,7 @@ func is_available(state: GameState, player_id: String) -> bool:
 	var p: PlayerState = state.players[player_id]
 	match source:
 		"hand": return not p.deck.hand.is_empty()
-		"inner_circle": return not p.deck.inner_circle.is_empty()
+		"inner_circle": return not state.stock(player_id).deck.inner_circle.is_empty()
 		"this": return p.deck.played_pile.has(card_id)
 	return true
 
@@ -112,7 +112,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		_answer = null
 		if chosen != null and chosen != "":
 			var p: PlayerState = state.players[player_id]
-			var pile: Array = p.deck.hand if source == "hand" else p.deck.inner_circle
+			var pile: Array = p.deck.hand if source == "hand" else state.stock(player_id).deck.inner_circle
 			var idx: int = pile.find(chosen)
 			if idx != -1:
 				pile.remove_at(idx)
@@ -120,7 +120,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		return
 
 	var p: PlayerState = state.players[player_id]
-	var pool: Array = (p.deck.hand if source == "hand" else p.deck.inner_circle).duplicate()
+	var pool: Array = (p.deck.hand if source == "hand" else state.stock(player_id).deck.inner_circle).duplicate()
 	if pool.is_empty():
 		return
 	if _is_optional():

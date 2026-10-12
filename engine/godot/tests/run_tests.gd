@@ -34,6 +34,7 @@ func _initialize() -> void:
 	test_dead_ends_pruned()
 	test_control_rules()
 	test_team_mode()
+	test_team_stock()
 
 	# этап 2: базовый цикл хода
 	test_vp_bank()
@@ -522,6 +523,50 @@ func test_control_rules() -> void:
 
 ## Этап Team-1: режим 2 на 2 — очередь A1 → B1 → A2 → B2, общее Присутствие,
 ## союзника нельзя атаковать, счёт команды общий.
+func test_team_stock() -> void:
+	section("2 на 2: общие бараки, трофеи и внутренний круг")
+	var ids: Array[String] = ["red", "blue", "green", "purple"]
+	var state := GameSetup.new_game(ids, 5, [], false, false, false, GameSetup.MODE_STANDARD, true)
+	var red: PlayerState = state.players["red"]
+	var green: PlayerState = state.players["green"]
+	check(state.stock("green") == red and state.stock("purple") == state.players["blue"], "запас команды у red и blue")
+	check_eq(state.stock_share("green"), 2, "запас делят двое")
+	check_eq(red.troops_in_barracks, 78, "80 войск на команду минус два стартовых")
+	check_eq(green.troops_in_barracks, 0, "у союзника своих бараков нет")
+	check_eq(red.spies_in_barracks, 10, "10 шпионов на команду")
+	var slots: Array = []
+	for site_id: String in state.graph.sites.keys():
+		if state.graph.slots_of_site(site_id).size() >= 3:
+			slots = Array(state.graph.slots_of_site(site_id))
+			break
+	for slot_id: String in state.troops.keys():
+		state.troops[slot_id] = ""
+	state.troops[slots[0]] = "blue"
+	Actions.kill_at(state, "green", slots[0])
+	check_eq(red.trophy_hall_count, 1, "трофей зелёного — в общий зал")
+	var before := red.troops_in_barracks
+	var resolver := EffectResolver.new()
+	var deploy := DeployTroop.new(1)
+	deploy._deploy_at(state, "green", slots[1], resolver)
+	check_eq(red.troops_in_barracks, before - 1, "зелёный ставит войско из общих бараков")
+	check_eq(state.troops_out("green"), 80 - red.troops_in_barracks, "ушло из общих бараков (Solar)")
+	green.deck.played_pile.append("x")
+	green.pending_promotions.append("x")
+	TurnEngine.finish_end_of_turn(state, "green")
+	check(red.deck.inner_circle.has("x") and green.deck.inner_circle.is_empty(), "промоут зелёного — в общий круг")
+	check_eq(GainVpPerN.new("vp", "inner_circle", 1, 1)._count_source(state, "green"), red.deck.inner_circle.size(),
+		"\"your inner circle\" у союзника — общий круг")
+	var view := StateView.for_player(state, "green")
+	check_eq(int(view["players"]["green"]["troops_in_barracks"]), red.troops_in_barracks, "интерфейс видит общие бараки")
+	var copy := StateCopy.copy_state(state)
+	check(copy.stock("green") == copy.players["red"], "копия для бота держит тот же запас")
+	red.troops_in_barracks = 1
+	deploy._deploy_at(state, "green", slots[2], resolver)
+	check(state.game_end_triggered, "конец игры — когда пусты общие бараки")
+	check(ReplayBook.same_rules(22) and not ReplayBook.same_rules(22, true) and ReplayBook.same_rules(NetSession.PROTOCOL, true),
+		"реплей 2v2 до общих бараков — OLD, обычный — нет")
+
+
 func test_team_mode() -> void:
 	section("режим 2 на 2")
 	var ids: Array[String] = ["red", "blue", "green", "purple"]

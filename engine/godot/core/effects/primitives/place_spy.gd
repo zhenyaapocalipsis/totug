@@ -57,7 +57,7 @@ func is_available(state: GameState, player_id: String) -> bool:
 ## локации ставить нельзя (подтвердил владелец игры).
 func _legal_sites(state: GameState, player_id: String) -> Array:
 	var result: Array = []
-	var p: PlayerState = state.players[player_id]
+	var p: PlayerState = state.stock(player_id)
 	if p.spies_in_barracks <= 0:
 		return result
 	for site_id: String in state.graph.sites.keys():
@@ -67,7 +67,7 @@ func _legal_sites(state: GameState, player_id: String) -> Array:
 
 
 func _place_at(state: GameState, player_id: String, site_id: String, resolver: EffectResolver) -> void:
-	var p: PlayerState = state.players[player_id]
+	var p: PlayerState = state.stock(player_id)
 	p.spies_in_barracks -= 1
 	var site_spies: Array = state.spies.get(site_id, [])
 	site_spies.append(player_id)

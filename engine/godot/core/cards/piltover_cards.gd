@@ -252,7 +252,7 @@ class _BothIfFocus extends CardEffect:
 class _PowerToTroops extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var p: PlayerState = state.players[player_id]
-		if p.power < 1 or p.troops_in_barracks <= 0:
+		if p.power < 1 or state.stock(player_id).troops_in_barracks <= 0:
 			return
 		var ask := OptionalEffect.new(_PayPower.new(), "Spend 1 Power to deploy 2 troops?")
 		ask.source_card = "49216"
@@ -270,12 +270,17 @@ class _PayPower extends CardEffect:
 
 
 ## Archmage: "Gain a spy to your supply (you can hold up to 10 spies)".
+## 2v2: общий запас команды — до 10 на каждого союзника (шпионы обоих).
 class _GainSpy extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var p: PlayerState = state.players[player_id]
-		if p.spies_in_barracks + CelestialCards._own_spies(state, player_id) >= PiltoverCards.MAX_SPIES:
+		var stock: PlayerState = state.stock(player_id)
+		var on_board := 0
+		for pid: String in state.players.keys():
+			if state.stock(pid) == stock:
+				on_board += CelestialCards._own_spies(state, pid)
+		if stock.spies_in_barracks + on_board >= PiltoverCards.MAX_SPIES * state.stock_share(player_id):
 			return
-		p.spies_in_barracks += 1
+		stock.spies_in_barracks += 1
 		resolver.log_event("gain_spy", {"player_id": player_id})
 
 

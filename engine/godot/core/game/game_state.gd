@@ -120,6 +120,7 @@ func set_teams(team_of: Dictionary) -> void:
 	teams = team_of
 	presence.sides = team_of
 	control.sides = team_of
+	pool_stocks()
 
 
 func is_team_game() -> bool:
@@ -155,6 +156,56 @@ func members_of(side: String) -> Array[String]:
 		if side_of(pid) == side:
 			out.append(pid)
 	return out
+
+
+## Запас игрока (этап Team-6): бараки (войска и шпионы), трофейный зал и
+## внутренний круг. В 2v2 у команды один общий запас — он лежит у "хозяина",
+## игрока с тем же id, что и команда (GameSetup.team_map: "red", "blue");
+## у союзника эти поля пустые. В обычной игре — сам игрок.
+func stock(player_id: String) -> PlayerState:
+	var side := side_of(player_id)
+	if players.has(side):
+		return players[side]
+	return players[player_id]
+
+
+## Сколько игроков делят запас player_id (1 в обычной игре, 2 в 2v2):
+## общие бараки вмещают STARTING_TROOPS и STARTING_SPIES на каждого.
+func stock_share(player_id: String) -> int:
+	var holder := stock(player_id)
+	var n := 0
+	for pid: String in players.keys():
+		if stock(pid) == holder:
+			n += 1
+	return maxi(1, n)
+
+
+## Сколько войск уже ушло из бараков игрока (в 2v2 — из общих бараков
+## команды): Solar и живой текст "troops_left".
+func troops_out(player_id: String) -> int:
+	return PlayerState.STARTING_TROOPS * stock_share(player_id) - stock(player_id).troops_in_barracks
+
+
+## Сложить запасы союзников у хозяина команды (повторный вызов ничего не
+## меняет: у союзника всё уже нулевое).
+func pool_stocks() -> void:
+	for pid: String in players.keys():
+		var p: PlayerState = players[pid]
+		var holder := stock(pid)
+		if holder == p:
+			continue
+		holder.troops_in_barracks += p.troops_in_barracks
+		holder.spies_in_barracks += p.spies_in_barracks
+		p.troops_in_barracks = 0
+		p.spies_in_barracks = 0
+		for color: String in p.trophies.keys():
+			for i in range(int(p.trophies[color])):
+				holder.add_trophy(color)
+		p.trophies.clear()
+		p.trophy_hall_count = 0
+		p.white_trophy_count = 0
+		holder.deck.inner_circle.append_array(p.deck.inner_circle)
+		p.deck.inner_circle.clear()
 
 
 ## Расставляет нейтральные белые войска по данным сайтов (рулбук стр. 4, шаг
@@ -195,7 +246,7 @@ func setup_white_troops(site_data: Dictionary) -> void:
 ## claude/stage2-start-here.md: список кандидатов не подтверждён владельцем
 ## игры). Возвращает false, если на сайте уже нет свободных слотов.
 func setup_deploy_starting_troop(player_id: String, site_id: String) -> bool:
-	var p: PlayerState = players[player_id]
+	var p: PlayerState = stock(player_id)
 	if p.troops_in_barracks <= 0:
 		return false
 	for slot_id: String in graph.slots_of_site(site_id):

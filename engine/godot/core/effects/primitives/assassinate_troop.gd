@@ -109,7 +109,7 @@ func _kill(state: GameState, player_id: String, slot_id: String, resolver: Effec
 	var victim: String = state.troops.get(slot_id, "")
 	state.troops[slot_id] = ""
 	var p: PlayerState = state.players[player_id]
-	p.add_trophy(victim)
+	state.stock(player_id).add_trophy(victim)
 	if gain_influence_per_removed > 0:
 		p.influence += gain_influence_per_removed
 	if gain_power_per_removed > 0:

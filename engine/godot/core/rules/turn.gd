@@ -181,7 +181,7 @@ static func finish_end_of_turn(state: GameState, player_id: String, resolver: Ef
 
 	# 1. promote
 	for card_id: String in p.pending_promotions.duplicate():
-		p.deck.promote(card_id)
+		p.deck.promote(card_id, state.stock(player_id).deck)
 	p.pending_promotions.clear()
 
 	# 2. VP по ходу партии приносят ТОЛЬКО две вещи:

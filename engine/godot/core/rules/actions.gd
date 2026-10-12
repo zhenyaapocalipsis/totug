@@ -40,7 +40,7 @@ static func kill_at(state: GameState, player_id: String, slot_id: String) -> voi
 	if victim == "":
 		return
 	state.troops[slot_id] = ""
-	state.players[player_id].add_trophy(victim)
+	state.stock(player_id).add_trophy(victim)
 
 
 ## Deploy a troop (рулбук стр. 12): 1 Power. Если в бараке войск больше нет,
@@ -52,7 +52,8 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	if p.power < COST_DEPLOY:
 		return false
 
-	if p.troops_in_barracks <= 0:
+	var stock: PlayerState = state.stock(player_id)
+	if stock.troops_in_barracks <= 0:
 		p.power -= COST_DEPLOY
 		p.vp_tokens += state.vp_bank.grant(1)
 		return true
@@ -63,8 +64,8 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 
 	p.power -= COST_DEPLOY
 	state.troops[slot_id] = player_id
-	p.troops_in_barracks -= 1
-	if p.troops_in_barracks == 0:
+	stock.troops_in_barracks -= 1
+	if stock.troops_in_barracks == 0:
 		GameEnd.trigger(state, "last_troop")
 	return true
 
@@ -170,7 +171,7 @@ static func remove_spy(state: GameState, site_id: String, spy_owner: String) -> 
 	site_spies.remove_at(idx)
 	state.spies[site_id] = site_spies
 	if state.players.has(spy_owner):
-		state.players[spy_owner].spies_in_barracks += 1
+		state.stock(spy_owner).spies_in_barracks += 1
 
 
 ## Цена карты в слоте рынка с учётом Cursed Affinity (New Era, Shadow Isles).

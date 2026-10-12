@@ -48,7 +48,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			_finish(player_id, resolver)
 			return
 		state.troops[slot_id] = ""
-		state.players[player_id].troops_in_barracks += 1
+		state.stock(player_id).troops_in_barracks += 1
 		returned += 1
 		resolver.log_event("return_troop", {"slot_id": slot_id, "owner": player_id})
 	elif exact and not is_available(state, player_id):

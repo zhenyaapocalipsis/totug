@@ -302,7 +302,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 				func(state, pid): return CardLibrary._site_has_enemy_troop(state, pid, site), GainPower.new(1)))
 		"48320":  # Drow Negotiator
 			return SequenceEffect.new([
-				ConditionalEffect.new(func(state, pid): return state.players[pid].deck.inner_circle.size() >= 4, GainInfluence.new(3)),
+				ConditionalEffect.new(func(state, pid): return state.stock(pid).deck.inner_circle.size() >= 4, GainInfluence.new(3)),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
 			])
 		"48310":  # Blackguard
@@ -357,7 +357,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 		"48415":  # Dragonclaw
 			return SequenceEffect.new([
 				AssassinateTroop.new(1),
-				ConditionalEffect.new(func(state, pid): return state.players[pid].player_trophy_count() >= 5, GainPower.new(2)),
+				ConditionalEffect.new(func(state, pid): return state.stock(pid).player_trophy_count() >= 5, GainPower.new(2)),
 			])
 		"48407":  # Cleric of Laogzed
 			return SequenceEffect.new([MoveTroop.new(1), AtEndOfTurn.new(PromoteCard.new("played_other", card_id))])
@@ -581,7 +581,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 		"48738":  # Revenant
 			return SequenceEffect.new([
 				AssassinateTroop.new(2),
-				ConditionalEffect.new(func(state, pid): return state.players[pid].trophy_hall_count >= 8, PromoteCard.new("this", "48738")),
+				ConditionalEffect.new(func(state, pid): return state.stock(pid).trophy_hall_count >= 8, PromoteCard.new("this", "48738")),
 			])
 		"48731":  # Ogre Zombie
 			return SupplantTroop.new(1, true, true)

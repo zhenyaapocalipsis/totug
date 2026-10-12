@@ -76,13 +76,14 @@ func play_from_hand(card_id: String) -> bool:
 
 ## Promote: переносит карту из played_pile (разыгранную В ЭТОТ ход, рулбук
 ## стр. 13) во Внутренний круг. Промутированные карты выходят из колоды
-## насовсем — в перетасовку сброса больше не попадают.
-func promote(card_id: String) -> bool:
+## насовсем — в перетасовку сброса больше не попадают. circle — чей круг
+## (2v2: общий круг команды лежит в колоде хозяина запаса), null — свой.
+func promote(card_id: String, circle: Deck = null) -> bool:
 	var idx := played_pile.find(card_id)
 	if idx == -1:
 		return false
 	played_pile.remove_at(idx)
-	inner_circle.append(card_id)
+	(circle if circle != null else self).inner_circle.append(card_id)
 	return true
 
 

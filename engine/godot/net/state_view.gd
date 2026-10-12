@@ -63,7 +63,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	}
 	for pid: String in state.players.keys():
 		# 2 на 2: рука и колода союзника открыты (смотреть по T, играть нельзя).
-		view["players"][pid] = _player_view(state.players[pid], pid == viewer_id or state.is_ally(viewer_id, pid))
+		view["players"][pid] = _player_view(state.players[pid], pid == viewer_id or state.is_ally(viewer_id, pid), state.stock(pid))
 	view["legal"] = _legal_actions(state, viewer_id)
 	# Живой текст карт (CardLive): у всех карт, которые зритель видит своими —
 	# рука, колода, сброс, сыгранные, рынок и запас.
@@ -133,7 +133,7 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 	var p: PlayerState = state.players[viewer_id]
 
 	var deploy_slots: Array[String] = []
-	if p.power >= Actions.COST_DEPLOY and p.troops_in_barracks > 0:
+	if p.power >= Actions.COST_DEPLOY and state.stock(viewer_id).troops_in_barracks > 0:
 		for slot_id in state.presence.deployable_slots(viewer_id, state.troops, state.spies):
 			deploy_slots.append(slot_id)
 
@@ -183,7 +183,7 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 		"recruit_supply": supply_cards,
 		# Deploy с пустым бараком — законное действие, дающее 1 VP вместо
 		# войска (рулбук стр. 12), поэтому оно отдельно от deploy_slots.
-		"deploy_for_vp": p.power >= Actions.COST_DEPLOY and p.troops_in_barracks <= 0,
+		"deploy_for_vp": p.power >= Actions.COST_DEPLOY and state.stock(viewer_id).troops_in_barracks <= 0,
 		"end_turn": true,
 	}
 
@@ -262,18 +262,21 @@ static func _duplicate_spies(spies: Dictionary) -> Dictionary:
 	return result
 
 
-static func _player_view(p: PlayerState, is_owner: bool) -> Dictionary:
+## stock — запас игрока (в 2v2 общий у команды: бараки, трофеи, внутренний круг).
+static func _player_view(p: PlayerState, is_owner: bool, stock: PlayerState = null) -> Dictionary:
+	if stock == null:
+		stock = p
 	var view: Dictionary = {
 		"id": p.id,
 		"power": p.power,
 		"influence": p.influence,
-		"troops_in_barracks": p.troops_in_barracks,
-		"spies_in_barracks": p.spies_in_barracks,
-		"trophy_hall_count": p.trophy_hall_count,
-		"white_trophy_count": p.white_trophy_count,
-		"trophies": p.trophies.duplicate(),
+		"troops_in_barracks": stock.troops_in_barracks,
+		"spies_in_barracks": stock.spies_in_barracks,
+		"trophy_hall_count": stock.trophy_hall_count,
+		"white_trophy_count": stock.white_trophy_count,
+		"trophies": stock.trophies.duplicate(),
 		"vp_tokens": p.vp_tokens,
-		"inner_circle": p.deck.inner_circle.duplicate(),
+		"inner_circle": stock.deck.inner_circle.duplicate(),
 		"played_pile": p.deck.played_pile.duplicate(),
 		"hand_size": p.deck.hand.size(),
 		"discard_size": p.deck.discard_pile.size(),

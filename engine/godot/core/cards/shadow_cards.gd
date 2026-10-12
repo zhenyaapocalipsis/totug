@@ -276,9 +276,9 @@ class _PowerPerDiscardedOutcast extends CardEffect:
 ## войско игрока попадает в трофеи как player troop.
 class _SupplantPlayerBonus extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var before: int = state.players[player_id].player_trophy_count()
+		var before: int = state.stock(player_id).player_trophy_count()
 		resolver.push(CallbackEffect.new(func(s: GameState, pid: String, r: EffectResolver):
-			if s.players[pid].player_trophy_count() > before:
+			if s.stock(pid).player_trophy_count() > before:
 				r.push(GainPower.new(1), pid)), player_id)
 		resolver.push(SupplantTroop.new(1), player_id)
 

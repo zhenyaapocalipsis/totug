@@ -44,7 +44,7 @@ func _count_source(state: GameState, player_id: String) -> int:
 				n += owners.count(player_id)
 			return n
 		"inner_circle":
-			return p.deck.inner_circle.size()
+			return state.stock(player_id).deck.inner_circle.size()
 		"sites_controlled":
 			var n := 0
 			for site_id: String in state.graph.sites.keys():
@@ -64,11 +64,11 @@ func _count_source(state: GameState, player_id: String) -> int:
 					n += 1
 			return n
 		"player_trophy":
-			return p.player_trophy_count()
+			return state.stock(player_id).player_trophy_count()
 		"white_trophy":
-			return p.white_trophy_count
+			return state.stock(player_id).white_trophy_count
 		"trophy_hall":
-			return p.trophy_hall_count
+			return state.stock(player_id).trophy_hall_count
 	push_error("GainVpPerN: неизвестный source '%s'" % source)
 	return 0
 

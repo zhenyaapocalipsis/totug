@@ -249,7 +249,7 @@ func _apply(intent: Intent) -> int:
 
 		Intent.Type.ACTION_DEPLOY:
 			var vp_before: int = state.players[intent.player_id].vp_tokens
-			var empty_barracks: bool = state.players[intent.player_id].troops_in_barracks <= 0
+			var empty_barracks: bool = state.stock(intent.player_id).troops_in_barracks <= 0
 			if not Actions.deploy(state, intent.player_id, intent.slot_id):
 				return Error.INVALID_ACTION
 			if empty_barracks:

@@ -42,7 +42,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	if remaining <= 0:
 		return
 	var p: PlayerState = state.players[player_id]
-	if p.troops_in_barracks <= 0:
+	if state.stock(player_id).troops_in_barracks <= 0:
 		var granted: int = state.vp_bank.grant(remaining)
 		p.vp_tokens += granted
 		resolver.log_event("gain_vp", {"player_id": player_id, "amount": granted})
@@ -72,8 +72,9 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 func _deploy_at(state: GameState, player_id: String, slot_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[player_id]
 	state.troops[slot_id] = player_id
-	p.troops_in_barracks -= 1
-	if p.troops_in_barracks == 0:
+	var stock: PlayerState = state.stock(player_id)
+	stock.troops_in_barracks -= 1
+	if stock.troops_in_barracks == 0:
 		GameEnd.trigger(state, "last_troop")
 	deployed.append(slot_id)
 	resolver.log_event("deploy_troop", {"player_id": player_id, "slot_id": slot_id})

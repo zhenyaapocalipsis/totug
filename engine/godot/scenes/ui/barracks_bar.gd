@@ -77,7 +77,12 @@ func _make_number() -> Label:
 
 
 func update_from_view(view: Dictionary) -> void:
-	var order: Array = view.get("turn_order", [])
+	# 2v2 (Team-6): бараки у команды общие — один прямоугольник на команду
+	# (ключ — id команды, он же id хозяина запаса).
+	var order: Array = []
+	for pid in view.get("turn_order", []):
+		if not order.has(_key(String(pid))):
+			order.append(_key(String(pid)))
 	if _boxes.is_empty():
 		for pid in order:
 			_boxes[String(pid)] = _make_box(String(pid))
@@ -90,14 +95,16 @@ func update_from_view(view: Dictionary) -> void:
 		var spies := int(p["spies_in_barracks"])
 		(box["troops"] as Label).text = str(troops)
 		(box["spies"] as Label).text = str(spies)
+		var who := "%s TEAM" % pid.to_upper() if BoardPanel.team_of.has(pid) else EventLogPanel.player_name(pid)
 		(box["panel"] as PanelContainer).tooltip_text = "%s\nTroops: %d, spies: %d" % [
-			EventLogPanel.player_name(pid), troops, spies]
+			who, troops, spies]
 
 
 ## Середина прямоугольника игрока pid в глобальных координатах — отсюда
 ## вылетают его войска и шпионы (см. GameScreen._launch_token). null, если
 ## такого игрока в полосе нет или полоса ещё не разложена.
 func box_global_centre(pid: String) -> Variant:
+	pid = _key(pid)
 	if not _boxes.has(pid):
 		return null
 	var panel: PanelContainer = _boxes[pid]["panel"]
@@ -109,9 +116,15 @@ func box_global_centre(pid: String) -> Variant:
 ## Из барака только что вылетела фишка: прямоугольник вспыхивает и гаснет.
 ## Без сдвига и масштаба — их раскладывает полоса, да и пиксели «кипят».
 func kick(pid: String) -> void:
+	pid = _key(pid)
 	if not _boxes.has(pid):
 		return
 	var panel: PanelContainer = _boxes[pid]["panel"]
 	panel.modulate = Color(KICK_BRIGHT, KICK_BRIGHT, KICK_BRIGHT)
 	var tween := panel.create_tween()
 	tween.tween_property(panel, "modulate", Color.WHITE, KICK_TIME)
+
+
+## Чей прямоугольник показывает запас игрока pid: в 2v2 — команды.
+func _key(pid: String) -> String:
+	return String(BoardPanel.team_of.get(pid, pid))

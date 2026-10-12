@@ -151,7 +151,9 @@ static func card_bonus_vp(state: GameState, player_id: String) -> Dictionary:
 	var inner_extra := 0
 	var spies := 0
 	for owners: Array in state.spies.values():
-		spies += owners.count(player_id)
+		for owner: String in owners:
+			if state.is_ally(player_id, owner):  # 2v2: шпионы общие
+				spies += 1
 	var outside := p.deck.cards_outside_inner_circle()
 	deck_extra += outside.count(COUATL) * spies
 	inner_extra += p.deck.inner_circle.count(COUATL) * spies

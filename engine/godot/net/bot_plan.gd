@@ -71,7 +71,7 @@ static func next_step(server: GameServer, me: String, budget_ms: int, seed: int 
 ## Подпись того, что план меняет: по ней видно, что шаг прошёл как ожидалось.
 static func signature(state: GameState, me: String) -> String:
 	var p: PlayerState = state.players[me]
-	return str([p.power, p.influence, p.troops_in_barracks, p.trophy_hall_count, p.vp_tokens,
+	return str([p.power, p.influence, state.stock(me).troops_in_barracks, state.stock(me).trophy_hall_count, p.vp_tokens,
 		p.deck.discard_pile.size(), state.troops.hash(), state.spies.hash()])
 
 

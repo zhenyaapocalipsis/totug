@@ -42,7 +42,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			var idx := p.deck.played_pile.find(card_id)
 			if idx != -1:
 				p.deck.played_pile.remove_at(idx)
-				p.deck.inner_circle.append(card_id)
+				state.stock(player_id).deck.inner_circle.append(card_id)
 				resolver.log_event("promote", {"player_id": player_id, "card_id": card_id})
 			return
 		"top_of_deck":
@@ -55,7 +55,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			var top: String = p.deck.draw_pile.pop_back()
 			if Supplies.redirect_outcast(state, player_id, top, resolver):
 				return
-			p.deck.inner_circle.append(top)
+			state.stock(player_id).deck.inner_circle.append(top)
 			resolver.log_event("promote", {"player_id": player_id, "card_id": top, "from": "top_of_deck"})
 			return
 
@@ -116,7 +116,7 @@ func _promote_from(state: GameState, player_id: String, chosen: String, resolver
 	if removed and Supplies.redirect_outcast(state, player_id, chosen, resolver):
 		return
 	if removed:
-		p.deck.inner_circle.append(chosen)
+		state.stock(player_id).deck.inner_circle.append(chosen)
 		resolver.log_event("promote", {"player_id": player_id, "card_id": chosen})
 
 

@@ -53,7 +53,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		if idx != -1:
 			spies.remove_at(idx)
 			state.spies[site_id] = spies
-			state.players[player_id].spies_in_barracks += 1
+			state.stock(player_id).spies_in_barracks += 1
 			resolver.log_event("return_own_spy", {"player_id": player_id, "site_id": site_id})
 		_collected.append(site_id)
 		if multi:

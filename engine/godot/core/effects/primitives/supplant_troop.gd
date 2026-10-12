@@ -79,11 +79,12 @@ func _after_hit(state: GameState, player_id: String, resolver: EffectResolver) -
 func _supplant(state: GameState, player_id: String, resolver: EffectResolver, slot_id: String) -> void:
 	var p: PlayerState = state.players[player_id]
 	var victim: String = state.troops.get(slot_id, "")
-	p.add_trophy(victim)
-	if p.troops_in_barracks > 0:
+	var stock: PlayerState = state.stock(player_id)
+	stock.add_trophy(victim)
+	if stock.troops_in_barracks > 0:
 		state.troops[slot_id] = player_id
-		p.troops_in_barracks -= 1
-		if p.troops_in_barracks == 0:
+		stock.troops_in_barracks -= 1
+		if stock.troops_in_barracks == 0:
 			GameEnd.trigger(state, "last_troop")
 	else:
 		state.troops[slot_id] = ""

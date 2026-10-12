@@ -129,7 +129,7 @@ class VictimDiscard extends CardEffect:
 			return
 		p.deck.hand.remove_at(idx)
 		if promote_instead:
-			p.deck.inner_circle.append(chosen_card)
+			state.stock(player_id).deck.inner_circle.append(chosen_card)
 			resolver.log_event("promote", {"player_id": player_id, "card_id": chosen_card})
 			return
 		p.deck.discard_pile.append(chosen_card)

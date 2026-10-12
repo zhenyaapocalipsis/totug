@@ -33,7 +33,7 @@ static func build(card_id: String) -> CardEffect:
 			], ["+3 Power", "Look at the top 6 cards: House Guards into your hand"])
 		"49001":  # Priest (Dawnspeakers)
 			return SequenceEffect.new([
-				ConditionalEffect.new(func(state, pid): return state.players[pid].deck.inner_circle.size() >= 6, GainInfluence.new(2)),
+				ConditionalEffect.new(func(state, pid): return state.stock(pid).deck.inner_circle.size() >= 6, GainInfluence.new(2)),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
 			])
 		"49002":  # Sphinx of Wonder (Insightful Investigator)
@@ -112,7 +112,7 @@ static func build(card_id: String) -> CardEffect:
 			], ["+2 Power", "Assassinate a white troop", "Return a troop or spy", "Put a House Guard into your hand"])
 		"49015":  # Solar (Kayle)
 			var left := func(state, pid, n):
-				return PlayerState.STARTING_TROOPS - state.players[pid].troops_in_barracks >= n
+				return state.troops_out(pid) >= n
 			return SequenceEffect.new([
 				DeployTroop.new(3),
 				ConditionalEffect.new(func(state, pid): return left.call(state, pid, 10), AssassinateTroop.new(1)),
@@ -274,7 +274,7 @@ class _PromoteHandDeployIc extends CardEffect:
 			p.deck.hand.remove_at(idx)
 			if Supplies.redirect_outcast(state, player_id, String(chosen), resolver):
 				return
-			p.deck.inner_circle.append(String(chosen))
+			state.stock(player_id).deck.inner_circle.append(String(chosen))
 			resolver.log_event("promote", {"player_id": player_id, "card_id": chosen})
 			var ic: int = Scoring._card_vp(String(chosen), "inner_circle_vp")
 			if ic > 0:

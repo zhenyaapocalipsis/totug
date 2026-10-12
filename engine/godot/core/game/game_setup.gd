@@ -189,6 +189,7 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 		var p: PlayerState = state.players[player_id]
 		p.deck.shuffle_draw_pile(state.rng)
 		p.deck.draw_up_to(HAND_SIZE, state.rng)
+	state.pool_stocks()  # 2v2: общие бараки команды (80 войск, 10 шпионов)
 
 	# 11. стартовое войско каждому на свободном стартовом сайте
 	var starting_sites := find_starting_sites(graph)

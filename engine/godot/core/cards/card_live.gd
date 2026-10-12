@@ -116,7 +116,7 @@ static func _count(state: GameState, pid: String, source: String) -> int:
 	var p: PlayerState = state.players[pid]
 	match source:
 		"troops_left":
-			return PlayerState.STARTING_TROOPS - p.troops_in_barracks
+			return state.troops_out(pid)
 		"outcast_supply":
 			return state.supplies.remaining(Supplies.INSANE_OUTCAST)
 		"discard_outcasts":

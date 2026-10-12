@@ -63,7 +63,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		pd.target_effect = self
 		resolver.request_decision(pd)
 	else:
-		var ic: Array = state.players[player_id].deck.inner_circle
+		var ic: Array = state.stock(player_id).deck.inner_circle
 		if ic.is_empty():
 			return
 		var pd2 := PendingDecision.new()

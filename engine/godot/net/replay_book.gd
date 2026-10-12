@@ -120,18 +120,24 @@ static func erase(file: String, dir: String = DIR) -> void:
 
 ## Реплей записан той же версией правил, что сейчас в игре.
 static func same_version(replay: Dictionary) -> bool:
-	return same_rules(int((replay.get("header", {}) as Dictionary).get("protocol", -1)))
+	var header: Dictionary = replay.get("header", {})
+	return same_rules(int(header.get("protocol", -1)), bool(header.get("teams", false)))
 
 
 ## Версии сети, после которых правила не менялись (менялась только связь),
 ## — их реплеи ложатся на нынешние карты так же (17: до LEADERBOARD; 19: до
 ## режима 2 на 2 — обычные партии он не меняет, проверено пересборкой реплеев 11.10;
 ## 20: до экрана DEALING THE CARDS; 21: до правки Gibbering Mouther — реплей с ним
-## может разойтись, остальные ложатся так же).
-const SAME_RULES := [17, 19, 20, 21]
+## может разойтись, остальные ложатся так же; 22: до общих бараков 2v2).
+const SAME_RULES := [17, 19, 20, 21, 22]
+## С этой версии в 2v2 общие бараки, трофеи и внутренний круг (этап Team-6):
+## реплеи 2v2 раньше неё — OLD, обычные партии она не меняет.
+const TEAM_STOCK := 23
 
 
-static func same_rules(protocol: int) -> bool:
+static func same_rules(protocol: int, teams: bool = false) -> bool:
+	if teams and protocol < TEAM_STOCK:
+		return false
 	return protocol == NetSession.PROTOCOL or SAME_RULES.has(protocol)
 
 

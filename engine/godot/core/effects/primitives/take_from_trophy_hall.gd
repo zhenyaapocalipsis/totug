@@ -39,6 +39,8 @@ func _collect(state: GameState, player_id: String) -> Array[String]:
 	var halls: Array = [specific_player_id] if specific_player_id != "" \
 		else state.turn_order.filter(func(pid): return state.is_opponent(player_id, pid))
 	for hall: String in halls:
+		if state.stock(hall) != state.players[hall]:
+			continue  # 2v2: общий зал команды лежит у хозяина
 		var p: PlayerState = state.players[hall]
 		var colors: Array = p.trophies.keys()
 		colors.sort()

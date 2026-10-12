@@ -285,13 +285,13 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 	var best_ratio := -0.01  # действие хоть чуть-чуть в минус не берём
 
 	if p.power >= Actions.COST_DEPLOY:
-		if p.troops_in_barracks <= 0:
+		if state.stock(pid).troops_in_barracks <= 0:
 			best = Intent.deploy(pid, "")
 			best_ratio = 1.0
 		else:
 			for slot: String in state.presence.deployable_slots(pid, state.troops, state.spies):
 				var gain := _troops_eval(state, ctx, {slot: pid}) - base
-				if p.troops_in_barracks == 1:
+				if state.stock(pid).troops_in_barracks == 1:
 					gain += _end_trigger_bonus(state, ctx)
 				var ratio := gain / float(Actions.COST_DEPLOY)
 				if _collect:
@@ -338,7 +338,7 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 	var best: Intent = null
 	var best_ratio := -0.01
 	if p.power >= Actions.COST_DEPLOY:
-		if p.troops_in_barracks <= 0:
+		if state.stock(pid).troops_in_barracks <= 0:
 			return Intent.deploy(pid, "")
 		var deployable := state.presence.deployable_slots(pid, state.troops, state.spies)
 		var reach := {}
@@ -346,7 +346,7 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 			reach[slot] = true
 		for slot: String in deployable:
 			var gain := _local_gain(state, ctx, {slot: pid}) + W_PRESENCE * _new_reach(state, slot, reach)
-			if p.troops_in_barracks == 1:
+			if state.stock(pid).troops_in_barracks == 1:
 				gain += END_LEADER if bool(ctx["leader"]) else -END_TRAILER
 			if _collect:
 				_notes.append([gain, Intent.deploy(pid, slot)])
@@ -842,7 +842,8 @@ static func horizon(state: GameState) -> float:
 	var n := state.turn_order.size()
 	var min_barracks := PlayerState.STARTING_TROOPS
 	for pid: String in state.turn_order:
-		min_barracks = mini(min_barracks, state.players[pid].troops_in_barracks)
+		# 2v2: общие бараки команды делят двое — на игрока половина
+		min_barracks = mini(min_barracks, state.stock(pid).troops_in_barracks / state.stock_share(pid))
 	var by_troops := float(min_barracks) / TROOPS_PER_ROUND
 	var by_market := float(state.market.deck_size()) / (BUYS_PER_ROUND * float(maxi(1, n)))
 	return clampf(minf(by_troops, by_market), 0.5, 8.0)
@@ -856,7 +857,8 @@ static func rounds_left(state: GameState) -> float:
 	var n := state.turn_order.size()
 	var min_barracks := PlayerState.STARTING_TROOPS
 	for pid: String in state.turn_order:
-		min_barracks = mini(min_barracks, state.players[pid].troops_in_barracks)
+		# 2v2: общие бараки команды делят двое — на игрока половина
+		min_barracks = mini(min_barracks, state.stock(pid).troops_in_barracks / state.stock_share(pid))
 	var by_troops := float(min_barracks) / TROOPS_PER_ROUND
 	var by_market := float(state.market.deck_size()) / (BUYS_PER_ROUND * float(maxi(1, n)))
 	return clampf(minf(by_troops, by_market), 0.5, 30.0)

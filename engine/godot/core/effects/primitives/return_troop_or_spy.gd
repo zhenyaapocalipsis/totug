@@ -112,7 +112,7 @@ static func _resolve_choice(state: GameState, choice: String, resolver: EffectRe
 		var owner: String = state.troops.get(slot_id, "")
 		state.troops[slot_id] = ""
 		if state.players.has(owner):
-			state.players[owner].troops_in_barracks += 1
+			state.stock(owner).troops_in_barracks += 1
 		resolver.log_event("return_troop", {"player_id": who, "slot_id": slot_id, "owner": owner})
 	else:
 		var site_id: String = parts[1]
@@ -123,7 +123,7 @@ static func _resolve_choice(state: GameState, choice: String, resolver: EffectRe
 			site_spies.remove_at(idx)
 			state.spies[site_id] = site_spies
 		if state.players.has(owner):
-			state.players[owner].spies_in_barracks += 1
+			state.stock(owner).spies_in_barracks += 1
 		resolver.log_event("return_spy", {"player_id": who, "site_id": site_id, "owner": owner, "spy_owner": owner})
 
 
