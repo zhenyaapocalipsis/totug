@@ -187,6 +187,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_played_card = null
 
 	var fresh := 0
+	var keys: Array = []   # место карты в ряду: прежний индекс, новые — правее
 	for entry: Array in entries:
 		var cid: String = entry[0]
 		var from_zone: bool = entry[1]
@@ -211,8 +212,21 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_delay.append(ENTER_STAGGER * fresh)
 			_deal_sound(fresh)
 			fresh += 1
+		keys.append(found if found >= 0 else old_cards.size() + keys.size())
 		_cards[_cards.size() - 1].set_clickable(
 			zone_ids.has(cid) if from_zone else playable.has(cid))
+
+	# Одинаковые карты сервер не различает: щёлкнули правый Noble — из руки
+	# уходит первый, и рука приходит в другом порядке, а левый Noble уезжал
+	# вправо. Оставшиеся карты руки держат прежние места, новые встают правее.
+	var order: Array = range(hand.size())
+	order.sort_custom(func(a: int, b: int) -> bool: return keys[a] < keys[b])
+	var was := [_cards.duplicate(), _pos.duplicate(), _vel.duplicate(), _delay.duplicate()]
+	for i in range(order.size()):
+		_cards[i] = was[0][order[i]]
+		_pos[i] = was[1][order[i]]
+		_vel[i] = was[2][order[i]]
+		_delay[i] = was[3][order[i]]
 
 	for j in range(old_cards.size()):
 		if reused.has(j):

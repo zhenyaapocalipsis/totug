@@ -126,8 +126,9 @@ static func same_version(replay: Dictionary) -> bool:
 ## Версии сети, после которых правила не менялись (менялась только связь),
 ## — их реплеи ложатся на нынешние карты так же (17: до LEADERBOARD; 19: до
 ## режима 2 на 2 — обычные партии он не меняет, проверено пересборкой реплеев 11.10;
-## 20: до экрана DEALING THE CARDS).
-const SAME_RULES := [17, 19, 20]
+## 20: до экрана DEALING THE CARDS; 21: до правки Gibbering Mouther — реплей с ним
+## может разойтись, остальные ложатся так же).
+const SAME_RULES := [17, 19, 20, 21]
 
 
 static func same_rules(protocol: int) -> bool:

@@ -143,7 +143,13 @@ func show_data(data: Dictionary) -> void:
 		var colour := PixelTheme.GOLD if me else PixelTheme.TEXT
 		var rating := int(row.get("rating", 0))
 		_grid.add_child(_cell(str(i + 1), PixelTheme.TEXT_DIM, int(COLUMNS[0][1])))
-		_grid.add_child(_cell(String(row.get("name", "")), colour, int(COLUMNS[1][1])))
+		var name_cell := _cell(String(row.get("name", "")), colour, int(COLUMNS[1][1]))
+		# Щелчок по чужому имени — карточка игрока с ADD FRIEND (владелец, 2026-10-12).
+		if not me:
+			var card := {"name": String(row.get("name", "")), "rating": rating,
+				"games": int(row.get("games", 0)), "wins": int(row.get("wins", 0))}
+			ProfileCard.attach(name_cell, "", func(): return card)
+		_grid.add_child(name_cell)
 		_grid.add_child(_cell(PlayerProfile.rank_title(rating), PlayerProfile.rank_colour(rating), int(COLUMNS[2][1])))
 		_grid.add_child(_cell(str(rating), colour, int(COLUMNS[3][1])))
 		_grid.add_child(_cell(str(int(row.get("games", 0))), colour, int(COLUMNS[4][1])))
@@ -156,6 +162,8 @@ func show_data(data: Dictionary) -> void:
 		_mine.text = "YOU: #%d   %d" % [int(mine["rank"]), int(mine["rating"])]
 	else:
 		_mine.text = "YOU: #%d" % int(mine["rank"])
+	if not top.is_empty():
+		_mine.text += "\nClick a player's name to add a friend."
 
 
 func _set_mode(mode: String) -> void:

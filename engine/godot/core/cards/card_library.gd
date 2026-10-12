@@ -393,7 +393,10 @@ static func _build_effect(card_id: String) -> CardEffect:
 				GainVpPerN.new("vp", "sites_controlled_total", 1, 1),
 			])
 		"48512":  # Gibbering Mouther
-			return SequenceEffect.new([DeployTroop.new(2), GiveInsaneOutcast.new("choose_opponent_adjacent", 1)])
+			var mouther_deploy := DeployTroop.new(2)
+			var mouther_give := GiveInsaneOutcast.new("choose_opponent_deployed", 1)
+			mouther_give.slots = mouther_deploy.deployed
+			return SequenceEffect.new([mouther_deploy, mouther_give])
 		"48534":  # Night Hag
 			return ChooseEffect.new([PlaceSpy.new(1), ReturnOwnSpy.new(DrawCards.new(2))], ["Place a spy", "Return one of your spies -> Draw 2 cards"])
 		"48527":  # Myconid Adult

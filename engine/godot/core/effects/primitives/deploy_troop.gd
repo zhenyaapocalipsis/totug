@@ -16,6 +16,9 @@ var up_to: bool
 ## "deploy ... there" — локацию назвала карта: только её пустые слоты, без
 ## проверки Присутствия (как у других эффектов с названной локацией).
 var site: String = ""
+## Общий список слотов, куда эта цепочка уже поставила войска (Gibbering
+## Mouther: следующий эффект карты смотрит, в чьё Присутствие они встали).
+var deployed: Array = []
 
 
 func _init(count: int = 1, allow_fewer: bool = false, at_site: String = "") -> void:
@@ -54,6 +57,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		return
 
 	var next := DeployTroop.new(remaining - 1, up_to, site)
+	next.deployed = deployed
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
 	pd.prompt = "Deploy a troop"
@@ -71,4 +75,5 @@ func _deploy_at(state: GameState, player_id: String, slot_id: String, resolver: 
 	p.troops_in_barracks -= 1
 	if p.troops_in_barracks == 0:
 		GameEnd.trigger(state, "last_troop")
+	deployed.append(slot_id)
 	resolver.log_event("deploy_troop", {"player_id": player_id, "slot_id": slot_id})

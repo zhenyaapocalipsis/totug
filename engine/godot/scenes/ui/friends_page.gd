@@ -184,7 +184,7 @@ func show_data(data: Dictionary) -> void:
 	var friends: Array = data.get("friends", [])
 	_list.add_child(_label("FRIENDS %d" % friends.size(), PixelTheme.TEXT_DIM))
 	if friends.is_empty():
-		_list.add_child(_label("Add a friend by nickname,\nor click a player's name\nin a lobby or a game.", PixelTheme.TEXT_DIM))
+		_list.add_child(_label("Add a friend by nickname,\nor click a player's name\nin a lobby, a game or\nLEADERBOARD.", PixelTheme.TEXT_DIM))
 	var still_there := false
 	for f: Dictionary in friends:
 		var fname := String(f["name"])

@@ -87,6 +87,7 @@ func _initialize() -> void:
 	test_auto_decision_answer()
 	test_recruit_from_supply()
 	test_insane_outcast_supply()
+	test_gibbering_mouther_presence()
 	test_state_view_legal_and_supplies()
 	test_game_server_recruit_supply()
 	test_white_troops_on_real_board()
@@ -2700,6 +2701,59 @@ func test_insane_outcast_supply() -> void:
 	check_eq(blue_after - blue_before, 1, "последняя карта ушла blue (следующий по часовой от red)")
 	check_eq(green_after - green_before, 0, "green не получил ничего — стопка кончилась")
 	check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), 0, "стопка пуста")
+
+
+func test_gibbering_mouther_presence() -> void:
+	section("Gibbering Mouther: Outcast — только тем, в чьё Присутствие встали войска карты")
+	var state := GameSetup.new_game(["red", "blue", "green"], 11, ["drow", "demons"])
+	var pres := state.presence
+	var only_blue := ""
+	var nobody := ""
+	for slot_id: String in state.graph.slots:
+		if state.troops.get(slot_id, "") != "":
+			continue
+		var b: bool = pres.has_presence_at_slot("blue", slot_id, state.troops, state.spies)
+		var g: bool = pres.has_presence_at_slot("green", slot_id, state.troops, state.spies)
+		if b and not g and only_blue == "":
+			only_blue = slot_id
+		if not b and not g and nobody == "":
+			nobody = slot_id
+	check(only_blue != "" and nobody != "", "нашлись слоты для проверки")
+
+	var give := GiveInsaneOutcast.new("choose_opponent_deployed")
+	give.slots = [only_blue]
+	var r := EffectResolver.new()
+	r.apply(give, "red", state)
+	check(r.is_waiting(), "выбор игрока спрошен")
+	check_eq(r.pending.legal_options, ["blue"], "на выбор только blue — green не в Присутствии")
+
+	var before: int = state.supplies.remaining(Supplies.INSANE_OUTCAST)
+	var give2 := GiveInsaneOutcast.new("choose_opponent_deployed")
+	give2.slots = [nobody]
+	var r2 := EffectResolver.new()
+	r2.apply(give2, "red", state)
+	check(not r2.is_waiting(), "никого в Присутствии — вопроса нет")
+	check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), before, "Outcast никому не выдан")
+
+	# сама карта: войска, поставленные её Deploy, попадают в список слотов
+	state.players["red"].troops_in_barracks = 10
+	var r3 := EffectResolver.new()
+	r3.apply(CardLibrary.get_effect("48512"), "red", state)
+	var guard := 0
+	while r3.is_waiting() and r3.pending.choice_type == "target_slot" and guard < 2:
+		var pick: String = only_blue if r3.pending.legal_options.has(only_blue) else String(r3.pending.legal_options[0])
+		r3.resume(state, pick)
+		guard += 1
+	if r3.is_waiting() and r3.pending.choice_type == "target_player":
+		check(not r3.pending.legal_options.has("red"), "себя выбрать нельзя")
+		for pid: String in r3.pending.legal_options:
+			var hit := false
+			for slot_id: String in state.graph.slots:
+				if state.troops.get(slot_id, "") == "red" and pres.has_presence_at_slot(pid, slot_id, state.troops, state.spies):
+					hit = true
+			check(hit, "%s в списке, потому что войско карты встало в его Присутствие" % pid)
+	else:
+		check(true, "войска карты не попали ни в чьё Присутствие — Outcast не спрошен")
 
 
 func _count_of(list: Array, value: String) -> int:

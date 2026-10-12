@@ -467,7 +467,7 @@
     "type": "ABERRATION",
     "deck_vp": 1,
     "inner_circle_vp": 3,
-    "ability_text": "Deploy 2 troops, then choose an opponent\nwith a troop adjacent to at least 1 of them. He\nor she recruits an Insane Outcast."
+    "ability_text": "Deploy 2 troops, then choose an opponent\nwith presence at at least 1 of them. He\nor she recruits an Insane Outcast."
   },
   {
     "card_id": 48534,

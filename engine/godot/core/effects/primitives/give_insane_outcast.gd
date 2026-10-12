@@ -9,17 +9,17 @@ extends CardEffect
 ##   "self"            — сам разыгравший карту игрок
 ##   "each_opponent"   — все противники
 ##   "choose_opponent"          — активный игрок выбирает, кто из противников
-##   "choose_opponent_adjacent" — УПРОЩЕНО (см. ниже): по правилам должен быть
-##       противник с войском, смежным хотя бы с одним из только что
-##       развёрнутых слотов (Gibbering Mouther); в этой реализации сужение по
-##       смежности не проверяется — выбор идёт из ВСЕХ противников. Пометка
-##       для владельца игры: если хочет строгую проверку смежности, отдельно
-##       уточнить набор "только что развёрнутых слотов" в интерфейсе эффекта.
+##   "choose_opponent_deployed" — решение владельца (2026-10-12, Gibbering
+##       Mouther): только противники, в чьё Присутствие встало хотя бы одно
+##       войско, развёрнутое этой картой (слоты — общий список slots, его
+##       заполняет DeployTroop.deployed). Никого нет — Outcast не выдаётся.
 
 const INSANE_OUTCAST_ID := Supplies.INSANE_OUTCAST
 
 var mode: String
 var count: int
+## Для "choose_opponent_deployed": слоты, куда карта поставила войска.
+var slots: Array = []
 
 
 func _init(m: String, n: int = 1) -> void:
@@ -71,7 +71,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 					_give(state, pid, resolver)
 			return
 
-	# choose_opponent / choose_opponent_adjacent
+	# choose_opponent / choose_opponent_deployed
 	if is_answered():
 		var target = answer()
 		if target != null and target != "":
@@ -79,7 +79,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		return
 	var options: Array = []
 	for pid: String in state.turn_order:
-		if state.is_opponent(player_id, pid):
+		if state.is_opponent(player_id, pid) and (mode != "choose_opponent_deployed" or _deployed_into(state, pid)):
 			options.append(pid)
 	if options.is_empty():
 		return
@@ -90,3 +90,10 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	pd.legal_options = options
 	pd.target_effect = self
 	resolver.request_decision(pd)
+
+
+func _deployed_into(state: GameState, pid: String) -> bool:
+	for slot_id: String in slots:
+		if state.presence.has_presence_at_slot(pid, slot_id, state.troops, state.spies):
+			return true
+	return false

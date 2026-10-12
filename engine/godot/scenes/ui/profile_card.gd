@@ -20,9 +20,10 @@ var _col: VBoxContainer
 static func open(anchor: Control, pid: String, profile: Dictionary) -> ProfileCard:
 	var card := ProfileCard.new(pid, profile)
 	# Чужой игрок в онлайне — его можно позвать в друзья прямо отсюда (в лобби
-	# и в партии; владелец, 2026-10-11).
+	# и в партии; владелец, 2026-10-11). В LEADERBOARD места нет — pid "", а
+	# своё имя там не кликается (владелец, 2026-10-12).
 	var net := anchor.get_tree().root.get_node_or_null("Net") as NetSession
-	if net != null and net.is_connected_to_server() and pid != net.seat:
+	if net != null and net.is_connected_to_server() and (pid == "" or pid != net.seat):
 		card._add_friend_button(net, String(profile.get("name", "")))
 	anchor.get_tree().root.add_child(card)
 	card._place.call_deferred(anchor.get_global_mouse_position())
