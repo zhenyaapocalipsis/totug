@@ -1110,6 +1110,10 @@ func _broadcast_pause(room: GameRoom) -> void:
 	var status := room.pause_status(abandon_seconds, pause_seconds)
 	for peer: int in room.seats:
 		_send(peer, "_pause", [status])
+	# Зрителю тоже: иначе при отключившемся игроке он видит застывшую доску
+	# без объяснений.
+	for peer: int in room.watchers:
+		_send(peer, "_pause", [status])
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -1472,6 +1476,7 @@ func _start_watching(peer: int, me: String, other: String, shown: String) -> Str
 		room.watch_player = room.server.state.current_player()
 	room.watchers[peer] = true
 	_send(peer, "_watch_start", [friend_seat, room.cached_board, room.watch_view, room.profiles])
+	_send(peer, "_pause", [room.pause_status(abandon_seconds, pause_seconds)])
 	_log("room %s: %s watches" % [room.code, ratings.friends.name_of(me)])
 	return ""
 
@@ -1503,6 +1508,7 @@ func _watch_start(friend_seat: String, board: Dictionary, view: Dictionary, seat
 	seat = ""
 	started = true
 	profiles = seat_profiles.duplicate(true)
+	pause_status = {}
 	_watch_queue.clear()
 	watch_started.emit(friend_seat, board, view)
 

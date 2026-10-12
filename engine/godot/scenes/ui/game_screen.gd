@@ -735,11 +735,11 @@ func _rebuild_pause_lines() -> void:
 		_pause_lines.add_child(_pause_line(pid, "%s DISCONNECTED" % EventLogPanel.player_name(pid).to_upper()))
 	var by := String(_pause.get("by", ""))
 	if by != "":
-		var who := "YOU" if by == viewer_id else EventLogPanel.player_name(by).to_upper()
+		var who := "YOU" if by == viewer_id and not watching else EventLogPanel.player_name(by).to_upper()
 		_pause_lines.add_child(_pause_line(by, "PAUSED BY %s" % who))
 	_pause_hint.text = "If they do not return in time, the game ends with the current score.\nRating does not change." \
 		if not absent.is_empty() else "The game goes on by itself when the time is up."
-	_pause_resume.visible = by == viewer_id and absent.is_empty()
+	_pause_resume.visible = by == viewer_id and absent.is_empty() and not watching
 
 
 func _pause_line(pid: String, text: String) -> HBoxContainer:

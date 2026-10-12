@@ -69,6 +69,8 @@ var _threads: Dictionary = {}
 var _watch_seat := ""
 var _watch_view: Dictionary = {}
 var _watch_over := false
+## Шагов партии, дошедших до зрителя до её конца.
+var _watch_steps := 0
 var _answered_at := -1
 var _spoof_sent := false
 var _turn_player := ""
@@ -289,7 +291,9 @@ func _process(delta: float) -> bool:
 					_watch_view = v)
 				_watcher.result_received.connect(func(_e: int, _ev: Array, v: Dictionary):
 					if bool(v.get("game_over", false)):
-						_watch_over = true)
+						_watch_over = true
+					else:
+						_watch_steps += 1)
 				_watcher.friends_action("watch", [players[0].profile["name"]])
 				_step = "watch_start"
 		"watch_start":
@@ -301,6 +305,15 @@ func _process(delta: float) -> bool:
 				check(hands == 0 and (_watch_view.get("legal", {}) as Dictionary).is_empty(),
 					"[watch] зрителю не видно ни рук, ни колод, ходить нечем")
 				check(server.rooms.values()[0].watchers.size() == 1, "[watch] сервер знает зрителя")
+				# Обычный ход: ходящий завершает ход — зритель должен его увидеть.
+				var current: String = server.rooms.values()[0].server.state.current_player()
+				for p in players:
+					if p.seat == current:
+						p.send_intent(Intent.end_turn(current))
+				_step = "watch_turn"
+		"watch_turn":
+			if _watch_steps > 0:
+				check(true, "[watch] обычный ход дошёл до зрителя")
 				_end_game()
 		"rated":
 			if ratings.has(players[0]) and ratings.has(players[1]) and _watch_over:
