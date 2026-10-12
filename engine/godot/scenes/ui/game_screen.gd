@@ -2119,8 +2119,10 @@ func _show_banner(text: String, colour: Color) -> void:
 	_turn_banner.show_turn(text, colour, Rect2(_board_area.position, _board_area.size))
 
 
+## Вне дерева окна ещё нет: при переподключении первый срез приходит прямо в
+## _init, и ошибка здесь обрывала весь refresh — экран оставался пустым.
 func _request_attention() -> void:
-	if net != null and not get_window().has_focus():
+	if net != null and is_inside_tree() and not get_window().has_focus():
 		get_window().request_attention()
 
 
