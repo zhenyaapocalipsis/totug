@@ -580,6 +580,38 @@ class _DiscardDrawn extends CardEffect:
 			return
 		if discarded.is_empty():
 			return
-		var list := discarded
-		resolver.push(MercenaryCards.maybe_bribe(PromoteCard.new("discard", "", func(cid): return list.has(cid)),
+		resolver.push(MercenaryCards.maybe_bribe(MercenaryCards._PromoteDiscarded.new(discarded),
 			"Promote one of the discarded cards"), player_id)
+
+
+## Xanathar Surveillance, Bribe: продвинуть одну из ТОЛЬКО ЧТО сброшенных карт —
+## вариантов ровно столько, сколько сброшено (не все копии того же номера в сбросе).
+class _PromoteDiscarded extends CardEffect:
+	var cards: Array
+	func _init(list: Array) -> void:
+		cards = list
+	func _options(state: GameState, player_id: String) -> Array:
+		var pile: Array = state.players[player_id].deck.discard_pile.duplicate()
+		var out: Array = []
+		for cid in cards:
+			var at := pile.find(cid)
+			if at != -1:
+				pile.remove_at(at)
+				out.append(cid)
+		return out
+	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
+		var options := _options(state, player_id)
+		if is_answered():
+			var chosen := String(answer())
+			if not options.has(chosen):
+				return
+			var deck: Deck = state.players[player_id].deck
+			deck.discard_pile.remove_at(deck.discard_pile.rfind(chosen))
+			if Supplies.redirect_outcast(state, player_id, chosen, resolver):
+				return
+			state.stock(player_id).deck.inner_circle.append(chosen)
+			resolver.log_event("promote", {"player_id": player_id, "card_id": chosen})
+			return
+		if options.is_empty():
+			return
+		MercenaryCards._ask(self, player_id, resolver, "Promote one of the discarded cards", "target_card", options, "discard")

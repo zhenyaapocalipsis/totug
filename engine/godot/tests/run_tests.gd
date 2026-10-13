@@ -5876,3 +5876,27 @@ func test_mercenaries_deck() -> void:
 	var rz := EffectResolver.new()
 	MercenaryCards.after_buy(state, "red", rz)
 	check_eq([red.vp_tokens, blue.vp_tokens], [1, 0], "Zushaxx: покупка украла 1 VP")
+
+	# Xanathar Surveillance: Bribe продвигает только одну из двух сброшенных карт
+	red.deck.hand.clear()
+	red.deck.discard_pile.clear()
+	red.deck.discard_pile.append_array(["48342", "48344"] as Array[String])
+	red.deck.draw_pile.clear()
+	red.deck.draw_pile.append_array(["49401", "48342", "49400"] as Array[String])  # сверху 49400
+	red.vp_tokens = 1
+	var rx := _play_with(state, "49419")
+	check(rx.is_waiting() and rx.pending.tag == "hand", "Surveillance: сбросить одну из трёх вытянутых")
+	TurnEngine.resume_card(state, "48342", rx)
+	TurnEngine.resume_card(state, "49400", rx)
+	check(rx.is_waiting() and rx.pending.choice_type == "confirm", "Surveillance: подкупить?")
+	TurnEngine.resume_card(state, true, rx)
+	if rx.is_waiting() and rx.pending.choice_type == "target_player":
+		TurnEngine.resume_card(state, "blue", rx)
+	check(rx.is_waiting() and rx.pending.tag == "discard", "Surveillance: выбор в сбросе")
+	var px: Array = rx.pending.legal_options.duplicate()
+	px.sort()
+	check_eq(px, ["48342", "49400"], "на выбор только две сброшенные карты, без старого Noble и Soldier")
+	TurnEngine.resume_card(state, "49400", rx)
+	check(state.stock("red").deck.inner_circle.has("49400"), "сброшенная карта продвинута")
+	check_eq(red.deck.discard_pile.count("48342"), 2, "оба Noble остались в сбросе")
+	check(red.deck.hand.has("49401"), "третья вытянутая карта осталась в руке")
