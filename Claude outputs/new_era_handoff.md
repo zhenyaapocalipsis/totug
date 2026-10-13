@@ -140,8 +140,15 @@
   - `ChooseEffect`: флаг `choose_all` — вариант «All of them».
   - `PlaceSpy`: флаг `spy_move` — после шпиона вопрос «Move a troop?».
   - Лишний ход: `GameState.extra_turn_for / in_extra_turn`, `GameEnd.advance_turn`, `turn_flags["card_limit"]`, `TurnEngine.can_play_card` (бот это учитывает), в view — `extra_turn`, `cards_left`.
-  - Hydra: `PiltoverCards.after_buy` из GameServer после покупки.
+  - Harpy (бывшая Hydra): `PiltoverCards.after_buy` из GameServer после покупки.
   - Режимы: `GameSetup.is_new_era / is_mode / new_era_pair / new_era_mode`, `SetupScreen.mode_title`.
 - **NE-7 (арты):** 21 арт в `cards/pz/`, окна и мини-лица в `pixel_cards.gd`; возможная доводка кадров — Spy (лицо в тени), Rust Monster и Iron Golem (тёмные). Кандидаты `cards/pz/cand*` не в git.
 - В интерфейсе пока нет отдельной надписи «лишний ход, осталось N карт» — сервер просто не даёт сыграть четвёртую карту.
-- Чек-лист для живой проверки: (1) NEW ERA → кнопки колод, выбрать CELESTIAL + PILTOVER, фон розово-золотой; (2) Homunculus «choose all», потом Wererat — есть вариант «All of them»; (3) Basilisk с двумя Malice в руке — лишний ход, четвёртая карта не играется; (4) Assassin показывает 2 верхние карты каждого; (5) Hydra с двумя Ambition — после покупки предлагает карту дешевле.
+- Чек-лист для живой проверки: (1) NEW ERA → кнопки колод, выбрать CELESTIAL + PILTOVER, фон розово-золотой; (2) Homunculus «choose all», потом Wererat — есть вариант «All of them»; (3) Basilisk с двумя Malice в руке — лишний ход, четвёртая карта не играется; (4) Assassin показывает 2 верхние карты каждого; (5) Harpy с двумя Ambition — после покупки предлагает карту дешевле.
+
+## Siege и Mercenaries (2026-10-13)
+Фанатские полуколоды Tyrants (не Runeterra): `cards/Siege_Deck.pdf`, `cards/Mercenaries_-_Full_deck.pdf`. Подробности — `Claude outputs/siege_mercenaries.md`.
+- Карты 49300–49319 (тип SIEGE), 49400–49419 (тип MERCENARY), по 40 карт, `wip`; кнопки SIEGE и MERCENARIES в переключателе NEW ERA.
+- Эффекты: `core/cards/siege_cards.gd`, `core/cards/mercenary_cards.gd`; тесты `test_siege_deck`, `test_mercenaries_deck`.
+- Арты вырезаны из самих PDF: `cards/siege/`, `cards/mercenaries/`.
+- Имя Hydra перешло к карте Siege, карта Waterdeep 49220 теперь **Harpy** (арт 2024 года с D&D Beyond, `cards/pz/harpy.png`).

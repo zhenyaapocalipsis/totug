@@ -5431,14 +5431,14 @@ func test_piltover_zaun() -> void:
 	check(not ra.is_waiting() or not ra.pending.prompt.begins_with("Top 2"), "после сброса green уже не спрашивают")
 	_auto_resolve(state, ra, false)
 
-	# Hydra: после покупки — бесплатная карта дешевле
+	# Harpy (бывшая Hydra): после покупки — бесплатная карта дешевле
 	TurnEngine.start_turn(state, "red")
 	EffectResolver.new().apply(ShadowCards._SetFlag.new("buy_echo"), "red", state)
 	state.market.display[0] = "49208"  # цена 2
 	state.market.display[1] = "49219"  # цена 9
 	var rhy := EffectResolver.new()
 	PiltoverCards.after_buy(state, "red", "49207", rhy)  # купил карту за 5
-	check(rhy.is_waiting() and rhy.pending.choice_type == "target_market_index", "Hydra: предлагает карту рынка")
+	check(rhy.is_waiting() and rhy.pending.choice_type == "target_market_index", "Harpy: предлагает карту рынка")
 	check(rhy.pending.legal_options.has(0) and not rhy.pending.legal_options.has(1), "только дешевле купленной")
 
 	# Tough Boss: войско рядом с чужим — scry 1
@@ -5787,6 +5787,15 @@ func test_siege_deck() -> void:
 func test_mercenaries_deck() -> void:
 	section("Mercenaries: полуколода")
 	check_eq(GameSetup.expand_half_deck("mercenaries").size(), 40, "Mercenaries: 40 карт")
+	check_eq(CardLibrary.card_data("49220").get("name"), "Harpy", "Waterdeep: Hydra отдала имя карте Siege, теперь Harpy")
+	var names: Array = []
+	var repeated: Array = []
+	for cid: String in CardLibrary.all_ids():
+		var card_name := String(CardLibrary.card_data(cid).get("name", ""))
+		if names.has(card_name):
+			repeated.append(card_name)
+		names.append(card_name)
+	check_eq(repeated, [], "имена карт не повторяются")
 	_sweep_deck_with_vp(49400, 49419)
 
 	var state := _build_rich_state(41)

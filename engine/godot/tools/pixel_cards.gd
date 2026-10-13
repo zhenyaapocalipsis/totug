@@ -97,7 +97,18 @@ const MINI_FACE := {
 	49208: Vector2i(90, 10), 49209: Vector2i(52, 14), 49210: Vector2i(49, 39), 49211: Vector2i(62, 0),
 	49212: Vector2i(49, 6), 49213: Vector2i(39, 19), 49214: Vector2i(33, 47), 49215: Vector2i(59, 29),
 	49216: Vector2i(62, 17), 49217: Vector2i(60, 28), 49218: Vector2i(49, 19), 49219: Vector2i(69, 21),
-	49220: Vector2i(56, 0),
+	49220: Vector2i(33, 4),
+	# Siege
+	49300: Vector2i(74, 0), 49301: Vector2i(19, 0), 49303: Vector2i(92, 14), 49304: Vector2i(74, 4),
+	49307: Vector2i(30, 15), 49308: Vector2i(95, 30), 49309: Vector2i(106, 5), 49310: Vector2i(50, 5),
+	49311: Vector2i(34, 19), 49312: Vector2i(69, 0), 49314: Vector2i(74, 9), 49316: Vector2i(104, 9),
+	49317: Vector2i(14, 29), 49318: Vector2i(74, 0), 49319: Vector2i(104, 19),
+	# Mercenaries
+	49400: Vector2i(14, 40), 49401: Vector2i(59, 9), 49402: Vector2i(25, 20), 49403: Vector2i(54, 24),
+	49404: Vector2i(44, 19), 49405: Vector2i(69, 0), 49406: Vector2i(112, 29), 49407: Vector2i(54, 0),
+	49408: Vector2i(99, 47), 49409: Vector2i(99, 4), 49410: Vector2i(4, 0), 49411: Vector2i(90, 19),
+	49412: Vector2i(34, 14), 49413: Vector2i(84, 0), 49414: Vector2i(74, 0), 49415: Vector2i(84, 14),
+	49416: Vector2i(54, 0), 49417: Vector2i(84, 4), 49418: Vector2i(54, 19), 49419: Vector2i(59, 44),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -233,7 +244,50 @@ const SINGLE_ART := {
 	49217: ["pz/archmage.png", Rect2i(100, 30, 700, 427)],
 	49218: ["pz/basilisk.png", Rect2i(24, 0, 700, 427)],
 	49219: ["pz/behir.png", Rect2i(0, 60, 554, 338)],
-	49220: ["pz/hydra.jpeg", Rect2i(0, 20, 1000, 610)],
+	49220: ["pz/harpy.png", Rect2i(100, 40, 700, 427)],
+	# Siege и Mercenaries: арты вырезаны из самих карт PDF (cards/siege/,
+	# cards/mercenaries/). В левом верхнем углу кадра — значок аспекта карты,
+	# поэтому кадр либо ниже него (y >= 62), либо правее (x >= 64).
+	49300: ["siege/avatar_of_lolth.jpg", Rect2i(64, 0, 627, 382)],
+	49301: ["siege/converter.jpg", Rect2i(64, 0, 627, 382)],
+	49302: ["siege/relentless_siege.jpg", Rect2i(0, 62, 691, 421)],
+	49303: ["siege/beast_tamer.jpg", Rect2i(64, 0, 627, 382)],
+	49304: ["siege/warlord.jpg", Rect2i(0, 62, 691, 421)],
+	49305: ["siege/siege_beast.jpg", Rect2i(0, 62, 691, 421)],
+	49306: ["siege/spoils_of_war.jpg", Rect2i(0, 62, 691, 421)],
+	49307: ["siege/hydra.jpg", Rect2i(0, 62, 691, 421)],
+	49308: ["siege/scout_leader.jpg", Rect2i(0, 62, 691, 421)],
+	49309: ["siege/siege_tower.jpg", Rect2i(64, 0, 627, 382)],
+	49310: ["siege/shade_lingerer.jpg", Rect2i(0, 62, 691, 421)],
+	49311: ["siege/chieftain.jpg", Rect2i(64, 0, 627, 382)],
+	49312: ["siege/privateers.jpg", Rect2i(64, 0, 627, 382)],
+	49313: ["siege/trebuchet.jpg", Rect2i(0, 62, 691, 421)],
+	49314: ["siege/plunder.jpg", Rect2i(64, 0, 627, 382)],
+	49315: ["siege/dread_ballista.jpg", Rect2i(0, 62, 691, 421)],
+	49316: ["siege/ramming_beast.jpg", Rect2i(64, 0, 627, 382)],
+	49317: ["siege/underdark_champion.jpg", Rect2i(0, 62, 691, 421)],
+	49318: ["siege/guardian_brute.jpg", Rect2i(64, 0, 627, 382)],
+	49319: ["siege/schemer.jpg", Rect2i(64, 0, 627, 382)],
+	49400: ["mercenaries/goblinoid_ambushers.jpg", Rect2i(0, 69, 690, 421)],
+	49401: ["mercenaries/hobgoblin_warlord.jpg", Rect2i(70, 0, 620, 378)],
+	49402: ["mercenaries/artemis_entreri.jpg", Rect2i(70, 0, 620, 378)],
+	49403: ["mercenaries/goblin_swarm.jpg", Rect2i(70, 0, 620, 378)],
+	49404: ["mercenaries/bugbear.jpg", Rect2i(70, 0, 620, 378)],
+	49405: ["mercenaries/dragonborn_hireling.jpg", Rect2i(70, 0, 620, 378)],
+	49406: ["mercenaries/bregan_daerthe_agents.jpg", Rect2i(0, 69, 690, 421)],
+	49407: ["mercenaries/nihiloor.jpg", Rect2i(70, 0, 620, 378)],
+	49408: ["mercenaries/goblin_thief.jpg", Rect2i(70, 0, 620, 378)],
+	49409: ["mercenaries/bazaar_trader.jpg", Rect2i(0, 69, 690, 421)],
+	49410: ["mercenaries/security_guard.jpg", Rect2i(0, 69, 690, 421)],
+	49411: ["mercenaries/bregan_daerthe_spy.jpg", Rect2i(70, 0, 620, 378)],
+	49412: ["mercenaries/narl_xibrindas.jpg", Rect2i(70, 0, 620, 378)],
+	49413: ["mercenaries/jarlaxle.jpg", Rect2i(70, 0, 620, 378)],
+	49414: ["mercenaries/xanathar_smuggler.jpg", Rect2i(0, 69, 690, 421)],
+	49415: ["mercenaries/shady_merchant.jpg", Rect2i(70, 0, 620, 378)],
+	49416: ["mercenaries/sylgar.jpg", Rect2i(0, 69, 690, 421)],
+	49417: ["mercenaries/ahmaergo.jpg", Rect2i(70, 0, 620, 378)],
+	49418: ["mercenaries/xanathar_zushaxx.jpg", Rect2i(70, 0, 620, 378)],
+	49419: ["mercenaries/xanathar_surveillance.jpg", Rect2i(0, 69, 690, 421)],
 }
 
 const FONT := {
@@ -462,7 +516,9 @@ func draw_footer(c: Dictionary, H: int) -> void:
 	rect(2, by, W - 4, 17, C_FRAME)
 	var card_id := int(c["card_id"])
 	# Плашки VP такие же, как на мелкой карте (решение владельца, 2026-09-24).
-	var ic_x := mini_vp_badge(W - 7, by + 3, str(int(c["inner_circle_vp"])), C_IC_HI, C_LIGHT)
+	# Sylgar (Mercenaries): во Внутренний круг не попадает — на карте "-".
+	var ic_text := "-" if c["inner_circle_vp"] == null else str(int(c["inner_circle_vp"]))
+	var ic_x := mini_vp_badge(W - 7, by + 3, ic_text, C_IC_HI, C_LIGHT)
 	mini_vp_badge(ic_x - 1, by + 3, str(int(c["deck_vp"])), C_PARCH, C_INK)
 	var set_str := set_name(card_id, sv(c["type"]))
 	text(9, by + 4, set_str, C_GREY, 1)
@@ -573,7 +629,8 @@ func layout_text(raw: String) -> Array:
 			paras.append(line)
 			continue
 		var prev := paras[-1]
-		var resource_line := RegEx.create_from_string("^(\\+\\d+ (Power|Influence) ?)+$")
+		# "• +1 Power" и "+1 Power, +1 Influence" (Siege) — тоже строки ресурсов.
+		var resource_line := RegEx.create_from_string("^(• )?(\\+\\d+ (Power|Influence),? ?)+$")
 		var brk := prev.ends_with(".") or prev.ends_with(":") or line.begins_with("•") \
 			or resource_line.search(prev) != null or line.begins_with("+") or line.contains("Focus ►")
 		if prev.ends_with("►"):

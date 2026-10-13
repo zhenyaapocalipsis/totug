@@ -15,11 +15,11 @@ extends RefCounted
 ##   "choose_all"  — Homunculus: в "Choose one" есть вариант "All of them";
 ##   "focus_extra" — Homunculus: каждый Focus срабатывает ещё раз;
 ##   "spy_move"    — Manticore: после каждого шпиона можно подвинуть войско;
-##   "buy_echo"    — Hydra: после покупки можно бесплатно взять карту дешевле.
+##   "buy_echo"    — Harpy: после покупки можно бесплатно взять карту дешевле.
 ## Лишний ход Basilisk — state.extra_turn_for / in_extra_turn (GameEnd).
 
 const BASILISK := "49218"
-const HYDRA := "49220"
+const HARPY := "49220"
 const MAX_SPIES := 10
 
 
@@ -144,7 +144,7 @@ static func build(card_id: String) -> CardEffect:
 			return ChooseEffect.new([_FocusFromTop.new(6), _RecruitFreeVp.new("", 999)],
 				["Focus cards from your top 6 into your hand, discard the rest",
 					"Recruit a market card for free, gain VP equal to its deck VP"])
-		"49220":  # Hydra (Seraphine) — бесплатная карта после покупки: after_buy
+		"49220":  # Harpy (Seraphine; до 2026-10-13 — Hydra, имя ушло карте Siege) — бесплатная карта после покупки: after_buy
 			return SequenceEffect.new([
 				GainInfluence.new(5),
 				FocusEffect.new("AMBITION", SequenceEffect.new([GainInfluence.new(4), ShadowCards._SetFlag.new("buy_echo")]), 2),
@@ -152,7 +152,7 @@ static func build(card_id: String) -> CardEffect:
 	return null
 
 
-## Hydra: после покупки (рынок или запас) — бесплатно карта рынка дешевле купленной.
+## Harpy: после покупки (рынок или запас) — бесплатно карта рынка дешевле купленной.
 static func after_buy(state: GameState, player_id: String, bought: String, resolver: EffectResolver) -> void:
 	if player_id != state.current_player() or not state.turn_flags.get("buy_echo", false):
 		return
@@ -162,7 +162,7 @@ static func after_buy(state: GameState, player_id: String, bought: String, resol
 	var free := RecruitFree.new("", limit, 1, true)
 	if free._eligible_indices(state).is_empty():
 		return
-	resolver.apply(free, player_id, state, HYDRA)
+	resolver.apply(free, player_id, state, HARPY)
 
 
 ## Stone Golem: "If it was a player troop, +3 Power. Otherwise, deploy a troop."

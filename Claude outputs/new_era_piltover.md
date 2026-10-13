@@ -34,7 +34,7 @@
 | 49217 | Archmage | Viktor | 7 | GUILE | 3/6 | 1 |
 | 49218 | Basilisk | Ekko | 7 | MALICE | 3/6 | 1 |
 | 49219 | Behir | Janna | 9 | MALICE | 4/9 | 1 |
-| 49220 | Hydra | Seraphine | 7 | AMBITION | 3/6 | 1 |
+| 49220 | Harpy (до 2026-10-13 — Hydra) | Seraphine | 7 | AMBITION | 3/6 | 1 |
 
 Арты (NE-7) — `cards/pz/<существо>.png/jpeg`, версии 2024 года с фоном; окна — `SINGLE_ART`/`MINI_FACE` в `tools/pixel_cards.gd`, подпись PILTOVER & ZAUN (в шрифт карт добавлен знак &). Неиспользованные кандидаты — `cards/pz/cand`, `cand2` (не в git, можно удалить).
 
@@ -44,7 +44,7 @@
 - Assassin (Caitlyn): смотрит 2 верхние карты каждого игрока, начиная с себя; сбросить можно **одну карту на всех**.
 - Iron Golem (Jayce): «promote a card you played» — можно продвинуть и саму Iron Golem.
 - Basilisk (Ekko): лишний ход сразу после своего, в нём не больше 3 карт. Из лишнего хода ещё один не берётся. Работает и в последнем круге.
-- Hydra (Seraphine): «whenever you recruit a card with Influence» = каждая покупка за Influence (рынок и запас). После неё можно бесплатно взять карту рынка дешевле купленной.
+- Harpy (Seraphine, бывшая Hydra): «whenever you recruit a card with Influence» = каждая покупка за Influence (рынок и запас). После неё можно бесплатно взять карту рынка дешевле купленной.
 - Behir (Janna): «Focus»-карта — карта, в тексте которой есть «Focus ►».
 - Archmage (Viktor): «Gain a spy» — +1 шпион в запас, всего не больше 10.
 - Chimera (Warwick): «deploy 2 troops per Power» — сколько угодно раз: платишь 1 Power, ставишь 2 войска.
