@@ -37,6 +37,9 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.ghost_market_player = ""
 	state.turn_discounts.clear()
 	state.turn_flags.clear()
+	for site_id: String in state.stolen_markers.keys():
+		if state.stolen_markers[site_id] == player_id:
+			state.stolen_markers.erase(site_id)
 	if state.in_extra_turn:
 		state.turn_flags["card_limit"] = EXTRA_TURN_CARDS
 	var p: PlayerState = state.players[player_id]
@@ -98,7 +101,7 @@ static func _pay_marker_influence(state: GameState, player_id: String, paid_site
 	for site_id: String in ControlMarkers.marked_sites(state):
 		if state.marker_influence_paid.has(site_id):
 			continue
-		if not state.control.controls(player_id, site_id, state.troops):
+		if not ControlMarkers.holds(state, player_id, site_id):
 			continue
 		state.marker_influence_paid.append(site_id)
 		paid_sites.append(site_id)

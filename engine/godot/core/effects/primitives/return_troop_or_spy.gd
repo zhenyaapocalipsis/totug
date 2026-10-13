@@ -21,6 +21,8 @@ var spy_only: bool
 ## "return up to N troops at that site" — локацию назвала карта: только она,
 ## без проверки Присутствия.
 var site: String = ""
+## Trebuchet: "Return a troop anywhere on the board" — без Присутствия.
+var anywhere: bool = false
 
 
 func _init(count: int = 1, allow_fewer: bool = false, only_troops: bool = false, only_spies: bool = false,
@@ -54,7 +56,7 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 				if site != "":
 					if state.graph.site_of_slot(slot_id) == site:
 						result.append("troop%s%s" % [SEP, slot_id])
-				elif state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
+				elif anywhere or state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
 					result.append("troop%s%s" % [SEP, slot_id])
 	if not troop_only:
 		for site_id: String in state.spies.keys():
@@ -124,6 +126,7 @@ static func _resolve_choice(state: GameState, choice: String, resolver: EffectRe
 			state.spies[site_id] = site_spies
 		if state.players.has(owner):
 			state.stock(owner).spies_in_barracks += 1
+			SiegeCards.brute_reaction(state, owner, who)
 		resolver.log_event("return_spy", {"player_id": who, "site_id": site_id, "owner": owner, "spy_owner": owner})
 
 

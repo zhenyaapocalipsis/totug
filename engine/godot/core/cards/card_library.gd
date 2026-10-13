@@ -623,6 +623,12 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var piltover := PiltoverCards.build(card_id)
 	if piltover != null:
 		return piltover
+	var siege := SiegeCards.build(card_id)
+	if siege != null:
+		return siege
+	var mercenary := MercenaryCards.build(card_id)
+	if mercenary != null:
+		return mercenary
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
 

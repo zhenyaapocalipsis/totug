@@ -18,7 +18,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		if card_id != null and card_id != "":
 			var p: PlayerState = state.players[player_id]
 			var idx: int = p.deck.hand.find(String(card_id))
-			if idx != -1:
+			if idx != -1 and not MercenaryCards.sylgar_saves(state, player_id, String(card_id), resolver):
 				p.deck.hand.remove_at(idx)
 				p.deck.discard_pile.append(String(card_id))
 				resolver.log_event("discard", {"player_id": player_id, "card_id": card_id})

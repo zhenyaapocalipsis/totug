@@ -26,6 +26,10 @@ var on_done: Callable = Callable()
 var _stage: String = "pick_source"
 var _picked_source: String = ""
 var _done_called := false
+## Nihiloor: двигать можно только войска с этих слотов; список общий с
+## картой и после хода войска переписывается на новый слот.
+var only_slots: Array = []
+var _moved_to: Array = []
 
 
 func _init(count: int = 1, allow_fewer: bool = false, own_troops: bool = false,
@@ -64,6 +68,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 					resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
 						func(s, pid, r): MoveTroop._do_move(s, pid, r, from, String(value))), "the move"), player_id)
 					return
+				if only_slots.has(from):
+					only_slots[only_slots.find(from)] = String(value)
+					_moved_to.append(String(value))
 				_do_move(state, player_id, resolver, from, String(value))
 			_after_move(state, player_id, resolver)
 			return
@@ -122,6 +129,8 @@ func _legal_sources(state: GameState, player_id: String) -> Array:
 		if owner == "":
 			continue
 		if single_site and locked_site != "" and state.graph.site_of_slot(slot_id) != locked_site:
+			continue
+		if not only_slots.is_empty() and (not only_slots.has(slot_id) or _moved_to.has(slot_id)):
 			continue
 		if own:
 			if owner == player_id:

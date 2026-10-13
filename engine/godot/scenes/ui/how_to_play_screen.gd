@@ -250,6 +250,8 @@ func _build_pages() -> Array:
 			+ "%s: you get the bonus if you played another card of the same aspect this turn, "
 				% _gold("Focus")
 			+ "or can show one from your hand.\n\n"
+			+ "%s: give 1 VP token to an opponent to get the effect. %s: take VP tokens from an opponent.\n\n"
+				% [_gold("Bribe ►"), _gold("Steal")]
 			+ "If a card disagrees with the rules, the card wins."},
 
 		{"title": "13. END OF THE GAME", "pic": _pic_rows.bind([

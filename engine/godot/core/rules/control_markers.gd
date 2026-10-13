@@ -75,7 +75,7 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 		var marker := marker_for(state, site_id)
 		if marker.is_empty():
 			continue
-		if not state.control.controls(player_id, site_id, state.troops):
+		if not holds(state, player_id, site_id):
 			continue
 		var site_name := String(state.graph.sites[site_id]["name"])
 		reward.influence += int(marker.get("control_influence", 0))
@@ -85,6 +85,14 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 			reward.total_control_sites.append(site_name)
 			reward.total_control_ids.append(site_id)
 	return reward
+
+
+## Чей сейчас маркер локации: обычно того, кто её контролирует; украденный
+## (Bregan D'aerthe Spy, state.stolen_markers) — только вора.
+static func holds(state: GameState, player_id: String, site_id: String) -> bool:
+	if state.stolen_markers.has(site_id):
+		return state.stolen_markers[site_id] == player_id
+	return state.control.controls(player_id, site_id, state.troops)
 
 
 ## Есть ли маркер у локации site_name на плитке tile ("B1") — для раскладки

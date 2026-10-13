@@ -24,7 +24,7 @@ const C_LIGHT := Color("f0e6d2")
 const C_PARCH := Color("e6d9bc")
 const C_PARCH_LO := Color("bfae88")
 const C_INK := Color("2a1a30")
-const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE",
+const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE", "BRIBE", "STEAL",
 	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
 
 ## Названия вариантов — по тексту варианта (ChooseEffect.labels), одинаковые
@@ -127,6 +127,29 @@ const NAMES := {
 	"Focus cards from your top 6 into your hand, discard the rest": "Howling Gale",
 	"Recruit a market card for free, gain VP equal to its deck VP": "Zephyr",
 	"All of them": "Everything",  # ChooseEffect.ALL_LABEL (Homunculus)
+	# Siege
+	"Place a spy, then draw a card": "Lolth's Gaze",
+	"Return one of your spies -> Put a played card or a card from your discard pile on top of your deck": "Move Forward",
+	"Return one of your spies -> +2 Influence, you may promote a market card for its cost": "Red Throne",
+	"+1 Power, +2 Influence": "Siege Fodder",
+	"Gain 1 VP": "Breach",
+	"+1 Power": "Sharpen Steel",
+	"Move an enemy spy to another site": "False Trail",
+	"Keep your Influence": "Hold Fire",
+	"Convert 1 Influence to Power": "Load One Bolt",
+	"Convert 2 Influence to Power": "Load Two Bolts",
+	"Convert 3 Influence to Power": "Full Volley",
+	# Mercenaries
+	"Steal 1 VP": "Ambush",
+	"Bribe -> +3 Power": "Hired Thugs",
+	"Bribe -> Supplant a white troop": "Highest Bidder",
+	"Discard a card -> Gain 1 VP and draw a card": "Fair Trade",
+	"Bribe -> Place a spy and draw 2 cards": "Back Room",
+	"Return one of your spies -> Steal 3 VP": "Cut Purse",
+	"Return one of your spies -> Steal that site's control marker until your next turn": "Borrowed Banner",
+	"Return one of your spies -> Swap this card with a card in a rival's discard pile": "Infiltrator",
+	"Move one of your troops and gain 1 Influence": "Slaver's Round",
+	"Bribe -> Swap 2 troops anywhere on the board": "Switched Chains",
 }
 
 var _tex: ImageTexture

@@ -38,7 +38,7 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 		var owner: String = state.troops.get(slot_id, "")
 		if not state.is_enemy(player_id, owner):
 			continue
-		if white_only and owner != "white":
+		if white_only and not SiegeCards.counts_as_white(state, player_id, owner):
 			continue
 		if preset_site != "" and state.graph.site_of_slot(slot_id) != preset_site:
 			continue

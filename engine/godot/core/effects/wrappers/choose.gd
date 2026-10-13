@@ -53,6 +53,8 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	if indices.size() > 1 and player_id == state.current_player() and state.turn_flags.get("choose_all", false):
 		indices.append(options.size())
 		shown_labels.append(ALL_LABEL)
+	if indices.is_empty():
+		return
 	pd.legal_options = indices
 	pd.option_labels = shown_labels
 	pd.source_card = source_card

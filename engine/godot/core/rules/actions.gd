@@ -147,7 +147,7 @@ static func return_enemy_spy(state: GameState, player_id: String, site_id: Strin
 	if not can_return_enemy_spy(state, player_id, site_id, spy_owner):
 		return false
 	state.players[player_id].power -= return_spy_cost(state)
-	remove_spy(state, site_id, spy_owner)
+	remove_spy(state, site_id, spy_owner, player_id)
 	return true
 
 
@@ -162,8 +162,9 @@ static func can_return_enemy_spy(state: GameState, player_id: String, site_id: S
 	return (state.spies.get(site_id, []) as Array).has(spy_owner)
 
 
-## Снять шпиона в барак владельца без платы и проверок.
-static func remove_spy(state: GameState, site_id: String, spy_owner: String) -> void:
+## Снять шпиона в барак владельца без платы и проверок. by — кто его
+## возвращает (Guardian Brute владельца шпиона даёт ему VP).
+static func remove_spy(state: GameState, site_id: String, spy_owner: String, by: String = "") -> void:
 	var site_spies: Array = state.spies.get(site_id, [])
 	var idx: int = site_spies.find(spy_owner)
 	if idx == -1:
@@ -172,6 +173,7 @@ static func remove_spy(state: GameState, site_id: String, spy_owner: String) -> 
 	state.spies[site_id] = site_spies
 	if state.players.has(spy_owner):
 		state.stock(spy_owner).spies_in_barracks += 1
+		SiegeCards.brute_reaction(state, spy_owner, by)
 
 
 ## Цена карты в слоте рынка с учётом Cursed Affinity (New Era, Shadow Isles).
@@ -180,7 +182,8 @@ static func market_cost(state: GameState, index: int) -> int:
 	var cost: int = state.market.card_cost(index)
 	if cost < 0:
 		return cost
-	return maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index]))
+	return maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index])
+		- int(state.turn_discounts.get("recruit", 0)))
 
 
 ## Цены базовых действий с учётом скидок хода (New Era, state.turn_discounts).
@@ -197,4 +200,5 @@ static func supply_cost(state: GameState, card_id: String) -> int:
 	var cost: int = CardLibrary.card_cost(card_id)
 	if cost < 0:
 		return cost
-	return maxi(0, cost - int(state.turn_discounts.get("supply:" + card_id, 0)))
+	return maxi(0, cost - int(state.turn_discounts.get("supply:" + card_id, 0))
+		- int(state.turn_discounts.get("recruit", 0)))

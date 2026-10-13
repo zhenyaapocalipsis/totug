@@ -64,6 +64,8 @@ func _initialize() -> void:
 	test_shield_guardian_reaction()
 	test_shadow_isles()
 	test_piltover_zaun()
+	test_siege_deck()
+	test_mercenaries_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2130,10 +2132,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 197 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 237 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 197, "cards.json содержит 197 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun)")
+	check_eq(all_ids.size(), 237, "cards.json содержит 237 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -5685,3 +5687,183 @@ func test_board_stock() -> void:
 		"другой сид — другая доска (сверка раскладки работает)")
 	var board := StateView.board_snapshot(state, entry["schematic"])
 	check(board["schematic"] == entry["schematic"], "снимок доски берёт готовый чертёж")
+
+
+
+## Все карты колоды разыгрываются до конца и с жетонами VP у всех (Bribe/Steal).
+func _sweep_deck_with_vp(first: int, last: int) -> void:
+	for prefer_last in [true, false]:
+		var hung: Array[String] = []
+		for n in range(first, last + 1):
+			var card_id := str(n)
+			var state := _build_rich_state(n % 1000)
+			for pid: String in state.players.keys():
+				state.players[pid].vp_tokens = 3
+			state.players["red"].deck.hand.append(card_id)
+			TurnEngine.start_turn(state, "red")
+			var resolver := EffectResolver.new()
+			TurnEngine.play_card(state, "red", card_id, resolver)
+			_auto_resolve(state, resolver, prefer_last)
+			if resolver.is_waiting():
+				hung.append(card_id)
+		check(hung.is_empty(), "карты %d-%d с жетонами VP разрешаются, prefer_last=%s (зависли: %s)" % [first, last, prefer_last, hung])
+
+
+func test_siege_deck() -> void:
+	section("Siege: полуколода")
+	check_eq(GameSetup.expand_half_deck("siege").size(), 40, "Siege: 40 карт")
+	check(not GameSetup.available_half_decks().has("siege"), "Siege пока не в обычном выборе (wip)")
+	var mode := GameSetup.new_era_mode(["mercenaries", "siege"])
+	check_eq(mode, "newera:siege,mercenaries", "пара Siege + Mercenaries в строке режима")
+	check(GameSetup.is_mode(mode), "режим принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 + 40 карт")
+	_sweep_deck_with_vp(49300, 49319)
+
+	var state := _build_rich_state(31)
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+
+	# Spoils of War: по выбору на каждый разный аспект (сама карта тоже считается)
+	state.played_aspects_this_turn.append_array(["MALICE", "GUILE", "MALICE"] as Array[String])
+	red.influence = 0
+	red.power = 0
+	var rs := _play_with(state, "49306", [0, 1, 0])
+	check(not rs.is_waiting(), "Spoils of War: три выбора при трёх разных аспектах")
+	check_eq([red.influence, red.power], [2, 1], "Spoils of War: +2 Influence, +1 Power")
+
+	# Relentless Siege: войска соперников — белые для "a white troop"
+	check(not SiegeCards.counts_as_white(state, "red", "blue"), "без Relentless Siege синее войско не белое")
+	_play_with(state, "49302")
+	check(SiegeCards.counts_as_white(state, "red", "blue"), "после Relentless Siege синее войско считается белым")
+	check(not SiegeCards.counts_as_white(state, "red", "red"), "своё войско — нет")
+
+	# Beast Tamer: рынок на 1 дешевле
+	var idx := 0
+	while state.market.card_cost(idx) <= 0:
+		idx += 1
+	var before := Actions.market_cost(state, idx)
+	_play_with(state, "49303")
+	check_eq(Actions.market_cost(state, idx), before - 1, "Beast Tamer: карта рынка на 1 дешевле")
+
+	# Dread Ballista: Influence -> Power
+	red.influence = 5
+	red.power = 0
+	var rb := _play_with(state, "49315")
+	check(rb.is_waiting() and rb.pending.legal_options.size() == 4, "Dread Ballista: оставить или 1-3 перевести")
+	TurnEngine.resume_card(state, 3, rb)
+	check_eq([red.influence, red.power], [2, 4], "Dread Ballista: +1 Power и 3 Influence в Power")
+
+	# Plunder: копия сыгранного Soldier (+1 Power)
+	red.deck.played_pile.clear()
+	red.deck.played_pile.append("48344")
+	red.power = 0
+	var rp := _play_with(state, "49314")
+	check(rp.is_waiting() and rp.pending.legal_options == ["48344"], "Plunder предлагает только сыгранную карту")
+	TurnEngine.resume_card(state, "48344", rp)
+	check_eq(red.power, 1, "Plunder: эффект Soldier ещё раз")
+
+	# Guardian Brute: соперник вернул шпиона — +1 VP за каждый Brute в руке
+	var blue: PlayerState = state.players["blue"]
+	blue.deck.hand.append_array(["49318", "49318"] as Array[String])
+	blue.vp_tokens = 0
+	var spy_site := ""
+	for site_id: String in state.spies.keys():
+		if (state.spies[site_id] as Array).has("blue"):
+			spy_site = site_id
+	Actions.remove_spy(state, spy_site, "blue", "red")
+	check_eq(blue.vp_tokens, 2, "Guardian Brute: два в руке — 2 VP за возвращённого шпиона")
+	Actions.remove_spy(state, spy_site, "blue", "blue")
+
+	# Scout Leader: войск по числу разных аспектов
+	state.played_aspects_this_turn.clear()
+	state.played_aspects_this_turn.append("MALICE")
+	var troops_before: int = red.troops_in_barracks
+	var rl := _play_with(state, "49308")
+	_auto_resolve(state, rl, false)
+	check_eq(troops_before - red.troops_in_barracks, 2, "Scout Leader: Malice + Conquest — 2 войска")
+
+
+func test_mercenaries_deck() -> void:
+	section("Mercenaries: полуколода")
+	check_eq(GameSetup.expand_half_deck("mercenaries").size(), 40, "Mercenaries: 40 карт")
+	_sweep_deck_with_vp(49400, 49419)
+
+	var state := _build_rich_state(41)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	var green: PlayerState = state.players["green"]
+	TurnEngine.start_turn(state, "red")
+
+	# Bribe без жетонов недоступен
+	red.vp_tokens = 0
+	var r0 := _play_with(state, "49400")
+	check_eq(r0.pending.legal_options, [0], "Goblinoid Ambushers без VP: только +1 Power (красть не у кого, подкупить нечем)")
+	TurnEngine.resume_card(state, 0, r0)
+
+	# Bribe: 1 VP выбранному сопернику, потом +3 Power
+	red.vp_tokens = 2
+	blue.vp_tokens = 0
+	green.vp_tokens = 0
+	red.power = 0
+	var r1 := _play_with(state, "49400", [2])
+	check(r1.is_waiting() and r1.pending.choice_type == "target_player", "Bribe: кому отдать VP")
+	TurnEngine.resume_card(state, "green", r1)
+	check_eq([red.vp_tokens, green.vp_tokens, red.power], [1, 1, 3], "Bribe: -1 VP у red, +1 у green, +3 Power")
+
+	# Steal: у соперника с жетонами
+	blue.vp_tokens = 2
+	green.vp_tokens = 0
+	var r2 := _play_with(state, "49400", [1])
+	check(not r2.is_waiting(), "Steal: жетоны только у blue — без вопроса")
+	check_eq([red.vp_tokens, blue.vp_tokens], [2, 1], "Steal 1 VP у blue")
+	MercenaryCards.steal(state, "red", "green", 3, EffectResolver.new())
+	check_eq(red.vp_tokens, 2, "у кого нет жетонов — ничего не украсть")
+
+	# Sylgar: сброс картой — остаётся в руке, +1 VP
+	red.deck.hand.clear()
+	red.deck.hand.append("49416")
+	red.vp_tokens = 0
+	var r3 := EffectResolver.new()
+	r3.apply(DiscardCardEffect.new(1), "red", state)
+	TurnEngine.resume_card(state, "49416", r3)
+	check(red.deck.hand.has("49416") and red.vp_tokens == 1, "Sylgar остался в руке, +1 VP")
+	var r4 := EffectResolver.new()
+	r4.apply(PromoteCard.new("hand"), "red", state)
+	TurnEngine.resume_card(state, "49416", r4)
+	check(red.deck.hand.has("49416") and red.vp_tokens == 2, "Sylgar не продвигается, +1 VP")
+
+	# Jarlaxle: карта соперника играется за него, вопросы — разыгравшему
+	blue.deck.hand.clear()
+	blue.deck.hand.append("49305")  # Siege Beast: Choose one
+	blue.power = 0
+	blue.influence = 0
+	green.deck.hand.clear()
+	red.vp_tokens = 0
+	var r5 := _play_with(state, "49413")
+	check(r5.is_waiting() and r5.pending.choice_type == "target_card", "Jarlaxle: выбор карты из руки blue")
+	TurnEngine.resume_card(state, "49305", r5)
+	check(r5.is_waiting() and r5.pending.player_id == "red", "вопрос карты blue задают red")
+	TurnEngine.resume_card(state, 0, r5)
+	check_eq([blue.power, blue.influence], [1, 2], "эффект достался blue")
+	check(blue.deck.discard_pile.has("49305") and not blue.deck.hand.has("49305"), "карта blue ушла в его сброс")
+	check(r5.deciders.is_empty(), "после карты вопросы снова задают владельцу")
+
+	# Bregan D'aerthe Spy: украденный маркер — до начала следующего хода вора
+	var marked := ControlMarkers.marked_sites(state)
+	check(not marked.is_empty(), "на доске есть локация с маркером")
+	var site: String = marked[0]
+	EffectResolver.new().apply(MercenaryCards._StealMarker.new(site), "red", state)
+	check(ControlMarkers.holds(state, "red", site), "маркер у red")
+	check(not ControlMarkers.holds(state, "blue", site) and not ControlMarkers.holds(state, "green", site), "у других маркера нет")
+	TurnEngine.start_turn(state, "red")
+	check(not state.stolen_markers.has(site), "в начале следующего хода red маркер вернулся")
+
+	# Xanathar Zushaxx: после покупки — кража 1 VP
+	red.vp_tokens = 0
+	blue.vp_tokens = 1
+	green.vp_tokens = 0
+	_play_with(state, "49418")
+	var rz := EffectResolver.new()
+	MercenaryCards.after_buy(state, "red", rz)
+	check_eq([red.vp_tokens, blue.vp_tokens], [1, 0], "Zushaxx: покупка украла 1 VP")

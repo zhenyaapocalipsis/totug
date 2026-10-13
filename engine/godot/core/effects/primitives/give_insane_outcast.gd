@@ -33,6 +33,8 @@ func _init(m: String, n: int = 1) -> void:
 ## сколько есть и молча останавливаемся — это не ошибка.
 func _give(state: GameState, target_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[target_id]
+	if state.supplies.is_available(INSANE_OUTCAST_ID):
+		SiegeCards.brute_reaction(state, target_id, state.current_player(), resolver)
 	# New Era, Swarm of Crawling Claws в руке получателя: он может взять Outcast в руку.
 	if p.deck.hand.has(ShadowCards.CRAWLING_CLAWS) and state.supplies.is_available(INSANE_OUTCAST_ID):
 		resolver.push(ShadowCards.ClawsReaction.new(target_id, count), target_id)

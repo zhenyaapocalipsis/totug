@@ -81,6 +81,10 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			_answered = false
 			_answer = null
 			if index != null and index != -1:
+				if MercenaryCards.sylgar_saves(state, player_id, state.market.display[int(index)], resolver):
+					if then_effect != null:
+						resolver.push(then_effect, player_id)
+					return
 				var devoured: String = state.market.recruit_at(int(index))
 				if devoured != "":
 					if state.market.is_deck_empty():
@@ -114,6 +118,10 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			var p: PlayerState = state.players[player_id]
 			var pile: Array = p.deck.hand if source == "hand" else state.stock(player_id).deck.inner_circle
 			var idx: int = pile.find(chosen)
+			if idx != -1 and MercenaryCards.sylgar_saves(state, player_id, String(chosen), resolver):
+				if then_effect != null:
+					resolver.push(then_effect, player_id)
+				return
 			if idx != -1:
 				pile.remove_at(idx)
 				_devour(state, player_id, String(chosen), source, resolver)

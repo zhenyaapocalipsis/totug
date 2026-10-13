@@ -53,6 +53,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				p.deck.discard_pile.clear()
 				p.deck.shuffle_draw_pile(state.rng)
 			var top: String = p.deck.draw_pile.pop_back()
+			if MercenaryCards.sylgar_saves(state, player_id, top, resolver):
+				p.deck.draw_pile.append(top)
+				return
 			if Supplies.redirect_outcast(state, player_id, top, resolver):
 				return
 			state.stock(player_id).deck.inner_circle.append(top)
@@ -103,6 +106,8 @@ func _candidates(state: GameState, player_id: String) -> Array:
 
 
 func _promote_from(state: GameState, player_id: String, chosen: String, resolver: EffectResolver) -> void:
+	if MercenaryCards.sylgar_saves(state, player_id, chosen, resolver):
+		return
 	var p: PlayerState = state.players[player_id]
 	var removed := false
 	# Из руки ищем сначала в руке: та же карта может лежать и в played_pile.

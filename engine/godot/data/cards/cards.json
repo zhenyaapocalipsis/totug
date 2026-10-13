@@ -1968,5 +1968,405 @@
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+5 Influence\nDouble Ambition Focus ► +4 Influence. This turn, whenever you buy a card, you may recruit a cheaper one for free."
+  },
+  {
+    "card_id": 49300,
+    "name": "Avatar of Lolth",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "SIEGE",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Choose one:\n• Place a spy, then draw a card.\n• Return one of your spies ► Put another played card, or any card from your discard pile, on top of your deck."
+  },
+  {
+    "card_id": 49301,
+    "name": "Converter",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 5,
+    "ability_text": "Assassinate a troop. If it belonged to another player who has white troops in their trophy hall, deploy one of them in the vacated space."
+  },
+  {
+    "card_id": 49302,
+    "name": "Relentless Siege",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "SIEGE",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "+3 Power\nFor the rest of your turn, treat other players' troops as white troops."
+  },
+  {
+    "card_id": 49303,
+    "name": "Beast Tamer",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "SIEGE",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+2 Influence\nFor the rest of your turn, cards cost 1 less to recruit."
+  },
+  {
+    "card_id": 49304,
+    "name": "Warlord",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "SIEGE",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► +2 Influence. You may promote a card from the market for its cost."
+  },
+  {
+    "card_id": 49305,
+    "name": "Siege Beast",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "SIEGE",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +1 Power, +2 Influence\n• Gain 1 VP."
+  },
+  {
+    "card_id": 49306,
+    "name": "Spoils of War",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "For each distinct card aspect you played this turn, choose one:\n• +1 Influence\n• +1 Power"
+  },
+  {
+    "card_id": 49307,
+    "name": "Hydra",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "SIEGE",
+    "deck_vp": 2,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop.\nAt end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49308,
+    "name": "Scout Leader",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "SIEGE",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Deploy a troop for each distinct card aspect you played this turn."
+  },
+  {
+    "card_id": 49309,
+    "name": "Siege Tower",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "SIEGE",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Draw a card.\n• At end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49310,
+    "name": "Shade Lingerer",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Place a spy. If you have the control marker of the spy's site, gain the control marker's effect."
+  },
+  {
+    "card_id": 49311,
+    "name": "Chieftain",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "SIEGE",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Supplant a white troop.\nIf you played 4 distinct card aspects this turn ► Gain 1 VP."
+  },
+  {
+    "card_id": 49312,
+    "name": "Privateers",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose two times:\n• +1 Influence\n• +1 Power\nIf you played 4 distinct card aspects this turn ► Draw a card."
+  },
+  {
+    "card_id": 49313,
+    "name": "Trebuchet",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Return a troop anywhere on the board."
+  },
+  {
+    "card_id": 49314,
+    "name": "Plunder",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Copy a played card with a cost of 4 or less."
+  },
+  {
+    "card_id": 49315,
+    "name": "Dread Ballista",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+1 Power\nYou may convert up to 3 Influence to Power."
+  },
+  {
+    "card_id": 49316,
+    "name": "Ramming Beast",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+1 Power, +1 Influence\nIf you played 4 distinct card aspects this turn ► Promote another card played this turn."
+  },
+  {
+    "card_id": 49317,
+    "name": "Underdark Champion",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Assassinate a white troop.\nIf you played 4 distinct card aspects this turn ► Supplant a white troop."
+  },
+  {
+    "card_id": 49318,
+    "name": "Guardian Brute",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "SIEGE",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Each time an opponent forces you to recruit an Insane Outcast, discard a card or return a spy ► Reveal this card and gain 1 VP.\nDraw a card."
+  },
+  {
+    "card_id": 49319,
+    "name": "Schemer",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "SIEGE",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Move an enemy spy to another site.\n• Move a troop."
+  },
+  {
+    "card_id": 49400,
+    "name": "Goblinoid Ambushers",
+    "cost": 2,
+    "aspect": "MALICE",
+    "type": "MERCENARY",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• +1 Power\n• Steal 1 VP.\n• Bribe ► +3 Power"
+  },
+  {
+    "card_id": 49401,
+    "name": "Hobgoblin Warlord",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "+3 Power\nBribe ► For the rest of your turn, you can expend 2 Power to assassinate a troop."
+  },
+  {
+    "card_id": 49402,
+    "name": "Artemis Entreri",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "MERCENARY",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Assassinate 3 troops at a single site. Then, if that site is empty, gain 1 VP."
+  },
+  {
+    "card_id": 49403,
+    "name": "Goblin Swarm",
+    "cost": 1,
+    "aspect": "CONQUEST",
+    "type": "MERCENARY",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Deploy a troop.\nBribe ► Deploy 2 troops."
+  },
+  {
+    "card_id": 49404,
+    "name": "Bugbear",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "MERCENARY",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Deploy a troop.\nAssassinate a white troop.\nGain 1 VP."
+  },
+  {
+    "card_id": 49405,
+    "name": "Dragonborn Hireling",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "MERCENARY",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Assassinate a troop. Then, if you have 3 or more player troops in your trophy hall, gain 1 VP."
+  },
+  {
+    "card_id": 49406,
+    "name": "Bregan D'aerthe Agents",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose 3 times:\n• Take a white troop from any trophy hall and deploy it.\n• Bribe ► Supplant a white troop."
+  },
+  {
+    "card_id": 49407,
+    "name": "Nihiloor",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Deploy 3 troops.\nBribe ► Move the deployed troops.\nAssassinate a white troop adjacent to each one."
+  },
+  {
+    "card_id": 49408,
+    "name": "Goblin Thief",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "MERCENARY",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Place a spy, then steal 1 VP from an opponent with at least a troop at that spy's site."
+  },
+  {
+    "card_id": 49409,
+    "name": "Bazaar Trader",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Discard a card ► Gain 1 VP and draw a card.\n• Bribe ► Place a spy and draw 2 cards.\n• Return one of your spies ► Steal 3 VP."
+  },
+  {
+    "card_id": 49410,
+    "name": "Security Guard",
+    "cost": 4,
+    "aspect": "CONQUEST",
+    "type": "MERCENARY",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Deploy 2 troops, then steal 1 VP from each opponent with a troop adjacent to at least 1 of them."
+  },
+  {
+    "card_id": 49411,
+    "name": "Bregan D'aerthe Spy",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "MERCENARY",
+    "deck_vp": 2,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Steal that spy's site control marker, wherever it is, and keep it until the start of your next turn."
+  },
+  {
+    "card_id": 49412,
+    "name": "Nar'l Xibrindas",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Choose a card in the discard pile of an opponent with at least a troop at that spy's site. Swap this card with it."
+  },
+  {
+    "card_id": 49413,
+    "name": "Jarlaxle",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Look at an opponent's hand and choose a card. They play it, but you decide how.\nBribe ► Copy that card's effect."
+  },
+  {
+    "card_id": 49414,
+    "name": "Xanathar Smuggler",
+    "cost": 1,
+    "aspect": "AMBITION",
+    "type": "MERCENARY",
+    "deck_vp": 0,
+    "inner_circle_vp": 1,
+    "ability_text": "+1 Influence\nBribe ► At end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49415,
+    "name": "Shady Merchant",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "MERCENARY",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Return another player's troop and move a spy.\nBribe ► Put another card played this turn on top of an opponent's deck."
+  },
+  {
+    "card_id": 49416,
+    "name": "Sylgar",
+    "cost": 1,
+    "aspect": "AMBITION",
+    "type": "MERCENARY",
+    "deck_vp": 4,
+    "inner_circle_vp": null,
+    "ability_text": "If this is devoured, promoted or discarded by a card, put it back where it was and gain 1 VP."
+  },
+  {
+    "card_id": 49417,
+    "name": "Ahmaergo",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "MERCENARY",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Choose 2 times:\n• Move one of your troops and gain 1 Influence.\n• Bribe ► Swap 2 troops anywhere on the board."
+  },
+  {
+    "card_id": 49418,
+    "name": "Xanathar Zushaxx",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "MERCENARY",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "+4 Influence\nFor the rest of your turn, each time you recruit a card, steal 1 VP."
+  },
+  {
+    "card_id": 49419,
+    "name": "Xanathar Surveillance",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "MERCENARY",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Draw 3 cards, then discard 2 of them.\nBribe ► Promote one of the discarded cards."
   }
 ]

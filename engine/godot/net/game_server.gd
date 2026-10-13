@@ -270,6 +270,7 @@ func _apply(intent: Intent) -> int:
 				return Error.INVALID_ACTION
 			resolver.log_event("recruit", {"player_id": intent.player_id, "market_index": intent.market_index, "card_id": bought})
 			PiltoverCards.after_buy(state, intent.player_id, bought, resolver)
+			MercenaryCards.after_buy(state, intent.player_id, resolver)
 			return Error.OK
 
 		Intent.Type.ACTION_RECRUIT_SUPPLY:
@@ -277,6 +278,7 @@ func _apply(intent: Intent) -> int:
 				return Error.INVALID_ACTION
 			resolver.log_event("recruit_supply", {"player_id": intent.player_id, "card_id": intent.card_id})
 			PiltoverCards.after_buy(state, intent.player_id, intent.card_id, resolver)
+			MercenaryCards.after_buy(state, intent.player_id, resolver)
 			return Error.OK
 
 		Intent.Type.ACTION_RETURN_SPY:
@@ -286,8 +288,9 @@ func _apply(intent: Intent) -> int:
 				state.players[intent.player_id].power -= Actions.return_spy_cost(state)
 				var site := intent.site_id
 				var spy_owner := intent.spy_owner
+				var returner := intent.player_id
 				var hit := func(s, pid, r):
-					Actions.remove_spy(s, site, spy_owner)
+					Actions.remove_spy(s, site, spy_owner, returner)
 					r.log_event("return_spy", {"player_id": pid, "site_id": site, "spy_owner": spy_owner})
 				resolver.apply(ShieldGuard.new(spy_owner, CallbackEffect.new(hit), "the spy's return"), intent.player_id, state)
 				return Error.OK

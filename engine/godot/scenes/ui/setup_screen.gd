@@ -64,6 +64,8 @@ const NEW_ERA_TITLES := {
 	"celestial": "CELESTIAL",
 	"shadow": "RAVENLOFT",
 	"piltover": "WATERDEEP",
+	"siege": "SIEGE",
+	"mercenaries": "MERCENARIES",
 }
 
 

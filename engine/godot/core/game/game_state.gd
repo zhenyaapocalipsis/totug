@@ -67,6 +67,10 @@ var turn_flags: Dictionary = {}
 ## сыграть не больше 3 карт (TurnEngine.start_turn ставит turn_flags["card_limit"]).
 var extra_turn_for: String = ""
 var in_extra_turn: bool = false
+## Siege/Mercenaries, Bregan D'aerthe Spy: украденные маркеры контроля
+## (id локации -> вор). Вор держит маркер до начала своего следующего хода
+## (TurnEngine.start_turn), пока маркер приносит доход только ему.
+var stolen_markers: Dictionary = {}
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.

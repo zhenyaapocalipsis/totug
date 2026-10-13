@@ -125,7 +125,7 @@ const ASPECT_COLOR := {
 	"MALICE": Color("d0283e"), "OBEDIENCE": Color("ffffff"), "": Color("a89cc0"),
 }
 
-const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE",
+const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE", "BRIBE", "STEAL",
 	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
 
 ## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
@@ -515,6 +515,8 @@ func set_name(card_id: int, type: String) -> String:
 		490: return "CELESTIAL"
 		491: return "RAVENLOFT"
 		492: return "WATERDEEP"
+		493: return "SIEGE"
+		494: return "MERCENARIES"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

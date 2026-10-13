@@ -127,6 +127,10 @@ class VictimDiscard extends CardEffect:
 		var idx: int = p.deck.hand.find(chosen_card)
 		if idx == -1:
 			return
+		if not promote_instead:
+			SiegeCards.brute_reaction(state, player_id, causer_id, resolver)
+			if MercenaryCards.sylgar_saves(state, player_id, chosen_card, resolver):
+				return
 		p.deck.hand.remove_at(idx)
 		if promote_instead:
 			state.stock(player_id).deck.inner_circle.append(chosen_card)

@@ -19,6 +19,10 @@ var _stack: Array = []
 var _card := ""
 var pending: PendingDecision = null
 var events: Array[Dictionary] = []
+## Jarlaxle (Mercenaries): вопросы эффектов, идущих от имени ключа (соперник),
+## задаются значению (тому, кто разыграл Jarlaxle) — "they play it, but you
+## decide how". Сам эффект после ответа продолжается от имени ключа.
+var deciders: Dictionary = {}
 
 
 ## Карта, чей эффект сейчас применяется ("" — ничья: старт партии и т.п.).
@@ -53,6 +57,9 @@ func _run(state: GameState) -> void:
 ## же вызвал request_decision (см. предупреждение про double-push в
 ## card_effect.gd) — ЕГО САМОГО в стек класть не нужно, resume() сделает это.
 func request_decision(pd: PendingDecision) -> void:
+	if deciders.has(pd.player_id):
+		pd.data["acting_for"] = pd.player_id
+		pd.player_id = String(deciders[pd.player_id])
 	if pd.source_card == "":
 		pd.source_card = _card
 	pd.frame_card = _card
@@ -70,7 +77,7 @@ func resume(state: GameState, answer) -> void:
 	_stack = pd.stack.duplicate()
 	pd.target_effect.set_answer(answer)
 	_card = pd.frame_card
-	push(pd.target_effect, pd.player_id)
+	push(pd.target_effect, String(pd.data.get("acting_for", pd.player_id)))
 	_run(state)
 
 

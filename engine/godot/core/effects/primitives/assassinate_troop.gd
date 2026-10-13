@@ -21,6 +21,8 @@ var locked_site: String = ""
 var gain_influence_per_removed: int
 var gain_power_per_removed: int
 var site_given_by_card: bool = false
+## Nihiloor: цели только среди этих слотов (пусто — без ограничения).
+var only_slots: Array = []
 
 
 func _init(count: int = 1, is_white_only: bool = false, allow_fewer: bool = false,
@@ -43,7 +45,9 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 		var owner: String = state.troops.get(slot_id, "")
 		if not state.is_enemy(player_id, owner):
 			continue
-		if white_only and owner != "white":
+		if white_only and not SiegeCards.counts_as_white(state, player_id, owner):
+			continue
+		if not only_slots.is_empty() and not only_slots.has(slot_id):
 			continue
 		if single_site and locked_site != "":
 			if state.graph.site_of_slot(slot_id) != locked_site:
@@ -101,6 +105,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	next.total = total
 	next.locked_site = locked_site
 	next.site_given_by_card = site_given_by_card
+	next.only_slots = only_slots
 	pd.target_effect = next
 	resolver.request_decision(pd)
 
