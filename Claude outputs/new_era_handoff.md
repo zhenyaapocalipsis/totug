@@ -1,4 +1,4 @@
-# New Era — передача работы в новый чат (на 2026-10-13)
+# New Era — передача работы в новый чат (на 2026-10-14)
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
@@ -13,9 +13,9 @@
   | **AVERNUS** | Noxus | `noxus` | 49500–49524 | NE-9 (правила), NE-10 (арты) |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
-- Всё закоммичено и запушено. Последний деплой — сборка 1791922398 (2026-10-14, после NE-10, PROTOCOL 24).
-- Всё закоммичено и запушено. Последний деплой — сборка 1791900932 (2026-10-13, после SiegeMerc). NE-6…8 задеплоены сборкой 1791729136.
-- Тесты на 2026-10-13: `пройдено: 1692, провалено: 0`, сеть `136 / 0`. В тесте карт 237 (126 + 25 + 25 + 21 New Era + 20 Siege + 20 Mercenaries). Сетевой `[server4] без лимита времени доска легла в сетку` (этап Stock-2) иногда падает по времени — повторный прогон проходит.
+- Всё закоммичено и запушено на GitHub (`main`, последний коммит `d9b9344`). Последний деплой — сборка 1791922398 (2026-10-14, после NE-10, **PROTOCOL 24**).
+- Тесты на 2026-10-14: `пройдено: 1726, провалено: 0`, сеть `136 / 0`. В тесте карт 262 (126 + 25 + 25 + 21 New Era + 20 Siege + 20 Mercenaries + 25 Avernus). Сетевой `[server4] без лимита времени доска легла в сетку` (этап Stock-2) иногда падает по времени — повторный прогон проходит.
+- **Следующий шаг** не назначен владельцем: либо его живая проверка AVERNUS (чек-лист в разделе AVERNUS), либо следующая колода — по mapping-файлу **Bilgewater** (заметки в разделе «Следующая колода»).
 - Не в git и не моё: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` — правки владельца (отладочный флаг), не трогать и не коммитить.
 - **Владелец ещё не проверял New Era-колоды живьём.** Чек-листы — в конце разделов ниже.
 
@@ -101,8 +101,8 @@
    | Demacia | 0–28 (0 Cursed Wanderer, 1–5 стартовые мода, 6–27 Демасия, 28 Shyvana) |
    | Shadow Isles | 29–52 (+ 321 Sapling, 326 Spider Elise) |
    | Piltover & Zaun | 53–73 (в 58 и 67 по две карты; Ferros Elite — только в 67) |
-   | Noxus | с 74 (74 Armed Acquisitioner, 75 Legion Marauder, 76–77 Crimson Disciple, 77 Thorn of the Rose…) |
-   | Bilgewater | следом |
+   | Noxus | 74–96 (+ 451–453 Blade Fragment, 454 Blade of Exile) |
+   | Bilgewater | с 97 (97 Shellshocker, 98 Prowling Cutthroat, Hired Gun, 100 Mystifying Magician, 101 Watchful Idol…) |
    | Freljord | следом |
    | Shurima | следом |
    | Ionia | следом |
@@ -116,7 +116,9 @@
    | Poro | в конце |
 
    Демасия при извлечении (картинки 0000–0027): 0 Cursed Wanderer, 1 Battlefield Sergeant, 2 Vanguard Cavalry, 3 Captain, 4 Officer, 5 Bannerman, 6–27 карты Демасии, 28 Shyvana, 341 Sylas, 360 Lucian.
-2. **Найти арты.** Во встроенном браузере открыть dndbeyond.com/monsters/… и через javascript_tool сделать fetch(`/monsters?filter-search=Имя`). Затем fetch страницы монстра (каждую в своём try/catch: закрытая страница роняет fetch) и взять src из `<img ... class="monster-image">` — общая регулярка по `avatars/` ловит картинки оформления сайта. Скрипт запускать фоном (`window.R = …`), результат забирать через 40 с: у javascript_tool лимит 45 с. Скачивать curl'ом с `-A "Mozilla/5.0"`. Монстры из платных книг отдают `locked` — брать других. jpeg почти всегда с фоном, png бывает и с фоном, и без. Проверять контакт-листом с пурпурной подложкой (прозрачное видно сразу). Почти всегда лучше версии **2024 года** (id `5195xxx`/`4904xxx`): у них сцена с фоном, у 2014 года — вырезанные фигуры. Перед выбором проверить, что имени нет в `cards.json` (у всех колод, включая Siege/Mercenaries).
+   Жетоны и вторые формы чемпионов лежат отдельно: ~318–330 (Hextech, Shimmer, Sapling, Tibbers, Valor, Eggnivia, Dragon Shyvana, Spider Elise, Cougar Nidalee, Mega Gnar…), 438–454 предметы (Aphelios, Ornn, осколки Riven), дальше Poro. Быстро найти — контакт-лист кусками по 40 картинок (`art_contact.gd` на папку с копиями).
+   Сколько копий: белые кружки внизу карты; у карт стоимостью 6+ (чемпионы) всегда 1. Обычно 13 обычных + 10 чемпионов = 45.
+2. **Найти арты.** Во встроенном браузере открыть dndbeyond.com/monsters/… и через javascript_tool сделать fetch(`/monsters?filter-search=Имя`). Затем fetch страницы монстра (каждую в своём try/catch: закрытая страница роняет fetch) и взять src из `<img ... class="monster-image">` — общая регулярка по `avatars/` ловит картинки оформления сайта. Скрипт запускать фоном (`window.R = …`), результат забирать через 40 с: у javascript_tool лимит 45 с. Скачивать curl'ом с `-A "Mozilla/5.0"`. Монстры из платных книг отдают `locked` — брать других. jpeg почти всегда с фоном, png бывает и с фоном, и без. Проверять контакт-листом с пурпурной подложкой (прозрачное видно сразу). Почти всегда лучше версии **2024 года** (id `5195xxx`/`4904xxx`): у них чаще сцена с фоном, у 2014 года — вырезанные фигуры. **Но и у 2024 года много вырезанных фигур** (на AVERNUS 8 из 23: Imp, Quasit, Dretch, Pit Fiend, Gladiator, Hobgoblin Warrior…), поэтому имена существ закладывать в код только ПОСЛЕ контакт-листа артов — иначе потом переименовывать. Узкие картинки (например, 377x1000) часто без фигуры в кадре. Перед выбором проверить, что имени нет в `cards.json` (у всех колод, включая Siege/Mercenaries). Свободные монстры с фоном, ещё не занятые (на 2026-10-14): Magmin, Invisible Stalker, Ettercap, Gorgon, Frost/Stone/Storm/Cloud/Hill Giant, Werewolf, Guard, Bandit Captain-подобные NPC (Bandit занят), Cockatrice, Ankheg, Bulette, Centaur Trooper, Pirate Captain (jpeg), Cultist Fanatic (сцена). Скачанные кандидаты лежат в `cards/avernus/cand*` (не в git).
 3. **Положить данные.** Арты — в `cards/<колода>/`. Новые карты дописать в конец `cards.json` (следующий диапазон id, например 49100+), полуколоду — в `half_decks.json` с `"wip": true`, тип — для подписи. В `tools/pixel_cards.gd` добавить:
    - в `SINGLE_ART` — `id: ["папка/файл", Rect2i(окно арта)]`, пропорция 164:100;
    - в `MINI_FACE` — левый верхний угол выреза 52x53 в арте 164x100;
@@ -128,6 +130,11 @@
    - Если одно и то же дерево эффекта нужно применить ещё раз, его надо пересобрать: эффекты хранят ответы внутри себя (см. `FocusEffect._fresh_copy`).
    - Снимок войск до/после действия («если поставил рядом с чужим», «если убил белое») — `PiltoverCards._AfterTroops`.
 7. **Тесты:** `run_tests.gd` и `net_loopback.gd`. После новых `class_name` сначала выполнить `--import`, иначе «Identifier not declared».
+8. **Мелочи, на которых спотыкались (NE-9/10):**
+   - Карты в `cards.json` дописывать так: фрагмент JSON записать инструментом Write в scratchpad, потом склеить (`head -c -2` + `,\n` + фрагмент). Heredoc в Bash ломается на апострофах (`player's`).
+   - `pixel_cards.gd` при полной генерации иногда меняет `assets/cards_pixel/48512.png` — это не наше, откатывать `git checkout`.
+   - Если текст новой карты длиннее 85 px (`-- measure`), сокращать текст, а не рамку.
+   - Перед выкладкой: новая колода или правка правил → поднять `NetSession.PROTOCOL` (сейчас 24), потом `bash server/deploy.sh` (собирает из рабочей папки, грузит на VPS, перезапускает; проверка — `curl http://129.101.123.70/tyrants/version.txt`).
 
 ## Открытые вопросы и что не сделано
 - Владелец ещё не проверял Celestial живьём. Чек-лист был: режим NEW ERA, покупка Scout, Gladiator→Berserker со скидками, превращение Gold Dragon, реакция Shield Guardian.
@@ -139,7 +146,7 @@
 - Возможная доводка кадров: Solar (лицо мелкое), Giant Eagle (голова слева).
 - `cards/celestial/cand` и `cand2` — неиспользованные кандидаты (не в git). Удалить вручную, если не нужны.
 - Механики следующих колод по правилам мода:
-  - Execute (бывший Devour) / Might;
+  - Execute (бывший Devour) / Might — сделано в AVERNUS;
   - Cursed Wanderer + Cursed Affinity;
   - Focus — уже есть в игре;
   - Retain;
@@ -152,12 +159,20 @@
   - Swarm (не-Obedience карты стоимостью 2);
   - Hextech / Shimmer (колоды по 30);
   - Transform (уже сделан).
-- **Noxus → AVERNUS сделан на правилах (NE-9, 2026-10-13)**: всё — в `Claude outputs/new_era_noxus.md` (таблица, толкования Might/Execute, Horned Devil «you win», Weretiger, Lamia). Тесты 1726/0, сеть 136/0, 24 партии ботов вчетвером без зависаний. **NE-10 (2026-10-14) — арты** с фоном, 8 существ заменены (см. справку). Дальше — живая проверка владельцем. Новое в движке: `GameState.deployable_slots` (все проверки постановки войск идут через него), `GameState.instant_winner`, скидка на слот рынка `turn_discounts["slot:N"]`, `turn_flags["devours"/"trophy_start"]`.
-- Старые заметки к Noxus (до NE-9):
-  - карты в PDF — с картинки 74 (первые карты видел: Armed Acquisitioner, Legion Marauder, Crimson Disciple, Thorn of the Rose — в них уже есть Execute);
-  - черновик mapping (дьяволы и хобгоблины) во многом занят: в Ravenloft уже Rakshasa, Bearded/Chain/Barbed/Bone Devil, Lemure; в Celestial — Erinyes. Проверять свободные имена по `cards.json` и свободный арт 2024 года;
-  - D&D-название придумать по составу (например, NINE HELLS, если останутся дьяволы, или ZHENTARIM / BANE, если люди-легион);
-  - Might — новый счётчик Execute за ход в `state.turn_flags` (по образцу счётчика Outcast в ShadowCards).
+- AVERNUS: в интерфейсе нет счётчика пожираний за ход; бот не знает о Might; кадр Minotaur of Baphomet можно доработать.
+
+## Готово: Noxus → AVERNUS (NE-9 `5db51a7`, NE-10 `441c853`, PROTOCOL 24 `8051fb4`)
+Всё по колоде — в `Claude outputs/new_era_noxus.md` (таблица id → существо → карта мода, все толкования).
+- Карты 49500–49522 (45 копий) + жетоны 49523 Blade Fragment (запас 3 у доски, если в рынке есть Half-Dragon) и 49524 Blade of Exile. Тип `AVERNUS`, ключ `noxus` (wip), эффекты `core/cards/noxus_cards.gd`, тест `test_avernus_deck`, цвет фона тёмно-красный.
+- Название колоды и все существа выбраны мной, **владелец их ещё не видел**. Состав: Bandit, Wereboar, Goblin Boss, Hell Hound, Pseudodragon, Medusa, Bugbear Stalker, Guard Captain, Bugbear Warrior, Mummy, Ogre, Minotaur of Baphomet, Hobgoblin Captain; чемпионы Weretiger (Katarina), Lamia (Leblanc), Horned Devil (Mordekaiser), Efreeti (Vladimir), Azer Sentinel (Draven), Ice Devil (Swain), Troll (Sion), Fire Giant (Darius), Half-Dragon (Riven), Wyvern (Samira).
+- Execute = Devour; **Might** — `NoxusCards.Might(index, factory)`: срабатывает, если текущий игрок сожрал в этот ход ≥ index карт. Все пути пожирания (DevourCard, Carrion Crawler, Ulitharid, Green Hag, карты Avernus) зовут `NoxusCards.on_devour` — новые карты с Devour тоже должны его звать.
+- Новое в движке: `GameState.deployable_slots(pid)` — все проверки постановки войск идут через него (Weretiger закрывает локацию); `GameState.instant_winner` + `Scoring.winners` (Horned Devil «you win»); скидка на слот рынка `turn_discounts["slot:N"]` (снимается при покупке); `turn_flags["devours"]`, `turn_flags["trophy_start"]` (ставится в `start_turn`).
+- Чек-лист живой проверки: (1) NEW ERA → CELESTIAL + AVERNUS, на рынке карты с артами, фон красно-золотой; (2) Mummy без пожирания +2 Influence, Ogre (сожрать карту), снова Mummy +3; (3) Bandit — замена сожранной карты рынка из 3 верхних; (4) Bugbear Stalker — новая карта в слоте на 3 дешевле (цена зелёная); (5) Half-Dragon — в сброс приходит Blade Fragment.
+
+## Следующая колода (по mapping-файлу — Bilgewater, владелец порядок не подтверждал)
+- Картинки PDF с 97: 97 Shellshocker, 98 Prowling Cutthroat, 99 Hired Gun, 100 Mystifying Magician, 101 Watchful Idol, дальше смотреть листами `pdf_sheets.gd FROM=97 TO=125`. Жетоны (если есть) — в районе 318–330 и 438–454.
+- Механики: **Voyage** — карта срабатывает сейчас и ещё раз в начале следующего хода (нужен отложенный эффект на начало хода и чтобы карта не уходила в сброс в конце хода); **кубики D4/D6** с перебросами (Shellshocker: «бросаешь кубик — бросай два, выбирай»), броски — через `state.rng`, чтобы реплеи и сеть сходились; Hired Gun — возврат в руку, когда другой игрок покупает карту за 6+ (реакция в чужой ход, по образцу `PiltoverCards.after_buy` / `MercenaryCards.after_buy`).
+- Черновик существ в mapping: сахуагины, куо-тоа, морские существа. D&D-название придумать по составу (например, SEA OF SWORDS / NELANTHER / SAHUAGIN), проверять занятость имён и фон артов ДО кода.
 
 ## Piltover & Zaun — правила (NE-6) и арты (NE-7)
 Всё по колоде — в `Claude outputs/new_era_piltover.md` (таблица id → существо → карта мода, толкования).
