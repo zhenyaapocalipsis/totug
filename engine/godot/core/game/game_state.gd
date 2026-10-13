@@ -40,7 +40,7 @@ var game_over: bool = false
 ## Сетевая партия кончилась досрочно: этот игрок отключился и не вернулся
 ## (GameEnd.abandon). Пусто — партия кончилась по правилам.
 var abandoned_by: String = ""
-## Pit Fiend (New Era): игрок сыграл его при пустой колоде рынка и побеждает
+## Horned Devil (New Era, Avernus): игрок сыграл его при пустой колоде рынка и побеждает
 ## (Scoring.winners), партия кончается после его хода.
 var instant_winner: String = ""
 

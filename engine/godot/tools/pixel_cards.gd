@@ -109,6 +109,13 @@ const MINI_FACE := {
 	49408: Vector2i(99, 47), 49409: Vector2i(99, 4), 49410: Vector2i(4, 0), 49411: Vector2i(90, 19),
 	49412: Vector2i(34, 14), 49413: Vector2i(84, 0), 49414: Vector2i(74, 0), 49415: Vector2i(84, 14),
 	49416: Vector2i(54, 0), 49417: Vector2i(84, 4), 49418: Vector2i(54, 19), 49419: Vector2i(59, 44),
+	49500: Vector2i(81, 24), 49501: Vector2i(70, 30), 49502: Vector2i(98, 40), 49503: Vector2i(112, 20),
+	49504: Vector2i(88, 24), 49505: Vector2i(19, 47), 49506: Vector2i(74, 6), 49507: Vector2i(19, 14),
+	49508: Vector2i(21, 7), 49509: Vector2i(39, 24), 49510: Vector2i(69, 34), 49511: Vector2i(78, 23),
+	49512: Vector2i(63, 16), 49513: Vector2i(69, 0), 49514: Vector2i(83, 0), 49515: Vector2i(59, 14),
+	49516: Vector2i(49, 19), 49517: Vector2i(52, 24), 49518: Vector2i(74, 29), 49519: Vector2i(69, 34),
+	49520: Vector2i(56, 4), 49521: Vector2i(29, 29), 49522: Vector2i(69, 19), 49523: Vector2i(84, 24),
+	49524: Vector2i(54, 24),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -157,6 +164,7 @@ const NAME_BREAKS := {
 	"ULITHARID": [3],
 	# Рядом с колонкой цены и аспекта (2026-10-08) тоже 8 букв.
 	"ELEMENTAL": [3, 6], "SOVEREIGN": [3], "HIPPOGRIFF": [5], "BERSERKER": [3],
+	"PSEUDODRAGON": [6], "WERETIGER": [4],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -288,6 +296,32 @@ const SINGLE_ART := {
 	49417: ["mercenaries/ahmaergo.jpg", Rect2i(70, 0, 620, 378)],
 	49418: ["mercenaries/xanathar_zushaxx.jpg", Rect2i(70, 0, 620, 378)],
 	49419: ["mercenaries/xanathar_surveillance.jpg", Rect2i(0, 69, 690, 421)],
+	# Avernus (New Era Noxus): D&D Beyond 2024, жетоны Half-Dragon — из PDF мода
+	49500: ["avernus/bandit.jpeg", Rect2i(100, 220, 600, 366)],
+	49501: ["avernus/wereboar.jpeg", Rect2i(0, 30, 559, 341)],
+	49502: ["avernus/goblin_boss.png", Rect2i(0, 40, 600, 366)],
+	49503: ["avernus/hell_hound.png", Rect2i(110, 110, 700, 427)],
+	49504: ["avernus/pseudodragon.png", Rect2i(301, 480, 500, 305)],
+	49505: ["avernus/medusa.jpeg", Rect2i(0, 20, 545, 332)],
+	49506: ["avernus/bugbear_stalker.png", Rect2i(0, 60, 600, 366)],
+	49507: ["avernus/guard_captain.jpeg", Rect2i(0, 40, 569, 347)],
+	49508: ["avernus/bugbear_warrior.png", Rect2i(60, 20, 800, 488)],
+	49509: ["avernus/mummy.png", Rect2i(0, 60, 600, 366)],
+	49510: ["avernus/ogre.png", Rect2i(0, 110, 600, 366)],
+	49511: ["avernus/minotaur.png", Rect2i(500, 150, 500, 305)],
+	49512: ["avernus/hobgoblin_captain.png", Rect2i(197, 170, 400, 244)],
+	49513: ["avernus/weretiger.jpeg", Rect2i(120, 0, 600, 366)],
+	49514: ["avernus/lamia.png", Rect2i(500, 0, 500, 305)],
+	49515: ["avernus/horned_devil.png", Rect2i(0, 80, 451, 275)],
+	49516: ["avernus/efreeti.png", Rect2i(0, 20, 600, 366)],
+	49517: ["avernus/azer_sentinel.jpeg", Rect2i(171, 0, 600, 366)],
+	49518: ["avernus/ice_devil.jpeg", Rect2i(90, 50, 600, 366)],
+	49519: ["avernus/troll.jpeg", Rect2i(0, 0, 571, 348)],
+	49520: ["avernus/fire_giant.png", Rect2i(230, 0, 600, 366)],
+	49521: ["avernus/half_dragon.png", Rect2i(0, 60, 700, 427)],
+	49522: ["avernus/wyvern.png", Rect2i(100, 0, 800, 488)],
+	49523: ["avernus/blade_fragment.jpg", Rect2i(250, 390, 1000, 610)],
+	49524: ["avernus/blade_of_exile.jpg", Rect2i(250, 360, 1000, 610)],
 }
 
 const FONT := {

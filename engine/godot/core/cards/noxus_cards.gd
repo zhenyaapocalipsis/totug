@@ -16,9 +16,9 @@ extends RefCounted
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "devours"        — сколько карт текущий игрок сожрал в этот ход (note_devour);
-##   "trophy_start"   — трофеи игрока в начале хода (Gladiator, TurnEngine.start_turn);
-##   "might_twice"    — Horned Devil: каждая Might срабатывает дважды;
-##   "might_supplant" — Pit Fiend: каждое срабатывание Might ещё и supplant;
+##   "trophy_start"   — трофеи игрока в начале хода (Azer Sentinel, TurnEngine.start_turn);
+##   "might_twice"    — Troll: каждая Might срабатывает дважды;
+##   "might_supplant" — Horned Devil: каждое срабатывание Might ещё и supplant;
 ##   "devour_promote" — Efreeti: сожранную из руки/сброса карту можно продвинуть;
 ##   "no_deploy"      — Weretiger: {site: player} — туда нельзя ставить войска.
 
@@ -30,9 +30,9 @@ const FRAGMENT_SUPPLY := 3
 
 static func build(card_id: String) -> CardEffect:
 	match card_id:
-		"49500":  # Imp (Armed Acquisitioner)
+		"49500":  # Bandit (Armed Acquisitioner)
 			return SequenceEffect.new([GainInfluence.new(2), devour(["market"], true, Callable(), "pick3")])
-		"49501":  # Hobgoblin Warrior (Legion Marauder)
+		"49501":  # Wereboar (Legion Marauder)
 			return PiltoverCards._AfterTroops.new(ChooseEffect.new([
 				DeployTroop.new(3),
 				AssassinateTroop.new(1),
@@ -40,7 +40,7 @@ static func build(card_id: String) -> CardEffect:
 				if PiltoverCards._moved_next_to_other(state, pid, before) or _hit_player(state, pid, before):
 					return devour(["hand", "market"], true)
 				return null)
-		"49502":  # Cultist (Crimson Disciple)
+		"49502":  # Goblin Boss (Crimson Disciple)
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
 					func(state, _pid): return CelestialCards.site_is_full(state, site),
@@ -53,7 +53,7 @@ static func build(card_id: String) -> CardEffect:
 				GainPower.new(3),
 				SequenceEffect.new([GainPower.new(1), devour(["market", "hand", "discard"], false)]),
 			], ["+3 Power", "+1 Power, devour a card in the market, your hand or discard pile"])
-		"49504":  # Quasit (Crimson Aristocrat)
+		"49504":  # Pseudodragon (Crimson Aristocrat)
 			return PlaceSpy.new(1, false, func(site): return _AristocratBonus.new(site))
 		"49505":  # Medusa (Lady of Blood)
 			return SequenceEffect.new([
@@ -75,7 +75,7 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49508":  # Bugbear Warrior (Reckless Trifarian)
 			return SequenceEffect.new([AssassinateTroop.new(1), _TrophyPower.new()])
-		"49509":  # Dretch (Grave Physician)
+		"49509":  # Mummy (Grave Physician)
 			return SequenceEffect.new([
 				GainInfluence.new(2),
 				CardLibrary._GhostDevouredPileEffect.new(),
@@ -111,7 +111,7 @@ static func build(card_id: String) -> CardEffect:
 				"Move up to 2 of your troops and draw a card"])
 		"49514":  # Lamia (Leblanc)
 			return _Lamia.new()
-		"49515":  # Pit Fiend (Mordekaiser)
+		"49515":  # Horned Devil (Mordekaiser)
 			return ChooseEffect.new([
 				_DevourHalfMarket.new(),
 				_PlayFromDevoured.new(2),
@@ -125,7 +125,7 @@ static func build(card_id: String) -> CardEffect:
 				ShadowCards._SetFlag.new("devour_promote"),
 				GainVpPerN.new("power", "inner_circle", 4, 1),
 			])
-		"49517":  # Gladiator (Draven)
+		"49517":  # Azer Sentinel (Draven)
 			return SequenceEffect.new([
 				PiltoverCards._strike_anywhere(),
 				AtEndOfTurn.new(_VpPerKill.new()),
@@ -139,7 +139,7 @@ static func build(card_id: String) -> CardEffect:
 					GainInfluence.new(sites.size()), ShadowCards._SupplantAtSites.new(sites)])),
 			], ["Place 2 spies and draw a card",
 				"Return any number of your spies -> +1 Influence and supplant a troop at each of those sites"])
-		"49519":  # Horned Devil (Sion)
+		"49519":  # Troll (Sion)
 			return SequenceEffect.new([
 				ShadowCards._SetFlag.new("might_twice"),
 				DrawCards.new(1),
@@ -179,7 +179,7 @@ static func build(card_id: String) -> CardEffect:
 ## есть и рынок, и карты игрока, сначала выбирается, откуда. then — Callable
 ## (card_id) -> CardEffect, что дать за сожранную карту. market_mode:
 ##   "refill"    — слот рынка пополняется как обычно;
-##   "pick3"     — Imp: из 3 верхних карт колоды рынка игрок выбирает замену;
+##   "pick3"     — Bandit: из 3 верхних карт колоды рынка игрок выбирает замену;
 ##   "discount3" — Bugbear Stalker: замена в этот ход на 3 дешевле.
 static func devour(zones: Array, optional: bool, then: Callable = Callable(), market_mode: String = "refill") -> CardEffect:
 	var own: Array = zones.filter(func(z): return z != "market")
@@ -230,7 +230,7 @@ static func _hit_player(state: GameState, player_id: String, before: Dictionary)
 
 ## "Might: X" — срабатывает, если в этот ход сожрано не меньше index карт.
 ## make — Callable() -> CardEffect: дерево эффекта пересобирается на каждое
-## срабатывание (Horned Devil — дважды).
+## срабатывание (Troll — дважды).
 class Might extends CardEffect:
 	var index: int
 	var make: Callable
@@ -359,7 +359,7 @@ class _Devour extends CardEffect:
 		NoxusCards.on_devour(state, player_id, cid, src, resolver)
 
 
-## Imp: из верхних карт колоды рынка одна встаёт в пустой слот, остальные — вниз колоды.
+## Bandit: из верхних карт колоды рынка одна встаёт в пустой слот, остальные — вниз колоды.
 class _PickReplacement extends CardEffect:
 	var index: int
 	var cards: Array[String]
@@ -400,7 +400,7 @@ class _PromoteDevoured extends CardEffect:
 		resolver.log_event("promote", {"player_id": player_id, "card_id": card})
 
 
-## Quasit: +1 Influence за чужое войско, полную локацию и чужого шпиона там.
+## Pseudodragon: +1 Influence за чужое войско, полную локацию и чужого шпиона там.
 class _AristocratBonus extends CardEffect:
 	var site: String
 	func _init(s: String) -> void:
@@ -442,7 +442,7 @@ class _BlockDeploy extends CardEffect:
 		state.turn_flags["no_deploy"] = blocked
 
 
-## Gladiator: в конце хода 1 VP за каждое войско, убитое или вытесненное в этот ход.
+## Azer Sentinel: в конце хода 1 VP за каждое войско, убитое или вытесненное в этот ход.
 class _VpPerKill extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var n: int = state.stock(player_id).trophy_hall_count - int(state.turn_flags.get("trophy_start", 0))
@@ -450,7 +450,7 @@ class _VpPerKill extends CardEffect:
 			resolver.push(GainVP.new(n), player_id)
 
 
-## Pit Fiend: сожрать верхнюю половину колоды рынка (с округлением вверх).
+## Horned Devil: сожрать верхнюю половину колоды рынка (с округлением вверх).
 ## Колода рынка уже пуста — игрок побеждает (партия кончается после его хода).
 class _DevourHalfMarket extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -471,7 +471,7 @@ class _DevourHalfMarket extends CardEffect:
 			GameEnd.trigger(state, "market_empty")
 
 
-## Pit Fiend: разыграть до N карт из стопки сожранных; они остаются вне игры.
+## Horned Devil: разыграть до N карт из стопки сожранных; они остаются вне игры.
 class _PlayFromDevoured extends CardEffect:
 	var remaining: int
 	func _init(n: int) -> void:

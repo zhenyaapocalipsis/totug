@@ -2371,7 +2371,7 @@
   },
   {
     "card_id": 49500,
-    "name": "Imp",
+    "name": "Bandit",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "AVERNUS",
@@ -2381,7 +2381,7 @@
   },
   {
     "card_id": 49501,
-    "name": "Hobgoblin Warrior",
+    "name": "Wereboar",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
@@ -2391,7 +2391,7 @@
   },
   {
     "card_id": 49502,
-    "name": "Cultist",
+    "name": "Goblin Boss",
     "cost": 3,
     "aspect": "GUILE",
     "type": "AVERNUS",
@@ -2411,7 +2411,7 @@
   },
   {
     "card_id": 49504,
-    "name": "Quasit",
+    "name": "Pseudodragon",
     "cost": 2,
     "aspect": "GUILE",
     "type": "AVERNUS",
@@ -2461,7 +2461,7 @@
   },
   {
     "card_id": 49509,
-    "name": "Dretch",
+    "name": "Mummy",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "AVERNUS",
@@ -2521,13 +2521,13 @@
   },
   {
     "card_id": 49515,
-    "name": "Pit Fiend",
+    "name": "Horned Devil",
     "cost": 9,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
     "deck_vp": 5,
     "inner_circle_vp": 9,
-    "ability_text": "Choose one:\n• Devour half the market deck. If it is already empty, you win.\n• Play up to 2 cards from the devoured pile.\n• Each time you trigger Might this turn, supplant a troop."
+    "ability_text": "Choose one:\n• Devour half the market deck. Already empty: you win.\n• Play up to 2 devoured cards.\n• This turn, each Might also supplants a troop."
   },
   {
     "card_id": 49516,
@@ -2541,7 +2541,7 @@
   },
   {
     "card_id": 49517,
-    "name": "Gladiator",
+    "name": "Azer Sentinel",
     "cost": 6,
     "aspect": "MALICE",
     "type": "AVERNUS",
@@ -2561,7 +2561,7 @@
   },
   {
     "card_id": 49519,
-    "name": "Horned Devil",
+    "name": "Troll",
     "cost": 9,
     "aspect": "CONQUEST",
     "type": "AVERNUS",

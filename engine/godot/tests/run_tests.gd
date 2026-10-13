@@ -5922,20 +5922,20 @@ func test_avernus_deck() -> void:
 	# Might: без пожирания не срабатывает, одна Might — одно пожирание
 	red.influence = 0
 	_play_with(state, "49509")
-	check_eq(red.influence, 2, "Dretch без пожирания: только +2 Influence")
-	check_eq(state.ghost_market_player, "red", "Dretch: верхнюю сожранную карту можно купить")
+	check_eq(red.influence, 2, "Mummy без пожирания: только +2 Influence")
+	check_eq(state.ghost_market_player, "red", "Mummy: верхнюю сожранную карту можно купить")
 	var rg := _play_with(state, "49105", [0, "48342"])  # Grick (Ravenloft): devour из руки
 	_auto_resolve(state, rg, false)
 	check_eq(NoxusCards.devours(state), 1, "пожирание картой Ravenloft считается для Might")
 	red.influence = 0
 	_play_with(state, "49509")
-	check_eq(red.influence, 3, "Dretch после пожирания: +2 и Might +1")
+	check_eq(red.influence, 3, "Mummy после пожирания: +2 и Might +1")
 
-	# Horned Devil: Might дважды
+	# Troll: Might дважды
 	state.turn_flags["might_twice"] = true
 	red.influence = 0
 	_play_with(state, "49509")
-	check_eq(red.influence, 4, "Horned Devil: Might Dretch срабатывает дважды")
+	check_eq(red.influence, 4, "Troll: Might Mummy срабатывает дважды")
 	state.turn_flags.erase("might_twice")
 
 	# Hobgoblin Captain: вторая Might требует второго пожирания
@@ -5946,21 +5946,21 @@ func test_avernus_deck() -> void:
 	check_eq(red.influence, 2, "Hobgoblin Captain: одна Might из двух (+2 Influence)")
 	check_eq(red.deck.hand.size(), hand_before, "вторая Might (карта) не сработала")
 
-	# Imp: замена сожранной карты из 3 верхних карт колоды рынка
+	# Bandit: замена сожранной карты из 3 верхних карт колоды рынка
 	var deck_before := state.market.deck_size()
 	var gone: String = state.market.display[0]
 	var top3: Array = [state.market.deck[-1], state.market.deck[-2], state.market.deck[-3]]
 	var ri := _play_with(state, "49500", [0])
-	check(ri.is_waiting() and ri.pending.legal_options.size() == 3, "Imp: выбор из 3 верхних карт")
+	check(ri.is_waiting() and ri.pending.legal_options.size() == 3, "Bandit: выбор из 3 верхних карт")
 	TurnEngine.resume_card(state, top3[2], ri)
-	check_eq(state.market.display[0], top3[2], "Imp: выбранная карта встала в слот")
-	check_eq(state.market.deck_size(), deck_before - 1, "Imp: остальные ушли вниз колоды")
+	check_eq(state.market.display[0], top3[2], "Bandit: выбранная карта встала в слот")
+	check_eq(state.market.deck_size(), deck_before - 1, "Bandit: остальные ушли вниз колоды")
 	var rest: Array = top3.slice(0, 2)
 	var bottom: Array = [state.market.deck[0], state.market.deck[1]]
 	rest.sort()
 	bottom.sort()
-	check_eq(bottom, rest, "Imp: две другие — под низ колоды рынка")
-	check_eq(state.devoured_pile[-1], gone, "Imp: старая карта сожрана")
+	check_eq(bottom, rest, "Bandit: две другие — под низ колоды рынка")
+	check_eq(state.devoured_pile[-1], gone, "Bandit: старая карта сожрана")
 
 	# Bugbear Stalker: замена на 3 дешевле
 	var rb := _play_with(state, "49506", [0])
@@ -6008,13 +6008,13 @@ func test_avernus_deck() -> void:
 	check(red.deck.discard_pile.has(NoxusCards.BLADE_OF_EXILE), "три осколка и Half-Dragon: Blade of Exile")
 	check_eq(red.deck.played_pile.count(NoxusCards.BLADE_FRAGMENT), 0, "осколки ушли из игры")
 
-	# Pit Fiend: половина колоды рынка сожрана; при пустой колоде — победа
+	# Horned Devil: половина колоды рынка сожрана; при пустой колоде — победа
 	var half := ceili(state.market.deck_size() / 2.0)
 	var pile_before := state.devoured_pile.size()
 	_play_with(state, "49515", [0])
-	check_eq(state.devoured_pile.size(), pile_before + half, "Pit Fiend: сожрана половина колоды рынка")
+	check_eq(state.devoured_pile.size(), pile_before + half, "Horned Devil: сожрана половина колоды рынка")
 	state.market.deck.clear()
 	_play_with(state, "49515", [0])
-	check_eq(state.instant_winner, "red", "Pit Fiend при пустой колоде рынка: победа")
+	check_eq(state.instant_winner, "red", "Horned Devil при пустой колоде рынка: победа")
 	check_eq(Scoring.winners(state), ["red"] as Array[String], "Scoring.winners — только он")
 	check_eq(state.final_round_ends_after_index, state.current_player_index, "партия кончается после его хода")
