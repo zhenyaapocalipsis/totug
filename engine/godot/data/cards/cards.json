@@ -2797,7 +2797,7 @@
     "type": "ICEWIND",
     "deck_vp": 3,
     "inner_circle_vp": 7,
-    "ability_text": "Opponents don't trigger Frostbite this turn. Choose one:\n• Each opponent discards down to 3 cards.\n• If each opponent has 4 or fewer cards in hand, supplant 2 troops.\nFrostbite: Return this to your hand."
+    "ability_text": "Opponents don't trigger Frostbite this turn.\n• Opponents discard down to 3 cards, or\n• no opponent has 5+ cards: supplant 2 troops.\nFrostbite: Return this to your hand."
   },
   {
     "card_id": 49618,

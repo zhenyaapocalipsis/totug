@@ -272,5 +272,32 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s did not come back — GAME OVER, rating does not change" % who
 		"give_insane_outcast":
 			return "%s receives Insane Outcast ×%s" % [who, e.get("count", 1)]
+		# Icewind Dale (New Era Freljord)
+		"frostbite":
+			var twice := "" if int(e.get("times", 1)) < 2 else " (twice)"
+			return "%s: Frostbite of %s%s" % [who, card, twice]
+		"hill_giant_block":
+			return "%s reveals Hill Giant and ignores the effect" % who
+		"discard_to_hand":
+			return "%s returns %s from the discard pile to hand" % [who, card]
+		"reveal_hand":
+			var shown: Array = e.get("cards", [])
+			return "%s reveals %s" % [who, ", ".join(PackedStringArray(shown.map(func(c): return card_name(String(c)))))]
+		"ward":
+			match String(e.get("kind", "")):
+				"storm":
+					return "%s puts a Glacial Storm on %s" % [who, site]
+				"pillar":
+					return "%s puts an Ice Pillar on %s" % [who, site]
+				"ice":
+					return "%s puts Ice on a troop at %s" % [who, slot]
+				_:
+					return "%s: Scarab of Protection — troops can't be hit until next turn" % who
+		"gain_front":
+			return "%s puts %s in front of them" % [who, card]
+		"masterwork":
+			return "%s triggers %s" % [who, card if e.has("card_id") else "Masterwork items"]
+		"roc_reborn":
+			return "%s: the Roc hatches back into hand" % who
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]
