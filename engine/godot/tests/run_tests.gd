@@ -66,6 +66,7 @@ func _initialize() -> void:
 	test_piltover_zaun()
 	test_siege_deck()
 	test_mercenaries_deck()
+	test_avernus_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2132,10 +2133,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 237 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 262 карты разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 237, "cards.json содержит 237 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries)")
+	check_eq(all_ids.size(), 262, "cards.json содержит 262 карты (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -5900,3 +5901,120 @@ func test_mercenaries_deck() -> void:
 	check(state.stock("red").deck.inner_circle.has("49400"), "сброшенная карта продвинута")
 	check_eq(red.deck.discard_pile.count("48342"), 2, "оба Noble остались в сбросе")
 	check(red.deck.hand.has("49401"), "третья вытянутая карта осталась в руке")
+
+
+func test_avernus_deck() -> void:
+	section("Avernus (New Era Noxus): полуколода")
+	check_eq(GameSetup.expand_half_deck("noxus").size(), 45, "Avernus: 45 карт")
+	check(not GameSetup.available_half_decks().has("noxus"), "Avernus пока не в обычном выборе (wip)")
+	var mode := GameSetup.new_era_mode(["noxus", "celestial"])
+	check_eq(mode, "newera:celestial,noxus", "пара Celestial + Avernus в строке режима")
+	check(GameSetup.is_mode(mode), "режим принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 90, "рынок: 45 + 45 карт")
+	check_eq(game.supplies.remaining(NoxusCards.BLADE_FRAGMENT), 3, "с Avernus у доски 3 Blade Fragment")
+	_sweep_deck_with_vp(49500, 49524)
+
+	var state := _build_rich_state(41)
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+
+	# Might: без пожирания не срабатывает, одна Might — одно пожирание
+	red.influence = 0
+	_play_with(state, "49509")
+	check_eq(red.influence, 2, "Dretch без пожирания: только +2 Influence")
+	check_eq(state.ghost_market_player, "red", "Dretch: верхнюю сожранную карту можно купить")
+	var rg := _play_with(state, "49105", [0, "48342"])  # Grick (Ravenloft): devour из руки
+	_auto_resolve(state, rg, false)
+	check_eq(NoxusCards.devours(state), 1, "пожирание картой Ravenloft считается для Might")
+	red.influence = 0
+	_play_with(state, "49509")
+	check_eq(red.influence, 3, "Dretch после пожирания: +2 и Might +1")
+
+	# Horned Devil: Might дважды
+	state.turn_flags["might_twice"] = true
+	red.influence = 0
+	_play_with(state, "49509")
+	check_eq(red.influence, 4, "Horned Devil: Might Dretch срабатывает дважды")
+	state.turn_flags.erase("might_twice")
+
+	# Hobgoblin Captain: вторая Might требует второго пожирания
+	var hand_before := red.deck.hand.size()
+	red.influence = 0
+	var rc := _play_with(state, "49512")
+	_auto_resolve(state, rc, false)
+	check_eq(red.influence, 2, "Hobgoblin Captain: одна Might из двух (+2 Influence)")
+	check_eq(red.deck.hand.size(), hand_before, "вторая Might (карта) не сработала")
+
+	# Imp: замена сожранной карты из 3 верхних карт колоды рынка
+	var deck_before := state.market.deck_size()
+	var gone: String = state.market.display[0]
+	var top3: Array = [state.market.deck[-1], state.market.deck[-2], state.market.deck[-3]]
+	var ri := _play_with(state, "49500", [0])
+	check(ri.is_waiting() and ri.pending.legal_options.size() == 3, "Imp: выбор из 3 верхних карт")
+	TurnEngine.resume_card(state, top3[2], ri)
+	check_eq(state.market.display[0], top3[2], "Imp: выбранная карта встала в слот")
+	check_eq(state.market.deck_size(), deck_before - 1, "Imp: остальные ушли вниз колоды")
+	var rest: Array = top3.slice(0, 2)
+	var bottom: Array = [state.market.deck[0], state.market.deck[1]]
+	rest.sort()
+	bottom.sort()
+	check_eq(bottom, rest, "Imp: две другие — под низ колоды рынка")
+	check_eq(state.devoured_pile[-1], gone, "Imp: старая карта сожрана")
+
+	# Bugbear Stalker: замена на 3 дешевле
+	var rb := _play_with(state, "49506", [0])
+	_auto_resolve_until(state, rb, "Devour")
+	TurnEngine.resume_card(state, 1, rb)
+	var cost_now: int = state.market.card_cost(1)
+	check_eq(Actions.market_cost(state, 1), maxi(0, cost_now - 3), "Bugbear Stalker: карта в слоте на 3 дешевле")
+
+	# Efreeti: сожранную из руки карту можно продвинуть
+	state.turn_flags["devour_promote"] = true
+	red.deck.hand.append("48331")
+	var ic_before: int = red.deck.inner_circle.size()
+	var copies_before: int = state.devoured_pile.count("48331")
+	var re := _play_with(state, "49105", [0, "48331"])
+	check(re.is_waiting() and re.pending.choice_type == "confirm", "Efreeti: вопрос «продвинуть вместо пожирания?»")
+	TurnEngine.resume_card(state, true, re)
+	_auto_resolve(state, re, false)
+	check_eq(red.deck.inner_circle.size(), ic_before + 1, "Efreeti: карта во Внутреннем круге")
+	check_eq(state.devoured_pile.count("48331"), copies_before, "Efreeti: в стопку сожранных она не попала")
+	state.turn_flags.erase("devour_promote")
+
+	# Weretiger: после убийства в локации шпиона туда нельзя ставить войска
+	var site := ""
+	for s: String in state.graph.sites.keys():
+		if not (state.spies.get(s, []) as Array).has("red"):
+			site = s
+			break
+	NoxusCards._BlockDeploy.new(site).apply(state, "red", EffectResolver.new())
+	var blocked := false
+	for slot_id: String in state.deployable_slots("red"):
+		if state.graph.site_of_slot(slot_id) == site:
+			blocked = true
+	check(not blocked, "Weretiger: в закрытую локацию войска не ставятся")
+	check(NoxusCards.deploy_blocked(state, "red", site) and not NoxusCards.deploy_blocked(state, "blue", site),
+		"Weretiger: запрет только для того, кто играл карту")
+
+	# Half-Dragon: Blade Fragment из запаса; все 3 осколка + Half-Dragon -> Blade of Exile
+	state.supplies.counts[NoxusCards.BLADE_FRAGMENT] = 3
+	red.deck.played_pile.clear()
+	_play_with(state, NoxusCards.HALF_DRAGON)
+	check_eq(state.supplies.remaining(NoxusCards.BLADE_FRAGMENT), 2, "Half-Dragon: взят осколок из запаса")
+	check(red.deck.discard_pile.has(NoxusCards.BLADE_FRAGMENT), "осколок в сбросе")
+	red.deck.played_pile.append_array([NoxusCards.BLADE_FRAGMENT, NoxusCards.BLADE_FRAGMENT, NoxusCards.BLADE_FRAGMENT] as Array[String])
+	NoxusCards._Reforge.new().apply(state, "red", EffectResolver.new())
+	check(red.deck.discard_pile.has(NoxusCards.BLADE_OF_EXILE), "три осколка и Half-Dragon: Blade of Exile")
+	check_eq(red.deck.played_pile.count(NoxusCards.BLADE_FRAGMENT), 0, "осколки ушли из игры")
+
+	# Pit Fiend: половина колоды рынка сожрана; при пустой колоде — победа
+	var half := ceili(state.market.deck_size() / 2.0)
+	var pile_before := state.devoured_pile.size()
+	_play_with(state, "49515", [0])
+	check_eq(state.devoured_pile.size(), pile_before + half, "Pit Fiend: сожрана половина колоды рынка")
+	state.market.deck.clear()
+	_play_with(state, "49515", [0])
+	check_eq(state.instant_winner, "red", "Pit Fiend при пустой колоде рынка: победа")
+	check_eq(Scoring.winners(state), ["red"] as Array[String], "Scoring.winners — только он")
+	check_eq(state.final_round_ends_after_index, state.current_player_index, "партия кончается после его хода")

@@ -164,6 +164,7 @@ class _CarrionCrawlerDevour extends CardEffect:
 					p.deck.played_pile.remove_at(idx)
 				state.market.display[int(index)] = "48737"
 				resolver.log_event("devour", {"player_id": player_id, "card_id": devoured, "source": "market"})
+				NoxusCards.on_devour(state, player_id, devoured, "market", resolver)
 			return
 		var options: Array = []
 		for i in range(state.market.display.size()):
@@ -626,6 +627,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var siege := SiegeCards.build(card_id)
 	if siege != null:
 		return siege
+	var noxus := NoxusCards.build(card_id)
+	if noxus != null:
+		return noxus
 	var mercenary := MercenaryCards.build(card_id)
 	if mercenary != null:
 		return mercenary

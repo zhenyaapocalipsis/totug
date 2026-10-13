@@ -58,7 +58,7 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 		p.vp_tokens += state.vp_bank.grant(1)
 		return true
 
-	var legal: PackedStringArray = state.presence.deployable_slots(player_id, state.troops, state.spies)
+	var legal: PackedStringArray = state.deployable_slots(player_id)
 	if not legal.has(slot_id):
 		return false
 
@@ -92,6 +92,8 @@ static func recruit(state: GameState, player_id: String, market_index: int, card
 	var card_id: String = state.market.recruit_at(market_index)
 	if card_id == "":
 		return false
+	# Bugbear Stalker: скидка была на карту в слоте, не на её замену.
+	state.turn_discounts.erase("slot:%d" % market_index)
 	p.influence -= card_cost
 	p.deck.discard_pile.append(card_id)
 	CardLibrary.on_gain(state, player_id, card_id)
@@ -183,7 +185,7 @@ static func market_cost(state: GameState, index: int) -> int:
 	if cost < 0:
 		return cost
 	return maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index])
-		- int(state.turn_discounts.get("recruit", 0)))
+		- int(state.turn_discounts.get("recruit", 0)) - int(state.turn_discounts.get("slot:%d" % index, 0)))
 
 
 ## Цены базовых действий с учётом скидок хода (New Era, state.turn_discounts).

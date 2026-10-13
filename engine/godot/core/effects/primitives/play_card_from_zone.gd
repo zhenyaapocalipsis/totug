@@ -97,4 +97,5 @@ class _FinishPlayFromZone extends CardEffect:
 				if state.market.is_deck_empty():
 					GameEnd.trigger(state, "market_empty")
 				resolver.log_event("devour", {"player_id": player_id, "card_id": card_id, "source": "market"})
+				NoxusCards.on_devour(state, player_id, card_id, "market", resolver)
 		# zone == "inner_circle": карта никогда не покидала inner_circle — ничего делать не нужно.

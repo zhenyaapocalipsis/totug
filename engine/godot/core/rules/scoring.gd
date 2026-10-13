@@ -120,6 +120,13 @@ static func winners(
 	card_deck_vp: Dictionary = {},
 	card_inner_circle_vp: Dictionary = {}
 ) -> Array[String]:
+	if state.instant_winner != "":
+		# Pit Fiend при пустой колоде рынка: "you win" (в 2v2 — вместе с союзником).
+		var side: Array[String] = []
+		for player_id: String in state.turn_order:
+			if state.is_ally(state.instant_winner, player_id):
+				side.append(player_id)
+		return side
 	var scores: Dictionary = {}
 	var best: int = -1
 	for player_id: String in state.turn_order:

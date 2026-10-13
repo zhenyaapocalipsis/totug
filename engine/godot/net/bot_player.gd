@@ -289,7 +289,7 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 			best = Intent.deploy(pid, "")
 			best_ratio = 1.0
 		else:
-			for slot: String in state.presence.deployable_slots(pid, state.troops, state.spies):
+			for slot: String in state.deployable_slots(pid):
 				var gain := _troops_eval(state, ctx, {slot: pid}) - base
 				if state.stock(pid).troops_in_barracks == 1:
 					gain += _end_trigger_bonus(state, ctx)
@@ -340,7 +340,7 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 	if p.power >= Actions.COST_DEPLOY:
 		if state.stock(pid).troops_in_barracks <= 0:
 			return Intent.deploy(pid, "")
-		var deployable := state.presence.deployable_slots(pid, state.troops, state.spies)
+		var deployable := state.deployable_slots(pid)
 		var reach := {}
 		for slot: String in deployable:
 			reach[slot] = true
@@ -713,7 +713,7 @@ static func _answer_slot(state: GameState, pd: PendingDecision, pid: String, ctx
 	if fast:
 		var reach := {}
 		if prompt.contains("deploy"):
-			for slot: String in state.presence.deployable_slots(pid, state.troops, state.spies):
+			for slot: String in state.deployable_slots(pid):
 				reach[slot] = true
 		value = func(o): return _local_gain(state, ctx, changes.call(o), trophy) \
 			+ (W_PRESENCE * _new_reach(state, String(o), reach) if not reach.is_empty() else 0.0)

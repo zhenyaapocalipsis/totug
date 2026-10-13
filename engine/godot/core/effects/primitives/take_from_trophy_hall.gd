@@ -106,7 +106,7 @@ class DeployTrophyTroop extends CardEffect:
 
 	static func legal_slots(state: GameState, player_id: String, any_site: bool) -> Array:
 		if not any_site:
-			return Array(state.presence.deployable_slots(player_id, state.troops, state.spies))
+			return Array(state.deployable_slots(player_id))
 		var result: Array = []
 		for slot_id: String in state.graph.slots.keys():
 			if state.troops.get(slot_id, "") == "":

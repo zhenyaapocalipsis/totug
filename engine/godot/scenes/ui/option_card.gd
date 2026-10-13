@@ -150,6 +150,25 @@ const NAMES := {
 	"Return one of your spies -> Swap this card with a card in a rival's discard pile": "Infiltrator",
 	"Move one of your troops and gain 1 Influence": "Slaver's Round",
 	"Bribe -> Swap 2 troops anywhere on the board": "Switched Chains",
+	# Avernus (New Era Noxus)
+	"Devour a card in your hand": "Cull the Weak",
+	"Devour a card in your hand or your discard pile": "Blood Tithe",
+	"Devour a card in the market": "Seize the Spoils",
+	"Place a spy (full site: you may devour a card in your hand or discard pile)": "Crimson Rite",
+	"+1 Power, devour a card in the market, your hand or discard pile": "Thorned Rose",
+	"Place a spy, devour a card in the market (its replacement costs 3 less)": "Black Rose",
+	"Return one of your spies -> +4 Influence": "Whispered Favour",
+	"Place a spy, you may assassinate up to 3 troops there (then no deploying there this turn)": "Death Lotus",
+	"Move up to 2 of your troops and draw a card": "Shunpo",
+	"Devour half the market deck (if it is already empty, you win)": "Iron Dominion",
+	"Play up to 2 cards from the devoured pile": "Realm of Death",
+	"Each time you trigger Might this turn, supplant a troop": "Lord of Ruin",
+	"Place 2 spies and draw a card": "Ravens Above",
+	"Return any number of your spies -> +1 Influence and supplant a troop at each of those sites": "Grand Strategy",
+	"Devour a card in your hand -> draw cards equal to its inner circle VP": "Daredevil",
+	"Devour a card in the market -> gain VP equal to its deck VP": "Showstopper",
+	"Assassinate 2 troops at a site": "Wild Rush",
+	"Blade Fragments and Half-Dragons from your top 5 cards into your hand, discard the rest": "Broken Wings",
 }
 
 var _tex: ImageTexture

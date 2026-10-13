@@ -10,6 +10,7 @@
   | **CELESTIAL** (Celestial Order) | Demacia | `celestial` | 49000–49024 | NE-1…3 |
   | **RAVENLOFT** | Shadow Isles | `shadow` | 49100–49124 | NE-4, NE-5, NE-8 (имя) |
   | **WATERDEEP** | Piltover & Zaun | `piltover` | 49200–49220 | NE-6, NE-7, NE-8 (имя) |
+  | **AVERNUS** | Noxus | `noxus` | 49500–49524 | NE-9 (правила; артов ещё нет) |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
 - Все пять — `wip`, играются только в режиме рынка **NEW ERA**: две колоды выбираются кнопками под режимами (меню HOTSEAT и LOBBY). Строка режима — `newera:celestial,piltover`; просто `newera` = Celestial + Ravenloft (старые реплеи). Ключи колод и классы в коде (`shadow`, `piltover`, `ShadowCards`, `PiltoverCards`) не переименованы, чтобы не ломать реплеи и сетевые режимы.
@@ -151,7 +152,8 @@
   - Swarm (не-Obedience карты стоимостью 2);
   - Hextech / Shimmer (колоды по 30);
   - Transform (уже сделан).
-- Следующая колода по mapping-файлу — **Noxus** (Execute = Devour, Might). Владелец порядок не подтверждал. Заметки для неё:
+- **Noxus → AVERNUS сделан на правилах (NE-9, 2026-10-13)**: всё — в `Claude outputs/new_era_noxus.md` (таблица, толкования Might/Execute, Pit Fiend «you win», Weretiger, Lamia). Тесты 1726/0, сеть 136/0, 24 партии ботов вчетвером без зависаний. Дальше — **NE-10, арты** (кандидаты на D&D Beyond найдены для всех 23 существ, у 2024-версий проверить фон; жетонам Blade Fragment / Blade of Exile арт не выбран), затем живая проверка владельцем. Новое в движке: `GameState.deployable_slots` (все проверки постановки войск идут через него), `GameState.instant_winner`, скидка на слот рынка `turn_discounts["slot:N"]`, `turn_flags["devours"/"trophy_start"]`.
+- Старые заметки к Noxus (до NE-9):
   - карты в PDF — с картинки 74 (первые карты видел: Armed Acquisitioner, Legion Marauder, Crimson Disciple, Thorn of the Rose — в них уже есть Execute);
   - черновик mapping (дьяволы и хобгоблины) во многом занят: в Ravenloft уже Rakshasa, Bearded/Chain/Barbed/Bone Devil, Lemure; в Celestial — Erinyes. Проверять свободные имена по `cards.json` и свободный арт 2024 года;
   - D&D-название придумать по составу (например, NINE HELLS, если останутся дьяволы, или ZHENTARIM / BANE, если люди-легион);

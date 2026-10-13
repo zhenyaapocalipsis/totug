@@ -50,6 +50,7 @@ func _devour(state: GameState, player_id: String, chosen: String, src: String, r
 		state.devoured_pile.append(chosen)
 		resolver.log_event("devour", {"player_id": player_id, "card_id": chosen, "source": src})
 		ShadowCards.on_devour(state, player_id, chosen, resolver)
+		NoxusCards.on_devour(state, player_id, chosen, src, resolver)
 	if then_effect != null:
 		resolver.push(then_effect, player_id)
 

@@ -134,7 +134,7 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 
 	var deploy_slots: Array[String] = []
 	if p.power >= Actions.COST_DEPLOY and state.stock(viewer_id).troops_in_barracks > 0:
-		for slot_id in state.presence.deployable_slots(viewer_id, state.troops, state.spies):
+		for slot_id in state.deployable_slots(viewer_id):
 			deploy_slots.append(slot_id)
 
 	var kill_slots: Array[String] = []
@@ -170,7 +170,7 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 	# интерфейсу, чтобы объяснить отказ: "нет Присутствия" и "не хватает
 	# Power" — разные причины, а игрок видел одинаковое "сюда нельзя".
 	var presence_slots: Array[String] = []
-	for slot_id in state.presence.deployable_slots(viewer_id, state.troops, state.spies):
+	for slot_id in state.deployable_slots(viewer_id):
 		presence_slots.append(slot_id)
 
 	return {

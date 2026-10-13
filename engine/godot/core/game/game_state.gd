@@ -40,6 +40,9 @@ var game_over: bool = false
 ## Сетевая партия кончилась досрочно: этот игрок отключился и не вернулся
 ## (GameEnd.abandon). Пусто — партия кончилась по правилам.
 var abandoned_by: String = ""
+## Pit Fiend (New Era): игрок сыграл его при пустой колоде рынка и побеждает
+## (Scoring.winners), партия кончается после его хода.
+var instant_winner: String = ""
 
 ## Этап 5: аспекты карт, сыгранных (или сожранных) в этот ход — используется
 ## FocusEffect ("<Aspect> Focus ► ..."). Сбрасывается в TurnEngine.start_turn().
@@ -114,6 +117,19 @@ func _init(map_graph: MapGraph, seed_value: int = 0) -> void:
 func add_player(player_id: String, starting_deck_cards: Array[String]) -> void:
 	players[player_id] = PlayerState.new(player_id, starting_deck_cards)
 	turn_order.append(player_id)
+
+
+## Слоты, куда игрок может поставить войско: Присутствие (Presence) минус
+## локации, закрытые для него в этот ход (Weretiger, NoxusCards).
+func deployable_slots(player_id: String) -> PackedStringArray:
+	var legal: PackedStringArray = presence.deployable_slots(player_id, troops, spies)
+	if not turn_flags.has("no_deploy"):
+		return legal
+	var result := PackedStringArray()
+	for slot_id: String in legal:
+		if not NoxusCards.deploy_blocked(self, player_id, graph.site_of_slot(slot_id)):
+			result.append(slot_id)
+	return result
 
 
 func current_player() -> String:

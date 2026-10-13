@@ -37,6 +37,8 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.ghost_market_player = ""
 	state.turn_discounts.clear()
 	state.turn_flags.clear()
+	# Gladiator (New Era): VP за войска, убитые в этот ход, — от трофеев на начало хода.
+	state.turn_flags["trophy_start"] = state.stock(player_id).trophy_hall_count
 	for site_id: String in state.stolen_markers.keys():
 		if state.stolen_markers[site_id] == player_id:
 			state.stolen_markers.erase(site_id)

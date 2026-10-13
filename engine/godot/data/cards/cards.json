@@ -2368,5 +2368,255 @@
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "Draw 3 cards, then discard 2 of them.\nBribe ► Promote one of the discarded cards."
+  },
+  {
+    "card_id": 49500,
+    "name": "Imp",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+2 Influence\nYou may devour a card in the market. Look at the top 3 cards of the market deck: one replaces it, the rest go to the bottom."
+  },
+  {
+    "card_id": 49501,
+    "name": "Hobgoblin Warrior",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Deploy 3 troops.\n• Assassinate a troop.\nIf you deployed next to or assassinated another player's troop, you may devour a card in your hand or the market."
+  },
+  {
+    "card_id": 49502,
+    "name": "Cultist",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "AVERNUS",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, you may devour a card in your hand or discard pile.\n• Return one of your spies ► +4 Power."
+  },
+  {
+    "card_id": 49503,
+    "name": "Hell Hound",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "AVERNUS",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +3 Power\n• +1 Power. Devour a card in the market, your hand or your discard pile."
+  },
+  {
+    "card_id": 49504,
+    "name": "Quasit",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Place a spy. +1 Influence if another player's troop is at that site, +1 if the site is full, +1 if another player's spy is there."
+  },
+  {
+    "card_id": 49505,
+    "name": "Medusa",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "+3 Power\nMight: Supplant a white troop.\nMight: Assassinate a troop."
+  },
+  {
+    "card_id": 49506,
+    "name": "Bugbear Stalker",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "AVERNUS",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy and devour a card in the market. The card that replaces it costs 3 less this turn.\n• Return one of your spies ► +4 Influence."
+  },
+  {
+    "card_id": 49507,
+    "name": "Guard Captain",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "AVERNUS",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "+3 Influence\nMight: Return a troop or spy.\nMight: Draw a card."
+  },
+  {
+    "card_id": 49508,
+    "name": "Bugbear Warrior",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Assassinate a troop.\n+1 Power if you have 4+ player troops in your trophy hall, +1 more at 8+."
+  },
+  {
+    "card_id": 49509,
+    "name": "Dretch",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+2 Influence\nThis turn you may recruit the top card of the devoured pile.\nMight: +1 Influence."
+  },
+  {
+    "card_id": 49510,
+    "name": "Ogre",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "You may devour a card in your hand or discard pile ► Scry 1.\nChoose one:\n• Supplant a white troop.\n• Deploy 3 troops."
+  },
+  {
+    "card_id": 49511,
+    "name": "Minotaur of Baphomet",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "AVERNUS",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+3 Power\nMight: +1 Power.\n+1 Power if you have 4+ player troops in your trophy hall, +1 more at 8+."
+  },
+  {
+    "card_id": 49512,
+    "name": "Hobgoblin Captain",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "AVERNUS",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Move a troop.\n• Deploy 3 troops.\nMight: +2 Influence.\nMight: Draw a card."
+  },
+  {
+    "card_id": 49513,
+    "name": "Weretiger",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Place a spy. You may assassinate up to 3 troops at that site, then you can't deploy there this turn.\n• Move up to 2 of your troops and draw a card."
+  },
+  {
+    "card_id": 49514,
+    "name": "Lamia",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose an opponent. Split the top 5 cards of their deck into a face-up and a face-down pile. They put one pile back on top; you play the other cards for free."
+  },
+  {
+    "card_id": 49515,
+    "name": "Pit Fiend",
+    "cost": 9,
+    "aspect": "CONQUEST",
+    "type": "AVERNUS",
+    "deck_vp": 5,
+    "inner_circle_vp": 9,
+    "ability_text": "Choose one:\n• Devour half the market deck. If it is already empty, you win.\n• Play up to 2 cards from the devoured pile.\n• Each time you trigger Might this turn, supplant a troop."
+  },
+  {
+    "card_id": 49516,
+    "name": "Efreeti",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Assassinate 2 troops.\nThis turn, whenever you devour a card from your hand or discard pile, you may promote it instead.\n+1 Power per 4 cards in your inner circle."
+  },
+  {
+    "card_id": 49517,
+    "name": "Gladiator",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop anywhere. At the end of your turn, gain 1 VP for each troop you assassinated or supplanted this turn.\nMight: Assassinate a troop.\nMight: +2 Power."
+  },
+  {
+    "card_id": 49518,
+    "name": "Ice Devil",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Place 2 spies and draw a card.\n• Return any number of your spies ► +1 Influence and supplant a troop at each of those sites."
+  },
+  {
+    "card_id": 49519,
+    "name": "Horned Devil",
+    "cost": 9,
+    "aspect": "CONQUEST",
+    "type": "AVERNUS",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Might triggers twice this turn.\nDraw a card and devour a card in your hand, the market or your discard pile.\nMight: Deploy 4 troops.\nMight: Supplant a troop."
+  },
+  {
+    "card_id": 49520,
+    "name": "Fire Giant",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Devour a card in your hand ► Assassinate a troop and draw a card. 15+ troops on the board: repeat any number of times. 30+: devour from your discard pile too and supplant instead."
+  },
+  {
+    "card_id": 49521,
+    "name": "Half-Dragon",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+4 Power. Gain a Blade Fragment.\nIf you played all 3 Blade Fragments and this card this turn, they leave the game and you gain the Blade of Exile."
+  },
+  {
+    "card_id": 49522,
+    "name": "Wyvern",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "AVERNUS",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose one:\n• Devour a card in your hand ► Draw cards equal to its inner circle VP.\n• Devour a card in the market ► Gain its deck VP.\n• Assassinate 2 troops at a site."
+  },
+  {
+    "card_id": 49523,
+    "name": "Blade Fragment",
+    "cost": null,
+    "aspect": null,
+    "type": "AVERNUS",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Choose one:\n• +3 Power\n• Draw a card.\n• Put Blade Fragments and Half-Dragons from your top 5 cards into your hand, discard the rest."
+  },
+  {
+    "card_id": 49524,
+    "name": "Blade of Exile",
+    "cost": null,
+    "aspect": null,
+    "type": "AVERNUS",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Put Half-Dragons from your top 5 cards into your hand, the rest back on top.\n+3 Power. Draw 3 cards."
   }
 ]

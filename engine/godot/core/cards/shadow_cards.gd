@@ -464,6 +464,7 @@ class _HagDevour extends CardEffect:
 			state.devoured_pile.append(cid)
 			resolver.log_event("devour", {"player_id": player_id, "card_id": cid, "source": "hand_or_discard"})
 			ShadowCards.on_devour(state, player_id, cid, resolver)
+			NoxusCards.on_devour(state, player_id, cid, "hand_or_discard", resolver)
 			var vp: int = Scoring._card_vp(cid, "deck_vp")
 			if vp > 0:
 				resolver.push(GainVP.new(vp), player_id)
@@ -511,6 +512,7 @@ class _OpponentDevour extends CardEffect:
 				state.devoured_pile.append(cid)
 				resolver.log_event("devour", {"player_id": victim, "card_id": cid, "source": "hand"})
 				ShadowCards.on_devour(state, victim, cid, resolver)
+				NoxusCards.on_devour(state, victim, cid, "hand", resolver)
 			return
 		if d.hand.is_empty():
 			return

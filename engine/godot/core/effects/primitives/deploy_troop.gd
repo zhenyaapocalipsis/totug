@@ -47,7 +47,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		p.vp_tokens += granted
 		resolver.log_event("gain_vp", {"player_id": player_id, "amount": granted})
 		return
-	var legal: PackedStringArray = state.presence.deployable_slots(player_id, state.troops, state.spies)
+	var legal: PackedStringArray = state.deployable_slots(player_id)
 	if site != "":
 		legal = PackedStringArray()
 		for slot_id: String in state.graph.slots_of_site(site):

@@ -66,6 +66,7 @@ const NEW_ERA_TITLES := {
 	"piltover": "WATERDEEP",
 	"siege": "SIEGE",
 	"mercenaries": "MERCENARIES",
+	"noxus": "AVERNUS",
 }
 
 
