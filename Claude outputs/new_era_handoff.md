@@ -1,13 +1,22 @@
-# New Era — передача работы в новый чат (на 2026-10-11)
+# New Era — передача работы в новый чат (на 2026-10-13)
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
 ## Состояние сейчас (коротко)
-- Готовы три колоды: **Celestial Order** (бывшая Demacia, NE-1…3), **Shadow Isles** (NE-4…5) и **Piltover & Zaun** (NE-6 правила, NE-7 арты). Все `wip`. Режим рынка **NEW ERA**: две колоды New Era выбираются переключателем под режимами (меню HOTSEAT и LOBBY), строка режима `newera:celestial,piltover`; просто `newera` = Celestial + Shadow Isles. **Названия в игре (2026-10-11): Shadow Isles → RAVENLOFT, Piltover & Zaun → WATERDEEP** (тип карт, подпись, кнопки меню); ключи колод `shadow`/`piltover` и классы в коде прежние, чтобы не ломать реплеи.
-- Всё закоммичено, запушено на GitHub и задеплоено на сервер (`bash server/deploy.sh`, сборка 1791731850 от 2026-10-11, после Copies-1, Records-1, Friends-1, Spectate-1; PROTOCOL 19).
-- Тесты на 2026-10-11 (после NE-6): `пройдено: 1535, провалено: 0`, сеть `118 / 0`. В тесте карт 197 (126 + 25 Celestial + 25 Shadow Isles + 21 Piltover & Zaun).
-- Не в git и не моё: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` — правки владельца, не трогать.
-- **Владелец ещё не проверял обе колоды живьём.** Чек-листы — в конце разделов ниже.
+- Готовы три колоды из мода Runeterra Reforged:
+
+  | В игре | Регион мода | Ключ в коде | id | Этапы |
+  |---|---|---|---|---|
+  | **CELESTIAL** (Celestial Order) | Demacia | `celestial` | 49000–49024 | NE-1…3 |
+  | **RAVENLOFT** | Shadow Isles | `shadow` | 49100–49124 | NE-4, NE-5, NE-8 (имя) |
+  | **WATERDEEP** | Piltover & Zaun | `piltover` | 49200–49220 | NE-6, NE-7, NE-8 (имя) |
+
+  Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
+- Все пять — `wip`, играются только в режиме рынка **NEW ERA**: две колоды выбираются кнопками под режимами (меню HOTSEAT и LOBBY). Строка режима — `newera:celestial,piltover`; просто `newera` = Celestial + Ravenloft (старые реплеи). Ключи колод и классы в коде (`shadow`, `piltover`, `ShadowCards`, `PiltoverCards`) не переименованы, чтобы не ломать реплеи и сетевые режимы.
+- Всё закоммичено и запушено. Последний деплой — сборка 1791900932 (2026-10-13, после SiegeMerc). NE-6…8 задеплоены сборкой 1791729136.
+- Тесты на 2026-10-13: `пройдено: 1692, провалено: 0`, сеть `136 / 0`. В тесте карт 237 (126 + 25 + 25 + 21 New Era + 20 Siege + 20 Mercenaries). Сетевой `[server4] без лимита времени доска легла в сетку` (этап Stock-2) иногда падает по времени — повторный прогон проходит.
+- Не в git и не моё: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` — правки владельца (отладочный флаг), не трогать и не коммитить.
+- **Владелец ещё не проверял New Era-колоды живьём.** Чек-листы — в конце разделов ниже.
 
 ### Что сделали другие сессии и касается New Era
 - **NE-UI-1…3** (`dfd82f0`, `9e6b3d5`, `f7814ca`): вопросы карт полосой сверху, без затемнения; слева показывается карта, которая спрашивает. Green Hag жрёт карту выбором в ряду руки, соперники выбирают в своей руке.
@@ -57,7 +66,7 @@
 
 ## Готово: Shadow Isles — правила (NE-4, `412727e`)
 Тесты 1258/0, сеть 108/0. Всё по колоде — в `Claude outputs/new_era_shadow_isles.md` (таблица id → существо → карта мода, толкования).
-- Карты 49100–49124, тип `SHADOW` (подпись SHADOW ISLES), полуколода `shadow` (wip), эффекты `core/cards/shadow_cards.gd`, тест `test_shadow_isles`.
+- Карты 49100–49124, тип `RAVENLOFT` (до NE-8 — SHADOW), полуколода `shadow` (wip), эффекты `core/cards/shadow_cards.gd`, тест `test_shadow_isles`.
 - Решения владельца: Cursed Wanderer = Insane Outcast (стопка выкладывается и с Shadow Isles); Execute = Devour; Sapling = Twig Blight (запас 4); Elise ↔ Spider Elise = Drider ↔ Phase Spider; режим NEW ERA = Celestial + Shadow Isles.
 - Новое в движке: `state.turn_flags` (счётчик Outcast за ход и т.п.), `ShadowCards.on_play` в `TurnEngine.play_card`, `ShadowCards.on_devour` в DevourCard, `Actions.market_cost` (Cursed Affinity), `PlayerState.start_of_turn_influence`, реакция `ShadowCards.ClawsReaction` (Swarm of Crawling Claws в руке) в GiveInsaneOutcast.
 - **NE-5 (`164a8e1`) — арты.** Состав существ заменён без отдельного согласования (черновая нежить почти вся в платных книгах D&D Beyond, свободная нежить уже занята в игре): Rakshasa, Nightmare, Chain Devil, Barbed Devil, Ghast, Treant, Bone Devil, Drider ↔ Phase Spider, Green Hag, Shadow + 13 обычных. Таблица — `new_era_shadow_isles.md`. Владелец состав пока не комментировал. Картинки карт мода для сверки: 29–52, 0, 321, 326.
@@ -70,19 +79,28 @@
 - Аспект Valor из мода → MALICE.
 - Реакции в чужой ход делаем честно (Rammus, Shen, Tahm Kench, Braum — по тому же образцу ShieldGuard).
 - **Арты:** брать с D&D Beyond, **обязательно с хоть каким-то фоном**. Вырезанных персонажей на прозрачном фоне владелец забраковал. Кадр приближать к лицу. Если прозрачный фон всё же остался, он становится чёрным (это делает `pixel_cards.gd`).
-- Число копий карты = белые кружки внизу карты в PDF. Полуколода — 45 карт.
+- Число копий карты = белые кружки внизу карты в PDF. Обычно выходит 45 карт (у Waterdeep — 42, больше карт в моде нет; так и оставлено).
+- **Колоде — D&D-название по составу существ**, не имя региона LoL (владелец, 2026-10-11): Shadow Isles → Ravenloft, Piltover & Zaun → Waterdeep.
+- **Имена карт уникальны во всей игре.** Если имя занято, меняется существо в New Era-колоде (так Waterdeep Hydra стала Harpy).
 - Extra Champions (Vayne, Sona, Xin Zhao, Sylas, Lucian и др.) пока не берём.
 - Работа маленькими этапами: «Stage NE-N: …», после каждого — тесты, коммит и короткий чек-лист на русском.
 
 ## Как делать следующую колоду (конвейер)
-1. **Читать карты.** Картинки карт из PDF уже извлечены во временную папку, в новом чате её не будет. Извлечь заново скриптом Godot, который ищет JPEG-потоки (FFD8…`endstream`): Read-инструмент не открывает PDF больше 100 МБ, а Python здесь не работает. Порядок карт в PDF:
+0. **Скрипты-помощники** лежат в `engine/godot/tools/new_era/` (запуск: `Godot --headless --script "<полный путь к .gd>"`, параметры — переменными окружения, пути — в стиле `C:/...`):
+   - `extract_pdf.gd` — `OUT_DIR=<папка>`: все 479 JPEG-картинок PDF мода в `<папка>/0000.jpg…` (~1 мин). Read-инструмент PDF больше 100 МБ не открывает, Python здесь не работает — только так.
+   - `pdf_sheets.gd` — `PDF_DIR=<папка> FROM=74 TO=97`: листы 2x2 карт для чтения текста, кладутся рядом с папкой как `sheet_NNNN.jpg`. Картинки 1731x2327, по одной смотреть дорого.
+   - `art_contact.gd` — `DIR=<папка артов> OUT=<файл.jpg>`: все арты на пурпурной подложке (видно прозрачный фон) и в консоли их порядок.
+   - `art_grid.gd` — `DIR NAMES="a.png b.jpeg" COLS=4 [CELL=600] OUT`: арты с сеткой через 100 px исходника — по ней выбирается окно `Rect2i` для `SINGLE_ART`.
+   - `card_art_grid.gd` — `FROM=49200 TO=49211 OUT`: окна арта готовых карт x3 с сеткой 10 px — для проверки кадра и `MINI_FACE`.
+   - `mini_strip.gd` — `IDS="49203 49205" OUT=<файл.png>`: мини-карты x4 полосой.
+1. **Читать карты.** Извлечь картинки (`extract_pdf.gd`) во временную папку и смотреть листами (`pdf_sheets.gd`). Порядок карт в PDF (номера картинок):
 
-   | Регион | Листы |
+   | Регион | Картинки |
    |---|---|
-   | Demacia | 0–27 |
-   | Shadow Isles | ~28–55 |
-   | Piltover & Zaun | следом |
-   | Noxus | следом |
+   | Demacia | 0–28 (0 Cursed Wanderer, 1–5 стартовые мода, 6–27 Демасия, 28 Shyvana) |
+   | Shadow Isles | 29–52 (+ 321 Sapling, 326 Spider Elise) |
+   | Piltover & Zaun | 53–73 (в 58 и 67 по две карты; Ferros Elite — только в 67) |
+   | Noxus | с 74 (74 Armed Acquisitioner, 75 Legion Marauder, 76–77 Crimson Disciple, 77 Thorn of the Rose…) |
    | Bilgewater | следом |
    | Freljord | следом |
    | Shurima | следом |
@@ -97,14 +115,17 @@
    | Poro | в конце |
 
    Демасия при извлечении (картинки 0000–0027): 0 Cursed Wanderer, 1 Battlefield Sergeant, 2 Vanguard Cavalry, 3 Captain, 4 Officer, 5 Bannerman, 6–27 карты Демасии, 28 Shyvana, 341 Sylas, 360 Lucian.
-2. **Найти арты.** Во встроенном браузере открыть dndbeyond.com/monsters/… и через javascript_tool сделать fetch(`/monsters?filter-search=Имя`). Затем fetch страницы монстра (каждую в своём try/catch: закрытая страница роняет fetch) и взять src из `<img ... class="monster-image">` — общая регулярка по `avatars/` ловит картинки оформления сайта. Скрипт запускать фоном (`window.R = …`), результат забирать через 40 с: у javascript_tool лимит 45 с. Скачивать curl'ом с `-A "Mozilla/5.0"`. Монстры из платных книг отдают `locked` — брать других. jpeg почти всегда с фоном, png бывает и с фоном, и без. Проверять контакт-листом с пурпурной подложкой (прозрачное видно сразу).
+2. **Найти арты.** Во встроенном браузере открыть dndbeyond.com/monsters/… и через javascript_tool сделать fetch(`/monsters?filter-search=Имя`). Затем fetch страницы монстра (каждую в своём try/catch: закрытая страница роняет fetch) и взять src из `<img ... class="monster-image">` — общая регулярка по `avatars/` ловит картинки оформления сайта. Скрипт запускать фоном (`window.R = …`), результат забирать через 40 с: у javascript_tool лимит 45 с. Скачивать curl'ом с `-A "Mozilla/5.0"`. Монстры из платных книг отдают `locked` — брать других. jpeg почти всегда с фоном, png бывает и с фоном, и без. Проверять контакт-листом с пурпурной подложкой (прозрачное видно сразу). Почти всегда лучше версии **2024 года** (id `5195xxx`/`4904xxx`): у них сцена с фоном, у 2014 года — вырезанные фигуры. Перед выбором проверить, что имени нет в `cards.json` (у всех колод, включая Siege/Mercenaries).
 3. **Положить данные.** Арты — в `cards/<колода>/`. Новые карты дописать в конец `cards.json` (следующий диапазон id, например 49100+), полуколоду — в `half_decks.json` с `"wip": true`, тип — для подписи. В `tools/pixel_cards.gd` добавить:
    - в `SINGLE_ART` — `id: ["папка/файл", Rect2i(окно арта)]`, пропорция 164:100;
    - в `MINI_FACE` — левый верхний угол выреза 52x53 в арте 164x100;
    - в `set_name()` — подпись для `card_id/100`.
 4. **Сгенерировать карты:** `Godot --headless --path engine/godot --script res://tools/pixel_cards.gd` (~2,5 мин). `-- mini` перерисует только мини-карты, `-- measure` покажет высоты текстов: текст новой карты не должен превышать 85 px, иначе раздуется рамка всего набора. После генерации — `--import`.
 5. **Кадры** удобнее подбирать по сетке 10 px на окне арта (вырезать `(6,34,164,100)` из `assets/cards_pixel/<id>.png`, увеличить x3, сетка). Оценки «на глаз» по общему листу дважды ошиблись.
-6. **Эффекты** — в новом файле `core/cards/<deck>_cards.gd` по образцу celestial_cards.gd, подключить в `CardLibrary._build_effect`. Добавить названия вариантов в `option_card.gd` и тест колоды. Режим рынка — по образцу MODE_NEW_ERA (или обобщить его на выбор колоды).
+6. **Эффекты** — в новом файле `core/cards/<deck>_cards.gd` по образцу celestial_cards.gd, подключить в `CardLibrary._build_effect`. Добавить названия вариантов в `option_card.gd` и тест колоды. Чтобы колода появилась в переключателе NEW ERA: ключ — в `GameSetup.NEW_ERA_DECKS`, надпись кнопки — в `SetupScreen.NEW_ERA_TITLES`, цвет фона — в `UnderdarkBg.DECK_COLOURS`. Число карт в `test_card_library_smoke_all_cards` поднять. Перед коммитом — несколько партий ботов: `tests/balance_run.gd -- name=x players=4 "mode=newera:celestial,<ключ>" games=24 procs=6` (итог в `Claude outputs/balance/`, пробные файлы потом удалить).
+   - Флаги хода — в `state.turn_flags`; простые флаги ставят `ShadowCards._SetFlag` / `_AddFlag`.
+   - Если одно и то же дерево эффекта нужно применить ещё раз, его надо пересобрать: эффекты хранят ответы внутри себя (см. `FocusEffect._fresh_copy`).
+   - Снимок войск до/после действия («если поставил рядом с чужим», «если убил белое») — `PiltoverCards._AfterTroops`.
 7. **Тесты:** `run_tests.gd` и `net_loopback.gd`. После новых `class_name` сначала выполнить `--import`, иначе «Identifier not declared».
 
 ## Открытые вопросы и что не сделано
@@ -130,11 +151,15 @@
   - Swarm (не-Obedience карты стоимостью 2);
   - Hextech / Shimmer (колоды по 30);
   - Transform (уже сделан).
-- Следующая колода по mapping-файлу — **Noxus** (Execute = Devour, Might). Владелец порядок не подтверждал.
+- Следующая колода по mapping-файлу — **Noxus** (Execute = Devour, Might). Владелец порядок не подтверждал. Заметки для неё:
+  - карты в PDF — с картинки 74 (первые карты видел: Armed Acquisitioner, Legion Marauder, Crimson Disciple, Thorn of the Rose — в них уже есть Execute);
+  - черновик mapping (дьяволы и хобгоблины) во многом занят: в Ravenloft уже Rakshasa, Bearded/Chain/Barbed/Bone Devil, Lemure; в Celestial — Erinyes. Проверять свободные имена по `cards.json` и свободный арт 2024 года;
+  - D&D-название придумать по составу (например, NINE HELLS, если останутся дьяволы, или ZHENTARIM / BANE, если люди-легион);
+  - Might — новый счётчик Execute за ход в `state.turn_flags` (по образцу счётчика Outcast в ShadowCards).
 
 ## Piltover & Zaun — правила (NE-6) и арты (NE-7)
 Всё по колоде — в `Claude outputs/new_era_piltover.md` (таблица id → существо → карта мода, толкования).
-- Карты 49200–49220, тип `PILTOVER`, полуколода `piltover` (wip, **42 карты** — столько копий по кружкам), эффекты `core/cards/piltover_cards.gd`, тест `test_piltover_zaun`. Цвет фона — розовый (`UnderdarkBg.DECK_COLOURS["piltover"]`).
+- Карты 49200–49220, тип `WATERDEEP` (до NE-8 — PILTOVER), полуколода `piltover` (wip, **42 карты** — столько копий по кружкам), эффекты `core/cards/piltover_cards.gd`, тест `test_piltover_zaun`. Цвет фона — розовый (`UnderdarkBg.DECK_COLOURS["piltover"]`).
 - Новое в движке:
   - `FocusEffect` с `need = 2` — Double Focus; `FocusEffect.support()` — сколько других карт аспекта (сыграно + в руке); флаг `focus_extra` повторяет Focus (копия эффекта пересобирается из карты по номеру Focus, `FocusEffect.registry`).
   - `ChooseEffect`: флаг `choose_all` — вариант «All of them».
