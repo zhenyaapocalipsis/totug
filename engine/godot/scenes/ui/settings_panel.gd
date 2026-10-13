@@ -49,6 +49,8 @@ func _init() -> void:
 
 	right.add_child(_heading("KEYS"))
 	for action: String in GameSettings.ACTIONS:
+		if action == "ally_hand" and not SetupScreen.TEAMS_ENABLED:
+			continue  # клавиша T нужна только в 2v2 (спрятан)
 		var b := _value_button(GameSettings.key_name(action), func(_b: Button): _wait_key(action))
 		_key_buttons[action] = b
 		right.add_child(_row(GameSettings.ACTION_TITLES[action], b))

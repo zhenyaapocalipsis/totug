@@ -117,6 +117,12 @@ var _new_era_buttons := {}
 var _count: int = GameScreen.MIN_PLAYERS
 ## HOTSEAT: соперники — боты (иначе люди за этим же компьютером).
 var _bots := false
+## Режим 2 на 2 спрятан (решение владельца, 2026-10-13: идея неудачна, может,
+## вернёмся): без этого флага нет кнопок 2V2 в HOTSEAT, своей комнате и SEARCH,
+## вкладок 2V2 в LEADERBOARD и клавиши T в настройках. Движок, сеть и рейтинг
+## 2v2 остаются в коде — вернуть режим = поставить true.
+const TEAMS_ENABLED := false
+
 ## HOTSEAT: режим 2 на 2 (кнопка 2V2 рядом с числом игроков).
 var _teams := false
 ## Кнопка 2V2 есть на текущей странице (HOTSEAT и своя комната в LOBBY).
@@ -402,12 +408,8 @@ func _build_online() -> void:
 			market.text = _match_market_text())
 		counts.append(b)
 	# SEARCH 2V2 (этап Team-5): своя очередь, рейтинг 2v2.
-	var duo := _toggle("2V2", group, _match_teams, 32)
-	duo.pressed.connect(func():
-		_match_count = GameScreen.MAX_PLAYERS
-		_match_teams = true
-		market.text = _match_market_text())
-	counts.append(duo)
+	if TEAMS_ENABLED:
+		counts.append(_search_duo(group, market))
 	_col.add_child(_heading("PLAYERS"))
 	_col.add_child(_row(counts))
 	_add_dim("The game starts as soon as the table is full.")
@@ -562,6 +564,7 @@ func _add_game_options(with_teams: bool = false) -> void:
 	_col.add_child(_heading("PLAYERS"))
 	var counts: Array[Button] = []
 	group = ButtonGroup.new()
+	with_teams = with_teams and TEAMS_ENABLED
 	_teams_shown = with_teams
 	for count in range(GameScreen.MIN_PLAYERS, GameScreen.MAX_PLAYERS + 1):
 		var b := _toggle(str(count), group, count == _count and not (with_teams and _teams), 24)
@@ -725,3 +728,13 @@ static func _style_button(button: Button) -> void:
 	button.add_theme_color_override("font_color", PixelTheme.TEXT)
 	button.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
 	button.add_theme_color_override("font_pressed_color", PixelTheme.BG)
+
+
+## Кнопка 2V2 на странице SEARCH (только с TEAMS_ENABLED).
+func _search_duo(group: ButtonGroup, market: Label) -> Button:
+	var duo := _toggle("2V2", group, _match_teams, 32)
+	duo.pressed.connect(func():
+		_match_count = GameScreen.MAX_PLAYERS
+		_match_teams = true
+		market.text = _match_market_text())
+	return duo

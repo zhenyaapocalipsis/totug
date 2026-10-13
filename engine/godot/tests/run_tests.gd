@@ -3994,9 +3994,12 @@ func test_main_menu() -> void:
 	_find_button(menu, "START").pressed.emit()
 	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4, true], "BOTS: соперники — боты")
 	_find_button(menu, "PEOPLE").pressed.emit()
-	_find_button(menu, "2V2").pressed.emit()
-	_find_button(menu, "START").pressed.emit()
-	check_eq(got.get("start"), [4, GameSetup.MODE_RANDOM_4, false, "2v2"], "2V2: четверо, команды")
+	if SetupScreen.TEAMS_ENABLED:
+		_find_button(menu, "2V2").pressed.emit()
+		_find_button(menu, "START").pressed.emit()
+		check_eq(got.get("start"), [4, GameSetup.MODE_RANDOM_4, false, "2v2"], "2V2: четверо, команды")
+	else:
+		check(_find_button(menu, "2V2") == null, "2V2 спрятан: кнопки нет")
 	_find_button(menu, "3").pressed.emit()
 
 	_find_button(menu, "ONLINE").pressed.emit()

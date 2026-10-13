@@ -44,6 +44,8 @@ func _init(session: NetSession = null) -> void:
 	modes.alignment = BoxContainer.ALIGNMENT_CENTER
 	var group := ButtonGroup.new()
 	for mode: String in MODES:
+		if not SetupScreen.TEAMS_ENABLED and mode in ["team", "2v2"]:
+			continue  # 2v2 спрятан
 		var b := Button.new()
 		b.text = MODES[mode]
 		b.toggle_mode = true
