@@ -74,6 +74,15 @@ var in_extra_turn: bool = false
 ## (id локации -> вор). Вор держит маркер до начала своего следующего хода
 ## (TurnEngine.start_turn), пока маркер приносит доход только ему.
 var stolen_markers: Dictionary = {}
+## New Era, Icewind Dale (FreljordCards): знаки на доске до начала следующего
+## хода владельца — Glacial Storm / Ice Pillar (доплата +2 Power в локации),
+## Scarab of Protection, лёд на войске. Dictionary {"kind", "owner", "site"/"slot"}.
+var wards: Array = []
+## Карты, лежащие перед игроком (не в колоде): Roc Egg, предметы Masterwork.
+## player_id -> Array[String].
+var front: Dictionary = {}
+## Колода предметов Masterwork (Stone Giant), верх — последний элемент.
+var masterwork: Array[String] = []
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.
@@ -120,15 +129,20 @@ func add_player(player_id: String, starting_deck_cards: Array[String]) -> void:
 
 
 ## Слоты, куда игрок может поставить войско: Присутствие (Presence) минус
-## локации, закрытые для него в этот ход (Weretiger, NoxusCards).
+## локации, закрытые для него в этот ход (Weretiger, NoxusCards), и локации
+## с Glacial Storm / Ice Pillar соперника, на доплату в которых нет Power.
 func deployable_slots(player_id: String) -> PackedStringArray:
 	var legal: PackedStringArray = presence.deployable_slots(player_id, troops, spies)
-	if not turn_flags.has("no_deploy"):
+	if not turn_flags.has("no_deploy") and wards.is_empty():
 		return legal
 	var result := PackedStringArray()
+	var power: int = players[player_id].power if players.has(player_id) else 0
 	for slot_id: String in legal:
-		if not NoxusCards.deploy_blocked(self, player_id, graph.site_of_slot(slot_id)):
-			result.append(slot_id)
+		if NoxusCards.deploy_blocked(self, player_id, graph.site_of_slot(slot_id)):
+			continue
+		if power < FreljordCards.deploy_tax(self, player_id, slot_id):
+			continue
+		result.append(slot_id)
 	return result
 
 

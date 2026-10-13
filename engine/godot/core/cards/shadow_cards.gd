@@ -379,6 +379,7 @@ class _CycleHand extends CardEffect:
 			p.deck.discard_pile.append(String(chosen))
 			discarded += 1
 			resolver.log_event("discard", {"player_id": player_id, "card_id": chosen})
+			FreljordCards.on_discard(state, player_id, String(chosen), resolver)
 		if p.deck.hand.is_empty():
 			_finish(player_id, resolver)
 			return

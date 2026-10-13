@@ -2618,5 +2618,345 @@
     "deck_vp": 0,
     "inner_circle_vp": 0,
     "ability_text": "Put Half-Dragons from your top 5 cards into your hand, the rest back on top.\n+3 Power. Draw 3 cards."
+  },
+  {
+    "card_id": 49600,
+    "name": "Guard",
+    "cost": 2,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+2 Influence. If this is the first card you play this turn and you have 3 or fewer cards in hand, +1 Influence.\nFrostbite: Recruit a card that costs 3 or less from the market for free."
+  },
+  {
+    "card_id": 49601,
+    "name": "Cultist Fanatic",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "This turn, cards you scry away trigger Frostbite.\nChoose one:\n• Place a spy and scry 2.\n• Return one of your spies ► each opponent discards down to 4 cards. Scry 4."
+  },
+  {
+    "card_id": 49602,
+    "name": "Werewolf",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+2 Power. Each opponent with more than 3 cards in hand discards a card.\nIf anyone triggered Frostbite this turn, +1 Power."
+  },
+  {
+    "card_id": 49603,
+    "name": "Giant Goat",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Deploy 2 troops.\n• Assassinate a white troop.\nFrostbite: Draw a card."
+  },
+  {
+    "card_id": 49604,
+    "name": "Centaur Trooper",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Assassinate a troop. If it was a player troop, each opponent with 3 or more cards in hand discards a card.\nFrostbite: Gain 1 VP."
+  },
+  {
+    "card_id": 49605,
+    "name": "Bulette",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "This turn, whenever an opponent triggers Frostbite, you gain that effect too.\nDeploy 3 troops. If one is next to a player troop, each opponent discards a card."
+  },
+  {
+    "card_id": 49606,
+    "name": "Ice Mephit",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "ICEWIND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +3 Influence.\n• Return a troop or spy.\nFrostbite: Return a card that costs 2 or less from your discard pile to your hand."
+  },
+  {
+    "card_id": 49607,
+    "name": "Giant Elk",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "ICEWIND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy. Each opponent with 3+ cards in hand discards a card. +1 Influence.\n• Return one of your spies ► each opponent with 4+ cards in hand discards a card. +2 Power."
+  },
+  {
+    "card_id": 49608,
+    "name": "Giant Badger",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "ICEWIND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy. If another player's troop is there, you may trigger the Frostbite of another card you played this turn.\n• Return one of your spies ► +3 Power."
+  },
+  {
+    "card_id": 49609,
+    "name": "Boar",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "ICEWIND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "At end of turn, promote another card played this turn.\nFrostbite: Promote another card in your hand or discard pile."
+  },
+  {
+    "card_id": 49610,
+    "name": "Giant Owl",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "ICEWIND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Place a spy. Each opponent with a troop there and 3+ cards in hand discards a card. Deploy a troop.\nFrostbite: Place a spy."
+  },
+  {
+    "card_id": 49611,
+    "name": "Winter Wolf",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Supplant a white troop.\n• Deploy 2 troops. Draw a card, then discard a card."
+  },
+  {
+    "card_id": 49612,
+    "name": "Giant Hyena",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Deploy 3 troops. If another player discarded a card this turn, +2 Power.\nFrostbite: Assassinate a troop."
+  },
+  {
+    "card_id": 49613,
+    "name": "Owlbear",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Draw 4 cards, then discard 4 cards.\nAt end of turn, promote a card from your discard pile or another card played this turn."
+  },
+  {
+    "card_id": 49614,
+    "name": "Hill Giant",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+5 Power.\nIf an opponent would make you discard or gain an Insane Outcast, you may reveal this card from your hand to prevent it."
+  },
+  {
+    "card_id": 49615,
+    "name": "Cloud Giant",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Place 2 spies and draw a card.\n• Return any number of your spies ► +2 Power and draw a card for each."
+  },
+  {
+    "card_id": 49616,
+    "name": "Remorhaz",
+    "cost": 7,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Each opponent reveals 4 cards from their hand; you choose one of them they discard.\nAssassinate a troop anywhere."
+  },
+  {
+    "card_id": 49617,
+    "name": "Mammoth",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Opponents don't trigger Frostbite this turn. Choose one:\n• Each opponent discards down to 3 cards.\n• If each opponent has 4 or fewer cards in hand, supplant 2 troops.\nFrostbite: Return this to your hand."
+  },
+  {
+    "card_id": 49618,
+    "name": "Storm Giant",
+    "cost": 8,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Your Frostbite triggers twice this turn.\nDiscard any number of cards, then draw that many. You may repeat, drawing 1 fewer each time.\nSupplant 2 troops."
+  },
+  {
+    "card_id": 49619,
+    "name": "Roc",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Draw a card. Glacial Storm a site until your next turn: its spies leave, opponents pay +2 Power there to deploy, place a spy or hit your troops. Put Ice on one of your troops and gain the Roc Egg."
+  },
+  {
+    "card_id": 49620,
+    "name": "Frost Giant",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Promote the top card of your deck.\nChoose one:\n• +2 Power.\n• Play a card from your inner circle as if from your hand; it stays there."
+  },
+  {
+    "card_id": 49621,
+    "name": "Stone Giant",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Look at the top 2 Masterwork items: put one in front of you, the other on the bottom.\nTrigger the effect of one of your Masterwork items."
+  },
+  {
+    "card_id": 49622,
+    "name": "Giant Ape",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "ICEWIND",
+    "deck_vp": 4,
+    "inner_circle_vp": 7,
+    "ability_text": "Deploy 4 troops. Put an Ice Pillar on a site where you have presence until your next turn: opponents pay +2 Power there to deploy, place a spy or hit your troops."
+  },
+  {
+    "card_id": 49623,
+    "name": "Roc Egg",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "At the start of your turn, if your troop with Ice still stands, put the Roc into your hand from anywhere. Then the Roc Egg and the Ice leave."
+  },
+  {
+    "card_id": 49624,
+    "name": "Frost Brand",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, +2 Power."
+  },
+  {
+    "card_id": 49625,
+    "name": "Rod of Rulership",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, +2 Influence."
+  },
+  {
+    "card_id": 49626,
+    "name": "Hat of Wizardry",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, draw a card."
+  },
+  {
+    "card_id": 49627,
+    "name": "Sword of Answering",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the end of your turn, you may promote a card you played this turn."
+  },
+  {
+    "card_id": 49628,
+    "name": "Armor of Invulnerability",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, gain 2 VP."
+  },
+  {
+    "card_id": 49629,
+    "name": "Boots of Speed",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, you may move up to 2 troops."
+  },
+  {
+    "card_id": 49630,
+    "name": "Horn of Valhalla",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, deploy 3 troops."
+  },
+  {
+    "card_id": 49631,
+    "name": "Cloak of Elvenkind",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, place up to 2 spies or return up to 2 spies."
+  },
+  {
+    "card_id": 49632,
+    "name": "Demon Armor",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. At the start of your turn, choose one: each opponent gains an Insane Outcast, or each opponent discards a card."
+  },
+  {
+    "card_id": 49633,
+    "name": "Scarab of Protection",
+    "cost": null,
+    "aspect": null,
+    "type": "ICEWIND",
+    "deck_vp": 0,
+    "inner_circle_vp": 0,
+    "ability_text": "Masterwork. When its effect is triggered: until your next turn, your troops can't be assassinated or supplanted. Then it leaves the game."
   }
 ]

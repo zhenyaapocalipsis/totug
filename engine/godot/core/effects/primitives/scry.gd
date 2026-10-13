@@ -43,6 +43,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 					break
 			deck.discard_pile.append(String(chosen))
 			resolver.log_event("discard", {"player_id": player_id, "card_id": chosen, "from": "scry"})
+			FreljordCards.on_discard(state, player_id, String(chosen), resolver, true)
 	if _revealed.is_empty():
 		return
 	var pd := PendingDecision.new()

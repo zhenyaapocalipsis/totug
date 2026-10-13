@@ -32,6 +32,18 @@ func _init(m: String, n: int = 1) -> void:
 ## able to recruit one of those cards". Если на всех не хватило, выдаём
 ## сколько есть и молча останавливаемся — это не ошибка.
 func _give(state: GameState, target_id: String, resolver: EffectResolver) -> void:
+	# Icewind Dale: Hill Giant в руке получателя может отменить Outcast от соперника.
+	var giver := state.current_player()
+	if target_id != giver and state.players[target_id].deck.hand.has(FreljordCards.HILL_GIANT) \
+			and state.supplies.is_available(INSANE_OUTCAST_ID):
+		var me := self
+		resolver.push(FreljordCards.guard(target_id, giver, "gaining an Insane Outcast",
+			CallbackEffect.new(func(s, _pid, r): me._give_now(s, target_id, r))), target_id)
+		return
+	_give_now(state, target_id, resolver)
+
+
+func _give_now(state: GameState, target_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[target_id]
 	if state.supplies.is_available(INSANE_OUTCAST_ID):
 		SiegeCards.brute_reaction(state, target_id, state.current_player(), resolver)

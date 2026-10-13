@@ -32,6 +32,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		resolver.log_event("discard", {"player_id": player_id, "card_id": chosen})
 		p.deck.played_pile.remove_at(played_idx)
 		Supplies.redirect_outcast(state, player_id, card_id, resolver)
+		FreljordCards.on_discard(state, player_id, String(chosen), resolver)
 		return
 	if not is_available(state, player_id) or not p.deck.played_pile.has(card_id):
 		return

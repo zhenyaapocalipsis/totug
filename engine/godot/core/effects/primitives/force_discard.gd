@@ -53,21 +53,21 @@ func is_available(state: GameState, player_id: String) -> bool:
 func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	if mode == "victim":
 		if is_available(state, player_id):
-			resolver.push(VictimDiscard.new(player_id), victim_id)
+			resolver.push(_guarded(player_id, victim_id), victim_id)
 		return
 
 	if mode == "each_opponent":
 		var victims := _eligible_opponents(state, player_id)
 		victims.reverse()  # стек LIFO: первым решает первый по порядку хода
 		for pid: String in victims:
-			resolver.push(VictimDiscard.new(player_id), pid)
+			resolver.push(_guarded(player_id, pid), pid)
 		return
 
 	# choose_opponent
 	if is_answered():
 		var victim = answer()
 		if victim != null and victim != "":
-			resolver.push(VictimDiscard.new(player_id), String(victim))
+			resolver.push(_guarded(player_id, String(victim)), String(victim))
 		return
 	var options: Array = _eligible_opponents(state, player_id)
 	if options.is_empty():
@@ -79,6 +79,11 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	pd.legal_options = options
 	pd.target_effect = self
 	resolver.request_decision(pd)
+
+
+## Icewind Dale: Hill Giant в руке жертвы может отменить сброс.
+static func _guarded(causer: String, victim: String) -> CardEffect:
+	return FreljordCards.guard(victim, causer, "discarding", VictimDiscard.new(causer))
 
 
 ## Сброс одной карты игроком, которого к этому вынудил causer_id. Применяется
@@ -138,6 +143,7 @@ class VictimDiscard extends CardEffect:
 			return
 		p.deck.discard_pile.append(chosen_card)
 		resolver.log_event("force_discard", {"player_id": player_id, "card_id": chosen_card})
+		FreljordCards.on_discard(state, player_id, chosen_card, resolver)
 		match chosen_card:
 			ForceDiscard.GRIMLOCK:
 				resolver.push(DrawCards.new(2), player_id)

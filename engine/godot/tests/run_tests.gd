@@ -67,6 +67,7 @@ func _initialize() -> void:
 	test_siege_deck()
 	test_mercenaries_deck()
 	test_avernus_deck()
+	test_icewind_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2133,10 +2134,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 262 карты разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 296 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 262, "cards.json содержит 262 карты (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus)")
+	check_eq(all_ids.size(), 296, "cards.json содержит 296 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 34 Icewind Dale)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -5901,6 +5902,159 @@ func test_mercenaries_deck() -> void:
 	check(state.stock("red").deck.inner_circle.has("49400"), "сброшенная карта продвинута")
 	check_eq(red.deck.discard_pile.count("48342"), 2, "оба Noble остались в сбросе")
 	check(red.deck.hand.has("49401"), "третья вытянутая карта осталась в руке")
+
+
+func test_icewind_deck() -> void:
+	section("Icewind Dale (New Era Freljord): полуколода")
+	var F := FreljordCards
+	check_eq(GameSetup.expand_half_deck("freljord").size(), 45, "Icewind Dale: 45 карт")
+	check(not GameSetup.available_half_decks().has("freljord"), "Icewind Dale пока не в обычном выборе (wip)")
+	var mode := GameSetup.new_era_mode(["freljord", "celestial"])
+	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 90, "рынок: 45 + 45 карт")
+	check_eq(game.masterwork.size(), 10, "со Stone Giant — колода Masterwork из 10 предметов")
+	check(game.supplies.remaining(Supplies.INSANE_OUTCAST) > 0, "Demon Armor: у доски есть Insane Outcast")
+	_sweep_deck_with_vp(49600, 49633)
+
+	var state := _build_rich_state(43)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	var green: PlayerState = state.players["green"]
+	TurnEngine.start_turn(state, "red")
+	green.deck.hand = ["48342", "48344"]
+
+	# Frostbite у соперника от чужого сброса; Werewolf видит, что Frostbite был
+	blue.deck.hand = [F.GOAT, "48342", "48344", "48343"]
+	red.power = 0
+	var rw := _play_with(state, F.WEREWOLF)
+	check(rw.is_waiting() and rw.pending.player_id == "blue", "Werewolf: сбрасывает синий (4 карты), зелёный (2) нет")
+	TurnEngine.resume_card(state, F.GOAT, rw)
+	_auto_resolve(state, rw, false)
+	check(blue.deck.discard_pile.has(F.GOAT), "Giant Goat сброшен")
+	check_eq(blue.deck.hand.size(), 4, "Frostbite Giant Goat: синий взял карту")
+	check_eq(red.power, 3, "Werewolf: +2 и +1 за Frostbite в этот ход")
+	check(state.turn_flags.get("other_discard", false), "сброс соперника отмечен (Giant Hyena)")
+
+	# Hill Giant в руке: можно отменить сброс
+	blue.deck.hand = [F.HILL_GIANT, "48342", "48344", "48343"]
+	var rh := _play_with(state, F.WEREWOLF)
+	check(rh.is_waiting() and rh.pending.choice_type == "confirm" and rh.pending.source_card == F.HILL_GIANT,
+		"Hill Giant: вопрос «раскрыть, чтобы не сбрасывать?»")
+	TurnEngine.resume_card(state, true, rh)
+	check(not rh.is_waiting() and blue.deck.hand.size() == 4, "Hill Giant раскрыт: синий ничего не сбросил")
+
+	# Mammoth: соперники не активируют Frostbite; сброс до 3 карт
+	blue.deck.hand = [F.GOAT, "48342", "48344", "48343", "48340"]
+	var rm := _play_with(state, F.MAMMOTH, [0])
+	TurnEngine.resume_card(state, F.GOAT, rm)
+	_auto_resolve(state, rm, false)
+	check_eq(blue.deck.hand.size(), 3, "Mammoth: синий сбросил до 3 карт, Frostbite не сработал")
+	state.turn_flags.erase("frost_shield")
+
+	# Frostbite Mammoth: сам сбросил — вернулся в руку
+	red.deck.hand = [F.MAMMOTH, "48342"]
+	var rs := EffectResolver.new()
+	rs.apply(DiscardCardEffect.new(1), "red", state)
+	TurnEngine.resume_card(state, F.MAMMOTH, rs)
+	check(red.deck.hand.has(F.MAMMOTH) and not red.deck.discard_pile.has(F.MAMMOTH), "Frostbite Mammoth: снова в руке")
+
+	# Storm Giant: Frostbite дважды; Bulette: Frostbite соперника и тебе
+	state.turn_flags["frost_twice"] = "red"
+	red.deck.hand = [F.GOAT]
+	var r2 := EffectResolver.new()
+	r2.apply(DiscardCardEffect.new(1), "red", state)
+	TurnEngine.resume_card(state, F.GOAT, r2)
+	check_eq(red.deck.hand.size(), 2, "Storm Giant: Frostbite Giant Goat — 2 карты")
+	state.turn_flags.erase("frost_twice")
+	state.turn_flags["frost_copy"] = "red"
+	var red_hand := red.deck.hand.size()
+	blue.deck.hand = [F.GOAT, "48342", "48344", "48343"]
+	var rc := EffectResolver.new()
+	rc.apply(ForceDiscard.new("victim", 0, "blue"), "red", state)
+	TurnEngine.resume_card(state, F.GOAT, rc)
+	check_eq(red.deck.hand.size(), red_hand + 1, "Bulette: Frostbite синего — красный тоже взял карту")
+	state.turn_flags.erase("frost_copy")
+
+	# Конец хода: несыгранная карта с Frostbite не срабатывает (решение владельца)
+	state.turn_flags.erase("frostbite_any")
+	red.deck.end_of_turn_discard()
+	check(not state.turn_flags.get("frostbite_any", false), "сброс руки в конце хода — без Frostbite")
+
+	# Ice Pillar: соперники платят +2 Power
+	var site := ""
+	var red_slot := ""
+	for slot_id: String in state.troops.keys():
+		if state.troops[slot_id] == "red" and state.graph.site_of_slot(slot_id) != "":
+			red_slot = slot_id
+			site = state.graph.site_of_slot(slot_id)
+			break
+	state.wards.append({"kind": "pillar", "owner": "red", "site": site})
+	check_eq(F.tax_at(state, "blue", site), 2, "Ice Pillar: синему +2 Power")
+	check_eq(F.tax_at(state, "red", site), 0, "Ice Pillar: владельцу без доплаты")
+	blue.power = 4
+	check(not Actions.can_assassinate(state, "blue", red_slot) or not state.presence.assassinatable_slots("blue", state.troops, state.spies).has(red_slot),
+		"Ice Pillar: 4 Power мало на убийство войска владельца (3 + 2)")
+	blue.power = 1
+	var empty_there := ""
+	for slot_id: String in state.graph.slots_of_site(site):
+		if state.troops.get(slot_id, "") == "":
+			empty_there = slot_id
+	if empty_there != "":
+		check(not state.deployable_slots("blue").has(empty_there), "Ice Pillar: с 1 Power туда не поставить войско")
+	check(not F.spy_allowed(state, "blue", site), "Ice Pillar: с 1 Power туда не поставить шпиона")
+
+	# Scarab of Protection: войска владельца не убить картой
+	state.wards.append({"kind": "scarab", "owner": "red"})
+	blue.power = 20
+	var strike := AssassinateTroop.new(1)
+	var targets: Array = strike._legal_targets(state, "blue")
+	var hits_red := targets.any(func(s): return state.troops.get(s, "") == "red")
+	check(not hits_red, "Scarab: войска красного не цель для убийства")
+	state.front["red"] = [F.SCARAB]
+	TurnEngine.start_turn(state, "red")
+	check(state.wards.is_empty(), "начало хода владельца: его знаки сняты")
+	check(not (state.front["red"] as Array).has(F.SCARAB), "сработавший Scarab ушёл из игры")
+
+	# Roc: лёд и Roc Egg; в начале хода Roc снова в руке
+	var rr := _play_with(state, F.ROC)
+	_auto_resolve(state, rr, false)
+	check((state.front["red"] as Array).has(F.ROC_EGG), "Roc: Roc Egg перед игроком")
+	var ice := state.wards.filter(func(w): return w["kind"] == "ice")
+	check_eq(ice.size(), 1, "Roc: лёд на войске")
+	red.deck.played_pile.erase(F.ROC)
+	red.deck.discard_pile.append(F.ROC)
+	if ice.size() == 1:
+		state.troops[String(ice[0]["slot"])] = "red"
+	TurnEngine.start_turn(state, "red", EffectResolver.new())
+	check(red.deck.hand.has(F.ROC) and not red.deck.discard_pile.has(F.ROC), "Roc Egg: Roc из сброса в руке")
+	check(not (state.front["red"] as Array).has(F.ROC_EGG), "Roc Egg ушёл")
+
+	# Stone Giant: предмет перед игроком, его эффект сразу и в начале хода
+	state.front["red"] = []
+	state.masterwork = [F.FROST_BRAND, F.ROD]  # верх — ROD
+	red.influence = 0
+	var rf := _play_with(state, F.STONE_GIANT)
+	check(rf.is_waiting() and rf.pending.legal_options.size() == 2, "Stone Giant: выбор из 2 верхних предметов")
+	TurnEngine.resume_card(state, F.ROD, rf)
+	_auto_resolve(state, rf, false)
+	check_eq(state.masterwork, [F.FROST_BRAND] as Array[String], "второй предмет — под низ колоды")
+	check_eq(red.influence, 2, "Rod of Rulership сработал сразу (+2 Influence)")
+	red.influence = 0
+	TurnEngine.start_turn(state, "red", EffectResolver.new())
+	check_eq(red.influence, 2, "Rod of Rulership в начале хода: +2 Influence")
+
+	# Remorhaz: соперник прячет лишние карты, красный выбирает сброс из 4 раскрытых
+	state.front["red"] = []
+	green.deck.hand = []
+	blue.deck.hand = ["48342", "48344", "48343", "48340", "48336"]
+	var ra := _play_with(state, F.REMORHAZ)
+	check(ra.is_waiting() and ra.pending.player_id == "blue", "Remorhaz: синий прячет 1 карту из 5")
+	TurnEngine.resume_card(state, "48342", ra)
+	check(ra.is_waiting() and ra.pending.player_id == "red" and not ra.pending.legal_options.has("48342"),
+		"Remorhaz: красный выбирает из 4 раскрытых")
+	TurnEngine.resume_card(state, "48340", ra)
+	check(blue.deck.discard_pile.has("48340") and blue.deck.hand.size() == 4, "Remorhaz: синий сбросил выбранную карту")
 
 
 func test_avernus_deck() -> void:

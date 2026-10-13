@@ -22,6 +22,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				p.deck.hand.remove_at(idx)
 				p.deck.discard_pile.append(String(card_id))
 				resolver.log_event("discard", {"player_id": player_id, "card_id": card_id})
+				FreljordCards.on_discard(state, player_id, String(card_id), resolver)
 			remaining -= 1
 		else:
 			remaining = 0

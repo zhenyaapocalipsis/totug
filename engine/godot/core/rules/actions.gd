@@ -22,6 +22,7 @@ const WHITE := "white"
 static func assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
 	if not can_assassinate(state, player_id, slot_id):
 		return false
+	FreljordCards.pay_hit(state, player_id, slot_id)
 	state.players[player_id].power -= assassinate_cost(state)
 	kill_at(state, player_id, slot_id)
 	return true
@@ -30,6 +31,8 @@ static func assassinate(state: GameState, player_id: String, slot_id: String) ->
 static func can_assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
 	var p: PlayerState = state.players[player_id]
 	if p.power < assassinate_cost(state):
+		return false
+	if not FreljordCards.can_hit(state, player_id, slot_id, false, assassinate_cost(state)):
 		return false
 	return state.presence.assassinatable_slots(player_id, state.troops, state.spies).has(slot_id)
 
@@ -61,8 +64,11 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	var legal: PackedStringArray = state.deployable_slots(player_id)
 	if not legal.has(slot_id):
 		return false
+	var tax: int = FreljordCards.deploy_tax(state, player_id, slot_id)
+	if p.power < COST_DEPLOY + tax:
+		return false
 
-	p.power -= COST_DEPLOY
+	p.power -= COST_DEPLOY + tax
 	state.troops[slot_id] = player_id
 	stock.troops_in_barracks -= 1
 	if stock.troops_in_barracks == 0:

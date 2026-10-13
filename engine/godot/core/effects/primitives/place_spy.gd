@@ -61,13 +61,14 @@ func _legal_sites(state: GameState, player_id: String) -> Array:
 	if p.spies_in_barracks <= 0:
 		return result
 	for site_id: String in state.graph.sites.keys():
-		if not (state.spies.get(site_id, []) as Array).has(player_id):
+		if not (state.spies.get(site_id, []) as Array).has(player_id) and FreljordCards.spy_allowed(state, player_id, site_id):
 			result.append(site_id)
 	return result
 
 
 func _place_at(state: GameState, player_id: String, site_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.stock(player_id)
+	FreljordCards.pay_spy(state, player_id, site_id)
 	p.spies_in_barracks -= 1
 	var site_spies: Array = state.spies.get(site_id, [])
 	site_spies.append(player_id)

@@ -169,6 +169,21 @@ const NAMES := {
 	"Devour a card in the market -> gain VP equal to its deck VP": "Showstopper",
 	"Assassinate 2 troops at a site": "Wild Rush",
 	"Blade Fragments and Half-Dragons from your top 5 cards into your hand, discard the rest": "Broken Wings",
+	# Icewind Dale (New Era Freljord)
+	"Place a spy and scry 2 cards": "Bone Omens",
+	"Return one of your spies -> each opponent discards down to 4 cards, scry 4 cards": "Rattling Bones",
+	"Place a spy, each opponent with 3+ cards in hand discards a card, +1 Influence": "Prophet's Call",
+	"Return one of your spies -> each opponent with 4+ cards in hand discards a card, +2 Power": "Spirit Howl",
+	"Place a spy (another player's troop there: trigger the Frostbite of another card you played)": "Snare Line",
+	"Deploy 2 troops, draw a card, then discard a card": "Pack Hunt",
+	"Return any number of your spies -> +2 Power and draw a card for each": "Frozen Tomb",
+	"Each opponent discards down to 3 cards": "Glacial Prison",
+	"If each opponent has 4 or fewer cards in hand, supplant 2 troops": "Winter's Wrath",
+	"Play a card from your inner circle as if from your hand (it stays there)": "Undying Rage",
+	"Place up to 2 spies": "Elven Shadows",
+	"Return up to 2 spies": "Vanishing Cloak",
+	"Each opponent gains an Insane Outcast": "Thorns of Madness",
+	"Each opponent discards a card": "Thorns of Pain",
 }
 
 var _tex: ImageTexture

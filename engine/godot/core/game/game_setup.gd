@@ -52,7 +52,7 @@ const MODE_RANDOM_6 := "random6"
 ## С Siege-1 (2026-10-13) в том же переключателе — фанатские колоды Siege и
 ## Mercenaries (тоже "wip").
 const MODE_NEW_ERA := "newera"
-const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege", "mercenaries", "noxus"]
+const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege", "mercenaries", "noxus", "freljord"]
 const NEW_ERA_DEFAULT: Array[String] = ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
@@ -173,10 +173,16 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 	var shadow_cards := expand_half_deck("shadow")
 	var with_demons := market_cards.any(func(cid: String) -> bool: return demon_cards.has(cid))
 	var with_shadow := market_cards.any(func(cid: String) -> bool: return shadow_cards.has(cid))
-	state.supplies = Supplies.standard(with_demons or with_shadow, with_shadow)
+	# Icewind Dale: Demon Armor из колоды Masterwork (Stone Giant) раздаёт Insane Outcast
+	var with_forge := market_cards.has(FreljordCards.STONE_GIANT)
+	state.supplies = Supplies.standard(with_demons or with_shadow or with_forge, with_shadow)
 	# Avernus (New Era Noxus): 3 Blade Fragment для Half-Dragon
 	if market_cards.has(NoxusCards.HALF_DRAGON):
 		state.supplies.counts[NoxusCards.BLADE_FRAGMENT] = NoxusCards.FRAGMENT_SUPPLY
+	# Icewind Dale: колода предметов Masterwork для Stone Giant
+	if with_forge:
+		state.masterwork = FreljordCards.MASTERWORK.duplicate()
+		Deck.shuffle_array(state.masterwork, state.rng)
 
 	# 6. белые войска
 	state.setup_white_troops(data["sites"])

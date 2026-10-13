@@ -571,6 +571,7 @@ class _DiscardDrawn extends CardEffect:
 					state.players[player_id].deck.discard_pile.append(value)
 					discarded.append(value)
 					resolver.log_event("discard", {"player_id": player_id, "card_id": value})
+					FreljordCards.on_discard(state, player_id, value, resolver)
 		var options: Array = []
 		for cid in drawn:
 			if hand.has(cid) and not options.has(cid):

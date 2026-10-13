@@ -56,6 +56,8 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.marker_influence_paid.clear()
 	state.a2_paid = {"power": 0, "influence": 0}
 	_grant_income(state, player_id, resolver, true)
+	# Icewind Dale: снять свои знаки, Roc Egg, предметы Masterwork "at the start of your turn".
+	FreljordCards.start_turn(state, player_id, resolver)
 
 
 ## Правило владельца игры (2026-09-24): Influence за локацию с маркером

@@ -14,6 +14,7 @@ extends CardEffect
 ##   "hand"           — выбор из руки ("promote another card in your hand")
 ##   "discard"        — выбор из сброса
 ##   "hand_or_discard"— выбор из руки ИЛИ сброса (плюс card_id как ещё один вариант "this")
+##   "discard_or_played" — из сброса или среди played_pile кроме самой card_id (Owlbear)
 ##
 ## filter — необязательный Callable(card_id:String)->bool, чтобы отфильтровать
 ## played_pile по аспекту/типу ("promote an Obedience card played this turn",
@@ -91,6 +92,11 @@ func _candidates(state: GameState, player_id: String) -> Array:
 				var self_idx := pool.find(card_id)
 				if self_idx != -1:
 					pool.remove_at(self_idx)
+		"discard_or_played":  # Owlbear: из сброса или другая карта, сыгранная в этот ход
+			pool = p.deck.played_pile.duplicate()
+			if card_id != "" and pool.find(card_id) != -1:
+				pool.remove_at(pool.find(card_id))
+			pool.append_array(p.deck.discard_pile)
 		"hand":
 			pool = p.deck.hand.duplicate()
 		"discard":

@@ -67,6 +67,7 @@ const NEW_ERA_TITLES := {
 	"siege": "SIEGE",
 	"mercenaries": "MERCENARIES",
 	"noxus": "AVERNUS",
+	"freljord": "ICEWIND DALE",
 }
 
 

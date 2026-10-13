@@ -54,6 +54,8 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 				continue
 		if not site_given_by_card and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
 			continue
+		if not FreljordCards.can_hit(state, player_id, slot_id):
+			continue
 		result.append(slot_id)
 	return result
 
@@ -112,6 +114,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 
 func _kill(state: GameState, player_id: String, slot_id: String, resolver: EffectResolver) -> void:
 	var victim: String = state.troops.get(slot_id, "")
+	FreljordCards.pay_hit(state, player_id, slot_id)
 	state.troops[slot_id] = ""
 	var p: PlayerState = state.players[player_id]
 	state.stock(player_id).add_trophy(victim)

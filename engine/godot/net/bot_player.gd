@@ -290,6 +290,8 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 			best_ratio = 1.0
 		else:
 			for slot: String in state.deployable_slots(pid):
+				if state.players[pid].power < Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, pid, slot):
+					continue
 				var gain := _troops_eval(state, ctx, {slot: pid}) - base
 				if state.stock(pid).troops_in_barracks == 1:
 					gain += _end_trigger_bonus(state, ctx)
@@ -303,6 +305,8 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 	var kill_cost := Actions.assassinate_cost(state)
 	if p.power >= kill_cost:
 		for slot: String in state.presence.assassinatable_slots(pid, state.troops, state.spies):
+			if not Actions.can_assassinate(state, pid, slot):
+				continue
 			var gain := _troops_eval(state, ctx, {slot: ""}, {pid: 1.0}) - base
 			var ratio := gain / maxf(0.5, float(kill_cost))
 			if _collect:
@@ -345,6 +349,8 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 		for slot: String in deployable:
 			reach[slot] = true
 		for slot: String in deployable:
+			if p.power < Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, pid, slot):
+				continue
 			var gain := _local_gain(state, ctx, {slot: pid}) + W_PRESENCE * _new_reach(state, slot, reach)
 			if state.stock(pid).troops_in_barracks == 1:
 				gain += END_LEADER if bool(ctx["leader"]) else -END_TRAILER
@@ -356,6 +362,8 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 	var kill_cost := Actions.assassinate_cost(state)
 	if p.power >= kill_cost:
 		for slot: String in state.presence.assassinatable_slots(pid, state.troops, state.spies):
+			if not Actions.can_assassinate(state, pid, slot):
+				continue
 			var ratio := _local_gain(state, ctx, {slot: ""}, {pid: 1.0}) / maxf(0.5, float(kill_cost))
 			if _collect:
 				_notes.append([ratio, Intent.assassinate(pid, slot)])
@@ -714,6 +722,8 @@ static func _answer_slot(state: GameState, pd: PendingDecision, pid: String, ctx
 		var reach := {}
 		if prompt.contains("deploy"):
 			for slot: String in state.deployable_slots(pid):
+				if state.players[pid].power < Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, pid, slot):
+					continue
 				reach[slot] = true
 		value = func(o): return _local_gain(state, ctx, changes.call(o), trophy) \
 			+ (W_PRESENCE * _new_reach(state, String(o), reach) if not reach.is_empty() else 0.0)
