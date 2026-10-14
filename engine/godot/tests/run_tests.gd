@@ -2716,6 +2716,35 @@ func test_game_modes() -> void:
 	check_eq(uniq.size(), 4, "RANDOM 4: четыре разные полуколоды")
 	var r4b := GameSetup.new_game(pids, 5, [], false, false, false, "random4")
 	check_eq(r4b.market.deck, r4.market.deck, "RANDOM 4: одинаковый сид — одинаковый маркет")
+	# Market-1: обычных карт не больше 2 копий, от каждой полуколоды минимум 4 уникальные.
+	var data: Dictionary = GameSetup._load_half_decks().get("half_decks", {})
+	var max_ok := true
+	var singles_ok := true
+	for s in range(30):
+		for mode: String in [GameSetup.MODE_RANDOM_3, GameSetup.MODE_RANDOM_4, GameSetup.MODE_RANDOM_6]:
+			var st := GameSetup.new_game(pids, 300 + s, [], false, false, false, mode)
+			var count := {}
+			for cid: String in st.market.deck + st.market.display:
+				count[cid] = int(count.get(cid, 0)) + 1
+			for cid: String in count.keys():
+				if int(count[cid]) > GameSetup.RANDOM_MAX_COPIES:
+					max_ok = false
+			for d: String in st.half_decks:
+				var copies: Dictionary = (data[d] as Dictionary)["copies"]
+				var have := 0
+				var all_singles := 0
+				for cid: String in copies.keys():
+					if int(copies[cid]) == 1:
+						all_singles += 1
+						if count.has(cid):
+							have += 1
+				if have < mini(GameSetup.RANDOM_SINGLES, all_singles):
+					singles_ok = false
+	check(max_ok, "RANDOM: ни одной карты больше 2 копий в маркете")
+	check(singles_ok, "RANDOM: от каждой полуколоды не меньше 4 уникальных карт")
+	check(ReplayBook.same_rules(28, false, GameSetup.MODE_STANDARD) and not ReplayBook.same_rules(28, false, GameSetup.MODE_RANDOM_4)
+		and ReplayBook.same_rules(NetSession.PROTOCOL, false, GameSetup.MODE_RANDOM_4),
+		"реплеи: RANDOM до Market-1 — OLD, STANDARD прежней версии смотрится")
 
 
 ## Предпочтительный бан поиска игры: забаненные полуколоды не попадают в рынок;

@@ -36,7 +36,8 @@ const HAND_SIZE := 5
 ##   STANDARD — две случайные разные полуколоды (рулбук);
 ##   DOUBLE   — одна случайная полуколода дважды;
 ##   RANDOM 3 / 4 / 6 — 3, 4 или 6 случайных полуколод, из них по 20 карт
-##              каждого аспекта (см. build_market_cards).
+##              каждого аспекта, обычных карт не больше 2 копий, от каждой
+##              полуколоды минимум 4 уникальные (см. build_market_cards).
 const MODE_STANDARD := "standard"
 const MODE_DOUBLE := "double"
 const MODE_RANDOM_3 := "random3"
@@ -56,6 +57,10 @@ const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege"
 const NEW_ERA_DEFAULT: Array[String] = ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
+## RANDOM-режимы: не больше стольких копий обычной карты в пуле маркета
+## и не меньше стольких уникальных карт от каждой полуколоды (Market-1).
+const RANDOM_MAX_COPIES := 2
+const RANDOM_SINGLES := 4
 
 static var _half_deck_data: Dictionary = {}
 ## Только для прогонов баланса (tests/balance_run.gd all_decks=1): брать в
@@ -323,17 +328,41 @@ static func new_era_mode(pair: Array) -> String:
 
 ## Колода маркета из выбранных полуколод.
 ## STANDARD/DOUBLE: полуколоды целиком (DOUBLE — 2 × одна и та же, 80 карт).
-## RANDOM 3/4/6: все копии всех выбранных полуколод сваливаются в общий пул,
-## и по КАЖДОМУ аспекту из него случайно берутся MARKET_PER_ASPECT карт —
-## как в обычном маркете (2 полуколоды × 10 копий на аспект = 20). Карты с
-## большим числом копий так и остаются вероятнее, как в обычной игре.
+## RANDOM 3/4/6 (решение владельца 2026-10-15, этап Market-1):
+##   1. из каждой выбранной полуколоды в маркет сразу идут RANDOM_SINGLES
+##      случайных уникальных карт (1 копия в полуколоде);
+##   2. остальные карты сваливаются в общий пул, копии обычных карт урезаны
+##      до RANDOM_MAX_COPIES;
+##   3. по КАЖДОМУ аспекту пул добирает до MARKET_PER_ASPECT карт — как в
+##      обычном маркете (2 полуколоды × 10 копий на аспект = 20).
 static func build_market_cards(mode: String, decks: Array[String], rng: RandomNumberGenerator) -> Array[String]:
 	var cards: Array[String] = []
-	for deck_name: String in decks:
-		cards.append_array(expand_half_deck(deck_name))
 	if mode not in [MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6]:
+		for deck_name: String in decks:
+			cards.append_array(expand_half_deck(deck_name))
 		return cards
+	var data: Dictionary = _load_half_decks().get("half_decks", {})
+	var sure: Array[String] = []
+	for deck_name: String in decks:
+		var copies: Dictionary = (data.get(deck_name, {}) as Dictionary).get("copies", {})
+		var ids: Array = copies.keys()
+		ids.sort()  # детерминированный порядок ДО тасовки: одинаковый сид -> одинаковый маркет
+		var singles: Array[String] = []
+		for card_id: String in ids:
+			if int(copies[card_id]) == 1:
+				singles.append(card_id)
+			else:
+				for i in range(mini(int(copies[card_id]), RANDOM_MAX_COPIES)):
+					cards.append(card_id)
+		Deck.shuffle_array(singles, rng)
+		sure.append_array(singles.slice(0, mini(RANDOM_SINGLES, singles.size())))
+		cards.append_array(singles.slice(mini(RANDOM_SINGLES, singles.size())))
 	var by_aspect := {}
+	var sure_by_aspect := {}
+	for cid: String in sure:
+		var aspect := CardLibrary.card_aspect(cid)
+		sure_by_aspect[aspect] = int(sure_by_aspect.get(aspect, 0)) + 1
+		by_aspect[aspect] = by_aspect.get(aspect, [] as Array[String])
 	for cid: String in cards:
 		var aspect := CardLibrary.card_aspect(cid)
 		if not by_aspect.has(aspect):
@@ -341,11 +370,12 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 		(by_aspect[aspect] as Array[String]).append(cid)
 	var aspects: Array = by_aspect.keys()
 	aspects.sort()  # детерминированность: одинаковый сид -> одинаковый маркет
-	var result: Array[String] = []
+	var result: Array[String] = sure.duplicate()
 	for aspect: String in aspects:
 		var pool: Array[String] = by_aspect[aspect]
 		Deck.shuffle_array(pool, rng)
-		result.append_array(pool.slice(0, mini(MARKET_PER_ASPECT, pool.size())))
+		var room := maxi(0, MARKET_PER_ASPECT - int(sure_by_aspect.get(aspect, 0)))
+		result.append_array(pool.slice(0, mini(room, pool.size())))
 	return result
 
 

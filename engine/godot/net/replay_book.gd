@@ -121,7 +121,8 @@ static func erase(file: String, dir: String = DIR) -> void:
 ## Реплей записан той же версией правил, что сейчас в игре.
 static func same_version(replay: Dictionary) -> bool:
 	var header: Dictionary = replay.get("header", {})
-	return same_rules(int(header.get("protocol", -1)), bool(header.get("teams", false)))
+	return same_rules(int(header.get("protocol", -1)), bool(header.get("teams", false)),
+		String(header.get("mode", "")))
 
 
 ## Версии сети, после которых правила не менялись (менялась только связь),
@@ -129,17 +130,28 @@ static func same_version(replay: Dictionary) -> bool:
 ## режима 2 на 2 — обычные партии он не меняет, проверено пересборкой реплеев 11.10;
 ## 20: до экрана DEALING THE CARDS; 21: до правки Gibbering Mouther — реплей с ним
 ## может разойтись, остальные ложатся так же; 22: до общих бараков 2v2;
-## 27: до бана полуколоды в поиске — без бана раздача та же).
-const SAME_RULES := [17, 19, 20, 21, 22, 27]
+## 27: до бана полуколоды в поиске — без бана раздача та же;
+## 28: до нового маркета RANDOM — STANDARD/DOUBLE/New Era не менялись).
+const SAME_RULES := [17, 19, 20, 21, 22, 27, 28]
 ## С этой версии в 2v2 общие бараки, трофеи и внутренний круг (этап Team-6):
 ## реплеи 2v2 раньше неё — OLD, обычные партии она не меняет.
 const TEAM_STOCK := 23
+## С этой версии маркет RANDOM 3/4/6 собирается по-новому (этап Market-1):
+## реплеи RANDOM раньше неё — OLD, остальные режимы она не меняет.
+const RANDOM_MARKET := 29
 
 
-static func same_rules(protocol: int, teams: bool = false) -> bool:
+## mode — режим из заголовка реплея ("" — неизвестен, считаем не RANDOM).
+static func same_rules(protocol: int, teams: bool = false, mode: String = "") -> bool:
 	if teams and protocol < TEAM_STOCK:
 		return false
+	if protocol < RANDOM_MARKET and is_random_mode(mode):
+		return false
 	return protocol == NetSession.PROTOCOL or SAME_RULES.has(protocol)
+
+
+static func is_random_mode(mode: String) -> bool:
+	return mode in [GameSetup.MODE_RANDOM_3, GameSetup.MODE_RANDOM_4, GameSetup.MODE_RANDOM_6]
 
 
 ## Начало партии реплея: раздача тем же сидом, ни одного хода ещё.

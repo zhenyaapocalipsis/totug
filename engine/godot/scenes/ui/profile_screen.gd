@@ -699,7 +699,11 @@ func _replay_cell(game: Dictionary) -> Control:
 	if not teams and version >= 20 and version < ReplayBook.TEAM_STOCK:
 		# 2v2 без рейтинга: kind в строке нет — смотрим заголовок реплея
 		teams = bool((ReplayBook.load_replay(file, replays_dir).get("header", {}) as Dictionary).get("teams", false))
-	if not ReplayBook.same_rules(version, teams):
+	var mode := ""
+	if version < ReplayBook.RANDOM_MARKET and ReplayBook.same_rules(version, teams):
+		# до Market-1 реплеи RANDOM не сходятся — режим смотрим в заголовке
+		mode = String((ReplayBook.load_replay(file, replays_dir).get("header", {}) as Dictionary).get("mode", ""))
+	if not ReplayBook.same_rules(version, teams, mode):
 		return _cell("OLD", PixelTheme.TEXT_OFF)
 	var watch := Button.new()
 	watch.text = "WATCH"
