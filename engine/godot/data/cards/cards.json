@@ -2631,7 +2631,7 @@
   },
   {
     "card_id": 49601,
-    "name": "Cultist Fanatic",
+    "name": "Skeleton",
     "cost": 5,
     "aspect": "GUILE",
     "type": "ICEWIND",
@@ -2651,7 +2651,7 @@
   },
   {
     "card_id": 49603,
-    "name": "Giant Goat",
+    "name": "Magmin",
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
@@ -2691,7 +2691,7 @@
   },
   {
     "card_id": 49607,
-    "name": "Giant Elk",
+    "name": "Invisible Stalker",
     "cost": 3,
     "aspect": "GUILE",
     "type": "ICEWIND",
@@ -2701,7 +2701,7 @@
   },
   {
     "card_id": 49608,
-    "name": "Giant Badger",
+    "name": "Ettercap",
     "cost": 2,
     "aspect": "GUILE",
     "type": "ICEWIND",
@@ -2711,7 +2711,7 @@
   },
   {
     "card_id": 49609,
-    "name": "Boar",
+    "name": "Xorn",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "ICEWIND",

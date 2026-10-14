@@ -19,7 +19,7 @@ extends RefCounted
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "frostbite_any" — в этот ход кто-то активировал Frostbite (Werewolf);
 ##   "other_discard" — в этот ход сбросил карту не текущий игрок (Giant Hyena);
-##   "deck_frostbite" — id игрока: его сброс с верха колоды (scry) тоже Frostbite (Cultist Fanatic);
+##   "deck_frostbite" — id игрока: его сброс с верха колоды (scry) тоже Frostbite (Skeleton);
 ##   "frost_copy"    — id игрока: получает Frostbite соперников (Bulette);
 ##   "frost_shield"  — id игрока: его соперники Frostbite не активируют (Mammoth);
 ##   "frost_twice"   — id игрока: его Frostbite срабатывает дважды (Storm Giant).
@@ -33,15 +33,15 @@ extends RefCounted
 ## Pirate Captain (Gragas), Blink Dog (Aurora), Young White Dragon (Olaf).
 
 const GUARD := "49600"
-const CULTIST := "49601"
+const SKELETON := "49601"
 const WEREWOLF := "49602"
-const GOAT := "49603"
+const MAGMIN := "49603"
 const CENTAUR := "49604"
 const BULETTE := "49605"
 const MEPHIT := "49606"
-const ELK := "49607"
-const BADGER := "49608"
-const BOAR := "49609"
+const STALKER := "49607"
+const ETTERCAP := "49608"
+const XORN := "49609"
 const OWL := "49610"
 const WINTER_WOLF := "49611"
 const HYENA := "49612"
@@ -56,7 +56,7 @@ const PIRATE_CAPTAIN := "49634"
 const BLINK_DOG := "49635"
 const WHITE_DRAGON := "49636"
 
-const FROSTBITE: Array[String] = [GUARD, GOAT, CENTAUR, MEPHIT, BOAR, OWL, HYENA, MAMMOTH]
+const FROSTBITE: Array[String] = [GUARD, MAGMIN, CENTAUR, MEPHIT, XORN, OWL, HYENA, MAMMOTH]
 
 
 static func build(card_id: String) -> CardEffect:
@@ -68,7 +68,7 @@ static func build(card_id: String) -> CardEffect:
 					return int(state.turn_flags.get("cards_played", 0)) == 1 and state.players[pid].deck.hand.size() <= 3,
 					GainInfluence.new(1)),
 			])
-		CULTIST:  # Bone Scryer
+		SKELETON:  # Bone Scryer
 			return SequenceEffect.new([
 				_SetPidFlag.new("deck_frostbite"),
 				ChooseEffect.new([
@@ -84,7 +84,7 @@ static func build(card_id: String) -> CardEffect:
 				ConditionalEffect.new(func(state, _pid): return state.turn_flags.get("frostbite_any", false),
 					GainPower.new(1)),
 			])
-		GOAT:  # Lorekeeper
+		MAGMIN:  # Lorekeeper
 			return ChooseEffect.new([DeployTroop.new(2), AssassinateTroop.new(1, true)],
 				["Deploy 2 troops", "Assassinate a white troop"])
 		CENTAUR:  # Icevale Archer
@@ -103,20 +103,20 @@ static func build(card_id: String) -> CardEffect:
 		MEPHIT:  # Rimetusk Shaman
 			return ChooseEffect.new([GainInfluence.new(3), ReturnTroopOrSpy.new(1)],
 				["+3 Influence", "Return a troop or spy"])
-		ELK:  # Valhir's Prophet
+		STALKER:  # Valhir's Prophet
 			return ChooseEffect.new([
 				SequenceEffect.new([PlaceSpy.new(1), ForceDiscard.new("each_opponent", 2), GainInfluence.new(1)]),
 				ReturnOwnSpy.new(SequenceEffect.new([ForceDiscard.new("each_opponent", 3), GainPower.new(2)])),
 			], ["Place a spy, each opponent with 3+ cards in hand discards a card, +1 Influence",
 				"Return one of your spies -> each opponent with 4+ cards in hand discards a card, +2 Power"])
-		BADGER:  # Avarosan Trapper
+		ETTERCAP:  # Avarosan Trapper
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return _TrapperEcho.new(site)),
 				ReturnOwnSpy.new(GainPower.new(3)),
 			], ["Place a spy (another player's troop there: trigger the Frostbite of another card you played)",
 				"Return one of your spies -> +3 Power"])
-		BOAR:  # Avarosan Hearthguard
-			return AtEndOfTurn.new(PromoteCard.new("played_other", BOAR))
+		XORN:  # Avarosan Hearthguard
+			return AtEndOfTurn.new(PromoteCard.new("played_other", XORN))
 		OWL:  # Starlit Seer
 			return SequenceEffect.new([
 				PlaceSpy.new(1, false, func(site): return _OwlDiscard.new(site)),
@@ -188,14 +188,14 @@ static func frostbite_effect(card_id: String) -> CardEffect:
 	match card_id:
 		GUARD:
 			return RecruitFree.new("", 3)
-		GOAT:
+		MAGMIN:
 			return DrawCards.new(1)
 		CENTAUR:
 			return GainVP.new(1)
 		MEPHIT:
 			return _DiscardToHand.new(2)
-		BOAR:
-			return _PromoteAnother.new(BOAR)
+		XORN:
+			return _PromoteAnother.new(XORN)
 		OWL:
 			return PlaceSpy.new(1)
 		HYENA:
@@ -351,7 +351,7 @@ class _TrapperEcho extends CardEffect:
 		site = s
 	func _options(state: GameState, player_id: String) -> Array:
 		var pile: Array = state.players[player_id].deck.played_pile.duplicate()
-		var own := pile.find(FreljordCards.BADGER)
+		var own := pile.find(FreljordCards.ETTERCAP)
 		if own != -1:
 			pile.remove_at(own)
 		var out: Array = []

@@ -5942,14 +5942,14 @@ func test_icewind_deck() -> void:
 	green.deck.hand = ["48342", "48344"]
 
 	# Frostbite у соперника от чужого сброса; Werewolf видит, что Frostbite был
-	blue.deck.hand = [F.GOAT, "48342", "48344", "48343"]
+	blue.deck.hand = [F.MAGMIN, "48342", "48344", "48343"]
 	red.power = 0
 	var rw := _play_with(state, F.WEREWOLF)
 	check(rw.is_waiting() and rw.pending.player_id == "blue", "Werewolf: сбрасывает синий (4 карты), зелёный (2) нет")
-	TurnEngine.resume_card(state, F.GOAT, rw)
+	TurnEngine.resume_card(state, F.MAGMIN, rw)
 	_auto_resolve(state, rw, false)
-	check(blue.deck.discard_pile.has(F.GOAT), "Giant Goat сброшен")
-	check_eq(blue.deck.hand.size(), 4, "Frostbite Giant Goat: синий взял карту")
+	check(blue.deck.discard_pile.has(F.MAGMIN), "Magmin сброшен")
+	check_eq(blue.deck.hand.size(), 4, "Frostbite Magmin: синий взял карту")
 	check_eq(red.power, 3, "Werewolf: +2 и +1 за Frostbite в этот ход")
 	check(state.turn_flags.get("other_discard", false), "сброс соперника отмечен (Giant Hyena)")
 
@@ -5962,9 +5962,9 @@ func test_icewind_deck() -> void:
 	check(not rh.is_waiting() and blue.deck.hand.size() == 4, "Hill Giant раскрыт: синий ничего не сбросил")
 
 	# Mammoth: соперники не активируют Frostbite; сброс до 3 карт
-	blue.deck.hand = [F.GOAT, "48342", "48344", "48343", "48340"]
+	blue.deck.hand = [F.MAGMIN, "48342", "48344", "48343", "48340"]
 	var rm := _play_with(state, F.MAMMOTH, [0])
-	TurnEngine.resume_card(state, F.GOAT, rm)
+	TurnEngine.resume_card(state, F.MAGMIN, rm)
 	_auto_resolve(state, rm, false)
 	check_eq(blue.deck.hand.size(), 3, "Mammoth: синий сбросил до 3 карт, Frostbite не сработал")
 	state.turn_flags.erase("frost_shield")
@@ -5978,18 +5978,18 @@ func test_icewind_deck() -> void:
 
 	# Storm Giant: Frostbite дважды; Bulette: Frostbite соперника и тебе
 	state.turn_flags["frost_twice"] = "red"
-	red.deck.hand = [F.GOAT]
+	red.deck.hand = [F.MAGMIN]
 	var r2 := EffectResolver.new()
 	r2.apply(DiscardCardEffect.new(1), "red", state)
-	TurnEngine.resume_card(state, F.GOAT, r2)
-	check_eq(red.deck.hand.size(), 2, "Storm Giant: Frostbite Giant Goat — 2 карты")
+	TurnEngine.resume_card(state, F.MAGMIN, r2)
+	check_eq(red.deck.hand.size(), 2, "Storm Giant: Frostbite Magmin — 2 карты")
 	state.turn_flags.erase("frost_twice")
 	state.turn_flags["frost_copy"] = "red"
 	var red_hand := red.deck.hand.size()
-	blue.deck.hand = [F.GOAT, "48342", "48344", "48343"]
+	blue.deck.hand = [F.MAGMIN, "48342", "48344", "48343"]
 	var rc := EffectResolver.new()
 	rc.apply(ForceDiscard.new("victim", 0, "blue"), "red", state)
-	TurnEngine.resume_card(state, F.GOAT, rc)
+	TurnEngine.resume_card(state, F.MAGMIN, rc)
 	check_eq(red.deck.hand.size(), red_hand + 1, "Bulette: Frostbite синего — красный тоже взял карту")
 	state.turn_flags.erase("frost_copy")
 
@@ -6031,9 +6031,9 @@ func test_icewind_deck() -> void:
 		check(not Actions.deploy(state, "red", free_slots[0]), "Deploy на запертую Power нельзя")
 		red.power += 1
 		check(Actions.deploy(state, "red", free_slots[0]), "Deploy на свою Power можно")
-	var rg := _play_with(state, F.GOAT)
+	var rg := _play_with(state, F.MAGMIN)
 	_auto_resolve(state, rg, false)
-	check_eq(F.locked_power(state, "red"), 5, "Giant Goat поставил 2 войска: ещё +2 запертой Power")
+	check_eq(F.locked_power(state, "red"), 5, "Magmin поставил 2 войска: ещё +2 запертой Power")
 	F.spent_power(state, "red", 3)
 	check_eq(F.locked_power(state, "red"), 2, "Power на убийство сначала тратится из запертой")
 
