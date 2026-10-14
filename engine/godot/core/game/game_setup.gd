@@ -37,7 +37,7 @@ const HAND_SIZE := 5
 ##   DOUBLE   — одна случайная полуколода дважды;
 ##   RANDOM 3 / 4 / 6 — 3, 4 или 6 случайных полуколод, из них по 20 карт
 ##              каждого аспекта, обычных карт не больше 2 копий, от каждой
-##              полуколоды минимум 4 уникальные (см. build_market_cards).
+##              полуколоды ровно 4 уникальные (см. build_market_cards).
 const MODE_STANDARD := "standard"
 const MODE_DOUBLE := "double"
 const MODE_RANDOM_3 := "random3"
@@ -58,9 +58,9 @@ const NEW_ERA_DEFAULT: Array[String] = ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
 ## RANDOM-режимы: не больше стольких копий обычной карты в пуле маркета
-## и не меньше стольких уникальных карт от каждой полуколоды (Market-1).
+## и ровно столько уникальных карт от каждой полуколоды (Market-1, Market-2).
 const RANDOM_MAX_COPIES := 2
-const RANDOM_SINGLES := 4
+const RANDOM_SINGLES := 5
 
 static var _half_deck_data: Dictionary = {}
 ## Только для прогонов баланса (tests/balance_run.gd all_decks=1): брать в
@@ -329,12 +329,15 @@ static func new_era_mode(pair: Array) -> String:
 ## Колода маркета из выбранных полуколод.
 ## STANDARD/DOUBLE: полуколоды целиком (DOUBLE — 2 × одна и та же, 80 карт).
 ## RANDOM 3/4/6 (решение владельца 2026-10-15, этап Market-1):
-##   1. из каждой выбранной полуколоды в маркет сразу идут RANDOM_SINGLES
-##      случайных уникальных карт (1 копия в полуколоде);
-##   2. остальные карты сваливаются в общий пул, копии обычных карт урезаны
-##      до RANDOM_MAX_COPIES;
+##   1. из каждой выбранной полуколоды в маркет идут РОВНО RANDOM_SINGLES
+##      случайных уникальных карт (1 копия в полуколоде), прочие уникальные
+##      в партию не попадают (решение владельца 2026-10-15, Market-2);
+##   2. обычные карты сваливаются в общий пул, копии урезаны до
+##      RANDOM_MAX_COPIES;
 ##   3. по КАЖДОМУ аспекту пул добирает до MARKET_PER_ASPECT карт — как в
-##      обычном маркете (2 полуколоды × 10 копий на аспект = 20).
+##      обычном маркете (2 полуколоды × 10 копий на аспект = 20);
+##   4. не хватило (бывает в RANDOM 3) — добор 3-ми копиями обычных карт
+##      этого аспекта, уникальных всё равно ровно RANDOM_SINGLES.
 static func build_market_cards(mode: String, decks: Array[String], rng: RandomNumberGenerator) -> Array[String]:
 	var cards: Array[String] = []
 	if mode not in [MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6]:
@@ -343,6 +346,7 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 		return cards
 	var data: Dictionary = _load_half_decks().get("half_decks", {})
 	var sure: Array[String] = []
+	var spare: Array[String] = []  # 3-и копии обычных карт — только на добор
 	for deck_name: String in decks:
 		var copies: Dictionary = (data.get(deck_name, {}) as Dictionary).get("copies", {})
 		var ids: Array = copies.keys()
@@ -354,9 +358,10 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 			else:
 				for i in range(mini(int(copies[card_id]), RANDOM_MAX_COPIES)):
 					cards.append(card_id)
+				if int(copies[card_id]) > RANDOM_MAX_COPIES:
+					spare.append(card_id)
 		Deck.shuffle_array(singles, rng)
 		sure.append_array(singles.slice(0, mini(RANDOM_SINGLES, singles.size())))
-		cards.append_array(singles.slice(mini(RANDOM_SINGLES, singles.size())))
 	var by_aspect := {}
 	var sure_by_aspect := {}
 	for cid: String in sure:
@@ -376,6 +381,10 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 		Deck.shuffle_array(pool, rng)
 		var room := maxi(0, MARKET_PER_ASPECT - int(sure_by_aspect.get(aspect, 0)))
 		result.append_array(pool.slice(0, mini(room, pool.size())))
+		if pool.size() < room:
+			var extra: Array[String] = spare.filter(func(cid): return CardLibrary.card_aspect(cid) == aspect)
+			Deck.shuffle_array(extra, rng)
+			result.append_array(extra.slice(0, mini(room - pool.size(), extra.size())))
 	return result
 
 

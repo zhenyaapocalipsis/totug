@@ -2716,18 +2716,21 @@ func test_game_modes() -> void:
 	check_eq(uniq.size(), 4, "RANDOM 4: четыре разные полуколоды")
 	var r4b := GameSetup.new_game(pids, 5, [], false, false, false, "random4")
 	check_eq(r4b.market.deck, r4.market.deck, "RANDOM 4: одинаковый сид — одинаковый маркет")
-	# Market-1: обычных карт не больше 2 копий, от каждой полуколоды минимум 4 уникальные.
+	# Market-1/2: обычных карт не больше 2 копий, от каждой полуколоды ровно 5 уникальных.
 	var data: Dictionary = GameSetup._load_half_decks().get("half_decks", {})
 	var max_ok := true
 	var singles_ok := true
-	for s in range(30):
+	var size_ok := true
+	for s in range(200):
 		for mode: String in [GameSetup.MODE_RANDOM_3, GameSetup.MODE_RANDOM_4, GameSetup.MODE_RANDOM_6]:
 			var st := GameSetup.new_game(pids, 300 + s, [], false, false, false, mode)
 			var count := {}
 			for cid: String in st.market.deck + st.market.display:
 				count[cid] = int(count.get(cid, 0)) + 1
+			# RANDOM 3 добирает нехватку 3-ми копиями — там предел на 1 больше
+			var cap := GameSetup.RANDOM_MAX_COPIES + (1 if mode == GameSetup.MODE_RANDOM_3 else 0)
 			for cid: String in count.keys():
-				if int(count[cid]) > GameSetup.RANDOM_MAX_COPIES:
+				if int(count[cid]) > cap:
 					max_ok = false
 			for d: String in st.half_decks:
 				var copies: Dictionary = (data[d] as Dictionary)["copies"]
@@ -2738,10 +2741,15 @@ func test_game_modes() -> void:
 						all_singles += 1
 						if count.has(cid):
 							have += 1
-				if have < mini(GameSetup.RANDOM_SINGLES, all_singles):
+				if have != mini(GameSetup.RANDOM_SINGLES, all_singles):
 					singles_ok = false
-	check(max_ok, "RANDOM: ни одной карты больше 2 копий в маркете")
-	check(singles_ok, "RANDOM: от каждой полуколоды не меньше 4 уникальных карт")
+			var total := st.market.deck.size() + st.market.display.size()
+			# RANDOM 3: в ~0.2% раздач не хватает даже 3-х копий — маркет 78-79
+			if total != 80 and not (mode == GameSetup.MODE_RANDOM_3 and total >= 78):
+				size_ok = false
+	check(max_ok, "RANDOM: копий не больше 2 (в RANDOM 3 на добор — 3)")
+	check(singles_ok, "RANDOM: от каждой полуколоды ровно 5 уникальных карт")
+	check(size_ok, "RANDOM: маркет набирает 80 карт (RANDOM 3 — не меньше 78)")
 	check(ReplayBook.same_rules(28, false, GameSetup.MODE_STANDARD) and not ReplayBook.same_rules(28, false, GameSetup.MODE_RANDOM_4)
 		and ReplayBook.same_rules(NetSession.PROTOCOL, false, GameSetup.MODE_RANDOM_4),
 		"реплеи: RANDOM до Market-1 — OLD, STANDARD прежней версии смотрится")
