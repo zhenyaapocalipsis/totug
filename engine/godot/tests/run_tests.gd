@@ -5919,12 +5919,17 @@ func test_mercenaries_deck() -> void:
 func test_icewind_deck() -> void:
 	section("Icewind Dale (New Era Freljord): полуколода")
 	var F := FreljordCards
-	check_eq(GameSetup.expand_half_deck("freljord").size(), 45, "Icewind Dale: 45 карт")
+	var ice_deck := GameSetup.expand_half_deck("freljord")
+	check_eq(ice_deck.size(), 40, "Icewind Dale: 40 карт")
+	var ice_uniques := {}
+	for cid: String in ice_deck:
+		ice_uniques[cid] = true
+	check_eq(ice_uniques.size(), 20, "Icewind Dale: 20 уникальных карт (без Guard, Giant Owl, Giant Hyena)")
 	check(not GameSetup.available_half_decks().has("freljord"), "Icewind Dale пока не в обычном выборе (wip)")
 	var mode := GameSetup.new_era_mode(["freljord", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Icewind Dale) карт")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Icewind Dale) карт")
 	check_eq(game.supplies.remaining(Supplies.INSANE_OUTCAST), 0, "без Stone Giant стопки Insane Outcast у доски нет")
 	_sweep_deck_with_vp(49600, 49620)
 	_sweep_deck_with_vp(49634, 49636)

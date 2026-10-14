@@ -174,6 +174,7 @@
 - Чек-лист живой проверки: (1) NEW ERA → CELESTIAL + AVERNUS, на рынке карты с артами, фон красно-золотой; (2) Mummy без пожирания +2 Influence, Ogre (сожрать карту), снова Mummy +3; (3) Bandit — замена сожранной карты рынка из 3 верхних; (4) Bugbear Stalker — новая карта в слоте на 3 дешевле (цена зелёная); (5) Half-Dragon — в сброс приходит Blade Fragment.
 
 ## Готово: Freljord → ICEWIND DALE (NE-11 `551d69a`, NE-12 `aebd453`, NE-12b `6b6417c`, NE-17)
+**NE-18:** по выбору владельца 40 карт / 20 уникальных — убраны Guard 49600, Giant Owl 49610, Giant Hyena 49612 (в cards.json остались), Giant Goat и Winter Wolf — по 3.
 Всё по колоде — в `Claude outputs/new_era_freljord.md` (таблица, толкования).
 - Карты 49600–49618, 49620 и 49634–49636 (45 копий). Тип `ICEWIND`, ключ `freljord` (wip), эффекты `core/cards/freljord_cards.gd`, тест `test_icewind_deck`, фон ледяной голубой. **NE-17:** по решению владельца убраны Roc, Stone Giant, Giant Ape и всё, что с ними связано (Roc Egg, 10 предметов Masterwork, знаки на доске `state.wards`, стопка FRONT, `state.front`, `state.masterwork`; id 49619, 49621–49633 удалены). Вместо них Extra Champions мода: Gragas → Pirate Captain (49634), Aurora → Blink Dog (49635), Olaf → Young White Dragon (49636).
 - **Frostbite** — `FreljordCards.on_discard` из всех путей сброса (DiscardCardEffect, ForceDiscard.VictimDiscard, ScryCards, _CycleHand, _DiscardDrawn, RemoveSelfFromPlay). Решение владельца: сброс руки в конце хода Frostbite не вызывает. Новые карты со сбросом из руки тоже должны звать on_discard.
