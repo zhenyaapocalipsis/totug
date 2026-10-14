@@ -159,7 +159,6 @@
     "celestial": {
       "name": "Celestial Order Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49000": 3,
         "49002": 3,
@@ -186,7 +185,6 @@
     "shadow": {
       "name": "Ravenloft Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49100": 3,
         "49101": 3,
@@ -213,7 +211,6 @@
     "piltover": {
       "name": "Waterdeep Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49200": 4,
         "49201": 4,
@@ -240,7 +237,6 @@
     "siege": {
       "name": "Siege Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49300": 1,
         "49301": 1,
@@ -267,7 +263,6 @@
     "mercenaries": {
       "name": "Mercenaries Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49400": 4,
         "49401": 2,
@@ -294,7 +289,6 @@
     "noxus": {
       "name": "Avernus Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49500": 3,
         "49502": 3,
@@ -321,7 +315,6 @@
     "freljord": {
       "name": "Icewind Dale Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49601": 3,
         "49602": 3,

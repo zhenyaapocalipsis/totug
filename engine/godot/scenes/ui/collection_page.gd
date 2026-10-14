@@ -23,7 +23,19 @@ const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const SECTIONS: Array[String] = ["CARDS", "SHADERS", "CARD BACKS", "BACKGROUNDS"]
 ## Фракции — полуколоды рынка в порядке книги правил; STARTING — стартовая
 ## колода и общие стопки (шейдер ложится и на них).
-const FACTIONS: Array[String] = ["drow", "dragons", "demons", "elementals", "aberrations", "undead", "starting"]
+const FACTIONS: Array[String] = ["drow", "dragons", "demons", "elementals", "aberrations", "undead", "starting",
+	"celestial", "shadow", "piltover", "noxus", "freljord", "siege", "mercenaries"]
+## Колоды New Era и фанатские — вторым рядом вкладок, подписи как в меню NEW ERA.
+const NEW_ERA_FACTIONS: Array[String] = ["celestial", "shadow", "piltover", "noxus", "freljord", "siege", "mercenaries"]
+## Жетоны и вторые стороны: в полуколоде их нет, на большой карте они
+## листаются кнопкой под ней (решение владельца 2026-10-14).
+const TOKENS := {
+	"49019": ["49023"],  # Scout -> Giant Eagle
+	"49022": ["49024"],  # Gold Dragon -> Ancient Gold Dragon
+	"49118": ["49124"],  # Treant -> Twig Blight
+	"49120": ["49123"],  # Drider -> Phase Spider
+	"49521": ["49523", "49524"],  # Half-Dragon -> Blade Fragment, Blade of Exile
+}
 const COLUMNS := 5
 const ROWS := 4
 const MINI := CardView.MINI_SIZE
@@ -55,6 +67,9 @@ var _preview: CardView
 var _tiles: Dictionary = {}
 var _selected := ""
 var _favourite_button: Button
+## Кнопка под большой картой: следующий жетон / вторая сторона; номер показанной формы.
+var _token_button: Button
+var _form_index := 0
 ## Арты выбранной карты: кнопки ("" — оригинал), просмотренный арт, что второй
 ## щелчок создаст за пыль, кнопка USE/CRAFT и подсказка.
 var _art_list: VBoxContainer
@@ -191,16 +206,21 @@ static func _showcase_card() -> String:
 func _cards_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 4)
-	var tabs := HBoxContainer.new()
-	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
-	tabs.add_theme_constant_override("separation", 3)
-	page.add_child(tabs)
 	var group := ButtonGroup.new()
+	var rows: Array[HBoxContainer] = []
+	for i in 2:
+		var tabs := HBoxContainer.new()
+		tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+		tabs.add_theme_constant_override("separation", 3)
+		page.add_child(tabs)
+		rows.append(tabs)
 	for faction in FACTIONS:
-		var b := _button(faction.to_upper(), show_faction.bind(faction))
+		var new_era := NEW_ERA_FACTIONS.has(faction)
+		var title: String = SetupScreen.NEW_ERA_TITLES.get(faction, faction.to_upper())
+		var b := _button(title, show_faction.bind(faction))
 		b.toggle_mode = true
 		b.button_group = group
-		tabs.add_child(b)
+		rows[1 if new_era else 0].add_child(b)
 		_faction_buttons[faction] = b
 
 	var body := HBoxContainer.new()
@@ -221,6 +241,9 @@ func _cards_page() -> Control:
 	_preview = CardView.new(faction_cards("drow")[0], int(FULL.x), int(FULL.y))
 	_preview.hover_preview = false
 	side.add_child(_preview)
+	_token_button = _button("", func(): next_form())
+	_token_button.custom_minimum_size = Vector2(FULL.x, 16)
+	side.add_child(_token_button)
 	# Любимая карта — видна в профиле и в карточке игрока у соперников.
 	_favourite_button = _button("", func(): toggle_favourite())
 	_favourite_button.custom_minimum_size = Vector2(FULL.x, 16)
@@ -328,9 +351,41 @@ static func faction_cards(faction: String) -> Array[String]:
 		for cid in GameSetup.expand_half_deck(faction):
 			if not ids.has(cid):
 				ids.append(cid)
+	# По возрастанию цены (решение владельца 2026-10-15), при равной — по имени.
 	ids.sort_custom(func(a: String, b: String) -> bool:
+		var ca := card_cost(a)
+		var cb := card_cost(b)
+		if ca != cb:
+			return ca < cb
 		return EventLogPanel.card_name(a) < EventLogPanel.card_name(b))
 	return ids
+
+
+## Цена карты; у стартовых и жетонов её нет — 0.
+static func card_cost(cid: String) -> int:
+	var cost = CardLibrary.card_data(cid).get("cost")
+	return int(cost) if cost != null else 0
+
+
+## Карта и её жетоны / вторые стороны — что листает кнопка под большой картой.
+static func card_forms(cid: String) -> Array[String]:
+	var forms: Array[String] = [cid]
+	for token in TOKENS.get(cid, []):
+		forms.append(String(token))
+	return forms
+
+
+## Показать на большой карте следующую форму (жетон, вторую сторону, снова карту).
+func next_form() -> void:
+	_form_index = (_form_index + 1) % card_forms(_selected).size()
+	Sfx.play("click")
+	refresh()
+
+
+## Что сейчас на большой карте: сама карта или её жетон.
+func shown_card() -> String:
+	var forms := card_forms(_selected)
+	return forms[_form_index % forms.size()]
 
 
 static func faction_of(cid: String) -> String:
@@ -368,6 +423,7 @@ func _add_tile(cid: String) -> void:
 ## Выбрать карту: она справа целиком.
 func select(cid: String) -> void:
 	_selected = cid
+	_form_index = 0
 	_set_note("")
 	_fill_art_list(cid)
 	refresh()
@@ -539,8 +595,14 @@ func refresh() -> void:
 	# Арты выбранной карты: большая карта показывает просматриваемый, мини в
 	# сетке — включённые.
 	var worn_art := SkinCollection.art_of(_selected)
-	_preview.set_card(_selected)
-	_preview.set_art(_art_selected)
+	var forms := card_forms(_selected)
+	var shown := shown_card()
+	_preview.set_card(shown)
+	_preview.set_art(_art_selected if shown == _selected else "")
+	_token_button.visible = forms.size() > 1
+	if forms.size() > 1:
+		var next: String = forms[(_form_index + 1) % forms.size()]
+		_token_button.text = ("BACK TO %s >" if next == _selected else "SHOW %s >") % EventLogPanel.card_name(next).to_upper()
 	for cid: String in _tiles:
 		(_tiles[cid]["card"] as CardView).set_art(SkinCollection.art_of(cid))
 	for art: String in _art_buttons:

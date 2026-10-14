@@ -11,6 +11,7 @@ var _failed := 0
 var _current := ""
 
 const GameSettings := preload("res://scenes/game_settings.gd")
+const CLASSIC_DECKS: Array[String] = ["drow", "dragons", "demons", "elementals", "aberrations", "undead"]
 
 
 func _initialize() -> void:
@@ -1646,6 +1647,27 @@ func test_skin_collection() -> void:
 	check(_all_text(page).contains("DUST 100") and _all_text(page).contains("LOOT BOXES 1"),
 		"вкладка показывает пыль и лутбоксы")
 	check(CollectionPage.faction_cards("starting").has("48342"), "в CARDS есть и стартовые карты")
+	# New Era во вкладке CARDS: 20 карт по возрастанию цены, жетоны — кнопкой под картой.
+	for deck in CollectionPage.NEW_ERA_FACTIONS:
+		check_eq(CollectionPage.faction_cards(deck).size(), 20, "CARDS: у %s 20 карт" % deck)
+		check(_find_button(page, SetupScreen.NEW_ERA_TITLES[deck]) != null, "CARDS: вкладка %s" % SetupScreen.NEW_ERA_TITLES[deck])
+	for deck in CollectionPage.FACTIONS:
+		var costs: Array = CollectionPage.faction_cards(deck).map(func(c): return CollectionPage.card_cost(c))
+		var sorted_costs := costs.duplicate()
+		sorted_costs.sort()
+		check_eq(costs, sorted_costs, "CARDS: %s по возрастанию цены" % deck)
+	page.show_faction("celestial")
+	page.select("49022")
+	check(_find_button(page, "SHOW ANCIENT GOLD DRAGON >") != null, "Gold Dragon: кнопка второй стороны")
+	page.next_form()
+	check_eq(page.shown_card(), "49024", "Gold Dragon: на большой карте Ancient Gold Dragon")
+	page.next_form()
+	check_eq(page.shown_card(), "49022", "и обратно Gold Dragon")
+	page.show_faction("noxus")
+	page.select("49521")
+	page.next_form()
+	page.next_form()
+	check_eq(page.shown_card(), "49524", "Half-Dragon: второй жетон — Blade of Exile")
 	page._rng.seed = 1
 	var dropped := page.open_box()
 	check(not dropped.is_empty() and _all_text(page).contains("LOOT BOXES 0"), "лутбокс открыт и потрачен")
@@ -2678,8 +2700,12 @@ func test_game_modes() -> void:
 			var a := CardLibrary.card_aspect(cid)
 			per_aspect[a] = int(per_aspect.get(a, 0)) + 1
 		check_eq(per_aspect.size(), 4, "%s: 4 аспекта" % mode)
-		for a: String in per_aspect.keys():
-			check_eq(int(per_aspect[a]), 20, "%s: аспект %s — 20 карт" % [mode, a])
+		# По 10 копий на аспект — только у классических полуколод; RANDOM-режимы
+		# сами набирают по 20 на аспект из общего пула.
+		var classic := state.half_decks.all(func(d): return CLASSIC_DECKS.has(d))
+		if classic or mode.begins_with("random"):
+			for a: String in per_aspect.keys():
+				check_eq(int(per_aspect[a]), 20, "%s: аспект %s — 20 карт" % [mode, a])
 	var dbl := GameSetup.new_game(pids, 99, [], false, false, false, "double")
 	check_eq(dbl.half_decks[0], dbl.half_decks[1], "DOUBLE: одна и та же полуколода дважды")
 	var r4 := GameSetup.new_game(pids, 5, [], false, false, false, "random4")
@@ -2693,7 +2719,7 @@ func test_game_modes() -> void:
 
 func test_half_deck_data() -> void:
 	section("Состав полуколод: копии карт из данных мода")
-	check_eq(GameSetup.available_half_decks().size(), 6, "доступно 6 полуколод")
+	check_eq(GameSetup.available_half_decks().size(), 13, "доступно 13 полуколод (6 классических + 7 New Era)")
 	for name: String in GameSetup.available_half_decks():
 		var cards := GameSetup.expand_half_deck(name)
 		check_eq(cards.size(), 40, "полуколода %s — ровно 40 карт" % name)
@@ -4216,7 +4242,9 @@ func test_replay_book() -> void:
 	var modes := {2: GameSetup.MODE_STANDARD, 3: GameSetup.MODE_RANDOM_3, 4: GameSetup.MODE_RANDOM_4}
 	for count: int in [2, 3, 4]:
 		var ids := GameScreen.player_ids_for(count)
-		var seed_value := 4242 + count
+		# Сиды, где простой автоигрок доводит партию до конца: с колодами New Era
+		# он может зациклиться (Black Pudding повышает всю колоду, покупать нечем).
+		var seed_value: int = {2: 4245, 3: 4245, 4: 4246}[count]
 		var live := GameServer.new(GameSetup.new_game(ids, seed_value, [], false, true, true, modes[count]))
 		var log := _autoplay(live)
 		check(live.state.game_over, "%d игрока: автоигрок доиграл партию до конца (%d ходов)" % [count, log.size()])
@@ -4499,7 +4527,11 @@ func test_bot_player() -> void:
 	var bot_wins := 0
 	var games := 4
 	for g in range(games):
-		var state := GameSetup.new_game(["red", "blue"], 100 + g, [], false, true, true)
+		# Классические пары: с New Era простой автоигрок иногда выигрывает рашем
+		# (Ravenloft выставляет все войска раньше, чем бот наберёт VP).
+		var pair: Array[String] = []
+		pair.assign([["drow", "dragons"], ["drow", "elementals"], ["demons", "undead"], ["aberrations", "dragons"]][g])
+		var state := GameSetup.new_game(["red", "blue"], 100 + g, pair, false, true, true)
 		var server := GameServer.new(state)
 		server.build_views = false
 		var guard := 0
@@ -5098,7 +5130,7 @@ func test_celestial_order() -> void:
 	for cid: String in deck:
 		uniques[cid] = true
 	check_eq(uniques.size(), 20, "Celestial Order: 20 уникальных карт (без Priest, Pegasus, Sphinx of Lore)")
-	check(not GameSetup.available_half_decks().has("celestial"), "пока не все эффекты готовы, колода не в выборе (wip)")
+	check(GameSetup.available_half_decks().has("celestial"), "Celestial в обычном выборе")
 	for cid: String in ["49000", "49010", "49019", "49022", "49023", "49024"]:
 		check(CardLibrary.card_data(cid).get("type") == "CELESTIAL", "%s — карта Celestial" % cid)
 
@@ -5283,7 +5315,7 @@ func test_piltover_zaun() -> void:
 	for cid: String in deck:
 		pz_uniques[cid] = true
 	check_eq(pz_uniques.size(), 20, "Waterdeep: 20 уникальных карт (без Rust Monster)")
-	check(not GameSetup.available_half_decks().has("piltover"), "колода пока не в обычном выборе (wip)")
+	check(GameSetup.available_half_decks().has("piltover"), "Waterdeep в обычном выборе")
 	for cid: String in ["49200", "49211", "49220"]:
 		check(CardLibrary.card_data(cid).get("type") == "WATERDEEP", "%s — карта Waterdeep (бывшая Piltover & Zaun)" % cid)
 
@@ -5494,7 +5526,7 @@ func test_shadow_isles() -> void:
 	for cid: String in deck:
 		shadow_uniques[cid] = true
 	check_eq(shadow_uniques.size(), 20, "Ravenloft: 20 уникальных карт (без Lemure, Will-o'-Wisp, Spirit Naga)")
-	check(not GameSetup.available_half_decks().has("shadow"), "колода пока не в обычном выборе (wip)")
+	check(GameSetup.available_half_decks().has("shadow"), "Ravenloft в обычном выборе")
 	for cid: String in ["49100", "49113", "49123", "49124"]:
 		check(CardLibrary.card_data(cid).get("type") == "RAVENLOFT", "%s — карта Ravenloft (бывшая Shadow Isles)" % cid)
 
@@ -5726,7 +5758,7 @@ func _sweep_deck_with_vp(first: int, last: int) -> void:
 func test_siege_deck() -> void:
 	section("Siege: полуколода")
 	check_eq(GameSetup.expand_half_deck("siege").size(), 40, "Siege: 40 карт")
-	check(not GameSetup.available_half_decks().has("siege"), "Siege пока не в обычном выборе (wip)")
+	check(GameSetup.available_half_decks().has("siege") and GameSetup.available_half_decks().has("mercenaries"), "Siege и Mercenaries в обычном выборе")
 	var mode := GameSetup.new_era_mode(["mercenaries", "siege"])
 	check_eq(mode, "newera:siege,mercenaries", "пара Siege + Mercenaries в строке режима")
 	check(GameSetup.is_mode(mode), "режим принимается")
@@ -5925,7 +5957,7 @@ func test_icewind_deck() -> void:
 	for cid: String in ice_deck:
 		ice_uniques[cid] = true
 	check_eq(ice_uniques.size(), 20, "Icewind Dale: 20 уникальных карт (без Guard, Giant Owl, Giant Hyena)")
-	check(not GameSetup.available_half_decks().has("freljord"), "Icewind Dale пока не в обычном выборе (wip)")
+	check(GameSetup.available_half_decks().has("freljord"), "Icewind Dale в обычном выборе")
 	var mode := GameSetup.new_era_mode(["freljord", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
@@ -6099,7 +6131,7 @@ func test_avernus_deck() -> void:
 	for cid: String in nx_deck:
 		nx_uniques[cid] = true
 	check_eq(nx_uniques.size(), 20, "Avernus: 20 уникальных карт (без Pseudodragon, Wereboar, Bugbear Warrior)")
-	check(not GameSetup.available_half_decks().has("noxus"), "Avernus пока не в обычном выборе (wip)")
+	check(GameSetup.available_half_decks().has("noxus"), "Avernus в обычном выборе")
 	var mode := GameSetup.new_era_mode(["noxus", "celestial"])
 	check_eq(mode, "newera:celestial,noxus", "пара Celestial + Avernus в строке режима")
 	check(GameSetup.is_mode(mode), "режим принимается")
