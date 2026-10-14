@@ -2665,7 +2665,7 @@ func test_game_modes() -> void:
 		var total := state.market.deck.size() + state.market.display.size()
 		if mode == GameSetup.MODE_NEW_ERA:
 			# Полуколоды New Era — по 45 карт и не по 10 копий на аспект.
-			check_eq(total, 90, "newera: в маркете 45 + 45 карт")
+			check_eq(total, 85, "newera: в маркете 40 (Celestial) + 45 карт")
 			check_eq(state.half_decks, ["celestial", "shadow"] as Array[String], "newera: Celestial Order + Shadow Isles")
 			check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), 30, "newera: с Shadow Isles лежит стопка Insane Outcast")
 			check_eq(state.supplies.remaining(ShadowCards.TWIG_BLIGHT), 4, "newera: и 4 Twig Blight")
@@ -5093,7 +5093,11 @@ func _trace_crossings(s: Dictionary) -> int:
 func test_celestial_order() -> void:
 	section("New Era: полуколода Celestial Order")
 	var deck := GameSetup.expand_half_deck("celestial")
-	check_eq(deck.size(), 45, "Celestial Order: 45 карт в полуколоде")
+	check_eq(deck.size(), 40, "Celestial Order: 40 карт в полуколоде")
+	var uniques := {}
+	for cid: String in deck:
+		uniques[cid] = true
+	check_eq(uniques.size(), 20, "Celestial Order: 20 уникальных карт (без Priest, Pegasus, Sphinx of Lore)")
 	check(not GameSetup.available_half_decks().has("celestial"), "пока не все эффекты готовы, колода не в выборе (wip)")
 	for cid: String in ["49000", "49010", "49019", "49022", "49023", "49024"]:
 		check(CardLibrary.card_data(cid).get("type") == "CELESTIAL", "%s — карта Celestial" % cid)
@@ -5288,7 +5292,7 @@ func test_piltover_zaun() -> void:
 	check_eq(GameSetup.new_era_mode(["shadow", "celestial"]), "newera", "прежняя пара — прежняя строка режима")
 	var pz_game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, pz_mode)
 	check_eq(pz_game.half_decks, ["celestial", "piltover"] as Array[String], "партия NEW ERA берёт выбранную пару")
-	check_eq(pz_game.market.deck_size() + pz_game.market.display.size(), 45 + 42, "рынок: 45 + 42 карты")
+	check_eq(pz_game.market.deck_size() + pz_game.market.display.size(), 40 + 42, "рынок: 40 + 42 карты")
 
 	var state := _build_rich_state(21)
 	var red: PlayerState = state.players["red"]
@@ -5912,7 +5916,7 @@ func test_icewind_deck() -> void:
 	var mode := GameSetup.new_era_mode(["freljord", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 90, "рынок: 45 + 45 карт")
+	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 карт")
 	check_eq(game.masterwork.size(), 10, "со Stone Giant — колода Masterwork из 10 предметов")
 	check(game.supplies.remaining(Supplies.INSANE_OUTCAST) > 0, "Demon Armor: у доски есть Insane Outcast")
 	_sweep_deck_with_vp(49600, 49633)
@@ -6065,7 +6069,7 @@ func test_avernus_deck() -> void:
 	check_eq(mode, "newera:celestial,noxus", "пара Celestial + Avernus в строке режима")
 	check(GameSetup.is_mode(mode), "режим принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 90, "рынок: 45 + 45 карт")
+	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 карт")
 	check_eq(game.supplies.remaining(NoxusCards.BLADE_FRAGMENT), 3, "с Avernus у доски 3 Blade Fragment")
 	_sweep_deck_with_vp(49500, 49524)
 

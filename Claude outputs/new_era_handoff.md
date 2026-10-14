@@ -43,7 +43,7 @@
 Коммиты: **NE-1** `3804aca`, **NE-2** `69fc428`, **NE-3** `19c56a5`. Тесты: `пройдено: 1201, провалено: 0`, сеть 105/0.
 
 - **Карты:** id 49000–49024, тип `CELESTIAL`, данные в `engine/godot/data/cards/cards.json`.
-- **Полуколода:** `celestial` в `data/cards/half_decks.json`, 45 карт, флаг `"wip": true`, поэтому её нет в обычном пуле случайного выбора. Иначе бы поменялись сиды и журналы старых партий.
+- **Полуколода:** `celestial` в `data/cards/half_decks.json`, 40 карт (20 уникальных; NE-13 по выбору владельца убрал Priest 49001, Pegasus 49008, Sphinx of Lore 49011 — карты остались в cards.json, +1 копия Warrior Infantry, Sphinx of Wonder, Hippogriff; PROTOCOL 26), флаг `"wip": true`, поэтому её нет в обычном пуле случайного выбора. Иначе бы поменялись сиды и журналы старых партий.
 - **Режим рынка NEW ERA** (`GameSetup.MODE_NEW_ERA`): сначала был Celestial + случайная классическая, с NE-4 — Celestial + Shadow Isles. Включается в меню HOTSEAT и LOBBY. Цвет фона партии — `UnderdarkBg.DECK_COLOURS["celestial"]`.
 - **Эффекты карт:** `engine/godot/core/cards/celestial_cards.gd`. CardLibrary берёт эффект оттуда, если своего нет. `CardLibrary.on_gain()` — триггер «когда получаешь карту» (Scout кладёт в сброс Giant Eagle).
 - **Новые примитивы** в `core/effects/primitives/`:
