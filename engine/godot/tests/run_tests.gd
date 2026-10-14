@@ -2665,7 +2665,7 @@ func test_game_modes() -> void:
 		var total := state.market.deck.size() + state.market.display.size()
 		if mode == GameSetup.MODE_NEW_ERA:
 			# Полуколоды New Era — по 45 карт и не по 10 копий на аспект.
-			check_eq(total, 85, "newera: в маркете 40 (Celestial) + 45 карт")
+			check_eq(total, 80, "newera: в маркете 40 (Celestial) + 40 (Ravenloft) карт")
 			check_eq(state.half_decks, ["celestial", "shadow"] as Array[String], "newera: Celestial Order + Shadow Isles")
 			check_eq(state.supplies.remaining(Supplies.INSANE_OUTCAST), 30, "newera: с Shadow Isles лежит стопка Insane Outcast")
 			check_eq(state.supplies.remaining(ShadowCards.TWIG_BLIGHT), 4, "newera: и 4 Twig Blight")
@@ -5485,7 +5485,11 @@ func _auto_resolve_until(state: GameState, resolver: EffectResolver, prefix: Str
 func test_shadow_isles() -> void:
 	section("New Era: полуколода Shadow Isles")
 	var deck := GameSetup.expand_half_deck("shadow")
-	check_eq(deck.size(), 45, "Shadow Isles: 45 карт в полуколоде")
+	check_eq(deck.size(), 40, "Ravenloft: 40 карт в полуколоде")
+	var shadow_uniques := {}
+	for cid: String in deck:
+		shadow_uniques[cid] = true
+	check_eq(shadow_uniques.size(), 20, "Ravenloft: 20 уникальных карт (без Lemure, Will-o'-Wisp, Spirit Naga)")
 	check(not GameSetup.available_half_decks().has("shadow"), "колода пока не в обычном выборе (wip)")
 	for cid: String in ["49100", "49113", "49123", "49124"]:
 		check(CardLibrary.card_data(cid).get("type") == "RAVENLOFT", "%s — карта Ravenloft (бывшая Shadow Isles)" % cid)
