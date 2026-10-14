@@ -30,6 +30,8 @@ var _done_called := false
 ## картой и после хода войска переписывается на новый слот.
 var only_slots: Array = []
 var _moved_to: Array = []
+## Blink Dog: ставить можно только на пустые места рядом с этой локацией.
+var dest_near_site: String = ""
 
 
 func _init(count: int = 1, allow_fewer: bool = false, own_troops: bool = false,
@@ -124,6 +126,9 @@ func is_available(state: GameState, player_id: String) -> bool:
 
 func _legal_sources(state: GameState, player_id: String) -> Array:
 	var legal: Array = []
+	if dest_near_site != "" and not Array(state.graph.slots_adjacent_to_site(dest_near_site)).any(
+			func(s): return state.troops.get(s, "") == ""):
+		return legal  # рядом с локацией некуда ставить
 	for slot_id: String in state.graph.slots.keys():
 		var owner: String = state.troops.get(slot_id, "")
 		if owner == "":
@@ -145,7 +150,9 @@ func _legal_sources(state: GameState, player_id: String) -> Array:
 
 func _request_dest(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	var empties: Array = []
-	for slot_id: String in state.graph.slots.keys():
+	var candidates: Array = state.graph.slots.keys() if dest_near_site == "" \
+			else Array(state.graph.slots_adjacent_to_site(dest_near_site))
+	for slot_id: String in candidates:
 		if slot_id != _picked_source and state.troops.get(slot_id, "") == "":
 			empties.append(slot_id)
 	if empties.is_empty():

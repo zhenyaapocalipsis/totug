@@ -283,21 +283,7 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 		"reveal_hand":
 			var shown: Array = e.get("cards", [])
 			return "%s reveals %s" % [who, ", ".join(PackedStringArray(shown.map(func(c): return card_name(String(c)))))]
-		"ward":
-			match String(e.get("kind", "")):
-				"storm":
-					return "%s puts a Glacial Storm on %s" % [who, site]
-				"pillar":
-					return "%s puts an Ice Pillar on %s" % [who, site]
-				"ice":
-					return "%s puts Ice on a troop at %s" % [who, slot]
-				_:
-					return "%s: Scarab of Protection — troops can't be hit until next turn" % who
-		"gain_front":
-			return "%s puts %s in front of them" % [who, card]
-		"masterwork":
-			return "%s triggers %s" % [who, card if e.has("card_id") else "Masterwork items"]
-		"roc_reborn":
-			return "%s: the Roc hatches back into hand" % who
+		"card_on_top":
+			return "%s puts %s on top of their deck" % [who, card]
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]

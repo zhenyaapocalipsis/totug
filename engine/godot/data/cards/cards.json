@@ -2810,16 +2810,6 @@
     "ability_text": "Your Frostbite triggers twice this turn.\nDiscard any number of cards, then draw that many. You may repeat, drawing 1 fewer each time.\nSupplant 2 troops."
   },
   {
-    "card_id": 49619,
-    "name": "Roc",
-    "cost": 8,
-    "aspect": "MALICE",
-    "type": "ICEWIND",
-    "deck_vp": 4,
-    "inner_circle_vp": 8,
-    "ability_text": "Draw a card. Glacial Storm a site until your next turn: its spies leave, opponents pay +2 Power there to deploy, place a spy or hit your troops. Put Ice on one of your troops and gain the Roc Egg."
-  },
-  {
     "card_id": 49620,
     "name": "Frost Giant",
     "cost": 7,
@@ -2830,133 +2820,33 @@
     "ability_text": "Promote the top card of your deck.\nChoose one:\n• +2 Power.\n• Play a card from your inner circle as if from your hand; it stays there."
   },
   {
-    "card_id": 49621,
-    "name": "Stone Giant",
-    "cost": 8,
+    "card_id": 49634,
+    "name": "Pirate Captain",
+    "cost": 6,
     "aspect": "MALICE",
     "type": "ICEWIND",
-    "deck_vp": 4,
-    "inner_circle_vp": 8,
-    "ability_text": "Look at the top 2 Masterwork items: put one in front of you, the other on the bottom.\nTrigger the effect of one of your Masterwork items."
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+4 Power\nIf you gain no cards this turn, you may put this card on top of your deck at the end of your turn."
   },
   {
-    "card_id": 49622,
-    "name": "Giant Ape",
+    "card_id": 49635,
+    "name": "Blink Dog",
     "cost": 6,
+    "aspect": "MALICE",
+    "type": "ICEWIND",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Choose a site with your troop. Move any other troops there to empty spaces next to it.\n• Move up to 3 of your troops. +1 Power per troop moved next to another player's troop."
+  },
+  {
+    "card_id": 49636,
+    "name": "Young White Dragon",
+    "cost": 7,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
-    "deck_vp": 4,
-    "inner_circle_vp": 7,
-    "ability_text": "Deploy 4 troops. Put an Ice Pillar on a site where you have presence until your next turn: opponents pay +2 Power there to deploy, place a spy or hit your troops."
-  },
-  {
-    "card_id": 49623,
-    "name": "Roc Egg",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "At the start of your turn, if your troop with Ice still stands, put the Roc into your hand from anywhere. Then the Roc Egg and the Ice leave."
-  },
-  {
-    "card_id": 49624,
-    "name": "Frost Brand",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, +2 Power."
-  },
-  {
-    "card_id": 49625,
-    "name": "Rod of Rulership",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, +2 Influence."
-  },
-  {
-    "card_id": 49626,
-    "name": "Hat of Wizardry",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, draw a card."
-  },
-  {
-    "card_id": 49627,
-    "name": "Sword of Answering",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the end of your turn, you may promote a card you played this turn."
-  },
-  {
-    "card_id": 49628,
-    "name": "Armor of Invulnerability",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, gain 2 VP."
-  },
-  {
-    "card_id": 49629,
-    "name": "Boots of Speed",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, you may move up to 2 troops."
-  },
-  {
-    "card_id": 49630,
-    "name": "Horn of Valhalla",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, deploy 3 troops."
-  },
-  {
-    "card_id": 49631,
-    "name": "Cloak of Elvenkind",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, place up to 2 spies or return up to 2 spies."
-  },
-  {
-    "card_id": 49632,
-    "name": "Demon Armor",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. At the start of your turn, choose one: each opponent gains an Insane Outcast, or each opponent discards a card."
-  },
-  {
-    "card_id": 49633,
-    "name": "Scarab of Protection",
-    "cost": null,
-    "aspect": null,
-    "type": "ICEWIND",
-    "deck_vp": 0,
-    "inner_circle_vp": 0,
-    "ability_text": "Masterwork. When its effect is triggered: until your next turn, your troops can't be assassinated or supplanted. Then it leaves the game."
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "This turn, each troop your cards deploy gives +1 Power. You can't deploy with that Power.\nDeploy 3 troops."
   }
 ]

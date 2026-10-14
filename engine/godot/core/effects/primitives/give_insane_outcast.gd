@@ -58,6 +58,7 @@ func _give_now(state: GameState, target_id: String, resolver: EffectResolver) ->
 		p.deck.discard_pile.append(INSANE_OUTCAST_ID)
 		given += 1
 	if given > 0:
+		FreljordCards.note_gain(state, target_id)
 		resolver.log_event("give_insane_outcast", {"player_id": target_id, "count": given})
 
 

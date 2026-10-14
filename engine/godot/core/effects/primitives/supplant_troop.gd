@@ -44,8 +44,6 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 			continue
 		if preset_site == "" and not anywhere and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
 			continue
-		if not FreljordCards.can_hit(state, player_id, slot_id, true):
-			continue
 		result.append(slot_id)
 	return result
 
@@ -81,7 +79,6 @@ func _after_hit(state: GameState, player_id: String, resolver: EffectResolver) -
 func _supplant(state: GameState, player_id: String, resolver: EffectResolver, slot_id: String) -> void:
 	var p: PlayerState = state.players[player_id]
 	var victim: String = state.troops.get(slot_id, "")
-	FreljordCards.pay_hit(state, player_id, slot_id, true)
 	var stock: PlayerState = state.stock(player_id)
 	stock.add_trophy(victim)
 	if stock.troops_in_barracks > 0:

@@ -644,3 +644,4 @@ static func _build_effect(card_id: String) -> CardEffect:
 ## наймом (Actions.recruit, RecruitFree).
 static func on_gain(state: GameState, player_id: String, card_id: String) -> void:
 	CelestialCards.on_gain(state, player_id, card_id)
+	FreljordCards.note_gain(state, player_id)

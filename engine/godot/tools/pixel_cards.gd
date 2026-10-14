@@ -121,11 +121,8 @@ const MINI_FACE := {
 	49604: Vector2i(64, 12), 49605: Vector2i(99, 28), 49606: Vector2i(31, 32), 49607: Vector2i(57, 17),
 	49608: Vector2i(43, 18), 49609: Vector2i(67, 0), 49610: Vector2i(65, 0), 49611: Vector2i(61, 23),
 	49612: Vector2i(24, 34), 49613: Vector2i(57, 1), 49614: Vector2i(98, 0), 49615: Vector2i(94, 0),
-	49616: Vector2i(71, 11), 49617: Vector2i(54, 17), 49618: Vector2i(47, 4), 49619: Vector2i(78, 22),
-	49620: Vector2i(81, 4), 49621: Vector2i(84, 0), 49622: Vector2i(51, 1), 49623: Vector2i(56, 24),
-	49624: Vector2i(56, 24), 49625: Vector2i(56, 24), 49626: Vector2i(56, 24), 49627: Vector2i(56, 24),
-	49628: Vector2i(56, 24), 49629: Vector2i(56, 24), 49630: Vector2i(56, 24), 49631: Vector2i(56, 24),
-	49632: Vector2i(56, 24), 49633: Vector2i(56, 24),
+	49616: Vector2i(71, 11), 49617: Vector2i(54, 17), 49618: Vector2i(47, 4),
+	49620: Vector2i(81, 4), 49634: Vector2i(43, 24), 49635: Vector2i(110, 14), 49636: Vector2i(77, 30),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -332,7 +329,7 @@ const SINGLE_ART := {
 	49522: ["avernus/wyvern.png", Rect2i(100, 0, 800, 488)],
 	49523: ["avernus/blade_fragment.jpg", Rect2i(250, 390, 1000, 610)],
 	49524: ["avernus/blade_of_exile.jpg", Rect2i(250, 360, 1000, 610)],
-	# Icewind Dale (New Era Freljord): D&D Beyond 2024; Roc Egg и предметы — из PDF мода
+	# Icewind Dale (New Era Freljord): D&D Beyond 2024
 	49600: ["freljord/guard.jpeg", Rect2i(0, 0, 595, 363)],
 	49601: ["freljord/cultist_fanatic.png", Rect2i(80, 20, 840, 512)],
 	49602: ["freljord/werewolf.png", Rect2i(10, 300, 400, 244)],
@@ -352,21 +349,10 @@ const SINGLE_ART := {
 	49616: ["freljord/remorhaz.png", Rect2i(150, 560, 600, 366)],
 	49617: ["freljord/mammoth.png", Rect2i(0, 200, 608, 371)],
 	49618: ["freljord/storm_giant.png", Rect2i(0, 60, 487, 297)],
-	49619: ["freljord/roc.png", Rect2i(200, 60, 600, 366)],
 	49620: ["freljord/frost_giant.png", Rect2i(0, 0, 640, 390)],
-	49621: ["freljord/stone_giant.png", Rect2i(100, 0, 760, 463)],
-	49622: ["freljord/giant_ape.jpeg", Rect2i(0, 0, 493, 300)],
-	49623: ["freljord/roc_egg.jpg", Rect2i(160, 560, 1300, 793)],
-	49624: ["freljord/item_frost_brand.jpg", Rect2i(605, 937, 700, 427)],
-	49625: ["freljord/item_rod.jpg", Rect2i(605, 937, 700, 427)],
-	49626: ["freljord/item_hat.jpg", Rect2i(605, 937, 700, 427)],
-	49627: ["freljord/item_sword.jpg", Rect2i(605, 937, 700, 427)],
-	49628: ["freljord/item_armor.jpg", Rect2i(605, 937, 700, 427)],
-	49629: ["freljord/item_boots.jpg", Rect2i(605, 937, 700, 427)],
-	49630: ["freljord/item_horn.jpg", Rect2i(605, 937, 700, 427)],
-	49631: ["freljord/item_cloak.jpg", Rect2i(605, 937, 700, 427)],
-	49632: ["freljord/item_demon_armor.jpg", Rect2i(605, 937, 700, 427)],
-	49633: ["freljord/item_scarab.jpg", Rect2i(605, 937, 700, 427)],
+	49634: ["freljord/pirate_captain.jpeg", Rect2i(0, 200, 522, 318)],
+	49635: ["freljord/blink_dog.jpeg", Rect2i(144, 130, 656, 400)],
+	49636: ["freljord/young_white_dragon.png", Rect2i(300, 60, 560, 341)],
 }
 
 const FONT := {

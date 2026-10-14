@@ -37,10 +37,6 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"spies": _duplicate_spies(state.spies),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
-		# Icewind Dale: знаки на доске, карты перед игроками, остаток колоды Masterwork.
-		"wards": state.wards.duplicate(true),
-		"front": state.front.duplicate(true),
-		"masterwork_left": state.masterwork.size(),
 		# Basilisk: лишний ход, сколько карт ещё можно сыграть (-1 — без ограничения).
 		"extra_turn": state.in_extra_turn,
 		"cards_left": (int(state.turn_flags["card_limit"]) - int(state.turn_flags.get("cards_played", 0))) \
@@ -137,17 +133,16 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 	var p: PlayerState = state.players[viewer_id]
 
 	var deploy_slots: Array[String] = []
-	if p.power >= Actions.COST_DEPLOY and state.stock(viewer_id).troops_in_barracks > 0:
+	# Icewind Dale: Power от Young White Dragon (Olaf) нельзя тратить на войска.
+	if p.power >= Actions.COST_DEPLOY + FreljordCards.locked_power(state, viewer_id) \
+			and state.stock(viewer_id).troops_in_barracks > 0:
 		for slot_id in state.deployable_slots(viewer_id):
-			# Icewind Dale: Glacial Storm / Ice Pillar соперника — +2 Power к цене.
-			if p.power >= Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, viewer_id, slot_id):
-				deploy_slots.append(slot_id)
+			deploy_slots.append(slot_id)
 
 	var kill_slots: Array[String] = []
 	if p.power >= Actions.assassinate_cost(state):
 		for slot_id in state.presence.assassinatable_slots(viewer_id, state.troops, state.spies):
-			if FreljordCards.can_hit(state, viewer_id, slot_id, false, Actions.assassinate_cost(state)):
-				kill_slots.append(slot_id)
+			kill_slots.append(slot_id)
 
 	# Вражеские шпионы там, где у зрителя есть Присутствие (3 Power).
 	var spy_targets: Array = []

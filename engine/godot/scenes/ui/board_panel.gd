@@ -1198,7 +1198,6 @@ func _draw() -> void:
 	_draw_focus()
 	_draw_arrivals()
 	_draw_spies()
-	_draw_wards()
 	_draw_spy_targets()
 	_draw_decision_targets()
 	_draw_captures()
@@ -1615,50 +1614,6 @@ func _draw_spies() -> void:
 				at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0)])
 			draw_colored_polygon(diamond, colour)
 			draw_polyline(diamond + PackedVector2Array([at + Vector2(0, -d)]), Color(0, 0, 0, 0.8), 1.5)
-
-
-## Icewind Dale (FreljordCards): Glacial Storm / Ice Pillar — ледяная рамка
-## локации с цветом владельца внутри; лёд — кольцо вокруг войска; Scarab of
-## Protection — золотые кольца вокруг войск владельца.
-const ICE_COLOR := Color(0.62, 0.90, 1.0)
-const SCARAB_COLOR := Color(1.0, 0.82, 0.25)
-
-
-func _draw_wards() -> void:
-	var wards: Array = _view.get("wards", [])
-	if wards.is_empty():
-		return
-	var troops: Dictionary = _view.get("troops", {})
-	var ring: float = maxf(_slot_radius_world() * _zoom, 3.0) * 1.35
-	for w: Dictionary in wards:
-		var kind := String(w.get("kind", ""))
-		var owner_colour: Color = colour(String(w.get("owner", "")), Color(0.7, 0.7, 0.7))
-		match kind:
-			"storm", "pillar":
-				var site := String(w.get("site", ""))
-				var rect: Variant = _site_rect(site)
-				if rect != null:
-					var r := rect as Rect2
-					var a := _to_screen(r.position)
-					var b := _to_screen(r.end)
-					var box := Rect2(a, b - a).grow(3.0 if kind == "storm" else 5.0)
-					draw_rect(box, ICE_COLOR, false, 2.0)
-					draw_rect(box.grow(-2.0), owner_colour, false, 1.0)
-				else:
-					var centre: Variant = _site_centre(site)
-					if centre != null:
-						draw_arc(_to_screen(centre), troop_radius() * 3.0, 0.0, TAU, 24, ICE_COLOR, 2.0)
-			"ice":
-				var at: Variant = _slot_world(String(w.get("slot", "")))
-				if at != null:
-					draw_arc(_to_screen(at), ring, 0.0, TAU, 16, ICE_COLOR, 2.0)
-			"scarab":
-				var who := String(w.get("owner", ""))
-				for slot_id: String in troops.keys():
-					if String(troops[slot_id]) == who:
-						var spot: Variant = _slot_world(slot_id)
-						if spot != null:
-							draw_arc(_to_screen(spot), ring, 0.0, TAU, 16, SCARAB_COLOR, 1.5)
 
 
 ## Центр i-го из count ромбиков шпионов у локации (координаты панели) или null.

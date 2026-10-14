@@ -290,7 +290,7 @@ static func _best_power_action(state: GameState, pid: String, ctx: Dictionary) -
 			best_ratio = 1.0
 		else:
 			for slot: String in state.deployable_slots(pid):
-				if state.players[pid].power < Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, pid, slot):
+				if state.players[pid].power < Actions.COST_DEPLOY + FreljordCards.locked_power(state, pid):
 					continue
 				var gain := _troops_eval(state, ctx, {slot: pid}) - base
 				if state.stock(pid).troops_in_barracks == 1:
@@ -349,7 +349,7 @@ static func _best_power_action_fast(state: GameState, pid: String, ctx: Dictiona
 		for slot: String in deployable:
 			reach[slot] = true
 		for slot: String in deployable:
-			if p.power < Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, pid, slot):
+			if p.power < Actions.COST_DEPLOY + FreljordCards.locked_power(state, pid):
 				continue
 			var gain := _local_gain(state, ctx, {slot: pid}) + W_PRESENCE * _new_reach(state, slot, reach)
 			if state.stock(pid).troops_in_barracks == 1:
@@ -722,7 +722,7 @@ static func _answer_slot(state: GameState, pd: PendingDecision, pid: String, ctx
 		var reach := {}
 		if prompt.contains("deploy"):
 			for slot: String in state.deployable_slots(pid):
-				if state.players[pid].power < Actions.COST_DEPLOY + FreljordCards.deploy_tax(state, pid, slot):
+				if state.players[pid].power < Actions.COST_DEPLOY + FreljordCards.locked_power(state, pid):
 					continue
 				reach[slot] = true
 		value = func(o): return _local_gain(state, ctx, changes.call(o), trophy) \

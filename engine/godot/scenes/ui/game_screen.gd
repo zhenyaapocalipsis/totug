@@ -198,7 +198,6 @@ var _pile_inner: PileZone
 var _deck_tracker: DeckTracker
 ## Общая для всех стопка сожранных карт — кнопкой рядом со своими стопками.
 var _pile_devour: PileZone
-var _pile_front: PileZone
 var _pile_dialog: PileDialog
 var _end_turn_area: Control
 var _end_turn_button: Button
@@ -473,13 +472,6 @@ func _build_layout() -> void:
 	_pile_devour.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_devour.clicked.connect(func(): _open_pile("devour"))
 	_piles_column.add_child(_pile_devour)
-	# Icewind Dale: карты перед игроком (Roc Egg, предметы Masterwork) — только когда есть.
-	_pile_front = PileZone.new("FRONT")
-	_pile_front.tooltip_text = "Cards in front of you: the Roc Egg and Masterwork items. Click to see them"
-	_pile_front.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_pile_front.clicked.connect(func(): _open_pile("front"))
-	_pile_front.visible = false
-	_piles_column.add_child(_pile_front)
 
 	# 7. End turn — правый нижний угол: высокая кнопка, на ней же написано,
 	# чей сейчас ход; под ней таймер.
@@ -2258,10 +2250,6 @@ func _refresh_piles(view: Dictionary) -> void:
 	_deck_tracker.set_cards(deck_of.get("deck_cards", []), deck_of.get("discard_pile", []), shown)
 	# Сожранные карты — стопка общая для всех, не своя у зрителя.
 	_pile_devour.set_cards(view.get("devoured_pile", []))
-	var front: Array = (view.get("front", {}) as Dictionary).get(viewer_id, [])
-	_pile_front.set_cards(front)
-	if _pile_front.visible != not front.is_empty():
-		_pile_front.visible = not front.is_empty()
 
 
 ## Щелчок по стопке — весь её список поверх экрана.
@@ -2274,8 +2262,6 @@ func _open_pile(which: String) -> void:
 			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []), viewer_id)
 		"devour":
 			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []))
-		"front":
-			_pile_dialog.open_pile("%s — In front of you" % who, (view.get("front", {}) as Dictionary).get(viewer_id, []), viewer_id)
 
 
 func _refresh_actions(view: Dictionary) -> void:

@@ -236,6 +236,7 @@ func _apply(intent: Intent) -> int:
 				if not Actions.can_assassinate(state, intent.player_id, intent.slot_id):
 					return Error.INVALID_ACTION
 				state.players[intent.player_id].power -= Actions.assassinate_cost(state)
+				FreljordCards.spent_power(state, intent.player_id, Actions.assassinate_cost(state))
 				var slot := intent.slot_id
 				var hit := func(s, pid, r):
 					Actions.kill_at(s, pid, slot)
@@ -286,6 +287,7 @@ func _apply(intent: Intent) -> int:
 				if not Actions.can_return_enemy_spy(state, intent.player_id, intent.site_id, intent.spy_owner):
 					return Error.INVALID_ACTION
 				state.players[intent.player_id].power -= Actions.return_spy_cost(state)
+				FreljordCards.spent_power(state, intent.player_id, Actions.return_spy_cost(state))
 				var site := intent.site_id
 				var spy_owner := intent.spy_owner
 				var returner := intent.player_id

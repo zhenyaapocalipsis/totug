@@ -180,10 +180,8 @@ const NAMES := {
 	"Each opponent discards down to 3 cards": "Glacial Prison",
 	"If each opponent has 4 or fewer cards in hand, supplant 2 troops": "Winter's Wrath",
 	"Play a card from your inner circle as if from your hand (it stays there)": "Undying Rage",
-	"Place up to 2 spies": "Elven Shadows",
-	"Return up to 2 spies": "Vanishing Cloak",
-	"Each opponent gains an Insane Outcast": "Thorns of Madness",
-	"Each opponent discards a card": "Thorns of Pain",
+	"Choose a site with your troop: move other troops there to empty spaces next to it": "Blink Away",
+	"Move up to 3 of your troops: +1 Power for each one moved next to another player's troop": "Phase Pounce",
 }
 
 var _tex: ImageTexture

@@ -2134,10 +2134,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 296 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 285 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 296, "cards.json содержит 296 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 34 Icewind Dale)")
+	check_eq(all_ids.size(), 285, "cards.json содержит 285 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -5925,9 +5925,9 @@ func test_icewind_deck() -> void:
 	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
 	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Icewind Dale) карт")
-	check_eq(game.masterwork.size(), 10, "со Stone Giant — колода Masterwork из 10 предметов")
-	check(game.supplies.remaining(Supplies.INSANE_OUTCAST) > 0, "Demon Armor: у доски есть Insane Outcast")
-	_sweep_deck_with_vp(49600, 49633)
+	check_eq(game.supplies.remaining(Supplies.INSANE_OUTCAST), 0, "без Stone Giant стопки Insane Outcast у доски нет")
+	_sweep_deck_with_vp(49600, 49620)
+	_sweep_deck_with_vp(49634, 49636)
 
 	var state := _build_rich_state(43)
 	var red: PlayerState = state.players["red"]
@@ -5993,71 +5993,88 @@ func test_icewind_deck() -> void:
 	red.deck.end_of_turn_discard()
 	check(not state.turn_flags.get("frostbite_any", false), "сброс руки в конце хода — без Frostbite")
 
-	# Ice Pillar: соперники платят +2 Power
-	var site := ""
-	var red_slot := ""
-	for slot_id: String in state.troops.keys():
-		if state.troops[slot_id] == "red" and state.graph.site_of_slot(slot_id) != "":
-			red_slot = slot_id
-			site = state.graph.site_of_slot(slot_id)
-			break
-	state.wards.append({"kind": "pillar", "owner": "red", "site": site})
-	check_eq(F.tax_at(state, "blue", site), 2, "Ice Pillar: синему +2 Power")
-	check_eq(F.tax_at(state, "red", site), 0, "Ice Pillar: владельцу без доплаты")
-	blue.power = 4
-	check(not Actions.can_assassinate(state, "blue", red_slot) or not state.presence.assassinatable_slots("blue", state.troops, state.spies).has(red_slot),
-		"Ice Pillar: 4 Power мало на убийство войска владельца (3 + 2)")
-	blue.power = 1
-	var empty_there := ""
-	for slot_id: String in state.graph.slots_of_site(site):
-		if state.troops.get(slot_id, "") == "":
-			empty_there = slot_id
-	if empty_there != "":
-		check(not state.deployable_slots("blue").has(empty_there), "Ice Pillar: с 1 Power туда не поставить войско")
-	check(not F.spy_allowed(state, "blue", site), "Ice Pillar: с 1 Power туда не поставить шпиона")
-
-	# Scarab of Protection: войска владельца не убить картой
-	state.wards.append({"kind": "scarab", "owner": "red"})
-	blue.power = 20
-	var strike := AssassinateTroop.new(1)
-	var targets: Array = strike._legal_targets(state, "blue")
-	var hits_red := targets.any(func(s): return state.troops.get(s, "") == "red")
-	check(not hits_red, "Scarab: войска красного не цель для убийства")
-	state.front["red"] = [F.SCARAB]
+	# Pirate Captain: +4 Power; без полученных карт в конце хода можно положить на верх колоды
 	TurnEngine.start_turn(state, "red")
-	check(state.wards.is_empty(), "начало хода владельца: его знаки сняты")
-	check(not (state.front["red"] as Array).has(F.SCARAB), "сработавший Scarab ушёл из игры")
+	red.power = 0
+	_play_with(state, F.PIRATE_CAPTAIN)
+	check_eq(red.power, 4, "Pirate Captain: +4 Power")
+	var re := EffectResolver.new()
+	TurnEngine.end_turn(state, "red", re)
+	check(re.is_waiting() and re.pending.choice_type == "confirm", "Pirate Captain: в конце хода вопрос про верх колоды")
+	if re.is_waiting():
+		TurnEngine.resume_card(state, true, re)
+		if not TurnEngine.run_deferred_end_of_turn(state, "red", re):
+			TurnEngine.finish_end_of_turn(state, "red", re)
+	check(red.deck.hand.has(F.PIRATE_CAPTAIN), "Pirate Captain лёг на колоду и снова пришёл в руку")
+	TurnEngine.start_turn(state, "red")
+	_play_with(state, F.PIRATE_CAPTAIN)
+	F.note_gain(state, "red")
+	var re2 := EffectResolver.new()
+	TurnEngine.end_turn(state, "red", re2)
+	check(not re2.is_waiting(), "Pirate Captain: получил карту за ход — вопроса нет")
 
-	# Roc: лёд и Roc Egg; в начале хода Roc снова в руке
-	var rr := _play_with(state, F.ROC)
-	_auto_resolve(state, rr, false)
-	check((state.front["red"] as Array).has(F.ROC_EGG), "Roc: Roc Egg перед игроком")
-	var ice := state.wards.filter(func(w): return w["kind"] == "ice")
-	check_eq(ice.size(), 1, "Roc: лёд на войске")
-	red.deck.played_pile.erase(F.ROC)
-	red.deck.discard_pile.append(F.ROC)
-	if ice.size() == 1:
-		state.troops[String(ice[0]["slot"])] = "red"
-	TurnEngine.start_turn(state, "red", EffectResolver.new())
-	check(red.deck.hand.has(F.ROC) and not red.deck.discard_pile.has(F.ROC), "Roc Egg: Roc из сброса в руке")
-	check(not (state.front["red"] as Array).has(F.ROC_EGG), "Roc Egg ушёл")
+	# Young White Dragon: +1 Power за войско от карт, на постановку войск её не потратить
+	TurnEngine.start_turn(state, "red")
+	red.power = 0
+	state.stock("red").troops_in_barracks = 20
+	var rd := _play_with(state, F.WHITE_DRAGON)
+	_auto_resolve(state, rd, false)
+	check_eq(red.power, 3, "Young White Dragon: свои 3 войска дали +3 Power")
+	check_eq(F.locked_power(state, "red"), 3, "Young White Dragon: эта Power заперта")
+	var free_slots := state.deployable_slots("red")
+	if not free_slots.is_empty():
+		check(not Actions.deploy(state, "red", free_slots[0]), "Deploy на запертую Power нельзя")
+		red.power += 1
+		check(Actions.deploy(state, "red", free_slots[0]), "Deploy на свою Power можно")
+	var rg := _play_with(state, F.GOAT)
+	_auto_resolve(state, rg, false)
+	check_eq(F.locked_power(state, "red"), 5, "Giant Goat поставил 2 войска: ещё +2 запертой Power")
+	F.spent_power(state, "red", 3)
+	check_eq(F.locked_power(state, "red"), 2, "Power на убийство сначала тратится из запертой")
 
-	# Stone Giant: предмет перед игроком, его эффект сразу и в начале хода
-	state.front["red"] = []
-	state.masterwork = [F.FROST_BRAND, F.ROD]  # верх — ROD
-	red.influence = 0
-	var rf := _play_with(state, F.STONE_GIANT)
-	check(rf.is_waiting() and rf.pending.legal_options.size() == 2, "Stone Giant: выбор из 2 верхних предметов")
-	TurnEngine.resume_card(state, F.ROD, rf)
-	_auto_resolve(state, rf, false)
-	check_eq(state.masterwork, [F.FROST_BRAND] as Array[String], "второй предмет — под низ колоды")
-	check_eq(red.influence, 2, "Rod of Rulership сработал сразу (+2 Influence)")
-	red.influence = 0
-	TurnEngine.start_turn(state, "red", EffectResolver.new())
-	check_eq(red.influence, 2, "Rod of Rulership в начале хода: +2 Influence")
+	# Blink Dog, вариант 2: +1 Power за своё войско, вставшее рядом с войском соперника
+	var before: Dictionary = state.troops.duplicate()
+	var near_slot := ""
+	for slot_id: String in state.graph.slots.keys():
+		if state.troops.get(slot_id, "") == "" and ShadowCards._next_to_enemy(state, "red", slot_id):
+			near_slot = slot_id
+			break
+	check(near_slot != "", "на доске есть пустое место рядом с войском соперника")
+	state.troops[near_slot] = "red"
+	check_eq(F._moved_next_to_enemy(state, "red", before), 1, "Blink Dog: войско рядом с соперником считается")
+	state.troops[near_slot] = ""
+
+	# Blink Dog, вариант 1: локация со своим войском — чужие войска на места рядом с ней
+	var scatter_site := ""
+	for site_id: String in state.graph.sites.keys():
+		var site_slots := state.graph.slots_of_site(site_id)
+		var has_room := Array(state.graph.slots_adjacent_to_site(site_id)).any(func(s): return state.troops.get(s, "") == "")
+		if site_slots.size() >= 2 and has_room:
+			scatter_site = site_id
+			state.troops[site_slots[0]] = "red"
+			state.troops[site_slots[1]] = "blue"
+			break
+	check(scatter_site != "", "нашлась локация для Blink Dog")
+	var blue_slot: String = state.graph.slots_of_site(scatter_site)[1]
+	var rb := _play_with(state, F.BLINK_DOG)
+	check(rb.is_waiting() and rb.pending.choice_type == "choose_option", "Blink Dog: выбор варианта")
+	TurnEngine.resume_card(state, 0, rb)
+	check(rb.is_waiting() and rb.pending.legal_options.has(scatter_site), "Blink Dog: локация со своим войском в выборе")
+	TurnEngine.resume_card(state, scatter_site, rb)
+	check(rb.is_waiting() and rb.pending.legal_options.has(blue_slot)
+		and not rb.pending.legal_options.has(state.graph.slots_of_site(scatter_site)[0]),
+		"Blink Dog: двигать можно чужое войско, не своё")
+	TurnEngine.resume_card(state, blue_slot, rb)
+	var near: Array = Array(state.graph.slots_adjacent_to_site(scatter_site))
+	check(rb.is_waiting() and rb.pending.legal_options.all(func(s): return near.has(s)),
+		"Blink Dog: ставить только на места рядом с локацией")
+	if rb.is_waiting() and not rb.pending.legal_options.is_empty():
+		var dest: String = rb.pending.legal_options[0]
+		TurnEngine.resume_card(state, dest, rb)
+		check(state.troops.get(dest, "") == "blue" and state.troops.get(blue_slot, "") == "", "Blink Dog: синее войско переставлено")
+	_auto_resolve(state, rb, true)
 
 	# Remorhaz: соперник прячет лишние карты, красный выбирает сброс из 4 раскрытых
-	state.front["red"] = []
 	green.deck.hand = []
 	blue.deck.hand = ["48342", "48344", "48343", "48340", "48336"]
 	var ra := _play_with(state, F.REMORHAZ)

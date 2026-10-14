@@ -539,6 +539,7 @@ class _GainFragment extends CardEffect:
 		if not state.supplies.take(NoxusCards.BLADE_FRAGMENT):
 			return
 		state.players[player_id].deck.discard_pile.append(NoxusCards.BLADE_FRAGMENT)
+		FreljordCards.note_gain(state, player_id)
 		resolver.log_event("gain_card", {"player_id": player_id, "card_id": NoxusCards.BLADE_FRAGMENT})
 
 

@@ -43,4 +43,5 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		return
 	state.supplies.take(chosen)
 	state.players[player_id].deck.hand.append(chosen)
+	FreljordCards.note_gain(state, player_id)
 	resolver.log_event("gain_card", {"player_id": player_id, "card_id": chosen, "to": "hand"})

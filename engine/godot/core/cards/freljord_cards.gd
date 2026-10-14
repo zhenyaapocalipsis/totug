@@ -23,16 +23,14 @@ extends RefCounted
 ##   "frost_copy"    — id игрока: получает Frostbite соперников (Bulette);
 ##   "frost_shield"  — id игрока: его соперники Frostbite не активируют (Mammoth);
 ##   "frost_twice"   — id игрока: его Frostbite срабатывает дважды (Storm Giant).
+##   "gained"        — {id игрока: true}: получил карту в этот ход (Pirate Captain);
+##   "olaf"          — id игрока: карты, ставящие войска, дают ему +1 Power за войско
+##                     (Young White Dragon);
+##   "olaf_locked"   — сколько из его Power нельзя тратить на войска (Young White Dragon).
 ##
-## На доске (state.wards, до начала следующего хода владельца):
-##   {"kind": "storm"|"pillar", "owner", "site"} — Glacial Storm (Roc), Ice Pillar
-##       (Giant Ape): соперники владельца платят там +2 Power, чтобы поставить
-##       войско, шпиона, вытеснить войско или убить войско владельца;
-##   {"kind": "scarab", "owner"} — Scarab of Protection: войска владельца нельзя
-##       убить или вытеснить;
-##   {"kind": "ice", "owner", "slot"} — лёд на войске (Roc): в начале хода, если
-##       войско стоит, Roc возвращается в руку (Roc Egg).
-## Перед игроком (state.front[pid]): Roc Egg и предметы Masterwork (Stone Giant).
+## 2026-10-14 владелец убрал Roc (Anivia), Stone Giant (Ornn) и Giant Ape (Trundle)
+## вместе с Glacial Storm, Ice Pillar, Roc Egg и колодой Masterwork; вместо них —
+## Pirate Captain (Gragas), Blink Dog (Aurora), Young White Dragon (Olaf).
 
 const GUARD := "49600"
 const CULTIST := "49601"
@@ -53,27 +51,12 @@ const CLOUD_GIANT := "49615"
 const REMORHAZ := "49616"
 const MAMMOTH := "49617"
 const STORM_GIANT := "49618"
-const ROC := "49619"
 const FROST_GIANT := "49620"
-const STONE_GIANT := "49621"
-const GIANT_APE := "49622"
-const ROC_EGG := "49623"
-
-## Колода Masterwork (Stone Giant): 10 предметов, один экземпляр каждого.
-const FROST_BRAND := "49624"
-const ROD := "49625"
-const HAT := "49626"
-const SWORD := "49627"
-const ARMOR := "49628"
-const BOOTS := "49629"
-const HORN := "49630"
-const CLOAK := "49631"
-const DEMON_ARMOR := "49632"
-const SCARAB := "49633"
-const MASTERWORK: Array[String] = [FROST_BRAND, ROD, HAT, SWORD, ARMOR, BOOTS, HORN, CLOAK, DEMON_ARMOR, SCARAB]
+const PIRATE_CAPTAIN := "49634"
+const BLINK_DOG := "49635"
+const WHITE_DRAGON := "49636"
 
 const FROSTBITE: Array[String] = [GUARD, GOAT, CENTAUR, MEPHIT, BOAR, OWL, HYENA, MAMMOTH]
-const WARD_TAX := 2
 
 
 static func build(card_id: String) -> CardEffect:
@@ -179,47 +162,24 @@ static func build(card_id: String) -> CardEffect:
 			])
 		STORM_GIANT:  # Volibear
 			return SequenceEffect.new([_SetPidFlag.new("frost_twice"), _Avalanche.new(), SupplantTroop.new(2)])
-		ROC:  # Anivia
-			return SequenceEffect.new([
-				DrawCards.new(1),
-				_PlaceWard.new("storm"),
-				_IceToken.new(),
-				_GainFront.new(ROC_EGG),
-			])
 		FROST_GIANT:  # Tryndamere
 			return SequenceEffect.new([
 				PromoteCard.new("top_of_deck"),
 				ChooseEffect.new([GainPower.new(2), PlayCardFromZone.new("inner_circle")],
 					["+2 Power", "Play a card from your inner circle as if from your hand (it stays there)"]),
 			])
-		STONE_GIANT:  # Ornn
-			return _Forge.new()
-		GIANT_APE:  # Trundle
-			return SequenceEffect.new([DeployTroop.new(4), _PlaceWard.new("pillar")])
-		ROC_EGG:  # лежит перед игроком, не разыгрывается
-			return SequenceEffect.new([])
-		FROST_BRAND:  # Infinity Edge
-			return GainPower.new(2)
-		ROD:  # Rod of Ages
-			return GainInfluence.new(2)
-		HAT:  # Rabadon's Deathcap
-			return DrawCards.new(1)
-		SWORD:  # Blade of the Ruined King
-			return AtEndOfTurn.new(PromoteCard.new("played_other", "", Callable(), 1, true))
-		ARMOR:  # Warmog's Armor
-			return GainVP.new(2)
-		BOOTS:  # Shurelya's Reverie
-			return MoveTroop.new(2, true)
-		HORN:  # Trinity Force
-			return DeployTroop.new(3)
-		CLOAK:  # Bloodthirster
-			return ChooseEffect.new([PlaceSpy.new(2, true), ReturnTroopOrSpy.new(2, true, false, true)],
-				["Place up to 2 spies", "Return up to 2 spies"])
-		DEMON_ARMOR:  # Thornmail
-			return ChooseEffect.new([GiveInsaneOutcast.new("each_opponent"), ForceDiscard.new("each_opponent", 0)],
-				["Each opponent gains an Insane Outcast", "Each opponent discards a card"])
-		SCARAB:  # Zhonya's Hourglass
-			return _Scarab.new()
+		PIRATE_CAPTAIN:  # Gragas
+			return SequenceEffect.new([GainPower.new(4), AtEndOfTurn.new(_BackOnTop.new(PIRATE_CAPTAIN))])
+		BLINK_DOG:  # Aurora
+			return ChooseEffect.new([
+				_ScatterSite.new(),
+				PiltoverCards._AfterTroops.new(MoveTroop.new(3, true, true), func(state, pid, before):
+					var n := _moved_next_to_enemy(state, pid, before)
+					return GainPower.new(n) if n > 0 else null),
+			], ["Choose a site with your troop: move other troops there to empty spaces next to it",
+				"Move up to 3 of your troops: +1 Power for each one moved next to another player's troop"])
+		WHITE_DRAGON:  # Olaf
+			return SequenceEffect.new([_SetPidFlag.new("olaf"), DeployTroop.new(3)])
 	return null
 
 
@@ -287,145 +247,48 @@ static func _all_opponents_at_most(state: GameState, player_id: String, n: int) 
 	return true
 
 
-# --- Glacial Storm / Ice Pillar / Scarab ------------------------------------
+# --- Pirate Captain / Young White Dragon: счётчики хода ----------------------
 
-## Доплата Power для player_id в локации site: по WARD_TAX за каждый Glacial
-## Storm / Ice Pillar соперника. victim_owner — только знаки этого владельца
-## (убийство его войска); "" — любые (поставить войско, шпиона, вытеснить).
-static func tax_at(state: GameState, player_id: String, site: String, victim_owner: String = "") -> int:
-	if site == "" or state.wards.is_empty():
+## Игрок получил карту: покупка, бесплатный найм, Insane Outcast, карта из запаса.
+## Pirate Captain возвращается на колоду, только если таких не было.
+static func note_gain(state: GameState, player_id: String) -> void:
+	var gained: Dictionary = (state.turn_flags.get("gained", {}) as Dictionary).duplicate()
+	gained[player_id] = true
+	state.turn_flags["gained"] = gained
+
+
+## Сколько Power игрока нельзя тратить на войска (Young White Dragon: "You cannot
+## deploy with Power gained this way").
+static func locked_power(state: GameState, player_id: String) -> int:
+	if String(state.turn_flags.get("olaf", "")) != player_id:
 		return 0
-	var tax := 0
-	for w: Dictionary in state.wards:
-		if not (w["kind"] in ["storm", "pillar"]) or String(w["site"]) != site:
-			continue
-		var owner := String(w["owner"])
-		if not state.is_opponent(owner, player_id):
-			continue
-		if victim_owner != "" and owner != victim_owner:
-			continue
-		tax += WARD_TAX
-	return tax
+	return mini(int(state.turn_flags.get("olaf_locked", 0)), state.players[player_id].power)
 
 
-static func _scarab_shields(state: GameState, player_id: String, owner: String) -> bool:
-	for w: Dictionary in state.wards:
-		if w["kind"] == "scarab" and String(w["owner"]) == owner and state.is_opponent(owner, player_id):
-			return true
-	return false
-
-
-## Доплата за убийство (supplant=false) или вытеснение войска в слоте.
-static func hit_tax(state: GameState, player_id: String, slot_id: String, supplant: bool = false) -> int:
-	var owner := String(state.troops.get(slot_id, ""))
-	var site := state.graph.site_of_slot(slot_id)
-	return tax_at(state, player_id, site, "" if supplant else owner)
-
-
-## Можно ли игроку убить / вытеснить войско в слоте (Scarab, хватает ли Power
-## на доплату). extra — сколько Power уходит ещё (базовое действие: 3).
-static func can_hit(state: GameState, player_id: String, slot_id: String, supplant: bool = false, extra: int = 0) -> bool:
-	if state.wards.is_empty():
-		return true
-	var owner := String(state.troops.get(slot_id, ""))
-	if owner != "" and owner != "white" and _scarab_shields(state, player_id, owner):
-		return false
-	var tax := hit_tax(state, player_id, slot_id, supplant)
-	return tax == 0 or state.players[player_id].power >= tax + extra
-
-
-static func pay_hit(state: GameState, player_id: String, slot_id: String, supplant: bool = false) -> void:
-	var tax := hit_tax(state, player_id, slot_id, supplant)
-	if tax > 0:
-		state.players[player_id].power = maxi(0, state.players[player_id].power - tax)
-
-
-static func deploy_tax(state: GameState, player_id: String, slot_id: String) -> int:
-	return tax_at(state, player_id, state.graph.site_of_slot(slot_id))
-
-
-static func pay_deploy(state: GameState, player_id: String, slot_id: String) -> void:
-	var tax := deploy_tax(state, player_id, slot_id)
-	if tax > 0:
-		state.players[player_id].power = maxi(0, state.players[player_id].power - tax)
-
-
-static func spy_allowed(state: GameState, player_id: String, site: String) -> bool:
-	var tax := tax_at(state, player_id, site)
-	return tax == 0 or state.players[player_id].power >= tax
-
-
-static func pay_spy(state: GameState, player_id: String, site: String) -> void:
-	var tax := tax_at(state, player_id, site)
-	if tax > 0:
-		state.players[player_id].power = maxi(0, state.players[player_id].power - tax)
-
-
-# --- Начало хода: знаки, Roc Egg, предметы Masterwork ------------------------
-
-## Зовёт TurnEngine.start_turn. resolver == null (тесты) — эффекты предметов
-## не применяются, только снимаются знаки.
-static func start_turn(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-	var front: Array = state.front.get(player_id, [])
-	if state.wards.is_empty() and front.is_empty():
+## Power потрачена не на войска (убийство, возврат шпиона) — первой уходит запертая.
+static func spent_power(state: GameState, player_id: String, amount: int) -> void:
+	if String(state.turn_flags.get("olaf", "")) != player_id:
 		return
-	var egg_hatches := false
-	var kept: Array = []
-	for w: Dictionary in state.wards:
-		if String(w["owner"]) != player_id:
-			kept.append(w)
-		elif w["kind"] == "ice" and String(state.troops.get(String(w["slot"]), "")) == player_id:
-			egg_hatches = front.has(ROC_EGG)
-		elif w["kind"] == "scarab":
-			front.erase(SCARAB)  # сработавший Scarab of Protection уходит из игры
-	state.wards = kept
-	if front.has(ROC_EGG):
-		front.erase(ROC_EGG)
-		if egg_hatches:
-			_roc_to_hand(state, player_id, resolver)
-	if resolver == null:
+	state.turn_flags["olaf_locked"] = maxi(0, int(state.turn_flags.get("olaf_locked", 0)) - amount)
+
+
+## Карта поставила войско (DeployTroop). Young White Dragon: "Whenever you play a
+## card that deploys troops, gain Power equal to the number of troops deployed".
+static func on_card_deploy(state: GameState, player_id: String) -> void:
+	if String(state.turn_flags.get("olaf", "")) != player_id:
 		return
-	var effects: Array[CardEffect] = []
-	for item: String in front:
-		if item != SCARAB:
-			effects.append(_ItemFromCard.new(build(item), item))
-	if not effects.is_empty():
-		resolver.log_event("masterwork", {"player_id": player_id, "count": effects.size()})
-		resolver.apply(SequenceEffect.new(effects), player_id, state)
+	state.players[player_id].power += 1
+	state.turn_flags["olaf_locked"] = int(state.turn_flags.get("olaf_locked", 0)) + 1
 
 
-## Roc Egg: Roc "from anywhere" в руку — из колоды, сброса, Внутреннего круга,
-## стопки сожранных или рынка.
-static func _roc_to_hand(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-	var d: Deck = state.players[player_id].deck
-	var ic: Array = state.stock(player_id).deck.inner_circle
-	var found := false
-	for pile: Array in [d.draw_pile, d.discard_pile, ic, state.devoured_pile, state.market.deck]:
-		var idx := pile.find(ROC)
-		if idx != -1:
-			pile.remove_at(idx)
-			found = true
-			break
-	if not found:
-		for opp: String in state.turn_order:
-			var od: Deck = state.players[opp].deck
-			for pile: Array in [od.draw_pile, od.discard_pile, od.hand, state.stock(opp).deck.inner_circle]:
-				var idx2 := pile.find(ROC)
-				if idx2 != -1:
-					pile.remove_at(idx2)
-					found = true
-					break
-			if found:
-				break
-	if not found:
-		var slot := state.market.display.find(ROC)
-		if slot != -1:
-			state.market.recruit_at(slot)
-			found = true
-	if found:
-		d.hand.append(ROC)
-		if resolver != null:
-			resolver.log_event("roc_reborn", {"player_id": player_id, "card_id": ROC})
+## Blink Dog: сколько своих войск встало рядом с войском другого игрока.
+static func _moved_next_to_enemy(state: GameState, player_id: String, before: Dictionary) -> int:
+	var n := 0
+	for slot_id: String in state.troops.keys():
+		if String(state.troops[slot_id]) == player_id and String(before.get(slot_id, "")) != player_id \
+				and ShadowCards._next_to_enemy(state, player_id, slot_id):
+			n += 1
+	return n
 
 
 # --- Эффекты ---------------------------------------------------------------
@@ -738,150 +601,68 @@ class _Avalanche extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Glacial Storm (Roc, любая локация — шпионы оттуда уходят) / Ice Pillar (Giant
-## Ape, локация с твоим Присутствием) до начала твоего следующего хода.
-class _PlaceWard extends CardEffect:
-	var kind: String
-	func _init(k: String) -> void:
-		kind = k
-	func _options(state: GameState, player_id: String) -> Array:
-		if kind == "storm":
-			return Array(state.graph.sites.keys())
-		return Array(state.presence.sites_with_presence(player_id, state.troops, state.spies))
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		if is_answered():
-			var site := String(answer())
-			if not _options(state, player_id).has(site):
-				return
-			state.wards.append({"kind": kind, "owner": player_id, "site": site})
-			resolver.log_event("ward", {"player_id": player_id, "kind": kind, "site_id": site})
-			if kind == "storm":
-				for owner: String in (state.spies.get(site, []) as Array).duplicate():
-					Actions.remove_spy(state, site, owner, player_id)
-					resolver.log_event("return_spy", {"player_id": player_id, "site_id": site, "spy_owner": owner})
-			return
-		var options := _options(state, player_id)
-		if options.is_empty():
-			return
-		var pd := PendingDecision.new()
-		pd.player_id = player_id
-		pd.prompt = "Put a Glacial Storm on a site (its spies leave)" if kind == "storm" else "Put an Ice Pillar on a site where you have presence"
-		pd.choice_type = "target_site"
-		pd.legal_options = options
-		pd.target_effect = self
-		resolver.request_decision(pd)
-
-
-## Roc: лёд на одно своё войско в локации.
-class _IceToken extends CardEffect:
-	func _options(state: GameState, player_id: String) -> Array:
-		var out: Array = []
-		for slot_id: String in state.troops.keys():
-			if String(state.troops[slot_id]) == player_id and state.graph.site_of_slot(slot_id) != "":
-				out.append(slot_id)
-		return out
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		if is_answered():
-			var slot := String(answer())
-			if _options(state, player_id).has(slot):
-				state.wards.append({"kind": "ice", "owner": player_id, "slot": slot})
-				resolver.log_event("ward", {"player_id": player_id, "kind": "ice", "slot_id": slot})
-			return
-		var options := _options(state, player_id)
-		if options.is_empty():
-			return
-		var pd := PendingDecision.new()
-		pd.player_id = player_id
-		pd.prompt = "Put Ice on one of your troops at a site (the Roc returns to your hand next turn while it stands)"
-		pd.choice_type = "target_slot"
-		pd.legal_options = options
-		pd.target_effect = self
-		resolver.request_decision(pd)
-
-
-## Положить карту перед игроком (Roc Egg; предмет Masterwork — через _Forge).
-class _GainFront extends CardEffect:
+## Pirate Captain (Gragas): "If you don't gain any cards this turn, you may put
+## this card on top of your deck before refilling your hand at the end of your turn".
+class _BackOnTop extends CardEffect:
 	var card: String
 	func _init(c: String) -> void:
 		card = c
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var front: Array = state.front.get(player_id, [])
-		if front.has(card):
+		var p: PlayerState = state.players[player_id]
+		if (state.turn_flags.get("gained", {}) as Dictionary).has(player_id):
 			return
-		front.append(card)
-		state.front[player_id] = front
-		resolver.log_event("gain_front", {"player_id": player_id, "card_id": card})
+		if not p.deck.played_pile.has(card) or p.pending_promotions.has(card):
+			return
+		var c := card
+		var ask := OptionalEffect.new(CallbackEffect.new(func(s: GameState, pid: String, r: EffectResolver):
+			var d: Deck = s.players[pid].deck
+			if d.played_pile.has(c):
+				d.played_pile.erase(c)
+				d.draw_pile.append(c)  # верх колоды — конец массива (Deck.draw_one)
+				r.log_event("card_on_top", {"player_id": pid, "card_id": c})),
+			"Put Pirate Captain on top of your deck?")
+		ask.source_card = card
+		resolver.push(ask, player_id)
 
 
-## Ornn: из 2 верхних карт колоды Masterwork одна — перед тобой, другая — под низ;
-## затем сработать эффект одного из твоих предметов.
-class _Forge extends CardEffect:
-	var stage := 0
-	var top: Array = []
+## Blink Dog (Aurora), первый вариант. Решение владельца (2026-10-14): "hex" —
+## локация, где есть твоё войско; чужие войска оттуда (других игроков и белые)
+## можно переставить на свободные места рядом с этой локацией.
+class _ScatterSite extends CardEffect:
+	func is_available(state: GameState, player_id: String) -> bool:
+		return not _sites(state, player_id).is_empty()
+
+	static func _sites(state: GameState, player_id: String) -> Array:
+		var result: Array = []
+		for site_id: String in state.graph.sites.keys():
+			var mine := false
+			var other := false
+			for slot_id: String in state.graph.slots_of_site(site_id):
+				var owner := String(state.troops.get(slot_id, ""))
+				if owner == player_id:
+					mine = true
+				elif owner != "" and not state.is_ally(player_id, owner):
+					other = true
+			if mine and other:
+				result.append(site_id)
+		return result
+
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		if stage == 0:
-			stage = 1
-			for i in range(mini(2, state.masterwork.size())):
-				top.append(state.masterwork.pop_back())
-			if top.size() == 1:
-				set_answer(top[0])
-			elif top.size() == 2:
-				var pd := PendingDecision.new()
-				pd.player_id = player_id
-				pd.prompt = "Gain a Masterwork item (the other goes to the bottom)"
-				pd.choice_type = "target_card"
-				pd.legal_options = top.duplicate()
-				pd.target_effect = self
-				resolver.request_decision(pd)
+		if is_answered():
+			var site := String(answer())
+			if site == "":
 				return
-		if stage == 1:
-			stage = 2
-			if is_answered() and top.has(String(answer())):
-				var pick := String(answer())
-				top.erase(pick)
-				var front: Array = state.front.get(player_id, [])
-				front.append(pick)
-				state.front[player_id] = front
-				resolver.log_event("gain_front", {"player_id": player_id, "card_id": pick})
-				for rest in top:
-					state.masterwork.insert(0, rest)
-			_answered = false
-			_answer = null
-		if stage == 2:
-			var items: Array = []
-			for cid in state.front.get(player_id, []):
-				if FreljordCards.MASTERWORK.has(cid) and not items.has(cid):
-					items.append(cid)
-			if items.is_empty():
-				return
-			if items.size() > 1 and not is_answered():
-				var pd2 := PendingDecision.new()
-				pd2.player_id = player_id
-				pd2.prompt = "Trigger the effect of one of your Masterwork items"
-				pd2.choice_type = "target_card"
-				pd2.legal_options = items
-				pd2.target_effect = self
-				resolver.request_decision(pd2)
-				return
-			var item := String(answer()) if is_answered() and items.has(String(answer())) else String(items[0])
-			resolver.log_event("masterwork", {"player_id": player_id, "card_id": item})
-			resolver.push(FreljordCards.build(item), player_id, item)
-
-
-## Scarab of Protection: до начала твоего следующего хода твои войска нельзя
-## убить или вытеснить; затем предмет уходит из игры (start_turn).
-class _Scarab extends CardEffect:
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		state.wards.append({"kind": "scarab", "owner": player_id})
-		resolver.log_event("ward", {"player_id": player_id, "kind": "scarab"})
-
-
-## Эффект предмета в начале хода — вопрос показывает сам предмет.
-class _ItemFromCard extends CardEffect:
-	var inner: CardEffect
-	var card: String
-	func _init(effect: CardEffect, c: String) -> void:
-		inner = effect
-		card = c
-	func apply(_state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		resolver.push(inner, player_id, card)
+			var move := MoveTroop.new(99, true, false, true, site)
+			move.dest_near_site = site
+			resolver.push(move, player_id)
+			return
+		var sites := _sites(state, player_id)
+		if sites.is_empty():
+			return
+		var pd := PendingDecision.new()
+		pd.player_id = player_id
+		pd.prompt = "Choose a site with your troop"
+		pd.choice_type = "target_site"
+		pd.legal_options = sites
+		pd.target_effect = self
+		resolver.request_decision(pd)

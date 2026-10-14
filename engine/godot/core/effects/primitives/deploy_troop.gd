@@ -51,7 +51,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	if site != "":
 		legal = PackedStringArray()
 		for slot_id: String in state.graph.slots_of_site(site):
-			if state.troops.get(slot_id, "") == "" and p.power >= FreljordCards.deploy_tax(state, player_id, slot_id):
+			if state.troops.get(slot_id, "") == "":
 				legal.append(slot_id)
 	if legal.is_empty():
 		return
@@ -71,7 +71,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 
 func _deploy_at(state: GameState, player_id: String, slot_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[player_id]
-	FreljordCards.pay_deploy(state, player_id, slot_id)
+	FreljordCards.on_card_deploy(state, player_id)
 	state.troops[slot_id] = player_id
 	var stock: PlayerState = state.stock(player_id)
 	stock.troops_in_barracks -= 1

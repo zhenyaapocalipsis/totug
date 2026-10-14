@@ -22,8 +22,8 @@ const WHITE := "white"
 static func assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
 	if not can_assassinate(state, player_id, slot_id):
 		return false
-	FreljordCards.pay_hit(state, player_id, slot_id)
 	state.players[player_id].power -= assassinate_cost(state)
+	FreljordCards.spent_power(state, player_id, assassinate_cost(state))
 	kill_at(state, player_id, slot_id)
 	return true
 
@@ -31,8 +31,6 @@ static func assassinate(state: GameState, player_id: String, slot_id: String) ->
 static func can_assassinate(state: GameState, player_id: String, slot_id: String) -> bool:
 	var p: PlayerState = state.players[player_id]
 	if p.power < assassinate_cost(state):
-		return false
-	if not FreljordCards.can_hit(state, player_id, slot_id, false, assassinate_cost(state)):
 		return false
 	return state.presence.assassinatable_slots(player_id, state.troops, state.spies).has(slot_id)
 
@@ -52,7 +50,7 @@ static func kill_at(state: GameState, player_id: String, slot_id: String) -> voi
 ## Развёртывание последнего войска запускает конец игры (стр. 14).
 static func deploy(state: GameState, player_id: String, slot_id: String) -> bool:
 	var p: PlayerState = state.players[player_id]
-	if p.power < COST_DEPLOY:
+	if p.power < COST_DEPLOY + FreljordCards.locked_power(state, player_id):
 		return false
 
 	var stock: PlayerState = state.stock(player_id)
@@ -64,11 +62,8 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	var legal: PackedStringArray = state.deployable_slots(player_id)
 	if not legal.has(slot_id):
 		return false
-	var tax: int = FreljordCards.deploy_tax(state, player_id, slot_id)
-	if p.power < COST_DEPLOY + tax:
-		return false
 
-	p.power -= COST_DEPLOY + tax
+	p.power -= COST_DEPLOY
 	state.troops[slot_id] = player_id
 	stock.troops_in_barracks -= 1
 	if stock.troops_in_barracks == 0:
@@ -90,6 +85,7 @@ static func recruit(state: GameState, player_id: String, market_index: int, card
 		state.devoured_pile.pop_back()
 		p.influence -= card_cost
 		p.deck.discard_pile.append(ghost_card)
+		FreljordCards.note_gain(state, player_id)
 		return true
 	if market_index < 0 or market_index >= state.market.display.size():
 		return false
@@ -145,6 +141,7 @@ static func recruit_from_supply(state: GameState, player_id: String, card_id: St
 		return false
 	p.influence -= cost
 	p.deck.discard_pile.append(card_id)
+	FreljordCards.note_gain(state, player_id)
 	return true
 
 
@@ -155,6 +152,7 @@ static func return_enemy_spy(state: GameState, player_id: String, site_id: Strin
 	if not can_return_enemy_spy(state, player_id, site_id, spy_owner):
 		return false
 	state.players[player_id].power -= return_spy_cost(state)
+	FreljordCards.spent_power(state, player_id, return_spy_cost(state))
 	remove_spy(state, site_id, spy_owner, player_id)
 	return true
 

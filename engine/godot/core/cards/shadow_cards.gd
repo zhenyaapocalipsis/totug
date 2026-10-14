@@ -357,6 +357,7 @@ class ClawsReaction extends CardEffect:
 				p.deck.discard_pile.append(ShadowCards.OUTCAST)
 			given += 1
 		if given > 0:
+			FreljordCards.note_gain(state, target)
 			resolver.log_event("give_insane_outcast", {"player_id": target, "count": given, "to_hand": to_hand})
 			if to_hand:
 				resolver.push(ScryCards.new(1), target)
@@ -403,6 +404,7 @@ class _GainTwigBlight extends CardEffect:
 		if not state.supplies.take(ShadowCards.TWIG_BLIGHT):
 			return
 		state.players[player_id].deck.discard_pile.append(ShadowCards.TWIG_BLIGHT)
+		FreljordCards.note_gain(state, player_id)
 		resolver.log_event("gain_card", {"player_id": player_id, "card_id": ShadowCards.TWIG_BLIGHT})
 
 

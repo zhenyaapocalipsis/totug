@@ -252,7 +252,7 @@ class _BothIfFocus extends CardEffect:
 class _PowerToTroops extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var p: PlayerState = state.players[player_id]
-		if p.power < 1 or state.stock(player_id).troops_in_barracks <= 0:
+		if p.power < 1 + FreljordCards.locked_power(state, player_id) or state.stock(player_id).troops_in_barracks <= 0:
 			return
 		var ask := OptionalEffect.new(_PayPower.new(), "Spend 1 Power to deploy 2 troops?")
 		ask.source_card = "49216"
@@ -262,7 +262,7 @@ class _PowerToTroops extends CardEffect:
 class _PayPower extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var p: PlayerState = state.players[player_id]
-		if p.power < 1:
+		if p.power < 1 + FreljordCards.locked_power(state, player_id):
 			return
 		p.power -= 1
 		resolver.push(_PowerToTroops.new(), player_id)

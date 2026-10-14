@@ -1,9 +1,9 @@
-# New Era: Freljord → ICEWIND DALE (этапы NE-11, NE-12)
+# New Era: Freljord → ICEWIND DALE (этапы NE-11, NE-12, NE-17)
 
 Полуколода Freljord из мода Runeterra Reforged на существах ледяного Севера D&D.
-Ключ в коде `freljord`, тип карт `ICEWIND`, id 49600–49633, эффекты `core/cards/freljord_cards.gd`,
+Ключ в коде `freljord`, тип карт `ICEWIND`, id 49600–49618, 49620, 49634–49636, эффекты `core/cards/freljord_cards.gd`,
 тест `test_icewind_deck`. Картинки мода: 121–143 (127 — Troll Scout + Rimetusk Shaman),
-жетоны: 324 Eggnivia, 441–450 предметы Ornn.
+новые чемпионы из Extra Champions: 359 Gragas (правая карта), 372 Aurora, 383 Olaf.
 
 ## Карты
 
@@ -28,17 +28,14 @@
 | 49616 | Remorhaz | Ashe | 7 | MALICE | 1 | 3/7 |
 | 49617 | Mammoth | Sejuani | 7 | CONQUEST | 1 | 3/7 |
 | 49618 | Storm Giant | Volibear | 8 | CONQUEST | 1 | 4/8 |
-| 49619 | Roc | Anivia | 8 | MALICE | 1 | 4/8 |
-| 49620 | Frost Giant | Tryndamere | 7 | CONQUEST | 1 | 3/7 |
-| 49621 | Stone Giant | Ornn | 8 | MALICE | 1 | 4/8 |
-| 49622 | Giant Ape | Trundle | 6 | CONQUEST | 1 | 4/7 |
 
-Не в рынке: 49623 Roc Egg (Eggnivia) и колода Masterwork (предметы Ornn, D&D-имена):
-49624 Frost Brand (Infinity Edge), 49625 Rod of Rulership (Rod of Ages), 49626 Hat of Wizardry
-(Rabadon's Deathcap), 49627 Sword of Answering (Blade of the Ruined King), 49628 Armor of
-Invulnerability (Warmog's), 49629 Boots of Speed (Shurelya's), 49630 Horn of Valhalla (Trinity Force),
-49631 Cloak of Elvenkind (Bloodthirster), 49632 Demon Armor (Thornmail), 49633 Scarab of Protection
-(Zhonya's Hourglass).
+| 49620 | Frost Giant | Tryndamere | 7 | CONQUEST | 1 | 3/7 |
+
+| 49634 | Pirate Captain | Gragas (картинка 359) | 6 | MALICE | 1 | 3/6 |
+| 49635 | Blink Dog | Aurora (картинка 372) | 6 | MALICE | 1 | 3/7 |
+| 49636 | Young White Dragon | Olaf (картинка 383) | 7 | CONQUEST | 1 | 3/6 |
+
+**2026-10-14 (NE-17):** владелец убрал Roc (Anivia), Stone Giant (Ornn) и Giant Ape (Trundle) со всеми их механиками (Glacial Storm, Ice Pillar, лёд, Roc Egg, колода Masterwork и 10 предметов, стопка FRONT); id 49619, 49621–49633 удалены из cards.json. Вместо них — чемпионы Extra Champions мода: Gragas, Aurora, Olaf.
 
 Арты — D&D Beyond 2024 (у всех есть фон), лежат в `cards/freljord/`. Кандидаты `cards/freljord/cand*` — не в git.
 
@@ -51,7 +48,7 @@ Invulnerability (Warmog's), 49629 Boots of Speed (Shurelya's), 49630 Horn of Val
 - Cloud Giant (Lissandra): «+2 Power и карта» — за КАЖДОГО возвращённого шпиона.
 - Remorhaz (Ashe): у кого больше 4 карт — сам прячет лишние, разыгравший выбирает 1 из 4 раскрытых.
 - Storm Giant (Volibear): раунд = сбрасывать по одной, «стоп» — добор; каждый следующий раунд добирает не больше, чем на 1 меньше прошлого.
-- **Glacial Storm (Roc) и Ice Pillar (Giant Ape)** — на одну локацию, до начала следующего хода владельца (в моде у Glacial Storm срок не указан, «hex» → локация). Соперники платят там +2 Power, чтобы поставить войско (картой тоже), поставить шпиона, вытеснить любое войско или убить войско владельца. Нет Power на доплату — действие там недоступно.
-- Roc Egg: лёд на своё войско в локации; в начале следующего хода, если войско стоит, Roc «откуда угодно» (колода, сброс, Внутренний круг, сожранные, рынок, чужие стопки) идёт в руку. Яйцо и лёд уходят в любом случае.
-- Stone Giant (Ornn): предметы лежат перед игроком (`state.front`), эффекты «в начале хода» срабатывают сами; Scarab — только когда его эффект вызвал Stone Giant, потом уходит из игры. Колода Masterwork и Insane Outcast у доски появляются, если в рынке есть Stone Giant.
+- **Pirate Captain (Gragas):** «получить карту» — покупка (рынок, запас, сожранные), бесплатный найм, Insane Outcast, Twig Blight, Blade Fragment, карта из запаса в руку (`FreljordCards.note_gain`). Если за ход ничего не получил — в конце хода вопрос, карта из сыгранных ложится на верх колоды и приходит в новую руку. Если её же повысили в этот ход — вопроса нет.
+- **Blink Dog (Aurora), вариант 1 (решение владельца 2026-10-14):** «hex» = локация, где есть твоё войско; войска других игроков и белые оттуда можно переставить на пустые места рядом с локацией (`slots_adjacent_to_site`). Вариант 2: до 3 своих войск куда угодно, +1 Power за каждое, вставшее рядом с войском другого игрока (не белым).
+- **Young White Dragon (Olaf) (решение владельца 2026-10-14):** сам тоже считается — его 3 войска дают +3 Power. Каждое войско, поставленное картой (`DeployTroop`), до конца хода даёт +1 Power; эта Power «заперта» (`turn_flags.olaf_locked`): базовое действие Deploy и Chimera не могут её тратить, убийство и возврат шпиона тратят её первой.
 - Frost Giant (Tryndamere): карта из Внутреннего круга играется и остаётся там.
