@@ -284,7 +284,7 @@ func _on_go() -> void:
 			if _kind == "create":
 				err = _net.create_room(server, NetSession.SERVER_PORT, _count, _mode, _teams)
 			elif _kind == "find":
-				err = _net.find_match(server, NetSession.SERVER_PORT, _count, _teams)
+				err = _net.find_match(server, NetSession.SERVER_PORT, _count, _teams, PlayerProfile.ban())
 			else:
 				var code := _code_edit.text.strip_edges().to_upper()
 				if code.length() != NetSession.CODE_LENGTH:

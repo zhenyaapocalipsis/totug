@@ -76,7 +76,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 27
+const PROTOCOL := 28
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -299,12 +299,13 @@ func create_room(address: String, port: int, player_count: int, mode: String, te
 
 ## Клиент: встать в очередь поиска игры на player_count человек. Профиль идёт
 ## прямо с просьбой: комнаты ещё нет, и _profile_up её бы не нашёл.
-func find_match(address: String, port: int, player_count: int, teams: bool = false) -> int:
+## ban — полуколода, которую игрок не хочет видеть в рынке ("" — без бана).
+func find_match(address: String, port: int, player_count: int, teams: bool = false, ban: String = "") -> int:
 	_remember_server(address, port)
 	return _connect(address, port, func():
 		var p := PlayerProfile.clean(profile)
 		_queue.rpc_id(1, PROTOCOL, player_count, p["name"], p["emblem"], p["back"], _client_key(), p["shader"], p["arts"], p["favourite"],
-			p["colour"], teams))
+			p["colour"], teams, ban))
 
 
 ## Комнату на сервере завели не по коду (CREATE ROOM, поиск игры) — её код
@@ -660,7 +661,7 @@ func _create(version: int, player_count: int, mode: String, teams: bool) -> void
 ## Поиск игры: встать в очередь на player_count человек (только выделенный сервер).
 @rpc("any_peer", "call_remote", "reliable")
 func _queue(version: int, player_count: int, player_name: String, emblem: String, back: String,
-		key: String, shader: String, arts: String, favourite: String, colour: String, teams: bool) -> void:
+		key: String, shader: String, arts: String, favourite: String, colour: String, teams: bool, ban: String) -> void:
 	if not dedicated:
 		return
 	var peer := multiplayer.get_remote_sender_id()
@@ -675,7 +676,8 @@ func _queue(version: int, player_count: int, player_name: String, emblem: String
 	queues[needed] = line
 	queued[peer] = {"needed": needed, "name": player_name, "emblem": emblem, "back": back, "key": key, "shader": shader, "arts": arts,
 		"favourite": favourite,
-		"colour": PlayerProfile.clean_colour(colour)}
+		"colour": PlayerProfile.clean_colour(colour),
+		"ban": ban if GameSetup.available_half_decks().has(ban) else ""}
 	_log("queue %d: %d waiting" % [needed, line.size()])
 	# Сервер забит комнатами — стоят дальше; следующий пришедший проверит снова.
 	if line.size() >= needed % TEAM_QUEUE and rooms.size() < MAX_ROOMS:
@@ -699,10 +701,13 @@ func _match(needed: int) -> void:
 	for peer: int in batch:
 		var q: Dictionary = queued[peer]
 		queued.erase(peer)
+		var ban := String(q.get("ban", ""))
+		if ban != "" and not room.banned.has(ban):
+			room.banned.append(ban)
 		_set_profile(room, String(room.seats[peer]), String(q["name"]), String(q["emblem"]), String(q["back"]),
 			String(q["key"]), String(q.get("shader", "")), String(q.get("arts", "")), String(q.get("favourite", "")))
 	queues[needed] = line.slice(size)
-	_log("room %s matched: %d players, %s" % [room.code, room.needed, room.mode])
+	_log("room %s matched: %d players, %s, bans %s" % [room.code, room.needed, room.mode, room.banned])
 	_broadcast_lobby(room)
 	_start_room(room, _rng.randi())
 
@@ -968,6 +973,7 @@ func _save_room(room: GameRoom) -> void:
 		"accounts": room.accounts,
 		"keys": room.keys,
 		"matched": room.matched,
+		"banned": room.banned,
 		"mulligan": room.server.with_mulligan,
 	}, room.log, saves_dir)
 
@@ -1091,6 +1097,7 @@ func _send_replay(room: GameRoom) -> void:
 	var state := room.server.state
 	var header := ReplayBook.header_for(state, room.ids, room.game_seed, room.mode,
 		room.server.with_mulligan, room.profiles, "", room.code, room.log)
+	header["banned"] = room.banned
 	if dedicated:
 		var file := ReplayBook.save(header, room.log, records_dir)
 		_log("room %s: game record %s" % [room.code, file if file != "" else "NOT SAVED"])
@@ -1191,6 +1198,7 @@ func _check_records(room: GameRoom, players: Dictionary, scores: Dictionary, win
 		result: Dictionary) -> void:
 	var header := ReplayBook.header_for(room.server.state, room.ids, room.game_seed, room.mode,
 		room.server.with_mulligan, room.profiles, "", room.code, room.log)
+	header["banned"] = room.banned
 	var stats := ReplayStats.collect({"header": header, "intents": room.log})
 	for pid: String in winners:
 		# 2 на 2: перевес — над командой соперников (у союзника тот же счёт).

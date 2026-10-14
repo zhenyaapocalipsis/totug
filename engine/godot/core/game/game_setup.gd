@@ -135,10 +135,12 @@ static func starting_deck() -> Array[String]:
 ## случайно (рулбук стр. 4). false по умолчанию: многие тесты вызывают
 ## new_game(["red", "blue"], seed) и полагаются на то, что первым ходит
 ## именно red — реальный экран игры включает этот флаг явно.
+## banned — полуколоды, которые игроки поиска игры не хотят видеть в рынке
+## (предпочтительный бан, pick_half_decks); пустой — выбор как раньше.
 static func new_game(player_ids: Array[String], seed_value: int = 0,
 		half_decks: Array[String] = [], with_x_hexes: bool = false,
 		interactive_start: bool = false, random_first_player: bool = false,
-		mode: String = MODE_STANDARD, team_game: bool = false) -> GameState:
+		mode: String = MODE_STANDARD, team_game: bool = false, banned: Array = []) -> GameState:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 
@@ -160,7 +162,7 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 	# 1-2. колода маркета: полуколоды по режиму, перетасованные ВМЕСТЕ (не стопкой)
 	var chosen: Array[String] = half_decks.duplicate()
 	if chosen.size() != mode_deck_count(mode):
-		chosen = pick_half_decks(mode, rng)
+		chosen = pick_half_decks(mode, rng, banned)
 	var market_cards := build_market_cards(mode, chosen, rng)
 	state.market = Market.build(market_cards, [], state.rng)
 
@@ -234,8 +236,7 @@ static func team_order(player_ids: Array[String], rng: RandomNumberGenerator = n
 	return [a[0], b[0], a[1], b[1]]
 
 
-static func _pick_two_half_decks(rng: RandomNumberGenerator) -> Array[String]:
-	var pool := available_half_decks()
+static func _pick_two_half_decks(rng: RandomNumberGenerator, pool: Array[String]) -> Array[String]:
 	var first: int = rng.randi_range(0, pool.size() - 1)
 	var second: int = rng.randi_range(0, pool.size() - 2)
 	if second >= first:
@@ -258,8 +259,10 @@ static func mode_deck_count(mode: String) -> int:
 
 ## Случайные полуколоды для режима. STANDARD — старый выбор двух разных
 ## (тот же порядок вызовов rng, чтобы сиды прежних партий не поменялись).
-static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[String]:
-	var pool := available_half_decks()
+## banned — предпочтительный бан поиска игры: эти полуколоды выпадают из
+## выбора, если без них остаётся достаточно (иначе бан не действует).
+static func pick_half_decks(mode: String, rng: RandomNumberGenerator, banned: Array = []) -> Array[String]:
+	var pool := without_banned(available_half_decks(), banned, mode_deck_count(mode))
 	match mode:
 		MODE_DOUBLE:
 			var one: String = pool[rng.randi_range(0, pool.size() - 1)]
@@ -270,7 +273,18 @@ static func pick_half_decks(mode: String, rng: RandomNumberGenerator) -> Array[S
 			return pool.slice(0, mini(mode_deck_count(mode), pool.size()))
 	if is_new_era(mode):
 		return new_era_pair(mode)
-	return _pick_two_half_decks(rng)
+	return _pick_two_half_decks(rng, pool)
+
+
+## Пул без забаненных полуколод; если их осталось меньше need — пул целиком.
+static func without_banned(pool: Array[String], banned: Array, need: int) -> Array[String]:
+	if banned.is_empty():
+		return pool
+	var left: Array[String] = []
+	for deck: String in pool:
+		if not banned.has(deck):
+			left.append(deck)
+	return left if left.size() >= need else pool
 
 
 static func is_new_era(mode: String) -> bool:

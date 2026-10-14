@@ -88,6 +88,7 @@ func _initialize() -> void:
 	# этап 7: настоящая партия и общие стопки
 	test_half_deck_data()
 	test_game_modes()
+	test_half_deck_ban()
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
 	test_market_mulligan()
@@ -2715,6 +2716,33 @@ func test_game_modes() -> void:
 	check_eq(uniq.size(), 4, "RANDOM 4: четыре разные полуколоды")
 	var r4b := GameSetup.new_game(pids, 5, [], false, false, false, "random4")
 	check_eq(r4b.market.deck, r4.market.deck, "RANDOM 4: одинаковый сид — одинаковый маркет")
+
+
+## Предпочтительный бан поиска игры: забаненные полуколоды не попадают в рынок;
+## без бана раздача та же, что раньше; бан, после которого не хватает колод, не действует.
+func test_half_deck_ban() -> void:
+	section("Бан полуколоды в поиске игры")
+	var pids: Array[String] = ["red", "blue"]
+	var banned: Array[String] = ["drow", "dragons", "demons", "undead"]
+	for s in 30:
+		for mode: String in [GameSetup.MODE_STANDARD, GameSetup.MODE_RANDOM_3, GameSetup.MODE_RANDOM_4]:
+			var state := GameSetup.new_game(pids, 300 + s, [], false, true, true, mode, false, banned)
+			check(not state.half_decks.any(func(d: String) -> bool: return banned.has(d)),
+				"%s сид %d: забаненных нет в рынке (%s)" % [mode, 300 + s, state.half_decks])
+	var plain := GameSetup.new_game(pids, 41, [], false, true, true, GameSetup.MODE_RANDOM_4)
+	var no_ban := GameSetup.new_game(pids, 41, [], false, true, true, GameSetup.MODE_RANDOM_4, false, [])
+	check_eq(no_ban.market.deck, plain.market.deck, "без бана тот же рынок, что и раньше")
+	var pool := GameSetup.available_half_decks()
+	check_eq(GameSetup.without_banned(pool, pool.slice(0, 12), 2), pool, "бан, после которого колод не хватает, не действует")
+	check_eq(GameSetup.without_banned(pool, ["drow"], 2).size(), pool.size() - 1, "одна забаненная выпадает из пула")
+	# Журнал комнаты помнит баны: восстановление после перезапуска сервера раздаёт то же.
+	var room := GameRoom.new("BAN", 2, GameSetup.MODE_STANDARD)
+	room.banned = banned
+	room.add(1)
+	room.add(2)
+	room.deal(77)
+	var restored := GameRoom.restore({"code": "BAN", "ids": room.ids, "seed": 77, "banned": banned}, [])
+	check_eq(restored.server.state.half_decks, room.server.state.half_decks, "восстановленная комната — те же полуколоды")
 
 
 func test_half_deck_data() -> void:

@@ -28,6 +28,8 @@ const SERVER_PORT := 7791
 ## моменту уже закрыт «перезапуском», но проще не делить один порт.
 const SERVER4_PORT := 7792
 const MATCH_PORT := 7793
+## Баны троих, что ищут стол на двоих.
+const MATCH_BANS: Array[String] = ["drow", "dragons", "demons"]
 const PAUSE_PORT := 7794
 ## "server" — самый длинный сценарий: раздача, чат, переподключение и
 ## «перезапуск» сервера (этап 7) в одном TIMEOUT-окне без сброса _elapsed.
@@ -431,6 +433,19 @@ func _process(delta: float) -> bool:
 					== seated[0].profile["name"], "[match] имя соперника дошло")
 				check(waiting.seat == "", "[match] третий ждёт дальше, за стол не сел")
 				check(room.matched, "[match] стол поиска игры помечен — за него будет награда")
+				var bans: Array[String] = []
+				for i in 3:
+					if players[i] != waiting:
+						bans.append(MATCH_BANS[i])
+				check(room.banned.size() == 2 and room.banned.has(bans[0]) and room.banned.has(bans[1]),
+					"[match] баны двоих за столом дошли до комнаты (%s)" % [room.banned])
+				check(not room.server.state.half_decks.any(func(d: String) -> bool: return bans.has(d)),
+					"[match] забаненных полуколод нет в рынке (%s)" % [room.server.state.half_decks])
+				var odd_ban := "x"
+				for q: Dictionary in server.queued.values():
+					if int(q["needed"]) == 3:
+						odd_ban = String(q.get("ban", "x"))
+				check(odd_ban == "", "[match] неизвестный бан сервер отбросил")
 				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("shader", "")) == "gilded",
 					"[match] шейдер соперника дошёл")
 				check(String((seated[1].profiles.get(seated[0].seat, {}) as Dictionary).get("arts", "")) == "48310_1,48403_2",
@@ -543,9 +558,10 @@ func _start_match() -> void:
 	players = ps
 	for p in players:
 		_track(p)
+	# Предпочтительный бан: у каждого свой; чужое имя полуколоды сервер отбрасывает.
 	for i in 3:
-		players[i].find_match("127.0.0.1", MATCH_PORT, 2)
-	players[3].find_match("127.0.0.1", MATCH_PORT, 3)
+		players[i].find_match("127.0.0.1", MATCH_PORT, 2, false, MATCH_BANS[i])
+	players[3].find_match("127.0.0.1", MATCH_PORT, 3, false, "no_such_deck")
 	_step = "match_wait"
 
 

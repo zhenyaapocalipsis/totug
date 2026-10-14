@@ -128,8 +128,9 @@ static func same_version(replay: Dictionary) -> bool:
 ## — их реплеи ложатся на нынешние карты так же (17: до LEADERBOARD; 19: до
 ## режима 2 на 2 — обычные партии он не меняет, проверено пересборкой реплеев 11.10;
 ## 20: до экрана DEALING THE CARDS; 21: до правки Gibbering Mouther — реплей с ним
-## может разойтись, остальные ложатся так же; 22: до общих бараков 2v2).
-const SAME_RULES := [17, 19, 20, 21, 22]
+## может разойтись, остальные ложатся так же; 22: до общих бараков 2v2;
+## 27: до бана полуколоды в поиске — без бана раздача та же).
+const SAME_RULES := [17, 19, 20, 21, 22, 27]
 ## С этой версии в 2v2 общие бараки, трофеи и внутренний круг (этап Team-6):
 ## реплеи 2v2 раньше неё — OLD, обычные партии она не меняет.
 const TEAM_STOCK := 23
@@ -148,7 +149,8 @@ static func start(replay: Dictionary) -> GameServer:
 	for pid in (header.get("ids", []) as Array):
 		ids.append(String(pid))
 	var state := GameSetup.new_game(ids, int(header.get("seed", 0)), [], false, true, true,
-		String(header.get("mode", GameSetup.MODE_STANDARD)), bool(header.get("teams", false)))
+		String(header.get("mode", GameSetup.MODE_STANDARD)), bool(header.get("teams", false)),
+		header.get("banned", []) as Array)
 	var server := GameServer.new(state, bool(header.get("mulligan", true)), true, false)
 	# Срезы собирает тот, кто смотрит (StateView), и только для своего зрителя.
 	server.build_views = false

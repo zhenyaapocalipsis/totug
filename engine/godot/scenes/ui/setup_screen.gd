@@ -104,6 +104,9 @@ const CORNER_BUTTON := Vector2(70, 16)
 const BUTTON_SIZE := Vector2(90, 16)
 const MENU_WIDTH := 400.0
 const DOT := 7.0
+## Кнопки бана полуколоды в поиске игры: ширина и сколько в ряду.
+const BAN_BUTTON := 70.0
+const BAN_PER_ROW := 5
 ## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
@@ -417,6 +420,7 @@ func _build_online() -> void:
 	_col.add_child(_heading("PLAYERS"))
 	_col.add_child(_row(counts))
 	_add_dim("The game starts as soon as the table is full.")
+	_add_ban_choice()
 	# Незаконченная онлайн-партия (игру закрыли или она упала) — вернуться в неё.
 	if not NetSession.saved_game().is_empty():
 		_col.add_child(HSeparator.new())
@@ -426,6 +430,43 @@ func _build_online() -> void:
 		_col.add_child(back)
 	_set_action("SEARCH", func():
 		online_requested.emit("find", _match_count, NetSession.match_mode(_match_count), ""))
+
+
+## Предпочтительный бан: одна полуколода, карт которой игрок не хочет в рынке.
+## Выбор сразу пишется в профиль (PlayerProfile.save_ban) и уходит с поиском.
+func _add_ban_choice() -> void:
+	_col.add_child(_heading("BAN A HALF-DECK"))
+	var group := ButtonGroup.new()
+	var current := PlayerProfile.ban()
+	var buttons: Array[Button] = []
+	var none := _toggle("NONE", group, current == "", BAN_BUTTON)
+	none.pressed.connect(func(): PlayerProfile.save_ban(""))
+	buttons.append(none)
+	for deck: String in ban_choices():
+		var b := _toggle(deck_title(deck), group, deck == current, BAN_BUTTON)
+		b.pressed.connect(func(): PlayerProfile.save_ban(deck))
+		buttons.append(b)
+	for i in range(0, buttons.size(), BAN_PER_ROW):
+		_col.add_child(_row(buttons.slice(i, i + BAN_PER_ROW)))
+	_add_dim("Its cards stay out of the market if the table allows it.")
+
+
+## Полуколоды, которые можно забанить, в порядке вкладок коллекции.
+static func ban_choices() -> Array[String]:
+	var pool := GameSetup.available_half_decks()
+	var out: Array[String] = []
+	for deck: String in CollectionPage.FACTIONS:
+		if pool.has(deck):
+			out.append(deck)
+	for deck: String in pool:
+		if not out.has(deck):
+			out.append(deck)
+	return out
+
+
+## Название полуколоды на кнопках: New Era — как в меню NEW ERA.
+static func deck_title(deck: String) -> String:
+	return String(NEW_ERA_TITLES.get(deck, deck.to_upper()))
 
 
 func _match_market_text() -> String:

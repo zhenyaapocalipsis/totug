@@ -141,6 +141,23 @@ static func favourite() -> String:
 	return String(load_local()["favourite"])
 
 
+## Предпочтительный бан поиска игры: полуколода, которую игрок не хочет видеть
+## в рынке ("" — без бана). Хранится у игрока и уходит с каждым поиском.
+static func save_ban(deck: String) -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(path())
+	cfg.set_value("profile", "ban", deck if GameSetup.available_half_decks().has(deck) else "")
+	return cfg.save(path())
+
+
+static func ban() -> String:
+	var cfg := ConfigFile.new()
+	if cfg.load(path()) != OK:
+		return ""
+	var deck := String(cfg.get_value("profile", "ban", ""))
+	return deck if GameSetup.available_half_decks().has(deck) else ""
+
+
 ## Рубашка из чужих рук (файл, сеть): имя известного рисунка, кроме CLASSIC;
 ## иначе "" (обычная рубашка).
 static func clean_back(back: String) -> String:

@@ -32,6 +32,9 @@ var rated := false
 ## Партию собрал поиск игры (NetSession._match): за неё дают награду
 ## (SkinCollection.reward_for_place), за комнаты по коду — нет.
 var matched := false
+## Предпочтительные баны игроков поиска игры — полуколоды, которых рынок по
+## возможности избегает (GameSetup.pick_half_decks).
+var banned: Array[String] = []
 var started := false
 var server: GameServer
 ## Задача WorkerThreadPool, что считает снимок доски на выделенном сервере;
@@ -282,7 +285,7 @@ func deal(seed_value: int) -> Dictionary:
 	ids = []
 	for pid in joined():
 		ids.append(String(pid))
-	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, mode, teams)
+	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, mode, teams, banned)
 	server = GameServer.new(state)
 	var views: Dictionary = {}
 	for pid: String in ids:
@@ -346,7 +349,9 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	room.accounts = (header.get("accounts", {}) as Dictionary).duplicate(true)
 	room.keys = (header.get("keys", {}) as Dictionary).duplicate(true)
 	room.matched = bool(header.get("matched", false))
-	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode, room.teams)
+	for deck in (header.get("banned", []) as Array):
+		room.banned.append(String(deck))
+	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode, room.teams, room.banned)
 	# Партии, начатые до муллигана рынка (в заголовке нет "mulligan"),
 	# переигрываются без него — иначе их ходы лягут не на те вопросы.
 	room.server = GameServer.new(state, bool(header.get("mulligan", false)))
