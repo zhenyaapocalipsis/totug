@@ -5278,7 +5278,11 @@ func _slot_of(state: GameState, pd: PendingDecision, owner: String) -> String:
 func test_piltover_zaun() -> void:
 	section("New Era: полуколода Piltover & Zaun")
 	var deck := GameSetup.expand_half_deck("piltover")
-	check_eq(deck.size(), 42, "Piltover & Zaun: 42 карты (копии по кружкам на картах мода)")
+	check_eq(deck.size(), 40, "Waterdeep: 40 карт в полуколоде")
+	var pz_uniques := {}
+	for cid: String in deck:
+		pz_uniques[cid] = true
+	check_eq(pz_uniques.size(), 20, "Waterdeep: 20 уникальных карт (без Rust Monster)")
 	check(not GameSetup.available_half_decks().has("piltover"), "колода пока не в обычном выборе (wip)")
 	for cid: String in ["49200", "49211", "49220"]:
 		check(CardLibrary.card_data(cid).get("type") == "WATERDEEP", "%s — карта Waterdeep (бывшая Piltover & Zaun)" % cid)
@@ -5292,7 +5296,7 @@ func test_piltover_zaun() -> void:
 	check_eq(GameSetup.new_era_mode(["shadow", "celestial"]), "newera", "прежняя пара — прежняя строка режима")
 	var pz_game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, pz_mode)
 	check_eq(pz_game.half_decks, ["celestial", "piltover"] as Array[String], "партия NEW ERA берёт выбранную пару")
-	check_eq(pz_game.market.deck_size() + pz_game.market.display.size(), 40 + 42, "рынок: 40 + 42 карты")
+	check_eq(pz_game.market.deck_size() + pz_game.market.display.size(), 40 + 40, "рынок: 40 + 40 карт")
 
 	var state := _build_rich_state(21)
 	var red: PlayerState = state.players["red"]

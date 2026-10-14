@@ -189,7 +189,7 @@
 
 ## Piltover & Zaun — правила (NE-6) и арты (NE-7)
 Всё по колоде — в `Claude outputs/new_era_piltover.md` (таблица id → существо → карта мода, толкования).
-- Карты 49200–49220, тип `WATERDEEP` (до NE-8 — PILTOVER), полуколода `piltover` (wip, **42 карты** — столько копий по кружкам), эффекты `core/cards/piltover_cards.gd`, тест `test_piltover_zaun`. Цвет фона — розовый (`UnderdarkBg.DECK_COLOURS["piltover"]`).
+- Карты 49200–49220, тип `WATERDEEP` (до NE-8 — PILTOVER), полуколода `piltover` (wip, **40 карт / 20 уникальных** с NE-15: владелец убрал Rust Monster 49203, Clay Golem 2, Gelatinous Cube 4, Tough Boss 4, Spy 3), эффекты `core/cards/piltover_cards.gd`, тест `test_piltover_zaun`. Цвет фона — розовый (`UnderdarkBg.DECK_COLOURS["piltover"]`).
 - Новое в движке:
   - `FocusEffect` с `need = 2` — Double Focus; `FocusEffect.support()` — сколько других карт аспекта (сыграно + в руке); флаг `focus_extra` повторяет Focus (копия эффекта пересобирается из карты по номеру Focus, `FocusEffect.registry`).
   - `ChooseEffect`: флаг `choose_all` — вариант «All of them».
