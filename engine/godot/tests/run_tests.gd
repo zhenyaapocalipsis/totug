@@ -5924,7 +5924,7 @@ func test_icewind_deck() -> void:
 	var mode := GameSetup.new_era_mode(["freljord", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 карт")
+	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Icewind Dale) карт")
 	check_eq(game.masterwork.size(), 10, "со Stone Giant — колода Masterwork из 10 предметов")
 	check(game.supplies.remaining(Supplies.INSANE_OUTCAST) > 0, "Demon Armor: у доски есть Insane Outcast")
 	_sweep_deck_with_vp(49600, 49633)
@@ -6071,13 +6071,18 @@ func test_icewind_deck() -> void:
 
 func test_avernus_deck() -> void:
 	section("Avernus (New Era Noxus): полуколода")
-	check_eq(GameSetup.expand_half_deck("noxus").size(), 45, "Avernus: 45 карт")
+	var nx_deck := GameSetup.expand_half_deck("noxus")
+	check_eq(nx_deck.size(), 40, "Avernus: 40 карт")
+	var nx_uniques := {}
+	for cid: String in nx_deck:
+		nx_uniques[cid] = true
+	check_eq(nx_uniques.size(), 20, "Avernus: 20 уникальных карт (без Pseudodragon, Wereboar, Bugbear Warrior)")
 	check(not GameSetup.available_half_decks().has("noxus"), "Avernus пока не в обычном выборе (wip)")
 	var mode := GameSetup.new_era_mode(["noxus", "celestial"])
 	check_eq(mode, "newera:celestial,noxus", "пара Celestial + Avernus в строке режима")
 	check(GameSetup.is_mode(mode), "режим принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 карт")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Avernus) карт")
 	check_eq(game.supplies.remaining(NoxusCards.BLADE_FRAGMENT), 3, "с Avernus у доски 3 Blade Fragment")
 	_sweep_deck_with_vp(49500, 49524)
 

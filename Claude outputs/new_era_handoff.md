@@ -165,6 +165,7 @@
 - AVERNUS: в интерфейсе нет счётчика пожираний за ход; бот не знает о Might; кадр Minotaur of Baphomet можно доработать.
 
 ## Готово: Noxus → AVERNUS (NE-9 `5db51a7`, NE-10 `441c853`, PROTOCOL 24 `8051fb4`)
+**NE-16:** по выбору владельца 40 карт / 20 уникальных — убраны Pseudodragon 49504, Wereboar 49501, Bugbear Warrior 49508 (в cards.json остались), Mummy, Goblin Boss, Hobgoblin Captain, Minotaur of Baphomet — по 3.
 Всё по колоде — в `Claude outputs/new_era_noxus.md` (таблица id → существо → карта мода, все толкования).
 - Карты 49500–49522 (45 копий) + жетоны 49523 Blade Fragment (запас 3 у доски, если в рынке есть Half-Dragon) и 49524 Blade of Exile. Тип `AVERNUS`, ключ `noxus` (wip), эффекты `core/cards/noxus_cards.gd`, тест `test_avernus_deck`, цвет фона тёмно-красный.
 - Название колоды и все существа выбраны мной, **владелец их ещё не видел**. Состав: Bandit, Wereboar, Goblin Boss, Hell Hound, Pseudodragon, Medusa, Bugbear Stalker, Guard Captain, Bugbear Warrior, Mummy, Ogre, Minotaur of Baphomet, Hobgoblin Captain; чемпионы Weretiger (Katarina), Lamia (Leblanc), Horned Devil (Mordekaiser), Efreeti (Vladimir), Azer Sentinel (Draven), Ice Devil (Swain), Troll (Sion), Fire Giant (Darius), Half-Dragon (Riven), Wyvern (Samira).
