@@ -50,12 +50,27 @@ func _add_friend_button(net: NetSession, player_name: String) -> void:
 	if player_name == "":
 		return
 	var add := Button.new()
-	add.text = "ADD FRIEND"
 	add.custom_minimum_size = Vector2(90, 16)
 	add.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	SetupScreen._style_button(add)
+	# Уже друг — кнопка гаснет (владелец, 2026-10-15). Снимок друзей мог
+	# устареть или ещё не прийти: просим свежий, кнопка обновится по ответу.
+	var show_status := func(_data: Dictionary = {}) -> void:
+		if not is_instance_valid(add):
+			return
+		var status := net.friend_status(player_name)
+		add.text = {"friend": "FRIEND", "outgoing": "REQUEST SENT",
+			"incoming": "ACCEPT FRIEND"}.get(status, "ADD FRIEND")
+		add.disabled = status == "friend" or status == "outgoing"
+	show_status.call()
+	net.friends_received.connect(show_status)
+	tree_exiting.connect(func(): net.friends_received.disconnect(show_status))
+	net.friends_action("list")
 	add.pressed.connect(func():
-		net.friends_action("add", [player_name])
+		if net.friend_status(player_name) == "incoming":
+			net.friends_action("answer", [player_name, true])
+		else:
+			net.friends_action("add", [player_name])
 		add.text = "REQUEST SENT"
 		add.disabled = true)
 	_col.add_child(add)

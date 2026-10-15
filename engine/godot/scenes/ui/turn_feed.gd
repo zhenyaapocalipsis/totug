@@ -41,7 +41,8 @@ const INNER := 80
 const WIDTH := INNER + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
 const ORDER: Array[String] = [
-	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED"]
+	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED",
+	"REPLACED", "NEW"]
 ## Строки действий хода: ключ -> подпись; порядок строк — порядок ключей.
 const STATS := {
 	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",
@@ -51,6 +52,8 @@ const STATS := {
 	# 2026-09-28: игроки его не замечали)
 	"mark_influence": "MARK INF", "mark_vp": "MARK VP",
 	"a2_power": "A2 POWER", "a2_influence": "A2 INF", "a2_vp": "A2 VP",
+	# муллиган рынка: игрок ничего не поменял
+	"kept": "KEPT MARKET",
 }
 ## Больше ходов не держим — самые старые уходят (сотни узлов ни к чему).
 const MAX_BLOCKS := 60
@@ -130,6 +133,24 @@ func add_to_turn(pid: String, cid: String, tag: String) -> void:
 		block.add_card(tag, _card(cid, pid, tag))
 	else:
 		block.add_card(tag + ":" + pid, _card(cid, pid, tag))
+	_after_add(follow)
+
+
+## Муллиган рынка перед стартом (владелец, 2026-10-15): у каждого игрока свой
+## блок "<ИМЯ> MULLIGAN" — убранная карта (REPLACED) и пришедшая (NEW); пропуск —
+## строка KEPT MARKET. Блок сразу закрыт: следующий игрок откроет свой.
+func add_mulligan(pid: String, removed: String, added: String) -> void:
+	var follow := _at_bottom()
+	end_turn()
+	var block := _current_block(pid)
+	block.title.text = _header_text(block.title, pid, "MULLIGAN")
+	if removed == "":
+		block.add_stat("kept", 1, "")
+	else:
+		block.add_card("REPLACED", _card(removed, pid, "REPLACED"))
+		if added != "":
+			block.add_card("NEW", _card(added, pid, "NEW"))
+	end_turn()
 	_after_add(follow)
 
 
@@ -267,13 +288,18 @@ func _open_block(pid: String) -> Block:
 ## пишем одно имя: цвет и так говорит, чей ход (как на кнопке End turn).
 ## Мерить можно только в дереве: шрифт приходит из темы экрана.
 func _fit_header(title: Label, pid: String) -> void:
+	title.text = _header_text(title, pid, "")
+
+
+## "RED'S TURN" (what пусто) или "RED MULLIGAN"; не влезает — короче.
+func _header_text(title: Label, pid: String, what: String) -> String:
 	var who := EventLogPanel.player_name(pid).to_upper()
-	var text := "%s'S TURN" % who
+	var text := "%s'S TURN" % who if what == "" else "%s %s" % [who, what]
 	var font := title.get_theme_font("font")
 	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			title.get_theme_font_size("font_size")).x > INNER:
-		text = who
-	title.text = text
+		text = who if what == "" else what
+	return text
 
 
 func _at_bottom() -> bool:
@@ -297,10 +323,10 @@ func _trim() -> void:
 		old.queue_free()
 
 
-## Карта pid — в его образе; съеденная (DEVOURED) ушла из маркета, она ничья.
+## Карта pid — в его образе; съеденная (DEVOURED) и карты муллигана — рыночные, ничьи.
 func _card(cid: String, pid: String, tag: String) -> CardView:
 	var card := CardView.new(cid, int(CARD.x), int(CARD.y))
-	if tag != "DEVOURED":
+	if tag != "DEVOURED" and tag != "REPLACED" and tag != "NEW":
 		card.set_card_owner(pid)
 	card.hover_full = true   # полная карта по наведению, без Alt
 	card.set_clickable(false, false)
@@ -399,6 +425,8 @@ class Block extends PanelContainer:
 				label.text = "A2 +%d VP" % stats[key]
 			"mark_vp":
 				label.text = "MARK +%d VP" % stats[key]
+			"kept":
+				label.text = TurnFeed.STATS[key]
 			"a2_power", "a2_influence", "mark_influence":
 				label.text = "%s +%d" % [TurnFeed.STATS[key], stats[key]]
 			_:

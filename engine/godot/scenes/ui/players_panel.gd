@@ -16,19 +16,20 @@ extends PanelContainer
 ## (DecisionDialog), не здесь.
 
 ## Числовые столбцы: ключ в срезе игрока, заголовок, подсказка к заголовку.
+## VP — последним, прямо перед залом трофеев (владелец, 2026-10-15).
 const COLUMNS: Array[Array] = [
-	["vp_tokens", "VP", "Victory point tokens"],
 	["hand_size", "HD", "Cards in hand"],
 	["deck_size", "DK", "Cards in deck"],
 	["discard_size", "DS", "Cards in discard pile"],
 	["inner_circle", "IC", "Cards in Inner Circle"],
+	["vp_tokens", "VP", "Victory point tokens"],
 ]
 ## Фишка войска с эмблемой (9 пикселей и 2 отступа); строка цифр начинается
 ## от левого края панели. Числовой столбец — 2 знака.
 const TOKEN_W := 11.0
 const NUM_W := 12.0
 const COL_GAP := 3
-## Лишний зазор перед залом трофеев: иначе последняя цифра IC читается как
+## Лишний зазор перед залом трофеев: иначе последняя цифра VP читается как
 ## первая цифра зала.
 const HALL_GAP := 3.0
 ## Строка цифр наезжает на пустой низ строки ника: глиф 7 пикселей в

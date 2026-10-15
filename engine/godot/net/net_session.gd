@@ -143,6 +143,9 @@ var records_dir := "user://game_records/"
 ## Клиент: файл реплея последней партии. Сервер шлёт реплей раньше итога
 ## рейтинга (_rating), и строка истории запоминает этот файл.
 var last_replay := ""
+## Клиент: последний снимок друзей с сервера (friends_data) — по нему карточка
+## игрока знает, друг ли он уже (владелец, 2026-10-15).
+var friends_cache: Dictionary = {}
 var rooms: Dictionary = {}      # code -> GameRoom
 ## Выделенный сервер: запас готовых чертежей доски (ставит launcher; в тестах
 ## по желанию). close() его дожидается и убирает.
@@ -1624,7 +1627,22 @@ func friends_data(account: String, note: String) -> Dictionary:
 
 @rpc("authority", "call_remote", "reliable")
 func _friends_down(data: Dictionary) -> void:
+	friends_cache = data
 	friends_received.emit(data)
+
+
+## Клиент: кем приходится игрок с ником player_name по последнему снимку:
+## "friend", "outgoing" (наша заявка), "incoming" (его заявка) или "".
+func friend_status(player_name: String) -> String:
+	var id := RatingBook.name_id(player_name)
+	for f: Dictionary in friends_cache.get("friends", []):
+		if RatingBook.name_id(String(f.get("name", ""))) == id:
+			return "friend"
+	for key in ["outgoing", "incoming"]:
+		for other in friends_cache.get(key, []):
+			if RatingBook.name_id(String(other)) == id:
+				return key
+	return ""
 
 
 @rpc("authority", "call_remote", "reliable")

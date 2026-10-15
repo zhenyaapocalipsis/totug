@@ -29,6 +29,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			if removed != "":
 				resolver.log_event("market_mulligan", {"player_id": player_id, "card_id": removed,
 					"new_card_id": state.market.display[int(index)]})
+		else:
+			# Пропуск — тоже ход муллигана: его видно в сводке MOVES.
+			resolver.log_event("market_mulligan_skip", {"player_id": player_id})
 		return
 
 	var options: Array = []

@@ -1465,6 +1465,10 @@ func _note_recap(events: Array) -> void:
 		elif type == "removed_to_supply":
 			# Изгой вместо devour/promote вернулся в запас — своя группа.
 			_feed.add_to_turn(String(evt.get("player_id", "")), String(evt.get("card_id", "")), "TO SUPPLY")
+		elif type == "market_mulligan" or type == "market_mulligan_skip":
+			# Муллиган рынка — свой блок игрока в MOVES (владелец, 2026-10-15).
+			_feed.add_mulligan(String(evt.get("player_id", "")), String(evt.get("card_id", "")),
+				String(evt.get("new_card_id", "")))
 		elif type == "turn_ended":
 			_feed.end_turn()
 		elif type == "turn_income":
