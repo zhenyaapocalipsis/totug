@@ -7,14 +7,14 @@ extends Control
 ## профиль — для сравнения), у каждого свой цвет. У подписи оси — числа
 ## игроков их цветами.
 ##
-## Масштаб оси — не меньше REF (хорошая партия), а если чьё-то среднее больше —
-## по нему: многоугольник не вылезает за сетку.
+## Шкала одна на все оси — 0..SCALE VP (владелец, 2026-10-16): видно, откуда
+## берутся очки. Если чьё-то среднее больше SCALE, шкала всех осей растёт до
+## него — многоугольник не вылезает за сетку.
 
 const AXES := PlayerProfile.VP_PARTS
 const LABELS := {"sites": "SITES", "total_control": "CONTROL", "trophies": "TROPHIES",
 	"deck": "DECK", "inner_circle": "INNER", "tokens": "TOKENS"}
-const REF := {"sites": 12.0, "total_control": 6.0, "trophies": 12.0, "deck": 20.0,
-	"inner_circle": 15.0, "tokens": 20.0}
+const SCALE := 25.0
 const RADIUS := 54.0
 ## Колец сетки (доли масштаба).
 const RINGS := 3
@@ -38,10 +38,12 @@ func add_series(values: Dictionary, colour: Color) -> void:
 	queue_redraw()
 
 
-func _scale(key: String) -> float:
-	var top := float(REF[key])
+## Общая шкала всех осей: SCALE или самое большое среднее, если оно больше.
+func _scale() -> float:
+	var top := SCALE
 	for s: Dictionary in _series:
-		top = maxf(top, float((s["values"] as Dictionary).get(key, 0.0)))
+		for key: String in AXES:
+			top = maxf(top, float((s["values"] as Dictionary).get(key, 0.0)))
 	return top
 
 
@@ -61,11 +63,12 @@ func _draw() -> void:
 		draw_polyline(points, PixelTheme.BORDER if ring < RINGS else PixelTheme.BORDER_HI)
 	for i in AXES.size():
 		draw_line(centre, (centre + _dir(i) * RADIUS).round(), PixelTheme.BORDER)
+	var full := _scale()
 	for s: Dictionary in _series:
 		var points := PackedVector2Array()
 		for i in AXES.size():
 			var key: String = AXES[i]
-			var share := float((s["values"] as Dictionary).get(key, 0.0)) / _scale(key)
+			var share := float((s["values"] as Dictionary).get(key, 0.0)) / full
 			points.append((centre + _dir(i) * RADIUS * clampf(share, 0.0, 1.0)).round())
 		var colour: Color = s["colour"]
 		if _polygon_ok(points):
