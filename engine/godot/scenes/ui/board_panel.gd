@@ -567,8 +567,7 @@ func focus_count() -> int:
 func _draw_focus() -> void:
 	if _focus.is_empty():
 		return
-	var k := _pulse()
-	var colour := FOCUS_COLOR.lerp(Color.WHITE, 0.5 * k)
+	var colour := _blink(FOCUS_COLOR)
 	var troops: Dictionary = _view.get("troops", {})
 	for place in _focus:
 		var kind := String(place).get_slice(":", 0)
@@ -588,7 +587,7 @@ func _draw_focus() -> void:
 			_draw_pool(_token_corner(pos), 6)
 			if owner != "":
 				_draw_troop(pos, owner)
-		_mark_slot(_snap(pos), colour, owner != "")
+		_mark_slot(_snap(pos), FOCUS_COLOR, owner != "")
 		if kind == "kill":
 			_draw_skull(_token_corner(pos), 6.0, 1.0)
 
@@ -1553,7 +1552,15 @@ func _mark_slot(pos: Vector2, colour: Color, occupied: bool) -> void:
 	# иначе оно станет неотличимо от фишки зелёного игрока.
 	if not occupied:
 		draw_circle(at, maxf(r - width * 0.5, 1.0), Color(colour, lerpf(0.2, 0.55, k)))
-	draw_arc(at, r, 0, TAU, 24, colour.lerp(Color.WHITE, 0.45 * k), width)
+	draw_arc(at, r, 0, TAU, 24, _blink(colour), width)
+
+
+## Цвет мерцающей рамки подсказки: на пике — светлее и непрозрачный, во
+## впадине — почти гаснет. Одного осветления к белому было не видно: зелёный
+## и оранжевый и так светлые.
+func _blink(colour: Color) -> Color:
+	var k := _pulse()
+	return Color(colour.lerp(Color.WHITE, 0.35 * k), lerpf(0.2, 1.0, k))
 
 
 ## Фаза мерцания подсказок: 0..1 по синусу. Заодно будит _process, чтобы
@@ -1669,7 +1676,7 @@ func _draw_decision_targets() -> void:
 		if at != null:
 			_mark_slot(_to_screen(at), DECISION_COLOR, String(troops.get(slot_id, "")) != "")
 	for site_id: String in site_targets.keys():
-		_outline_site(site_id, DECISION_COLOR)
+		_outline_site(site_id, _blink(DECISION_COLOR))
 	for pair in spy_targets:
 		_ring_spy(String(pair[0]), String(pair[1]), DECISION_COLOR)
 
@@ -1697,7 +1704,7 @@ func _ring_spy(site_id: String, owner: String, colour: Color) -> void:
 	var d := spy_half() + 2.0
 	var ring := PackedVector2Array([
 		at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0), at + Vector2(0, -d)])
-	draw_polyline(ring, colour, 1.0)
+	draw_polyline(ring, _blink(colour), 1.0)
 
 
 ## Навести обзор на точку доски с заданным масштабом. Нужно интерфейсу
