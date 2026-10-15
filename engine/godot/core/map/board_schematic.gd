@@ -1897,13 +1897,23 @@ func _grid_try(cell: Dictionary) -> bool:
 	var lines_x: Array[float] = [r.position.x + first]
 	for c in 4:
 		lines_x.append(lines_x[c] + need[c] + gap_x)
-	var px := {}   # hex -> x линии его колонки (у точки xkey)
+	# расстановки по x (hex -> x линии его колонки у точки xkey): строгие
+	# колонки, если влезли, и мягкие; трассы не легли в одной — пробуется другая
+	var choices: Array[Dictionary] = []
+	if gap_x >= GRID_MIN_GAP_X:
+		var strict := {}
+		for key: Vector2i in slot:
+			strict[slot[key]] = lines_x[key.x]
+		choices.append(strict)
+	var corners := {}   # угловые города (верх и низ крайних колонок) — строго на одной линии
 	for key: Vector2i in slot:
-		px[slot[key]] = lines_x[key.x]
-	if gap_x < GRID_MIN_GAP_X:
-		px = _grid_soft_x(slot, lw, rw, r)
-		if px.is_empty():
-			return false
+		if (key.x == 0 or key.x == 4) and key.y != 0:
+			corners[slot[key]] = true
+	var soft := _grid_soft(slot, lw, rw, r.position.x, r.end.x, GRID_SOFT_GAP, corners, slot.size() != 15)
+	if not soft.is_empty():
+		choices.append(soft)
+	if choices.is_empty():
+		return false
 
 	# по y: верх и низ — к краям, средний ряд — где самая узкая щель шире всего
 	var ykey := {}
@@ -1931,68 +1941,88 @@ func _grid_try(cell: Dictionary) -> bool:
 			var bot: String = slot[Vector2i(c, 1)]
 			var bot_top := bottom_line - float(ykey[bot]) + (_sp_box[bot] as Rect2).position.y
 			min_b = minf(min_b, bot_top - ((_sp_box[mid] as Rect2).end.y - float(ykey[mid])))
-	if min_a == INF or min_b == INF or (min_a + min_b) / 2.0 < GRID_MIN_GAP:
+	if min_a == INF or min_b == INF:
 		return false
-	var mid_line := (min_b - min_a) / 2.0
+	var py := {}   # hex -> y линии его ряда (у точки ykey)
+	if (min_a + min_b) / 2.0 >= GRID_MIN_GAP:
+		var mid_line := (min_b - min_a) / 2.0
+		for key: Vector2i in slot:
+			py[slot[key]] = top_line if key.y < 0 else (bottom_line if key.y > 0 else mid_line)
+	else:
+		# мягкие ряды: ось — ряд (key.y), линия — колонка; города верхнего и
+		# нижнего ряда (углы и середина) — строго на одной линии
+		var by_row := {}
+		var up := {}
+		var down := {}
+		var cities := {}
+		for key: Vector2i in slot:
+			var hex: String = slot[key]
+			by_row[Vector2i(key.y + 1, key.x)] = hex
+			up[hex] = float(ykey[hex]) - (_sp_box[hex] as Rect2).position.y
+			down[hex] = (_sp_box[hex] as Rect2).end.y - float(ykey[hex])
+			if key.y != 0 and key.x % 2 == 0:
+				cities[hex] = true
+		py = _grid_soft(by_row, up, down, r.position.y + ROUTE_EDGE, r.end.y - ROUTE_EDGE,
+				GRID_MIN_GAP, cities, false)
+		if py.is_empty():
+			return false
 
-	for key: Vector2i in slot:
-		var hex: String = slot[key]
-		var y_line := top_line if key.y < 0 else (bottom_line if key.y > 0 else mid_line)
-		var o := Vector2(float(px[hex]) - float(xkey[hex]), y_line - float(ykey[hex]))
-		_sp_off[hex] = (o / 2.0).round() * 2.0   # чётный сдвиг: стыки трасс на сетке 2 px
-	_grid_nudge(slot)
-	if not _grid_route(r):
+	for px: Dictionary in choices:
+		for key: Vector2i in slot:
+			var hex: String = slot[key]
+			var o := Vector2(float(px[hex]) - float(xkey[hex]), float(py[hex]) - float(ykey[hex]))
+			_sp_off[hex] = (o / 2.0).round() * 2.0   # чётный сдвиг: стыки трасс на сетке 2 px
+		_grid_nudge(slot)
+		if _grid_route(r):
+			return true
 		for hex: String in cell:
 			_sp_off[hex] = Vector2.ZERO
 		_grid_paths = {}
 		_grid_full = {}
-		return false
-	return true
+	return false
 
 
-## Строгие колонки не влезли по ширине (владелец, 2026-10-15: после UX-1 зона
-## 655 px, треть досок четверых выпадала из сетки, хотя самый широкий ряд
-## занимает ~600 px — терялось на том, что гексы колонки выступают по-разному).
-## Гекс может отойти от линии колонки: ищется самый малый уход d (шаг GRID, до
-## GRID_SOFT_MAX), при котором гексы одной колонки разнесены не больше чем на
-## 2d (угловые города — строго на одной линии), соседи в ряду не сходятся (щель >= GRID_SOFT_GAP) и всё в ширине r.
-## Ограничения — разности двух x, их решают кратчайшие пути (Беллман-Форд);
-## берётся середина между самой левой и самой правой расстановкой. Не вышло —
-## пусто.
+## Строгие колонки или ряды не влезли (владелец, 2026-10-15): после UX-1 зона
+## 655 px, и треть досок четверых выпадала из сетки по ширине, хотя самый
+## широкий ряд занимает ~600 px, а после NE-UI-2 (полоса вопроса 92 px) иные
+## не влезали по высоте — терялось на том, что гексы одной линии выступают
+## за неё по-разному. Гекс может отойти от линии: ищется самый малый уход d
+## (шаг GRID, до GRID_SOFT_MAX), при котором гексы одной линии (key.x) разнесены
+## не больше чем на 2d, гексы из locked — строго на одной линии, соседи по оси
+## (key.x и key.x + 1; при diag и через ряд) не сходятся (щель >= gap) и всё
+## между lo и hi. lo_ext/hi_ext — сколько гекс выступает от точки линии назад и
+## вперёд по оси. Ограничения — разности двух координат, их решают кратчайшие
+## пути (Беллман-Форд); берётся середина между самой ранней и самой поздней
+## расстановкой. Ответ hex -> координата его точки линии; не вышло — пусто.
 const GRID_SOFT_MAX := 16
 const GRID_SOFT_GAP := 6.0
 
-func _grid_soft_x(slot: Dictionary, lw: Dictionary, rw: Dictionary, r: Rect2) -> Dictionary:
+func _grid_soft(slot: Dictionary, lo_ext: Dictionary, hi_ext: Dictionary, lo: float, hi: float,
+		gap: float, locked: Dictionary, diag: bool) -> Dictionary:
 	var hexes: Array = slot.values()
 	for d in range(GRID, GRID_SOFT_MAX + 1, GRID):
-		var edges := _grid_soft_edges(slot, lw, rw, r, d)
+		# ограничения x_to <= x_from + w как [from, to, w]; "" — начало оси (0)
+		var edges: Array = []
+		for key: Vector2i in slot:
+			var hex: String = slot[key]
+			edges.append(["", hex, hi - float(hi_ext[hex])])
+			edges.append([hex, "", -(lo + float(lo_ext[hex]))])
+			for key2: Vector2i in slot:
+				var other: String = slot[key2]
+				if key2.x == key.x and key2.y != key.y:
+					var both := locked.has(hex) and locked.has(other)
+					edges.append([hex, other, 0.0 if both else 2.0 * d])
+				elif key2.x == key.x + 1 and (key2.y == key.y or (diag and absi(key2.y - key.y) <= 1)):
+					edges.append([other, hex, -(float(hi_ext[hex]) + float(lo_ext[other]) + gap)])
 		var late := _grid_soft_paths(hexes, edges, false)
 		var early := _grid_soft_paths(hexes, edges, true)
 		if late.is_empty() or early.is_empty():
 			continue
-		var px := {}
+		var at := {}
 		for hex: String in hexes:
-			px[hex] = roundf((float(late[hex]) + float(early[hex])) / 4.0) * 2.0
-		return px
+			at[hex] = roundf((float(late[hex]) + float(early[hex])) / 4.0) * 2.0
+		return at
 	return {}
-
-
-## Ограничения x_to <= x_from + w как [from, to, w]; "" — левый край (x = 0).
-func _grid_soft_edges(slot: Dictionary, lw: Dictionary, rw: Dictionary, r: Rect2, d: int) -> Array:
-	var edges: Array = []
-	for key: Vector2i in slot:
-		var hex: String = slot[key]
-		edges.append(["", hex, r.end.x - float(rw[hex])])
-		edges.append([hex, "", -(r.position.x + float(lw[hex]))])
-		for key2: Vector2i in slot:
-			var other: String = slot[key2]
-			if key2.x == key.x and key2.y != key.y:
-				# угловые города (верх и низ крайних колонок) — строго на одной линии
-				var corners := (key.x == 0 or key.x == 4) and key.y != 0 and key2.y != 0
-				edges.append([hex, other, 0.0 if corners else 2.0 * d])
-			elif key2.x == key.x + 1 and (key2.y == key.y or (slot.size() != 15 and absi(key2.y - key.y) <= 1)):
-				edges.append([other, hex, -(float(rw[hex]) + float(lw[other]) + GRID_SOFT_GAP)])
-	return edges
 
 
 ## Самая правая расстановка (reverse — самая левая) или пусто, если ограничения
