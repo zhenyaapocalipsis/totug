@@ -72,6 +72,8 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 func _deploy_at(state: GameState, player_id: String, slot_id: String, resolver: EffectResolver) -> void:
 	var p: PlayerState = state.players[player_id]
 	FreljordCards.on_card_deploy(state, player_id)
+	if deployed.is_empty():
+		ShurimaCards.on_card_deploy(state, player_id, resolver)  # Hyena: раз на цепочку
 	state.troops[slot_id] = player_id
 	var stock: PlayerState = state.stock(player_id)
 	stock.troops_in_barracks -= 1

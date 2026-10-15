@@ -2,6 +2,13 @@
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
+## NE-21 (2026-10-16): Shurima → CALIMSHAN — сделано, не задеплоено
+- Ключ `shurima`, тип `CALIMSHAN`, id 49700–49720, `wip` (кнопка CALIMSHAN в NEW ERA, не в обычном пуле). Эффекты `core/cards/shurima_cards.gd`, тест `test_calimshan_deck`, справка `Claude outputs/new_era_shurima.md`, лист всех карт `Claude outputs/calimshan_cards_all.png`.
+- Владелец: **Azir заменён на Naafiri** (картинка PDF 380, Extra Champions) и **в колоде все 45 карт / 21 уникальная** — что убрать до 40/20, владелец выберет сам по листу. После его выбора: поправить `half_decks.json`, тест (45/21 → 40/20, рынок 85 → 80), убрать `wip`, если скажет.
+- **Devotion**: `ShurimaCards.on_recruit` (GameServer после покупки, RecruitFree) и `on_promote` (после каждого `log_event("promote")` — PromoteCard, Celestial, Mercenary, Noxus, Siege, ForceDiscard). Новые пути найма/promote тоже должны их звать.
+- **Ankheg (Rammus)** — реакция внутри `ShieldGuard` (параметр `kill`): только убийство/вытеснение войска. **Roper (Naafiri)** — хуки в `DeployTroop._deploy_at` и `Actions.deploy`. **Tough** — `turn_flags["no_recruit"]`, `Actions.market_cost` = -1.
+- PROTOCOL **31**. Тесты 1968/0, сеть 151/0. Звери заменены на чудищ/гуманоидов (правило NE-19).
+
 ## Коротко на 2026-10-16 (читать первым)
 - **Всё закоммичено и запушено** (`main`, последний коммит `9df122f`). На сервере сборка **1792092861**, **PROTOCOL 30** (`net/net_session.gd`).
 - **Тесты на 2026-10-16:** `пройдено: 1939, провалено: 0`, сеть `151 / 0`. В тесте карт 285 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит.

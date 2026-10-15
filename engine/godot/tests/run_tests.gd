@@ -69,6 +69,7 @@ func _initialize() -> void:
 	test_mercenaries_deck()
 	test_avernus_deck()
 	test_icewind_deck()
+	test_calimshan_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -1679,9 +1680,13 @@ func test_skin_collection() -> void:
 	check(_all_text(page).contains("DUST 100") and _all_text(page).contains("LOOT BOXES 1"),
 		"вкладка показывает пыль и лутбоксы")
 	check(CollectionPage.faction_cards("starting").has("48342"), "в CARDS есть и стартовые карты")
-	# New Era во вкладке CARDS: 20 карт по возрастанию цены, жетоны — кнопкой под картой.
+	# New Era во вкладке CARDS: уникальные карты полуколоды (обычно 20; у Calimshan пока
+	# все 21) по возрастанию цены, жетоны — кнопкой под картой.
 	for deck in CollectionPage.NEW_ERA_FACTIONS:
-		check_eq(CollectionPage.faction_cards(deck).size(), 20, "CARDS: у %s 20 карт" % deck)
+		var unique := {}
+		for cid: String in GameSetup.expand_half_deck(deck):
+			unique[cid] = true
+		check_eq(CollectionPage.faction_cards(deck).size(), unique.size(), "CARDS: у %s %d карт" % [deck, unique.size()])
 		check(_find_button(page, SetupScreen.NEW_ERA_TITLES[deck]) != null, "CARDS: вкладка %s" % SetupScreen.NEW_ERA_TITLES[deck])
 	for deck in CollectionPage.FACTIONS:
 		var costs: Array = CollectionPage.faction_cards(deck).map(func(c): return CollectionPage.card_cost(c))
@@ -2188,10 +2193,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 285 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 306 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 285, "cards.json содержит 285 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale)")
+	check_eq(all_ids.size(), 306, "cards.json содержит 306 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -5876,6 +5881,128 @@ func test_shadow_isles() -> void:
 
 
 ## Живой текст карт (CardLive + CardLiveFace, владелец 2026-10-11).
+func test_calimshan_deck() -> void:
+	section("Calimshan (New Era Shurima): полуколода и Devotion")
+	var S := ShurimaCards
+	var deck := GameSetup.expand_half_deck("shurima")
+	check_eq(deck.size(), 45, "Calimshan: все 45 карт мода (владелец урежет сам)")
+	var uniques := {}
+	for cid: String in deck:
+		uniques[cid] = true
+	check_eq(uniques.size(), 21, "Calimshan: 21 уникальная карта, Roper (Naafiri) вместо Azir")
+	check(not GameSetup.available_half_decks().has("shurima"), "Calimshan пока wip: не в обычном выборе")
+	var mode := GameSetup.new_era_mode(["shurima", "celestial"])
+	check(GameSetup.is_mode(mode), "режим Celestial + Calimshan принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Calimshan)")
+	_sweep_deck_with_vp(49700, 49720)
+
+	var state := _build_rich_state(47)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	TurnEngine.start_turn(state, "red")
+
+	# Devotion при найме (GameServer зовёт сразу) и при promote
+	red.power = 0
+	var rd := EffectResolver.new()
+	S.on_recruit(state, "red", S.GORGON, rd, true)
+	check_eq(red.power, 3, "Devotion Gorgon при найме: +3 Power")
+	red.influence = 0
+	red.deck.hand = [S.MAGMA_MEPHIT]
+	var rp := EffectResolver.new()
+	rp.apply(PromoteCard.new("hand"), "red", state)
+	TurnEngine.resume_card(state, S.MAGMA_MEPHIT, rp)
+	check(state.stock("red").deck.inner_circle.has(S.MAGMA_MEPHIT), "Magma Mephit продвинут")
+	check_eq(red.influence, 1, "Devotion Magma Mephit при promote: +1 Influence")
+
+	# Goblin Warrior: каждый Devotion в этот ход +1 Power; Cockatrice повторяет Devotion сыгранной карты
+	red.power = 0
+	var rw := _play_with(state, S.GOBLIN_WARRIOR, [0])
+	_auto_resolve(state, rw, false)
+	red.deck.played_pile.append(S.GORGON)
+	red.power = 0
+	var rc := _play_with(state, S.COCKATRICE, [0])
+	check(rc.is_waiting() and rc.pending.legal_options.has(S.GORGON), "Cockatrice: на выбор Devotion сыгранных карт")
+	TurnEngine.resume_card(state, S.GORGON, rc)
+	check_eq(red.power, 4, "Devotion Gorgon через Cockatrice: +3 и +1 от Goblin Warrior")
+
+	# Tough: оба соседа называют карту — её нельзя нанять, +1 Influence за каждую
+	red.influence = 0
+	var rt := _play_with(state, S.TOUGH, [2])
+	var namers: Array = []
+	while rt.is_waiting() and rt.pending.choice_type == "target_market_index":
+		namers.append(rt.pending.player_id)
+		TurnEngine.resume_card(state, rt.pending.legal_options[0], rt)
+	namers.sort()
+	check_eq(namers, ["blue", "green"], "Tough: назвали карту оба соседа")
+	check_eq(red.influence, 4, "Tough: +2 и +1 за каждую названную карту")
+	var banned := 0
+	for i in range(state.market.display.size()):
+		if Actions.market_cost(state, i) < 0 and S.recruit_banned(state, String(state.market.display[i])):
+			banned += 1
+	check(banned >= 1, "названные карты рынка не нанять (цена -1)")
+	state.turn_flags.erase("no_recruit")
+
+	# Roper: карта ставит войска — убийство; Deploy возвращает 1 Power раз на карту
+	red.power = 0
+	var rh := _play_with(state, S.ROPER)
+	check_eq(red.power, 3, "Roper: +3 Power")
+	var rg := _play_with(state, S.ZOMBIE)
+	var asked_kill := false
+	var steps := 0
+	while rg.is_waiting() and steps < 10:
+		steps += 1
+		if rg.pending.prompt.begins_with("Assassinate"):
+			asked_kill = true
+		TurnEngine.resume_card(state, rg.pending.legal_options[0], rg)
+	check(asked_kill, "Roper: Zombie поставил войска — вопрос «убить войско»")
+	red.power = 5
+	var refunds := 0
+	for slot_id: String in state.deployable_slots("red"):
+		var before := red.power
+		if not Actions.deploy(state, "red", slot_id):
+			break
+		if red.power == before:
+			refunds += 1
+		if refunds > 3 or red.power <= 1:
+			break
+	check_eq(int(state.turn_flags.get("naafiri_used", 0)), 2, "Roper: Deploy вернул Power 2 раза (Roper и Zombie)")
+	state.turn_flags.erase("naafiri")
+
+	# Ankheg в руке жертвы: отменяет убийство и вытесняет войско нападавшего
+	blue.deck.hand = [S.ANKHEG, "48342"]
+	var ra := EffectResolver.new()
+	ra.apply(AssassinateTroop.new(1), "red", state)
+	var target := _slot_of(state, ra.pending, "blue")
+	TurnEngine.resume_card(state, target, ra)
+	check(ra.is_waiting() and ra.pending.player_id == "blue" and ra.pending.source_card == S.ANKHEG,
+		"Ankheg: синему вопрос «сбросить, чтобы отменить?»")
+	TurnEngine.resume_card(state, true, ra)
+	check_eq(String(state.troops[target]), "blue", "убийство отменено")
+	check(blue.deck.discard_pile.has(S.ANKHEG), "Ankheg сброшен")
+	var only_red := ra.is_waiting() and ra.pending.legal_options.all(
+		func(s): return String(state.troops.get(String(s), "")) == "red")
+	check(only_red, "Ankheg: вытеснить можно только войско красного")
+	var hit: String = String(ra.pending.legal_options[0])
+	TurnEngine.resume_card(state, hit, ra)
+	check_eq(String(state.troops[hit]), "blue", "синий вытеснил войско красного")
+
+	# Purple Worm: карта за каждое войско, убитое или вытесненное в этот ход
+	state.turn_flags["trophy_start"] = state.stock("red").trophy_hall_count
+	red.deck.hand.clear()
+	var rv := _play_with(state, S.PURPLE_WORM)
+	TurnEngine.resume_card(state, rv.pending.legal_options[0], rv)
+	check_eq(red.deck.hand.size(), 1, "Purple Worm: вытеснил 1 войско — взял 1 карту")
+
+	# Deva: Devotion по желанию кладёт его наверх колоды
+	red.deck.discard_pile.append(S.DEVA)
+	var rs := EffectResolver.new()
+	S.on_recruit(state, "red", S.DEVA, rs, true)
+	check(rs.is_waiting() and rs.pending.choice_type == "confirm", "Deva: вопрос «наверх колоды?»")
+	TurnEngine.resume_card(state, true, rs)
+	check_eq(red.deck.draw_pile.back(), S.DEVA, "Deva наверху колоды")
+
+
 func test_card_live() -> void:
 	print("\n[card live]")
 	var state := GameSetup.new_game(["red", "blue"] as Array[String], 4242, ["drow", "demons"])
@@ -6165,7 +6292,7 @@ func test_icewind_deck() -> void:
 	var ice_uniques := {}
 	for cid: String in ice_deck:
 		ice_uniques[cid] = true
-	check_eq(ice_uniques.size(), 20, "Icewind Dale: 20 уникальных карт (без Guard, Giant Owl, Giant Hyena)")
+	check_eq(ice_uniques.size(), 20, "Icewind Dale: 20 уникальных карт (без Guard, Giant Owl, Giant Roper)")
 	check(GameSetup.available_half_decks().has("freljord"), "Icewind Dale в обычном выборе")
 	var mode := GameSetup.new_era_mode(["freljord", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Icewind Dale принимается")
@@ -6192,7 +6319,7 @@ func test_icewind_deck() -> void:
 	check(blue.deck.discard_pile.has(F.MAGMIN), "Magmin сброшен")
 	check_eq(blue.deck.hand.size(), 4, "Frostbite Magmin: синий взял карту")
 	check_eq(red.power, 3, "Werewolf: +2 и +1 за Frostbite в этот ход")
-	check(state.turn_flags.get("other_discard", false), "сброс соперника отмечен (Giant Hyena)")
+	check(state.turn_flags.get("other_discard", false), "сброс соперника отмечен (Giant Roper)")
 
 	# Hill Giant в руке: можно отменить сброс
 	blue.deck.hand = [F.HILL_GIANT, "48342", "48344", "48343"]

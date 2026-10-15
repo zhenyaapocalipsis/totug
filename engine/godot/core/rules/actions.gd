@@ -68,6 +68,7 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	stock.troops_in_barracks -= 1
 	if stock.troops_in_barracks == 0:
 		GameEnd.trigger(state, "last_troop")
+	ShurimaCards.on_deploy_action(state, player_id)
 	return true
 
 
@@ -188,6 +189,8 @@ static func market_cost(state: GameState, index: int) -> int:
 	var cost: int = state.market.card_cost(index)
 	if cost < 0:
 		return cost
+	if ShurimaCards.recruit_banned(state, String(state.market.display[index])):
+		return -1  # Tough: соседи назвали эту карту — в этот ход не нанять
 	return maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index])
 		- int(state.turn_discounts.get("recruit", 0)) - int(state.turn_discounts.get("slot:%d" % index, 0)))
 

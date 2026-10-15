@@ -64,12 +64,12 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		if slot_id == null or slot_id == "":
 			return
 		var owner: String = state.troops.get(slot_id, "")
-		if ShieldGuard.can_react(state, player_id, owner):
-			# Сначала вопрос жертве (Shield Guardian), потом продолжение.
+		if ShieldGuard.can_react(state, player_id, owner, true):
+			# Сначала вопрос жертве (Shield Guardian, Ankheg), потом продолжение.
 			var me := self
 			resolver.push(CallbackEffect.new(func(s, pid, r): me._after_hit(s, pid, r, slot_id)), player_id)
 			resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
-				func(s, pid, r): me._kill(s, pid, slot_id, r)), "the assassination"), player_id)
+				func(s, pid, r): me._kill(s, pid, slot_id, r)), "the assassination", true), player_id)
 			return
 		_kill(state, player_id, slot_id, resolver)
 		_after_hit(state, player_id, resolver, slot_id)

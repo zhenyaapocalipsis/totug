@@ -287,5 +287,14 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s reveals %s" % [who, ", ".join(PackedStringArray(shown.map(func(c): return card_name(String(c)))))]
 		"card_on_top":
 			return "%s puts %s on top of their deck" % [who, card]
+		# Calimshan (New Era Shurima)
+		"devotion":
+			return "%s: Devotion of %s" % [who, card]
+		"ankheg_block":
+			return "%s discards Ankheg and stops %s" % [who, e.get("what", "it")]
+		"name_card":
+			return "%s names %s: it can't be recruited this turn" % [who, card]
+		"inner_to_hand":
+			return "%s returns %s from the inner circle to hand" % [who, card]
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]

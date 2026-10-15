@@ -123,6 +123,13 @@ const MINI_FACE := {
 	49612: Vector2i(24, 34), 49613: Vector2i(57, 1), 49614: Vector2i(98, 0), 49615: Vector2i(94, 0),
 	49616: Vector2i(71, 11), 49617: Vector2i(54, 17), 49618: Vector2i(47, 4),
 	49620: Vector2i(81, 4), 49634: Vector2i(43, 24), 49635: Vector2i(110, 14), 49636: Vector2i(77, 30),
+	# Calimshan (New Era Shurima)
+	49700: Vector2i(57, 0), 49701: Vector2i(30, 21), 49702: Vector2i(79, 0), 49703: Vector2i(38, 14),
+	49704: Vector2i(25, 12), 49705: Vector2i(31, 14), 49706: Vector2i(80, 15), 49707: Vector2i(7, 22),
+	49708: Vector2i(47, 1), 49709: Vector2i(44, 16), 49710: Vector2i(40, 19), 49711: Vector2i(47, 28),
+	49712: Vector2i(42, 12), 49713: Vector2i(71, 21), 49714: Vector2i(49, 14), 49715: Vector2i(42, 40),
+	49716: Vector2i(54, 0), 49717: Vector2i(34, 5), 49718: Vector2i(71, 27), 49719: Vector2i(55, 24),
+	49720: Vector2i(49, 5),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -155,7 +162,9 @@ const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETU
 	# новые слова New Era и фанатских колод (владелец, 2026-10-15)
 	"SCRY", "MIGHT", "FROSTBITE", "TRANSFORM",
 	# владелец, 2026-10-16
-	"DISTINCT"]
+	"DISTINCT",
+	# Calimshan (2026-10-16)
+	"DEVOTION"]
 
 ## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
 ## (номер буквы, после которой ставится дефис). Берётся самая дальняя граница,
@@ -357,6 +366,28 @@ const SINGLE_ART := {
 	49634: ["freljord/pirate_captain.jpeg", Rect2i(0, 200, 522, 318)],
 	49635: ["freljord/blink_dog.jpeg", Rect2i(144, 130, 656, 400)],
 	49636: ["freljord/young_white_dragon.png", Rect2i(300, 60, 560, 341)],
+	# Calimshan (New Era Shurima), арты D&D Beyond
+	49700: ["shurima/zombie.jpeg", Rect2i(0, 120, 777, 474)],
+	49701: ["shurima/cockatrice.png", Rect2i(60, 400, 560, 341)],
+	49702: ["shurima/brass_dragon_wyrmling.png", Rect2i(150, 150, 700, 427)],
+	49703: ["shurima/steam_mephit.jpeg", Rect2i(0, 80, 638, 389)],
+	49704: ["shurima/commoner.png", Rect2i(100, 230, 650, 396)],
+	49705: ["shurima/tough.png", Rect2i(0, 150, 460, 280)],
+	49706: ["shurima/incubus.png", Rect2i(0, 130, 572, 349)],
+	49707: ["shurima/goblin_warrior.png", Rect2i(0, 230, 574, 350)],
+	49708: ["shurima/goblin_minion.jpeg", Rect2i(100, 40, 700, 427)],
+	49709: ["shurima/dragon_turtle.png", Rect2i(100, 100, 700, 427)],
+	49710: ["shurima/magma_mephit.jpeg", Rect2i(300, 80, 700, 427)],
+	49711: ["shurima/roper.jpeg", Rect2i(50, 220, 700, 427)],
+	49712: ["shurima/ancient_brass_dragon.jpeg", Rect2i(50, 120, 600, 366)],
+	49713: ["shurima/purple_worm.png", Rect2i(0, 520, 455, 277)],
+	49714: ["shurima/guardian_naga.jpeg", Rect2i(50, 0, 700, 427)],
+	49715: ["shurima/adult_brass_dragon.png", Rect2i(150, 180, 700, 427)],
+	49716: ["shurima/stone_giant.png", Rect2i(250, 0, 700, 427)],
+	49717: ["shurima/gorgon.png", Rect2i(200, 100, 600, 366)],
+	49718: ["shurima/ankheg.png", Rect2i(0, 50, 755, 460)],
+	49719: ["shurima/dust_mephit.jpeg", Rect2i(0, 220, 525, 320)],
+	49720: ["shurima/deva.png", Rect2i(100, 80, 650, 396)],
 }
 
 const FONT := {
@@ -644,6 +675,7 @@ func set_name(card_id: int, type: String) -> String:
 		494: return "MERCENARIES"
 		495: return "AVERNUS"
 		496: return "ICEWIND DALE"
+		497: return "CALIMSHAN"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

@@ -18,6 +18,10 @@ var up_to: bool
 var _post_effect_factory: Callable  # func(slot_id: String) -> CardEffect, опционально
 var preset_site: String = ""
 var lock_after_first: bool = false  # "up to N troops at one site": локация фиксируется первым выбором
+## Gorgon (New Era): цели только среди этих слотов (пусто — без ограничения).
+var only_slots: Array = []
+## Ankheg (New Era): только войска этого игрока ("" — любые вражеские).
+var only_owner: String = ""
 
 
 func _init(count: int = 1, is_white_only: bool = false, allow_anywhere: bool = false,
@@ -40,6 +44,10 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 			continue
 		if white_only and not SiegeCards.counts_as_white(state, player_id, owner):
 			continue
+		if not only_slots.is_empty() and not only_slots.has(slot_id):
+			continue
+		if only_owner != "" and owner != only_owner:
+			continue
 		if preset_site != "" and state.graph.site_of_slot(slot_id) != preset_site:
 			continue
 		if preset_site == "" and not anywhere and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
@@ -55,12 +63,12 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		_answer = null
 		if slot_id != null and slot_id != "":
 			var owner: String = state.troops.get(slot_id, "")
-			if ShieldGuard.can_react(state, player_id, owner):
-				# Сначала вопрос жертве (Shield Guardian), потом продолжение.
+			if ShieldGuard.can_react(state, player_id, owner, true):
+				# Сначала вопрос жертве (Shield Guardian, Ankheg), потом продолжение.
 				var me := self
 				resolver.push(CallbackEffect.new(func(s, pid, r): me._after_hit(s, pid, r)), player_id)
 				resolver.push(ShieldGuard.new(owner, CallbackEffect.new(
-					func(s, pid, r): me._supplant(s, pid, r, slot_id)), "the supplant"), player_id)
+					func(s, pid, r): me._supplant(s, pid, r, slot_id)), "the supplant", true), player_id)
 				return
 			_supplant(state, player_id, resolver, slot_id)
 			_after_hit(state, player_id, resolver)

@@ -26,7 +26,7 @@ func _eligible_indices(state: GameState) -> Array:
 		if cid == "":
 			continue
 		var cost: int = CardLibrary.card_cost(cid)
-		if cost < 0 or cost > max_cost:
+		if cost < 0 or cost > max_cost or ShurimaCards.recruit_banned(state, cid):
 			continue
 		if aspect_filter != "" and CardLibrary.card_aspect(cid) != aspect_filter:
 			continue
@@ -44,6 +44,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			if card_id != "":
 				state.players[player_id].deck.discard_pile.append(card_id)
 				CardLibrary.on_gain(state, player_id, card_id)
+				ShurimaCards.on_recruit(state, player_id, card_id, resolver)
 				resolver.log_event("recruit_free", {"player_id": player_id, "card_id": card_id, "market_index": int(index)})
 				if state.market.is_deck_empty():
 					GameEnd.trigger(state, "market_empty")

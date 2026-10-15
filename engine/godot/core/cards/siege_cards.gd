@@ -226,6 +226,7 @@ class PromoteFromMarket extends CardEffect:
 			state.players[player_id].influence -= cost
 			state.stock(player_id).deck.inner_circle.append(card)
 			resolver.log_event("promote", {"player_id": player_id, "card_id": card, "from": "market"})
+			ShurimaCards.on_promote(state, player_id, String(card), resolver)
 			if state.market.is_deck_empty():
 				GameEnd.trigger(state, "market_empty")
 			return

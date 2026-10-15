@@ -2848,5 +2848,215 @@
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, each troop your cards deploy gives +1 Power. You can't deploy with that Power.\nDeploy 3 troops."
+  },
+  {
+    "card_id": 49700,
+    "name": "Zombie",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CALIMSHAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Devotion: Return a troop or spy.\nDeploy 2 troops.\nReturn a troop or spy."
+  },
+  {
+    "card_id": 49701,
+    "name": "Cockatrice",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "CALIMSHAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Trigger the Devotion of another card you played this turn.\n• Return a card from your inner circle to your hand, draw a card.\n• +2 Power."
+  },
+  {
+    "card_id": 49702,
+    "name": "Brass Dragon Wyrmling",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CALIMSHAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Devotion: Draw a card.\nDeploy 3 troops. If one is next to another player's troop, you may promote a card from your hand or discard pile."
+  },
+  {
+    "card_id": 49703,
+    "name": "Steam Mephit",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "CALIMSHAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Devotion: Scry 3.\nChoose one:\n• Place a spy, scry 3.\n• Return one of your spies: look at the top 3 cards of your deck, put 1 in your hand, discard the rest."
+  },
+  {
+    "card_id": 49704,
+    "name": "Commoner",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "CALIMSHAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Devotion: Draw a card, then discard a card.\nChoose one:\n• +2 Influence.\n• At end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49705,
+    "name": "Tough",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "CALIMSHAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Influence\nYou may let the players to your left and right each name a market card: you can't recruit it this turn, +1 Influence per card named."
+  },
+  {
+    "card_id": 49706,
+    "name": "Incubus",
+    "cost": 5,
+    "aspect": "GUILE",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "Devotion: +2 Power.\nChoose one:\n• Place a spy. If that site is full, +3 Power.\n• Return one of your spies: supplant a troop at that site, +2 Power."
+  },
+  {
+    "card_id": 49707,
+    "name": "Goblin Warrior",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CALIMSHAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Devotion: Deploy 3 troops.\nThis turn, +1 Power each time you trigger Devotion.\nChoose one:\n• Deploy 3 troops.\n• Supplant a white troop."
+  },
+  {
+    "card_id": 49708,
+    "name": "Goblin Minion",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "CALIMSHAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Devotion: Place a spy.\nChoose one:\n• Place a spy. Full site: at end of turn, promote another played card.\n• Return one of your spies: supplant a troop there."
+  },
+  {
+    "card_id": 49709,
+    "name": "Dragon Turtle",
+    "cost": 5,
+    "aspect": "CONQUEST",
+    "type": "CALIMSHAN",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "Devotion: Supplant a troop.\nChoose one:\n• Devour a card in your hand, draw a card.\n• Supplant a troop."
+  },
+  {
+    "card_id": 49710,
+    "name": "Magma Mephit",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "CALIMSHAN",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Devotion: +1 Influence.\nChoose two:\n• +1 Influence.\n• +1 Power.\n• Place a spy.\n• Deploy 2 troops."
+  },
+  {
+    "card_id": 49711,
+    "name": "Roper",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+3 Power\nThis turn, each time a card deploys your troops, assassinate a troop. Your Deploy actions give 1 Power back, once per card you play."
+  },
+  {
+    "card_id": 49712,
+    "name": "Ancient Brass Dragon",
+    "cost": 8,
+    "aspect": "GUILE",
+    "type": "CALIMSHAN",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Devotion: Assassinate a troop anywhere.\nAssassinate 3 troops anywhere. If none was where you had Presence, draw a card."
+  },
+  {
+    "card_id": 49713,
+    "name": "Purple Worm",
+    "cost": 8,
+    "aspect": "AMBITION",
+    "type": "CALIMSHAN",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Devotion: Supplant a troop.\nSupplant a troop.\nDraw a card for each troop you assassinated or supplanted this turn."
+  },
+  {
+    "card_id": 49714,
+    "name": "Guardian Naga",
+    "cost": 8,
+    "aspect": "MALICE",
+    "type": "CALIMSHAN",
+    "deck_vp": 4,
+    "inner_circle_vp": 8,
+    "ability_text": "Devotion: Assassinate a troop.\nAssassinate a troop. +3 Power.\n+1 Power per 3 troops in your trophy hall."
+  },
+  {
+    "card_id": 49715,
+    "name": "Adult Brass Dragon",
+    "cost": 7,
+    "aspect": "AMBITION",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Devotion: Scry 2, draw a card.\n+1 Influence and +1 Power for each different cost among cards you played this turn."
+  },
+  {
+    "card_id": 49716,
+    "name": "Stone Giant",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Devotion: Move 2 troops.\nDraw a card. Choose one:\n• Move 3 of your troops.\n• Move an enemy troop."
+  },
+  {
+    "card_id": 49717,
+    "name": "Gorgon",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Devotion: +3 Power.\nMove another player's troop, then supplant it."
+  },
+  {
+    "card_id": 49718,
+    "name": "Ankheg",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Move a troop, deploy 3 troops.\nIf another player would assassinate or supplant your troop, you may discard this from hand to stop it and supplant one of their troops."
+  },
+  {
+    "card_id": 49719,
+    "name": "Dust Mephit",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Devotion: Recruit a card that costs 3 or less for free.\nChoose one:\n• Recruit a card that costs 5 or less for free.\n• Recruit 2 cards that cost 3 or less for free."
+  },
+  {
+    "card_id": 49720,
+    "name": "Deva",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CALIMSHAN",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Devotion: Put this card on top of your deck.\nSupplant a troop. If it was another player's, you may take a troop from their trophy hall and deploy it; otherwise scry 2."
   }
 ]

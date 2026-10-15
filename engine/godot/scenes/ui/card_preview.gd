@@ -38,6 +38,7 @@ const KEYWORD_TIPS := {
 	"SCRY": "SCRY N: look at the top N cards of your deck\nand discard any of them.",
 	"MIGHT": "MIGHT: works if you devoured a card this turn.\nThe second Might on a card needs 2 devours, and so on.",
 	"FROSTBITE": "FROSTBITE: works when this card is discarded from your hand\n(not by the end-of-turn discard).",
+	"DEVOTION": "DEVOTION: works when you recruit or promote this card.",
 	"TRANSFORM": "TRANSFORM: this card turns into the stronger card it names.",
 	"DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
 }

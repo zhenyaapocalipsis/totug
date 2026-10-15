@@ -68,6 +68,7 @@ const NEW_ERA_TITLES := {
 	"mercenaries": "MERCENARIES",
 	"noxus": "AVERNUS",
 	"freljord": "ICEWIND DALE",
+	"shurima": "CALIMSHAN",
 }
 
 
@@ -122,6 +123,7 @@ const DECK_TIPS := {
 	"mercenaries": "MERCENARIES: Bribe.\nGive a rival 1 VP for a stronger effect; lots of VP.",
 	"noxus": "AVERNUS: Execute and Might.\nDevour cards this turn to power up Might effects.",
 	"freljord": "ICEWIND DALE: Frostbite.\nCards fire when discarded from hand; make others discard.",
+	"shurima": "CALIMSHAN: Devotion.\nCards fire when recruited or promoted; recruit and promote a lot.",
 }
 ## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из

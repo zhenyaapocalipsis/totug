@@ -230,7 +230,7 @@ func _apply(intent: Intent) -> int:
 
 		Intent.Type.ACTION_ASSASSINATE:
 			var victim := String(state.troops.get(intent.slot_id, ""))
-			if ShieldGuard.can_react(state, intent.player_id, victim):
+			if ShieldGuard.can_react(state, intent.player_id, victim, true):
 				# Жертва может ответить Shield Guardian: Power тратится сразу,
 				# убийство — только если она откажется.
 				if not Actions.can_assassinate(state, intent.player_id, intent.slot_id):
@@ -241,7 +241,7 @@ func _apply(intent: Intent) -> int:
 				var hit := func(s, pid, r):
 					Actions.kill_at(s, pid, slot)
 					r.log_event("assassinate", {"player_id": pid, "slot_id": slot, "victim": victim})
-				resolver.apply(ShieldGuard.new(victim, CallbackEffect.new(hit), "the assassination"), intent.player_id, state)
+				resolver.apply(ShieldGuard.new(victim, CallbackEffect.new(hit), "the assassination", true), intent.player_id, state)
 				return Error.OK
 			if not Actions.assassinate(state, intent.player_id, intent.slot_id):
 				return Error.INVALID_ACTION
@@ -272,6 +272,7 @@ func _apply(intent: Intent) -> int:
 			resolver.log_event("recruit", {"player_id": intent.player_id, "market_index": intent.market_index, "card_id": bought})
 			PiltoverCards.after_buy(state, intent.player_id, bought, resolver)
 			MercenaryCards.after_buy(state, intent.player_id, resolver)
+			ShurimaCards.on_recruit(state, intent.player_id, bought, resolver, true)
 			return Error.OK
 
 		Intent.Type.ACTION_RECRUIT_SUPPLY:

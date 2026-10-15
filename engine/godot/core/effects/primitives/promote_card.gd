@@ -45,6 +45,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				p.deck.played_pile.remove_at(idx)
 				state.stock(player_id).deck.inner_circle.append(card_id)
 				resolver.log_event("promote", {"player_id": player_id, "card_id": card_id})
+				ShurimaCards.on_promote(state, player_id, String(card_id), resolver)
 			return
 		"top_of_deck":
 			if p.deck.draw_pile.is_empty():
@@ -61,6 +62,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				return
 			state.stock(player_id).deck.inner_circle.append(top)
 			resolver.log_event("promote", {"player_id": player_id, "card_id": top, "from": "top_of_deck"})
+			ShurimaCards.on_promote(state, player_id, String(top), resolver)
 			return
 
 	if is_answered():
@@ -129,6 +131,7 @@ func _promote_from(state: GameState, player_id: String, chosen: String, resolver
 	if removed:
 		state.stock(player_id).deck.inner_circle.append(chosen)
 		resolver.log_event("promote", {"player_id": player_id, "card_id": chosen})
+		ShurimaCards.on_promote(state, player_id, String(chosen), resolver)
 
 
 func _continue(state: GameState, player_id: String, resolver: EffectResolver) -> void:

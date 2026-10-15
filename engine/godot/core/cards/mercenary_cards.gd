@@ -612,6 +612,7 @@ class _PromoteDiscarded extends CardEffect:
 				return
 			state.stock(player_id).deck.inner_circle.append(chosen)
 			resolver.log_event("promote", {"player_id": player_id, "card_id": chosen})
+			ShurimaCards.on_promote(state, player_id, String(chosen), resolver)
 			return
 		if options.is_empty():
 			return

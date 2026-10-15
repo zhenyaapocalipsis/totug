@@ -276,6 +276,7 @@ class _PromoteHandDeployIc extends CardEffect:
 				return
 			state.stock(player_id).deck.inner_circle.append(String(chosen))
 			resolver.log_event("promote", {"player_id": player_id, "card_id": chosen})
+			ShurimaCards.on_promote(state, player_id, String(chosen), resolver)
 			var ic: int = Scoring._card_vp(String(chosen), "inner_circle_vp")
 			if ic > 0:
 				resolver.push(DeployTroop.new(ic), player_id)

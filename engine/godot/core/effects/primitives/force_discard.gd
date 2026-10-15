@@ -140,6 +140,7 @@ class VictimDiscard extends CardEffect:
 		if promote_instead:
 			state.stock(player_id).deck.inner_circle.append(chosen_card)
 			resolver.log_event("promote", {"player_id": player_id, "card_id": chosen_card})
+			ShurimaCards.on_promote(state, player_id, String(chosen_card), resolver)
 			return
 		p.deck.discard_pile.append(chosen_card)
 		resolver.log_event("force_discard", {"player_id": player_id, "card_id": chosen_card})

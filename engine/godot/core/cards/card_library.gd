@@ -633,6 +633,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var mercenary := MercenaryCards.build(card_id)
 	if mercenary != null:
 		return mercenary
+	var shurima := ShurimaCards.build(card_id)
+	if shurima != null:
+		return shurima
 	var freljord := FreljordCards.build(card_id)
 	if freljord != null:
 		return freljord
