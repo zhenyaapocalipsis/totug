@@ -1894,11 +1894,16 @@ func _grid_try(cell: Dictionary) -> bool:
 	for c in 4:
 		used += need[c]
 	var gap_x := (r.size.x - used) / 4.0
-	if gap_x < GRID_MIN_GAP_X:
-		return false
 	var lines_x: Array[float] = [r.position.x + first]
 	for c in 4:
 		lines_x.append(lines_x[c] + need[c] + gap_x)
+	var px := {}   # hex -> x линии его колонки (у точки xkey)
+	for key: Vector2i in slot:
+		px[slot[key]] = lines_x[key.x]
+	if gap_x < GRID_MIN_GAP_X:
+		px = _grid_soft_x(slot, lw, rw, r)
+		if px.is_empty():
+			return false
 
 	# по y: верх и низ — к краям, средний ряд — где самая узкая щель шире всего
 	var ykey := {}
@@ -1933,7 +1938,7 @@ func _grid_try(cell: Dictionary) -> bool:
 	for key: Vector2i in slot:
 		var hex: String = slot[key]
 		var y_line := top_line if key.y < 0 else (bottom_line if key.y > 0 else mid_line)
-		var o := Vector2(lines_x[key.x] - float(xkey[hex]), y_line - float(ykey[hex]))
+		var o := Vector2(float(px[hex]) - float(xkey[hex]), y_line - float(ykey[hex]))
 		_sp_off[hex] = (o / 2.0).round() * 2.0   # чётный сдвиг: стыки трасс на сетке 2 px
 	_grid_nudge(slot)
 	if not _grid_route(r):
@@ -1943,6 +1948,73 @@ func _grid_try(cell: Dictionary) -> bool:
 		_grid_full = {}
 		return false
 	return true
+
+
+## Строгие колонки не влезли по ширине (владелец, 2026-10-15: после UX-1 зона
+## 655 px, треть досок четверых выпадала из сетки, хотя самый широкий ряд
+## занимает ~600 px — терялось на том, что гексы колонки выступают по-разному).
+## Гекс может отойти от линии колонки: ищется самый малый уход d (шаг GRID, до
+## GRID_SOFT_MAX), при котором гексы одной колонки разнесены не больше чем на
+## 2d (угловые города — строго на одной линии), соседи в ряду не сходятся (щель >= GRID_SOFT_GAP) и всё в ширине r.
+## Ограничения — разности двух x, их решают кратчайшие пути (Беллман-Форд);
+## берётся середина между самой левой и самой правой расстановкой. Не вышло —
+## пусто.
+const GRID_SOFT_MAX := 16
+const GRID_SOFT_GAP := 6.0
+
+func _grid_soft_x(slot: Dictionary, lw: Dictionary, rw: Dictionary, r: Rect2) -> Dictionary:
+	var hexes: Array = slot.values()
+	for d in range(GRID, GRID_SOFT_MAX + 1, GRID):
+		var edges := _grid_soft_edges(slot, lw, rw, r, d)
+		var late := _grid_soft_paths(hexes, edges, false)
+		var early := _grid_soft_paths(hexes, edges, true)
+		if late.is_empty() or early.is_empty():
+			continue
+		var px := {}
+		for hex: String in hexes:
+			px[hex] = roundf((float(late[hex]) + float(early[hex])) / 4.0) * 2.0
+		return px
+	return {}
+
+
+## Ограничения x_to <= x_from + w как [from, to, w]; "" — левый край (x = 0).
+func _grid_soft_edges(slot: Dictionary, lw: Dictionary, rw: Dictionary, r: Rect2, d: int) -> Array:
+	var edges: Array = []
+	for key: Vector2i in slot:
+		var hex: String = slot[key]
+		edges.append(["", hex, r.end.x - float(rw[hex])])
+		edges.append([hex, "", -(r.position.x + float(lw[hex]))])
+		for key2: Vector2i in slot:
+			var other: String = slot[key2]
+			if key2.x == key.x and key2.y != key.y:
+				# угловые города (верх и низ крайних колонок) — строго на одной линии
+				var corners := (key.x == 0 or key.x == 4) and key.y != 0 and key2.y != 0
+				edges.append([hex, other, 0.0 if corners else 2.0 * d])
+			elif key2.x == key.x + 1 and (key2.y == key.y or (slot.size() != 15 and absi(key2.y - key.y) <= 1)):
+				edges.append([other, hex, -(float(rw[hex]) + float(lw[other]) + GRID_SOFT_GAP)])
+	return edges
+
+
+## Самая правая расстановка (reverse — самая левая) или пусто, если ограничения
+## несовместны (отрицательный цикл).
+func _grid_soft_paths(hexes: Array, edges: Array, reverse: bool) -> Dictionary:
+	var dist := {"": 0.0}
+	for hex: String in hexes:
+		dist[hex] = INF
+	for _pass in hexes.size() + 2:
+		var changed := false
+		for e: Array in edges:
+			var from: String = e[1] if reverse else e[0]
+			var to: String = e[0] if reverse else e[1]
+			if float(dist[from]) + float(e[2]) < float(dist[to]) - 0.001:
+				dist[to] = float(dist[from]) + float(e[2])
+				changed = true
+		if not changed:
+			var x := {}
+			for hex: String in hexes:
+				x[hex] = -float(dist[hex]) if reverse else float(dist[hex])
+			return x
+	return {}
 
 
 ## Стыки двух гексов почти напротив (вбок на 2..NUDGE_MAX px) дали бы мостику
