@@ -175,6 +175,14 @@ func _step_check_alt_preview() -> void:
 	# Мышь ушла с карты, Alt всё ещё зажат — копия остаётся (владелец, 2026-10-15).
 	CardPreview.clear_hovered(CardPreview.active._hovered)
 	check(CardPreview.active.has_preview(), "с зажатым Alt копия не пропадает, когда мышь ушла с карты")
+	# Мышь прошла через другую карту — показанная не сменилась.
+	var shown: CardView = CardPreview.active._source
+	var other := CardView.new(shown.card_id, 40, 56)
+	_screen.add_child(other)
+	CardPreview.set_hovered(other)
+	check(CardPreview.active._source == shown, "с зажатым Alt другая карта под мышью не сбивает показанную")
+	CardPreview.clear_hovered(other)
+	other.queue_free()
 
 
 func _step_alt_up() -> void:

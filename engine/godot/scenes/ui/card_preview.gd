@@ -117,8 +117,11 @@ func _set_alt(value: bool) -> void:
 
 ## Пока Alt зажат, показанная карта не пропадает, даже если мышь ушла с
 ## исходной (владелец, 2026-10-15): можно навести мышь на слова самой копии и
-## прочитать подсказки. Отпустил Alt — карта пропадает.
+## прочитать подсказки. Отпустил Alt — карта пропадает. Пока Alt зажат,
+## другая карта на пути мыши показанную не сменяет (владелец, 2026-10-15).
 func _sync() -> void:
+	if _alt and _card != null:
+		return
 	var hovered := _hovered != null and is_instance_valid(_hovered)
 	if hovered and (_alt or _hovered.hover_full):
 		if _source != _hovered:
