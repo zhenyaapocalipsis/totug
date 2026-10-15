@@ -26,6 +26,8 @@ var _names_path := ""
 var records: RecordBook
 ## Друзья и почта (FriendBook) — тоже свой файл рядом (ratings_friends.json).
 var friends: FriendBook
+## Профили для чужих глаз (ProfileBook) — ratings_profiles.json.
+var profiles: ProfileBook
 
 
 func _init(path: String = PATH) -> void:
@@ -35,6 +37,7 @@ func _init(path: String = PATH) -> void:
 	names = _read(_names_path)
 	records = RecordBook.new(path.get_basename() + "_records.json")
 	friends = FriendBook.new(path.get_basename() + "_friends.json")
+	profiles = ProfileBook.new(path.get_basename() + "_profiles.json")
 
 
 static func _read(file_path: String) -> Dictionary:

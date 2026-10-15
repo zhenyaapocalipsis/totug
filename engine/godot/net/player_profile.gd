@@ -492,8 +492,13 @@ const VP_PARTS := ["sites", "total_control", "trophies", "deck", "inner_circle",
 static func totals() -> Dictionary:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
-	var t = cfg.get_value("totals", "all", {})
-	var out: Dictionary = t if t is Dictionary else {}
+	return clean_totals(cfg.get_value("totals", "all", {}))
+
+
+## Суммы в полном виде (недостающие поля — нули). Так же их хранит сервер
+## (ProfileBook) для чужих профилей.
+static func clean_totals(t: Variant) -> Dictionary:
+	var out: Dictionary = (t as Dictionary).duplicate(true) if t is Dictionary else {}
 	for key in ["games", "vp", "best_vp", "most_trophies", "most_ic"]:
 		out[key] = int(out.get(key, 0))
 	for key in ["parts", "decks"]:
@@ -502,12 +507,13 @@ static func totals() -> Dictionary:
 	return out
 
 
-## Добавить партию к накопленному. Партия без разбивки (старый сервер) не в счёт.
-static func add_totals(entry: Dictionary) -> void:
+## Суммы t плюс партия entry (строка истории). Партия без разбивки (старый
+## сервер) не в счёт.
+static func merge_totals(t_in: Variant, entry: Dictionary) -> Dictionary:
+	var t := clean_totals(t_in)
 	var parts: Dictionary = entry.get("breakdown", {})
 	if parts.is_empty():
-		return
-	var t := totals()
+		return t
 	t["games"] += 1
 	t["vp"] += int(entry.get("vp", 0))
 	for key: String in VP_PARTS:
@@ -520,6 +526,21 @@ static func add_totals(entry: Dictionary) -> void:
 	t["best_vp"] = maxi(t["best_vp"], int(entry.get("vp", 0)))
 	t["most_trophies"] = maxi(t["most_trophies"], int(parts.get("trophies", 0)))
 	t["most_ic"] = maxi(t["most_ic"], int(entry.get("ic_cards", 0)))
+	return t
+
+
+## Средние VP за партию по статьям (VP_PARTS) — оси многоугольника.
+static func averages(t: Dictionary) -> Dictionary:
+	var out := {}
+	var games := int(t.get("games", 0))
+	for key: String in VP_PARTS:
+		out[key] = float((t.get("parts", {}) as Dictionary).get(key, 0)) / games if games > 0 else 0.0
+	return out
+
+
+## Добавить партию к накопленному.
+static func add_totals(entry: Dictionary) -> void:
+	var t := merge_totals(totals(), entry)
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("totals", "all", t)

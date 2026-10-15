@@ -107,6 +107,22 @@ const DOT := 7.0
 ## Кнопки бана полуколоды в поиске игры: ширина и сколько в ряду.
 const BAN_BUTTON := 70.0
 const BAN_PER_ROW := 5
+## В чём фишка полуколоды — подсказка в таблице банов (владелец, 2026-10-15).
+const DECK_TIPS := {
+	"drow": "DROW: the classic toolkit.\nSpies, supplants and promotions, steady and even.",
+	"dragons": "DRAGONS: lots of Influence and Power.\nBig dragons pay VP for sites, total control and trophies.",
+	"demons": "DEMONS: madness.\nHand opponents Insane Outcasts, devour cards to thin your deck.",
+	"elementals": "ELEMENTALS: Focus.\nA card gets a bonus if you play another card of its aspect.",
+	"aberrations": "ABERRATIONS: mind control.\nOpponents discard; play cards from your inner circle or the market.",
+	"undead": "UNDEAD: sacrifice.\nDevour your own cards for strong one-time effects.",
+	"celestial": "CELESTIAL: order and growth.\nHouse Guards, spies, promotions; dragons Transform.",
+	"shadow": "RAVENLOFT: curses.\nFloods the table with Insane Outcasts and profits from them.",
+	"piltover": "WATERDEEP: Focus combos.\nObedience cards, Double Focus, even an extra turn.",
+	"siege": "SIEGE: variety.\nPlay cards of different aspects in one turn to unlock bonuses.",
+	"mercenaries": "MERCENARIES: Bribe.\nGive a rival 1 VP for a stronger effect; lots of VP.",
+	"noxus": "AVERNUS: Execute and Might.\nDevour cards this turn to power up Might effects.",
+	"freljord": "ICEWIND DALE: Frostbite.\nCards fire when discarded from hand; make others discard.",
+}
 ## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
@@ -295,9 +311,12 @@ func _show_tab(tab: String) -> void:
 			PAGE_SETTINGS:
 				content = _build_settings()
 			PAGE_LEADERBOARD:
-				content = LeaderboardPage.new(presence)
+				var board := LeaderboardPage.new(presence)
+				board.profile_requested.connect(open_player)
+				content = board
 			PAGE_FRIENDS:
 				var friends := FriendsPage.new(presence)
+				friends.profile_requested.connect(open_player)
 				friends.invite_requested.connect(func(fname: String):
 					friend_invite_requested.emit(fname, _count, _chosen_mode()))
 				friends.watch_requested.connect(func(fname: String): friend_watch_requested.emit(fname))
@@ -314,6 +333,14 @@ func _show_tab(tab: String) -> void:
 		(_tab_buttons[key] as Button).set_pressed_no_signal(key == tab)
 	if tab == PAGE_PLAY:
 		_show_section(_section)
+
+
+## Полный профиль другого игрока поверх меню (PlayerProfilePanel); WATCH в
+## нём открывает реплей, как в своей истории.
+func open_player(player_name: String) -> void:
+	var panel := PlayerProfilePanel.new(presence, player_name)
+	panel.replay_requested.connect(func(file: String): replay_requested.emit(file))
+	add_child(panel)
 
 
 # --- PLAY -------------------------------------------------------------------
@@ -434,20 +461,34 @@ func _build_online() -> void:
 
 ## Предпочтительный бан: одна полуколода, карт которой игрок не хочет в рынке.
 ## Выбор сразу пишется в профиль (PlayerProfile.save_ban) и уходит с поиском.
+## Таблица с галочками (владелец, 2026-10-15): отметить можно одну колоду,
+## снять галочку — без бана. Наведение — подсказка, в чём фишка колоды.
 func _add_ban_choice() -> void:
 	_col.add_child(_heading("BAN A HALF-DECK"))
-	var group := ButtonGroup.new()
 	var current := PlayerProfile.ban()
-	var buttons: Array[Button] = []
-	var none := _toggle("NONE", group, current == "", BAN_BUTTON)
-	none.pressed.connect(func(): PlayerProfile.save_ban(""))
-	buttons.append(none)
+	var grid := GridContainer.new()
+	grid.columns = BAN_PER_ROW
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 1)
+	var centre := CenterContainer.new()
+	centre.add_child(grid)
+	_col.add_child(centre)
+	var boxes: Array[CheckBox] = []
 	for deck: String in ban_choices():
-		var b := _toggle(deck_title(deck), group, deck == current, BAN_BUTTON)
-		b.pressed.connect(func(): PlayerProfile.save_ban(deck))
-		buttons.append(b)
-	for i in range(0, buttons.size(), BAN_PER_ROW):
-		_col.add_child(_row(buttons.slice(i, i + BAN_PER_ROW)))
+		var box := CheckBox.new()
+		box.text = deck_title(deck)
+		box.button_pressed = deck == current
+		box.focus_mode = Control.FOCUS_NONE
+		box.custom_minimum_size.x = BAN_BUTTON
+		box.tooltip_text = String(DECK_TIPS.get(deck, ""))
+		box.toggled.connect(func(on: bool):
+			if on:
+				for other in boxes:
+					if other != box:
+						other.set_pressed_no_signal(false)
+			PlayerProfile.save_ban(deck if on else ""))
+		boxes.append(box)
+		grid.add_child(box)
 	_add_dim("Its cards stay out of the market if the table allows it.")
 
 

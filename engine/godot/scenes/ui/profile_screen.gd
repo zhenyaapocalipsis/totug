@@ -37,10 +37,6 @@ const PREVIEW_ZOOM := 3
 const RIM := Color(0.04, 0.03, 0.06)
 const BUTTON_SIZE := Vector2(70, 16)
 const PLACES := ["1ST", "2ND", "3RD", "4TH"]
-## Подписи статей VP (PlayerProfile.VP_PARTS) и ширина полоски доли.
-const VP_PART_NAMES := {"sites": "SITES", "total_control": "TOTAL CONTROL", "trophies": "TROPHIES",
-	"deck": "DECK", "inner_circle": "INNER CIRCLE", "tokens": "VP TOKENS"}
-const BAR_W := 60
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 ## Вкладки обычного профиля; STATS первой и открыта сразу (владелец, 2026-09-28).
@@ -660,7 +656,7 @@ func _stats_page() -> Control:
 		grid.add_child(_cell(header, PixelTheme.TEXT_DIM))
 	for game: Dictionary in list:
 		grid.add_child(_cell(_date(int(game.get("time", 0))), PixelTheme.TEXT_DIM))
-		grid.add_child(_history_players(game))
+		grid.add_child(history_players(game))
 		var place := int(game.get("place", 0))
 		grid.add_child(_cell(PLACES[clampi(place - 1, 0, PLACES.size() - 1)],
 			PixelTheme.GOLD if place == 1 else PixelTheme.TEXT))
@@ -714,76 +710,41 @@ func _replay_cell(game: Dictionary) -> Control:
 	return watch
 
 
-## Статистика по самой игре (PlayerProfile.totals): средние VP по статьям с
-## полосками, полуколоды с процентом побед, рекорды.
+## Статистика по самой игре (PlayerProfile.totals): средний VP и
+## многоугольник средних по статьям (владелец, 2026-10-15: полуколоды и
+## рекорды из профиля убраны).
 func _game_stats() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
-	var t := PlayerProfile.totals()
-	var games := int(t["games"])
 	col.add_child(GameScreen.section_label("AVERAGE PER GAME"))
-	if games == 0:
+	var t := PlayerProfile.totals()
+	if int(t["games"]) == 0:
 		col.add_child(_cell("Play an online game\nto collect statistics.", PixelTheme.TEXT_DIM))
 		return col
-
-	var avg := float(t["vp"]) / games
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 2)
-	col.add_child(grid)
-	grid.add_child(_cell("VP", PixelTheme.GOLD))
-	grid.add_child(_cell("%.1f" % avg, PixelTheme.GOLD))
-	grid.add_child(Control.new())
-	for key: String in PlayerProfile.VP_PARTS:
-		var value := float(t["parts"].get(key, 0)) / games
-		grid.add_child(_cell(String(VP_PART_NAMES[key]), PixelTheme.TEXT_DIM))
-		grid.add_child(_cell("%.1f" % value, PixelTheme.TEXT))
-		grid.add_child(_bar(value / maxf(avg, 1.0), PixelTheme.GOLD))
-
-	col.add_child(GameScreen.section_label("HALF-DECKS"))
-	var decks: Dictionary = t["decks"]
-	var names: Array = decks.keys()
-	names.sort_custom(func(a, b) -> bool: return int(decks[a]["games"]) > int(decks[b]["games"]))
-	var deck_grid := GridContainer.new()
-	deck_grid.columns = 3
-	deck_grid.add_theme_constant_override("h_separation", 6)
-	deck_grid.add_theme_constant_override("v_separation", 2)
-	col.add_child(deck_grid)
-	for deck: String in names:
-		var d: Dictionary = decks[deck]
-		var played := int(d["games"])
-		var colour: Color = UnderdarkBg.DECK_COLOURS.get(deck, PixelTheme.TEXT).lightened(0.35)
-		deck_grid.add_child(_cell(deck.to_upper(), colour))
-		deck_grid.add_child(_cell("%d games" % played, PixelTheme.TEXT_DIM))
-		deck_grid.add_child(_cell("%d%% wins" % roundi(100.0 * int(d["wins"]) / played), PixelTheme.TEXT))
-
-	col.add_child(GameScreen.section_label("RECORDS"))
-	for pair in [["BEST VP", t["best_vp"]], ["MOST TROPHIES", t["most_trophies"]],
-			["MOST INNER CIRCLE", t["most_ic"]]]:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row.add_child(_cell(String(pair[0]), PixelTheme.TEXT_DIM))
-		row.add_child(_cell(str(int(pair[1])), PixelTheme.GOLD))
-		col.add_child(row)
+	col.add_child(average_vp_row([[t, MINE_COLOUR]]))
+	var chart := RadarChart.new()
+	chart.add_series(PlayerProfile.averages(t), MINE_COLOUR)
+	col.add_child(chart)
 	return col
 
 
-
-## Полоска доли (0..1) шириной до BAR_W — сплошная, пиксель-арт.
-func _bar(share: float, colour: Color) -> Control:
-	var back := ColorRect.new()
-	back.color = PixelTheme.PANEL_LO
-	back.custom_minimum_size = Vector2(BAR_W, 5)
-	back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var fill := ColorRect.new()
-	fill.color = colour
-	fill.size = Vector2(roundf(BAR_W * clampf(share, 0.0, 1.0)), 5)
-	back.add_child(fill)
-	return back
+## Цвет своего многоугольника (и при сравнении с чужим).
+const MINE_COLOUR := PixelTheme.GOLD
 
 
-func _cell(text: String, colour: Color) -> Label:
+## "VP 45.3" (и "38.0" второго игрока его цветом): pairs — [[суммы, цвет]].
+static func average_vp_row(pairs: Array) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.add_child(_cell("VP PER GAME", PixelTheme.TEXT_DIM))
+	for pair: Array in pairs:
+		var t: Dictionary = pair[0]
+		var games := int(t.get("games", 0))
+		row.add_child(_cell("%.1f" % (float(t.get("vp", 0)) / games) if games > 0 else "-", pair[1]))
+	return row
+
+
+static func _cell(text: String, colour: Color) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", colour)
@@ -802,13 +763,14 @@ static func _date(unix: int) -> String:
 
 
 ## Фишки всех игроков партии (победитель первым); подсказка — имена и VP.
-func _history_players(game: Dictionary) -> Control:
+## mine — свой ли это профиль: тогда место владельца истории помечено "(you)".
+static func history_players(game: Dictionary, mine: bool = true) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 2)
 	for p: Dictionary in game.get("players", []):
 		var icon := token_icon(String(p.get("seat", "")), String(p.get("emblem", "")))
 		var who := String(p.get("name", ""))
-		if String(p.get("seat", "")) == String(game.get("seat", "")):
+		if mine and String(p.get("seat", "")) == String(game.get("seat", "")):
 			who += " (you)"
 		icon.tooltip_text = "%s: %d VP%s" % [who, int(p.get("vp", 0)), ", winner" if p.get("won", false) else ""]
 		row.add_child(icon)

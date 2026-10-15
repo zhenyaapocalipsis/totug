@@ -18,6 +18,8 @@ signal invite_requested(friend_name: String)
 signal watch_requested(friend_name: String)
 ## Сколько непрочитанных и заявок — для метки на кнопке вкладки.
 signal badge_changed(count: int)
+## PROFILE — открыть полный профиль друга (PlayerProfilePanel).
+signal profile_requested(friend_name: String)
 
 const REFRESH := 10.0
 const LIST_WIDTH := 150.0
@@ -91,11 +93,12 @@ func _init(session: NetSession = null) -> void:
 	_actions = HBoxContainer.new()
 	_actions.add_theme_constant_override("separation", 2)
 	_side.add_child(_actions)
-	_invite = _button("INVITE", 70, func(): invite_requested.emit(_selected))
+	_actions.add_child(_button("PROFILE", 56, func(): profile_requested.emit(_selected)))
+	_invite = _button("INVITE", 56, func(): invite_requested.emit(_selected))
 	_actions.add_child(_invite)
-	_watch = _button("WATCH", 70, func(): watch_requested.emit(_selected))
+	_watch = _button("WATCH", 56, func(): watch_requested.emit(_selected))
 	_actions.add_child(_watch)
-	_actions.add_child(_button("REMOVE", 70, func():
+	_actions.add_child(_button("REMOVE", 56, func():
 		net.friends_action("remove", [_selected])
 		_selected = ""))
 	_side.add_child(HSeparator.new())

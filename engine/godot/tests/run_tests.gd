@@ -1374,6 +1374,34 @@ func test_rating() -> void:
 	check_eq(tot["decks"]["drow"], {"games": 2, "wins": 1}, "полуколода: партии и победы")
 	check_eq(tot["decks"]["undead"], {"games": 1, "wins": 0}, "вторая полуколода")
 	check(int(tot["best_vp"]) == 40 and int(tot["most_trophies"]) == 7 and int(tot["most_ic"]) == 7, "рекорды")
+	var avg := PlayerProfile.averages(tot)
+	check(is_equal_approx(float(avg["sites"]), 8.0) and is_equal_approx(float(avg["deck"]), 11.0),
+		"средние по статьям — оси многоугольника")
+
+	# Чужие профили на сервере (ProfileBook): история, суммы, записи партий.
+	var book_path := "user://test_profiles.json"
+	if FileAccess.file_exists(book_path):
+		DirAccess.remove_absolute(book_path)
+	var pbook := ProfileBook.new(book_path)
+	entry_a["replay"] = "20261015_120000_ABCD.replay"
+	pbook.add("acc1", entry_a)
+	for i in ProfileBook.HISTORY_MAX + 2:
+		pbook.add("acc2", {"vp": i, "breakdown": parts_b})
+	pbook.save()
+	var pbook2 := ProfileBook.new(book_path)
+	check_eq(int(pbook2.totals_of("acc1")["games"]), 1, "сервер: суммы игрока сохранены")
+	check_eq(pbook2.history_of("acc2").size(), ProfileBook.HISTORY_MAX, "сервер: история обрезана")
+	check(pbook2.knows_replay("20261015_120000_ABCD.replay") and not pbook2.knows_replay("../ratings.json")
+		and not pbook2.knows_replay(""), "сервер отдаёт только записи из историй")
+	check_eq(int(pbook2.totals_of("nobody")["games"]), 0, "незнакомый игрок — пустые суммы")
+	DirAccess.remove_absolute(book_path)
+	var panel := PlayerProfilePanel.new(null, "Bob")
+	panel.show_data({"name": "Bob", "rating": 1100, "games": 3, "wins": 1, "totals": tot,
+		"history": [entry_a]})
+	var panel_text := _all_text(panel)
+	check(panel_text.contains("Bob") and panel_text.contains("LAST 1 ONLINE GAMES") and panel_text.contains("VP PER GAME"),
+		"чужой профиль: карточка, средние, партии")
+	panel.free()
 
 	# Карточка игрока по щелчку на имя.
 	var card := ProfileCard.new("blue", {"name": "Bob", "emblem": "", "rating": 1160, "games": 10, "wins": 4})
@@ -2598,8 +2626,27 @@ func test_market_mulligan() -> void:
 		"обе убранные карты в чёрном списке")
 	check_eq(state.market.deck_size() + state.market.available_cards().size(), total,
 		"карты не теряются во время муллигана")
-	server.apply_intent(Intent.make_decision("green", -1))
+	var skip: Dictionary = server.apply_intent(Intent.make_decision("green", -1))
+	var skipped := false
+	for e: Dictionary in skip["events"]:
+		skipped = skipped or (e.get("type") == "market_mulligan_skip" and e.get("player_id") == "green")
+	check(skipped, "пропуск муллигана виден в событиях (для MOVES)")
 	check(state.market.mulligan_blacklist.is_empty(), "после муллигана чёрный список пуст")
+	# Сводка MOVES: у каждого игрока свой блок муллигана.
+	var feed := TurnFeed.new()
+	feed.add_mulligan("red", first, second)
+	feed.add_mulligan("green", "", "")
+	check_eq(feed.card_count(), 2, "MOVES: убранная и пришедшая карты")
+	check_eq(feed.last_block_tags(), [] as Array[String], "MOVES: пропуск — без карт")
+	check(_all_text(feed).contains("KEPT MARKET"), "MOVES: пропуск подписан")
+	feed.free()
+
+	# Подсказки к ключевым словам большой карты: Frostbite на месте.
+	var spots := CardLiveFace.keyword_spots("49603", [], int(CardView.PIXEL_SIZE.x), int(CardView.PIXEL_SIZE.y))
+	var words := spots.map(func(s): return s[1])
+	check(words.has("FROSTBITE") and words.has("DEPLOY"), "ключевые слова карты найдены: %s" % [words])
+	check(CardPreview.keyword_tip("FROSTBITE") != "" and CardPreview.keyword_tip("SCRY") != "",
+		"у новых слов есть подсказки")
 	check(state.market.deck.has(first) and state.market.deck.has(second), "убранные карты вмешаны в колоду")
 	check_eq(state.market.deck.size() + state.market.available_cards().size(), total, "размер колоды сходится")
 	pd = server.resolver.pending

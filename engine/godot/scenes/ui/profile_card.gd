@@ -17,7 +17,8 @@ var _col: VBoxContainer
 
 
 ## Открыть карточку у мыши. profile — {name, emblem, rating?, games?, wins?}.
-static func open(anchor: Control, pid: String, profile: Dictionary) -> ProfileCard:
+## on_profile(ник) — есть: кнопка PROFILE открывает полный профиль (меню).
+static func open(anchor: Control, pid: String, profile: Dictionary, on_profile: Callable = Callable()) -> ProfileCard:
 	var card := ProfileCard.new(pid, profile)
 	# Чужой игрок в онлайне — его можно позвать в друзья прямо отсюда (в лобби
 	# и в партии; владелец, 2026-10-11). В LEADERBOARD места нет — pid "", а
@@ -25,6 +26,8 @@ static func open(anchor: Control, pid: String, profile: Dictionary) -> ProfileCa
 	var net := anchor.get_tree().root.get_node_or_null("Net") as NetSession
 	if net != null and net.is_connected_to_server() and (pid == "" or pid != net.seat):
 		card._add_friend_button(net, String(profile.get("name", "")))
+	if on_profile.is_valid() and String(profile.get("name", "")) != "":
+		card._add_profile_button(on_profile, String(profile.get("name", "")))
 	anchor.get_tree().root.add_child(card)
 	card._place.call_deferred(anchor.get_global_mouse_position())
 	return card
@@ -44,6 +47,18 @@ func _init(pid: String = "", profile: Dictionary = {}) -> void:
 	_col.add_theme_constant_override("separation", 4)
 	_panel.add_child(_col)
 	fill(_col, pid, profile)
+
+
+func _add_profile_button(on_profile: Callable, player_name: String) -> void:
+	var b := Button.new()
+	b.text = "PROFILE"
+	b.custom_minimum_size = Vector2(90, 16)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	SetupScreen._style_button(b)
+	b.pressed.connect(func():
+		queue_free()
+		on_profile.call(player_name))
+	_col.add_child(b)
 
 
 func _add_friend_button(net: NetSession, player_name: String) -> void:
@@ -153,10 +168,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 ## Сделать надпись имени кликабельной: щелчок — карточка этого игрока.
 ## profile_of вызывается в момент щелчка (профили приходят по сети позже).
-static func attach(label: Control, pid: String, profile_of: Callable) -> void:
+static func attach(label: Control, pid: String, profile_of: Callable, on_profile: Callable = Callable()) -> void:
 	label.mouse_filter = Control.MOUSE_FILTER_STOP
 	label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	label.gui_input.connect(func(e: InputEvent):
 		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-			ProfileCard.open(label, pid, profile_of.call())
+			ProfileCard.open(label, pid, profile_of.call(), on_profile)
 			label.accept_event())

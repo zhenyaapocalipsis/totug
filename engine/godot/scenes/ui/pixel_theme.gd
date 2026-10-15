@@ -187,3 +187,36 @@ static func _setup_misc(t: Theme) -> void:
 
 	t.set_constant("separation", "HBoxContainer", 2)
 	t.set_constant("separation", "VBoxContainer", 2)
+
+	# Галочки (таблица банов, 2026-10-15): квадрат 9x9 в один пиксель рамки.
+	var empty := StyleBoxEmpty.new()
+	for state in ["normal", "pressed", "hover", "hover_pressed", "focus", "disabled"]:
+		t.set_stylebox(state, "CheckBox", empty)
+	t.set_icon("unchecked", "CheckBox", _check_icon(false, BORDER_HI))
+	t.set_icon("checked", "CheckBox", _check_icon(true, GOLD))
+	t.set_icon("unchecked_disabled", "CheckBox", _check_icon(false, TEXT_OFF))
+	t.set_icon("checked_disabled", "CheckBox", _check_icon(true, TEXT_OFF))
+	t.set_constant("h_separation", "CheckBox", 3)
+	t.set_color("font_color", "CheckBox", TEXT)
+	t.set_color("font_hover_color", "CheckBox", GOLD)
+	t.set_color("font_pressed_color", "CheckBox", GOLD)
+	t.set_color("font_hover_pressed_color", "CheckBox", GOLD)
+	t.set_color("font_focus_color", "CheckBox", TEXT)
+	t.set_font_size("font_size", "CheckBox", SIZE)
+
+	# Всплывающие подсказки — в рамке игры, а не серым окном по умолчанию.
+	t.set_stylebox("panel", "TooltipPanel", box(PANEL, BORDER_HI, 1, 3, 2))
+	t.set_color("font_color", "TooltipLabel", TEXT)
+	t.set_font_size("font_size", "TooltipLabel", SIZE)
+
+
+## Квадрат галочки 9x9: рамка, внутри — крестик-заливка, если отмечено.
+static func _check_icon(on: bool, colour: Color) -> ImageTexture:
+	var img := Image.create(9, 9, false, Image.FORMAT_RGBA8)
+	img.fill(PANEL_LO)
+	for i in 9:
+		for edge in [Vector2i(i, 0), Vector2i(i, 8), Vector2i(0, i), Vector2i(8, i)]:
+			img.set_pixelv(edge, colour)
+	if on:
+		img.fill_rect(Rect2i(2, 2, 5, 5), colour)
+	return ImageTexture.create_from_image(img)

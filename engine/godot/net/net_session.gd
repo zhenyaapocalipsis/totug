@@ -66,6 +66,11 @@ signal thread_received(friend_name: String, messages: Array)
 signal invite_received(from_name: String, code: String)
 ## Смотрим партию друга: экран партии от его лица (friend_seat), без руки.
 signal watch_started(friend_seat: String, board: Dictionary, view: Dictionary)
+## Чужой профиль (player_data): {name, emblem, favourite, rating?, games?,
+## wins?, totals, history} или {name, missing}.
+signal player_received(data: Dictionary)
+## Запись партии с сервера (header пустой — не отдали).
+signal record_received(file: String, header: Dictionary, intents: Array)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -76,7 +81,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 29
+const PROTOCOL := 30
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -1103,6 +1108,7 @@ func _send_replay(room: GameRoom) -> void:
 	header["banned"] = room.banned
 	if dedicated:
 		var file := ReplayBook.save(header, room.log, records_dir)
+		room.record_file = file
 		_log("room %s: game record %s" % [room.code, file if file != "" else "NOT SAVED"])
 	for peer: int in room.seats:
 		_send(peer, "_replay", [header, room.log])
@@ -1190,6 +1196,15 @@ func _rate_room(room: GameRoom) -> void:
 		for pid: String in result:
 			result[pid]["reward"] = SkinCollection.reward_for_place(PlayerProfile.place_of(pid, result))
 		_check_records(room, players, scores, winners, result)
+	# Строка истории каждого — и в его профиль на сервере (чужие профили).
+	for pid: String in result:
+		var entry := PlayerProfile.history_entry(pid, result, room.profiles)
+		entry["replay"] = room.record_file
+		entry["protocol"] = PROTOCOL
+		entry["mode"] = room.mode
+		entry["teams"] = room.teams
+		ratings.profiles.add(String(players[pid]["account"]), entry)
+	ratings.profiles.save()
 	_log("room %s: rated %s" % [room.code, JSON.stringify(result)])
 	for peer: int in room.seats:
 		_send(peer, "_rating", [result])
@@ -1380,6 +1395,65 @@ func leaderboard(account: String = "") -> Dictionary:
 @rpc("authority", "call_remote", "reliable")
 func _leaderboard_down(data: Dictionary) -> void:
 	leaderboard_received.emit(data)
+
+
+# --- чужие профили (ProfileBook, владелец 2026-10-15) -----------------------
+
+## Клиент: профиль игрока по нику. Ответ — player_received.
+func request_player(player_name: String) -> void:
+	if is_connected_to_server():
+		_player_up.rpc_id(1, PROTOCOL, player_name)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _player_up(version: int, player_name: String) -> void:
+	if not dedicated or ratings == null or version != PROTOCOL:
+		return
+	_send(multiplayer.get_remote_sender_id(), "_player_down", [player_data(player_name)])
+
+
+## Сервер: всё, что показывает чужой профиль: карточка (имя, герб, любимая
+## карта, рейтинг), суммы для многоугольника и последние партии.
+func player_data(player_name: String) -> Dictionary:
+	var account := String(ratings.names.get(RatingBook.name_id(player_name), ""))
+	if account == "":
+		return {"name": PlayerProfile.clean_name(player_name), "missing": true}
+	var person: Dictionary = ratings.friends.people.get(account, {})
+	var data := {"name": String(person.get("name", player_name)), "emblem": String(person.get("emblem", "")),
+		"favourite": String(person.get("favourite", "")),
+		"totals": ratings.profiles.totals_of(account), "history": ratings.profiles.history_of(account)}
+	if ratings.accounts.has(account):
+		data.merge(ratings.stats_of(account))
+	return data
+
+
+@rpc("authority", "call_remote", "reliable")
+func _player_down(data: Dictionary) -> void:
+	player_received.emit(data)
+
+
+## Клиент: запись партии с сервера (из чужой истории). Ответ — record_received.
+func request_record(file: String) -> void:
+	if is_connected_to_server():
+		_record_up.rpc_id(1, PROTOCOL, file)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _record_up(version: int, file: String) -> void:
+	if not dedicated or ratings == null or version != PROTOCOL:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	# Только записи из чьей-то истории и не чаще, чем фразы чата.
+	if not _may_speak(peer) or not ratings.profiles.knows_replay(file):
+		_send(peer, "_record_down", [file, {}, []])
+		return
+	var replay := ReplayBook.load_replay(file, records_dir)
+	_send(peer, "_record_down", [file, replay.get("header", {}), replay.get("intents", [])])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _record_down(file: String, header: Dictionary, intents: Array) -> void:
+	record_received.emit(file, header, intents)
 
 
 # --- друзья (FriendBook, владелец 2026-10-11) -------------------------------

@@ -67,11 +67,12 @@ static func header_for(state: GameState, ids: Array[String], game_seed: int, mod
 
 
 ## Сохранить реплей. Возвращает имя файла ("" — не вышло).
-static func save(header: Dictionary, intents: Array, dir: String = DIR) -> String:
+## name — своё имя файла (чужой реплей с сервера), "" — по дате и коду.
+static func save(header: Dictionary, intents: Array, dir: String = DIR, name: String = "") -> String:
 	DirAccess.make_dir_recursive_absolute(dir)
 	var stamp := Time.get_datetime_string_from_unix_time(int(header.get("date", 0))).replace(":", "").replace("-", "").replace("T", "_")
 	var tail := String(header.get("code", ""))
-	var file := "%s_%s%s" % [stamp, tail if tail != "" else "local", EXT]
+	var file := name if name != "" else "%s_%s%s" % [stamp, tail if tail != "" else "local", EXT]
 	var f := FileAccess.open_compressed(dir + file, FileAccess.WRITE, FileAccess.COMPRESSION_GZIP)
 	if f == null:
 		return ""
@@ -131,8 +132,9 @@ static func same_version(replay: Dictionary) -> bool:
 ## 20: до экрана DEALING THE CARDS; 21: до правки Gibbering Mouther — реплей с ним
 ## может разойтись, остальные ложатся так же; 22: до общих бараков 2v2;
 ## 27: до бана полуколоды в поиске — без бана раздача та же;
-## 28: до нового маркета RANDOM — STANDARD/DOUBLE/New Era не менялись).
-const SAME_RULES := [17, 19, 20, 21, 22, 27, 28]
+## 28: до нового маркета RANDOM — STANDARD/DOUBLE/New Era не менялись;
+## 29: до чужих профилей на сервере — правила те же).
+const SAME_RULES := [17, 19, 20, 21, 22, 27, 28, 29]
 ## С этой версии в 2v2 общие бараки, трофеи и внутренний круг (этап Team-6):
 ## реплеи 2v2 раньше неё — OLD, обычные партии она не меняет.
 const TEAM_STOCK := 23

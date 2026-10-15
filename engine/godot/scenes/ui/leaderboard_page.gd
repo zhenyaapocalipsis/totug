@@ -7,6 +7,9 @@ extends VBoxContainer
 ## пока меню открыто, раз в REFRESH секунд страница просит свежую таблицу, а
 ## пропавшую связь поднимает заново — так игрок в меню и считается онлайн.
 
+## Щелчок по имени → PROFILE на карточке: полный профиль игрока.
+signal profile_requested(player_name: String)
+
 const REFRESH := 10.0
 const LIST_HEIGHT := 250.0
 ## Заголовки столбцов и их ширина.
@@ -150,7 +153,8 @@ func show_data(data: Dictionary) -> void:
 		if not me:
 			var card := {"name": String(row.get("name", "")), "rating": rating,
 				"games": int(row.get("games", 0)), "wins": int(row.get("wins", 0))}
-			ProfileCard.attach(name_cell, "", func(): return card)
+			ProfileCard.attach(name_cell, "", func(): return card,
+				func(n: String): profile_requested.emit(n))
 		_grid.add_child(name_cell)
 		_grid.add_child(_cell(PlayerProfile.rank_title(rating), PlayerProfile.rank_colour(rating), int(COLUMNS[2][1])))
 		_grid.add_child(_cell(str(rating), colour, int(COLUMNS[3][1])))
@@ -165,7 +169,7 @@ func show_data(data: Dictionary) -> void:
 	else:
 		_mine.text = "YOU: #%d" % int(mine["rank"])
 	if not top.is_empty():
-		_mine.text += "\nClick a player's name to add a friend."
+		_mine.text += "\nClick a player's name for the profile."
 
 
 func _set_mode(mode: String) -> void:
