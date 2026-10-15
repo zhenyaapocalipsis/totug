@@ -27,8 +27,9 @@ const HALF_DECKS_PATH := "res://data/cards/half_decks.json"
 ## Стартовые сайты (рулбук стр. 4, шаг 11: "starting sites are those with black
 ## boxes"). Признака "чёрная рамка" в данных мода нет, поэтому список сверен
 ## вручную по картинкам гексов assets/hexes/*.png (чёрные таблички).
-## Zi'Xzolca на гексе C6 белая — не стартовая.
-const STARTING_SITE_NAMES := ["Magma Gate", "Menzoberranzan", "Xal Veldrin", "Caer Sidi", "Ath-Qua", "Wells of Darkness"]
+## Zi'Xzolca на гексе C6 в оригинале белая, но по решению владельца
+## (2026-10-15) тоже стартовая — теперь у каждого гекса кольца C1–C6 своя.
+const STARTING_SITE_NAMES := ["Magma Gate", "Menzoberranzan", "Xal Veldrin", "Caer Sidi", "Ath-Qua", "Zi'Xzolca", "Wells of Darkness"]
 
 const HAND_SIZE := 5
 
