@@ -124,7 +124,7 @@ func show_data(data: Dictionary) -> void:
 	var theirs := PlayerProfile.clean_totals(data.get("totals", {}))
 	var mine := PlayerProfile.totals()
 	if int(theirs["games"]) == 0:
-		left.add_child(ProfileScreen._cell("No games on the server yet\n(they count from this update).",
+		left.add_child(ProfileScreen._cell("No finished online games yet.",
 			PixelTheme.TEXT_DIM))
 	else:
 		left.add_child(_legend(String(data.get("name", player_name)), int(mine["games"]) > 0))
@@ -143,8 +143,8 @@ func show_data(data: Dictionary) -> void:
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(right)
 	var history: Array = data.get("history", [])
-	right.add_child(GameScreen.section_label("LAST %d ONLINE GAMES" % history.size() if not history.is_empty()
-		else "LAST ONLINE GAMES"))
+	right.add_child(GameScreen.section_label("ONLINE GAMES: %d" % history.size() if not history.is_empty()
+		else "ONLINE GAMES"))
 	if history.is_empty():
 		right.add_child(ProfileScreen._cell("No games recorded yet.", PixelTheme.TEXT_DIM))
 		return
@@ -170,9 +170,13 @@ func show_data(data: Dictionary) -> void:
 		var delta := int(game.get("delta", 0))
 		var rating_row := HBoxContainer.new()
 		rating_row.add_theme_constant_override("separation", 4)
-		rating_row.add_child(ProfileScreen._cell(str(int(game.get("rating", 0))), PixelTheme.TEXT))
-		rating_row.add_child(ProfileScreen._cell("LOBBY" if game.get("unrated", false) else "%+d" % delta,
-			Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
+		# Партии до профилей на сервере (ProfileBook.backfill): рейтинга тех дней нет.
+		if game.get("old", false):
+			rating_row.add_child(ProfileScreen._cell("-", PixelTheme.TEXT_DIM))
+		else:
+			rating_row.add_child(ProfileScreen._cell(str(int(game.get("rating", 0))), PixelTheme.TEXT))
+			rating_row.add_child(ProfileScreen._cell("LOBBY" if game.get("unrated", false) else "%+d" % delta,
+				Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)))
 		grid.add_child(rating_row)
 		grid.add_child(_replay_cell(game))
 

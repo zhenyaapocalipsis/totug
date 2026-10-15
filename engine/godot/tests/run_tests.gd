@@ -1386,12 +1386,12 @@ func test_rating() -> void:
 	var pbook := ProfileBook.new(book_path)
 	entry_a["replay"] = "20261015_120000_ABCD.replay"
 	pbook.add("acc1", entry_a)
-	for i in ProfileBook.HISTORY_MAX + 2:
+	for i in 40:
 		pbook.add("acc2", {"vp": i, "breakdown": parts_b})
 	pbook.save()
 	var pbook2 := ProfileBook.new(book_path)
 	check_eq(int(pbook2.totals_of("acc1")["games"]), 1, "сервер: суммы игрока сохранены")
-	check_eq(pbook2.history_of("acc2").size(), ProfileBook.HISTORY_MAX, "сервер: история обрезана")
+	check_eq(pbook2.history_of("acc2").size(), 40, "сервер: история хранит все партии")
 	check(pbook2.knows_replay("20261015_120000_ABCD.replay") and not pbook2.knows_replay("../ratings.json")
 		and not pbook2.knows_replay(""), "сервер отдаёт только записи из историй")
 	check_eq(int(pbook2.totals_of("nobody")["games"]), 0, "незнакомый игрок — пустые суммы")
@@ -1400,7 +1400,7 @@ func test_rating() -> void:
 	panel.show_data({"name": "Bob", "rating": 1100, "games": 3, "wins": 1, "totals": tot,
 		"history": [entry_a]})
 	var panel_text := _all_text(panel)
-	check(panel_text.contains("Bob") and panel_text.contains("LAST 1 ONLINE GAMES") and panel_text.contains("VP PER GAME"),
+	check(panel_text.contains("Bob") and panel_text.contains("ONLINE GAMES: 1") and panel_text.contains("VP PER GAME"),
 		"чужой профиль: карточка, средние, партии")
 	panel.free()
 
@@ -2650,6 +2650,21 @@ func test_market_mulligan() -> void:
 	check(words.has("FROSTBITE") and words.has("DEPLOY"), "ключевые слова карты найдены: %s" % [words])
 	check(CardPreview.keyword_tip("FROSTBITE") != "" and CardPreview.keyword_tip("SCRY") != "",
 		"у новых слов есть подсказки")
+	# Столбик подсказок по Alt: все жирные слова карты по одному разу, DISTINCT тоже.
+	var spoils := CardView.new("49306", 40, 56)
+	var spoils_tips := CardPreview.tips_for(spoils)
+	check(spoils_tips.size() == 1 and spoils_tips[0].begins_with("DISTINCT"),
+		"Spoils of War: в столбике подсказка DISTINCT (%s)" % [spoils_tips])
+	spoils.free()
+	var frost := CardView.new("49603", 40, 56)
+	var frost_tips := CardPreview.tips_for(frost)
+	var unique_tips := {}
+	for word in words:
+		if CardPreview.keyword_tip(String(word)) != "":
+			unique_tips[CardPreview.keyword_tip(String(word))] = true
+	check(frost_tips.size() == unique_tips.size() and frost_tips.has(CardPreview.keyword_tip("FROSTBITE")),
+		"столбик: по одной подсказке на каждое жирное слово (%d)" % frost_tips.size())
+	frost.free()
 	check(state.market.deck.has(first) and state.market.deck.has(second), "убранные карты вмешаны в колоду")
 	check_eq(state.market.deck.size() + state.market.available_cards().size(), total, "размер колоды сходится")
 	pd = server.resolver.pending
@@ -4397,6 +4412,33 @@ func test_game_journal_replay() -> void:
 	check_eq(room.claim(7, "nope"), "", "чужой ключ — отказ")
 
 
+## Профили на сервере досчитываются из записей партий (ProfileBook.backfill):
+## доигранная партия двух учётных записей — в истории обоих и в многоугольнике.
+func _check_profile_backfill(header: Dictionary, log: Array, ids: Array[String]) -> void:
+	var dir := "user://backfill_test/"
+	for name in ReplayBook.list(dir):
+		ReplayBook.erase(name, dir)
+	var full := header.duplicate(true)
+	full["profiles"] = {ids[0]: {"name": "Ann", "emblem": ""}, ids[1]: {"name": "Bob", "emblem": ""}}
+	var file := ReplayBook.save(full, log, dir)
+	var bots := full.duplicate(true)
+	bots["profiles"][ids[1]]["name"] = "Bot"
+	bots["date"] = int(full["date"]) + 1
+	ReplayBook.save(bots, log, dir)
+	var path := "user://test_backfill_profiles.json"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var book := ProfileBook.new(path)
+	var names := {RatingBook.name_id("Ann"): "accA", RatingBook.name_id("Bob"): "accB"}
+	check_eq(book.backfill(dir, names), 1, "профили: досчитана одна партия (вторая — с незнакомым игроком)")
+	var games := book.history_of("accA")
+	check(games.size() == 1 and String(games[0]["replay"]) == file and games[0].get("old", false)
+		and int(games[0]["time"]) == int(full["date"]), "профили: старая партия в истории, с записью и датой")
+	check_eq(int(book.totals_of("accB")["games"]), 1, "профили: разбивка из пересборки — в многоугольнике")
+	check_eq(book.backfill(dir, names), 0, "профили: второй досчёт ничего не добавил")
+	for name in ReplayBook.list(dir):
+		ReplayBook.erase(name, dir)
+
+
 ## Реплеи (Replay-1): полная партия на 2, 3 и 4 игрока простым автоигроком,
 ## реплей на диск и обратно, пересборка по сиду и ходам — тот же итог.
 func test_replay_book() -> void:
@@ -4424,6 +4466,8 @@ func test_replay_book() -> void:
 		check(ReplayBook.matches(loaded, rebuilt), "%d игрока: пересборка по ходам — те же очки" % count)
 		check_eq(Array(rebuilt.state.market.display), Array(live.state.market.display), "%d игрока: тот же рынок в конце" % count)
 		check_eq(rebuilt.state.troops, live.state.troops, "%d игрока: те же войска в конце" % count)
+		if count == 2:
+			_check_profile_backfill(header, log, ids)
 	check_eq(ReplayBook.list(dir).size(), 3, "три реплея в папке")
 	check(ReplayBook.list(dir)[0].begins_with("20231114"), "новые первыми, имя файла — дата")
 	var packed := ReplayBook.list(dir)[0]

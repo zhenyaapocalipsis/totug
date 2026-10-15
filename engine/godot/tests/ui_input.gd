@@ -172,17 +172,19 @@ func _step_alt_down() -> void:
 func _step_check_alt_preview() -> void:
 	check(CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
 		"с зажатым Alt карта руки показалась полной, без увеличения (%s)" % CardPreview.active.preview_size())
-	# Мышь ушла с карты, Alt всё ещё зажат — копия остаётся (владелец, 2026-10-15).
-	CardPreview.clear_hovered(CardPreview.active._hovered)
-	check(CardPreview.active.has_preview(), "с зажатым Alt копия не пропадает, когда мышь ушла с карты")
-	# Мышь прошла через другую карту — показанная не сменилась.
 	var shown: CardView = CardPreview.active._source
+	check(CardPreview.active.tips_shown() == CardPreview.tips_for(shown).size(),
+		"с зажатым Alt справа от карты столбик подсказок ко всем жирным словам (%d, %s)" % [CardPreview.active.tips_shown(), shown.card_id])
+	# Фиксации нет (владелец, 2026-10-16): другая карта под мышью сменяет показанную.
 	var other := CardView.new(shown.card_id, 40, 56)
 	_screen.add_child(other)
 	CardPreview.set_hovered(other)
-	check(CardPreview.active._source == shown, "с зажатым Alt другая карта под мышью не сбивает показанную")
+	check(CardPreview.active._source == other, "с зажатым Alt другая карта под мышью сменяет показанную")
+	# Мышь ушла с карты — копия пропала и с зажатым Alt.
 	CardPreview.clear_hovered(other)
+	check(not CardPreview.active.has_preview(), "мышь ушла с карты — копия пропала, хоть Alt и зажат")
 	other.queue_free()
+	CardPreview.set_hovered(shown)
 
 
 func _step_alt_up() -> void:

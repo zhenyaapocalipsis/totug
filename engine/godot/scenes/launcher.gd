@@ -63,5 +63,10 @@ func _start_server(port: int) -> void:
 		get_tree().quit(1)
 		return
 	print("Tyrants server: listening on UDP port %d, protocol %d" % [port, NetSession.PROTOCOL])
+	# партии из записей, которых ещё нет в профилях игроков (ProfileBook.backfill)
+	var added := net.ratings.profiles.backfill(net.records_dir, net.ratings.names)
+	if added > 0:
+		net.ratings.profiles.save()
+		print("Tyrants server: %d recorded games added to player profiles" % added)
 	# запас готовых досок: партия стартует сразу, доска всегда в сетке
 	net.board_stock = BoardStock.new()

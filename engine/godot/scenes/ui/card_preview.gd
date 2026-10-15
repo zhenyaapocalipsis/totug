@@ -39,6 +39,7 @@ const KEYWORD_TIPS := {
 	"MIGHT": "MIGHT: works if you devoured a card this turn.\nThe second Might on a card needs 2 devours, and so on.",
 	"FROSTBITE": "FROSTBITE: works when this card is discarded from your hand\n(not by the end-of-turn discard).",
 	"TRANSFORM": "TRANSFORM: this card turns into the stronger card it names.",
+	"DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
 }
 
 static var active: CardPreview = null
@@ -48,6 +49,8 @@ var _card: CardView
 ## Карта под курсором и состояние Alt.
 var _hovered: CardView
 var _alt := false
+## Столбик подсказок справа от копии (только с зажатым Alt).
+var _tips: VBoxContainer
 
 
 func _init() -> void:
@@ -115,18 +118,16 @@ func _set_alt(value: bool) -> void:
 	_sync()
 
 
-## Пока Alt зажат, показанная карта не пропадает, даже если мышь ушла с
-## исходной (владелец, 2026-10-15): можно навести мышь на слова самой копии и
-## прочитать подсказки. Отпустил Alt — карта пропадает. Пока Alt зажат,
-## другая карта на пути мыши показанную не сменяет (владелец, 2026-10-15).
+## Копия живёт, пока мышь на исходной карте (фиксация по Alt убрана,
+## владелец, 2026-10-16). С зажатым Alt справа от копии сразу стоит столбик
+## подсказок ко всем жирным действиям карты — наводить мышь на слова не нужно.
 func _sync() -> void:
-	if _alt and _card != null:
-		return
 	var hovered := _hovered != null and is_instance_valid(_hovered)
 	if hovered and (_alt or _hovered.hover_full):
 		if _source != _hovered:
 			_show(_hovered)
-	elif _card != null and not _alt:
+		_sync_tips()
+	elif _card != null:
 		_hide()
 
 
@@ -150,31 +151,61 @@ func _show(card: CardView) -> void:
 	add_child(_card)
 	_card.size = s
 	_card.pivot_offset = s * 0.5
-	_add_keyword_tips(card, s)
 	_place()
 
 
-## Над каждым ключевым словом копии — прозрачная площадка с подсказкой:
-## наведение мыши показывает, что делает это действие (KEYWORD_TIPS).
-func _add_keyword_tips(card: CardView, s: Vector2) -> void:
+## Столбик подсказок есть, только пока зажат Alt.
+func _sync_tips() -> void:
+	if _alt and _tips == null and _source != null:
+		_tips = _build_tips(_source)
+		if _tips != null:
+			add_child(_tips)
+			_place()
+	elif not _alt and _tips != null:
+		_tips.queue_free()
+		_tips = null
+
+
+## Подсказки ко всем жирным действиям карты (KEYWORD_TIPS) по порядку текста,
+## каждая один раз; null — подсказывать нечего.
+func _build_tips(card: CardView) -> VBoxContainer:
+	var tips := tips_for(card)
+	if tips.is_empty():
+		return null
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override("separation", 2)
+	for tip: String in tips:
+		var panel := PanelContainer.new()
+		panel.theme_type_variation = "TooltipPanel"
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var label := Label.new()
+		label.theme_type_variation = "TooltipLabel"
+		label.text = tip
+		panel.add_child(label)
+		col.add_child(panel)
+	return col
+
+
+## Тексты подсказок к жирным словам карты, без повторов.
+static func tips_for(card: CardView) -> Array[String]:
+	var out: Array[String] = []
 	if CardView.pixel_texture(card.card_id) == null:
-		return
+		return out
 	var notes: Array = []
 	if card.live and CardView.live_data.has(card.card_id):
 		notes = (CardView.live_data[card.card_id] as Dictionary).get("notes", [])
-	var k := s / CardView.PIXEL_SIZE
 	for spot: Array in CardLiveFace.keyword_spots(card.card_id, notes,
 			int(CardView.PIXEL_SIZE.x), int(CardView.PIXEL_SIZE.y)):
 		var tip := keyword_tip(String(spot[1]))
-		if tip == "":
-			continue
-		var r: Rect2i = spot[0]
-		var area := Control.new()
-		area.mouse_filter = Control.MOUSE_FILTER_STOP
-		area.tooltip_text = tip
-		area.position = Vector2(r.position) * k
-		area.size = Vector2(r.size) * k
-		_card.add_child(area)
+		if tip != "" and not out.has(tip):
+			out.append(tip)
+	return out
+
+
+## Для проверок: сколько подсказок стоит в столбике.
+func tips_shown() -> int:
+	return _tips.get_child_count() if _tips != null else 0
 
 
 ## Подсказка к ключевому слову карты ("" — нет).
@@ -184,6 +215,9 @@ static func keyword_tip(word: String) -> String:
 
 func _hide() -> void:
 	_source = null
+	if _tips != null:
+		_tips.queue_free()
+		_tips = null
 	if _card != null:
 		_card.queue_free()
 		_card = null
@@ -194,14 +228,16 @@ func _hide() -> void:
 func _place() -> void:
 	var area: Rect2 = get_global_rect()
 	_card.global_position = (area.get_center() - _card.size * 0.5).floor()
+	if _tips != null:
+		_tips.size = _tips.get_combined_minimum_size()
+		_tips.global_position = _card.global_position + Vector2(_card.size.x + MARGIN, 0)
 
 
 func _process(_delta: float) -> void:
 	if _card == null:
 		return
-	# Исходную карту могли пересоздать (перерисовка после хода) или спрятать;
-	# с зажатым Alt копия остаётся до отпускания.
-	if not _alt and (not is_instance_valid(_source) or not _source.is_visible_in_tree()):
+	# Исходную карту могли пересоздать (перерисовка после хода) или спрятать.
+	if not is_instance_valid(_source) or not _source.is_visible_in_tree():
 		_hide()
 		return
 	_place()  # карта в руке приподнимается — копия едет следом
