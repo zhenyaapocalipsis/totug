@@ -121,6 +121,7 @@ func _initialize() -> void:
 
 	# сеть
 	test_public_address_check()
+	test_update_signature()
 	test_player_profile()
 	test_chat_wheel_and_ping()
 	test_card_back()
@@ -3888,6 +3889,25 @@ func test_public_address_check() -> void:
 		check(not NetSession.is_public_ipv4(grey), "%s — не белый" % grey)
 	check(NetSession.is_public_ipv4("172.32.0.1"), "172.32.* уже не частная сеть")
 	check(Intent.from_dict(Intent.recruit("red", 3).to_dict()).market_index == 3, "намерение переживает пересылку словарём")
+
+
+func test_update_signature() -> void:
+	section("автообновление: подпись владельца (Sec-1)")
+	var key := Crypto.new().generate_rsa(2048)
+	var pem := key.save_to_string(true)
+	var sha := "ab".repeat(32)
+	var sig := UpdateSign.sign(1792000000, sha, key)
+	check(UpdateSign.verify(1792000000, sha, sig, pem), "верная подпись принимается")
+	check(not UpdateSign.verify(1792000000, "cd".repeat(32), sig, pem), "подменённый sha — отказ")
+	check(not UpdateSign.verify(1792000001, sha, sig, pem), "подменённый номер версии — отказ")
+	check(not UpdateSign.verify(1792000000, sha, "", pem), "без подписи — отказ")
+	check(not UpdateSign.verify(1792000000, sha, "bm90IGEgc2lnbmF0dXJl", pem), "мусор вместо подписи — отказ")
+	var other := Crypto.new().generate_rsa(2048).save_to_string(true)
+	check(not UpdateSign.verify(1792000000, sha, sig, other), "подпись чужим ключом — отказ")
+	var embedded := CryptoKey.new()
+	check(UpdateSign.KEY_SCRIPT.PUBLIC_KEY != "" and embedded.load_from_string(UpdateSign.KEY_SCRIPT.PUBLIC_KEY, true) == OK,
+		"в игру зашит открытый ключ")
+	check(not UpdateSign.verify(1792000000, sha, sig), "тестовая подпись не проходит зашитый ключ")
 
 
 func test_player_profile() -> void:

@@ -19,3 +19,7 @@ GAME online/*.zip
 engine/godot/build_info.gd
 engine/godot/build_info.gd.uid
 engine/build/version.txt
+
+# Update signing private key (lives in ~/.ssh, never in git)
+*.key
+tyrants_update*

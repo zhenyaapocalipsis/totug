@@ -13,6 +13,13 @@ GODOT="/c/godot/Godot_v4.7.2-stable_win64_console.exe"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$ROOT/engine/build"
 OUT="$ROOT/GAME online"
+# Закрытый ключ подписи обновлений — только на этом ПК, не в git (этап Sec-1).
+# Без него не выкладываем: игра не примет неподписанную версию.
+UPDATE_KEY=~/.ssh/tyrants_update.key
+if [ ! -f "$UPDATE_KEY" ]; then
+  echo "No update signing key $UPDATE_KEY (see server/README.md, 'Update signing key')." >&2
+  exit 1
+fi
 
 echo "== build number"
 BUILD=$(date +%s)
@@ -27,7 +34,13 @@ cd "$ROOT/engine/godot"
 # же .pck и скачивают игроки при автообновлении.
 "$GODOT" --headless --path . --export-release "Windows Game" ../build/TyrantsOfTheUnderdark.exe >/dev/null 2>&1
 SHA=$(sha256sum "$BUILD_DIR/TyrantsOfTheUnderdark.pck" | cut -d' ' -f1)
-echo "$BUILD $SHA" > "$BUILD_DIR/version.txt"
+# Подпись "<номер> <sha256>"; старые клиенты третье поле не читают.
+SIG=$("$GODOT" --headless --path . --script res://tools/sign_update.gd -- --sign "$(cygpath -m "$UPDATE_KEY")" "$BUILD" "$SHA" | sed -n 's/^SIG://p' | tr -d '\r')
+if [ -z "$SIG" ]; then
+  echo "Signing the update failed." >&2
+  exit 1
+fi
+echo "$BUILD $SHA $SIG" > "$BUILD_DIR/version.txt"
 ls -la "$BUILD_DIR/tyrants_server.pck" "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$BUILD_DIR/TyrantsOfTheUnderdark.exe"
 
 echo "== GAME online"

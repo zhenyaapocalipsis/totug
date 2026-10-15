@@ -6,8 +6,8 @@ extends Control
 ## Игра у игрока — два файла в одной папке: TyrantsOfTheUnderdark.exe (движок
 ## Godot) и TyrantsOfTheUnderdark.pck (сама игра; движок сам грузит .pck с
 ## тем же именем рядом с собой). При запуске игра спрашивает у нашего сервера
-## номер последней версии (version.txt: "<номер> <sha256 файла>"). Если он
-## больше своего, скачивает новый .pck рядом (.pck.new) и закрывается, а
+## номер последней версии (version.txt: "<номер> <sha256 файла> <подпись>").
+## Если он больше своего и подпись владельца сходится (UpdateSign), скачивает новый .pck рядом (.pck.new) и закрывается, а
 ## скрытый update.bat дожидается её закрытия, подменяет файл и запускает
 ## игру снова. Пока игра открыта, свой .pck она держит открытым — поэтому
 ## подмена после выхода. (`--main-pack` готовые сборки Godot не принимают.)
@@ -102,8 +102,15 @@ func _on_version(result: int, code: int, _headers: PackedStringArray, body: Pack
 	var parts := body.get_string_from_utf8().strip_edges().split(" ", false)
 	_server_build = int(parts[0]) if parts.size() > 0 else 0
 	_server_sha = String(parts[1]) if parts.size() > 1 else ""
+	var sig := String(parts[2]) if parts.size() > 2 else ""
 	print("Tyrants update: own build %d, server build %d" % [own_build(), _server_build])
 	if _server_build <= own_build():
+		finished.emit()
+		return
+	# Без подписи владельца не качаем: version.txt мог подменить кто угодно
+	# по дороге (этап Sec-1, scenes/update_sign.gd).
+	if not UpdateSign.verify(_server_build, _server_sha, sig):
+		printerr("Tyrants update: bad or missing signature, keeping build %d" % own_build())
 		finished.emit()
 		return
 	_label.text = "DOWNLOADING UPDATE..."
@@ -118,7 +125,7 @@ func _on_downloaded(result: int, code: int, _headers: PackedStringArray, _body: 
 	_http.request_completed.disconnect(_on_downloaded)
 	var fresh := pck_path() + ".new"
 	if result != HTTPRequest.RESULT_SUCCESS or code != 200 \
-			or (_server_sha != "" and FileAccess.get_sha256(fresh) != _server_sha):
+			or FileAccess.get_sha256(fresh) != _server_sha:
 		printerr("Tyrants update: download failed (result %d, code %d)" % [result, code])
 		DirAccess.remove_absolute(fresh)
 		finished.emit()
