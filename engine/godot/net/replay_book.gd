@@ -88,6 +88,33 @@ static func keep_only(files: Array, dir: String = DIR) -> void:
 			erase(name, dir)
 
 
+## Выделенный сервер (этап Sec-2): записей партий не больше max_files и не
+## старше max_days дней (по дате в имени файла, now — unix-время); лишние
+## стираются, старые первыми. Ссылка на стёртую запись в чужой истории не
+## ломается: сервер отдаёт пустой реплей, клиент пишет «not available».
+## Возвращает, сколько файлов стёрто.
+static func prune(dir: String, max_files: int, max_days: int, now: int) -> int:
+	var oldest := now - max_days * 86400
+	var removed := 0
+	var names := list(dir)
+	for i in names.size():
+		var when := date_of(names[i])
+		if i >= max_files or (when > 0 and when < oldest):
+			erase(names[i], dir)
+			removed += 1
+	return removed
+
+
+## Дата партии (unix) из имени файла, как его даёт save(): ГГГГММДД_ЧЧММСС_...;
+## 0 — имя не такое.
+static func date_of(file: String) -> int:
+	if file.length() < 15 or file[8] != "_" or not file.substr(0, 8).is_valid_int() \
+			or not file.substr(9, 6).is_valid_int():
+		return 0
+	return Time.get_unix_time_from_datetime_string("%s-%s-%sT%s:%s:%s" % [file.substr(0, 4), file.substr(4, 2),
+		file.substr(6, 2), file.substr(9, 2), file.substr(11, 2), file.substr(13, 2)])
+
+
 ## Имена файлов реплеев, новые первыми.
 static func list(dir: String = DIR) -> Array[String]:
 	var names: Array[String] = []

@@ -119,6 +119,31 @@ const RATE_WINDOW_MS := 5000
 const SERVER_RATE_WINDOW_MS := 4500
 const PING_ZONES := ["board", "market", "players", "barracks"]
 
+## Защита выделенного сервера (этап Sec-2).
+## Отказанного (_refuse) клиент обычно отключает сам; изменённый — нет: через
+## REFUSE_GRACE_MS сервер рвёт связь сам.
+const REFUSE_GRACE_MS := 1000
+## Подбор кода комнаты: ENTER_FAILS неверных кодов с одного IP за
+## ENTER_WINDOW_MS — дальше вход по коду с этого IP закрыт, пока окно не сдвинется.
+const ENTER_FAILS := 5
+const ENTER_WINDOW_MS := 5 * 60 * 1000
+const TOO_MANY_CODES := "Too many wrong room codes. Wait a few minutes and try again"
+## Друзья: заявка, ответ, удаление, приглашение, просмотр — не больше
+## FRIEND_RATE_COUNT за FRIEND_RATE_WINDOW_MS на учётную запись.
+const FRIEND_RATE_COUNT := 5
+const FRIEND_RATE_WINDOW_MS := 10000
+## Новые учётные записи (первое занятое имя) — не больше NEW_ACCOUNTS_PER_IP с
+## одного IP за сутки. Счёт в памяти: перезапуск сервера его обнуляет.
+const NEW_ACCOUNTS_PER_IP := 5
+const NEW_ACCOUNT_WINDOW_MS := 24 * 60 * 60 * 1000
+const TOO_MANY_ACCOUNTS := "Too many new players from your network today. Try again tomorrow"
+## Записи партий на сервере (records_dir): не больше RECORDS_MAX файлов и не
+## старше RECORDS_DAYS дней — лишние стираются при каждой новой записи.
+const RECORDS_MAX := 5000
+const RECORDS_DAYS := 90
+## Как часто выметать из памяти старые счётчики (IP и учётные записи).
+const SWEEP_MS := 60000
+
 ## У этой программы есть комнаты (хост по IP или сервер).
 var is_host := false
 var dedicated := false
@@ -162,6 +187,19 @@ var queues: Dictionary = {}
 var queued: Dictionary = {}
 ## Когда игрок последний раз пинговал или писал: peer id -> [мс, ...] (rate_ok).
 var _said: Dictionary = {}
+## Этап Sec-2. Отказанные подключения: peer id -> когда рвать связь (мс; -1 —
+## уже рвём). Их запросы сервер больше не слушает.
+var _dropping: Dictionary = {}
+## IP -> [мс неверных кодов комнаты]; IP -> [мс новых учётных записей];
+## учётная запись -> [мс действий с друзьями].
+var _bad_codes: Dictionary = {}
+var _new_accounts: Dictionary = {}
+var _acted: Dictionary = {}
+## Сколько новых учётных записей с одного IP за сутки (тест ставит меньше).
+var accounts_per_ip := NEW_ACCOUNTS_PER_IP
+var _next_sweep := 0
+## Тест: «изменённый клиент» — по отказу связь сам не закрывает.
+var ignore_refusal := false
 ## Выделенный сервер: чья учётная запись за каким подключением (друзья: кто
 ## в сети, кому доставить заявку, сообщение, приглашение).
 var peer_account: Dictionary = {}
@@ -235,6 +273,10 @@ func _process(delta: float) -> void:
 		return
 	if board_stock != null and dedicated:
 		board_stock.tick()
+	if not _dropping.is_empty():
+		_drop_refused()
+	if Time.get_ticks_msec() >= _next_sweep:
+		_sweep()
 	for room: GameRoom in rooms.values():
 		# Настоящее время: скорость анимаций (Engine.time_scale) паузу не торопит.
 		var real := delta / Engine.time_scale if Engine.time_scale > 0.0 else 0.0
@@ -436,6 +478,7 @@ func close() -> void:
 	peer_room.clear()
 	queues.clear()
 	queued.clear()
+	_dropping.clear()
 	seat = ""
 	room_code = ""
 	started = false
@@ -609,6 +652,8 @@ func _profile_up(player_name: String, emblem: String, back: String, key: String,
 	if not is_host:
 		return
 	var peer := multiplayer.get_remote_sender_id()
+	if _dropping.has(peer):
+		return
 	_note_presence(peer, player_name, emblem, key, favourite)
 	var room := _room_of(peer)
 	if room == null or room.started or not room.seats.has(peer):
@@ -627,10 +672,44 @@ func _name_free(peer: int, player_name: String, key: String) -> bool:
 	if ratings == null:
 		return true
 	var clean_name := PlayerProfile.clean_name(player_name)
-	if ratings.claim_name(RatingBook.account_of(key), clean_name):
+	var why := _claim(peer, RatingBook.account_of(key), clean_name)
+	if why == "":
 		return true
-	_refuse(peer, NAME_TAKEN % clean_name)
+	_refuse(peer, NAME_TAKEN % clean_name if why == "taken" else TOO_MANY_ACCOUNTS)
 	return false
+
+
+## Занять имя (RatingBook.claim_name), но новых учётных записей с одного IP —
+## не больше accounts_per_ip за сутки (этап Sec-2: иначе любой случайный ключ
+## бесплатно занимает ник). "" — занято (или занимать нечего), "taken" — имя
+## чужое, "limit" — новых записей с этого IP на сегодня хватит.
+func _claim(peer: int, account: String, clean_name: String) -> String:
+	if account == "" or RatingBook.name_id(clean_name) == "":
+		return ""
+	var owner := String(ratings.names.get(RatingBook.name_id(clean_name), ""))
+	if owner != "" and owner != account:
+		return "taken"
+	var fresh := not ratings.knows(account)
+	var ip := _ip_of(peer)
+	var now := Time.get_ticks_msec()
+	var times: Array = _new_accounts.get(ip, [])
+	if fresh and recent(times, now, NEW_ACCOUNT_WINDOW_MS) >= accounts_per_ip:
+		return "limit"
+	if not ratings.claim_name(account, clean_name):
+		return "taken"
+	if fresh:
+		times.append(now)
+		_new_accounts[ip] = times
+	return ""
+
+
+## IP подключения ("" — не ENet или подключения уже нет).
+func _ip_of(peer: int) -> String:
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if enet == null or not multiplayer.get_peers().has(peer):
+		return ""
+	var packet_peer := enet.get_peer(peer)
+	return packet_peer.get_remote_address() if packet_peer != null else ""
 
 
 func _set_profile(room: GameRoom, pid: String, player_name: String, emblem: String, back: String, key: String,
@@ -746,9 +825,22 @@ func _enter(version: int, code: String, key: String) -> void:
 	var peer := multiplayer.get_remote_sender_id()
 	if not _check_newcomer(peer, version):
 		return
+	# Подбор кода (этап Sec-2): после ENTER_FAILS неверных кодов с этого IP
+	# вход по коду закрыт на время — даже с верным кодом.
+	var ip := _ip_of(peer) if dedicated else ""
+	var fails: Array = _bad_codes.get(ip, [])
+	var now := Time.get_ticks_msec()
+	if dedicated and recent(fails, now, ENTER_WINDOW_MS) >= ENTER_FAILS:
+		_refuse(peer, TOO_MANY_CODES)
+		return
 	var room_key := _lan_code if not dedicated else code
 	var room: GameRoom = rooms.get(room_key)
 	if room == null:
+		if dedicated:
+			fails.append(now)
+			_bad_codes[ip] = fails
+			if fails.size() >= ENTER_FAILS:
+				_log("wrong room codes from %s: entry closed for a while" % ip)
 		_refuse(peer, "There is no room %s" % code)
 		return
 	if room.started:
@@ -794,18 +886,55 @@ func _deliver_reconnect(room: GameRoom, peer: int, pid: String) -> void:
 
 
 func _check_newcomer(peer: int, version: int) -> bool:
+	if _dropping.has(peer):
+		return false
 	if version != PROTOCOL:
 		_refuse(peer, "Different game version (yours %d, server %d): update the game" % [version, PROTOCOL])
 		return false
 	return not peer_room.has(peer) and not queued.has(peer)
 
 
+## Отказ. Честный клиент по нему закрывает связь сам (_refused), а изменённый
+## мог бы остаться: через REFUSE_GRACE_MS сервер рвёт связь сам (из _process —
+## не внутри приёма пакета), а до тех пор не слушает его запросов.
 func _refuse(peer: int, reason: String) -> void:
 	_refused.rpc_id(peer, reason)
+	if peer != multiplayer.get_unique_id() and not _dropping.has(peer):
+		_dropping[peer] = Time.get_ticks_msec() + REFUSE_GRACE_MS
+
+
+func _drop_refused() -> void:
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	var alive := multiplayer.get_peers()
+	var now := Time.get_ticks_msec()
+	for peer: int in _dropping.keys():
+		if not alive.has(peer):
+			_dropping.erase(peer)
+		elif int(_dropping[peer]) >= 0 and now >= int(_dropping[peer]) and enet != null:
+			# Уходит штатно (peer_disconnected), а не молчком: место, очередь и
+			# прочее подчистит _on_peer_disconnected.
+			_dropping[peer] = -1
+			enet.disconnect_peer(peer)
+			_log("refused peer %d did not leave: disconnected" % peer)
+
+
+## Выкинуть из памяти счётчики, у которых все отметки старше своего окна.
+func _sweep() -> void:
+	var now := Time.get_ticks_msec()
+	_next_sweep = now + SWEEP_MS
+	for pair: Array in [[_bad_codes, ENTER_WINDOW_MS], [_new_accounts, NEW_ACCOUNT_WINDOW_MS],
+			[_acted, FRIEND_RATE_WINDOW_MS], [_said, SERVER_RATE_WINDOW_MS]]:
+		var store: Dictionary = pair[0]
+		for k in store.keys():
+			if recent(store[k], now, int(pair[1])) == 0:
+				store.erase(k)
 
 
 @rpc("authority", "call_remote", "reliable")
 func _refused(reason: String) -> void:
+	if ignore_refusal:
+		connection_lost.emit(reason)
+		return
 	# Запомненной партии на сервере больше нет (или место в ней не наше).
 	if _resuming:
 		_resuming = false
@@ -817,6 +946,7 @@ func _refused(reason: String) -> void:
 
 func _on_peer_disconnected(id: int) -> void:
 	_said.erase(id)
+	_dropping.erase(id)
 	peer_account.erase(id)
 	for room: GameRoom in rooms.values():
 		room.watchers.erase(id)
@@ -1110,6 +1240,9 @@ func _send_replay(room: GameRoom) -> void:
 		var file := ReplayBook.save(header, room.log, records_dir)
 		room.record_file = file
 		_log("room %s: game record %s" % [room.code, file if file != "" else "NOT SAVED"])
+		var pruned := ReplayBook.prune(records_dir, RECORDS_MAX, RECORDS_DAYS, int(Time.get_unix_time_from_system()))
+		if pruned > 0:
+			_log("old game records removed: %d" % pruned)
 	for peer: int in room.seats:
 		_send(peer, "_replay", [header, room.log])
 
@@ -1336,13 +1469,19 @@ func _may_speak(sender: int) -> bool:
 
 ## Можно ли ещё раз пингнуть/сказать: в times — моменты прошлых раз (мс),
 ## старше окна выкидываются. Да — момент now записывается.
-static func rate_ok(times: Array, now: int, window: int = RATE_WINDOW_MS) -> bool:
-	while not times.is_empty() and now - int(times[0]) >= window:
-		times.pop_front()
-	if times.size() >= RATE_COUNT:
+## count — сколько раз можно за окно (по умолчанию — пинги и чат).
+static func rate_ok(times: Array, now: int, window: int = RATE_WINDOW_MS, count: int = RATE_COUNT) -> bool:
+	if recent(times, now, window) >= count:
 		return false
 	times.append(now)
 	return true
+
+
+## Сколько отметок в times моложе окна; старшие выкидываются.
+static func recent(times: Array, now: int, window: int) -> int:
+	while not times.is_empty() and now - int(times[0]) >= window:
+		times.pop_front()
+	return times.size()
 
 
 # --- главное меню: онлайн и таблица лидеров ---------------------------------
@@ -1469,7 +1608,7 @@ func _note_presence(peer: int, player_name: String, emblem: String, key: String,
 		return
 	peer_account[peer] = account
 	var clean_name := PlayerProfile.clean_name(player_name)
-	if ratings.claim_name(account, clean_name):
+	if _claim(peer, account, clean_name) == "":
 		ratings.friends.note_person(account, clean_name, PlayerProfile.clean_emblem(emblem),
 			PlayerProfile.clean_favourite(favourite))
 
@@ -1489,7 +1628,7 @@ func _friends_up(version: int, key: String, action: String, args: Array) -> void
 		return
 	var peer := multiplayer.get_remote_sender_id()
 	var me := RatingBook.account_of(key)
-	if me == "":
+	if me == "" or _dropping.has(peer):
 		return
 	peer_account[peer] = me
 	var book := ratings.friends
@@ -1500,6 +1639,18 @@ func _friends_up(version: int, key: String, action: String, args: Array) -> void
 	if action != "list" and other == "":
 		note = "No player named %s." % PlayerProfile.clean_name(other_name)
 		action = "list"
+	# Этап Sec-2: заявки и приглашения — только от игрока с именем на сервере
+	# (новых имён с одного IP немного, _claim), и всё, что пишет в книгу друзей
+	# или дёргает других, — не чаще FRIEND_RATE_COUNT за окно.
+	if action in ["add", "invite"] and book.name_of(me) == "":
+		note = "Your name is taken or not set. Change it in your profile first."
+		action = "list"
+	if action in ["add", "answer", "remove", "invite", "watch"]:
+		if not _acted.has(me):
+			_acted[me] = []
+		if not rate_ok(_acted[me], Time.get_ticks_msec(), FRIEND_RATE_WINDOW_MS, FRIEND_RATE_COUNT):
+			note = "Too many requests. Wait a moment."
+			action = "list"
 	match action:
 		"add":
 			match book.request(me, other):

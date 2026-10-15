@@ -18,6 +18,8 @@ extends SceneTree
 ##             собирается и раздаётся сервером сам, ушедший из очереди убран.
 ##   pause   — общая пауза кнопкой, отказ в ходе на паузе; отключившийся не
 ##             вернулся — партия кончается по текущему счёту без рейтинга.
+##   abuse   — защита сервера (этап Sec-2): подбор кода с одного IP, клиент,
+##             не ушедший по отказу, лимиты новых учёток и заявок в друзья.
 ##
 ##   godot --headless --path . --script res://tests/net_loopback.gd
 ## Последняя строка: "сеть: пройдено N, провалено 0".
@@ -31,6 +33,7 @@ const MATCH_PORT := 7793
 ## Баны троих, что ищут стол на двоих.
 const MATCH_BANS: Array[String] = ["drow", "dragons", "demons"]
 const PAUSE_PORT := 7794
+const ABUSE_PORT := 7795
 ## "server" — самый длинный сценарий: раздача, чат, переподключение и
 ## «перезапуск» сервера (этап 7) в одном TIMEOUT-окне без сброса _elapsed.
 const TIMEOUT := 30.0
@@ -98,6 +101,11 @@ var _restart_seat0 := ""
 var _restart_seat1 := ""
 ## Сценарий pause: кто отключился и не вернулся.
 var _absent_seat := ""
+## Сценарий abuse (этап Sec-2): подбиравшие код, опоздавший и ответы друзей.
+var _guessers: Array[NetSession] = []
+var _late: NetSession
+var _abuse_replies := 0
+var _abuse_note := ""
 
 
 func _initialize() -> void:
@@ -527,6 +535,71 @@ func _process(delta: float) -> bool:
 				check_eq_str(String(header.get("seat", "")), players[0].seat, "[replay] реплей пришёл оставшемуся, записан его глазами")
 				check_eq_str(String(header.get("abandoned_by", "")), _absent_seat, "[replay] в реплее — кто бросил партию")
 				check(ReplayBook.matches(replay, ReplayBook.rebuild(replay)), "[replay] реплей пересобирается до того же итога")
+				_start_abuse()
+		"abuse_room":
+			if players[0].room_code != "":
+				# Пятеро подбирают код; первый — «изменённый клиент», связь сам не рвёт.
+				var wrong := "ZZZZ" if players[0].room_code != "ZZZZ" else "YYYY"
+				for i in NetSession.ENTER_FAILS:
+					var s := _session()
+					_track(s)
+					s.ignore_refusal = i == 0
+					s.enter_room("127.0.0.1", ABUSE_PORT, wrong)
+					_guessers.append(s)
+				_step = "abuse_codes"
+		"abuse_codes":
+			var all_lost := true
+			for s in _guessers:
+				all_lost = all_lost and lost.has(s)
+			var evil: NetSession = _guessers[0]
+			if all_lost and String(lost[evil]).contains("connection to the game was lost") \
+					and server.multiplayer.get_peers().size() == 1:
+				check(String(lost[_guessers[1]]).contains("no room"), "[abuse] чужой код — отказ: %s" % lost[_guessers[1]])
+				check(evil.multiplayer.multiplayer_peer == null,
+					"[abuse] клиент, не ушедший по отказу, отключён сервером")
+				check(server._dropping.is_empty(), "[abuse] отказанных подключений на сервере не осталось")
+				_late = _session()
+				_track(_late)
+				_late.enter_room("127.0.0.1", ABUSE_PORT, players[0].room_code)
+				_step = "abuse_locked"
+		"abuse_locked":
+			if lost.has(_late):
+				check(String(lost[_late]).contains("Too many wrong room codes"),
+					"[abuse] после %d неверных кодов с IP не пускает и с верным: %s" % [NetSession.ENTER_FAILS, lost[_late]])
+				check((server.rooms[players[0].room_code] as GameRoom).seats.size() == 1, "[abuse] в комнату никто не сел")
+				check(not server.ratings.knows(RatingBook.account_of(_guessers[1].rating_key)),
+					"[abuse] отказанный по коду имя не занял")
+				# Окно прошло: вход по коду снова открыт.
+				server._bad_codes.clear()
+				var b := _session()
+				_track(b)
+				b.enter_room("127.0.0.1", ABUSE_PORT, players[0].room_code)
+				players.append(b)
+				_step = "abuse_second"
+		"abuse_second":
+			if players[1].seat != "" and server.ratings.knows(RatingBook.account_of(players[1].rating_key)):
+				check(true, "[abuse] окно прошло — вход по коду открыт, вторая новая учётка заняла имя")
+				_late = _session()
+				_track(_late)
+				_late.create_room("127.0.0.1", ABUSE_PORT, 2, GameSetup.MODE_STANDARD)
+				_step = "abuse_accounts"
+		"abuse_accounts":
+			if lost.has(_late):
+				check(String(lost[_late]).contains("Too many new players"),
+					"[abuse] третья новая учётка с IP за сутки — отказ: %s" % lost[_late])
+				check(not server.ratings.knows(RatingBook.account_of(_late.rating_key)), "[abuse] имя третьей не занято")
+				players[0].friends_received.connect(func(d: Dictionary):
+					_abuse_replies += 1
+					_abuse_note = String(d.get("note", "")))
+				for i in NetSession.FRIEND_RATE_COUNT + 1:
+					players[0].friends_action("add", [players[1].profile["name"]])
+				_step = "abuse_friends"
+		"abuse_friends":
+			if _abuse_replies >= NetSession.FRIEND_RATE_COUNT + 1:
+				check(_abuse_note.contains("Too many requests"),
+					"[abuse] %d-я заявка подряд — «подождите»: %s" % [NetSession.FRIEND_RATE_COUNT + 1, _abuse_note])
+				var b_account := RatingBook.account_of(players[1].rating_key)
+				check(server.ratings.friends.incoming(b_account).size() == 1, "[abuse] заявка у второго одна")
 				return _finish()
 	return false
 
@@ -593,6 +666,33 @@ func _start_pause() -> void:
 		_track(p)
 	a.create_room("127.0.0.1", PAUSE_PORT, 2, GameSetup.MODE_STANDARD)
 	_step = "pause_wait_code"
+
+
+## Защита сервера (этап Sec-2): подбор кода комнаты с одного IP, отказанный
+## клиент, что не уходит сам, лимит новых учётных записей с IP (здесь 2) и
+## заявок в друзья подряд.
+func _start_abuse() -> void:
+	for p in players:
+		p.close()
+	if server != null:
+		server.close()
+	_scenario = "abuse"
+	_reset()
+	_clear_saves_dir()
+	server = _session()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_NAMES_PATH))
+	for extra in ["_friends", "_records"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(RATINGS_PATH.get_basename() + extra + ".json"))
+	server.ratings = RatingBook.new(RATINGS_PATH)
+	server.saves_dir = SAVES_DIR
+	server.accounts_per_ip = 2
+	check(server.serve(ABUSE_PORT, true) == OK, "[abuse] сервер открыл порт")
+	var a := _session()
+	_track(a)
+	players = [a]
+	a.create_room("127.0.0.1", ABUSE_PORT, 2, GameSetup.MODE_STANDARD)
+	_step = "abuse_room"
 
 
 ## Чей сейчас ход (по _turn_player, его ставит _answer_setup).

@@ -1430,6 +1430,8 @@ func test_rating() -> void:
 	check(book.claim_name(b, "Ann"), "после смены старое имя свободно")
 	check(book.claim_name(b, "") and book.claim_name("", "Anna") == true,
 		"пустое имя и игрок без ключа ничего не занимают")
+	check(book.knows(a) and book.knows(b) and not book.knows("someone_new"),
+		"учётная запись с именем известна, без имени и партий — новая")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
@@ -3984,6 +3986,37 @@ func test_chat_wheel_and_ping() -> void:
 		"три пинга подряд можно")
 	check(not NetSession.rate_ok(times, 4999), "четвёртый за 5 с — нельзя")
 	check(NetSession.rate_ok(times, 5000), "через 5 с после первого — снова можно")
+	# Этап Sec-2: тот же счётчик со своим числом и окном (друзья, коды, учётки).
+	var acted: Array = []
+	for i in NetSession.FRIEND_RATE_COUNT:
+		NetSession.rate_ok(acted, i, NetSession.FRIEND_RATE_WINDOW_MS, NetSession.FRIEND_RATE_COUNT)
+	check(not NetSession.rate_ok(acted, 100, NetSession.FRIEND_RATE_WINDOW_MS, NetSession.FRIEND_RATE_COUNT),
+		"друзья: %d действий за окно, следующее — нельзя" % NetSession.FRIEND_RATE_COUNT)
+	check(NetSession.rate_ok(acted, NetSession.FRIEND_RATE_WINDOW_MS, NetSession.FRIEND_RATE_WINDOW_MS,
+		NetSession.FRIEND_RATE_COUNT), "друзья: окно сдвинулось — снова можно")
+	var fails: Array = [0, 10, 20]
+	check_eq(NetSession.recent(fails, 25, 10), 1, "recent: старые отметки выкинуты, осталась одна")
+	check_eq(fails, [20], "recent: в списке только свежие")
+
+	# Записи партий на сервере: не больше N файлов и не старше M дней.
+	var rec_dir := "user://records_prune_test/"
+	for name in ReplayBook.list(rec_dir):
+		ReplayBook.erase(name, rec_dir)
+	var day := 86400
+	var now_unix := 2000000000
+	for age in [0, 1, 2, 3, 100]:
+		ReplayBook.save({"date": now_unix - age * day, "code": "AB%d" % age}, [], rec_dir)
+	check_eq(ReplayBook.date_of(ReplayBook.list(rec_dir)[0]), now_unix, "дата записи читается из имени файла")
+	check_eq(ReplayBook.date_of("net_x.replay"), 0, "имя без даты — даты нет")
+	check_eq(ReplayBook.prune(rec_dir, 10, 90, now_unix), 1, "стёрта запись старше 90 дней")
+	check_eq(ReplayBook.prune(rec_dir, 3, 90, now_unix), 1, "стёрта самая старая сверх лимита в 3 файла")
+	var left := ReplayBook.list(rec_dir)
+	check(left.size() == 3 and ReplayBook.date_of(left[2]) == now_unix - 2 * day,
+		"остались три самые новые: %s" % [left])
+	check(ReplayBook.load_replay("20000101_000000_GONE.replay", rec_dir).is_empty(),
+		"стёртая запись читается как пустая (WATCH пишет «not available»)")
+	for name in left:
+		ReplayBook.erase(name, rec_dir)
 
 	check_eq(ChatWheel.side_of(Vector2(0, -20)), 0, "колесо: вверх")
 	check_eq(ChatWheel.side_of(Vector2(20, 5)), 1, "колесо: вправо")

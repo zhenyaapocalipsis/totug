@@ -79,6 +79,13 @@ func claim_name(account: String, player_name: String) -> bool:
 	return true
 
 
+## Учётная запись уже известна серверу: играла рейтинговую партию или заняла
+## имя. Неизвестная — новая (этап Sec-2: новых с одного IP в сутки — немного).
+## У записи всегда не больше одного имени: claim_name освобождает прежнее.
+func knows(account: String) -> bool:
+	return accounts.has(account) or names.values().has(account)
+
+
 ## Кириллические буквы, которые выглядят как латинские (после to_lower).
 const LOOKALIKES := {"а": "a", "в": "b", "е": "e", "ё": "e", "к": "k", "м": "m", "н": "h", "о": "o",
 	"р": "p", "с": "c", "т": "t", "у": "y", "х": "x"}
