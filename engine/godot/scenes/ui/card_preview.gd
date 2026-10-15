@@ -19,6 +19,28 @@ const GameSettings := preload("res://scenes/game_settings.gd")
 const MIN_SIZE := Vector2(176, 254)
 const MARGIN := 4.0
 
+## Что делает действие (владелец, 2026-10-15: подсказка при наведении на
+## жирное слово карты; новые слова New Era и базовые).
+const KEYWORD_TIPS := {
+	"DEVOUR": "DEVOUR: remove a card from the game.\nIt goes to the devoured pile.",
+	"SUPPLANT": "SUPPLANT: assassinate a troop where you have presence,\nthen deploy your own troop in its place.",
+	"DEPLOY": "DEPLOY: put a troop from your barracks on a free space\nwhere you have presence.",
+	"ASSASSINATE": "ASSASSINATE: remove a troop where you have presence.\nIt goes to your trophy hall (1 VP each).",
+	"PLACE": "PLACE A SPY: put a spy on a site.\nIt gives you presence there and counts for control.",
+	"RETURN": "RETURN: send a troop or spy where you have presence\nback to its owner.",
+	"PROMOTE": "PROMOTE: move a card into your Inner Circle.\nIt leaves your deck and scores its Inner Circle VP.",
+	"BRIBE": "BRIBE: give 1 VP token to an opponent of your choice\nto get the effect after the arrow.",
+	"STEAL": "STEAL: take VP tokens from another player.",
+	"RECRUIT": "RECRUIT: take a card into your discard pile.",
+	"RECRUITS": "RECRUIT: take a card into your discard pile.",
+	"MOVE": "MOVE: take a troop where you have presence\nand put it on any free space.",
+	"FOCUS": "FOCUS: works if you played another card of this aspect\nthis turn or reveal one from your hand.",
+	"SCRY": "SCRY N: look at the top N cards of your deck\nand discard any of them.",
+	"MIGHT": "MIGHT: works if you devoured a card this turn.\nThe second Might on a card needs 2 devours, and so on.",
+	"FROSTBITE": "FROSTBITE: works when this card is discarded from your hand\n(not by the end-of-turn discard).",
+	"TRANSFORM": "TRANSFORM: this card turns into the stronger card it names.",
+}
+
 static var active: CardPreview = null
 
 var _source: CardView
@@ -93,12 +115,15 @@ func _set_alt(value: bool) -> void:
 	_sync()
 
 
+## Пока Alt зажат, показанная карта не пропадает, даже если мышь ушла с
+## исходной (владелец, 2026-10-15): можно навести мышь на слова самой копии и
+## прочитать подсказки. Отпустил Alt — карта пропадает.
 func _sync() -> void:
 	var hovered := _hovered != null and is_instance_valid(_hovered)
 	if hovered and (_alt or _hovered.hover_full):
 		if _source != _hovered:
 			_show(_hovered)
-	elif _card != null:
+	elif _card != null and not _alt:
 		_hide()
 
 
@@ -122,7 +147,36 @@ func _show(card: CardView) -> void:
 	add_child(_card)
 	_card.size = s
 	_card.pivot_offset = s * 0.5
+	_add_keyword_tips(card, s)
 	_place()
+
+
+## Над каждым ключевым словом копии — прозрачная площадка с подсказкой:
+## наведение мыши показывает, что делает это действие (KEYWORD_TIPS).
+func _add_keyword_tips(card: CardView, s: Vector2) -> void:
+	if CardView.pixel_texture(card.card_id) == null:
+		return
+	var notes: Array = []
+	if card.live and CardView.live_data.has(card.card_id):
+		notes = (CardView.live_data[card.card_id] as Dictionary).get("notes", [])
+	var k := s / CardView.PIXEL_SIZE
+	for spot: Array in CardLiveFace.keyword_spots(card.card_id, notes,
+			int(CardView.PIXEL_SIZE.x), int(CardView.PIXEL_SIZE.y)):
+		var tip := keyword_tip(String(spot[1]))
+		if tip == "":
+			continue
+		var r: Rect2i = spot[0]
+		var area := Control.new()
+		area.mouse_filter = Control.MOUSE_FILTER_STOP
+		area.tooltip_text = tip
+		area.position = Vector2(r.position) * k
+		area.size = Vector2(r.size) * k
+		_card.add_child(area)
+
+
+## Подсказка к ключевому слову карты ("" — нет).
+static func keyword_tip(word: String) -> String:
+	return String(KEYWORD_TIPS.get(word.to_upper(), ""))
 
 
 func _hide() -> void:
@@ -142,8 +196,9 @@ func _place() -> void:
 func _process(_delta: float) -> void:
 	if _card == null:
 		return
-	# Исходную карту могли пересоздать (перерисовка после хода) или спрятать.
-	if not is_instance_valid(_source) or not _source.is_visible_in_tree():
+	# Исходную карту могли пересоздать (перерисовка после хода) или спрятать;
+	# с зажатым Alt копия остаётся до отпускания.
+	if not _alt and (not is_instance_valid(_source) or not _source.is_visible_in_tree()):
 		_hide()
 		return
 	_place()  # карта в руке приподнимается — копия едет следом

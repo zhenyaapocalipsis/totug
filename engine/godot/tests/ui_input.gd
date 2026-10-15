@@ -172,6 +172,9 @@ func _step_alt_down() -> void:
 func _step_check_alt_preview() -> void:
 	check(CardPreview.active.preview_size() == CardView.PIXEL_SIZE,
 		"с зажатым Alt карта руки показалась полной, без увеличения (%s)" % CardPreview.active.preview_size())
+	# Мышь ушла с карты, Alt всё ещё зажат — копия остаётся (владелец, 2026-10-15).
+	CardPreview.clear_hovered(CardPreview.active._hovered)
+	check(CardPreview.active.has_preview(), "с зажатым Alt копия не пропадает, когда мышь ушла с карты")
 
 
 func _step_alt_up() -> void:

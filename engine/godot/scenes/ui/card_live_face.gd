@@ -72,29 +72,59 @@ static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
 ## если и так нет — поле поднимается на низ арта (fit_box). Возвращает высоту.
 static func _draw_text_box(img: Image, raw: String, notes: Array) -> int:
 	var w := img.get_width()
-	var text_h := img.get_height() - 22 - TEXT_TOP
+	var box := text_layout(raw, notes, w, img.get_height())
+	var top: int = box["top"]
+	var box_h: int = box["box_h"]
+	img.fill_rect(Rect2i(7, top, w - 14, box_h), PC.C_OUTLINE)
+	img.fill_rect(Rect2i(8, top + 1, w - 16, box_h - 2), PC.C_PARCH)
+	img.fill_rect(Rect2i(8, top + box_h - 2, w - 16, 1), PC.C_PARCH_LO)
+	img.fill_rect(Rect2i(w - 9, top + 1, 1, box_h - 2), PC.C_PARCH_LO)
+	for dot: Vector2i in box["bullets"]:
+		_text(img, dot.x, dot.y, "•", PC.C_INK, 1)
+	for spot: Array in box["words"]:
+		_draw_word(img, spot[0], spot[1], spot[2])
+	return box["content_h"]
+
+
+## Где что лежит в поле текста карты размера w x h (так же рисует и
+## tools/pixel_cards.gd без пометок): {top, box_h, content_h, bullets:
+## [Vector2i], words: [[x, y, слово]]}.
+static func text_layout(raw: String, notes: Array, w: int, h: int) -> Dictionary:
+	var text_h := h - 22 - TEXT_TOP
 	var paras := layout(raw, notes, w)
 	var fit := fit_box(paras, text_h)
 	var gap: int = fit[0]
 	var top: int = TEXT_TOP - int(fit[1])
 	var box_h: int = text_h + int(fit[1])
-	img.fill_rect(Rect2i(7, top, w - 14, box_h), PC.C_OUTLINE)
-	img.fill_rect(Rect2i(8, top + 1, w - 16, box_h - 2), PC.C_PARCH)
-	img.fill_rect(Rect2i(8, top + box_h - 2, w - 16, 1), PC.C_PARCH_LO)
-	img.fill_rect(Rect2i(w - 9, top + 1, 1, box_h - 2), PC.C_PARCH_LO)
 	var content_h := block_height(paras, gap)
+	var bullets: Array[Vector2i] = []
+	var words: Array = []
 	var y := top + 4 + (box_h - 8 - content_h) / 2
 	for p: Dictionary in paras:
 		for li in p["lines"].size():
 			var x := 11 + (8 if p["bullet"] else 0)
 			if p["bullet"] and li == 0:
-				_text(img, 11, y, "•", PC.C_INK, 1)
+				bullets.append(Vector2i(11, y))
 			for word: String in p["lines"][li]:
-				_draw_word(img, x, y, word)
+				words.append([x, y, word])
 				x += word_width(word) + 5
 			y += PC.LINE_H
 		y += gap
-	return content_h
+	return {"top": top, "box_h": box_h, "content_h": content_h, "bullets": bullets, "words": words}
+
+
+## Ключевые слова на большой карте (для подсказок при наведении):
+## [[Rect2i в пикселях лица, слово без знаков]].
+static func keyword_spots(cid: String, notes: Array, w: int, h: int) -> Array:
+	var out: Array = []
+	var raw := String(CardLibrary.card_data(cid).get("ability_text", ""))
+	for spot: Array in text_layout(raw, notes, w, h)["words"]:
+		var word := String(spot[2])
+		if word.begins_with(MARK_OK) or word.begins_with(MARK_NO) or not is_keyword(word):
+			continue
+		var bare := word.rstrip(".,:;")
+		out.append([Rect2i(spot[0] - 1, spot[1] - 1, word_width(bare) + 2, 9), bare])
+	return out
 
 
 ## [промежуток между абзацами, на сколько поднять поле над артом].
@@ -108,7 +138,8 @@ static func fit_box(paras: Array, text_h: int) -> Array:
 ## Разметка как PC.layout_text, только в абзацы сначала вставляются пометки.
 static func layout(raw: String, notes: Array, w: int = PC.W) -> Array:
 	var paras: Array[String] = []
-	var resource_line := RegEx.create_from_string("^(\\+\\d+ (Power|Influence) ?)+$")
+	# Та же строка ресурсов, что в PC.layout_text ("• +1 Power", "+1 Power, +1 Influence").
+	var resource_line := RegEx.create_from_string("^(• )?(\\+\\d+ (Power|Influence),? ?)+$")
 	for line in raw.split("\n"):
 		line = line.strip_edges()
 		if line == "":

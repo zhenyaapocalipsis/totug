@@ -151,7 +151,9 @@ const ASPECT_COLOR := {
 }
 
 const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE", "BRIBE", "STEAL",
-	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
+	"RECRUIT", "RECRUITS", "MOVE", "FOCUS",
+	# новые слова New Era и фанатских колод (владелец, 2026-10-15)
+	"SCRY", "MIGHT", "FROSTBITE", "TRANSFORM"]
 
 ## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
 ## (номер буквы, после которой ставится дефис). Берётся самая дальняя граница,
