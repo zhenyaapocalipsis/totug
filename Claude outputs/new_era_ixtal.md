@@ -1,6 +1,6 @@
-# New Era: Ixtal → CHULT (этап NE-31)
+# New Era: Ixtal → CHULT (этапы NE-31…32)
 
-Полуколода Ixtal из мода Runeterra Reforged (картинки PDF **252–272**; 273 и дальше — Arcane) на существах джунглей Чульта и рядом: люди-ящеры, юань-ти, ааракокры, Sarrukh Tyrant. Ключ `ixtal`, тип `CHULT`, id **50100–50120** (50109 свободен — **Nidalee владелец велел не делать**). Флаг `wip`: колода доступна только кнопкой CHULT в режиме NEW ERA. **Сейчас все 44 карты мода (20 уникальных)** — владелец сам скажет, какие копии убрать до 40.
+Полуколода Ixtal из мода Runeterra Reforged (картинки PDF **252–272**; 273 и дальше — Arcane) на существах джунглей Чульта и рядом: люди-ящеры, юань-ти, ааракокры, Sarrukh Tyrant. Ключ `ixtal`, тип `CHULT`, id **50100–50120** (50109 свободен — **Nidalee владелец велел не делать**). Флаг `wip`: колода доступна только кнопкой CHULT в режиме NEW ERA. **NE-32 (владелец): 40 карт / 20 уникальных** — по одной копии убрано у Bandit Deceiver, Lizardfolk Warden, Aarakocra Aeromancer (4 → 3) и Minotaur Archaeologist (3 → 2).
 
 Эффекты — `engine/godot/core/cards/ixtal_cards.gd`, тест — `test_chult_deck`, арты — `cards/ixtal/` (кандидаты `cards/ixtal/cand`, `bg`, `more`, `sky`, `giff` в git не идут), лист всех карт — `Claude outputs/chult_cards_all.png`.
 
@@ -24,16 +24,16 @@
 | 50106 | Lizardfolk Geomancer | Zyra | 7 | Conquest | 1 | 3/7 |
 | 50107 | Dao | Qiyana | 6 | Malice | 1 | 3/6 |
 | 50108 | Knight of Eldraine | Ezreal | 6 | Ambition | 1 | 3/6 |
-| 50110 | Bandit Deceiver | Treasure Seeker | 5 | Ambition | 4 | 3/5 |
-| 50111 | Lizardfolk Warden | All Terrain Trooper | 3 | Conquest | 4 | 2/4 |
+| 50110 | Bandit Deceiver | Treasure Seeker | 5 | Ambition | 3 | 3/5 |
+| 50111 | Lizardfolk Warden | All Terrain Trooper | 3 | Conquest | 3 | 2/4 |
 | 50112 | Yuan-ti Abomination | Avenging Vastaya | 4 | Malice | 3 | 2/4 |
 | 50113 | Performer Maestro | Big Game Tycoon | 4 | Ambition | 2 | 2/5 |
-| 50114 | Minotaur Archaeologist | Intrepid Archaeologist | 4 | Ambition | 3 | 2/4 |
+| 50114 | Minotaur Archaeologist | Intrepid Archaeologist | 4 | Ambition | 2 | 2/4 |
 | 50115 | Living Gust of Wind | Sky Squad | 3 | Conquest | 3 | 2/4 |
 | 50116 | Bullywug Bog Sage | Curious Ecologist | 3 | Malice | 3 | 1/3 |
 | 50117 | Cyclops Oracle | Axiomata Monk | 3 | Malice | 3 | 2/4 |
 | 50118 | Kenku | Secret Keeper | 2 | Guile | 3 | 1/3 |
-| 50119 | Aarakocra Aeromancer | Landing Party | 3 | Conquest | 4 | 2/4 |
+| 50119 | Aarakocra Aeromancer | Landing Party | 3 | Conquest | 3 | 2/4 |
 | 50120 | Bone Naga | Yun Tal Initiate | 2 | Malice | 3 | 1/3 |
 
 Все арты — со сценой-фоном (`art_bgcheck.gd` + контакт-лист). Особенные динозавры (Aerosaur, Altisaur, Regisaur, Fastieth, Clawfoot Raptor) и Grung, Tlincalli, Kamadan, Su-monster — на D&D Beyond только вырезанные фигуры; владелец решил делать **без динозавров**. Aarakocra Skirmisher (Sky Squad) заменён на Living Gust of Wind: у его арта вырезано небо.

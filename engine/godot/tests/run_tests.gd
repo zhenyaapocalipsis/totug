@@ -6462,7 +6462,7 @@ func test_chult_deck() -> void:
 	section("Chult (New Era Ixtal): полуколода, Explore, войска на рынке")
 	var X := IxtalCards
 	var deck := GameSetup.expand_half_deck("ixtal")
-	check_eq(deck.size(), 44, "Chult: все 44 карты мода без Nidalee")
+	check_eq(deck.size(), 40, "Chult: 40 карт (Bandit Deceiver, Lizardfolk Warden, Aarakocra Aeromancer по 3, Minotaur Archaeologist 2)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
@@ -6471,7 +6471,7 @@ func test_chult_deck() -> void:
 	var mode := GameSetup.new_era_mode(["ixtal", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Chult принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 84, "рынок: 40 (Celestial) + 44 (Chult)")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Chult)")
 	_sweep_deck_with_vp(50100, 50108)
 	_sweep_deck_with_vp(50110, 50120)
 
