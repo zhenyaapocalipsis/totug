@@ -642,6 +642,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var ionia := IoniaCards.build(card_id)
 	if ionia != null:
 		return ionia
+	var bandle := BandleCards.build(card_id)
+	if bandle != null:
+		return bandle
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
 

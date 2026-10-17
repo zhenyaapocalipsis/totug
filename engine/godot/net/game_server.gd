@@ -245,11 +245,13 @@ func _apply(intent: Intent) -> int:
 				var hit := func(s, pid, r):
 					Actions.kill_at(s, pid, slot)
 					r.log_event("assassinate", {"player_id": pid, "slot_id": slot, "victim": victim})
+					BandleCards.after_kill(s, pid, slot, r, false)
 				resolver.apply(ShieldGuard.new(victim, CallbackEffect.new(hit), "the assassination", true, false), intent.player_id, state)
 				return Error.OK
 			if not Actions.assassinate(state, intent.player_id, intent.slot_id):
 				return Error.INVALID_ACTION
 			resolver.log_event("assassinate", {"player_id": intent.player_id, "slot_id": intent.slot_id, "victim": victim})
+			BandleCards.after_kill(state, intent.player_id, intent.slot_id, resolver, false, true)
 			return Error.OK
 
 		Intent.Type.ACTION_DEPLOY:
@@ -278,6 +280,7 @@ func _apply(intent: Intent) -> int:
 			MercenaryCards.after_buy(state, intent.player_id, resolver)
 			ShurimaCards.on_recruit(state, intent.player_id, bought, resolver, true)
 			IoniaCards.on_recruit(state, intent.player_id, resolver, true)
+			BandleCards.on_recruit(state, intent.player_id, bought, resolver, true)
 			return Error.OK
 
 		Intent.Type.ACTION_RECRUIT_SUPPLY:
@@ -287,6 +290,7 @@ func _apply(intent: Intent) -> int:
 			PiltoverCards.after_buy(state, intent.player_id, intent.card_id, resolver)
 			MercenaryCards.after_buy(state, intent.player_id, resolver)
 			IoniaCards.on_recruit(state, intent.player_id, resolver, true)
+			BandleCards.on_recruit(state, intent.player_id, intent.card_id, resolver, true)
 			return Error.OK
 
 		Intent.Type.ACTION_RETURN_SPY:

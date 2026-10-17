@@ -121,3 +121,4 @@ func _kill(state: GameState, player_id: String, slot_id: String, resolver: Effec
 	if gain_power_per_removed > 0:
 		p.power += gain_power_per_removed
 	resolver.log_event("assassinate", {"player_id": player_id, "slot_id": slot_id, "victim": victim})
+	BandleCards.after_kill(state, player_id, slot_id, resolver, false)

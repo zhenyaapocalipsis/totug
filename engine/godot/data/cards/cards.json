@@ -3288,5 +3288,225 @@
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Retain.\nReveal the top 5 cards of your deck: cards with the word Assassinate or Supplant go to your hand, discard the rest.\nThis turn, +1 Power whenever you assassinate or supplant a troop."
+  },
+  {
+    "card_id": 49900,
+    "name": "Quickling",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Top 6 cards of your deck: cards with the word spy to your hand, discard the rest.\nThis turn: each spy you place, place another and gain 1 VP; each spy you return, supplant a troop at that site."
+  },
+  {
+    "card_id": 49901,
+    "name": "Darkling",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Retain: Gain 1 VP.\nChoose one:\n• Place a spy and draw a card.\n• Return one of your spies, assassinate up to 3 troops at that site."
+  },
+  {
+    "card_id": 49902,
+    "name": "Kobold Inventor",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+3 Power\nChoose one for this turn:\n• Each troop you assassinate or supplant: 1 VP.\n• You may supplant troops you assassinate."
+  },
+  {
+    "card_id": 49903,
+    "name": "Rock Gnome Recluse",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate 2 troops.\nGlamour: At end of turn, promote an Obedience card you played this turn.\nAmbition Focus: Draw a card."
+  },
+  {
+    "card_id": 49904,
+    "name": "Tressym",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+5 Influence\nChoose one:\n• This turn, you may put cards you recruit on top of your deck.\n• Gain 1 VP for each card you recruit this turn."
+  },
+  {
+    "card_id": 49905,
+    "name": "Faerie Pathlighter",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose another player: they place three 1 VP tokens at sites without one. Only you take them, when you have a troop at that site.\nMove a troop and deploy 2 troops."
+  },
+  {
+    "card_id": 49906,
+    "name": "Faerie Dragon Youth",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+2 Power and draw a card.\nIf you gained 6 or more Power this turn, this card leaves the game and Faerie Dragon Adult goes to your discard pile."
+  },
+  {
+    "card_id": 49908,
+    "name": "Nilbog",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop.\n+1 Power, and +1 Power for every 3 troops in your trophy hall."
+  },
+  {
+    "card_id": 49909,
+    "name": "Korred",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose one:\n• Place a spy and deploy 4 troops.\n• Return one of your spies, supplant a troop at that site and gain 1 VP."
+  },
+  {
+    "card_id": 49910,
+    "name": "Grung",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Draw a card, then discard a card and gain 1 VP.\n• +2 Power\n• +2 Influence"
+  },
+  {
+    "card_id": 49911,
+    "name": "Darkling Elder",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "At end of turn, promote another card played this turn.\nGlamour: +2 Influence\nIf you recruited 3 or more cards this turn, gain 1 VP."
+  },
+  {
+    "card_id": 49912,
+    "name": "Deep Gnome",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+2 Influence\nIf you have no VP tokens, gain 1 VP and place a spy."
+  },
+  {
+    "card_id": 49913,
+    "name": "Leprechaun",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "You may discard up to 3 cards in the market.\nGain a card that costs 3 or less.\nGlamour: +3 Influence instead.\nGlamour: Gain a card that costs 5 or less instead."
+  },
+  {
+    "card_id": 49914,
+    "name": "Faerie Pest",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, gain 1 VP.\n• Return one of your spies, +2 Influence and draw a card."
+  },
+  {
+    "card_id": 49915,
+    "name": "Boggle",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy. If another player's troop is there, gain 1 VP.\n• Return one of your spies, take 2 VP from each other player with a troop at that site."
+  },
+  {
+    "card_id": 49916,
+    "name": "Redcap",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "FEYWILD",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Deploy 3 troops.\n• Supplant a white troop.\nIf you gained control of a site this turn, gain 1 VP."
+  },
+  {
+    "card_id": 49917,
+    "name": "Faerie Borrower",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy. Site full: you may devour a card in hand or discard pile for 1 VP.\n• Return one of your spies, devour 2 market cards. Their replacements cost 2 less."
+  },
+  {
+    "card_id": 49918,
+    "name": "Meenlock",
+    "cost": 2,
+    "aspect": "MALICE",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Assassinate a troop.\nGlamour: Deploy 3 troops.\nGlamour: Return a troop or spy.\nGlamour: +2 Power"
+  },
+  {
+    "card_id": 49919,
+    "name": "Smoke Mephit",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Supplant a white troop.\nGlamour: Supplant any troop instead.\nGlamour: Supplant a white troop anywhere on the board instead."
+  },
+  {
+    "card_id": 49920,
+    "name": "Xvart",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "+3 Influence\nGlamour: At end of turn, promote another card you played this turn."
+  },
+  {
+    "card_id": 49921,
+    "name": "Goblin Hexer",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "FEYWILD",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy, move one of your troops to that site.\n• Return one of your spies, move up to one enemy troop at that site and one of your troops."
+  },
+  {
+    "card_id": 49922,
+    "name": "Faerie Dragon Adult",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FEYWILD",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+6 Power\nEach opponent discards a card.\nThis card leaves the game and Faerie Dragon Youth goes to your discard pile."
   }
 ]

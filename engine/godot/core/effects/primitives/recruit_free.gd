@@ -46,6 +46,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				CardLibrary.on_gain(state, player_id, card_id)
 				ShurimaCards.on_recruit(state, player_id, card_id, resolver)
 				IoniaCards.on_recruit(state, player_id, resolver)
+				BandleCards.on_recruit(state, player_id, card_id, resolver)
 				resolver.log_event("recruit_free", {"player_id": player_id, "card_id": card_id, "market_index": int(index)})
 				if state.market.is_deck_empty():
 					GameEnd.trigger(state, "market_empty")

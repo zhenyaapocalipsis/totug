@@ -54,7 +54,7 @@ const MODE_RANDOM_6 := "random6"
 ## С Siege-1 (2026-10-13) в том же переключателе — фанатские колоды Siege и
 ## Mercenaries (тоже "wip").
 const MODE_NEW_ERA := "newera"
-const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege", "mercenaries", "noxus", "freljord", "shurima", "ionia"]
+const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege", "mercenaries", "noxus", "freljord", "shurima", "ionia", "bandle"]
 const NEW_ERA_DEFAULT: Array[String] = ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20

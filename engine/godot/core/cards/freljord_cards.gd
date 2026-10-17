@@ -267,6 +267,7 @@ static func locked_power(state: GameState, player_id: String) -> int:
 
 ## Power потрачена не на войска (убийство, возврат шпиона) — первой уходит запертая.
 static func spent_power(state: GameState, player_id: String, amount: int) -> void:
+	BandleCards.spend(state, amount)
 	if String(state.turn_flags.get("olaf", "")) != player_id:
 		return
 	state.turn_flags["olaf_locked"] = maxi(0, int(state.turn_flags.get("olaf_locked", 0)) - amount)

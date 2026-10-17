@@ -98,6 +98,7 @@ func _supplant(state: GameState, player_id: String, resolver: EffectResolver, sl
 	else:
 		state.troops[slot_id] = ""
 	resolver.log_event("supplant", {"player_id": player_id, "slot_id": slot_id, "victim": victim})
+	BandleCards.after_kill(state, player_id, slot_id, resolver, true)
 	if lock_after_first:
 		preset_site = state.graph.site_of_slot(slot_id)
 		lock_after_first = false

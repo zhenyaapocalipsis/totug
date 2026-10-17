@@ -189,7 +189,7 @@ static func retain_effect(card_id: String) -> CardEffect:
 
 ## Можно ли сейчас удержать эту карту из руки вместо розыгрыша.
 static func can_retain(state: GameState, player_id: String, card_id: String) -> bool:
-	if not RETAINABLE.has(card_id) or player_id != state.current_player():
+	if not (RETAINABLE.has(card_id) or card_id == BandleCards.KENNEN) or player_id != state.current_player():
 		return false
 	var hand: Array = state.players[player_id].deck.hand
 	if not hand.has(card_id):
@@ -229,7 +229,7 @@ static func retain(state: GameState, player_id: String, card_id: String, resolve
 	if pw > 0:
 		p.power += pw
 		resolver.log_event("gain_power", {"player_id": player_id, "amount": pw})
-	var bonus := retain_effect(card_id)
+	var bonus := retain_effect(card_id) if card_id != BandleCards.KENNEN else BandleCards.retain_effect(card_id)
 	if bonus != null:
 		resolver.push(bonus, player_id, card_id)
 	var deploy := int(state.turn_flags.get("retain_deploy", 0))

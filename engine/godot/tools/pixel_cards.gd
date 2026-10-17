@@ -137,6 +137,13 @@ const MINI_FACE := {
 	49812: Vector2i(47, 24), 49813: Vector2i(61, 21), 49814: Vector2i(54, 41), 49815: Vector2i(51, 4),
 	49816: Vector2i(47, 27), 49817: Vector2i(61, 14), 49818: Vector2i(51, 7), 49819: Vector2i(74, 44),
 	49820: Vector2i(47, 17), 49821: Vector2i(31, 34), 49822: Vector2i(64, 31),
+	# FEYWILD (Bandle City)
+	49900: Vector2i(10, 6), 49901: Vector2i(56, 12), 49902: Vector2i(43, 16), 49903: Vector2i(18, 0),
+	49904: Vector2i(26, 41), 49905: Vector2i(54, 0), 49906: Vector2i(35, 3), 49908: Vector2i(34, 23),
+	49909: Vector2i(59, 10), 49910: Vector2i(59, 7), 49911: Vector2i(52, 8), 49912: Vector2i(54, 7),
+	49913: Vector2i(37, 29), 49914: Vector2i(44, 2), 49915: Vector2i(33, 11), 49916: Vector2i(60, 8),
+	49917: Vector2i(53, 2), 49918: Vector2i(49, 14), 49920: Vector2i(22, 6), 49921: Vector2i(62, 38),
+	49922: Vector2i(43, 29), 49919: Vector2i(13, 27),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -173,7 +180,9 @@ const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETU
 	# Calimshan (2026-10-16)
 	"DEVOTION",
 	# Kara-Tur (2026-10-17)
-	"RETAIN", "RETAINED"]
+	"RETAIN", "RETAINED",
+	# Feywild (2026-10-17)
+	"GLAMOUR"]
 
 ## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
 ## (номер буквы, после которой ставится дефис). Берётся самая дальняя граница,
@@ -421,6 +430,29 @@ const SINGLE_ART := {
 	49820: ["ionia/adult_gold_dragon.png", Rect2i(80, 100, 500, 305)],
 	49821: ["ionia/ancient_silver_dragon.jpeg", Rect2i(40, 60, 520, 317)],
 	49822: ["ionia/kraken.png", Rect2i(120, 40, 600, 366)],
+	# FEYWILD (Bandle City)
+	49900: ["bandle/quickling.jpeg", Rect2i(0, 0, 820, 500)],
+	49901: ["bandle/darkling.jpeg", Rect2i(50, 20, 700, 427)],
+	49902: ["bandle/kobold_inventor.jpeg", Rect2i(36, 120, 600, 366)],
+	49903: ["bandle/rock_gnome_recluse.jpeg", Rect2i(0, 40, 900, 549)],
+	49904: ["bandle/tressym.png", Rect2i(50, 250, 750, 457)],
+	49905: ["bandle/faerie_pathlighter.jpeg", Rect2i(220, 0, 600, 366)],
+	49906: ["bandle/faerie_dragon_youth.jpeg", Rect2i(0, 200, 767, 468)],
+	49908: ["bandle/nilbog.jpeg", Rect2i(0, 280, 538, 328)],
+	49909: ["bandle/korred.jpeg", Rect2i(100, 20, 800, 488)],
+	49910: ["bandle/grung.jpeg", Rect2i(100, 0, 794, 484)],
+	49911: ["bandle/darkling_elder.jpeg", Rect2i(50, 20, 640, 390)],
+	49912: ["bandle/deep_gnome.jpeg", Rect2i(0, 20, 684, 417)],
+	49913: ["bandle/leprechaun.png", Rect2i(0, 330, 397, 242)],
+	49914: ["bandle/faerie_pest.jpeg", Rect2i(150, 0, 850, 518)],
+	49915: ["bandle/boggle.jpeg", Rect2i(80, 0, 700, 427)],
+	49916: ["bandle/redcap.jpeg", Rect2i(100, 0, 900, 549)],
+	49917: ["bandle/faerie_borrower.jpeg", Rect2i(150, 50, 750, 457)],
+	49918: ["bandle/meenlock.jpeg", Rect2i(80, 50, 700, 427)],
+	49919: ["bandle/smoke_mephit.jpeg", Rect2i(0, 300, 715, 436)],
+	49920: ["bandle/xvart.jpeg", Rect2i(0, 60, 1000, 610)],
+	49921: ["bandle/goblin_hexer.png", Rect2i(0, 150, 578, 352)],
+	49922: ["bandle/faerie_dragon_adult.jpeg", Rect2i(0, 190, 520, 317)],
 }
 
 const FONT := {
@@ -710,6 +742,7 @@ func set_name(card_id: int, type: String) -> String:
 		496: return "ICEWIND DALE"
 		497: return "CALIMSHAN"
 		498: return "KARA-TUR"
+		499: return "FEYWILD"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

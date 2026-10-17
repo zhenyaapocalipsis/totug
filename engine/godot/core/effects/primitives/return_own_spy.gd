@@ -55,6 +55,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			state.spies[site_id] = spies
 			state.stock(player_id).spies_in_barracks += 1
 			resolver.log_event("return_own_spy", {"player_id": player_id, "site_id": site_id})
+			BandleCards.on_return_spy(state, player_id, site_id, resolver)
 		_collected.append(site_id)
 		if multi:
 			_continue(state, player_id, resolver)

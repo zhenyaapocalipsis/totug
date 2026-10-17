@@ -307,5 +307,14 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s gains an Acorn token (%d)" % [who, int(e.get("total", 1))]
 		"look_at_hand":
 			return "%s looks at %s's hand" % [who, String(e.get("target", "")).capitalize()]
+		# Feywild (New Era Bandle City)
+		"glamour":
+			return "%s spends 1 VP on Glamour" % who
+		"market_discard":
+			return "%s discards %s from the market" % [who, card]
+		"board_vp":
+			return "%s places a 1 VP token for %s at %s" % [who, player_name(String(e.get("owner", ""))), site]
+		"board_vp_claim":
+			return "%s takes the 1 VP token at %s" % [who, site]
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]

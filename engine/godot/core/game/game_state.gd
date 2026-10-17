@@ -74,6 +74,9 @@ var in_extra_turn: bool = false
 ## (id локации -> вор). Вор держит маркер до начала своего следующего хода
 ## (TurnEngine.start_turn), пока маркер приносит доход только ему.
 var stolen_markers: Dictionary = {}
+## FEYWILD, Faerie Pathlighter (Norra): жетоны 1 VP на локациях (id локации ->
+## игрок, который один может их забрать, когда у него там есть войско).
+var board_vp: Dictionary = {}
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.

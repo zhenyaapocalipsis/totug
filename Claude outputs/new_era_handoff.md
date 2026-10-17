@@ -6,7 +6,8 @@
 - **Всё закоммичено, запушено и задеплоено** (кроме коммита с этой сводкой — его push по слову владельца). На сервере сборка **1792240980**, **PROTOCOL 33** (`net/net_session.gd`). Проверка: `curl http://129.101.123.70/tyrants/version.txt`.
 - **Тесты:** `пройдено: 2005, провалено: 0`, сеть `151 / 0`. В тесте карт 329 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит. Полный прогон run_tests идёт ~5–8 минут (запускать в фоне).
 - **Колоды:** 7 колод New Era в обычном пуле (NE-20), все 40/20. Две последние — `wip` (только кнопками в NEW ERA, не в STANDARD/RANDOM и онлайн-поиске): **CALIMSHAN** (Shurima, NE-21/22) и **KARA-TUR** (Ionia, NE-23…25). Снять `wip` — только по слову владельца (меняет сиды обычных режимов), затем поднять PROTOCOL и задеплоить. Обе колоды владелец **ещё не проверял живьём** — чек-листы в `new_era_shurima.md` и `new_era_ionia.md`.
-- **Следующий шаг (не назначен):** следующая колода по PDF — **Bandle City**, картинки PDF с **188**: 188 Teemo, 189 Kennen, 190 Tristana, 191 Ziggs, 192 Yuumi… (смотреть `pdf_sheets.gd FROM=188 TO=215`). Механика **Glamour** — «потратить 1 VP-жетон (вернуть в запас), чтобы включить способность; одна Glamour на карту». Черновик существ — `new_era_dnd_mapping.md`, раздел 9 (мелкие феи-шутники). Либо живая проверка Calimshan / Kara-Tur, либо снятие `wip`.
+- **NE-26 (2026-10-17): Bandle City → FEYWILD** (ключ `bandle`, id 49900–49922, `wip`, 21 уникальная / 44 карты — все карты мода; Rumble и Lulu убраны владельцем, вместо них Norra — картинка PDF **457**, раздел Poro). Всё по колоде — `Claude outputs/new_era_bandle.md`, лист `Claude outputs/feywild_cards_all.png`. **Ждёт владельца:** что убрать до 40/20, живая проверка, потом PROTOCOL и деплой. Следующая по PDF — **Targon** (картинки с 210: Soraka, Zoe, Taric, Diana, Pantheon, Leona…; механика Gems/Tribute).
+- **Арты платных книг D&D Beyond** доступны: в списке поиска (`/monsters?filter-search=…`) у каждой строки `.monster-icon a[href]` — полный арт 1000 px, даже если страница монстра закрыта. Свободные существа больше не проблема.
 - **Порядок работы с новой колодой (владелец, 2026-10-16):** сделать колоду **целиком (все карты мода)**, `wip` → лист всех карт (`tools/new_era/cards_sheet.gd`, сам сортирует по цене) → владелец сам говорит, что убрать до 40/20 (столько уникальных, чтобы осталось 20, и копий, чтобы вышло 40; если после выреза не хватает копий — спросить, кому добавить). Потом `half_decks.json`, тест колоды (число карт, уникальных, размер рынка), справка, PROTOCOL.
 - **Владелец меняет чемпионов на Extra Champions мода** (Azir→Naafiri, Jhin→Hwei). Extra Champions — картинки PDF 331–400 (например, 373 Hwei, 379 Brand, 380 Naafiri); быстро найти — контакт-лист `art_contact.gd` на копию папки 331–400.
 - **Подбор существ (правила владельца):** имена не повторяются во всей игре — **проверять по `cards.json` до кода**; **без зверей** (NE-19); арт только **с фоном** (контакт-лист на пурпурной подложке). Свободных не-зверей с фоном почти не осталось (после NE-25): Adult Black/Blue/Red/White/Green Dragon (у 2024 Young-версий тот же арт, что у Adult — Young не брать), Ancient Red/White Dragon, Adult Bronze Dragon и Violet Fungus (в cards.json, но вырезаны из Kara-Tur — имена заняты!), Roc (птица — спорно). Без фона (не брать): Animated Armor/Flying Sword/Rug, Salamander, Sahuagin Warrior, Kobold Warrior, Pirate, Priest Acolyte, Knight, Gold/Bronze Wyrmling, Gray Ooze, Cyclops, Darkmantle, Flameskull, Imp, Quasit, Hobgoblin Warrior, Pit Fiend, Gnoll, Lizardfolk, Gladiator, Androsphinx/Gynosphinx. Платные (locked): Pixie, Mage Apprentice, Performer, Questing Knight, Archpriest, Sahuagin Priest, Cultist Hierophant, Bandit Deceiver, Dao, Marid, Yuan-ti, Gnoll Pack Lord, Lizardfolk Geomancer, Mud/Smoke Mephit. Для Bandle City, скорее всего, придётся спросить владельца: брать ли 2014-арты, хроматических Adult-драконов или существ без фона.
@@ -47,6 +48,7 @@
   | **ICEWIND DALE** | Freljord | `freljord` | 49600–49620, 49634–49636 | NE-11 (правила), NE-12 (арты, UI), NE-12b (PROTOCOL 25), NE-17 (Gragas/Aurora/Olaf) |
   | **CALIMSHAN** | Shurima (+ Naafiri) | `shurima` | 49700–49720 | NE-21 (все 45 карт), NE-22 (40/20) |
   | **KARA-TUR** | Ionia (+ Hwei) | `ionia` | 49800–49822 | NE-23 (все 45 карт), NE-24/25 (40/20) |
+  | **FEYWILD** | Bandle City (+ Norra, без Rumble и Lulu) | `bandle` | 49900–49922 | NE-26 (все 44 карты, wip) |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
 - Всё закоммичено и запушено на GitHub (`main`). Последний деплой — сборка 1792009359 (2026-10-15, после NE-20, **PROTOCOL 27**): все колоды New Era в обычном пуле.
@@ -145,8 +147,8 @@
    | Freljord | 121–143 (127 — Troll Scout + Rimetusk Shaman; жетоны 324 Eggnivia, 441–450 предметы Ornn) |
    | Shurima | 144–164 (+ 380 Naafiri) |
    | Ionia | 165–187 (171 Jhin; + 373 Hwei) |
-   | Bandle City | с 188 (188 Teemo, 189 Kennen, 190 Tristana, 191 Ziggs, 192 Yuumi…) |
-   | Targon | следом |
+   | Bandle City | 188–209 (+ 457 Norra, 326 Mega Gnar) |
+   | Targon | с 210 (210 Soraka, 211 Zoe, 212 Taric, 213 Diana, 214 Pantheon, 215 Leona…) |
    | Void | следом |
    | Ixtal | следом |
    | Arcane | следом |

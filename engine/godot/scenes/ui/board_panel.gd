@@ -1196,6 +1196,7 @@ func _draw() -> void:
 	_draw_kills()
 	_draw_focus()
 	_draw_arrivals()
+	_draw_board_vp()
 	_draw_spies()
 	_draw_spy_targets()
 	_draw_decision_targets()
@@ -1601,6 +1602,29 @@ func _outline_site(site_id: String, colour: Color) -> void:
 
 ## Шпионы стоят не в троп-слотах, а «у названия локации» (рулбук стр. 12),
 ## поэтому рисуем их ромбиками над локацией.
+## FEYWILD (Faerie Pathlighter): жетоны 1 VP на локациях — золотая монетка с
+## ободком цвета игрока, который один может её забрать, в правом верхнем углу.
+func _draw_board_vp() -> void:
+	var tokens: Dictionary = _view.get("board_vp", {})
+	if tokens.is_empty():
+		return
+	var r := spy_half() * 1.1
+	for site_id: String in tokens.keys():
+		var at: Vector2
+		var rect: Variant = _site_rect(site_id)
+		if rect != null:
+			var box := rect as Rect2
+			at = _to_screen(Vector2(box.end.x, box.position.y)) + Vector2(-r, r)
+		else:
+			var centre: Variant = _site_centre(site_id)
+			if centre == null:
+				continue
+			at = _to_screen(centre) + Vector2(troop_radius() * 2.2, -troop_radius() * 2.2)
+		draw_circle(at, r + 1.5, colour(String(tokens[site_id]), Color(0.7, 0.7, 0.7)))
+		draw_circle(at, r, Color(0.98, 0.80, 0.25))
+		draw_line(at + Vector2(0, -r * 0.55), at + Vector2(0, r * 0.55), Color(0.35, 0.22, 0.05), 2.0)
+
+
 func _draw_spies() -> void:
 	var spies: Dictionary = _view.get("spies", {})
 	if spies.is_empty():

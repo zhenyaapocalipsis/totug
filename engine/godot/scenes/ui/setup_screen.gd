@@ -70,6 +70,7 @@ const NEW_ERA_TITLES := {
 	"freljord": "ICEWIND DALE",
 	"shurima": "CALIMSHAN",
 	"ionia": "KARA-TUR",
+	"bandle": "FEYWILD",
 }
 
 
@@ -126,6 +127,7 @@ const DECK_TIPS := {
 	"freljord": "ICEWIND DALE: Frostbite.\nCards fire when discarded from hand; make others discard.",
 	"shurima": "CALIMSHAN: Devotion.\nCards fire when recruited or promoted; recruit and promote a lot.",
 	"ionia": "KARA-TUR: Retain.\nKeep cards in hand for your next turn and build big combos.",
+	"bandle": "FEYWILD: Glamour.\nSpend 1 VP to switch on extra card abilities.",
 }
 ## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из

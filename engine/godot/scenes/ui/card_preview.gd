@@ -41,6 +41,7 @@ const KEYWORD_TIPS := {
 	"DEVOTION": "DEVOTION: works when you recruit or promote this card.",
 	"RETAIN": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
 	"RETAINED": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
+	"GLAMOUR": "GLAMOUR: spend 1 VP token (back to the supply) to switch this ability on.\nOnly one Glamour per card.",
 	"TRANSFORM": "TRANSFORM: this card turns into the stronger card it names.",
 	"DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
 }

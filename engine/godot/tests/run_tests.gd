@@ -71,6 +71,7 @@ func _initialize() -> void:
 	test_icewind_deck()
 	test_calimshan_deck()
 	test_karatur_deck()
+	test_feywild_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2194,10 +2195,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 329 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 351 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 329, "cards.json содержит 329 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur)")
+	check_eq(all_ids.size(), 351, "cards.json содержит 351 карту (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -6152,6 +6153,139 @@ func test_karatur_deck() -> void:
 			asks += 1
 		TurnEngine.resume_card(state, rz.pending.legal_options[0], rz)
 	check_eq(asks, 3, "Ancient Black Dragon: 1 + 2 повтора")
+
+
+func test_feywild_deck() -> void:
+	section("Feywild (New Era Bandle City): полуколода и Glamour")
+	var B := BandleCards
+	var deck := GameSetup.expand_half_deck("bandle")
+	check_eq(deck.size(), 44, "Feywild: 44 карты (без Rumble и Lulu, с Norra)")
+	var uniques := {}
+	for cid: String in deck:
+		uniques[cid] = true
+	check_eq(uniques.size(), 21, "Feywild: 21 уникальная карта")
+	check(not uniques.has(B.MEGA_GNAR), "Faerie Dragon Adult не в рынке")
+	check(not GameSetup.available_half_decks().has("bandle"), "Feywild пока wip: не в обычном выборе")
+	var mode := GameSetup.new_era_mode(["bandle", "celestial"])
+	check(GameSetup.is_mode(mode), "режим Celestial + Feywild принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 84, "рынок: 40 (Celestial) + 44 (Feywild)")
+	_sweep_deck_with_vp(49900, 49906)
+	_sweep_deck_with_vp(49908, 49922)
+
+	# Glamour: Xvart — без VP вопроса нет; с VP — 1 VP уходит в запас, promote в конце хода
+	var state := _build_rich_state(61)
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.vp_tokens = 0
+	red.influence = 0
+	var r := _play_with(state, B.CAPTAIN)
+	check(not r.is_waiting() and red.influence == 3, "Xvart без VP: +3 Influence, вопроса Glamour нет")
+	red.vp_tokens = 2
+	var ones: int = state.vp_bank.ones
+	r = _play_with(state, B.CAPTAIN)
+	check(r.is_waiting() and r.pending.option_labels.has(B.NO_GLAMOUR), "Xvart с VP: вопрос Glamour")
+	TurnEngine.resume_card(state, 1, r)
+	check_eq([red.vp_tokens, state.vp_bank.ones], [1, ones + 1], "Glamour: 1 VP вернулся в запас")
+	check_eq(red.pending_end_of_turn.size(), 1, "Glamour Xvart: promote в конце хода")
+
+	# Smoke Mephit: без VP сразу обычный supplant, с VP — выбор из трёх
+	red.vp_tokens = 0
+	r = _play_with(state, B.TORNADO)
+	check(not r.is_waiting() or r.pending.choice_type != "choose_option", "Smoke Mephit без VP: выбора нет")
+	state = _build_rich_state(62)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.vp_tokens = 1
+	r = _play_with(state, B.TORNADO)
+	check(r.is_waiting() and r.pending.option_labels.size() == 3, "Smoke Mephit с VP: обычный вариант и два Glamour")
+
+	# Faerie Dragon Youth: 6+ Power за ход — превращение во взрослого и обратно
+	state = _build_rich_state(63)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.power = 1
+	_play_with(state, B.GNAR)
+	check(red.deck.played_pile.has(B.GNAR), "Faerie Dragon Youth: 3 Power — не превращается")
+	red.power = 4
+	state.turn_flags["power_spent"] = 0
+	_play_with(state, B.GNAR)
+	check(red.deck.discard_pile.has(B.MEGA_GNAR), "Faerie Dragon Youth: 6 Power — Faerie Dragon Adult в сброс")
+	red.power = 0
+	r = _play_with(state, B.MEGA_GNAR)
+	var guard := 0
+	while r.is_waiting() and guard < 10:
+		guard += 1
+		TurnEngine.resume_card(state, r.pending.legal_options[0], r)
+	check(red.power >= 6 and red.deck.discard_pile.has(B.GNAR), "Faerie Dragon Adult: +6 Power и снова Faerie Dragon Youth")
+
+	# Deep Gnome: без VP — 1 VP и шпион
+	state = _build_rich_state(64)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.vp_tokens = 0
+	r = _play_with(state, B.EXPLORER)
+	check(red.vp_tokens == 1 and r.is_waiting() and r.pending.choice_type == "target_site", "Deep Gnome: 1 VP и вопрос о шпионе")
+
+	# Quickling: каждый шпион — ещё шпион и 1 VP
+	state = _build_rich_state(65)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	state.turn_flags["teemo"] = true
+	red.vp_tokens = 0
+	var spies_before: int = red.spies_in_barracks
+	r = EffectResolver.new()
+	r.apply(PlaceSpy.new(1), "red", state)
+	guard = 0
+	while r.is_waiting() and guard < 10:
+		guard += 1
+		TurnEngine.resume_card(state, r.pending.legal_options[0], r)
+	check_eq([spies_before - red.spies_in_barracks, red.vp_tokens], [2, 1], "Quickling: 2 шпиона и 1 VP")
+
+	# Faerie Pathlighter (Norra): соперник кладёт 3 жетона 1 VP, забрать их может только хозяин
+	state = _build_rich_state(66)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	r = _play_with(state, B.NORRA)
+	check(r.is_waiting() and r.pending.choice_type == "target_player", "Faerie Pathlighter: выбрать игрока")
+	TurnEngine.resume_card(state, "blue", r)
+	check(r.is_waiting() and r.pending.player_id == "blue" and r.pending.choice_type == "target_site", "жетоны кладёт blue")
+	var placed := 0
+	while r.is_waiting() and r.pending.player_id == "blue" and placed < 5:
+		var free: Array = r.pending.legal_options.filter(func(s):
+			for slot_id: String in state.graph.slots_of_site(String(s)):
+				if String(state.troops.get(slot_id, "")) == "red":
+					return false
+			return true)
+		TurnEngine.resume_card(state, free[0] if not free.is_empty() else r.pending.legal_options[0], r)
+		placed += 1
+	check_eq(state.board_vp.size(), 3, "на доске 3 жетона 1 VP")
+	check(state.board_vp.values().all(func(o): return o == "red"), "жетоны принадлежат red")
+	var site: String = state.board_vp.keys()[0]
+	state.troops[state.graph.slots_of_site(site)[0]] = "red"
+	var vp_before: int = red.vp_tokens
+	B.claim_board_vp(state, "red", EffectResolver.new())
+	check(red.vp_tokens == vp_before + 1 and not state.board_vp.has(site), "red забирает жетон, когда у него там войско")
+
+	# Darkling: Retain через сервер, бонус +1 VP
+	state = _build_rich_state(67)
+	var server := GameServer.new(state)
+	red = state.players["red"]
+	red.deck.hand.append(B.KENNEN)
+	red.vp_tokens = 0
+	server.apply_intent(Intent.play_card("red", B.KENNEN))
+	check(server.resolver.is_waiting() and server.resolver.pending.option_labels.has(IoniaCards.RETAIN_LABEL), "Darkling: можно удержать")
+	server.apply_intent(Intent.make_decision("red", 1))
+	check(red.deck.retained.has(B.KENNEN) and red.vp_tokens == 1, "Darkling удержан, +1 VP")
+
+	# Tressym: +1 VP за каждую купленную карту
+	state = _build_rich_state(68)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.vp_tokens = 0
+	r = _play_with(state, B.YUUMI, [1])
+	B.on_recruit(state, "red", "48342", r, true)
+	check_eq(red.vp_tokens, 1, "Tressym: купил карту — 1 VP")
 
 
 func test_card_live() -> void:

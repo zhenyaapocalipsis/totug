@@ -39,6 +39,7 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.turn_flags.clear()
 	# Azer Sentinel (New Era): VP за войска, убитые в этот ход, — от трофеев на начало хода.
 	state.turn_flags["trophy_start"] = state.stock(player_id).trophy_hall_count
+	BandleCards.on_start_turn(state, player_id)
 	for site_id: String in state.stolen_markers.keys():
 		if state.stolen_markers[site_id] == player_id:
 			state.stolen_markers.erase(site_id)
@@ -193,6 +194,9 @@ static func run_deferred_end_of_turn(state: GameState, player_id: String, resolv
 ## "за что у красного 18 VP?"). Правила от него не зависят.
 static func finish_end_of_turn(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
 	var p: PlayerState = state.players[player_id]
+
+	# FEYWILD (Faerie Pathlighter): свои жетоны 1 VP на локациях с войском.
+	BandleCards.claim_board_vp(state, player_id, resolver)
 
 	# 1. promote
 	for card_id: String in p.pending_promotions.duplicate():

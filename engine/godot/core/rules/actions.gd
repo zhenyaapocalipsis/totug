@@ -57,6 +57,7 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	var stock: PlayerState = state.stock(player_id)
 	if stock.troops_in_barracks <= 0:
 		p.power -= COST_DEPLOY
+		BandleCards.spend(state, COST_DEPLOY)
 		p.vp_tokens += state.vp_bank.grant(1)
 		return true
 
@@ -65,6 +66,7 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 		return false
 
 	p.power -= COST_DEPLOY
+	BandleCards.spend(state, COST_DEPLOY)
 	state.troops[slot_id] = player_id
 	stock.troops_in_barracks -= 1
 	if stock.troops_in_barracks == 0:

@@ -35,6 +35,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"site_control": _site_control(state),
 		"site_total_control": _site_total_control(state),
 		"spies": _duplicate_spies(state.spies),
+		"board_vp": state.board_vp.duplicate(),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
 		"devoured_pile": state.devoured_pile.duplicate(),
 		# Basilisk: лишний ход, сколько карт ещё можно сыграть (-1 — без ограничения).
