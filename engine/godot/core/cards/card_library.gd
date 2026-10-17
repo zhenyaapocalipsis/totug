@@ -639,6 +639,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var freljord := FreljordCards.build(card_id)
 	if freljord != null:
 		return freljord
+	var ionia := IoniaCards.build(card_id)
+	if ionia != null:
+		return ionia
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
 

@@ -296,5 +296,16 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s names %s: it can't be recruited this turn" % [who, card]
 		"inner_to_hand":
 			return "%s returns %s from the inner circle to hand" % [who, card]
+		# Kara-Tur (New Era Ionia)
+		"retain":
+			if String(e.get("card_id", "")) == "":
+				return "%s retains the top card of their deck" % who
+			return "%s retains %s for the next turn" % [who, card]
+		"oni_block":
+			return "%s discards Oni and stops %s" % [who, e.get("what", "it")]
+		"acorn":
+			return "%s gains an Acorn token (%d)" % [who, int(e.get("total", 1))]
+		"look_at_hand":
+			return "%s looks at %s's hand" % [who, String(e.get("target", "")).capitalize()]
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]

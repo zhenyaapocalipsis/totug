@@ -39,6 +39,8 @@ const KEYWORD_TIPS := {
 	"MIGHT": "MIGHT: works if you devoured a card this turn.\nThe second Might on a card needs 2 devours, and so on.",
 	"FROSTBITE": "FROSTBITE: works when this card is discarded from your hand\n(not by the end-of-turn discard).",
 	"DEVOTION": "DEVOTION: works when you recruit or promote this card.",
+	"RETAIN": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
+	"RETAINED": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
 	"TRANSFORM": "TRANSFORM: this card turns into the stronger card it names.",
 	"DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
 }

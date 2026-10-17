@@ -130,6 +130,13 @@ const MINI_FACE := {
 	49712: Vector2i(42, 12), 49713: Vector2i(71, 21), 49714: Vector2i(49, 14), 49715: Vector2i(42, 40),
 	49716: Vector2i(54, 0), 49717: Vector2i(34, 5), 49718: Vector2i(71, 27), 49719: Vector2i(55, 24),
 	49720: Vector2i(49, 5),
+	# Kara-Tur (New Era Ionia)
+	49800: Vector2i(40, 0), 49801: Vector2i(52, 0), 49802: Vector2i(100, 10), 49803: Vector2i(84, 40),
+	49804: Vector2i(74, 7), 49805: Vector2i(21, 44), 49806: Vector2i(24, 34), 49807: Vector2i(64, 14),
+	49808: Vector2i(71, 24), 49809: Vector2i(74, 0), 49810: Vector2i(57, 37), 49811: Vector2i(24, 47),
+	49812: Vector2i(47, 24), 49813: Vector2i(61, 21), 49814: Vector2i(54, 41), 49815: Vector2i(51, 4),
+	49816: Vector2i(47, 27), 49817: Vector2i(61, 14), 49818: Vector2i(51, 7), 49819: Vector2i(74, 44),
+	49820: Vector2i(47, 17), 49821: Vector2i(31, 34), 49822: Vector2i(64, 31),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -164,7 +171,9 @@ const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETU
 	# владелец, 2026-10-16
 	"DISTINCT",
 	# Calimshan (2026-10-16)
-	"DEVOTION"]
+	"DEVOTION",
+	# Kara-Tur (2026-10-17)
+	"RETAIN", "RETAINED"]
 
 ## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
 ## (номер буквы, после которой ставится дефис). Берётся самая дальняя граница,
@@ -388,6 +397,30 @@ const SINGLE_ART := {
 	49718: ["shurima/ankheg.png", Rect2i(0, 50, 755, 460)],
 	49719: ["shurima/dust_mephit.jpeg", Rect2i(0, 220, 525, 320)],
 	49720: ["shurima/deva.png", Rect2i(100, 80, 650, 396)],
+	# Kara-Tur (New Era Ionia) — арты D&D Beyond, все с фоном
+	49800: ["ionia/ancient_green_dragon.jpeg", Rect2i(0, 150, 500, 305)],
+	49801: ["ionia/oni.png", Rect2i(0, 0, 600, 366)],
+	49802: ["ionia/adult_bronze_dragon.png", Rect2i(200, 160, 600, 366)],
+	49803: ["ionia/ancient_black_dragon.jpeg", Rect2i(130, 380, 540, 329)],
+	49804: ["ionia/sprite.png", Rect2i(0, 0, 452, 276)],
+	49805: ["ionia/dryad.png", Rect2i(0, 120, 500, 305)],
+	49806: ["ionia/ancient_copper_dragon.jpeg", Rect2i(0, 80, 640, 390)],
+	49807: ["ionia/ancient_blue_dragon.jpeg", Rect2i(150, 20, 500, 305)],
+	49808: ["ionia/mage.jpeg", Rect2i(0, 280, 553, 337)],
+	49809: ["ionia/violet_fungus.jpeg", Rect2i(0, 50, 614, 374)],
+	49810: ["ionia/merfolk_skirmisher.jpeg", Rect2i(150, 40, 500, 305)],
+	49811: ["ionia/tarrasque.jpeg", Rect2i(250, 0, 650, 396)],
+	49812: ["ionia/copper_dragon_wyrmling.jpeg", Rect2i(150, 90, 560, 341)],
+	49813: ["ionia/silver_dragon_wyrmling.png", Rect2i(250, 160, 520, 317)],
+	49814: ["ionia/young_brass_dragon.png", Rect2i(150, 260, 560, 341)],
+	49815: ["ionia/ancient_bronze_dragon.jpeg", Rect2i(300, 140, 460, 280)],
+	49816: ["ionia/adult_copper_dragon.png", Rect2i(80, 40, 520, 317)],
+	49817: ["ionia/merrow.png", Rect2i(0, 160, 401, 245)],
+	49818: ["ionia/adult_silver_dragon.png", Rect2i(420, 120, 580, 354)],
+	49819: ["ionia/shrieker_fungus.jpeg", Rect2i(0, 40, 536, 327)],
+	49820: ["ionia/adult_gold_dragon.png", Rect2i(80, 100, 500, 305)],
+	49821: ["ionia/ancient_silver_dragon.jpeg", Rect2i(40, 60, 520, 317)],
+	49822: ["ionia/kraken.png", Rect2i(120, 40, 600, 366)],
 }
 
 const FONT := {
@@ -676,6 +709,7 @@ func set_name(card_id: int, type: String) -> String:
 		495: return "AVERNUS"
 		496: return "ICEWIND DALE"
 		497: return "CALIMSHAN"
+		498: return "KARA-TUR"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

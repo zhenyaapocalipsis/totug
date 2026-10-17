@@ -16,6 +16,9 @@ var hand: Array[String] = []
 var discard_pile: Array[String] = []
 var played_pile: Array[String] = []
 var inner_circle: Array[String] = []
+## Retain (Kara-Tur, New Era): карты, отложенные в этот ход; в конце хода
+## добор идёт до 5 без них, потом они добавляются в руку.
+var retained: Array[String] = []
 
 
 func _init(starting_cards: Array[String] = []) -> void:
@@ -106,4 +109,5 @@ func cards_outside_inner_circle() -> Array[String]:
 	result.append_array(hand)
 	result.append_array(discard_pile)
 	result.append_array(played_pile)
+	result.append_array(retained)
 	return result

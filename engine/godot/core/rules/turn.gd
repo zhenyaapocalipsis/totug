@@ -118,18 +118,28 @@ static func _pay_marker_influence(state: GameState, player_id: String, paid_site
 ## код должен показать decision и в дальнейшем вызвать resume_card().
 ## Возвращает false, если карты нет в руке (эффект в этом случае не трогается).
 static func play_card(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> bool:
+	var effect: CardEffect = begin_play(state, player_id, card_id)
+	if effect == null:
+		return false
+	resolver.apply(effect, player_id, state, card_id)
+	return true
+
+
+## Розыгрыш без запуска эффекта: карта из руки в played_pile, счётчики хода.
+## Возвращает эффект карты (null — сыграть нельзя). Kara-Tur: вопрос "сыграть или
+## удержать" сам кладёт эффект в стек резолвера.
+static func begin_play(state: GameState, player_id: String, card_id: String) -> CardEffect:
 	var p: PlayerState = state.players[player_id]
 	if not can_play_card(state, player_id):
-		return false
+		return null
 	if not p.deck.play_from_hand(card_id):
-		return false
+		return null
 	state.turn_flags["cards_played"] = int(state.turn_flags.get("cards_played", 0)) + 1
 	var aspect: String = CardLibrary.card_aspect(card_id)
 	if aspect != "":
 		state.played_aspects_this_turn.append(aspect)
 	var effect: CardEffect = ShadowCards.on_play(state, player_id, card_id, CardLibrary.get_effect(card_id))
-	resolver.apply(effect, player_id, state, card_id)
-	return true
+	return IoniaCards.on_play(state, player_id, card_id, effect)
 
 
 ## Можно ли сейчас сыграть ещё карту из руки: в лишнем ходу Basilisk — не
@@ -215,8 +225,10 @@ static func finish_end_of_turn(state: GameState, player_id: String, resolver: Ef
 	# 3. сброс
 	p.deck.end_of_turn_discard()
 
-	# 4. добор
+	# 4. добор (Retain: удержанные карты — сверх пяти)
 	p.deck.draw_up_to(HAND_SIZE, state.rng)
+	p.deck.hand.append_array(p.deck.retained)
+	p.deck.retained.clear()
 
 	# неистраченные ресурсы сгорают (рулбук стр. 7)
 	p.reset_resources_for_new_turn()

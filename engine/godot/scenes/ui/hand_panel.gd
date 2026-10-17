@@ -156,6 +156,13 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 				played.append(cid)
 		zone_ids = played + zone_ids
 		_label.text = "THIS + DISCARD" if not played.is_empty() else "DISCARD"
+	# Kara-Tur: удержанные (Retain) карты — справа от руки, тусклые: вернутся
+	# в руку в конце хода. Вопрос с картами зоны важнее — тогда их не видно.
+	var retained: Array = p.get("retained", [])
+	var showing_retained := zone_ids.is_empty() and not retained.is_empty()
+	if showing_retained:
+		zone_ids = retained.duplicate()
+		_label.text = "RETAINED"
 	var entries: Array = []   # [card_id, карта из Inner Circle]
 	for cid in hand:
 		entries.append([String(cid), false])
@@ -214,7 +221,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			fresh += 1
 		keys.append(found if found >= 0 else old_cards.size() + keys.size())
 		_cards[_cards.size() - 1].set_clickable(
-			zone_ids.has(cid) if from_zone else playable.has(cid))
+			(zone_ids.has(cid) and not showing_retained) if from_zone else playable.has(cid))
 
 	# Одинаковые карты сервер не различает: щёлкнули правый Noble — из руки
 	# уходит первый, и рука приходит в другом порядке, а левый Noble уезжал

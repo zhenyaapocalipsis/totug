@@ -24,9 +24,9 @@ const SECTIONS: Array[String] = ["CARDS", "SHADERS", "CARD BACKS", "BACKGROUNDS"
 ## Фракции — полуколоды рынка в порядке книги правил; STARTING — стартовая
 ## колода и общие стопки (шейдер ложится и на них).
 const FACTIONS: Array[String] = ["drow", "dragons", "demons", "elementals", "aberrations", "undead", "starting",
-	"celestial", "shadow", "piltover", "noxus", "freljord", "shurima", "siege", "mercenaries"]
+	"celestial", "shadow", "piltover", "noxus", "freljord", "shurima", "ionia", "siege", "mercenaries"]
 ## Колоды New Era и фанатские — вторым рядом вкладок, подписи как в меню NEW ERA.
-const NEW_ERA_FACTIONS: Array[String] = ["celestial", "shadow", "piltover", "noxus", "freljord", "shurima", "siege", "mercenaries"]
+const NEW_ERA_FACTIONS: Array[String] = ["celestial", "shadow", "piltover", "noxus", "freljord", "shurima", "ionia", "siege", "mercenaries"]
 ## Жетоны и вторые стороны: в полуколоде их нет, на большой карте они
 ## листаются кнопкой под ней (решение владельца 2026-10-14).
 const TOKENS := {

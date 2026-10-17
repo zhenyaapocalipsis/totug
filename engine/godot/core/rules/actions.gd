@@ -42,6 +42,7 @@ static func kill_at(state: GameState, player_id: String, slot_id: String) -> voi
 		return
 	state.troops[slot_id] = ""
 	state.stock(player_id).add_trophy(victim)
+	IoniaCards.on_kill(state, player_id)
 
 
 ## Deploy a troop (рулбук стр. 12): 1 Power. Если в бараке войск больше нет,

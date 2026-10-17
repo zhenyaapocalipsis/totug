@@ -89,6 +89,7 @@ func _supplant(state: GameState, player_id: String, resolver: EffectResolver, sl
 	var victim: String = state.troops.get(slot_id, "")
 	var stock: PlayerState = state.stock(player_id)
 	stock.add_trophy(victim)
+	IoniaCards.on_kill(state, player_id)
 	if stock.troops_in_barracks > 0:
 		state.troops[slot_id] = player_id
 		stock.troops_in_barracks -= 1

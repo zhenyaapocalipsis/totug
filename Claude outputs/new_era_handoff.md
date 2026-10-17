@@ -2,8 +2,17 @@
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
+## NE-23 (2026-10-17, позже): Ionia → KARA-TUR — закоммичено, НЕ запушено и НЕ задеплоено
+- Владелец: «jhin меняем на hwei». Колода Ionia целиком (45 карт, 23 уникальные), **Hwei вместо Jhin** (картинка PDF 373). Ключ `ionia`, тип `KARA-TUR`, id 49800–49822, `wip` (кнопка KARA-TUR в NEW ERA). Справка и толкования — `Claude outputs/new_era_ionia.md`, лист всех карт — `Claude outputs/karatur_cards_all.png`.
+- **Retain** в движке: `Deck.retained`; щелчок по карте со словом Retain → вопрос «Play / Retain» (`IoniaCards.play_or_retain`, GameServer PLAY_CARD); бонус «Retain:» сразу; в конце хода после добора до 5 удержанные возвращаются в руку (`TurnEngine.finish_end_of_turn`). `TurnEngine.begin_play` — розыгрыш без запуска эффекта. В виде: `retained` (владельцу), `retained_size`, `acorns`; HandPanel показывает удержанные справа с подписью RETAINED.
+- Хуки: `IoniaCards.on_kill` (все 3 места add_trophy — Kraken), `IoniaCards.on_recruit` (GameServer recruit/supply, RecruitFree — Adult Gold Dragon), `IoniaCards.on_play` (Mage = Witness), `ShieldGuard.ONI` + параметр `from_card` (Oni отвечает только на карты; базовые действия в GameServer передают false), `PlayerState.acorns`.
+- **PROTOCOL 32**. Тесты `2005 / 0`, сеть `151 / 0`. 12 партий ботов CELESTIAL+KARA-TUR без зависаний.
+- **Ждёт владельца:** (1) посмотреть лист и сказать, что убрать до 40/20 (3 уникальные + копии); (2) существа выбраны мной (почти все свободные не-звери с фоном кончились — колода «драконья», 4 хроматических древних дракона: имя «Ancient Red Dragon» и т.п. отличается от классических «Red Dragon», но владелец может счесть это повтором); (3) push и деплой — только по его слову.
+- Свободные не-звери с фоном, ещё не занятые после NE-23: Adult Black/Blue/Red/White/Green Dragon (у 2024 Young-версий те же арты, что у Adult), Ancient Red/White Dragon, Roc (птица — спорно), Kraken занят. Без фона (не брать): Animated Armor/Flying Sword/Rug, Salamander, Sahuagin Warrior, Kobold Warrior, Pirate, Priest Acolyte, Knight, Gold/Bronze Wyrmling, Gray Ooze. Платные: Pixie, Mage Apprentice, Performer, Questing Knight, Archpriest, Sahuagin Priest, Cultist Hierophant, Bandit Deceiver.
+- Следующая колода по PDF — **Bandle City** (с 188: Teemo, Kennen, Tristana, Ziggs, Yuumi…; Glamour = потратить 1 VP-жетон).
+
 ## Коротко на 2026-10-17 (читать первым)
-- **Всё закоммичено, запушено и задеплоено.** `main` = последний коммит этого раздела. На сервере сборка **1792227394**, **PROTOCOL 31** (`net/net_session.gd`).
+- **Всё до NE-22 закоммичено, запушено и задеплоено.** На сервере сборка **1792227394**, **PROTOCOL 31** (`net/net_session.gd`); локально уже 32 (NE-23).
 - **Тесты:** `пройдено: 1968, провалено: 0`, сеть `151 / 0`. В тесте карт 306 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит.
 - **Последняя колода — CALIMSHAN (Shurima), NE-21/22, 40/20, `wip`:** играется через NEW ERA (кнопка CALIMSHAN), в обычный пул и онлайн-поиск не входит. Убрать `wip` — только по слову владельца (поменяет сиды обычных режимов), потом поднять PROTOCOL и задеплоить. Владелец её ещё **не проверял живьём** — чек-лист в `Claude outputs/new_era_shurima.md`.
 - **Остальные 7 колод New Era в обычном пуле** (NE-20): 13 полуколод в STANDARD/RANDOM и онлайн-поиске; все 40/20.

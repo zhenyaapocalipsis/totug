@@ -21,33 +21,47 @@ extends CardEffect
 ## that effect and Supplant one of their troops instead". Если в руке обе карты,
 ## сначала спрашивается Shield Guardian, при отказе — Ankheg.
 
+##
+## Oni (Kara-Tur, Shen из Runeterra Reforged) — та же реакция, но только на
+## эффекты КАРТ соперника (from_card): "If an opponent's card would cause one of
+## your units to be Assassinated, Supplanted, returned, or moved, you may discard
+## this card to negate that effect and draw 2 cards". Порядок вопросов:
+## Shield Guardian, Ankheg, Oni.
+
 const CARD := "49021"
 const ANKHEG := "49718"
+const ONI := "49801"
 
 var victim: String
 var hit: CardEffect
 var what: String
 var kill: bool
+var from_card: bool
 ## resume() вызывает эффект от имени того, кто отвечал (жертвы), поэтому
 ## атакующего запоминаем при первом вызове.
 var attacker: String = ""
 var _asking: String = ""
 
 
-func _init(victim_id: String, hit_effect: CardEffect, description: String = "", is_kill: bool = false) -> void:
+func _init(victim_id: String, hit_effect: CardEffect, description: String = "", is_kill: bool = false,
+		is_from_card: bool = true) -> void:
 	victim = victim_id
 	hit = hit_effect
 	what = description
 	kill = is_kill
+	from_card = is_from_card
 
 
 ## Защищён ли юнит владельца owner от действия игрока attacker (kill — убийство
-## или вытеснение войска: на них отвечает ещё и Ankheg).
-static func can_react(state: GameState, attacker: String, owner: String, is_kill: bool = false) -> bool:
-	return _guards(state, attacker, owner, is_kill).size() > 0
+## или вытеснение войска: на них отвечает ещё и Ankheg; from_card — удар картой,
+## а не базовым действием: на него отвечает ещё и Oni).
+static func can_react(state: GameState, attacker: String, owner: String, is_kill: bool = false,
+		is_from_card: bool = true) -> bool:
+	return _guards(state, attacker, owner, is_kill, is_from_card).size() > 0
 
 
-static func _guards(state: GameState, attacker: String, owner: String, is_kill: bool) -> Array[String]:
+static func _guards(state: GameState, attacker: String, owner: String, is_kill: bool,
+		is_from_card: bool = true) -> Array[String]:
 	var out: Array[String] = []
 	if owner == "" or owner == attacker or owner == GameState.WHITE:
 		return out
@@ -58,6 +72,8 @@ static func _guards(state: GameState, attacker: String, owner: String, is_kill: 
 		out.append(CARD)
 	if is_kill and hand.has(ANKHEG):
 		out.append(ANKHEG)
+	if is_from_card and hand.has(ONI):
+		out.append(ONI)
 	return out
 
 
@@ -66,7 +82,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 		var yes := bool(answer())
 		_answered = false
 		_answer = null
-		var guards := _guards(state, attacker, victim, kill)
+		var guards := _guards(state, attacker, victim, kill, from_card)
 		if yes and guards.has(_asking):
 			var p: PlayerState = state.players[victim]
 			p.deck.hand.erase(_asking)
@@ -74,6 +90,9 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			if _asking == CARD:
 				resolver.log_event("shield_guardian", {"player_id": victim, "attacker": attacker, "what": what})
 				resolver.push(SequenceEffect.new([DeployTroop.new(4), DrawCards.new(1)]), victim)
+			elif _asking == ONI:
+				resolver.log_event("oni_block", {"player_id": victim, "attacker": attacker, "what": what})
+				resolver.push(DrawCards.new(2), victim)
 			else:
 				resolver.log_event("ankheg_block", {"player_id": victim, "attacker": attacker, "what": what})
 				var strike := SupplantTroop.new(1, false, true)
@@ -81,13 +100,13 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 				resolver.push(strike, victim)
 			return
 		var next := guards.find(_asking) + 1
-		if _asking == CARD and next < guards.size():
+		if next > 0 and next < guards.size():
 			_ask(guards[next], resolver)
 			return
 		resolver.push(hit, attacker)
 		return
 	attacker = player_id
-	var guards := _guards(state, attacker, victim, kill)
+	var guards := _guards(state, attacker, victim, kill, from_card)
 	if guards.is_empty():
 		resolver.push(hit, attacker)
 		return
@@ -100,6 +119,8 @@ func _ask(card: String, resolver: EffectResolver) -> void:
 	pd.player_id = victim
 	if card == CARD:
 		pd.prompt = "Discard Shield Guardian to stop %s? (deploy 4 troops, draw a card)" % (what if what != "" else "it")
+	elif card == ONI:
+		pd.prompt = "Discard Oni to stop %s? (draw 2 cards)" % (what if what != "" else "it")
 	else:
 		pd.prompt = "Discard Ankheg to stop %s? (supplant one of their troops)" % (what if what != "" else "it")
 	pd.choice_type = "confirm"

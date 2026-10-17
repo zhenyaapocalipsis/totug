@@ -3058,5 +3058,235 @@
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Devotion: Put this card on top of your deck.\nSupplant a troop. If it was another player's, you may take a troop from their trophy hall and deploy it; otherwise scry 2."
+  },
+  {
+    "card_id": 49800,
+    "name": "Ancient Green Dragon",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Retain: Place 2 spies.\n+1 Power for each spy you have on the board.\nReturn any number of your spies to supplant a troop at each of those sites."
+  },
+  {
+    "card_id": 49801,
+    "name": "Oni",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+2 Influence, +2 Power\nIf an opponent's card would assassinate, supplant, return or move your unit, you may discard this card to stop it and draw 2 cards."
+  },
+  {
+    "card_id": 49802,
+    "name": "Adult Bronze Dragon",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "KARA-TUR",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Deploy 3 troops.\n5+ cards in hand: also +2 Power.\n7+ cards in hand: also draw a card."
+  },
+  {
+    "card_id": 49803,
+    "name": "Ancient Black Dragon",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Repeat once for each card you Retained this turn (up to 2). Choose one:\n• Place a spy, assassinate a troop at that site.\n• Return one of your spies, supplant a troop at that site."
+  },
+  {
+    "card_id": 49804,
+    "name": "Sprite",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Retain.\nName a non-Obedience Aspect: this card becomes it. +1 Influence for each card of it you played this turn."
+  },
+  {
+    "card_id": 49805,
+    "name": "Dryad",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Retain: Look at another player's hand.\nAt end of turn, promote another card played this turn."
+  },
+  {
+    "card_id": 49806,
+    "name": "Ancient Copper Dragon",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "For each of the 2 Aspects you played before this card: Malice: assassinate a troop. Guile: place 2 spies, +1 Power. Conquest: supplant a white troop. Ambition: +3 Influence."
+  },
+  {
+    "card_id": 49807,
+    "name": "Ancient Blue Dragon",
+    "cost": 7,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Retain: +1 Power.\n+1 Power for each other card you played this turn."
+  },
+  {
+    "card_id": 49808,
+    "name": "Mage",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "KARA-TUR",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "The next card you play that costs 5 or less is played one more time."
+  },
+  {
+    "card_id": 49809,
+    "name": "Violet Fungus",
+    "cost": 3,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+1 Power if a neighbour has more than 5 cards in hand.\nChoose one:\n• Place a spy. Site full: +2 Power.\n• Return one of your spies, supplant a troop at that site."
+  },
+  {
+    "card_id": 49810,
+    "name": "Merfolk Skirmisher",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "+2 Influence\nThis turn, whenever you Retain a card, +1 Influence."
+  },
+  {
+    "card_id": 49811,
+    "name": "Tarrasque",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "This turn, other players' troops count as white troops.\nAssassinate 2 white troops.\nIf you have 10+ troops in your trophy hall, draw a card."
+  },
+  {
+    "card_id": 49812,
+    "name": "Copper Dragon Wyrmling",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Retain.\nChoose one:\n• Deploy a troop for each different Aspect you played this turn.\n• Move a troop.\n• Assassinate a white troop."
+  },
+  {
+    "card_id": 49813,
+    "name": "Silver Dragon Wyrmling",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "This turn, whenever you Retain a card, deploy a troop.\nChoose one:\n• Assassinate a white troop.\n• Deploy 2 troops."
+  },
+  {
+    "card_id": 49814,
+    "name": "Young Brass Dragon",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Discard a card to Retain: gain an Acorn token.\n+2 Power, +1 Power for each Acorn token you have."
+  },
+  {
+    "card_id": 49815,
+    "name": "Ancient Bronze Dragon",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose two:\n• Double your Power.\n• Return all enemy spies from a site.\n• Supplant a white troop.\n• Deploy 3 troops."
+  },
+  {
+    "card_id": 49816,
+    "name": "Adult Copper Dragon",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Power\nThis turn, whenever you Retain a card, +1 Power."
+  },
+  {
+    "card_id": 49817,
+    "name": "Merrow",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Retain.\nName a non-Obedience Aspect: this card becomes it. +1 Power for each card of it you played this turn."
+  },
+  {
+    "card_id": 49818,
+    "name": "Adult Silver Dragon",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, you may Retain the top card of your deck.\n• Return 2 of your spies to Retain a card you played this turn."
+  },
+  {
+    "card_id": 49819,
+    "name": "Shrieker Fungus",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Place a spy. If another player's troop is there, you may Retain the top card of your deck.\n• Return one of your spies, supplant a troop at that site."
+  },
+  {
+    "card_id": 49820,
+    "name": "Adult Gold Dragon",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "+4 Influence\nChoose one:\n• This turn, cards cost 1 less to recruit.\n• This turn, whenever you recruit a card, you may assassinate a troop."
+  },
+  {
+    "card_id": 49821,
+    "name": "Ancient Silver Dragon",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Retain: You may also Retain 2 other cards.\nAt end of turn, promote a card you played to recruit a market card that costs up to 2 more for free."
+  },
+  {
+    "card_id": 49822,
+    "name": "Kraken",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "KARA-TUR",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Retain.\nReveal the top 5 cards of your deck: cards with the word Assassinate or Supplant go to your hand, discard the rest.\nThis turn, +1 Power whenever you assassinate or supplant a troop."
   }
 ]

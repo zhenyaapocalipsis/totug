@@ -70,7 +70,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 	if state.players.has(viewer_id):
 		var d: Deck = state.players[viewer_id].deck
 		var seen: Array = []
-		for pile: Array in [d.hand, d.draw_pile, d.discard_pile, d.played_pile, state.market.display,
+		for pile: Array in [d.hand, d.draw_pile, d.discard_pile, d.played_pile, d.retained, state.market.display,
 				Supplies.PURCHASABLE]:
 			seen.append_array(pile)
 		view["live"] = CardLive.for_view(state, viewer_id, seen)
@@ -283,9 +283,12 @@ static func _player_view(p: PlayerState, is_owner: bool, stock: PlayerState = nu
 		"hand_size": p.deck.hand.size(),
 		"discard_size": p.deck.discard_pile.size(),
 		"deck_size": p.deck.draw_pile.size(),
+		"retained_size": p.deck.retained.size(),
+		"acorns": p.acorns,
 	}
 	if is_owner:
 		view["hand"] = p.deck.hand.duplicate()
+		view["retained"] = p.deck.retained.duplicate()
 		view["discard_pile"] = p.deck.discard_pile.duplicate()
 		# Отсортировано: порядок добора не утекает даже владельцу.
 		var deck_cards := p.deck.draw_pile.duplicate()

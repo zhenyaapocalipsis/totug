@@ -115,6 +115,7 @@ func _kill(state: GameState, player_id: String, slot_id: String, resolver: Effec
 	state.troops[slot_id] = ""
 	var p: PlayerState = state.players[player_id]
 	state.stock(player_id).add_trophy(victim)
+	IoniaCards.on_kill(state, player_id)
 	if gain_influence_per_removed > 0:
 		p.influence += gain_influence_per_removed
 	if gain_power_per_removed > 0:

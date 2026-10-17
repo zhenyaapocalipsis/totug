@@ -70,6 +70,7 @@ func _initialize() -> void:
 	test_avernus_deck()
 	test_icewind_deck()
 	test_calimshan_deck()
+	test_karatur_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2193,10 +2194,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 306 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 329 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 306, "cards.json содержит 306 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan)")
+	check_eq(all_ids.size(), 329, "cards.json содержит 329 карт (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -6001,6 +6002,156 @@ func test_calimshan_deck() -> void:
 	check(rs.is_waiting() and rs.pending.choice_type == "confirm", "Deva: вопрос «наверх колоды?»")
 	TurnEngine.resume_card(state, true, rs)
 	check_eq(red.deck.draw_pile.back(), S.DEVA, "Deva наверху колоды")
+
+
+func test_karatur_deck() -> void:
+	section("Kara-Tur (New Era Ionia): полуколода и Retain")
+	var I := IoniaCards
+	var deck := GameSetup.expand_half_deck("ionia")
+	check_eq(deck.size(), 45, "Kara-Tur: все 45 карт мода (владелец режет сам)")
+	var uniques := {}
+	for cid: String in deck:
+		uniques[cid] = true
+	check_eq(uniques.size(), 23, "Kara-Tur: 23 уникальные карты, Hwei вместо Jhin")
+	check(not GameSetup.available_half_decks().has("ionia"), "Kara-Tur пока wip: не в обычном выборе")
+	var mode := GameSetup.new_era_mode(["ionia", "celestial"])
+	check(GameSetup.is_mode(mode), "режим Celestial + Kara-Tur принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Kara-Tur)")
+	_sweep_deck_with_vp(49800, 49822)
+
+	# Retain через сервер: щелчок по карте с Retain — вопрос «сыграть или удержать»
+	var state := _build_rich_state(48)
+	var server := GameServer.new(state)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	red.deck.hand.append_array([I.YASUO, I.PATHLESS, I.RIVERSHAPER])
+	red.power = 0
+	red.influence = 0
+	server.apply_intent(Intent.play_card("red", I.PATHLESS))
+	server.apply_intent(Intent.play_card("red", I.RIVERSHAPER))
+	check_eq([red.power, red.influence], [2, 2], "Adult Copper +2 Power, Merfolk Skirmisher +2 Influence")
+	var res := server.apply_intent(Intent.play_card("red", I.YASUO))
+	check(server.resolver.is_waiting() and server.resolver.pending.option_labels.has(I.RETAIN_LABEL),
+		"Ancient Blue Dragon: вопрос «сыграть или удержать»")
+	res = server.apply_intent(Intent.make_decision("red", 1))
+	check(red.deck.retained.has(I.YASUO) and not red.deck.hand.has(I.YASUO), "Ancient Blue Dragon удержан")
+	check_eq([red.power, red.influence], [4, 3], "Retain: +1 Power (бонус) +1 Power и +1 Influence (Adult Copper, Merfolk)")
+	check(not (res["views"]["blue"]["players"]["red"] as Dictionary).has("retained")
+		and int(res["views"]["blue"]["players"]["red"]["retained_size"]) == 1, "сопернику видно только число удержанных")
+	server.apply_intent(Intent.end_turn("red"))
+	check_eq(red.deck.hand.size(), 6, "в новой руке 5 карт + удержанная")
+	check(red.deck.hand.has(I.YASUO) and red.deck.retained.is_empty(), "удержанная карта вернулась в руку")
+
+	# Сыграть карту с Retain: вариант «Play»
+	state = _build_rich_state(49)
+	server = GameServer.new(state)
+	red = state.players["red"]
+	red.deck.hand.append(I.YASUO)
+	red.deck.hand.append("48342")
+	server.apply_intent(Intent.play_card("red", "48342"))
+	red.power = 0
+	server.apply_intent(Intent.play_card("red", I.YASUO))
+	server.apply_intent(Intent.make_decision("red", 0))
+	check(red.deck.played_pile.has(I.YASUO), "Ancient Blue Dragon сыгран")
+	check_eq(red.power, 1, "Ancient Blue Dragon: +1 Power за другую сыгранную карту")
+
+	# Young Brass Dragon: удержать — сбросить другую карту, жетон Acorn; при розыгрыше +2 и +1 за жетон
+	state = _build_rich_state(50)
+	red = state.players["red"]
+	blue = state.players["blue"]
+	TurnEngine.start_turn(state, "red")
+	red.deck.hand = [I.SQUIRREL, "48342"]
+	var rq := EffectResolver.new()
+	rq.apply(I.play_or_retain(I.SQUIRREL), "red", state, I.SQUIRREL)
+	TurnEngine.resume_card(state, 1, rq)
+	check(rq.is_waiting() and rq.pending.legal_options == ["48342"], "Young Brass Dragon: сначала сбросить другую карту")
+	TurnEngine.resume_card(state, "48342", rq)
+	check(red.deck.discard_pile.has("48342") and red.deck.retained.has(I.SQUIRREL), "карта сброшена, дракон удержан")
+	check_eq(red.acorns, 1, "жетон Acorn")
+	red.power = 0
+	_play_with(state, I.SQUIRREL)
+	check_eq(red.power, 3, "Young Brass Dragon: +2 и +1 за жетон")
+
+	# Mage: следующая карта ценой <= 5 играется ещё раз
+	red.power = 0
+	_play_with(state, I.WITNESS)
+	_play_with(state, I.PATHLESS)
+	check_eq(red.power, 4, "Mage: Adult Copper Dragon сыгран дважды (+2 +2)")
+
+	# Sprite: становится названным Аспектом; +1 Influence за каждую карту этого Аспекта
+	state.played_aspects_this_turn.clear()
+	state.played_aspects_this_turn.append("MALICE")
+	red.influence = 0
+	var ra := _play_with(state, I.AIRIS)
+	TurnEngine.resume_card(state, 3, ra)  # Malice
+	check_eq(red.influence, 2, "Sprite стал Malice: +1 за Malice-карту и за себя")
+	check(not state.played_aspects_this_turn.has("AMBITION"), "Sprite больше не считается Ambition")
+
+	# Ancient Copper Dragon (Hwei): по двум Аспектам перед ней
+	state.played_aspects_this_turn.assign(["CONQUEST", "AMBITION", "AMBITION"])
+	red.influence = 0
+	_play_with(state, I.HWEI)
+	check_eq(red.influence, 6, "Hwei: две Ambition перед ней — +3 и +3 Influence")
+
+	# Copper Dragon Wyrmling: войско за каждый разный Аспект хода
+	state.played_aspects_this_turn.assign(["MALICE", "GUILE", "GUILE"])
+	var before: int = state.stock("red").troops_in_barracks
+	var rw := _play_with(state, I.HIGHWAYMAN, [0])
+	_auto_resolve(state, rw, false)
+	check_eq(before - state.stock("red").troops_in_barracks, 3, "Copper Dragon Wyrmling: Malice, Guile, Conquest — 3 войска")
+
+	# Kraken: +1 Power за каждое убийство в этот ход
+	red.power = 0
+	var rk := _play_with(state, I.MASTER_YI)
+	_auto_resolve(state, rk, false)
+	red.power = 0
+	var rx := EffectResolver.new()
+	rx.apply(AssassinateTroop.new(1), "red", state)
+	if rx.is_waiting():
+		TurnEngine.resume_card(state, rx.pending.legal_options[0], rx)
+		check_eq(red.power, 1, "Kraken: убийство дало +1 Power")
+
+	# Tarrasque: чужие войска считаются белыми
+	var rl := _play_with(state, I.LEE_SIN)
+	check(rl.is_waiting() and _slot_of(state, rl.pending, "blue") != "", "Tarrasque: войска синего можно убить как белые")
+	_auto_resolve(state, rl, false)
+
+	# Oni в руке синего: отменяет удар картой (не базовым действием) и даёт 2 карты
+	blue.deck.hand = [I.SHEN]
+	check(not ShieldGuard.can_react(state, "red", "blue", true, false), "Oni не отвечает на базовое действие")
+	var ro := EffectResolver.new()
+	ro.apply(AssassinateTroop.new(1), "red", state)
+	var target := _slot_of(state, ro.pending, "blue")
+	if target != "":
+		TurnEngine.resume_card(state, target, ro)
+		check(ro.is_waiting() and ro.pending.player_id == "blue" and ro.pending.source_card == I.SHEN,
+			"Oni: синему вопрос «сбросить, чтобы отменить?»")
+		TurnEngine.resume_card(state, true, ro)
+		check_eq(String(state.troops[target]), "blue", "убийство отменено")
+		check_eq(blue.deck.hand.size(), 2, "Oni сброшен, синий взял 2 карты")
+
+	# Ancient Silver Dragon: удержание + ещё 2 карты
+	red.deck.hand = [I.KARMA, "48342", "48342", "48302"]
+	red.deck.retained.clear()
+	var rr := EffectResolver.new()
+	rr.apply(I.play_or_retain(I.KARMA), "red", state, I.KARMA)
+	TurnEngine.resume_card(state, 1, rr)
+	TurnEngine.resume_card(state, "48342", rr)
+	TurnEngine.resume_card(state, "48302", rr)
+	check_eq(red.deck.retained.size(), 3, "Ancient Silver Dragon: удержаны она и ещё 2 карты")
+	check_eq(int(state.turn_flags.get("retains", 0)) >= 3, true, "счётчик удержаний хода")
+
+	# Ancient Black Dragon: выбор повторяется за удержанные карты (не больше 2)
+	var rz := _play_with(state, I.ZED)
+	var asks := 0
+	var guard := 0
+	while rz.is_waiting() and guard < 30:
+		guard += 1
+		if rz.pending.choice_type == "choose_option":
+			asks += 1
+		TurnEngine.resume_card(state, rz.pending.legal_options[0], rz)
+	check_eq(asks, 3, "Ancient Black Dragon: 1 + 2 повтора")
 
 
 func test_card_live() -> void:
