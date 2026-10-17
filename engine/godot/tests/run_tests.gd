@@ -6008,16 +6008,16 @@ func test_karatur_deck() -> void:
 	section("Kara-Tur (New Era Ionia): полуколода и Retain")
 	var I := IoniaCards
 	var deck := GameSetup.expand_half_deck("ionia")
-	check_eq(deck.size(), 45, "Kara-Tur: все 45 карт мода (владелец режет сам)")
+	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Adult Bronze Dragon, Sprite, Violet Fungus; Mage и Young Brass по 3)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
-	check_eq(uniques.size(), 23, "Kara-Tur: 23 уникальные карты, Hwei вместо Jhin")
+	check_eq(uniques.size(), 20, "Kara-Tur: 20 уникальных карт, Hwei вместо Jhin")
 	check(not GameSetup.available_half_decks().has("ionia"), "Kara-Tur пока wip: не в обычном выборе")
 	var mode := GameSetup.new_era_mode(["ionia", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Kara-Tur принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Kara-Tur)")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Kara-Tur)")
 	_sweep_deck_with_vp(49800, 49822)
 
 	# Retain через сервер: щелчок по карте с Retain — вопрос «сыграть или удержать»
