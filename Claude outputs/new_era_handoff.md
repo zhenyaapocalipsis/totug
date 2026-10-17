@@ -2,7 +2,7 @@
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
-## NE-21 (2026-10-16): Shurima → CALIMSHAN — сделано, не задеплоено
+## NE-21/22 (2026-10-16/17): Shurima → CALIMSHAN — задеплоено (сборка 1792227394, PROTOCOL 31, push 5c2a12e)
 - Ключ `shurima`, тип `CALIMSHAN`, id 49700–49720, `wip` (кнопка CALIMSHAN в NEW ERA, не в обычном пуле). Эффекты `core/cards/shurima_cards.gd`, тест `test_calimshan_deck`, справка `Claude outputs/new_era_shurima.md`, лист всех карт `Claude outputs/calimshan_cards_all.png`.
 - Владелец: **Azir заменён на Naafiri** (картинка PDF 380, Extra Champions). NE-22 (2026-10-17): колода урезана до **40 / 20** — убран Zombie (остался в cards.json), Cockatrice и Brass Dragon Wyrmling по 3. Флаг `wip` — пока владелец не скажет.
 - **Devotion**: `ShurimaCards.on_recruit` (GameServer после покупки, RecruitFree) и `on_promote` (после каждого `log_event("promote")` — PromoteCard, Celestial, Mercenary, Noxus, Siege, ForceDiscard). Новые пути найма/promote тоже должны их звать.
