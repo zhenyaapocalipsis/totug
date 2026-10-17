@@ -2,13 +2,13 @@
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
-## NE-23/24 (2026-10-17, позже): Ionia → KARA-TUR, 40/20 — закоммичено, НЕ запушено и НЕ задеплоено
+## NE-23/24 (2026-10-17, позже): Ionia → KARA-TUR, 40/20 — запушено (652ca08) и задеплоено: сборка 1792234224, PROTOCOL 32
 - **NE-24:** владелец урезал до 40/20 — убраны Adult Bronze Dragon, Sprite, Violet Fungus (остались в cards.json), Mage и Young Brass Dragon по 3. Флаг `wip` пока не снят.
 - Владелец: «jhin меняем на hwei». Колода Ionia целиком (45 карт, 23 уникальные), **Hwei вместо Jhin** (картинка PDF 373). Ключ `ionia`, тип `KARA-TUR`, id 49800–49822, `wip` (кнопка KARA-TUR в NEW ERA). Справка и толкования — `Claude outputs/new_era_ionia.md`, лист всех карт — `Claude outputs/karatur_cards_all.png`.
 - **Retain** в движке: `Deck.retained`; щелчок по карте со словом Retain → вопрос «Play / Retain» (`IoniaCards.play_or_retain`, GameServer PLAY_CARD); бонус «Retain:» сразу; в конце хода после добора до 5 удержанные возвращаются в руку (`TurnEngine.finish_end_of_turn`). `TurnEngine.begin_play` — розыгрыш без запуска эффекта. В виде: `retained` (владельцу), `retained_size`, `acorns`; HandPanel показывает удержанные справа с подписью RETAINED.
 - Хуки: `IoniaCards.on_kill` (все 3 места add_trophy — Kraken), `IoniaCards.on_recruit` (GameServer recruit/supply, RecruitFree — Adult Gold Dragon), `IoniaCards.on_play` (Mage = Witness), `ShieldGuard.ONI` + параметр `from_card` (Oni отвечает только на карты; базовые действия в GameServer передают false), `PlayerState.acorns`.
 - **PROTOCOL 32**. Тесты `2005 / 0`, сеть `151 / 0`. 12 партий ботов CELESTIAL+KARA-TUR без зависаний.
-- **Ждёт владельца:** (1) живая проверка; (2) существа выбраны мной (почти все свободные не-звери с фоном кончились — колода «драконья», 4 хроматических древних дракона: имя «Ancient Red Dragon» и т.п. отличается от классических «Red Dragon», но владелец может счесть это повтором); (3) push и деплой — только по его слову.
+- **Ждёт владельца:** (1) живая проверка; (2) существа выбраны мной (почти все свободные не-звери с фоном кончились — колода «драконья», 4 хроматических древних дракона: имя «Ancient Red Dragon» и т.п. отличается от классических «Red Dragon», но владелец может счесть это повтором); (3) снять `wip` (ввести в обычный пул) — только по его слову, потом поднять PROTOCOL и задеплоить.
 - Свободные не-звери с фоном, ещё не занятые после NE-23: Adult Black/Blue/Red/White/Green Dragon (у 2024 Young-версий те же арты, что у Adult), Ancient Red/White Dragon, Roc (птица — спорно), Kraken занят. Без фона (не брать): Animated Armor/Flying Sword/Rug, Salamander, Sahuagin Warrior, Kobold Warrior, Pirate, Priest Acolyte, Knight, Gold/Bronze Wyrmling, Gray Ooze. Платные: Pixie, Mage Apprentice, Performer, Questing Knight, Archpriest, Sahuagin Priest, Cultist Hierophant, Bandit Deceiver.
 - Следующая колода по PDF — **Bandle City** (с 188: Teemo, Kennen, Tristana, Ziggs, Yuumi…; Glamour = потратить 1 VP-жетон).
 
