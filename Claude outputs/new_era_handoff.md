@@ -4,7 +4,7 @@
 
 ## NE-23/24 (2026-10-17, позже): Ionia → KARA-TUR, 40/20 — запушено (652ca08) и задеплоено: сборка 1792234224, PROTOCOL 32
 - **NE-24:** владелец урезал до 40/20 — убраны Adult Bronze Dragon, Sprite, Violet Fungus (остались в cards.json), Mage и Young Brass Dragon по 3. Флаг `wip` пока не снят.
-- **NE-25:** владелец заменил Young Brass Dragon на Sprite (3 копии), PROTOCOL 33 — закоммичено, деплой только по слову владельца.
+- **NE-25:** владелец заменил Young Brass Dragon на Sprite (3 копии), PROTOCOL 33 — запушено (8167fff) и задеплоено: сборка 1792240980.
 - Владелец: «jhin меняем на hwei». Колода Ionia целиком (45 карт, 23 уникальные), **Hwei вместо Jhin** (картинка PDF 373). Ключ `ionia`, тип `KARA-TUR`, id 49800–49822, `wip` (кнопка KARA-TUR в NEW ERA). Справка и толкования — `Claude outputs/new_era_ionia.md`, лист всех карт — `Claude outputs/karatur_cards_all.png`.
 - **Retain** в движке: `Deck.retained`; щелчок по карте со словом Retain → вопрос «Play / Retain» (`IoniaCards.play_or_retain`, GameServer PLAY_CARD); бонус «Retain:» сразу; в конце хода после добора до 5 удержанные возвращаются в руку (`TurnEngine.finish_end_of_turn`). `TurnEngine.begin_play` — розыгрыш без запуска эффекта. В виде: `retained` (владельцу), `retained_size`, `acorns`; HandPanel показывает удержанные справа с подписью RETAINED.
 - Хуки: `IoniaCards.on_kill` (все 3 места add_trophy — Kraken), `IoniaCards.on_recruit` (GameServer recruit/supply, RecruitFree — Adult Gold Dragon), `IoniaCards.on_play` (Mage = Witness), `ShieldGuard.ONI` + параметр `from_card` (Oni отвечает только на карты; базовые действия в GameServer передают false), `PlayerState.acorns`.
