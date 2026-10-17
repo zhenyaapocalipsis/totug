@@ -40,6 +40,8 @@ var pending_end_of_turn: Array[CardEffect] = []
 var start_of_turn_influence: int = 0
 ## Kara-Tur (Young Brass Dragon): жетоны Acorn — копятся до конца партии.
 var acorns: int = 0
+## FAR REALM (Thri-kreen Marauder): способности, которые карта копит навсегда.
+var evolutions: Array = []
 
 
 func _init(player_id: String, starting_deck_cards: Array[String] = []) -> void:

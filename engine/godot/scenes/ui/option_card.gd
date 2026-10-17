@@ -261,6 +261,28 @@ const NAMES := {
 	"Glamour (1 VP): At end of turn, promote another card you played this turn": "Glamour: Rally the Gang",
 	"Place a spy -> move one of your troops to that site": "Open Portal",
 	"Return one of your spies -> move up to one enemy troop at that site and one of your troops": "Swap Places",
+	# FAR REALM (New Era Void)
+	"Supplant a troop anywhere on the board": "Killer Instinct",
+	"+1 Power for each card in your hand": "Icathian Rain",
+	"Draw 2 cards, then discard a card": "Supercharge",
+	"Assassinate 2 troops": "Void Seeker",
+	"Return up to 2 troops or spies": "Call of the Void",
+	"Supplant 2 white troops": "Malefic Visions",
+	"Draw a card for every 2 sites under your total control": "Tremor Sense",
+	"Supplant a troop and deploy 2 troops": "Unburrow",
+	"Move up to 2 troops or spies": "Tunnel",
+	"Move one of your spies": "Shift",
+	"Done": "Hold",
+	"+1 Influence for every 2 sites you control": "Lavender Tithe",
+	"At end of turn, promote another card you played this turn": "Endless Banquet",
+	"Look at the top 5 cards of your deck: up to 2 that cost 2 or less to your hand": "Hive Call",
+	"+1 Power for every 2 sites you control": "Sand Swallow",
+	"Return a troop": "Bedrock Breaker",
+	"Place a spy (site full: deploy 2 troops)": "Brood Signal",
+	"Return one of your spies -> supplant a white troop at that site": "Queen's Call",
+	"Place a spy at a site": "Watching Eye",
+	"Place a spy on a market card": "Gaze of the Abyss",
+	"Gain a market card with the same name as a card you played this turn": "Echo of the Void",
 }
 
 var _tex: ImageTexture

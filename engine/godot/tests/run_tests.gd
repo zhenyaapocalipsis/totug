@@ -72,6 +72,7 @@ func _initialize() -> void:
 	test_calimshan_deck()
 	test_karatur_deck()
 	test_feywild_deck()
+	test_farrealm_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2195,10 +2196,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 351 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 371 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 351, "cards.json содержит 351 карту (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild)")
+	check_eq(all_ids.size(), 371, "cards.json содержит 371 карту (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild + 20 Far Realm)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -6286,6 +6287,155 @@ func test_feywild_deck() -> void:
 	r = _play_with(state, B.YUUMI, [1])
 	B.on_recruit(state, "red", "48342", r, true)
 	check_eq(red.vp_tokens, 1, "Silverquill Apprentice: купил карту — 1 VP")
+
+
+func _resolve_first(state: GameState, r: EffectResolver) -> void:
+	var guard := 0
+	while r.is_waiting() and guard < 20:
+		guard += 1
+		var opts: Array = r.pending.legal_options.filter(func(o): return not (typeof(o) == TYPE_STRING and o == "") and not (typeof(o) == TYPE_INT and o == -1))
+		TurnEngine.resume_card(state, opts[0] if not opts.is_empty() else r.pending.legal_options[0], r)
+
+
+func test_farrealm_deck() -> void:
+	section("Far Realm (New Era Void): полуколода, 50 войск, шпион на рынке")
+	var V := VoidCards
+	var deck := GameSetup.expand_half_deck("void")
+	check_eq(deck.size(), 45, "Far Realm: все 45 карт мода (9 чемпионов + 36 обычных)")
+	var uniques := {}
+	for cid: String in deck:
+		uniques[cid] = true
+	check_eq(uniques.size(), 20, "Far Realm: 20 уникальных карт")
+	check(not GameSetup.available_half_decks().has("void"), "Far Realm пока wip: не в обычном выборе")
+	var mode := GameSetup.new_era_mode(["void", "celestial"])
+	check(GameSetup.is_mode(mode), "режим Celestial + Far Realm принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Far Realm)")
+	check_eq(game.starting_troops, 50, "с Far Realm по 50 войск")
+	check(game.stock("red").troops_in_barracks >= 49 and game.troops_out("red") <= 1, "в бараке red 50 войск (минус стартовое)")
+	var plain := GameSetup.new_game(["red", "blue"], 5, ["drow", "demons"])
+	check_eq(plain.starting_troops, 40, "без Far Realm по 40 войск")
+	_sweep_deck_with_vp(50000, 50008)
+	_sweep_deck_with_vp(50010, 50020)
+
+	# Elder Thing: deploy 3 можно заменить на +3 Power
+	var state := _build_rich_state(71)
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.power = 0
+	var barracks: int = red.troops_in_barracks
+	var r := _play_with(state, V.UNDERTITAN)
+	check(r.is_waiting() and r.pending.option_labels.has("+3 Power instead"), "Elder Thing: вопрос войска или Power")
+	TurnEngine.resume_card(state, 1, r)
+	check(red.power == 3 and red.troops_in_barracks == barracks, "Elder Thing: +3 Power, войска остались в бараке")
+
+	# Inquisitor of the Mind Fire: другая карта ставит 1 войско -> ещё 2
+	state = _build_rich_state(72)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	state.turn_flags["malzahar"] = true
+	barracks = red.troops_in_barracks
+	r = EffectResolver.new()
+	r.apply(DeployTroop.new(1), "red", state, "50013")
+	_resolve_first(state, r)
+	check_eq(barracks - red.troops_in_barracks, 3, "Inquisitor of the Mind Fire: 1 + 2 войска")
+	check_eq(V.deploys(state), 3, "счётчик поставленных войск за ход")
+
+	# Red Slaad: слотов для войск не меньше, чем по Присутствию, и дальше
+	state = GameSetup.new_game(["red", "blue"] as Array[String], 7, ["drow", "demons"])
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var before: int = state.deployable_slots("red").size()
+	_play_with(state, V.KOGMAW)
+	check(red.power >= 4 and state.deployable_slots("red").size() > before, "Red Slaad: +4 Power и войска дальше Присутствия")
+
+	# Githzerai Zerth: базовое убийство где угодно
+	state = _build_rich_state(74)
+	TurnEngine.start_turn(state, "red")
+	var far := ""
+	for slot_id: String in state.graph.slots.keys():
+		if String(state.troops.get(slot_id, "")) == "white" \
+				and not state.presence.has_presence_at_slot("red", slot_id, state.troops, state.spies):
+			far = slot_id
+			break
+	state.players["red"].power = 3
+	check(far != "" and not Actions.can_assassinate(state, "red", far), "без Githzerai Zerth далёкое белое не убить")
+	state.turn_flags["kassadin"] = true
+	check(Actions.can_assassinate(state, "red", far), "с Githzerai Zerth — можно")
+
+	# Blue Slaad: шпион на карте рынка — сопернику 3 Power, карта на 6 дешевле
+	state = _build_rich_state(75)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var spies: int = red.spies_in_barracks
+	r = EffectResolver.new()
+	r.apply(VoidCards._MarketSpy.new(), "red", state)
+	TurnEngine.resume_card(state, 0, r)
+	check(red.spies_in_barracks == spies - 1 and V.market_spy_owner(state, 0) == "red", "Blue Slaad: шпион red на карте 0")
+	var blue: PlayerState = state.players["blue"]
+	state.current_player_index = state.turn_order.find("blue")
+	var base_cost: int = CardLibrary.card_cost(state.market.display[0])
+	blue.power = 2
+	check_eq(Actions.market_cost(state, 0), -1, "без 3 Power карту со шпионом не купить")
+	blue.power = 3
+	blue.influence = 20
+	check_eq(Actions.market_cost(state, 0), maxi(0, base_cost - 6), "с 3 Power — на 6 дешевле")
+	check(Actions.recruit(state, "blue", 0, Actions.market_cost(state, 0)), "blue покупает карту со шпионом")
+	check(blue.power == 0 and red.spies_in_barracks == spies, "blue заплатил 3 Power, шпион вернулся к red")
+
+	# Eye Monger: отложенная карта разыгрывается в начале хода, обе считаются в колоде
+	state = _build_rich_state(76)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.deck.hand.append(V.DUNEBREAKER)
+	r = _play_with(state, V.VELKOZ)
+	check(r.is_waiting() and r.pending.legal_options.has(V.DUNEBREAKER), "Eye Monger: выбрать карту из руки")
+	TurnEngine.resume_card(state, V.DUNEBREAKER, r)
+	check_eq(red.deck.set_aside, [V.VELKOZ, V.DUNEBREAKER] as Array[String], "Eye Monger и Gray Slaad отложены")
+	check(red.deck.cards_outside_inner_circle().has(V.VELKOZ) and red.deck.cards_outside_inner_circle().has(V.DUNEBREAKER),
+		"отложенные карты считаются в deck VP")
+	r = EffectResolver.new()
+	TurnEngine.start_turn(state, "red", r)
+	check(r.is_waiting() and r.pending.option_labels.has("+2 Influence"), "в начале хода разыгрывается Gray Slaad")
+
+	# Lesser Star Spawn Emissary: верх колоды можно сожрать; без войск за ход — сжирает себя
+	state = _build_rich_state(77)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var top: String = red.deck.draw_pile.back()
+	r = _play_with(state, V.HATCHLING, [true])
+	check(state.devoured_pile.has(top) and red.power >= 2, "Lesser Star Spawn Emissary: +2 Power, верхняя карта сожрана")
+	r = EffectResolver.new()
+	TurnEngine.end_turn(state, "red", r)
+	check(state.devoured_pile.has(V.HATCHLING), "без войск за ход Lesser Star Spawn Emissary сожран")
+
+	# Froghemoth Elder: весь гекс — враги в трофеи, свои в барак
+	state = _build_rich_state(78)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var trophies: int = red.trophy_hall_count
+	r = _play_with(state, V.CHOGATH)
+	check(r.is_waiting() and r.pending.choice_type == "target_site", "Froghemoth Elder: выбрать локацию гекса")
+	var site: String = r.pending.legal_options[0]
+	var hex := String(state.graph.sites[site]["hex"])
+	TurnEngine.resume_card(state, site, r)
+	var left := 0
+	for slot_id: String in state.graph.slots.keys():
+		if String(state.graph.slots[slot_id]["hex"]) == hex and String(state.troops.get(slot_id, "")) != "":
+			left += 1
+	check(left == 0 and red.trophy_hall_count >= trophies, "Froghemoth Elder: гекс пуст")
+
+	# Thri-kreen Marauder: 8 трофеев — две способности навсегда
+	state = _build_rich_state(79)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	for i in range(8):
+		red.add_trophy("white")
+	r = _play_with(state, V.KHAZIX, [0, 1])
+	check_eq(red.evolutions, ["power", "kill"], "Thri-kreen Marauder: +2 Power и убийство")
+	_resolve_first(state, r)
+	r = _play_with(state, V.KHAZIX)
+	check(not r.is_waiting() or r.pending.choice_type != "choose_option", "второй розыгрыш: новых способностей не просит")
 
 
 func test_card_live() -> void:

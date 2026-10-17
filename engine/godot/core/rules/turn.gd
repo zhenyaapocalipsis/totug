@@ -57,6 +57,8 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	state.marker_influence_paid.clear()
 	state.a2_paid = {"power": 0, "influence": 0}
 	_grant_income(state, player_id, resolver, true)
+	# FAR REALM: шпионы рынка; отложенная карта Eye Monger разыгрывается в начале хода.
+	VoidCards.on_start_turn(state, player_id, resolver)
 
 
 ## Правило владельца игры (2026-09-24): Influence за локацию с маркером
@@ -67,6 +69,7 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 ## разница с уже выданным в этом ходу (state.a2_paid); ярус упал — ничего не
 ## отнимается. Зовётся после каждого действия игрока.
 static func grant_control_income(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
+	VoidCards.sync_market_spies(state)
 	_grant_income(state, player_id, resolver, false)
 
 

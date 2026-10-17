@@ -4,10 +4,12 @@
 
 ## Коротко (читать первым)
 - **Всё закоммичено, запушено (main = origin/main) и задеплоено.** На сервере сборка **1792248295**, **PROTOCOL 34** (`net/net_session.gd`). Проверка: `curl http://129.101.123.70/tyrants/version.txt`.
-- **Тесты:** `пройдено: 2037, провалено: 0`, сеть `151 / 0`. В тесте карт 351 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит. Полный прогон run_tests ~7 минут, сеть ~3 минуты (запускать в фоне).
+- **Тесты (после NE-28):** `пройдено: 2074, провалено: 0`, сеть `151 / 0`. В тесте карт 371 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild + 20 Far Realm). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит. Полный прогон run_tests ~7 минут, сеть ~3 минуты (запускать в фоне).
 - **Колоды:** 7 колод New Era в обычном пуле (NE-20), все 40/20. Три последние — `wip` (только кнопками в NEW ERA, не в STANDARD/RANDOM и онлайн-поиске), все 40/20: **CALIMSHAN** (Shurima, NE-21/22), **KARA-TUR** (Ionia, NE-23…25), **FEYWILD** (Bandle City, NE-26/27). Снять `wip` — только по слову владельца (меняет сиды обычных режимов), затем поднять PROTOCOL и задеплоить. Все три владелец **ещё не проверял живьём** — чек-листы в `new_era_shurima.md`, `new_era_ionia.md`, `new_era_bandle.md`.
 - **Последняя работа — FEYWILD** (NE-26, 26b, 27; ключ `bandle`, id 49900–49922): Rumble и Lulu убраны владельцем, вместо них Norra (картинка PDF **457**, раздел Poro); 15 артов на белом фоне владелец забраковал — заменены на сцены (феи Эльдрейна, ученики Стриксхейвена); до 40/20 владелец убрал Goblin Hexer (остался в cards.json), Icewind Kobold и High Fae Mage по 3. Glamour = вопрос «Glamour: spend 1 VP?» после эффекта карты. Всё по колоде — `Claude outputs/new_era_bandle.md`, лист `Claude outputs/feywild_cards_all.png`.
-- **Следующий шаг (не назначен):** следующая колода по PDF — **Targon**, картинки с **210**: 210 Soraka, 211 Zoe, 212 Taric, 213 Diana, 214 Pantheon, 215 Leona… (смотреть `pdf_sheets.gd FROM=210 TO=235`). Механики **Gems** (самоцвет на своём войске — убить/вытеснить его на 1 Power дороже) и **Tribute X** (снять X самоцветов ради эффекта); Aurelion Sol — жетоны Stardust, мгновенная победа. Черновик существ — `new_era_dnd_mapping.md`, раздел 10 (самоцветные драконы). Либо живая проверка wip-колод, либо снятие `wip`.
+- **Targon владелец велел пропустить (2026-10-17).** Картинки Targon 210–231.
+- **Последняя работа — FAR REALM (Void, NE-28, 2026-10-17, не задеплоено):** ключ `void`, id 50000–50020 (50009 свободен), `wip`, **все 45 карт / 20 уникальных** — ждёт, что владелец уберёт до 40/20 по листу `Claude outputs/farrealm_cards_all.png`. Правило мода: с Void у всех по **50 войск**. Справка, толкования и чек-лист — `Claude outputs/new_era_void.md`. После выреза: `half_decks.json` (total 40), тест `test_farrealm_deck` (45→40), PROTOCOL 35, деплой по слову владельца.
+- **Следующая колода после Void — Ixtal** (картинки PDF с **252**: 252 Neeko, 253 Malphite, 254 Zilean, 255 Nidalee, 256 Skarner, 257 Milio, 258 Rengar, 259 Zyra…; механика **Explore** — посмотреть 2 верхние карты, открыть одну подходящую). Черновик существ — `new_era_dnd_mapping.md`, раздел 12.
 - **Порядок работы с новой колодой (владелец, 2026-10-16):** сделать колоду **целиком (все карты мода)**, `wip` → лист всех карт (`tools/new_era/cards_sheet.gd`, сам сортирует по цене) → владелец сам говорит, что убрать до 40/20 (одну уникальную и лишние копии; если после выреза не хватает копий — спросить, кому добавить). Потом `half_decks.json`, тест колоды (число карт, уникальных, размер рынка), справка, PROTOCOL.
 - **Владелец меняет и убирает чемпионов** (Azir→Naafiri, Jhin→Hwei, Rumble/Lulu→Norra). Extra Champions — картинки PDF 331–400 (373 Hwei, 379 Brand, 380 Naafiri), но часть дополнительных чемпионов лежит и в разделе Poro (457 Norra, рядом Jack). Быстро найти — контакт-лист `art_contact.gd` на копию нужных картинок кусками по 50.
 - **Подбор существ (правила владельца):** имена не повторяются во всей игре — **проверять по `cards.json` до кода**; **без зверей** (NE-19); арт только **со сценой-фоном** — **белый фон бракуется так же, как прозрачный** (2026-10-17). Проверка фона — `tools/new_era/art_bgcheck.gd` (`DIR=папка` → `BG` сцена / `CUT` белый или прозрачный край), потом контакт-лист.
@@ -25,6 +27,14 @@
 - GDScript: `int("49800")` — ошибка (нужно `"49800".to_int()`), `int(null)` — ошибка; массивы нельзя сравнивать через `<`; тернарник с двумя литералами массива даёт нетипизированный Array — в `SequenceEffect.new()` передавать `Array[CardEffect]`; пустую цепочку создавать `SequenceEffect.new()` без `[]`.
 - `Start-Sleep` в PowerShell заблокирован — ждать фоновые процессы через `Wait-Process -Id … -Timeout …` или уведомление о завершении.
 - Картинки PDF мода уже извлечены: `C:\Users\JEKADI~1\AppData\Local\Temp\claude\C--tyrants-of-the-underdark-godot\a31afa31-071e-448f-9f8f-f2c96eb1d715\scratchpad\pdf\0000.jpg…0478.jpg` (если папки нет — `extract_pdf.gd`, ~1 мин).
+
+## NE-28 (2026-10-17): Void → FAR REALM — wip, все 45 карт, не задеплоено
+- Ключ `void`, тип `FAR REALM`, id 50000–50008 (чемпионы) и 50010–50020, кнопка FAR REALM в NEW ERA, фон лиловый. Эффекты `core/cards/void_cards.gd`, тест `test_farrealm_deck`, справка `Claude outputs/new_era_void.md`, лист `Claude outputs/farrealm_cards_all.png`, арты `cards/void/` (кандидаты `cards/void/cand_*` не в git; книга Monsters of the Multiverse — только вырезанные фигуры).
+- Существа: звёздные порождения (Greater/Lesser Star Spawn Emissary — Ravenloft: The Horrors Within), слаады (2024 MM), гит, три-крины, Froghemoth Elder, Eye Monger, Elder Thing, Hook Horror, Carrion Stalker, Groundling Stalker, Inquisitor of the Mind Fire. Владелец их ещё не видел.
+- Новое в движке: `GameState.starting_troops` (40/50, `VoidCards.setup_troops` в GameSetup), `GameState.market_spies` (Blue Slaad: шпион на карте рынка — `Actions.market_cost/recruit`, `RecruitFree`, надпись SPY в `market_panel.gd`), `Deck.set_aside` (Eye Monger, разыгрывается в `TurnEngine.start_turn` через `VoidCards.on_start_turn`), `PlayerState.evolutions` (Thri-kreen Marauder), поля `DeployTroop.bonus / void_checked` (хуки `VoidCards.before_deploy` — Elder Thing, `on_card_deploy` — Inquisitor), `VoidCards.reach` (Red Slaad — дальность 3, Githzerai Zerth — убийство где угодно; в AssassinateTroop, SupplantTroop, `GameState.deployable_slots`, `Actions.can_assassinate`, StateView), `turn_flags.deploys` (`VoidCards.note_deploy` в DeployTroop, SupplantTroop, Actions.deploy), `VoidCards.on_place_spy` (Carrion Stalker).
+- В view: `market_spies`, `starting_troops`, у игрока `set_aside`, `evolutions`. События журнала: `devour_hex`, `evolve`, `set_aside`, `set_aside_play`, `reveal_top`, `market_reveal`, `play_free`, `market_spy`.
+- `pixel_cards.gd -- only=50000,50004` — перерисовать только эти карты (без листов превью), ~1 мин вместо 8.
+- **Ждёт владельца:** (1) что убрать до 40/20; (2) толкования в справке, главное — Froghemoth Elder (Cho'Gath) гекс с доски не убирает; (3) кадр Groundling Stalker тёмный; (4) отложенные карты Eye Monger на экране не показаны (только журнал).
 
 ## NE-26…27 (2026-10-17): Bandle City → FEYWILD — задеплоено (сборка 1792248295, PROTOCOL 34)
 - Ключ `bandle`, тип `FEYWILD`, id 49900–49922 (49907 свободен, 49921 Goblin Hexer и 49922 Faerie Dragon Adult не в рынке), `wip` (кнопка FEYWILD в NEW ERA, фон — зелёный луг). Эффекты `core/cards/bandle_cards.gd`, тест `test_feywild_deck`, справка и толкования — `Claude outputs/new_era_bandle.md`, лист — `Claude outputs/feywild_cards_all.png`, арты — `cards/bandle/` (кандидаты `cards/bandle/cand*` не в git).
@@ -62,6 +72,7 @@
   | **CALIMSHAN** | Shurima (+ Naafiri) | `shurima` | 49700–49720 | NE-21 (все 45 карт), NE-22 (40/20) |
   | **KARA-TUR** | Ionia (+ Hwei) | `ionia` | 49800–49822 | NE-23 (все 45 карт), NE-24/25 (40/20) |
   | **FEYWILD** | Bandle City (+ Norra, без Rumble и Lulu) | `bandle` | 49900–49922 | NE-26 (все 44 карты), NE-26b (арты со сценой), NE-27 (40/20), wip |
+  | **FAR REALM** | Void | `void` | 50000–50020 | NE-28 (все 45 карт), wip |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
 - Всё закоммичено и запушено на GitHub (`main`). Последний деплой — сборка 1792009359 (2026-10-15, после NE-20, **PROTOCOL 27**): все колоды New Era в обычном пуле.
@@ -162,9 +173,9 @@
    | Shurima | 144–164 (+ 380 Naafiri) |
    | Ionia | 165–187 (171 Jhin; + 373 Hwei) |
    | Bandle City | 188–209 (+ 457 Norra, 326 Mega Gnar) |
-   | Targon | с 210 (210 Soraka, 211 Zoe, 212 Taric, 213 Diana, 214 Pantheon, 215 Leona…) |
-   | Void | следом |
-   | Ixtal | следом |
+   | Targon | 210–231 (210 Soraka, 211 Zoe, 212 Taric, 213 Diana, 214 Pantheon, 215 Leona…; пропущен владельцем) |
+   | Void | 232–251 (232 Kai'Sa, 233 Bel'Veth, 234 Cho'Gath, 235 Kassadin, 236 Kha'Zix, 237 Kog'Maw…) |
+   | Ixtal | с 252 (252 Neeko, 253 Malphite, 254 Zilean, 255 Nidalee, 256 Skarner, 257 Milio, 258 Rengar, 259 Zyra) |
    | Arcane | следом |
    | Extra Champions | следом |
    | Jungle Monsters, Items, Stances, Guns | следом |

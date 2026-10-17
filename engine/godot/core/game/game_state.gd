@@ -77,6 +77,10 @@ var stolen_markers: Dictionary = {}
 ## FEYWILD, Faerie Pathlighter (Norra): жетоны 1 VP на локациях (id локации ->
 ## игрок, который один может их забрать, когда у него там есть войско).
 var board_vp: Dictionary = {}
+## FAR REALM (Blue Slaad): шпионы на картах рынка — "индекс" -> {"owner", "card"} (VoidCards).
+var market_spies: Dictionary = {}
+## Войск у игрока в начале партии: 40, с полуколодой Void — 50 (VoidCards.setup_troops).
+var starting_troops: int = PlayerState.STARTING_TROOPS
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.
@@ -125,7 +129,7 @@ func add_player(player_id: String, starting_deck_cards: Array[String]) -> void:
 ## Слоты, куда игрок может поставить войско: Присутствие (Presence) минус
 ## локации, закрытые для него в этот ход (Weretiger, NoxusCards).
 func deployable_slots(player_id: String) -> PackedStringArray:
-	var legal: PackedStringArray = presence.deployable_slots(player_id, troops, spies)
+	var legal: PackedStringArray = VoidCards.add_reach_slots(self, player_id, presence.deployable_slots(player_id, troops, spies))
 	if not turn_flags.has("no_deploy"):
 		return legal
 	var result := PackedStringArray()
@@ -206,7 +210,7 @@ func stock_share(player_id: String) -> int:
 ## Сколько войск уже ушло из бараков игрока (в 2v2 — из общих бараков
 ## команды): Solar и живой текст "troops_left".
 func troops_out(player_id: String) -> int:
-	return PlayerState.STARTING_TROOPS * stock_share(player_id) - stock(player_id).troops_in_barracks
+	return starting_troops * stock_share(player_id) - stock(player_id).troops_in_barracks
 
 
 ## Сложить запасы союзников у хозяина команды (повторный вызов ничего не

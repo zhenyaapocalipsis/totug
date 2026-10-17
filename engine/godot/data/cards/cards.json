@@ -3508,5 +3508,205 @@
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+6 Power\nEach opponent discards a card.\nThis card leaves the game and Faerie Dragon Youth goes to your discard pile."
+  },
+  {
+    "card_id": 50000,
+    "name": "Githyanki Knight",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Choose one:\n• Supplant a troop anywhere on the board.\n• +1 Power for each card in your hand.\n• Draw 2 cards, then discard a card.\n• Assassinate 2 troops."
+  },
+  {
+    "card_id": 50001,
+    "name": "Greater Star Spawn Emissary",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Deploy 4 troops.\nGain 1 VP for each site under your total control."
+  },
+  {
+    "card_id": 50002,
+    "name": "Froghemoth Elder",
+    "cost": 10,
+    "aspect": "CONQUEST",
+    "type": "FAR REALM",
+    "deck_vp": 5,
+    "inner_circle_vp": 10,
+    "ability_text": "Choose a hex where you have presence: every enemy troop on it goes to your trophy hall, and your troops there return to your barracks."
+  },
+  {
+    "card_id": 50003,
+    "name": "Githzerai Zerth",
+    "cost": 6,
+    "aspect": "GUILE",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "This turn, you may assassinate troops anywhere on the board.\nAssassinate a troop for every 2 sites you control."
+  },
+  {
+    "card_id": 50004,
+    "name": "Thri-kreen Marauder",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "For every 4 troops in your trophy hall, this card keeps one more of these for good. Then use all it has:\n• +2 Power\n• Assassinate a troop\n• Place 2 spies\n• Draw a card"
+  },
+  {
+    "card_id": 50005,
+    "name": "Red Slaad",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+4 Power\nThis turn, you may deploy, assassinate and supplant up to 3 spaces away from your troops."
+  },
+  {
+    "card_id": 50006,
+    "name": "Inquisitor of the Mind Fire",
+    "cost": 6,
+    "aspect": "CONQUEST",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "This turn, whenever another card deploys troops, deploy 2 more troops.\nChoose one:\n• Return up to 2 troops or spies.\n• Supplant 2 white troops."
+  },
+  {
+    "card_id": 50007,
+    "name": "Groundling Stalker",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Draw a card for every 2 sites under your total control.\n• Supplant a troop and deploy 2 troops.\n• Move up to 2 troops or spies."
+  },
+  {
+    "card_id": 50008,
+    "name": "Eye Monger",
+    "cost": 9,
+    "aspect": "AMBITION",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 9,
+    "ability_text": "You may set aside a card from your hand that costs 5 or less with this card. At the start of each of your turns, play that card. Both still count for deck VP."
+  },
+  {
+    "card_id": 50010,
+    "name": "Lesser Star Spawn Emissary",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+2 Power\nReveal the top card of your deck: you may devour it.\nIf you deploy no troops this turn, devour this card at end of turn."
+  },
+  {
+    "card_id": 50011,
+    "name": "Githzerai Monk",
+    "cost": 3,
+    "aspect": "AMBITION",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +1 Influence for every 2 sites you control.\n• At end of turn, promote another card you played this turn."
+  },
+  {
+    "card_id": 50012,
+    "name": "Thri-kreen Psion",
+    "cost": 2,
+    "aspect": "MALICE",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one:\n• Look at the top 5 cards of your deck. Put up to 2 that cost 2 or less into your hand, the rest back on top.\n• Assassinate a white troop."
+  },
+  {
+    "card_id": 50013,
+    "name": "Hook Horror",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "FAR REALM",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +1 Power for every 2 sites you control.\n• Deploy 3 troops.\n• Supplant a white troop."
+  },
+  {
+    "card_id": 50014,
+    "name": "Elder Thing",
+    "cost": 5,
+    "aspect": "MALICE",
+    "type": "FAR REALM",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "This turn, whenever a card tells you to deploy X troops, you may gain X Power instead.\nDeploy 3 troops."
+  },
+  {
+    "card_id": 50015,
+    "name": "Carrion Stalker",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "This turn, your spy placed by another player's spy returns it.\nChoose one: place a spy (site full: deploy 2 troops), or return your spy to supplant a white troop there."
+  },
+  {
+    "card_id": 50016,
+    "name": "Gray Slaad",
+    "cost": 2,
+    "aspect": "AMBITION",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• +2 Influence\n• Return a troop."
+  },
+  {
+    "card_id": 50017,
+    "name": "Green Slaad",
+    "cost": 4,
+    "aspect": "GUILE",
+    "type": "FAR REALM",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Reveal the top 3 cards of the market deck. You may play one that costs 5 or less for free. Put them on the bottom of the market deck."
+  },
+  {
+    "card_id": 50018,
+    "name": "Blue Slaad",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Place a spy. You may put it on a market card instead: other players must spend 3 Power to return it before recruiting that card, which then costs them 6 less."
+  },
+  {
+    "card_id": 50019,
+    "name": "Githyanki Dracomancer",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +2 Power\n• Gain a market card with the same name as a card you played this turn.\n• Return a troop or spy."
+  },
+  {
+    "card_id": 50020,
+    "name": "Githyanki Warrior",
+    "cost": 2,
+    "aspect": "CONQUEST",
+    "type": "FAR REALM",
+    "deck_vp": 1,
+    "inner_circle_vp": 2,
+    "ability_text": "Choose one (all of them if you have total control of 4 or more sites):\n• Move one of your troops.\n• Deploy 2 troops.\n• Assassinate a white troop."
   }
 ]

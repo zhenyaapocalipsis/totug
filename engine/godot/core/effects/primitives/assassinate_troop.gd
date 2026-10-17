@@ -52,7 +52,8 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 		if single_site and locked_site != "":
 			if state.graph.site_of_slot(slot_id) != locked_site:
 				continue
-		if not site_given_by_card and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
+		if not site_given_by_card and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies) \
+				and not VoidCards.reach(state, player_id, slot_id, "kill"):
 			continue
 		result.append(slot_id)
 	return result

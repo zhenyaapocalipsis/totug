@@ -316,5 +316,23 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s places a 1 VP token for %s at %s" % [who, player_name(String(e.get("owner", ""))), site]
 		"board_vp_claim":
 			return "%s takes the 1 VP token at %s" % [who, site]
+		# Far Realm (New Era Void)
+		"devour_hex":
+			return "%s devours the hex of %s: %d enemy troops to the trophy hall, %d own troops home" % [
+				who, site, int(e.get("taken", 0)), int(e.get("returned", 0))]
+		"evolve":
+			return "%s's Thri-kreen Marauder keeps %s for good" % [who, String(e.get("ability", ""))]
+		"set_aside":
+			return "%s sets aside %s with Eye Monger" % [who, card]
+		"set_aside_play":
+			return "%s plays set-aside %s" % [who, card]
+		"reveal_top":
+			return "%s reveals %s from the top of their deck" % [who, card]
+		"market_reveal":
+			return "%s reveals the top 3 cards of the market deck" % who
+		"play_free":
+			return "%s plays %s for free" % [who, card]
+		"market_spy":
+			return "%s places a spy on %s in the market" % [who, card]
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]

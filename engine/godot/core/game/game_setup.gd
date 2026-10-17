@@ -54,7 +54,7 @@ const MODE_RANDOM_6 := "random6"
 ## С Siege-1 (2026-10-13) в том же переключателе — фанатские колоды Siege и
 ## Mercenaries (тоже "wip").
 const MODE_NEW_ERA := "newera"
-const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege", "mercenaries", "noxus", "freljord", "shurima", "ionia", "bandle"]
+const NEW_ERA_DECKS: Array[String] = ["celestial", "shadow", "piltover", "siege", "mercenaries", "noxus", "freljord", "shurima", "ionia", "bandle", "void"]
 const NEW_ERA_DEFAULT: Array[String] = ["celestial", "shadow"]
 const MODES := [MODE_STANDARD, MODE_DOUBLE, MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6, MODE_NEW_ERA]
 const MARKET_PER_ASPECT := 20
@@ -203,6 +203,7 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 		p.deck.shuffle_draw_pile(state.rng)
 		p.deck.draw_up_to(HAND_SIZE, state.rng)
 	state.pool_stocks()  # 2v2: общие бараки команды (80 войск, 10 шпионов)
+	VoidCards.setup_troops(state)  # FAR REALM: по 50 войск
 
 	# 11. стартовое войско каждому на свободном стартовом сайте
 	var starting_sites := find_starting_sites(graph)

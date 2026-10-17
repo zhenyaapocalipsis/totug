@@ -125,9 +125,11 @@ func update_from_view(view: Dictionary) -> void:
 		affordable = pd["legal_options"]
 	_deck_label.text = "DECK %d" % int(market["deck_size"])
 
+	var market_spies: Dictionary = view.get("market_spies", {})
 	for i in range(DISPLAY_SLOTS):
 		var cid: String = String(display[i]) if i < display.size() else ""
 		_fill_slot(i, cid, affordable.has(i))
+		_mark_spy(i, String(market_spies.get(i, market_spies.get(str(i), ""))))
 
 	# Ghost: верхняя сожранная карта до конца хода считается картой маркета.
 	var ghost_card: String = view.get("ghost_market_card", "")
@@ -217,6 +219,31 @@ func _ensure_card(i: int, cid: String) -> CardView:
 		_cards[i] = card
 		card.flash_arrival()
 	return card
+
+
+## FAR REALM (Blue Slaad): шпион игрока owner на карте слота ("" — нет).
+## Ромбик цвета хозяина в углу карты; соперник покупает её только за 3 Power.
+func _mark_spy(i: int, owner: String) -> void:
+	var mark: Label = _boxes[i].get_node_or_null("MarketSpy")
+	if owner == "":
+		if mark != null:
+			mark.visible = false
+		return
+	if mark == null:
+		mark = Label.new()
+		mark.name = "MarketSpy"
+		mark.text = "SPY"
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mark.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		mark.offset_left = -16
+		mark.offset_top = 1
+		mark.add_theme_color_override("font_outline_color", PixelTheme.BG)
+		mark.add_theme_constant_override("outline_size", 2)
+		_boxes[i].add_child(mark)
+	_boxes[i].move_child(mark, -1)
+	mark.add_theme_color_override("font_color", EventLogPanel.player_color(owner))
+	mark.tooltip_text = "%s's spy: others pay 3 Power to recruit it, then it costs 6 less" % owner.capitalize()
+	mark.visible = true
 
 
 ## Пустой слот: подложка с надписью «empty». Карта кладётся поверх неё.

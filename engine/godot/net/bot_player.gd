@@ -850,7 +850,7 @@ static func horizon(state: GameState) -> float:
 	if state.game_end_triggered:
 		return 0.5
 	var n := state.turn_order.size()
-	var min_barracks := PlayerState.STARTING_TROOPS
+	var min_barracks := state.starting_troops
 	for pid: String in state.turn_order:
 		# 2v2: общие бараки команды делят двое — на игрока половина
 		min_barracks = mini(min_barracks, state.stock(pid).troops_in_barracks / state.stock_share(pid))
@@ -865,7 +865,7 @@ static func rounds_left(state: GameState) -> float:
 	if state.game_end_triggered:
 		return 0.5
 	var n := state.turn_order.size()
-	var min_barracks := PlayerState.STARTING_TROOPS
+	var min_barracks := state.starting_troops
 	for pid: String in state.turn_order:
 		# 2v2: общие бараки команды делят двое — на игрока половина
 		min_barracks = mini(min_barracks, state.stock(pid).troops_in_barracks / state.stock_share(pid))

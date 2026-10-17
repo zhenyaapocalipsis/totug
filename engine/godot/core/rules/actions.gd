@@ -32,7 +32,8 @@ static func can_assassinate(state: GameState, player_id: String, slot_id: String
 	var p: PlayerState = state.players[player_id]
 	if p.power < assassinate_cost(state):
 		return false
-	return state.presence.assassinatable_slots(player_id, state.troops, state.spies).has(slot_id)
+	return state.presence.assassinatable_slots(player_id, state.troops, state.spies).has(slot_id) \
+		or VoidCards.can_kill_far(state, player_id, slot_id)
 
 
 ## Само убийство без платы и проверок (после реакции Shield Guardian).
@@ -72,6 +73,7 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	if stock.troops_in_barracks == 0:
 		GameEnd.trigger(state, "last_troop")
 	ShurimaCards.on_deploy_action(state, player_id)
+	VoidCards.note_deploy(state)
 	return true
 
 
@@ -95,9 +97,13 @@ static func recruit(state: GameState, player_id: String, market_index: int, card
 		return false
 	if state.market.display[market_index] == "":
 		return false
+	# FAR REALM (Blue Slaad): чужой шпион на карте — сначала 3 Power.
+	if not VoidCards.pay_market_spy(state, player_id, market_index):
+		return false
 	var card_id: String = state.market.recruit_at(market_index)
 	if card_id == "":
 		return false
+	VoidCards.sync_market_spies(state)
 	# Bugbear Stalker: скидка была на карту в слоте, не на её замену.
 	state.turn_discounts.erase("slot:%d" % market_index)
 	p.influence -= card_cost
@@ -194,8 +200,8 @@ static func market_cost(state: GameState, index: int) -> int:
 		return cost
 	if ShurimaCards.recruit_banned(state, String(state.market.display[index])):
 		return -1  # Tough: соседи назвали эту карту — в этот ход не нанять
-	return maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index])
-		- int(state.turn_discounts.get("recruit", 0)) - int(state.turn_discounts.get("slot:%d" % index, 0)))
+	return VoidCards.market_cost(state, index, maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index])
+		- int(state.turn_discounts.get("recruit", 0)) - int(state.turn_discounts.get("slot:%d" % index, 0))))
 
 
 ## Цены базовых действий с учётом скидок хода (New Era, state.turn_discounts).

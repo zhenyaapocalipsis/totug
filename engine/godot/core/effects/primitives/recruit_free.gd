@@ -26,7 +26,8 @@ func _eligible_indices(state: GameState) -> Array:
 		if cid == "":
 			continue
 		var cost: int = CardLibrary.card_cost(cid)
-		if cost < 0 or cost > max_cost or ShurimaCards.recruit_banned(state, cid):
+		if cost < 0 or cost > max_cost or ShurimaCards.recruit_banned(state, cid) \
+				or VoidCards.free_recruit_blocked(state, state.current_player(), i):
 			continue
 		if aspect_filter != "" and CardLibrary.card_aspect(cid) != aspect_filter:
 			continue

@@ -59,6 +59,9 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 			"deck_size": state.market.deck_size(),
 		},
 		"supplies": state.supplies.counts.duplicate(),
+		# FAR REALM (Blue Slaad): шпионы на картах рынка — индекс слота -> хозяин.
+		"market_spies": _market_spies_view(state),
+		"starting_troops": state.starting_troops,
 		"players": {},
 		"pending_decision": _pending_decision_view(state, viewer_id),
 	}
@@ -144,6 +147,10 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 	if p.power >= Actions.assassinate_cost(state):
 		for slot_id in state.presence.assassinatable_slots(viewer_id, state.troops, state.spies):
 			kill_slots.append(slot_id)
+		# FAR REALM: Red Slaad / Githzerai Zerth — убивать дальше Присутствия.
+		for slot_id: String in state.graph.slots.keys():
+			if not kill_slots.has(slot_id) and VoidCards.can_kill_far(state, viewer_id, slot_id):
+				kill_slots.append(slot_id)
 
 	# Вражеские шпионы там, где у зрителя есть Присутствие (3 Power).
 	var spy_targets: Array = []
@@ -266,6 +273,15 @@ static func _duplicate_spies(spies: Dictionary) -> Dictionary:
 
 
 ## stock — запас игрока (в 2v2 общий у команды: бараки, трофеи, внутренний круг).
+static func _market_spies_view(state: GameState) -> Dictionary:
+	var out := {}
+	for i in range(state.market.display.size()):
+		var owner := VoidCards.market_spy_owner(state, i)
+		if owner != "":
+			out[i] = owner
+	return out
+
+
 static func _player_view(p: PlayerState, is_owner: bool, stock: PlayerState = null) -> Dictionary:
 	if stock == null:
 		stock = p
@@ -286,6 +302,8 @@ static func _player_view(p: PlayerState, is_owner: bool, stock: PlayerState = nu
 		"deck_size": p.deck.draw_pile.size(),
 		"retained_size": p.deck.retained.size(),
 		"acorns": p.acorns,
+		"set_aside": p.deck.set_aside.duplicate(),
+		"evolutions": p.evolutions.duplicate(),
 	}
 	if is_owner:
 		view["hand"] = p.deck.hand.duplicate()

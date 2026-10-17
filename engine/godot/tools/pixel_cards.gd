@@ -144,6 +144,12 @@ const MINI_FACE := {
 	49913: Vector2i(37, 29), 49914: Vector2i(44, 2), 49915: Vector2i(52, 13), 49916: Vector2i(71, 20),
 	49917: Vector2i(53, 2), 49918: Vector2i(74, 0), 49919: Vector2i(26, 15), 49920: Vector2i(65, 18),
 	49921: Vector2i(62, 38), 49922: Vector2i(43, 29),
+	# FAR REALM (Void)
+	50000: Vector2i(0, 14), 50001: Vector2i(74, 0), 50002: Vector2i(56, 14), 50003: Vector2i(77, 27),
+	50004: Vector2i(0, 41), 50005: Vector2i(50, 47), 50006: Vector2i(14, 31), 50007: Vector2i(54, 23),
+	50008: Vector2i(36, 0), 50010: Vector2i(44, 11), 50011: Vector2i(24, 0), 50012: Vector2i(56, 11),
+	50013: Vector2i(64, 4), 50014: Vector2i(41, 11), 50015: Vector2i(53, 0), 50016: Vector2i(44, 1),
+	50017: Vector2i(21, 34), 50018: Vector2i(53, 31), 50019: Vector2i(84, 24), 50020: Vector2i(27, 14),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -453,6 +459,27 @@ const SINGLE_ART := {
 	49920: ["bandle/ogre_chitterlord.jpeg", Rect2i(100, 120, 820, 500)],
 	49921: ["bandle/goblin_hexer.png", Rect2i(0, 150, 578, 352)],
 	49922: ["bandle/faerie_dragon_adult.jpeg", Rect2i(0, 190, 520, 317)],
+	# FAR REALM (Void)
+	50000: ["void/githyanki_knight.png", Rect2i(0, 0, 525, 320)],
+	50001: ["void/greater_star_spawn_emissary.jpeg", Rect2i(100, 100, 800, 488)],
+	50002: ["void/froghemoth_elder.jpeg", Rect2i(0, 0, 773, 471)],
+	50003: ["void/githzerai_zerth.jpeg", Rect2i(0, 120, 525, 320)],
+	50004: ["void/thri_kreen_marauder.png", Rect2i(60, 180, 483, 294)],
+	50005: ["void/red_slaad.jpeg", Rect2i(0, 50, 613, 374)],
+	50006: ["void/inquisitor_mind_fire.jpeg", Rect2i(0, 50, 495, 302)],
+	50007: ["void/groundling_stalker.jpeg", Rect2i(100, 0, 740, 451)],
+	50008: ["void/eye_monger.jpeg", Rect2i(150, 30, 850, 518)],
+	50010: ["void/lesser_star_spawn_emissary.jpeg", Rect2i(0, 20, 576, 351)],
+	50011: ["void/githzerai_monk.jpeg", Rect2i(0, 180, 555, 338)],
+	50012: ["void/thri_kreen_psion.jpeg", Rect2i(0, 60, 547, 333)],
+	50013: ["void/hook_horror.png", Rect2i(0, 50, 800, 488)],
+	50014: ["void/elder_thing.jpeg", Rect2i(100, 0, 877, 535)],
+	50015: ["void/carrion_stalker.png", Rect2i(100, 50, 820, 500)],
+	50016: ["void/gray_slaad.jpeg", Rect2i(0, 250, 655, 400)],
+	50017: ["void/green_slaad.jpeg", Rect2i(0, 280, 501, 305)],
+	50018: ["void/blue_slaad.jpeg", Rect2i(0, 200, 537, 327)],
+	50019: ["void/githyanki_dracomancer.png", Rect2i(0, 150, 523, 319)],
+	50020: ["void/githyanki_warrior.png", Rect2i(0, 180, 529, 322)],
 }
 
 const FONT := {
@@ -580,9 +607,17 @@ func _init() -> void:
 		render_alt(all, H, text_top, text_h)
 		return
 
+	# "-- only=50000,50004": перерисовать только эти карты (подбор кадра), без листов превью.
+	var only: Array = []
+	for a in OS.get_cmdline_user_args():
+		if String(a).begins_with("only="):
+			for id_text in String(a).trim_prefix("only=").split(","):
+				only.append(String(id_text).to_int())
 	DirAccess.make_dir_recursive_absolute(PREVIEW)
 	var rendered: Array[Image] = []
 	for c: Dictionary in all:
+		if not only.is_empty() and not only.has(int(c["card_id"])):
+			continue
 		if not SHEETS.has(int(c["card_id"]) / 100) and not SINGLE_ART.has(int(c["card_id"])):
 			print("no art sheet for card ", c["card_id"], " ", c["name"])
 			continue
@@ -591,6 +626,9 @@ func _init() -> void:
 		rendered.append(card)
 		render_mini(c).save_png(OUT_MINI + "%d.png" % int(c["card_id"]))
 	print("rendered: ", rendered.size())
+	if not only.is_empty():
+		quit()
+		return
 
 	# preview sheets: 5x5 cards at x2
 	var s := 2
@@ -743,6 +781,7 @@ func set_name(card_id: int, type: String) -> String:
 		497: return "CALIMSHAN"
 		498: return "KARA-TUR"
 		499: return "FEYWILD"
+		500: return "FAR REALM"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

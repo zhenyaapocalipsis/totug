@@ -50,7 +50,8 @@ func _legal_targets(state: GameState, player_id: String) -> Array:
 			continue
 		if preset_site != "" and state.graph.site_of_slot(slot_id) != preset_site:
 			continue
-		if preset_site == "" and not anywhere and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
+		if preset_site == "" and not anywhere and not state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies) \
+				and not VoidCards.reach(state, player_id, slot_id, "supplant"):
 			continue
 		result.append(slot_id)
 	return result
@@ -93,6 +94,7 @@ func _supplant(state: GameState, player_id: String, resolver: EffectResolver, sl
 	if stock.troops_in_barracks > 0:
 		state.troops[slot_id] = player_id
 		stock.troops_in_barracks -= 1
+		VoidCards.note_deploy(state)
 		if stock.troops_in_barracks == 0:
 			GameEnd.trigger(state, "last_troop")
 	else:

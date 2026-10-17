@@ -19,6 +19,10 @@ var site: String = ""
 ## Общий список слотов, куда эта цепочка уже поставила войска (Gibbering
 ## Mouther: следующий эффект карты смотрит, в чьё Присутствие они встали).
 var deployed: Array = []
+## FAR REALM: bonus — лишние войска Inquisitor of the Mind Fire (хуки Void их не трогают);
+## void_checked — вопрос Elder Thing ("войска или Power") уже был (VoidCards.before_deploy).
+var bonus := false
+var void_checked := false
 
 
 func _init(count: int = 1, allow_fewer: bool = false, at_site: String = "") -> void:
@@ -34,6 +38,8 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			return  # игрок остановился ("up to N") — дальше не спрашиваем
 		_deploy_at(state, player_id, slot_id, resolver)
 		_continue(state, player_id, resolver)
+		return
+	if not void_checked and VoidCards.before_deploy(state, player_id, self, resolver):
 		return
 	_continue(state, player_id, resolver)
 
@@ -58,6 +64,8 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 
 	var next := DeployTroop.new(remaining - 1, up_to, site)
 	next.deployed = deployed
+	next.bonus = bonus
+	next.void_checked = true
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
 	pd.prompt = "Deploy a troop"
@@ -74,6 +82,8 @@ func _deploy_at(state: GameState, player_id: String, slot_id: String, resolver: 
 	FreljordCards.on_card_deploy(state, player_id)
 	if deployed.is_empty():
 		ShurimaCards.on_card_deploy(state, player_id, resolver)  # Hyena: раз на цепочку
+		VoidCards.on_card_deploy(state, player_id, self, resolver)  # Inquisitor of the Mind Fire
+	VoidCards.note_deploy(state)
 	state.troops[slot_id] = player_id
 	var stock: PlayerState = state.stock(player_id)
 	stock.troops_in_barracks -= 1
