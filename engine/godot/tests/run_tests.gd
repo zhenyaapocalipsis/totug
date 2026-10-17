@@ -6159,17 +6159,17 @@ func test_feywild_deck() -> void:
 	section("Feywild (New Era Bandle City): полуколода и Glamour")
 	var B := BandleCards
 	var deck := GameSetup.expand_half_deck("bandle")
-	check_eq(deck.size(), 44, "Feywild: 44 карты (без Rumble и Lulu, с Norra)")
+	check_eq(deck.size(), 40, "Feywild: 40 карт (без Rumble, Lulu и Goblin Hexer; Icewind Kobold и High Fae Mage по 3)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
-	check_eq(uniques.size(), 21, "Feywild: 21 уникальная карта")
+	check_eq(uniques.size(), 20, "Feywild: 20 уникальных карт")
 	check(not uniques.has(B.MEGA_GNAR), "Faerie Dragon Adult не в рынке")
 	check(not GameSetup.available_half_decks().has("bandle"), "Feywild пока wip: не в обычном выборе")
 	var mode := GameSetup.new_era_mode(["bandle", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Feywild принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 84, "рынок: 40 (Celestial) + 44 (Feywild)")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Feywild)")
 	_sweep_deck_with_vp(49900, 49906)
 	_sweep_deck_with_vp(49908, 49922)
 

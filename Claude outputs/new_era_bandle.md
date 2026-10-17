@@ -38,7 +38,7 @@
 - 326 **Mega Gnar** (жетон, Valor, 6, 3/6): Gain 6 Power and each opponent discards a card. Transform into Gnar.
 
 ## NE-26 (2026-10-17): Bandle City → FEYWILD (wip)
-- Владелец: 2014-арты можно; **Rumble и Lulu убраны, вместо них Norra** (Extra Champions). Колода — все карты мода: **21 уникальная, 44 копии**. Урезать до 40/20 — по слову владельца (лист `Claude outputs/feywild_cards_all.png`).
+- Владелец: 2014-арты можно; **Rumble и Lulu убраны, вместо них Norra** (Extra Champions). NE-26 — все карты мода (21/44); **NE-27 — 40/20 по выбору владельца**: убран Goblin Hexer (остался в cards.json), Icewind Kobold и High Fae Mage по 3.
 - Ключ `bandle`, тип `FEYWILD`, id 49900–49922 (49907 свободен), `wip` (кнопка FEYWILD в NEW ERA, фон — зелёный луг). Эффекты `core/cards/bandle_cards.gd`, тест `test_feywild_deck`.
 - Арты: в списке поиска D&D Beyond (`.monster-icon a[href]`) есть полный арт даже у монстров из платных книг. **Владелец: персонажей на белом фоне — заменить** (2026-10-17) — теперь все 22 арта со сценой: феи Эльдрейна (High Fae, Faerie), ученики Стриксхейвена (Lorehold, Silverquill, Witherbloom, Quandrix Apprentice) и др. Фон проверяет `tools/new_era/art_bgcheck.gd` (DIR=папка: BG — сцена, CUT — белый/прозрачный край). Кандидаты — `cards/bandle/cand*` (не в git).
 
@@ -54,8 +54,8 @@
 | 49908 | Witherbloom Apprentice | Veigar | 1 |
 | 49909 | Witchkite | Corki | 1 |
 | 49910 | Modron Monodrone | Bandle Gunners | 4 |
-| 49911 | High Fae Mage | Realm Caretaker | 4 |
-| 49912 | Icewind Kobold | Yordle Explorer | 4 |
+| 49911 | High Fae Mage | Realm Caretaker | 3 |
+| 49912 | Icewind Kobold | Yordle Explorer | 3 |
 | 49913 | Leprechaun | Bandle City Mayor | 2 |
 | 49914 | Faerie Pest | Bandle Painter | 2 |
 | 49915 | Quandrix Apprentice | Banana Blaster | 3 |
@@ -64,7 +64,7 @@
 | 49918 | High Fae Impostor | Carved Bladetwirler | 3 |
 | 49919 | Pixie Wonderbringer | Tornado Warrior | 3 |
 | 49920 | Ogre Chitterlord | Yordle Captain | 2 |
-| 49921 | Goblin Hexer | Portal Scholar | 2 |
+| 49921 | Goblin Hexer | Portal Scholar | — (убран, NE-27) |
 | 49922 | Faerie Dragon Adult | Mega Gnar (не в рынке) | — |
 
 ### Толкования
