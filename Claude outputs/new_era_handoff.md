@@ -1,29 +1,32 @@
-# New Era — передача работы в новый чат (на 2026-10-17)
+# New Era — передача работы в новый чат (на 2026-10-17, вечер)
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
-## NE-23/24 (2026-10-17, позже): Ionia → KARA-TUR, 40/20 — запушено (652ca08) и задеплоено: сборка 1792234224, PROTOCOL 32
-- **NE-24:** владелец урезал до 40/20 — убраны Adult Bronze Dragon, Sprite, Violet Fungus (остались в cards.json), Mage и Young Brass Dragon по 3. Флаг `wip` пока не снят.
-- **NE-25:** владелец заменил Young Brass Dragon на Sprite (3 копии), PROTOCOL 33 — запушено (8167fff) и задеплоено: сборка 1792240980.
-- Владелец: «jhin меняем на hwei». Колода Ionia целиком (45 карт, 23 уникальные), **Hwei вместо Jhin** (картинка PDF 373). Ключ `ionia`, тип `KARA-TUR`, id 49800–49822, `wip` (кнопка KARA-TUR в NEW ERA). Справка и толкования — `Claude outputs/new_era_ionia.md`, лист всех карт — `Claude outputs/karatur_cards_all.png`.
-- **Retain** в движке: `Deck.retained`; щелчок по карте со словом Retain → вопрос «Play / Retain» (`IoniaCards.play_or_retain`, GameServer PLAY_CARD); бонус «Retain:» сразу; в конце хода после добора до 5 удержанные возвращаются в руку (`TurnEngine.finish_end_of_turn`). `TurnEngine.begin_play` — розыгрыш без запуска эффекта. В виде: `retained` (владельцу), `retained_size`, `acorns`; HandPanel показывает удержанные справа с подписью RETAINED.
-- Хуки: `IoniaCards.on_kill` (все 3 места add_trophy — Kraken), `IoniaCards.on_recruit` (GameServer recruit/supply, RecruitFree — Adult Gold Dragon), `IoniaCards.on_play` (Mage = Witness), `ShieldGuard.ONI` + параметр `from_card` (Oni отвечает только на карты; базовые действия в GameServer передают false), `PlayerState.acorns`.
-- **PROTOCOL 32**. Тесты `2005 / 0`, сеть `151 / 0`. 12 партий ботов CELESTIAL+KARA-TUR без зависаний.
-- **Ждёт владельца:** (1) живая проверка; (2) существа выбраны мной (почти все свободные не-звери с фоном кончились — колода «драконья», 4 хроматических древних дракона: имя «Ancient Red Dragon» и т.п. отличается от классических «Red Dragon», но владелец может счесть это повтором); (3) снять `wip` (ввести в обычный пул) — только по его слову, потом поднять PROTOCOL и задеплоить.
-- Свободные не-звери с фоном, ещё не занятые после NE-23: Adult Black/Blue/Red/White/Green Dragon (у 2024 Young-версий те же арты, что у Adult), Ancient Red/White Dragon, Roc (птица — спорно), Kraken занят. Без фона (не брать): Animated Armor/Flying Sword/Rug, Salamander, Sahuagin Warrior, Kobold Warrior, Pirate, Priest Acolyte, Knight, Gold/Bronze Wyrmling, Gray Ooze. Платные: Pixie, Mage Apprentice, Performer, Questing Knight, Archpriest, Sahuagin Priest, Cultist Hierophant, Bandit Deceiver.
-- Следующая колода по PDF — **Bandle City** (с 188: Teemo, Kennen, Tristana, Ziggs, Yuumi…; Glamour = потратить 1 VP-жетон).
+## Коротко (читать первым)
+- **Всё закоммичено, запушено и задеплоено** (кроме коммита с этой сводкой — его push по слову владельца). На сервере сборка **1792240980**, **PROTOCOL 33** (`net/net_session.gd`). Проверка: `curl http://129.101.123.70/tyrants/version.txt`.
+- **Тесты:** `пройдено: 2005, провалено: 0`, сеть `151 / 0`. В тесте карт 329 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит. Полный прогон run_tests идёт ~5–8 минут (запускать в фоне).
+- **Колоды:** 7 колод New Era в обычном пуле (NE-20), все 40/20. Две последние — `wip` (только кнопками в NEW ERA, не в STANDARD/RANDOM и онлайн-поиске): **CALIMSHAN** (Shurima, NE-21/22) и **KARA-TUR** (Ionia, NE-23…25). Снять `wip` — только по слову владельца (меняет сиды обычных режимов), затем поднять PROTOCOL и задеплоить. Обе колоды владелец **ещё не проверял живьём** — чек-листы в `new_era_shurima.md` и `new_era_ionia.md`.
+- **Следующий шаг (не назначен):** следующая колода по PDF — **Bandle City**, картинки PDF с **188**: 188 Teemo, 189 Kennen, 190 Tristana, 191 Ziggs, 192 Yuumi… (смотреть `pdf_sheets.gd FROM=188 TO=215`). Механика **Glamour** — «потратить 1 VP-жетон (вернуть в запас), чтобы включить способность; одна Glamour на карту». Черновик существ — `new_era_dnd_mapping.md`, раздел 9 (мелкие феи-шутники). Либо живая проверка Calimshan / Kara-Tur, либо снятие `wip`.
+- **Порядок работы с новой колодой (владелец, 2026-10-16):** сделать колоду **целиком (все карты мода)**, `wip` → лист всех карт (`tools/new_era/cards_sheet.gd`, сам сортирует по цене) → владелец сам говорит, что убрать до 40/20 (столько уникальных, чтобы осталось 20, и копий, чтобы вышло 40; если после выреза не хватает копий — спросить, кому добавить). Потом `half_decks.json`, тест колоды (число карт, уникальных, размер рынка), справка, PROTOCOL.
+- **Владелец меняет чемпионов на Extra Champions мода** (Azir→Naafiri, Jhin→Hwei). Extra Champions — картинки PDF 331–400 (например, 373 Hwei, 379 Brand, 380 Naafiri); быстро найти — контакт-лист `art_contact.gd` на копию папки 331–400.
+- **Подбор существ (правила владельца):** имена не повторяются во всей игре — **проверять по `cards.json` до кода**; **без зверей** (NE-19); арт только **с фоном** (контакт-лист на пурпурной подложке). Свободных не-зверей с фоном почти не осталось (после NE-25): Adult Black/Blue/Red/White/Green Dragon (у 2024 Young-версий тот же арт, что у Adult — Young не брать), Ancient Red/White Dragon, Adult Bronze Dragon и Violet Fungus (в cards.json, но вырезаны из Kara-Tur — имена заняты!), Roc (птица — спорно). Без фона (не брать): Animated Armor/Flying Sword/Rug, Salamander, Sahuagin Warrior, Kobold Warrior, Pirate, Priest Acolyte, Knight, Gold/Bronze Wyrmling, Gray Ooze, Cyclops, Darkmantle, Flameskull, Imp, Quasit, Hobgoblin Warrior, Pit Fiend, Gnoll, Lizardfolk, Gladiator, Androsphinx/Gynosphinx. Платные (locked): Pixie, Mage Apprentice, Performer, Questing Knight, Archpriest, Sahuagin Priest, Cultist Hierophant, Bandit Deceiver, Dao, Marid, Yuan-ti, Gnoll Pack Lord, Lizardfolk Geomancer, Mud/Smoke Mephit. Для Bandle City, скорее всего, придётся спросить владельца: брать ли 2014-арты, хроматических Adult-драконов или существ без фона.
+- **Что поменялось вокруг колод (другие сессии):** Market-1/2 (RANDOM: 5 одиночных с полуколоды), Ban-1 (бан полуколоды в онлайн-поиске), Keywords-1…3 (жирные слова с подсказкой по Alt: новое слово — в `card_preview.gd` KEYWORDS-подсказки и `pixel_cards.gd` KEYWORDS, как DEVOTION и RETAIN), Profile-2/Radar.
+- **Деплой и push — только по слову владельца.** Новая колода или правка состава/правил → поднять `PROTOCOL`, потом `bash server/deploy.sh` (собирает из рабочей папки, ~5 минут, запускать в фоне).
+- Не трогать и не коммитить: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` (правки владельца). После полной генерации `pixel_cards.gd` откатывать `git checkout` чужие `assets/cards_pixel/49700–49702.png` (и иногда 48512) — они меняются сами.
 
-## Коротко на 2026-10-17 (читать первым)
-- **Всё до NE-22 закоммичено, запушено и задеплоено.** На сервере сборка **1792227394**, **PROTOCOL 31** (`net/net_session.gd`); локально уже 32 (NE-23).
-- **Тесты:** `пройдено: 1968, провалено: 0`, сеть `151 / 0`. В тесте карт 306 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит.
-- **Последняя колода — CALIMSHAN (Shurima), NE-21/22, 40/20, `wip`:** играется через NEW ERA (кнопка CALIMSHAN), в обычный пул и онлайн-поиск не входит. Убрать `wip` — только по слову владельца (поменяет сиды обычных режимов), потом поднять PROTOCOL и задеплоить. Владелец её ещё **не проверял живьём** — чек-лист в `Claude outputs/new_era_shurima.md`.
-- **Остальные 7 колод New Era в обычном пуле** (NE-20): 13 полуколод в STANDARD/RANDOM и онлайн-поиске; все 40/20.
-- **Как владелец теперь режет колоды (2026-10-16):** «не надо 40/20, добавь все, я сам потом выберу». Новую колоду делать **целиком (все карты мода)**, `wip`, затем показать лист всех карт (`tools/new_era/cards_sheet.gd`, см. конвейер) и сказать, сколько убрать до 40/20: 1 уникальную + столько копий, чтобы вышло 40. После его выбора — `half_decks.json`, тест колоды (число карт, уникальных, размер рынка), справка.
-- **Подбор существ (правила владельца):** имена не повторяются во всей игре — **проверять по `cards.json` до кода** (Ghoul оказался занят классической нежитью); **без зверей** (NE-19: чудища, гуманоиды, нежить, исчадия — не животные); арт только **с фоном** (контакт-лист на пурпурной подложке). Свободные не-звери с фоном, ещё не занятые (2026-10-17): Adult Bronze Dragon, Adult Copper Dragon, Ancient Bronze Dragon, Copper Dragon Wyrmling, Dryad; скачанные кандидаты — `cards/shurima/cand*` (не в git). Вырезанные без фона (не брать): Cyclops, Darkmantle, Flameskull, Imp, Quasit, Hobgoblin Warrior, Pit Fiend, Gnoll, Lizardfolk, Gladiator, Knight, Androsphinx/Gynosphinx. Платные (locked): Dao, Marid, Yuan-ti, Gnoll Pack Lord, Lizardfolk Geomancer, Mud/Smoke Mephit, Pixie.
-- **Следующий шаг (не назначен):** следующая колода по PDF — **Ionia**, картинки PDF со **165**: 165 Akali, 166 Shen, 167 Kinkou Wayfinder, 168 Zed, 169 Airis, 170 Blossoming Blade, 171 Jhin… (листы `pdf_sheets.gd FROM=165 TO=190`). Механика **Retain** — карта остаётся в руке после конца хода; рука добирается до 5 без неё, потом удержанные добавляются («Retain: …» — бонус при удержании). Shen — реакция в чужой ход (как Shield Guardian / Ankheg в `ShieldGuard`). Mapping-черновик Ionia: феи и эладрины (`Claude outputs/new_era_dnd_mapping.md`, раздел 8). Либо живая проверка Calimshan владельцем.
-- **Что поменялось вокруг колод (другие сессии):** Market-1/2 (RANDOM: 5 одиночных с полуколоды), Ban-1 (бан полуколоды в онлайн-поиске), Keywords-1…3 (жирные слова с подсказкой по Alt: новое слово — в `card_preview.gd` KEYWORDS-подсказки и `pixel_cards.gd` KEYWORDS, как DEVOTION), Profile-2/Radar.
-- **Новая колода и протокол:** новая колода или правка правил → поднять `PROTOCOL`, затем `bash server/deploy.sh`. Проверка: `curl http://129.101.123.70/tyrants/version.txt`. Деплой и push — только по слову владельца.
-- Не трогать и не коммитить: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` (правки владельца).
+## Ловушки этого окружения (2026-10-17)
+- **sed с `\n` внутри JSON-строк** в Git Bash ведёт себя непредсказуемо (вставлял настоящий перенос строки или не находил `\n`). Правки текстов карт в `cards.json` и строк с `\n` в .gd — только инструментом Edit.
+- Скрипт Godot (`--script`) при ошибке скрипта **не завершается** и висит до таймаута. Помощники из `tools/new_era/` запускать через `Start-Process … -PassThru` + `WaitForExit(90000)` и читать stderr.
+- GDScript: `int("49800")` — ошибка (нужно `"49800".to_int()`), `int(null)` — ошибка; массивы нельзя сравнивать через `<`; тернарник с двумя литералами массива даёт нетипизированный Array — в `SequenceEffect.new()` передавать `Array[CardEffect]`.
+- Картинки PDF мода уже извлечены: `C:\Users\JEKADI~1\AppData\Local\Temp\claude\C--tyrants-of-the-underdark-godot\a31afa31-071e-448f-9f8f-f2c96eb1d715\scratchpad\pdf\0000.jpg…0478.jpg` (если папки нет — `extract_pdf.gd`, ~1 мин).
+
+## NE-23…25 (2026-10-17): Ionia → KARA-TUR — задеплоено (сборка 1792240980, PROTOCOL 33)
+- Владелец: «jhin меняем на hwei» — **Hwei вместо Jhin** (картинка PDF 373). Ключ `ionia`, тип `KARA-TUR`, id 49800–49822, `wip` (кнопка KARA-TUR в NEW ERA, фон — сакура). Эффекты `core/cards/ionia_cards.gd`, тест `test_karatur_deck`, справка и толкования — `Claude outputs/new_era_ionia.md`, лист колоды — `Claude outputs/karatur_cards_all.png`, арты — `cards/ionia/` (кандидаты не в git — во временной папке сессии).
+- **Состав 40/20:** NE-24 владелец убрал Adult Bronze Dragon, Sprite, Violet Fungus, +1 Mage и Young Brass Dragon; NE-25 — Young Brass Dragon заменён обратно на Sprite (3). Сейчас вне колоды (в cards.json остались): Adult Bronze Dragon 49802, Violet Fungus 49809, Young Brass Dragon 49814.
+- **Retain** в движке: `Deck.retained`; щелчок по карте со словом Retain → вопрос «Play this card now / Retain it» (`IoniaCards.play_or_retain`, GameServer PLAY_CARD); бонус «Retain:» срабатывает сразу; в конце хода после добора до 5 удержанные возвращаются в руку (`TurnEngine.finish_end_of_turn`). `TurnEngine.begin_play` — розыгрыш без запуска эффекта. В виде: `retained` (только владельцу), `retained_size`, `acorns`; HandPanel показывает удержанные справа от руки с подписью RETAINED. Журнал: `retain`, `oni_block`, `acorn`, `look_at_hand`.
+- Хуки: `IoniaCards.on_kill` (все 3 места `add_trophy` — Kraken/Master Yi), `IoniaCards.on_recruit` (GameServer recruit и supply, RecruitFree — Adult Gold Dragon/Ahri), `IoniaCards.on_play` (Mage/Witness — повтор следующей карты ≤ 5), `ShieldGuard.ONI` + параметр `from_card` (Oni/Shen отвечает только на карты; базовые действия в GameServer передают false), `PlayerState.acorns`, Tarrasque/Lee Sin — флаг Siege `all_white`.
+- 12 партий ботов CELESTIAL+KARA-TUR — без зависаний. Пользуется ли бот Retain — не проверялось.
+- **Ждёт владельца:** (1) живая проверка (чек-лист в справке); (2) существа выбраны мной — колода «драконья», 3 хроматических древних дракона (Green, Black, Blue): имя «Ancient Black Dragon» отличается от классического «Black Dragon», но владелец может счесть это повтором; кадры Ancient Green Dragon, Tarrasque, Kraken тёмные — можно доработать; (3) снять `wip`.
 
 ## NE-21/22 (2026-10-16/17): Shurima → CALIMSHAN — задеплоено (сборка 1792227394, PROTOCOL 31, push 5c2a12e)
 - Ключ `shurima`, тип `CALIMSHAN`, id 49700–49720, `wip` (кнопка CALIMSHAN в NEW ERA, не в обычном пуле). Эффекты `core/cards/shurima_cards.gd`, тест `test_calimshan_deck`, справка `Claude outputs/new_era_shurima.md`, лист всех карт `Claude outputs/calimshan_cards_all.png`.
@@ -43,6 +46,7 @@
   | **AVERNUS** | Noxus | `noxus` | 49500–49524 | NE-9 (правила), NE-10 (арты) |
   | **ICEWIND DALE** | Freljord | `freljord` | 49600–49620, 49634–49636 | NE-11 (правила), NE-12 (арты, UI), NE-12b (PROTOCOL 25), NE-17 (Gragas/Aurora/Olaf) |
   | **CALIMSHAN** | Shurima (+ Naafiri) | `shurima` | 49700–49720 | NE-21 (все 45 карт), NE-22 (40/20) |
+  | **KARA-TUR** | Ionia (+ Hwei) | `ionia` | 49800–49822 | NE-23 (все 45 карт), NE-24/25 (40/20) |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
 - Всё закоммичено и запушено на GitHub (`main`). Последний деплой — сборка 1792009359 (2026-10-15, после NE-20, **PROTOCOL 27**): все колоды New Era в обычном пуле.
@@ -139,10 +143,9 @@
    | Noxus | 74–96 (+ 451–453 Blade Fragment, 454 Blade of Exile) |
    | Bilgewater | с 97 (97 Shellshocker, 98 Prowling Cutthroat, Hired Gun, 100 Mystifying Magician, 101 Watchful Idol…) |
    | Freljord | 121–143 (127 — Troll Scout + Rimetusk Shaman; жетоны 324 Eggnivia, 441–450 предметы Ornn) |
-   | Shurima | с 144 (144 Azir, 145 Xerath, 146 Renekton, 147 Nasus…) |
-   | Shurima | следом |
-   | Ionia | следом |
-   | Bandle City | следом |
+   | Shurima | 144–164 (+ 380 Naafiri) |
+   | Ionia | 165–187 (171 Jhin; + 373 Hwei) |
+   | Bandle City | с 188 (188 Teemo, 189 Kennen, 190 Tristana, 191 Ziggs, 192 Yuumi…) |
    | Targon | следом |
    | Void | следом |
    | Ixtal | следом |
@@ -170,7 +173,7 @@
    - Карты в `cards.json` дописывать так: фрагмент JSON записать инструментом Write в scratchpad, потом склеить (`head -c -2` + `,\n` + фрагмент). Heredoc в Bash ломается на апострофах (`player's`).
    - `pixel_cards.gd` при полной генерации иногда меняет `assets/cards_pixel/48512.png` — это не наше, откатывать `git checkout`.
    - Если текст новой карты длиннее 85 px (`-- measure`), сокращать текст, а не рамку.
-   - Перед выкладкой: новая колода или правка правил → поднять `NetSession.PROTOCOL` (сейчас 24), потом `bash server/deploy.sh` (собирает из рабочей папки, грузит на VPS, перезапускает; проверка — `curl http://129.101.123.70/tyrants/version.txt`).
+   - Перед выкладкой: новая колода или правка правил → поднять `NetSession.PROTOCOL` (сейчас 33), потом `bash server/deploy.sh` (собирает из рабочей папки, грузит на VPS, перезапускает; проверка — `curl http://129.101.123.70/tyrants/version.txt`).
 
 ## Открытые вопросы и что не сделано
 - Владелец ещё не проверял Celestial живьём. Чек-лист был: режим NEW ERA, покупка Scout, Gladiator→Berserker со скидками, превращение Gold Dragon, реакция Shield Guardian.
