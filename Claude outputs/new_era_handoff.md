@@ -1,6 +1,18 @@
-# New Era — передача работы в новый чат (на 2026-10-16)
+# New Era — передача работы в новый чат (на 2026-10-17)
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
+
+## Коротко на 2026-10-17 (читать первым)
+- **Всё закоммичено, запушено и задеплоено.** `main` = последний коммит этого раздела. На сервере сборка **1792227394**, **PROTOCOL 31** (`net/net_session.gd`).
+- **Тесты:** `пройдено: 1968, провалено: 0`, сеть `151 / 0`. В тесте карт 306 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит.
+- **Последняя колода — CALIMSHAN (Shurima), NE-21/22, 40/20, `wip`:** играется через NEW ERA (кнопка CALIMSHAN), в обычный пул и онлайн-поиск не входит. Убрать `wip` — только по слову владельца (поменяет сиды обычных режимов), потом поднять PROTOCOL и задеплоить. Владелец её ещё **не проверял живьём** — чек-лист в `Claude outputs/new_era_shurima.md`.
+- **Остальные 7 колод New Era в обычном пуле** (NE-20): 13 полуколод в STANDARD/RANDOM и онлайн-поиске; все 40/20.
+- **Как владелец теперь режет колоды (2026-10-16):** «не надо 40/20, добавь все, я сам потом выберу». Новую колоду делать **целиком (все карты мода)**, `wip`, затем показать лист всех карт (`tools/new_era/cards_sheet.gd`, см. конвейер) и сказать, сколько убрать до 40/20: 1 уникальную + столько копий, чтобы вышло 40. После его выбора — `half_decks.json`, тест колоды (число карт, уникальных, размер рынка), справка.
+- **Подбор существ (правила владельца):** имена не повторяются во всей игре — **проверять по `cards.json` до кода** (Ghoul оказался занят классической нежитью); **без зверей** (NE-19: чудища, гуманоиды, нежить, исчадия — не животные); арт только **с фоном** (контакт-лист на пурпурной подложке). Свободные не-звери с фоном, ещё не занятые (2026-10-17): Adult Bronze Dragon, Adult Copper Dragon, Ancient Bronze Dragon, Copper Dragon Wyrmling, Dryad; скачанные кандидаты — `cards/shurima/cand*` (не в git). Вырезанные без фона (не брать): Cyclops, Darkmantle, Flameskull, Imp, Quasit, Hobgoblin Warrior, Pit Fiend, Gnoll, Lizardfolk, Gladiator, Knight, Androsphinx/Gynosphinx. Платные (locked): Dao, Marid, Yuan-ti, Gnoll Pack Lord, Lizardfolk Geomancer, Mud/Smoke Mephit, Pixie.
+- **Следующий шаг (не назначен):** следующая колода по PDF — **Ionia**, картинки PDF со **165**: 165 Akali, 166 Shen, 167 Kinkou Wayfinder, 168 Zed, 169 Airis, 170 Blossoming Blade, 171 Jhin… (листы `pdf_sheets.gd FROM=165 TO=190`). Механика **Retain** — карта остаётся в руке после конца хода; рука добирается до 5 без неё, потом удержанные добавляются («Retain: …» — бонус при удержании). Shen — реакция в чужой ход (как Shield Guardian / Ankheg в `ShieldGuard`). Mapping-черновик Ionia: феи и эладрины (`Claude outputs/new_era_dnd_mapping.md`, раздел 8). Либо живая проверка Calimshan владельцем.
+- **Что поменялось вокруг колод (другие сессии):** Market-1/2 (RANDOM: 5 одиночных с полуколоды), Ban-1 (бан полуколоды в онлайн-поиске), Keywords-1…3 (жирные слова с подсказкой по Alt: новое слово — в `card_preview.gd` KEYWORDS-подсказки и `pixel_cards.gd` KEYWORDS, как DEVOTION), Profile-2/Radar.
+- **Новая колода и протокол:** новая колода или правка правил → поднять `PROTOCOL`, затем `bash server/deploy.sh`. Проверка: `curl http://129.101.123.70/tyrants/version.txt`. Деплой и push — только по слову владельца.
+- Не трогать и не коммитить: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` (правки владельца).
 
 ## NE-21/22 (2026-10-16/17): Shurima → CALIMSHAN — задеплоено (сборка 1792227394, PROTOCOL 31, push 5c2a12e)
 - Ключ `shurima`, тип `CALIMSHAN`, id 49700–49720, `wip` (кнопка CALIMSHAN в NEW ERA, не в обычном пуле). Эффекты `core/cards/shurima_cards.gd`, тест `test_calimshan_deck`, справка `Claude outputs/new_era_shurima.md`, лист всех карт `Claude outputs/calimshan_cards_all.png`.
@@ -8,20 +20,6 @@
 - **Devotion**: `ShurimaCards.on_recruit` (GameServer после покупки, RecruitFree) и `on_promote` (после каждого `log_event("promote")` — PromoteCard, Celestial, Mercenary, Noxus, Siege, ForceDiscard). Новые пути найма/promote тоже должны их звать.
 - **Ankheg (Rammus)** — реакция внутри `ShieldGuard` (параметр `kill`): только убийство/вытеснение войска. **Roper (Naafiri)** — хуки в `DeployTroop._deploy_at` и `Actions.deploy`. **Tough** — `turn_flags["no_recruit"]`, `Actions.market_cost` = -1.
 - PROTOCOL **31**. Тесты 1968/0, сеть 151/0. Звери заменены на чудищ/гуманоидов (правило NE-19).
-
-## Коротко на 2026-10-16 (читать первым)
-- **Всё закоммичено и запушено** (`main`, последний коммит `9df122f`). На сервере сборка **1792092861**, **PROTOCOL 30** (`net/net_session.gd`).
-- **Тесты на 2026-10-16:** `пройдено: 1939, провалено: 0`, сеть `151 / 0`. В тесте карт 285 (126 классических + 25 Celestial + 25 Shadow + 21 Piltover + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale). Сетевой `[server4] … доска легла в сетку` иногда падает по времени — повторный прогон проходит.
-- **Все 7 колод New Era в обычном пуле** (NE-20, без `wip`): 13 полуколод в STANDARD/RANDOM и онлайн-поиске.
-- **Правило владельца для полуколод: 40 карт / 20 уникальных** (NE-13…NE-18 урезали все колоды; лишние карты остаются в `cards.json`, но не в `half_decks.json`). Новую колоду сразу делать 40/20 — какие карты мода не брать, спросить владельца или предложить.
-- **Что ещё поменялось вокруг колод (другие сессии):**
-  - **Market-1/2:** RANDOM-рынок берёт ровно 5 одиночных карт с каждой полуколоды. Если аспекту в RANDOM 3 не хватает до 20 карт, добавляются третьи копии обычных карт.
-  - **Ban-1:** в онлайн-поиске каждый банит одну полуколоду.
-  - **Keywords-1…3:** SCRY, MIGHT, FROSTBITE, TRANSFORM, DISTINCT — жирным, с подсказками по Alt. Новое ключевое слово (например, DEVOTION у Shurima) тоже нужно добавить в подсказки — смотреть, как сделан FROSTBITE.
-  - **Profile-2/Radar:** профиль-шестиугольник; на колоды не влияет.
-- **Новая колода и протокол:** новая колода или правка правил → поднять `PROTOCOL`, затем деплой `bash server/deploy.sh`. Проверка: `curl http://129.101.123.70/tyrants/version.txt`. Деплой и push — только по слову владельца.
-- **Следующий шаг (не назначен):** следующая колода — **Shurima** (Bilgewater владелец пропустил), картинки PDF с 144: 144 Azir, 145 Xerath, 146 Renekton, 147 Nasus… Механика **Devotion** — срабатывает при покупке или Promote карты. Либо живая проверка колод владельцем.
-- Не трогать и не коммитить: `scenes/ui/card_fx.gd`, `tests/ui_shot.gd` (правки владельца).
 
 ## Состояние подробнее (история)
 - Колоды из мода Runeterra Reforged:
@@ -33,6 +31,7 @@
   | **WATERDEEP** | Piltover & Zaun | `piltover` | 49200–49220 | NE-6, NE-7, NE-8 (имя) |
   | **AVERNUS** | Noxus | `noxus` | 49500–49524 | NE-9 (правила), NE-10 (арты) |
   | **ICEWIND DALE** | Freljord | `freljord` | 49600–49620, 49634–49636 | NE-11 (правила), NE-12 (арты, UI), NE-12b (PROTOCOL 25), NE-17 (Gragas/Aurora/Olaf) |
+  | **CALIMSHAN** | Shurima (+ Naafiri) | `shurima` | 49700–49720 | NE-21 (все 45 карт), NE-22 (40/20) |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
 - Всё закоммичено и запушено на GitHub (`main`). Последний деплой — сборка 1792009359 (2026-10-15, после NE-20, **PROTOCOL 27**): все колоды New Era в обычном пуле.
@@ -118,6 +117,7 @@
    - `art_grid.gd` — `DIR NAMES="a.png b.jpeg" COLS=4 [CELL=600] OUT`: арты с сеткой через 100 px исходника — по ней выбирается окно `Rect2i` для `SINGLE_ART`.
    - `card_art_grid.gd` — `FROM=49200 TO=49211 OUT`: окна арта готовых карт x3 с сеткой 10 px — для проверки кадра и `MINI_FACE`.
    - `mini_strip.gd` — `IDS="49203 49205" OUT=<файл.png>`: мини-карты x4 полосой.
+   - `cards_sheet.gd` — `IDS="49700 49701 …" OUT=<файл.png>`: лист готовых карт x2 по 6 в ряд — для выбора владельцем, что убрать (запуск `--path engine/godot` не нужен, пути абсолютные).
 1. **Читать карты.** Извлечь картинки (`extract_pdf.gd`) во временную папку и смотреть листами (`pdf_sheets.gd`). Порядок карт в PDF (номера картинок):
 
    | Регион | Картинки |
