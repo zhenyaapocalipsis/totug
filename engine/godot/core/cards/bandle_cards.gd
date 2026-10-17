@@ -13,42 +13,42 @@ extends RefCounted
 ## Glamour (правило мода): "spend 1 VP token (return it to the supply) to enable
 ## the ability; only one Glamour per card". Здесь: после основного эффекта карты
 ## вопрос "Glamour?" со списком её Glamour-способностей и вариантом "No Glamour";
-## у карт с "instead" (Leprechaun, Smoke Mephit) Glamour-варианты стоят рядом с
+## у карт с "instead" (Leprechaun, Pixie Wonderbringer) Glamour-варианты стоят рядом с
 ## основным эффектом. Без VP-жетонов вопроса нет.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "teemo"            — Quickling: каждый шпион -> ещё шпион и 1 VP; возврат
+##   "teemo"            — Satyr Thornbearer: каждый шпион -> ещё шпион и 1 VP; возврат
 ##                        своего шпиона -> supplant в той локации;
-##   "teemo_busy"       — ставится дополнительный шпион Quickling (он не цепляет ещё один);
-##   "tristana_vp"      — Kobold Inventor: убил или вытеснил войско -> 1 VP;
-##   "tristana_supplant" — Kobold Inventor: убил войско -> можно вытеснить его вместо этого;
-##   "yuumi_top"        — Tressym: купленную карту можно положить на верх колоды;
-##   "yuumi_vp"         — Tressym: +1 VP за каждую купленную карту;
-##   "recruits"         — сколько карт куплено в этот ход (Tressym, Darkling Elder);
+##   "teemo_busy"       — ставится дополнительный шпион Satyr Thornbearer (он не цепляет ещё один);
+##   "tristana_vp"      — High Fae Noble: убил или вытеснил войско -> 1 VP;
+##   "tristana_supplant" — High Fae Noble: убил войско -> можно вытеснить его вместо этого;
+##   "yuumi_top"        — Silverquill Apprentice: купленную карту можно положить на верх колоды;
+##   "yuumi_vp"         — Silverquill Apprentice: +1 VP за каждую купленную карту;
+##   "recruits"         — сколько карт куплено в этот ход (Silverquill Apprentice, High Fae Mage);
 ##   "power_spent"      — сколько Power потрачено в этот ход (Faerie Dragon Youth:
 ##                        "gained 6 or more Power this turn" = потрачено + осталось);
-##   "control_start"    — локации, которые игрок контролировал в начале хода (Redcap).
+##   "control_start"    — локации, которые игрок контролировал в начале хода (Yeti Tyke).
 
-const TEEMO := "49900"  # Quickling
-const KENNEN := "49901"  # Darkling
-const TRISTANA := "49902"  # Kobold Inventor
-const ZIGGS := "49903"  # Rock Gnome Recluse
-const YUUMI := "49904"  # Tressym
+const TEEMO := "49900"  # Satyr Thornbearer
+const KENNEN := "49901"  # High Fae Kindguard
+const TRISTANA := "49902"  # High Fae Noble
+const ZIGGS := "49903"  # Lorehold Apprentice
+const YUUMI := "49904"  # Silverquill Apprentice
 const NORRA := "49905"  # Faerie Pathlighter
 const GNAR := "49906"  # Faerie Dragon Youth
-const VEIGAR := "49908"  # Nilbog
-const CORKI := "49909"  # Korred
-const GUNNERS := "49910"  # Grung (Bandle Gunners)
-const CARETAKER := "49911"  # Darkling Elder (Realm Caretaker)
-const EXPLORER := "49912"  # Deep Gnome (Yordle Explorer)
+const VEIGAR := "49908"  # Witherbloom Apprentice
+const CORKI := "49909"  # Witchkite
+const GUNNERS := "49910"  # Modron Monodrone (Bandle Gunners)
+const CARETAKER := "49911"  # High Fae Mage (Realm Caretaker)
+const EXPLORER := "49912"  # Icewind Kobold (Yordle Explorer)
 const MAYOR := "49913"  # Leprechaun (Bandle City Mayor)
 const PAINTER := "49914"  # Faerie Pest (Bandle Painter)
-const BANANA := "49915"  # Boggle (Banana Blaster)
-const SWOLE := "49916"  # Redcap (Swole Scout)
+const BANANA := "49915"  # Quandrix Apprentice (Banana Blaster)
+const SWOLE := "49916"  # Yeti Tyke (Swole Scout)
 const KINGPIN := "49917"  # Faerie Borrower (Arena Kingpin)
-const BLADETWIRLER := "49918"  # Meenlock (Carved Bladetwirler)
-const TORNADO := "49919"  # Smoke Mephit (Tornado Warrior)
-const CAPTAIN := "49920"  # Xvart (Yordle Captain)
+const BLADETWIRLER := "49918"  # High Fae Impostor (Carved Bladetwirler)
+const TORNADO := "49919"  # Pixie Wonderbringer (Tornado Warrior)
+const CAPTAIN := "49920"  # Ogre Chitterlord (Yordle Captain)
 const PORTAL := "49921"  # Goblin Hexer (Portal Scholar)
 const MEGA_GNAR := "49922"  # Faerie Dragon Adult (Mega Gnar, не в рынке)
 
@@ -168,7 +168,7 @@ static func build(card_id: String) -> CardEffect:
 	return null
 
 
-## Kara-Tur Retain: бонус "Retain: Gain 1 VP" (Darkling).
+## Kara-Tur Retain: бонус "Retain: Gain 1 VP" (High Fae Kindguard).
 static func retain_effect(card_id: String) -> CardEffect:
 	if card_id == KENNEN:
 		return GainVP.new(1)
@@ -230,7 +230,7 @@ static func spend(state: GameState, amount: int) -> void:
 	state.turn_flags["power_spent"] = int(state.turn_flags.get("power_spent", 0)) + amount
 
 
-## Начало хода: какие локации игрок контролирует (Redcap).
+## Начало хода: какие локации игрок контролирует (Yeti Tyke).
 static func on_start_turn(state: GameState, player_id: String) -> void:
 	state.turn_flags["control_start"] = _controlled(state, player_id)
 
@@ -243,7 +243,7 @@ static func _controlled(state: GameState, player_id: String) -> Array:
 	return out
 
 
-## Redcap: "If you gained control of a site this turn" — сейчас контролирует
+## Yeti Tyke: "If you gained control of a site this turn" — сейчас контролирует
 ## локацию, которую не контролировал в начале хода.
 static func gained_control(state: GameState, player_id: String) -> bool:
 	var before: Array = state.turn_flags.get("control_start", [])
@@ -253,7 +253,7 @@ static func gained_control(state: GameState, player_id: String) -> bool:
 	return false
 
 
-## Quickling: "Whenever you place a spy, place an additional spy and gain 1 VP".
+## Satyr Thornbearer: "Whenever you place a spy, place an additional spy and gain 1 VP".
 static func on_place_spy(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	if not state.turn_flags.get("teemo", false) or state.turn_flags.get("teemo_busy", false) \
 			or player_id != state.current_player():
@@ -266,14 +266,14 @@ static func on_place_spy(state: GameState, player_id: String, resolver: EffectRe
 	]), player_id, TEEMO)
 
 
-## Quickling: "Whenever you return one of your spies, also Supplant a troop at that site".
+## Satyr Thornbearer: "Whenever you return one of your spies, also Supplant a troop at that site".
 static func on_return_spy(state: GameState, player_id: String, site_id: String, resolver: EffectResolver) -> void:
 	if not state.turn_flags.get("teemo", false) or player_id != state.current_player():
 		return
 	resolver.push(SupplantTroop.new(1, false, false, false, Callable(), site_id), player_id, TEEMO)
 
 
-## Войско убито (supplanted — вытеснено). Kobold Inventor (Tristana).
+## Войско убито (supplanted — вытеснено). High Fae Noble (Tristana).
 ## immediate — зовёт GameServer вне розыгрыша карты (базовое действие).
 static func after_kill(state: GameState, player_id: String, slot_id: String, resolver: EffectResolver,
 		supplanted: bool, immediate: bool = false) -> void:
@@ -288,7 +288,7 @@ static func after_kill(state: GameState, player_id: String, slot_id: String, res
 		_run(state, player_id, resolver, ask, immediate)
 
 
-## Карта куплена (рынок, запас, бесплатный найм). Tressym (Yuumi).
+## Карта куплена (рынок, запас, бесплатный найм). Silverquill Apprentice (Yuumi).
 static func on_recruit(state: GameState, player_id: String, card_id: String, resolver: EffectResolver, immediate: bool = false) -> void:
 	if player_id != state.current_player():
 		return
@@ -423,7 +423,7 @@ class _Branch extends CardEffect:
 		resolver.push(yes if cond.call(state, player_id) else no, player_id)
 
 
-## Quickling (Teemo): верхние N карт колоды — карты с этими словами в руку, остальные в сброс.
+## Satyr Thornbearer (Teemo): верхние N карт колоды — карты с этими словами в руку, остальные в сброс.
 class _FromTopWithWord extends CardEffect:
 	var amount: int
 	var words: Array
@@ -450,7 +450,7 @@ class _FromTopWithWord extends CardEffect:
 		resolver.log_event("fetch_from_top", {"player_id": player_id, "looked": taken.size() + dropped.size(), "cards": taken})
 
 
-## Tressym (Yuumi): +1 VP за каждую уже купленную в этот ход карту и за каждую следующую.
+## Silverquill Apprentice (Yuumi): +1 VP за каждую уже купленную в этот ход карту и за каждую следующую.
 class _YuumiVP extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		state.turn_flags["yuumi_vp"] = int(state.turn_flags.get("yuumi_vp", 0)) + 1
@@ -459,7 +459,7 @@ class _YuumiVP extends CardEffect:
 			resolver.push(GainVP.new(n), player_id)
 
 
-## Nilbog (Veigar): +1 Power за каждые per войск в трофейном зале.
+## Witherbloom Apprentice (Veigar): +1 Power за каждые per войск в трофейном зале.
 class _PowerPerTrophies extends CardEffect:
 	var per: int
 	func _init(n: int) -> void:
@@ -470,7 +470,7 @@ class _PowerPerTrophies extends CardEffect:
 			resolver.push(GainPower.new(n), player_id)
 
 
-## Boggle (Banana Blaster): по 2 VP у каждого другого игрока с войском в этой локации.
+## Quandrix Apprentice (Banana Blaster): по 2 VP у каждого другого игрока с войском в этой локации.
 class _StealAtSite extends CardEffect:
 	var amount: int
 	var site: String
@@ -483,7 +483,7 @@ class _StealAtSite extends CardEffect:
 				MercenaryCards.steal(state, player_id, victim, amount, resolver)
 
 
-## Kobold Inventor (Tristana): своё войско в освободившийся слот убитого.
+## High Fae Noble (Tristana): своё войско в освободившийся слот убитого.
 class _DeployAt extends CardEffect:
 	var slot: String
 	func _init(s: String) -> void:
@@ -499,7 +499,7 @@ class _DeployAt extends CardEffect:
 		resolver.log_event("deploy", {"player_id": player_id, "slot_id": slot})
 
 
-## Tressym (Yuumi): купленная карта из сброса — на верх колоды.
+## Silverquill Apprentice (Yuumi): купленная карта из сброса — на верх колоды.
 class _ToTop extends CardEffect:
 	var card: String
 	func _init(c: String) -> void:

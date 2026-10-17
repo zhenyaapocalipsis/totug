@@ -40,48 +40,48 @@
 ## NE-26 (2026-10-17): Bandle City → FEYWILD (wip)
 - Владелец: 2014-арты можно; **Rumble и Lulu убраны, вместо них Norra** (Extra Champions). Колода — все карты мода: **21 уникальная, 44 копии**. Урезать до 40/20 — по слову владельца (лист `Claude outputs/feywild_cards_all.png`).
 - Ключ `bandle`, тип `FEYWILD`, id 49900–49922 (49907 свободен), `wip` (кнопка FEYWILD в NEW ERA, фон — зелёный луг). Эффекты `core/cards/bandle_cards.gd`, тест `test_feywild_deck`.
-- Арты: в списке поиска D&D Beyond (`.monster-icon a[href]`) есть полный арт даже у монстров из платных книг — так взяты феи и гномы. Почти все на белом фоне (стиль 2014), со сценой: Faerie Pathlighter, Faerie Pest, Faerie Borrower, оба Faerie Dragon, Leprechaun, Smoke Mephit, Goblin Hexer. Кандидаты — `cards/bandle/cand/` (не в git).
+- Арты: в списке поиска D&D Beyond (`.monster-icon a[href]`) есть полный арт даже у монстров из платных книг. **Владелец: персонажей на белом фоне — заменить** (2026-10-17) — теперь все 22 арта со сценой: феи Эльдрейна (High Fae, Faerie), ученики Стриксхейвена (Lorehold, Silverquill, Witherbloom, Quandrix Apprentice) и др. Фон проверяет `tools/new_era/art_bgcheck.gd` (DIR=папка: BG — сцена, CUT — белый/прозрачный край). Кандидаты — `cards/bandle/cand*` (не в git).
 
 | id | Существо | Карта мода | Копий |
 |---|---|---|---|
-| 49900 | Quickling | Teemo | 1 |
-| 49901 | Darkling | Kennen | 1 |
-| 49902 | Kobold Inventor | Tristana | 1 |
-| 49903 | Rock Gnome Recluse | Ziggs | 1 |
-| 49904 | Tressym | Yuumi | 1 |
+| 49900 | Satyr Thornbearer | Teemo | 1 |
+| 49901 | High Fae Kindguard | Kennen | 1 |
+| 49902 | High Fae Noble | Tristana | 1 |
+| 49903 | Lorehold Apprentice | Ziggs | 1 |
+| 49904 | Silverquill Apprentice | Yuumi | 1 |
 | 49905 | Faerie Pathlighter | Norra | 1 |
 | 49906 | Faerie Dragon Youth | Gnar | 1 |
-| 49908 | Nilbog | Veigar | 1 |
-| 49909 | Korred | Corki | 1 |
-| 49910 | Grung | Bandle Gunners | 4 |
-| 49911 | Darkling Elder | Realm Caretaker | 4 |
-| 49912 | Deep Gnome | Yordle Explorer | 4 |
+| 49908 | Witherbloom Apprentice | Veigar | 1 |
+| 49909 | Witchkite | Corki | 1 |
+| 49910 | Modron Monodrone | Bandle Gunners | 4 |
+| 49911 | High Fae Mage | Realm Caretaker | 4 |
+| 49912 | Icewind Kobold | Yordle Explorer | 4 |
 | 49913 | Leprechaun | Bandle City Mayor | 2 |
 | 49914 | Faerie Pest | Bandle Painter | 2 |
-| 49915 | Boggle | Banana Blaster | 3 |
-| 49916 | Redcap | Swole Scout | 3 |
+| 49915 | Quandrix Apprentice | Banana Blaster | 3 |
+| 49916 | Yeti Tyke | Swole Scout | 3 |
 | 49917 | Faerie Borrower | Arena Kingpin | 3 |
-| 49918 | Meenlock | Carved Bladetwirler | 3 |
-| 49919 | Smoke Mephit | Tornado Warrior | 3 |
-| 49920 | Xvart | Yordle Captain | 2 |
+| 49918 | High Fae Impostor | Carved Bladetwirler | 3 |
+| 49919 | Pixie Wonderbringer | Tornado Warrior | 3 |
+| 49920 | Ogre Chitterlord | Yordle Captain | 2 |
 | 49921 | Goblin Hexer | Portal Scholar | 2 |
 | 49922 | Faerie Dragon Adult | Mega Gnar (не в рынке) | — |
 
 ### Толкования
-- **Glamour:** после основного эффекта вопрос «Glamour: spend 1 VP?» со списком Glamour-способностей карты и вариантом «No Glamour». Без VP-жетонов вопроса нет. У Leprechaun и Smoke Mephit Glamour стоит рядом с основным эффектом («instead»). Жетон уходит в общий запас.
+- **Glamour:** после основного эффекта вопрос «Glamour: spend 1 VP?» со списком Glamour-способностей карты и вариантом «No Glamour». Без VP-жетонов вопроса нет. У Leprechaun и Pixie Wonderbringer Glamour стоит рядом с основным эффектом («instead»). Жетон уходит в общий запас.
 - **Execute** = Devour (как в Avernus). «Discard a card in the market» (Leprechaun) — карта уходит под низ колоды рынка, слот пополняется.
-- **Quickling (Teemo):** «слово spy» — в тексте есть spy или spies. Дополнительный шпион сам не даёт ещё одного.
-- **Kobold Inventor (Tristana):** «supplant instead» — после убийства вопрос «поставить своё войско на место убитого?». Работает и для базового действия.
+- **Satyr Thornbearer (Teemo):** «слово spy» — в тексте есть spy или spies. Дополнительный шпион сам не даёт ещё одного.
+- **High Fae Noble (Tristana):** «supplant instead» — после убийства вопрос «поставить своё войско на место убитого?». Работает и для базового действия.
 - **Faerie Dragon Youth (Gnar):** «gained 6 or more Power this turn» = Power сейчас + потраченная в этот ход (базовые действия). Проверка в момент розыгрыша.
-- **Tressym (Yuumi):** «+1 VP за каждую купленную в этот ход» — и за уже купленные, и за следующие. «На верх колоды» — вопрос после каждой покупки.
-- **Darkling Elder, Redcap:** «recruited 3+ cards this turn» и «gained control of a site this turn» проверяются в конце хода (контроль — сравнение с началом хода).
+- **Silverquill Apprentice (Yuumi):** «+1 VP за каждую купленную в этот ход» — и за уже купленные, и за следующие. «На верх колоды» — вопрос после каждой покупки.
+- **High Fae Mage, Yeti Tyke:** «recruited 3+ cards this turn» и «gained control of a site this turn» проверяются в конце хода (контроль — сравнение с началом хода).
 - **Faerie Pathlighter (Norra):** соперник выбирается, если их несколько; он сам ставит 3 жетона (`state.board_vp`, на доске — золотая монетка с ободком цвета хозяина). Хозяин забирает жетон, если у него в той локации есть войско: сразу после розыгрыша и в конце каждого своего хода. Жетоны, не забранные до конца партии, VP не дают.
-- **Nilbog (Veigar):** «every 3 troops in your trophy hall» — любые войска в трофейном зале.
+- **Witherbloom Apprentice (Veigar):** «every 3 troops in your trophy hall» — любые войска в трофейном зале.
 
 ### Чек-лист живой проверки
 1. NEW ERA → кнопка FEYWILD, на рынке карты с артами, фон зелёный.
-2. Xvart с VP-жетоном: вопрос Glamour, после «Glamour» — 1 VP меньше, в конце хода promote.
+2. Ogre Chitterlord с VP-жетоном: вопрос Glamour, после «Glamour» — 1 VP меньше, в конце хода promote.
 3. Faerie Pathlighter: соперник ставит 3 монетки на доске, ты ставишь туда войско — в конце хода +1 VP.
 4. Faerie Dragon Youth, когда за ход уже 4+ Power: в сбросе появляется Faerie Dragon Adult.
-5. Darkling: щелчок — «сыграть или удержать», при удержании +1 VP.
-6. Quickling, затем Boggle «Place a spy»: два шпиона и +1 VP.
+5. High Fae Kindguard: щелчок — «сыграть или удержать», при удержании +1 VP.
+6. Satyr Thornbearer, затем Quandrix Apprentice «Place a spy»: два шпиона и +1 VP.

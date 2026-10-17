@@ -3291,7 +3291,7 @@
   },
   {
     "card_id": 49900,
-    "name": "Quickling",
+    "name": "Satyr Thornbearer",
     "cost": 6,
     "aspect": "GUILE",
     "type": "FEYWILD",
@@ -3301,7 +3301,7 @@
   },
   {
     "card_id": 49901,
-    "name": "Darkling",
+    "name": "High Fae Kindguard",
     "cost": 6,
     "aspect": "GUILE",
     "type": "FEYWILD",
@@ -3311,7 +3311,7 @@
   },
   {
     "card_id": 49902,
-    "name": "Kobold Inventor",
+    "name": "High Fae Noble",
     "cost": 6,
     "aspect": "MALICE",
     "type": "FEYWILD",
@@ -3321,7 +3321,7 @@
   },
   {
     "card_id": 49903,
-    "name": "Rock Gnome Recluse",
+    "name": "Lorehold Apprentice",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "FEYWILD",
@@ -3331,7 +3331,7 @@
   },
   {
     "card_id": 49904,
-    "name": "Tressym",
+    "name": "Silverquill Apprentice",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "FEYWILD",
@@ -3361,7 +3361,7 @@
   },
   {
     "card_id": 49908,
-    "name": "Nilbog",
+    "name": "Witherbloom Apprentice",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
@@ -3371,7 +3371,7 @@
   },
   {
     "card_id": 49909,
-    "name": "Korred",
+    "name": "Witchkite",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
@@ -3381,7 +3381,7 @@
   },
   {
     "card_id": 49910,
-    "name": "Grung",
+    "name": "Modron Monodrone",
     "cost": 3,
     "aspect": "MALICE",
     "type": "FEYWILD",
@@ -3391,7 +3391,7 @@
   },
   {
     "card_id": 49911,
-    "name": "Darkling Elder",
+    "name": "High Fae Mage",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "FEYWILD",
@@ -3401,7 +3401,7 @@
   },
   {
     "card_id": 49912,
-    "name": "Deep Gnome",
+    "name": "Icewind Kobold",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "FEYWILD",
@@ -3431,7 +3431,7 @@
   },
   {
     "card_id": 49915,
-    "name": "Boggle",
+    "name": "Quandrix Apprentice",
     "cost": 2,
     "aspect": "GUILE",
     "type": "FEYWILD",
@@ -3441,7 +3441,7 @@
   },
   {
     "card_id": 49916,
-    "name": "Redcap",
+    "name": "Yeti Tyke",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
@@ -3461,7 +3461,7 @@
   },
   {
     "card_id": 49918,
-    "name": "Meenlock",
+    "name": "High Fae Impostor",
     "cost": 2,
     "aspect": "MALICE",
     "type": "FEYWILD",
@@ -3471,7 +3471,7 @@
   },
   {
     "card_id": 49919,
-    "name": "Smoke Mephit",
+    "name": "Pixie Wonderbringer",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
@@ -3481,7 +3481,7 @@
   },
   {
     "card_id": 49920,
-    "name": "Xvart",
+    "name": "Ogre Chitterlord",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "FEYWILD",
