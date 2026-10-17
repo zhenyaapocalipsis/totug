@@ -6301,7 +6301,7 @@ func test_farrealm_deck() -> void:
 	section("Far Realm (New Era Void): полуколода, 50 войск, шпион на рынке")
 	var V := VoidCards
 	var deck := GameSetup.expand_half_deck("void")
-	check_eq(deck.size(), 45, "Far Realm: все 45 карт мода (9 чемпионов + 36 обычных)")
+	check_eq(deck.size(), 40, "Far Realm: 40 карт (Githzerai Monk, Hook Horror, Gray Slaad, Githyanki Dracomancer и Warrior по 3)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
@@ -6310,7 +6310,7 @@ func test_farrealm_deck() -> void:
 	var mode := GameSetup.new_era_mode(["void", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Far Realm принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Far Realm)")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Far Realm)")
 	check_eq(game.starting_troops, 50, "с Far Realm по 50 войск")
 	check(game.stock("red").troops_in_barracks >= 49 and game.troops_out("red") <= 1, "в бараке red 50 войск (минус стартовое)")
 	var plain := GameSetup.new_game(["red", "blue"], 5, ["drow", "demons"])

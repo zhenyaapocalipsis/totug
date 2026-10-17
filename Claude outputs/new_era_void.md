@@ -1,6 +1,6 @@
-# New Era: Void → FAR REALM (этап NE-28)
+# New Era: Void → FAR REALM (этапы NE-28, NE-29)
 
-Полуколода Void из мода Runeterra Reforged (картинки PDF **232–251**) на существах Далёкого Предела и Астрала: звёздные порождения, слаады, гит, три-крины. Ключ `void`, тип `FAR REALM`, id **50000–50020** (50009 свободен). Флаг `wip` — только кнопкой FAR REALM в режиме NEW ERA. Сейчас колода **целиком: 45 карт / 20 уникальных** — владелец сам скажет, что убрать до 40/20.
+Полуколода Void из мода Runeterra Reforged (картинки PDF **232–251**) на существах Далёкого Предела и Астрала: звёздные порождения, слаады, гит, три-крины. Ключ `void`, тип `FAR REALM`, id **50000–50020** (50009 свободен). Флаг `wip` — только кнопкой FAR REALM в режиме NEW ERA. **NE-29 (владелец): 40 карт / 20 уникальных** — Githzerai Monk, Hook Horror, Gray Slaad, Githyanki Dracomancer и Githyanki Warrior по 3 копии (было по 4). PROTOCOL 35.
 
 Эффекты — `engine/godot/core/cards/void_cards.gd`, тест — `test_farrealm_deck`, арты — `cards/void/` (кандидаты `cards/void/cand_*` не в git), лист всех карт — `Claude outputs/farrealm_cards_all.png`.
 
@@ -22,16 +22,16 @@
 | 50007 | Groundling Stalker | Rek'Sai | 7 | Conquest | 1 |
 | 50008 | Eye Monger | Vel'Koz | 9 | Ambition | 1 |
 | 50010 | Lesser Star Spawn Emissary | Xer'Sai Hatchling | 3 | Malice | 2 |
-| 50011 | Githzerai Monk | Belvethi Elder | 3 | Ambition | 4 |
+| 50011 | Githzerai Monk | Belvethi Elder | 3 | Ambition | 3 |
 | 50012 | Thri-kreen Psion | Xer'Sai Caller | 2 | Malice | 3 |
-| 50013 | Hook Horror | Dune Swallower | 3 | Conquest | 4 |
+| 50013 | Hook Horror | Dune Swallower | 3 | Conquest | 3 |
 | 50014 | Elder Thing | Xerxa'Reth Undertitan | 5 | Malice | 2 |
 | 50015 | Carrion Stalker | Hive Herald | 2 | Guile | 3 |
-| 50016 | Gray Slaad | Xer'Sai Dunebreaker | 2 | Ambition | 4 |
+| 50016 | Gray Slaad | Xer'Sai Dunebreaker | 2 | Ambition | 3 |
 | 50017 | Green Slaad | Camouflaged Horror | 4 | Guile | 3 |
 | 50018 | Blue Slaad | Void Abomination | 2 | Guile | 3 |
-| 50019 | Githyanki Dracomancer | Void Blaster | 3 | Malice | 4 |
-| 50020 | Githyanki Warrior | Voidling | 2 | Conquest | 4 |
+| 50019 | Githyanki Dracomancer | Void Blaster | 3 | Malice | 3 |
+| 50020 | Githyanki Warrior | Voidling | 2 | Conquest | 3 |
 
 Все арты — со сценой-фоном (проверка `art_bgcheck.gd` + контакт-лист). Книги Monsters of the Multiverse (star spawn, kruthik, oblex, choldrith, neothelid) дают только вырезанные фигуры — не взяты.
 
