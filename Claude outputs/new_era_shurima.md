@@ -1,7 +1,7 @@
 # New Era: Shurima → CALIMSHAN (этап NE-21, 2026-10-16)
 
 Источник: `new era/Runeterra Reforged A4 3x3.pdf`, картинки 144–164 (Shurima) и 380 (Naafiri из Extra Champions).
-Решения владельца (2026-10-16): **Azir заменён на Naafiri**; в колоде **все 45 карт мода** (21 уникальная) — что убрать до 40/20, владелец выберет сам.
+Решения владельца: **Azir заменён на Naafiri** (2026-10-16); сначала в колоде были все 45 карт мода, 2026-10-17 (NE-22) владелец урезал до **40 / 20**.
 
 - Ключ `shurima`, тип `CALIMSHAN`, id 49700–49720, полуколода `wip` (в переключателе NEW ERA, не в обычном пуле).
 - Эффекты: `engine/godot/core/cards/shurima_cards.gd`, тест `test_calimshan_deck`.
@@ -12,9 +12,9 @@
 
 | id | Существо | Карта мода | Цена | Аспект | VP | Копий |
 |---|---|---|---|---|---|---|
-| 49700 | Zombie | Voice of the Risen | 3 | Conquest | 1/3 | 3 |
-| 49701 | Cockatrice | Baccai Witherclaw | 3 | Malice (Valor) | 1/3 | 4 |
-| 49702 | Brass Dragon Wyrmling | Sandcrafter | 3 | Conquest | 2/4 | 4 |
+| 49700 | Zombie | Voice of the Risen | 3 | Conquest | 1/3 | 0 (убран, NE-22) |
+| 49701 | Cockatrice | Baccai Witherclaw | 3 | Malice (Valor) | 1/3 | 3 |
+| 49702 | Brass Dragon Wyrmling | Sandcrafter | 3 | Conquest | 2/4 | 3 |
 | 49703 | Steam Mephit | Reaper of the Sands | 3 | Guile | 1/3 | 3 |
 | 49704 | Commoner | Dunekeeper | 3 | Ambition | 1/3 | 4 |
 | 49705 | Tough | Inspiring Marshal | 3 | Ambition | 1/3 | 2 |
@@ -34,7 +34,7 @@
 | 49719 | Dust Mephit | Amumu | 6 | Ambition | 3/6 | 1 |
 | 49720 | Deva | Akshan | 6 | Malice (Valor) | 3/7 | 1 |
 
-Итого 35 обычных + 10 чемпионов = 45.
+Итого 30 обычных + 10 чемпионов = 40 (NE-22, 2026-10-17: владелец убрал Zombie, по 1 копии Cockatrice и Brass Dragon Wyrmling; Zombie остался в cards.json).
 
 ## Devotion
 Правило мода: «You may activate a card's Devotion ability when it is either recruited or promoted».
@@ -63,4 +63,4 @@
 3. Сыграть Goblin Warrior, потом купить карту с Devotion — ещё +1 Power.
 4. Сыграть Tough — выбрать «соседа»; названная карта на рынке не покупается.
 5. Ankheg в руке соперника — при убийстве его войска он может сбросить Ankheg и вытеснить твоё войско.
-6. Roper, затем Zombie — после постановки войск вопрос «убить войско»; базовый Deploy возвращает 1 Power.
+6. Roper, затем карта, ставящая войска (Goblin Warrior) — после постановки войск вопрос «убить войско»; базовый Deploy возвращает 1 Power.

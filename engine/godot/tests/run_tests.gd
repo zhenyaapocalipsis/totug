@@ -5885,16 +5885,16 @@ func test_calimshan_deck() -> void:
 	section("Calimshan (New Era Shurima): полуколода и Devotion")
 	var S := ShurimaCards
 	var deck := GameSetup.expand_half_deck("shurima")
-	check_eq(deck.size(), 45, "Calimshan: все 45 карт мода (владелец урежет сам)")
+	check_eq(deck.size(), 40, "Calimshan: 40 карт (без Zombie, Cockatrice и Wyrmling по 3)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
-	check_eq(uniques.size(), 21, "Calimshan: 21 уникальная карта, Roper (Naafiri) вместо Azir")
+	check_eq(uniques.size(), 20, "Calimshan: 20 уникальных карт, Roper (Naafiri) вместо Azir")
 	check(not GameSetup.available_half_decks().has("shurima"), "Calimshan пока wip: не в обычном выборе")
 	var mode := GameSetup.new_era_mode(["shurima", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Calimshan принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
-	check_eq(game.market.deck_size() + game.market.display.size(), 85, "рынок: 40 (Celestial) + 45 (Calimshan)")
+	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Calimshan)")
 	_sweep_deck_with_vp(49700, 49720)
 
 	var state := _build_rich_state(47)

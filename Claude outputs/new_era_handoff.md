@@ -4,7 +4,7 @@
 
 ## NE-21 (2026-10-16): Shurima → CALIMSHAN — сделано, не задеплоено
 - Ключ `shurima`, тип `CALIMSHAN`, id 49700–49720, `wip` (кнопка CALIMSHAN в NEW ERA, не в обычном пуле). Эффекты `core/cards/shurima_cards.gd`, тест `test_calimshan_deck`, справка `Claude outputs/new_era_shurima.md`, лист всех карт `Claude outputs/calimshan_cards_all.png`.
-- Владелец: **Azir заменён на Naafiri** (картинка PDF 380, Extra Champions) и **в колоде все 45 карт / 21 уникальная** — что убрать до 40/20, владелец выберет сам по листу. После его выбора: поправить `half_decks.json`, тест (45/21 → 40/20, рынок 85 → 80), убрать `wip`, если скажет.
+- Владелец: **Azir заменён на Naafiri** (картинка PDF 380, Extra Champions). NE-22 (2026-10-17): колода урезана до **40 / 20** — убран Zombie (остался в cards.json), Cockatrice и Brass Dragon Wyrmling по 3. Флаг `wip` — пока владелец не скажет.
 - **Devotion**: `ShurimaCards.on_recruit` (GameServer после покупки, RecruitFree) и `on_promote` (после каждого `log_event("promote")` — PromoteCard, Celestial, Mercenary, Noxus, Siege, ForceDiscard). Новые пути найма/promote тоже должны их звать.
 - **Ankheg (Rammus)** — реакция внутри `ShieldGuard` (параметр `kill`): только убийство/вытеснение войска. **Roper (Naafiri)** — хуки в `DeployTroop._deploy_at` и `Actions.deploy`. **Tough** — `turn_flags["no_recruit"]`, `Actions.market_cost` = -1.
 - PROTOCOL **31**. Тесты 1968/0, сеть 151/0. Звери заменены на чудищ/гуманоидов (правило NE-19).
