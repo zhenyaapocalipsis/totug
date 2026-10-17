@@ -52,10 +52,12 @@ static func kill_at(state: GameState, player_id: String, slot_id: String) -> voi
 ## Развёртывание последнего войска запускает конец игры (стр. 14).
 static func deploy(state: GameState, player_id: String, slot_id: String) -> bool:
 	var p: PlayerState = state.players[player_id]
-	if p.power < COST_DEPLOY + FreljordCards.locked_power(state, player_id):
+	var stock: PlayerState = state.stock(player_id)
+	# CHULT, Lizardfolk Geomancer: войско можно поставить за 1 Influence.
+	var by_influence := p.power < COST_DEPLOY + FreljordCards.locked_power(state, player_id)
+	if by_influence and (stock.troops_in_barracks <= 0 or not IxtalCards.deploy_by_influence(state, player_id)):
 		return false
 
-	var stock: PlayerState = state.stock(player_id)
 	if stock.troops_in_barracks <= 0:
 		p.power -= COST_DEPLOY
 		BandleCards.spend(state, COST_DEPLOY)
@@ -66,8 +68,11 @@ static func deploy(state: GameState, player_id: String, slot_id: String) -> bool
 	if not legal.has(slot_id):
 		return false
 
-	p.power -= COST_DEPLOY
-	BandleCards.spend(state, COST_DEPLOY)
+	if by_influence:
+		p.influence -= 1
+	else:
+		p.power -= COST_DEPLOY
+		BandleCards.spend(state, COST_DEPLOY)
 	state.troops[slot_id] = player_id
 	stock.troops_in_barracks -= 1
 	if stock.troops_in_barracks == 0:
@@ -200,6 +205,7 @@ static func market_cost(state: GameState, index: int) -> int:
 		return cost
 	if ShurimaCards.recruit_banned(state, String(state.market.display[index])):
 		return -1  # Tough: соседи назвали эту карту — в этот ход не нанять
+	cost = IxtalCards.market_cost(state, index, cost)  # CHULT: войска на карте, скидка аспекта
 	return VoidCards.market_cost(state, index, maxi(0, cost - ShadowCards.affinity_discount(state, state.market.display[index])
 		- int(state.turn_discounts.get("recruit", 0)) - int(state.turn_discounts.get("slot:%d" % index, 0))))
 

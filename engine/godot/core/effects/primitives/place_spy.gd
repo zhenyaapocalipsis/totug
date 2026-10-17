@@ -75,6 +75,7 @@ func _place_at(state: GameState, player_id: String, site_id: String, resolver: E
 	resolver.log_event("place_spy", {"player_id": player_id, "site_id": site_id})
 	BandleCards.on_place_spy(state, player_id, resolver)
 	VoidCards.on_place_spy(state, player_id, site_id, resolver)
+	IxtalCards.note_spy(state)  # CHULT, Dao: цель "place a spy"
 	# Manticore (New Era): "this turn, whenever you place a spy, you may move a troop".
 	if state.turn_flags.get("spy_move", false) and player_id == state.current_player():
 		var move := MoveTroop.new(1)

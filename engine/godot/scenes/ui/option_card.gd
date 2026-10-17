@@ -283,6 +283,18 @@ const NAMES := {
 	"Place a spy at a site": "Watching Eye",
 	"Place a spy on a market card": "Gaze of the Abyss",
 	"Gain a market card with the same name as a card you played this turn": "Echo of the Void",
+	# CHULT (New Era Ixtal)
+	"Copy the previous card you played": "Mimicry",
+	"Copy a market card": "Stolen Guise",
+	"Explore for a card that costs 3 or less": "Small Finds",
+	"Explore for a card that costs 6 or more": "Grand Prize",
+	"Deploy 3 troops (next to another player's troop: Explore for \"Deploy\")": "Trailblazer",
+	"Explore for an odd cost card": "Odd Trail",
+	"Explore for an even cost card": "Even Trail",
+	"Put a card from your hand on top of your deck: supplant a troop and deploy a troop": "Axiom Strike",
+	"You may shuffle your discard pile into your deck, then Scry 3": "Inner Eye",
+	"Place a spy (site full: +1 Power and +1 Influence)": "Whispered Secret",
+	"Return one of your spies, draw 2 cards, put a card from your hand on top of your deck": "Keeper's Vault",
 }
 
 var _tex: ImageTexture

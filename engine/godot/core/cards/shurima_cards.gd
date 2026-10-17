@@ -211,6 +211,7 @@ static func on_recruit(state: GameState, player_id: String, card_id: String, res
 
 ## Карту продвинули во Внутренний круг (любой путь promote).
 static func on_promote(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> void:
+	IxtalCards.note_promote(state)  # CHULT, Dao: цель "promote a card"
 	_devotion(state, player_id, card_id, resolver, false)
 
 

@@ -150,6 +150,12 @@ const MINI_FACE := {
 	50008: Vector2i(36, 0), 50010: Vector2i(44, 11), 50011: Vector2i(24, 0), 50012: Vector2i(56, 11),
 	50013: Vector2i(64, 4), 50014: Vector2i(41, 11), 50015: Vector2i(53, 0), 50016: Vector2i(44, 1),
 	50017: Vector2i(21, 34), 50018: Vector2i(53, 31), 50019: Vector2i(84, 24), 50020: Vector2i(27, 14),
+	# CHULT (Ixtal)
+	50100: Vector2i(24, 10), 50101: Vector2i(51, 11), 50102: Vector2i(49, 0), 50103: Vector2i(18, 8),
+	50104: Vector2i(35, 18), 50105: Vector2i(56, 0), 50106: Vector2i(62, 11), 50107: Vector2i(29, 5),
+	50108: Vector2i(50, 0), 50110: Vector2i(0, 0), 50111: Vector2i(62, 7), 50112: Vector2i(112, 23),
+	50113: Vector2i(44, 26), 50114: Vector2i(59, 4), 50115: Vector2i(70, 0), 50116: Vector2i(32, 22),
+	50117: Vector2i(33, 4), 50118: Vector2i(27, 16), 50119: Vector2i(112, 1), 50120: Vector2i(20, 0),
 }
 const PREVIEW := ROOT + "Claude outputs/pixel_cards_preview/"
 const AltArts := preload("res://tools/alt_arts.gd")
@@ -188,7 +194,9 @@ const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETU
 	# Kara-Tur (2026-10-17)
 	"RETAIN", "RETAINED",
 	# Feywild (2026-10-17)
-	"GLAMOUR"]
+	"GLAMOUR",
+	# Chult (2026-10-18)
+	"EXPLORE"]
 
 ## Где можно рвать слово, которое само шире строки мелкой карты: границы слогов
 ## (номер буквы, после которой ставится дефис). Берётся самая дальняя граница,
@@ -480,6 +488,27 @@ const SINGLE_ART := {
 	50018: ["void/blue_slaad.jpeg", Rect2i(0, 200, 537, 327)],
 	50019: ["void/githyanki_dracomancer.png", Rect2i(0, 150, 523, 319)],
 	50020: ["void/githyanki_warrior.png", Rect2i(0, 180, 529, 322)],
+	# CHULT (Ixtal)
+	50100: ["ixtal/yuanti_infiltrator.jpeg", Rect2i(0, 0, 450, 274)],
+	50101: ["ixtal/galeb_duhr.png", Rect2i(130, 40, 600, 366)],
+	50102: ["ixtal/sarrukh_tyrant.png", Rect2i(180, 0, 700, 427)],
+	50103: ["ixtal/lizardfolk_sovereign.jpeg", Rect2i(0, 50, 600, 366)],
+	50104: ["ixtal/chwinga.png", Rect2i(150, 430, 400, 244)],
+	50105: ["ixtal/troglodyte.png", Rect2i(0, 0, 820, 500)],
+	50106: ["ixtal/lizardfolk_geomancer.jpeg", Rect2i(250, 30, 650, 396)],
+	50107: ["ixtal/dao.png", Rect2i(50, 60, 600, 366)],
+	50108: ["ixtal/knight_of_eldraine.jpeg", Rect2i(350, 150, 650, 396)],
+	50110: ["ixtal/bandit_deceiver.jpeg", Rect2i(0, 40, 800, 488)],
+	50111: ["ixtal/lizardfolk_warden.jpeg", Rect2i(200, 60, 700, 427)],
+	50112: ["ixtal/yuanti_abomination.png", Rect2i(0, 80, 400, 244)],
+	50113: ["ixtal/performer_maestro.png", Rect2i(0, 300, 556, 339)],
+	50114: ["ixtal/minotaur_archaeologist.png", Rect2i(50, 120, 700, 427)],
+	50115: ["ixtal/living_gust_of_wind.jpeg", Rect2i(150, 0, 850, 518)],
+	50116: ["ixtal/bullywug_bog_sage.png", Rect2i(0, 300, 427, 260)],
+	50117: ["ixtal/cyclops_oracle.jpeg", Rect2i(0, 80, 516, 315)],
+	50118: ["ixtal/kenku.png", Rect2i(0, 380, 465, 284)],
+	50119: ["ixtal/aarakocra_aeromancer.png", Rect2i(250, 0, 750, 457)],
+	50120: ["ixtal/bone_naga.png", Rect2i(100, 20, 750, 457)],
 }
 
 const FONT := {
@@ -782,6 +811,7 @@ func set_name(card_id: int, type: String) -> String:
 		498: return "KARA-TUR"
 		499: return "FEYWILD"
 		500: return "FAR REALM"
+		501: return "CHULT"
 	# the shared sheet: indices 0-19 and Umber Hulk (39) belong to the Aberrations half
 	var idx := card_id % 100
 	return "ABERRATIONS" if idx < 20 or idx == 39 else "UNDEAD"

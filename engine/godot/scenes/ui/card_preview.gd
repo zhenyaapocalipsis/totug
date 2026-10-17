@@ -42,6 +42,7 @@ const KEYWORD_TIPS := {
 	"RETAIN": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
 	"RETAINED": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
 	"GLAMOUR": "GLAMOUR: spend 1 VP token (back to the supply) to switch this ability on.\nOnly one Glamour per card.",
+	"EXPLORE": "EXPLORE: look at the top 2 cards of your deck. Put up to one that matches into your hand,\nthe rest on the top or bottom of your deck in any order.",
 	"TRANSFORM": "TRANSFORM: this card turns into the stronger card it names.",
 	"DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
 }

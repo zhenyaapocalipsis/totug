@@ -1,6 +1,14 @@
-# New Era — передача работы в новый чат (на 2026-10-17, ночь, после NE-30)
+# New Era — передача работы в новый чат (на 2026-10-18, после NE-31)
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
+
+## NE-31 (2026-10-18): Ixtal → CHULT — все 44 карты, wip, НЕ задеплоено
+- **Владелец: Nidalee не делаем; динозавры можно, но только особенные — а у особенных (Aerosaur, Altisaur, Regisaur, Fastieth, Clawfoot Raptor) на D&D Beyond только вырезанные фигуры, поэтому владелец выбрал «без динозавров».**
+- Ключ `ixtal`, тип `CHULT`, id 50100–50108 (чемпионы) и 50110–50120 (50109 свободен — место Nidalee). Кнопка CHULT в NEW ERA, фон изумрудный. Эффекты `core/cards/ixtal_cards.gd`, тест `test_chult_deck`, справка и толкования — `Claude outputs/new_era_ixtal.md`, лист — `Claude outputs/chult_cards_all.png`, арты — `cards/ixtal/` (папки `cand`, `bg`, `more`, `sky`, `giff` — кандидаты, не в git).
+- **Сейчас 44 карты / 20 уникальных** (`half_decks.json`, total 44). Ждём владельца: какие 4 копии убрать до 40 → потом `pixel_cards.gd -- copies`, тест (44 → 40), справка.
+- Explore — `IxtalCards._Peek` (mode "explore"; Bog Sage — mode "promote"): выбор карты → что под низ → порядок сверху. Флаги хода: `milio`, `ezreal`, `landing`, `rengar`, `skarner`, `zyra`/`zyra_drawn`, `aspect_discount`, `spy_done`, `promoted`.
+- Новое в движке: `GameState.extra_turn_full` (Sarrukh Tyrant — лишний ход без лимита; сброс в `GameEnd.advance_turn`), `GameState.market_troops` (Performer Maestro; цена — `IxtalCards.market_cost` в `Actions.market_cost`, возврат войск — `IxtalCards.sync_market_troops` из `VoidCards.sync_market_spies`; в view `market_troops`, на рынке надпись «T1» — `market_panel._mark_troops`), Deploy за Influence (`IxtalCards.deploy_by_influence` в `Actions.deploy` и StateView), `ControlMarkers.evaluate` + `IxtalCards.markers_total` (Skarner), хуки `IxtalCards.on_play` (TurnEngine.begin_play), `on_deploy_count` (VoidCards.note_deploy), `note_spy` (PlaceSpy, ReturnOwnSpy), `note_promote` (ShurimaCards.on_promote). События журнала: `explore`, `explore_take`, `copy_card`, `marker_again`, `market_troop`, `shuffle_discard`, `extra_turn` (теперь с текстом).
+- PROTOCOL **37** (поднят, но сборка не задеплоена). Тесты 2113/0.
 
 ## Коротко (читать первым)
 - **Всё закоммичено, запушено (main = origin/main) и задеплоено.** На сервере сборка **1792263050**, **PROTOCOL 36** (`net/net_session.gd`). Проверка: `curl http://129.101.123.70/tyrants/version.txt`.
@@ -8,7 +16,7 @@
 - **Колоды:** 7 колод New Era в обычном пуле (NE-20), все 40/20. Четыре последние — `wip` (только кнопками в NEW ERA, не в STANDARD/RANDOM и онлайн-поиске), все 40/20: **CALIMSHAN** (Shurima, NE-21/22), **KARA-TUR** (Ionia, NE-23…25), **FEYWILD** (Bandle City, NE-26/27), **FAR REALM** (Void, NE-28…30). Снять `wip` — только по слову владельца (меняет сиды обычных режимов), затем поднять PROTOCOL и задеплоить. Все четыре владелец **ещё не проверял живьём** — чек-листы в `new_era_shurima.md`, `new_era_ionia.md`, `new_era_bandle.md`, `new_era_void.md`.
 - **Targon и Bilgewater владелец велел пропустить.** Картинки Targon 210–231.
 - **Последняя работа — FAR REALM** (Void, NE-28…30; ключ `void`, id 50000–50020, 50009 свободен): звёздные порождения, слаады, гит, три-крины; правило мода — с Void у всех по **50 войск**. NE-29: владелец срезал Githzerai Monk, Hook Horror, Gray Slaad, Githyanki Dracomancer и Warrior с 4 до 3 копий. NE-30 (владелец): **Froghemoth Elder (Cho'Gath) убирает гекс с доски по-настоящему** — новый граф без гекса и оставшихся после него тупиков, схема доски перерисовывается без них (никакой «пустоты» не рисовать); **отложенные карты Eye Monger — рядом слева от руки** (SET ASIDE). Всё по колоде — `Claude outputs/new_era_void.md`, лист `Claude outputs/farrealm_cards_all.png`, подробности — раздел NE-28…30 ниже.
-- **Следующий шаг (не назначен):** следующая колода по PDF — **Ixtal**, картинки с **252**: 252 Neeko, 253 Malphite, 254 Zilean, 255 Nidalee, 256 Skarner, 257 Milio, 258 Rengar, 259 Zyra… (смотреть `pdf_sheets.gd FROM=252 TO=275`, где кончается — следом Arcane). Механика **Explore** — «Look at the top 2 cards of your deck. Reveal up to one card that matches terms that you're searching for. Put the rest onto the top or bottom of your deck in any order». Черновик существ — `new_era_dnd_mapping.md`, раздел 12 (джунгли Чульта). Либо живая проверка wip-колод, либо снятие `wip`.
+- **Следующий шаг:** владелец смотрит лист CHULT (`chult_cards_all.png`) и говорит, какие 4 копии убрать до 40 (уникальных уже 20). Потом — следующая колода по PDF — **Arcane** (картинки с **273**: 273 Arcane Jinx, 274 Arcane Vi, 275 Arcane Jayce, 276 Machine Herald Viktor, 277 Arcane Viktor, 278 Arcane Caitlyn, 279 Arcane Ekko…; механика — колоды Hextech и Shimmer по 30 карт). Либо живая проверка wip-колод, либо снятие `wip`.
 - **Порядок работы с новой колодой (владелец, 2026-10-16):** сделать колоду **целиком (все карты мода)**, `wip` → лист всех карт (`tools/new_era/cards_sheet.gd`, сам сортирует по цене) → владелец сам говорит, что убрать до 40/20 (одну уникальную и лишние копии; если после выреза не хватает копий — спросить, кому добавить). Потом `half_decks.json`, тест колоды (число карт, уникальных, размер рынка), подписи копий на картах (`pixel_cards.gd -- copies`), справка, PROTOCOL.
 - **Владелец меняет и убирает чемпионов** (Azir→Naafiri, Jhin→Hwei, Rumble/Lulu→Norra). Extra Champions — картинки PDF 331–400 (373 Hwei, 379 Brand, 380 Naafiri), но часть дополнительных чемпионов лежит и в разделе Poro (457 Norra, рядом Jack). Быстро найти — контакт-лист `art_contact.gd` на копию нужных картинок кусками по 50.
 - **Подбор существ (правила владельца):** имена не повторяются во всей игре — **проверять по `cards.json` до кода**; **без зверей** (NE-19); арт только **со сценой-фоном** — **белый фон бракуется так же, как прозрачный** (2026-10-17). Проверка фона — `tools/new_era/art_bgcheck.gd` (`DIR=папка` → `BG` сцена / `CUT` белый или прозрачный край), потом контакт-лист.
@@ -81,6 +89,7 @@
   | **KARA-TUR** | Ionia (+ Hwei) | `ionia` | 49800–49822 | NE-23 (все 45 карт), NE-24/25 (40/20) |
   | **FEYWILD** | Bandle City (+ Norra, без Rumble и Lulu) | `bandle` | 49900–49922 | NE-26 (все 44 карты), NE-26b (арты со сценой), NE-27 (40/20), wip |
   | **FAR REALM** | Void | `void` | 50000–50020 | NE-28 (все 45 карт), NE-29 (40/20), wip |
+  | **CHULT** | Ixtal (без Nidalee) | `ixtal` | 50100–50120 | NE-31 (все 44 карты), wip |
 
   Плюс две фанатские колоды Tyrants другой сессии — **SIEGE** (49300–49319) и **MERCENARIES** (49400–49419), см. раздел в конце.
 - Всё закоммичено и запушено на GitHub (`main`). Последний деплой — сборка 1792009359 (2026-10-15, после NE-20, **PROTOCOL 27**): все колоды New Era в обычном пуле.
@@ -183,8 +192,8 @@
    | Bandle City | 188–209 (+ 457 Norra, 326 Mega Gnar) |
    | Targon | 210–231 (210 Soraka, 211 Zoe, 212 Taric, 213 Diana, 214 Pantheon, 215 Leona…; пропущен владельцем) |
    | Void | 232–251 (232 Kai'Sa, 233 Bel'Veth, 234 Cho'Gath, 235 Kassadin, 236 Kha'Zix, 237 Kog'Maw…) |
-   | Ixtal | с 252 (252 Neeko, 253 Malphite, 254 Zilean, 255 Nidalee, 256 Skarner, 257 Milio, 258 Rengar, 259 Zyra) |
-   | Arcane | следом |
+   | Ixtal | 252–272 (255 Nidalee — пропущена; в 256, 269, 272 по две карты) |
+   | Arcane | с 273 (273 Jinx, 274 Vi, 275 Jayce, 276 Machine Herald Viktor, 277 Viktor, 278 Caitlyn, 279 Ekko…) |
    | Extra Champions | следом |
    | Jungle Monsters, Items, Stances, Guns | следом |
    | Poro | в конце |

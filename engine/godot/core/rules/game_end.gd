@@ -42,6 +42,7 @@ static func advance_turn(state: GameState) -> bool:
 		return false
 	state.extra_turn_for = ""
 	state.in_extra_turn = false
+	state.extra_turn_full = false
 	var just_finished: int = state.current_player_index
 	if state.game_end_triggered and just_finished == state.final_round_ends_after_index:
 		state.game_over = true

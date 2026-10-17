@@ -80,7 +80,9 @@ static func evaluate(state: GameState, player_id: String) -> Reward:
 		var site_name := String(state.graph.sites[site_id]["name"])
 		reward.influence += int(marker.get("control_influence", 0))
 		reward.sites.append(site_name)
-		if state.control.has_total_control(player_id, site_id, state.troops, state.spies):
+		# CHULT, Lizardfolk Sovereign: в этот ход маркеры перевёрнуты на тотальный контроль.
+		if state.control.has_total_control(player_id, site_id, state.troops, state.spies) \
+				or IxtalCards.markers_total(state, player_id):
 			reward.vp += int(marker.get("total_control_vp", 0))
 			reward.total_control_sites.append(site_name)
 			reward.total_control_ids.append(site_id)

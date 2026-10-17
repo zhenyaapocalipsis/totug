@@ -3708,5 +3708,205 @@
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "Choose one (all of them if you have total control of 4 or more sites):\n• Move one of your troops.\n• Deploy 2 troops.\n• Assassinate a white troop."
+  },
+  {
+    "card_id": 50100,
+    "name": "Yuan-ti Infiltrator",
+    "cost": 7,
+    "aspect": "GUILE",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Choose one:\n• Copy the previous card you played.\n• Copy a market card. At end of turn put it on the bottom of the market deck."
+  },
+  {
+    "card_id": 50101,
+    "name": "Galeb Duhr",
+    "cost": 8,
+    "aspect": "CONQUEST",
+    "type": "CHULT",
+    "deck_vp": 6,
+    "inner_circle_vp": 12,
+    "ability_text": "+8 Power"
+  },
+  {
+    "card_id": 50102,
+    "name": "Sarrukh Tyrant",
+    "cost": 9,
+    "aspect": "AMBITION",
+    "type": "CHULT",
+    "deck_vp": 4,
+    "inner_circle_vp": 9,
+    "ability_text": "Draw 5 cards and take another turn after this one.\nAt end of turn, promote this card."
+  },
+  {
+    "card_id": 50103,
+    "name": "Lizardfolk Sovereign",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Supplant a troop.\nThis turn your site control markers count as total control. One of them gives its reward again now."
+  },
+  {
+    "card_id": 50104,
+    "name": "Chwinga",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "+4 Influence\nWhenever you Explore this turn, put all matching cards into your hand."
+  },
+  {
+    "card_id": 50105,
+    "name": "Troglodyte",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "This turn the top card of your deck stays revealed: whenever it gives Power, you may put it into your hand.\nExplore for Power.\nAssassinate a troop."
+  },
+  {
+    "card_id": 50106,
+    "name": "Lizardfolk Geomancer",
+    "cost": 7,
+    "aspect": "CONQUEST",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 7,
+    "ability_text": "Return up to 3 troops or spies.\nThis turn you may deploy troops paying 1 Influence each.\nWhen you deploy your 7th troop this turn, draw a card."
+  },
+  {
+    "card_id": 50107,
+    "name": "Dao",
+    "cost": 6,
+    "aspect": "MALICE",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate a troop for each goal you met this turn: assassinate or supplant a troop; deploy 3 troops; place or return a spy; recruit or promote a card."
+  },
+  {
+    "card_id": 50108,
+    "name": "Knight of Eldraine",
+    "cost": 6,
+    "aspect": "AMBITION",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 6,
+    "ability_text": "Assassinate up to 2 troops at one site.\nWhenever you Explore this turn, look at 4 cards instead of 2.\nName a region. Explore for a card of that region."
+  },
+  {
+    "card_id": 50110,
+    "name": "Bandit Deceiver",
+    "cost": 5,
+    "aspect": "AMBITION",
+    "type": "CHULT",
+    "deck_vp": 3,
+    "inner_circle_vp": 5,
+    "ability_text": "+2 Influence\nChoose one:\n• Explore for a card that costs 3 or less.\n• Explore for a card that costs 6 or more."
+  },
+  {
+    "card_id": 50111,
+    "name": "Lizardfolk Warden",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• Deploy 3 troops. If one is next to another player's troop, Explore for a card with \"Deploy\".\n• Supplant a white troop."
+  },
+  {
+    "card_id": 50112,
+    "name": "Yuan-ti Abomination",
+    "cost": 4,
+    "aspect": "MALICE",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Explore for an odd cost card or an even cost card.\nChoose one:\n• Deploy 2 troops.\n• Assassinate a white troop."
+  },
+  {
+    "card_id": 50113,
+    "name": "Performer Maestro",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 5,
+    "ability_text": "+2 Influence\nPut a troop from your barracks on a market card. Each of your troops on a card: it costs 1 less for you and 1 more for opponents."
+  },
+  {
+    "card_id": 50114,
+    "name": "Minotaur Archaeologist",
+    "cost": 4,
+    "aspect": "AMBITION",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "+2 Influence\nReveal the top card of your deck. This turn non-Obedience market cards that share its aspect cost 1 less."
+  },
+  {
+    "card_id": 50115,
+    "name": "Living Gust of Wind",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "If a card effect reveals this card on top of your deck, you may put it into your hand.\nMove a troop."
+  },
+  {
+    "card_id": 50116,
+    "name": "Bullywug Bog Sage",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "CHULT",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "+1 Influence\nLook at the top 2 cards of your deck. You may promote one of them. Put the rest on the top or bottom."
+  },
+  {
+    "card_id": 50117,
+    "name": "Cyclops Oracle",
+    "cost": 3,
+    "aspect": "MALICE",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Choose one:\n• +2 Power\n• Put a hand card on top of your deck: supplant and deploy a troop.\n• You may shuffle your discard into your deck. Scry 3."
+  },
+  {
+    "card_id": 50118,
+    "name": "Kenku",
+    "cost": 2,
+    "aspect": "GUILE",
+    "type": "CHULT",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "Choose one:\n• Place a spy. If the site is full, +1 Power and +1 Influence.\n• Return one of your spies and draw 2 cards, then put a card from your hand on top of your deck."
+  },
+  {
+    "card_id": 50119,
+    "name": "Aarakocra Aeromancer",
+    "cost": 3,
+    "aspect": "CONQUEST",
+    "type": "CHULT",
+    "deck_vp": 2,
+    "inner_circle_vp": 4,
+    "ability_text": "Whenever you Explore this turn, deploy a troop.\nChoose one:\n• Deploy 3 troops.\n• Supplant a white troop.\nIf you deployed 4+ troops this turn, Scry 2."
+  },
+  {
+    "card_id": 50120,
+    "name": "Bone Naga",
+    "cost": 2,
+    "aspect": "MALICE",
+    "type": "CHULT",
+    "deck_vp": 1,
+    "inner_circle_vp": 3,
+    "ability_text": "By the aspect of the previous card you played:\nMalice: +2 Power. Ambition: promote a card in your hand or discard pile. Guile: place 2 spies. Conquest: deploy 3 troops."
   }
 ]

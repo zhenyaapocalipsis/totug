@@ -173,6 +173,7 @@ static func deploys(state: GameState) -> int:
 ## Войско игрока встало на доску (карта, базовое действие, supplant).
 static func note_deploy(state: GameState) -> void:
 	state.turn_flags["deploys"] = deploys(state) + 1
+	IxtalCards.on_deploy_count(state)  # CHULT, Lizardfolk Geomancer: 7-е войско — карта
 
 
 # --- 50 войск ------------------------------------------------------------------
@@ -366,6 +367,7 @@ static func market_spy_owner(state: GameState, index: int) -> String:
 
 ## Карта ушла из слота — шпион возвращается в барак хозяина.
 static func sync_market_spies(state: GameState) -> void:
+	IxtalCards.sync_market_troops(state)  # CHULT, Performer Maestro: войска на картах рынка
 	for key: String in state.market_spies.keys():
 		var entry: Dictionary = state.market_spies[key]
 		var i := key.to_int()

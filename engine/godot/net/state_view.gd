@@ -61,6 +61,8 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"supplies": state.supplies.counts.duplicate(),
 		# FAR REALM (Blue Slaad): шпионы на картах рынка — индекс слота -> хозяин.
 		"market_spies": _market_spies_view(state),
+		# CHULT (Performer Maestro): войска на картах рынка — индекс слота -> {игрок: n}.
+		"market_troops": _market_troops_view(state),
 		"starting_troops": state.starting_troops,
 		# FAR REALM (Froghemoth Elder): гексы раскладки, убранные с доски.
 		"removed_hexes": state.removed_hexes.duplicate(),
@@ -141,7 +143,8 @@ static func _legal_actions(state: GameState, viewer_id: String) -> Dictionary:
 
 	var deploy_slots: Array[String] = []
 	# Icewind Dale: Power от Young White Dragon (Olaf) нельзя тратить на войска.
-	if p.power >= Actions.COST_DEPLOY + FreljordCards.locked_power(state, viewer_id) \
+	if (p.power >= Actions.COST_DEPLOY + FreljordCards.locked_power(state, viewer_id)
+			or IxtalCards.deploy_by_influence(state, viewer_id)) \
 			and state.stock(viewer_id).troops_in_barracks > 0:
 		for slot_id in state.deployable_slots(viewer_id):
 			deploy_slots.append(slot_id)
@@ -276,6 +279,15 @@ static func _duplicate_spies(spies: Dictionary) -> Dictionary:
 
 
 ## stock — запас игрока (в 2v2 общий у команды: бараки, трофеи, внутренний круг).
+static func _market_troops_view(state: GameState) -> Dictionary:
+	var out := {}
+	for i in range(state.market.display.size()):
+		var troops := IxtalCards.market_troops_at(state, i)
+		if not troops.is_empty():
+			out[i] = troops.duplicate()
+	return out
+
+
 static func _market_spies_view(state: GameState) -> Dictionary:
 	var out := {}
 	for i in range(state.market.display.size()):

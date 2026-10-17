@@ -126,10 +126,12 @@ func update_from_view(view: Dictionary) -> void:
 	_deck_label.text = "DECK %d" % int(market["deck_size"])
 
 	var market_spies: Dictionary = view.get("market_spies", {})
+	var market_troops: Dictionary = view.get("market_troops", {})
 	for i in range(DISPLAY_SLOTS):
 		var cid: String = String(display[i]) if i < display.size() else ""
 		_fill_slot(i, cid, affordable.has(i))
 		_mark_spy(i, String(market_spies.get(i, market_spies.get(str(i), ""))))
+		_mark_troops(i, market_troops.get(i, market_troops.get(str(i), {})))
 
 	# Ghost: верхняя сожранная карта до конца хода считается картой маркета.
 	var ghost_card: String = view.get("ghost_market_card", "")
@@ -243,6 +245,35 @@ func _mark_spy(i: int, owner: String) -> void:
 	_boxes[i].move_child(mark, -1)
 	mark.add_theme_color_override("font_color", EventLogPanel.player_color(owner))
 	mark.tooltip_text = "%s's spy: others pay 3 Power to recruit it, then it costs 6 less" % owner.capitalize()
+	mark.visible = true
+
+
+## CHULT (Performer Maestro): войска игроков на карте слота — {игрок: n}.
+## Надпись "T2" цвета хозяина в левом верхнем углу; своим дешевле, чужим дороже.
+func _mark_troops(i: int, troops: Dictionary) -> void:
+	var mark: RichTextLabel = _boxes[i].get_node_or_null("MarketTroops")
+	if troops.is_empty():
+		if mark != null:
+			mark.visible = false
+		return
+	if mark == null:
+		mark = RichTextLabel.new()
+		mark.name = "MarketTroops"
+		mark.bbcode_enabled = true
+		mark.fit_content = true
+		mark.scroll_active = false
+		mark.autowrap_mode = TextServer.AUTOWRAP_OFF
+		mark.mouse_filter = Control.MOUSE_FILTER_PASS
+		mark.position = Vector2(2, 1)
+		mark.add_theme_color_override("font_outline_color", PixelTheme.BG)
+		mark.add_theme_constant_override("outline_size", 2)
+		_boxes[i].add_child(mark)
+	_boxes[i].move_child(mark, -1)
+	var parts: PackedStringArray = []
+	for pid in troops.keys():
+		parts.append("[color=#%s]T%d[/color]" % [EventLogPanel.player_color(String(pid)).to_html(false), int(troops[pid])])
+	mark.text = " ".join(parts)
+	mark.tooltip_text = "Troops on this card: each makes it 1 cheaper for its owner and 1 dearer for opponents"
 	mark.visible = true
 
 

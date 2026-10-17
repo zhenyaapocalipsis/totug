@@ -648,6 +648,9 @@ static func _build_effect(card_id: String) -> CardEffect:
 	var void_effect := VoidCards.build(card_id)
 	if void_effect != null:
 		return void_effect
+	var ixtal := IxtalCards.build(card_id)
+	if ixtal != null:
+		return ixtal
 	push_error("CardLibrary: нет эффекта для card_id=%s" % card_id)
 	return SequenceEffect.new([])
 

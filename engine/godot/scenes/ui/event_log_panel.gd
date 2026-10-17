@@ -334,5 +334,22 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s plays %s for free" % [who, card]
 		"market_spy":
 			return "%s places a spy on %s in the market" % [who, card]
+		# Chult (New Era Ixtal)
+		"explore":
+			return "%s explores the top %d cards of their deck for %s" % [who, int(e.get("looked", 2)), String(e.get("what", "a card"))]
+		"explore_take":
+			return "%s reveals %s and puts it into their hand" % [who, card]
+		"copy_card":
+			return "%s copies %s" % [who, card]
+		"marker_again":
+			return "%s uses the control marker of %s once more" % [who, site]
+		"market_troop":
+			return "%s puts a troop on %s in the market" % [who, card]
+		"shuffle_discard":
+			return "%s shuffles their discard pile into their deck" % who
+		"extra_turn":
+			if int(e.get("cards", 0)) > 0:
+				return "%s will take an extra turn (up to %d cards)" % [who, int(e.get("cards", 0))]
+			return "%s will take an extra turn" % who
 		_:
 			return "%s: %s" % [who, e.get("type", "?")]

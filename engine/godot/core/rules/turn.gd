@@ -43,7 +43,7 @@ static func start_turn(state: GameState, player_id: String, resolver: EffectReso
 	for site_id: String in state.stolen_markers.keys():
 		if state.stolen_markers[site_id] == player_id:
 			state.stolen_markers.erase(site_id)
-	if state.in_extra_turn:
+	if state.in_extra_turn and not state.extra_turn_full:  # Sarrukh Tyrant — лишний ход без лимита
 		state.turn_flags["card_limit"] = EXTRA_TURN_CARDS
 	var p: PlayerState = state.players[player_id]
 	if p.start_of_turn_influence > 0:
@@ -143,7 +143,8 @@ static func begin_play(state: GameState, player_id: String, card_id: String) -> 
 	if aspect != "":
 		state.played_aspects_this_turn.append(aspect)
 	var effect: CardEffect = ShadowCards.on_play(state, player_id, card_id, CardLibrary.get_effect(card_id))
-	return IoniaCards.on_play(state, player_id, card_id, effect)
+	effect = IoniaCards.on_play(state, player_id, card_id, effect)
+	return IxtalCards.on_play(state, player_id, card_id, effect)  # CHULT: Troglodyte — проверка верха колоды
 
 
 ## Можно ли сейчас сыграть ещё карту из руки: в лишнем ходу Basilisk — не

@@ -72,6 +72,7 @@ const NEW_ERA_TITLES := {
 	"ionia": "KARA-TUR",
 	"bandle": "FEYWILD",
 	"void": "FAR REALM",
+	"ixtal": "CHULT",
 }
 
 
@@ -130,6 +131,7 @@ const DECK_TIPS := {
 	"ionia": "KARA-TUR: Retain.\nKeep cards in hand for your next turn and build big combos.",
 	"bandle": "FEYWILD: Glamour.\nSpend 1 VP to switch on extra card abilities.",
 	"void": "FAR REALM: the swarm.\nEveryone gets 50 troops; deploy a lot and grow by controlling sites.",
+	"ixtal": "CHULT: Explore.\nLook at the top of your deck and pull the cards you need into your hand.",
 }
 ## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из

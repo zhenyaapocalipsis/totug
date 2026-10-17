@@ -70,6 +70,10 @@ var turn_flags: Dictionary = {}
 ## сыграть не больше 3 карт (TurnEngine.start_turn ставит turn_flags["card_limit"]).
 var extra_turn_for: String = ""
 var in_extra_turn: bool = false
+## CHULT, Sarrukh Tyrant (Zilean): лишний ход полный — без лимита в 3 карты.
+var extra_turn_full: bool = false
+## CHULT, Performer Maestro: войска на картах рынка — "индекс" -> {"card", "troops": {игрок: n}} (IxtalCards).
+var market_troops: Dictionary = {}
 ## Siege/Mercenaries, Bregan D'aerthe Spy: украденные маркеры контроля
 ## (id локации -> вор). Вор держит маркер до начала своего следующего хода
 ## (TurnEngine.start_turn), пока маркер приносит доход только ему.

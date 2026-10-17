@@ -73,6 +73,7 @@ func _initialize() -> void:
 	test_karatur_deck()
 	test_feywild_deck()
 	test_farrealm_deck()
+	test_chult_deck()
 	test_card_live()
 
 	# этап 6: сетевой слой
@@ -2196,10 +2197,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 371 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 391 карт разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 371, "cards.json содержит 371 карту (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild + 20 Far Realm)")
+	check_eq(all_ids.size(), 391, "cards.json содержит 391 карту (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild + 20 Far Realm + 20 Chult)")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -6455,6 +6456,146 @@ func test_farrealm_deck() -> void:
 	_resolve_first(state, r)
 	r = _play_with(state, V.KHAZIX)
 	check(not r.is_waiting() or r.pending.choice_type != "choose_option", "второй розыгрыш: новых способностей не просит")
+
+
+func test_chult_deck() -> void:
+	section("Chult (New Era Ixtal): полуколода, Explore, войска на рынке")
+	var X := IxtalCards
+	var deck := GameSetup.expand_half_deck("ixtal")
+	check_eq(deck.size(), 44, "Chult: все 44 карты мода без Nidalee")
+	var uniques := {}
+	for cid: String in deck:
+		uniques[cid] = true
+	check_eq(uniques.size(), 20, "Chult: 20 уникальных карт")
+	check(not GameSetup.available_half_decks().has("ixtal"), "Chult пока wip: не в обычном выборе")
+	var mode := GameSetup.new_era_mode(["ixtal", "celestial"])
+	check(GameSetup.is_mode(mode), "режим Celestial + Chult принимается")
+	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
+	check_eq(game.market.deck_size() + game.market.display.size(), 84, "рынок: 40 (Celestial) + 44 (Chult)")
+	_sweep_deck_with_vp(50100, 50108)
+	_sweep_deck_with_vp(50110, 50120)
+
+	# Explore: подходящая — в руку, остальное — под низ или наверх
+	var state := _build_rich_state(81)
+	var red: PlayerState = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.deck.draw_pile.append_array(["50101", "50120"])  # верх — 50120 (цена 2), под ним 50101 (цена 8)
+	var r := _play_with(state, X.SEEKER, [0])
+	check(r.is_waiting() and r.pending.legal_options.has("50120") and not r.pending.legal_options.has("50101"),
+		"Explore for cost 3 or less: на выбор только Bone Naga")
+	TurnEngine.resume_card(state, "50120", r)
+	check(red.deck.hand.has("50120"), "Explore: Bone Naga в руке")
+	check(r.is_waiting() and r.pending.legal_options.has("50101"), "Explore: остаток — под низ или наверх")
+	TurnEngine.resume_card(state, "50101", r)
+	check(not r.is_waiting() and red.deck.draw_pile[0] == "50101", "Explore: Galeb Duhr ушёл под низ колоды")
+
+	# Chwinga: все подходящие сразу в руку; Knight of Eldraine: смотрим 4
+	state = _build_rich_state(82)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	state.turn_flags["milio"] = true
+	state.turn_flags["ezreal"] = true
+	red.deck.draw_pile.append_array(["50101", "50118", "50101", "50120"])
+	var hand_before: int = red.deck.hand.size()
+	r = EffectResolver.new()
+	r.apply(X.explore(X.SEEKER, "a card that costs 3 or less", func(cid): return X._cost_in(cid, 0, 3)), "red", state)
+	check(red.deck.hand.has("50118") and red.deck.hand.has("50120") and red.deck.hand.size() == hand_before + 2,
+		"Chwinga + Knight of Eldraine: из 4 карт обе дешёвые в руке")
+	_resolve_first(state, r)
+	check(not r.is_waiting() and red.deck.draw_pile.count("50101") == 2, "два Galeb Duhr вернулись в колоду")
+
+	# Aarakocra Aeromancer: после Explore — войско
+	state = _build_rich_state(83)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	state.turn_flags["landing"] = 1
+	red.deck.draw_pile.append_array(["50101", "50101"])
+	r = EffectResolver.new()
+	r.apply(X.explore(X.LANDING, "x", func(_cid): return false), "red", state)
+	TurnEngine.resume_card(state, "", r)  # ничего под низ
+	check(r.is_waiting() and r.pending.choice_type == "target_slot", "Landing Party: после Explore — поставить войско")
+
+	# Performer Maestro: своё войско на карте — дешевле себе, дороже сопернику
+	state = _build_rich_state(84)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var idx := -1
+	for i in range(state.market.display.size()):
+		if state.market.card_cost(i) >= 3:
+			idx = i
+			break
+	var base := Actions.market_cost(state, idx)
+	var barracks: int = state.stock("red").troops_in_barracks
+	r = _play_with(state, X.TYCOON, [idx])
+	check_eq(Actions.market_cost(state, idx), base - 1, "Performer Maestro: red платит на 1 меньше")
+	check_eq(state.stock("red").troops_in_barracks, barracks - 1, "войско ушло из барака на карту")
+	state.current_player_index = state.turn_order.find("blue")
+	check_eq(Actions.market_cost(state, idx), base + 1, "Performer Maestro: blue платит на 1 больше")
+	state.market.recruit_at(idx)
+	VoidCards.sync_market_spies(state)
+	check(state.market_troops.is_empty() and state.stock("red").troops_in_barracks == barracks,
+		"карта ушла из рынка — войско вернулось в барак")
+
+	# Sarrukh Tyrant: полный лишний ход
+	state = _build_rich_state(85)
+	TurnEngine.start_turn(state, "red")
+	_play_with(state, X.ZILEAN)
+	check(state.extra_turn_for == "red" and state.extra_turn_full, "Sarrukh Tyrant: лишний ход")
+	GameEnd.advance_turn(state)
+	TurnEngine.start_turn(state, "red")
+	check(state.in_extra_turn and not state.turn_flags.has("card_limit"), "лишний ход без лимита карт")
+	GameEnd.advance_turn(state)
+	check(not state.extra_turn_full and state.current_player() != "red", "после лишнего хода — ход соперника")
+
+	# Lizardfolk Geomancer: Deploy за Influence
+	state = _build_rich_state(86)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.power = 0
+	red.influence = 1
+	var slot: String = state.deployable_slots("red")[0]
+	check(not Actions.deploy(state, "red", slot), "без Geomancer Deploy без Power нельзя")
+	state.turn_flags["zyra"] = true
+	check(Actions.deploy(state, "red", slot) and red.influence == 0, "Geomancer: войско за 1 Influence")
+
+	# Dao: цели хода
+	state = _build_rich_state(87)
+	TurnEngine.start_turn(state, "red")
+	check_eq(X.objectives(state, "red"), 0, "Dao: в начале хода целей нет")
+	state.turn_flags["deploys"] = 3
+	state.turn_flags["spy_done"] = true
+	check_eq(X.objectives(state, "red"), 2, "Dao: 3 войска и шпион — 2 цели")
+
+	# Yuan-ti Infiltrator: копия предыдущей карты; Bone Naga — по её аспекту
+	state = _build_rich_state(88)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.power = 0
+	_play_with(state, X.MALPHITE)
+	_play_with(state, X.NEEKO, [0])
+	check_eq(red.power, 16, "Yuan-ti Infiltrator: копия Galeb Duhr, +8 Power ещё раз")
+	r = _play_with(state, X.INITIATE)
+	check(r.is_waiting() and r.pending.prompt.to_lower().contains("spy"), "Bone Naga после Guile-карты (Infiltrator): ставит шпионов")
+
+	# Minotaur Archaeologist: скидка на карты рынка того же аспекта
+	state = _build_rich_state(89)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	var aspect_idx := -1
+	for i in range(state.market.display.size()):
+		var a := CardLibrary.card_aspect(state.market.display[i])
+		if a != "" and a != "OBEDIENCE" and state.market.card_cost(i) > 0:
+			aspect_idx = i
+			break
+	var top := ""
+	for cid: String in CardLibrary.all_ids():
+		if CardLibrary.card_aspect(cid) == CardLibrary.card_aspect(state.market.display[aspect_idx]) and cid != X.SKY_SQUAD:
+			top = cid
+			break
+	red.deck.draw_pile.append(top)
+	var price := Actions.market_cost(state, aspect_idx)
+	_play_with(state, X.ARCHAEOLOGIST)
+	check_eq(Actions.market_cost(state, aspect_idx), price - 1, "Minotaur Archaeologist: карта того же аспекта на 1 дешевле")
 
 
 func test_card_live() -> void:
