@@ -62,6 +62,9 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		# FAR REALM (Blue Slaad): шпионы на картах рынка — индекс слота -> хозяин.
 		"market_spies": _market_spies_view(state),
 		"starting_troops": state.starting_troops,
+		# FAR REALM (Froghemoth Elder): гексы раскладки, убранные с доски.
+		"removed_hexes": state.removed_hexes.duplicate(),
+		"removed_slots": state.removed_slots.duplicate(),
 		"players": {},
 		"pending_decision": _pending_decision_view(state, viewer_id),
 	}

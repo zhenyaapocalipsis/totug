@@ -81,6 +81,12 @@ var board_vp: Dictionary = {}
 var market_spies: Dictionary = {}
 ## Войск у игрока в начале партии: 40, с полуколодой Void — 50 (VoidCards.setup_troops).
 var starting_troops: int = PlayerState.STARTING_TROOPS
+## FAR REALM (Froghemoth Elder): гексы раскладки ("c_n1"), убранные с доски.
+## Их локаций и мест уже нет в graph (VoidCards.remove_hex); интерфейс рисует
+## на их месте пустоту.
+var removed_hexes: Array[String] = []
+## Места туннелей соседей, ставшие тупиками после съеденного гекса (тоже убраны).
+var removed_slots: Array[String] = []
 
 ## Этап 5: открытая общая стопка карт, ушедших из игры через Devour. Видна
 ## всем игрокам (в отличие от played_pile) — нужна как минимум для Ghost.

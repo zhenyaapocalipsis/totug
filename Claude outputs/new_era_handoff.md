@@ -35,7 +35,8 @@
 - В view: `market_spies`, `starting_troops`, у игрока `set_aside`, `evolutions`. События журнала: `devour_hex`, `evolve`, `set_aside`, `set_aside_play`, `reveal_top`, `market_reveal`, `play_free`, `market_spy`.
 - `pixel_cards.gd -- only=50000,50004` — перерисовать только эти карты (без листов превью), ~1 мин вместо 8.
 - **NE-29:** 40/20 — пять карт с 4 копиями (Githzerai Monk, Hook Horror, Gray Slaad, Githyanki Dracomancer, Githyanki Warrior) по 3; подписи копий на картах — `pixel_cards.gd -- copies`.
-- **Ждёт владельца:** (1) живая проверка; (2) толкования в справке, главное — Froghemoth Elder (Cho'Gath) гекс с доски не убирает; (3) кадр Groundling Stalker тёмный; (4) отложенные карты Eye Monger на экране не показаны (только журнал).
+- **NE-30 (владелец):** Froghemoth Elder убирает гекс с доски по-настоящему (новый граф без гекса и тупиков; `GameState.removed_hexes / removed_slots`, в view; `BoardPanel._without_removed` перерисовывает схему без них, без «пустоты»); отложенные карты Eye Monger — рядом слева от руки (`HandPanel._sync_aside`).
+- **Ждёт владельца:** (1) живая проверка; (2) остальные толкования в справке; (3) кадр Groundling Stalker тёмный.
 
 ## NE-26…27 (2026-10-17): Bandle City → FEYWILD — задеплоено (сборка 1792248295, PROTOCOL 34)
 - Ключ `bandle`, тип `FEYWILD`, id 49900–49922 (49907 свободен, 49921 Goblin Hexer и 49922 Faerie Dragon Adult не в рынке), `wip` (кнопка FEYWILD в NEW ERA, фон — зелёный луг). Эффекты `core/cards/bandle_cards.gd`, тест `test_feywild_deck`, справка и толкования — `Claude outputs/new_era_bandle.md`, лист — `Claude outputs/feywild_cards_all.png`, арты — `cards/bandle/` (кандидаты `cards/bandle/cand*` не в git).

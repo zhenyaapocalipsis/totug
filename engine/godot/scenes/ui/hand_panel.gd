@@ -87,6 +87,11 @@ var _choosing := false
 ## подпись INNER CIRCLE.
 var _split := -1
 var _label: Label
+## FAR REALM (Eye Monger): отложенные карты — отдельный ряд слева от руки,
+## не кликаются; отложенная карта разыгрывается сама в начале хода.
+var _aside: Array[CardView] = []
+var _aside_ids: Array = []
+var _aside_label: Label
 ## Размер, под который в последний раз считали ряд: зона получает настоящий
 ## размер позже, чем в неё кладут карты, и без этой сверки ряд остаётся
 ## посчитанным по нулевой ширине и уезжает за нижний край.
@@ -113,11 +118,16 @@ func _init() -> void:
 	_label.add_theme_constant_override("shadow_offset_y", 1)
 	_label.visible = false
 	add_child(_label)
+	_aside_label = _label.duplicate()
+	_aside_label.text = "SET ASIDE"
+	_aside_label.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
+	add_child(_aside_label)
 
 
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_viewer = viewer_id
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
+	_sync_aside(p.get("set_aside", []))
 	var hand: Array = p.get("hand", [])
 	var playable: Array = (view.get("legal", {}) as Dictionary).get("play_card", [])
 	# Вопрос "выбери карту в руке": кликаются и подсвечены золотом только
@@ -262,6 +272,35 @@ func _deal_sound(order: int) -> void:
 		func() -> void: Sfx.play("draw", false, order))
 
 
+## Ряд отложенных карт Eye Monger пересобирается, только когда он сменился.
+func _sync_aside(ids: Array) -> void:
+	if ids == _aside_ids:
+		return
+	_aside_ids = ids.duplicate()
+	for card in _aside:
+		CardPreview.clear_hovered(card)
+		remove_child(card)
+		card.queue_free()
+	_aside = []
+	for cid in ids:
+		var card := CardView.new(String(cid), int(CARD_SIZE.x), int(CARD_SIZE.y))
+		card.set_card_owner(_viewer)
+		card.set_live(true)
+		card.set_clickable(false)
+		card.tooltip_text = "Set aside with Eye Monger: played at the start of each of your turns"
+		add_child(card)
+		_aside.append(card)
+	_aside_label.visible = not _aside.is_empty()
+	_layout()
+
+
+## Ширина ряда отложенных карт вместе с промежутком до руки (0 — ряда нет).
+func _aside_width() -> float:
+	if _aside.is_empty():
+		return 0.0
+	return _aside.size() * (CARD_SIZE.x + GAP) - GAP + ZONE_GAP
+
+
 static func _is_zone(card: CardView) -> bool:
 	return bool(card.get_meta("zone", false))
 
@@ -336,11 +375,20 @@ func _layout() -> void:
 	# целиком правее последней карты руки (см. _split_extra).
 	var divider := CARD_SIZE.x + ZONE_GAP if _split > 0 else 0.0
 	var steps := n - 1 - (1 if _split > 0 else 0)
+	# Отложенные карты Eye Monger занимают место слева, рука центруется в остатке.
+	var aside_w := _aside_width()
+	var avail := size.x - aside_w
 	_row_step = CARD_SIZE.x + GAP
-	if steps > 0 and CARD_SIZE.x + divider + _row_step * steps > size.x:
-		_row_step = maxf(floorf((size.x - CARD_SIZE.x - divider) / steps), 6.0)
+	if steps > 0 and CARD_SIZE.x + divider + _row_step * steps > avail:
+		_row_step = maxf(floorf((avail - CARD_SIZE.x - divider) / steps), 6.0)
 	var total := CARD_SIZE.x + divider + _row_step * maxi(steps, 0)
-	_row_x0 = floorf((size.x - total) * 0.5)
+	_row_x0 = aside_w + floorf((avail - total) * 0.5)
+	var aside_x0 := _row_x0 - aside_w
+	for i in range(_aside.size()):
+		_aside[i].position = Vector2(aside_x0 + i * (CARD_SIZE.x + GAP), _row_y).round()
+	if not _aside.is_empty():
+		_aside_label.position = Vector2(aside_x0, _row_y - PixelTheme.LINE_H - 1)
+		_aside_label.size = Vector2(aside_w - ZONE_GAP, PixelTheme.LINE_H)
 	if _split >= 0 or _label.visible:
 		# Подпись по центру над картами Inner Circle, в полосе над рядом.
 		var first := maxi(_split, 0)
@@ -386,6 +434,9 @@ func _split_extra(i: int) -> float:
 
 ## Черта посередине промежутка между рукой и Inner Circle.
 func _draw() -> void:
+	if not _aside.is_empty():
+		var ax := floorf(_row_x0 - ZONE_GAP * 0.5)
+		draw_line(Vector2(ax, _row_y), Vector2(ax, _row_y + CARD_SIZE.y), PixelTheme.TEXT_OFF, 1.0)
 	if _split <= 0 or _split >= _cards.size():
 		return
 	var x := floorf(_row_x0 + _row_step * (_split - 1) + CARD_SIZE.x + ZONE_GAP * 0.5)

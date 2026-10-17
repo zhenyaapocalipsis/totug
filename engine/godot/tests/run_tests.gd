@@ -6417,13 +6417,32 @@ func test_farrealm_deck() -> void:
 	r = _play_with(state, V.CHOGATH)
 	check(r.is_waiting() and r.pending.choice_type == "target_site", "Froghemoth Elder: выбрать локацию гекса")
 	var site: String = r.pending.legal_options[0]
-	var hex := String(state.graph.sites[site]["hex"])
+	var hex := MapGraph.hex_of(site)
+	var old_graph := state.graph
+	var sites_before := state.graph.sites.size()
+	var copy := StateCopy.copy_state(state)
 	TurnEngine.resume_card(state, site, r)
 	var left := 0
 	for slot_id: String in state.graph.slots.keys():
-		if String(state.graph.slots[slot_id]["hex"]) == hex and String(state.troops.get(slot_id, "")) != "":
+		if MapGraph.hex_of(slot_id) == hex:
 			left += 1
-	check(left == 0 and red.trophy_hall_count >= trophies, "Froghemoth Elder: гекс пуст")
+	check(left == 0 and not state.graph.sites.has(site) and state.graph.sites.size() < sites_before,
+		"Froghemoth Elder: гекс ушёл с доски вместе с локациями и местами")
+	check(Array(state.removed_hexes) == [hex] and red.trophy_hall_count >= trophies, "убранный гекс записан, трофеи на месте")
+	check(old_graph.sites.has(site) and copy.graph.sites.has(site), "старый граф (и копия бота) не тронуты")
+	check(StateView.for_player(state, "red")["removed_hexes"] == [hex], "интерфейс знает убранный гекс")
+	check(not state.presence.has_presence_at_site("red", site, state.troops, state.spies), "в убранной локации Присутствия нет")
+	var dead_ends := 0
+	for slot_id: String in state.graph.slots.keys():
+		if state.graph.is_route_slot(slot_id):
+			var around := {}
+			for other in state.graph.adjacent_slots(slot_id):
+				var s := state.graph.site_of_slot(other)
+				around[s if s != "" else other] = true
+			if around.size() <= 1:
+				dead_ends += 1
+	check_eq(dead_ends, 0, "после съеденного гекса тупиков на доске нет")
+	check(state.removed_slots.all(func(s): return not state.graph.slots.has(s) and not state.troops.has(s)), "тупики убраны вместе с войсками")
 
 	# Thri-kreen Marauder: 8 трофеев — две способности навсегда
 	state = _build_rich_state(79)

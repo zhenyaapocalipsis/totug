@@ -3537,7 +3537,7 @@
     "type": "FAR REALM",
     "deck_vp": 5,
     "inner_circle_vp": 10,
-    "ability_text": "Choose a hex where you have presence: every enemy troop on it goes to your trophy hall, and your troops there return to your barracks."
+    "ability_text": "Remove a hex where you have presence from the board: every enemy troop on it goes to your trophy hall, and your troops there return to your barracks."
   },
   {
     "card_id": 50003,

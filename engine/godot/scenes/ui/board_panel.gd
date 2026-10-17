@@ -144,6 +144,10 @@ const SCHEMATIC_ZOOM_MIN := 0.25
 const SCHEMATIC_ZOOM_MAX := 6.0
 
 var _board: Dictionary = {}
+## FAR REALM (Froghemoth Elder): гексы раскладки, убранные с доски (из вида).
+var _removed_hexes: Array = []
+## ...и места соседей, ставшие тупиками (их кольца и туннели тоже не рисуются).
+var _removed_slots: Array = []
 var _view: Dictionary = {}
 var _viewer_id: String = ""
 var _textures: Dictionary = {}   # hex_id -> Texture2D
@@ -213,10 +217,19 @@ func _init() -> void:
 func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) -> void:
 	_view = view
 	_viewer_id = viewer_id
+	var removed: Array = view.get("removed_hexes", [])
+	var removed_slots: Array = view.get("removed_slots", [])
 	if board != _board:
 		_board = board
+		_removed_hexes = removed.duplicate()
+		_removed_slots = removed_slots.duplicate()
 		_load_textures()
 		_zoom = 0.0  # новая доска — пересчитать обзор
+	elif removed != _removed_hexes or removed_slots != _removed_slots:
+		# FAR REALM: гекс съеден посреди партии — схема перерисовывается без него.
+		_removed_hexes = removed.duplicate()
+		_removed_slots = removed_slots.duplicate()
+		_rebuild_schematic_texture()
 	_note_captures(view.get("site_control", {}))
 	queue_redraw()
 
@@ -922,11 +935,62 @@ func _load_textures() -> void:
 
 func _rebuild_schematic_texture() -> void:
 	_schematic_texture = null
-	var schematic: Dictionary = _board.get("schematic", {})
+	var schematic: Dictionary = _without_removed(_board.get("schematic", {}))
 	if not schematic.is_empty():
 		var image := SchematicPainter.paint(schematic, art_layer, object_layer)
 		image.generate_mipmaps()
 		_schematic_texture = ImageTexture.create_from_image(image)
+
+
+## FAR REALM (Froghemoth Elder): схема без убранных гексов — без их арта,
+## локаций, колец и туннелей, которые в них вели (решение владельца: гекс
+## просто исчезает, на его месте живой фон экрана).
+func _without_removed(schematic: Dictionary) -> Dictionary:
+	if _removed_hexes.is_empty() or schematic.is_empty():
+		return schematic
+	var out := schematic.duplicate()
+	var gone := func(key: String) -> bool:
+		return _removed_slots.has(key) or _removed_hexes.has(MapGraph.hex_of(key.trim_prefix("port:")))
+	var hexes: Dictionary = (schematic.get("hexes", {}) as Dictionary).duplicate()
+	for hex in _removed_hexes:
+		hexes.erase(hex)
+	out["hexes"] = hexes
+	for field in ["rings", "sites"]:
+		var kept := {}
+		var all: Dictionary = schematic.get(field, {})
+		for key: String in all:
+			if not gone.call(key):
+				kept[key] = all[key]
+		out[field] = kept
+	# Туннель уходит, если любой его конец на убранном гексе; потом — и
+	# обрубок до порта на краю, у которого не осталось второй половины.
+	var traces: Array = schematic.get("traces", [])
+	var ends: Array = schematic.get("trace_ends", [])
+	var keep: Array = []
+	for i in range(traces.size()):
+		var pair: Array = ends[i] if i < ends.size() else []
+		keep.append(pair.size() == 2 and not gone.call(String(pair[0])) and not gone.call(String(pair[1])))
+	var port_uses := {}
+	for i in range(traces.size()):
+		if keep[i]:
+			for key in ends[i]:
+				if String(key).begins_with("port:"):
+					port_uses[key] = int(port_uses.get(key, 0)) + 1
+	var kept_traces: Array = []
+	var kept_ends: Array = []
+	for i in range(traces.size()):
+		if not keep[i]:
+			continue
+		var stub := false
+		for key in ends[i]:
+			if String(key).begins_with("port:") and int(port_uses.get(key, 0)) < 2:
+				stub = true
+		if not stub:
+			kept_traces.append(traces[i])
+			kept_ends.append(ends[i])
+	out["traces"] = kept_traces
+	out["trace_ends"] = kept_ends
+	return out
 
 
 func _schematic_on() -> bool:
@@ -1304,8 +1368,12 @@ func _a2_sites() -> Array[String]:
 	if not _schematic_on():
 		return result
 	var sites: Dictionary = (_board["schematic"] as Dictionary).get("sites", {})
+	var removed: Array = _view.get("removed_hexes", [])
 	for site_id: String in sites:
 		if ClusterBonus.SITE_NAMES.has(String((sites[site_id] as Dictionary).get("name", ""))):
+			# FAR REALM: гекс A2 съеден Froghemoth Elder — ни рамки, ни таблички.
+			if removed.has(MapGraph.hex_of(site_id)):
+				return [] as Array[String]
 			result.append(site_id)
 	return result if result.size() == ClusterBonus.SITE_NAMES.size() else ([] as Array[String])
 
@@ -1346,7 +1414,7 @@ func _a2_plate() -> Rect2:
 	if not _schematic_on():
 		return Rect2()
 	var r: Array = (_board["schematic"] as Dictionary).get("a2_legend", [])
-	if r.size() != 4:
+	if r.size() != 4 or _a2_sites().is_empty():
 		return Rect2()
 	return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
 

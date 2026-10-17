@@ -309,6 +309,49 @@ static func on_start_turn(state: GameState, player_id: String, resolver: EffectR
 			return
 
 
+# --- Съеденный гекс (Froghemoth Elder) ------------------------------------------
+
+## Гекс раскладки уходит с доски: состояние получает новый граф без его
+## локаций и мест (старый граф делят копии бота — его не трогаем), новые
+## Presence и SiteControl. Шпионы на его локациях — в бараки хозяев.
+static func remove_hex(state: GameState, hex: String) -> void:
+	if hex == "" or state.removed_hexes.has(hex):
+		return
+	var g := state.graph.without_hex(hex)
+	# Тупиков в игре нет (решение владельца 2026-09-22): кольца соседей, которые
+	# вели только в съеденный гекс, уходят тоже; войска с них — хозяевам.
+	for slot_id in g.prune_dead_ends():
+		state.removed_slots.append(slot_id)
+		var owner := String(state.troops.get(slot_id, ""))
+		if state.players.has(owner):
+			state.stock(owner).troops_in_barracks += 1
+		state.troops.erase(slot_id)
+	g.finalize()
+	for site_id: String in state.spies.keys():
+		if g.sites.has(site_id):
+			continue
+		for owner in (state.spies[site_id] as Array):
+			state.stock(String(owner)).spies_in_barracks += 1
+		state.spies.erase(site_id)
+	for slot_id: String in state.troops.keys():
+		if not g.slots.has(slot_id):
+			state.troops.erase(slot_id)
+	for site_id: String in state.board_vp.keys():
+		if not g.sites.has(site_id):
+			state.board_vp.erase(site_id)
+	for site_id: String in state.stolen_markers.keys():
+		if not g.sites.has(site_id):
+			state.stolen_markers.erase(site_id)
+	state.graph = g
+	var presence := Presence.new(g)
+	presence.sides = state.teams
+	var control := SiteControl.new(g)
+	control.sides = state.teams
+	state.presence = presence
+	state.control = control
+	state.removed_hexes.append(hex)
+
+
 # --- Шпион на рынке (Blue Slaad) --------------------------------------------------
 
 ## Хозяин шпиона на карте слота index ("" — нет шпиона).
@@ -382,17 +425,22 @@ class _PerCount extends CardEffect:
 			resolver.push(factory.call(n), player_id)
 
 
-## Froghemoth Elder (Cho'Gath): гекс, где есть Присутствие, — все вражеские войска
-## гекса в трофейный зал, свои — в барак. Выбор — локацией этого гекса.
+## Froghemoth Elder (Cho'Gath): "Remove a hex where you have presence" — гекс
+## раскладки уходит с доски (решение владельца, 2026-10-17): все вражеские
+## войска на нём (и белые) — в трофейный зал, свои — в барак, шпионы — хозяевам,
+## его локации и места исчезают из игры (VoidCards.remove_hex). Выбор — любой
+## локацией этого гекса.
 class _DevourHex extends CardEffect:
 	func _sites(state: GameState, player_id: String) -> Array:
 		var hexes := {}
 		for slot_id: String in state.graph.slots.keys():
-			if state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
-				hexes[String(state.graph.slots[slot_id].get("hex", ""))] = true
+			var hex := MapGraph.hex_of(slot_id)
+			if hex != "" and not hexes.has(hex) \
+					and state.presence.has_presence_at_slot(player_id, slot_id, state.troops, state.spies):
+				hexes[hex] = true
 		var out: Array = []
 		for site_id: String in state.graph.sites.keys():
-			if hexes.has(String(state.graph.sites[site_id].get("hex", ""))):
+			if hexes.has(MapGraph.hex_of(site_id)):
 				out.append(site_id)
 		return out
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -400,33 +448,33 @@ class _DevourHex extends CardEffect:
 			var site := String(answer()) if answer() != null else ""
 			if not _sites(state, player_id).has(site):
 				return
-			var hex := String(state.graph.sites[site].get("hex", ""))
+			var hex := MapGraph.hex_of(site)
 			var taken := 0
 			var back := 0
 			var stock: PlayerState = state.stock(player_id)
 			for slot_id: String in state.graph.slots.keys():
-				if String(state.graph.slots[slot_id].get("hex", "")) != hex:
+				if MapGraph.hex_of(slot_id) != hex:
 					continue
 				var owner := String(state.troops.get(slot_id, ""))
 				if owner == "":
 					continue
-				if owner == player_id:
-					state.troops[slot_id] = ""
-					stock.troops_in_barracks += 1
-					back += 1
-				elif state.is_enemy(player_id, owner):
-					state.troops[slot_id] = ""
+				if state.is_enemy(player_id, owner):
 					stock.add_trophy(owner)
 					taken += 1
+				else:
+					state.stock(owner).troops_in_barracks += 1
+					back += 1
+				state.troops[slot_id] = ""
 			resolver.log_event("devour_hex", {"player_id": player_id, "site_id": site, "hex": hex,
-				"taken": taken, "returned": back})
+				"name": String(state.graph.sites[site].get("name", "")), "taken": taken, "returned": back})
+			VoidCards.remove_hex(state, hex)
 			return
 		var options := _sites(state, player_id)
 		if options.is_empty():
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Choose a site: its whole hex is devoured"
+		pd.prompt = "Choose a site: its whole hex is devoured and leaves the board"
 		pd.choice_type = "target_site"
 		pd.legal_options = options
 		pd.source_card = VoidCards.CHOGATH

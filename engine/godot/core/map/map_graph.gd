@@ -159,6 +159,42 @@ func _remove_slot(slot_id: String) -> void:
 	slots.erase(slot_id)
 
 
+## Гекс раскладки, которому принадлежит слот или локация: префикс id до ":"
+## ("c_n1:C4_3_0" -> "c_n1"). Один и тот же печатный гекс может стоять в
+## раскладке дважды, поэтому поле "hex" (печатный id) для этого не годится.
+static func hex_of(node_id: String) -> String:
+	var i := node_id.find(":")
+	return node_id.substr(0, i) if i >= 0 else ""
+
+
+## Копия графа без гекса раскладки hex (FAR REALM, Froghemoth Elder: гекс
+## уходит с доски). Сам граф не меняется: его делят копии партии бота
+## (StateCopy.SHARED), поэтому состояние получает новый граф целиком.
+func without_hex(hex: String) -> MapGraph:
+	var g := MapGraph.new()
+	for site_id: String in sites.keys():
+		if hex_of(site_id) == hex:
+			continue
+		var s: Dictionary = sites[site_id]
+		g.add_site(site_id, String(s["name"]), int(s["vp"]), String(s.get("hex", "")))
+	for slot_id: String in slots.keys():
+		if hex_of(slot_id) == hex:
+			continue
+		var sl: Dictionary = slots[slot_id]
+		var site := String(sl.get("site", ""))
+		g.add_slot(slot_id, String(sl.get("hex", "")), sl["pos"], site if g.sites.has(site) else "")
+	for slot_id: String in g.slots.keys():
+		for other in adjacent_slots(slot_id):
+			if g.slots.has(other):
+				g.connect_slots(slot_id, other)
+	for site_id: String in g.sites.keys():
+		for other in adjacent_sites(site_id):
+			if g.sites.has(other):
+				g.connect_sites(site_id, other)
+	g.finalize()
+	return g
+
+
 ## Должен вызываться после того, как все узлы и рёбра добавлены.
 func finalize() -> void:
 	_site_adjacent_slots.clear()
