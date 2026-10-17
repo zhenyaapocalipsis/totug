@@ -6008,7 +6008,7 @@ func test_karatur_deck() -> void:
 	section("Kara-Tur (New Era Ionia): полуколода и Retain")
 	var I := IoniaCards
 	var deck := GameSetup.expand_half_deck("ionia")
-	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Adult Bronze Dragon, Sprite, Violet Fungus; Mage и Young Brass по 3)")
+	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Adult Bronze Dragon, Violet Fungus, Young Brass Dragon; Mage и Sprite по 3)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true

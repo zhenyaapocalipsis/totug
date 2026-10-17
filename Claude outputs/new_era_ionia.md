@@ -16,7 +16,7 @@
 | 49801 | Oni | Shen | 6 | Malice (Valor) | 3/6 | 1 |
 | 49802 | Adult Bronze Dragon | Kinkou Wayfinder | 3 | Conquest | 2/4 | 0 (убран, NE-24) |
 | 49803 | Ancient Black Dragon | Zed | 7 | Guile | 3/6 | 1 |
-| 49804 | Sprite | Airis | 3 | Ambition | 1/3 | 0 (убран, NE-24) |
+| 49804 | Sprite | Airis | 3 | Ambition | 1/3 | 3 (вернул владелец, NE-25) |
 | 49805 | Dryad | Blossoming Blade | 3 | Ambition | 1/3 | 3 |
 | 49806 | Ancient Copper Dragon | **Hwei** (вместо Jhin) | 6 | Guile | 3/6 | 1 |
 | 49807 | Ancient Blue Dragon | Yasuo | 7 | Malice (Valor) | 3/7 | 1 |
@@ -26,7 +26,7 @@
 | 49811 | Tarrasque | Lee Sin | 6 | Malice (Valor) | 3/6 | 1 |
 | 49812 | Copper Dragon Wyrmling | Navori Highwayman | 2 | Conquest | 1/3 | 4 |
 | 49813 | Silver Dragon Wyrmling | Greenglade Duo | 2 | Conquest | 1/3 | 3 |
-| 49814 | Young Brass Dragon | Swole Squirrel | 3 | Malice (Valor) | 1/3 | 3 |
+| 49814 | Young Brass Dragon | Swole Squirrel | 3 | Malice (Valor) | 1/3 | 0 (убран, NE-25) |
 | 49815 | Ancient Bronze Dragon | Irelia | 6 | Conquest | 3/6 | 1 |
 | 49816 | Adult Copper Dragon | Pathless Ancient | 3 | Malice (Valor) | 1/3 | 3 |
 | 49817 | Merrow | Kinkou Lifeblade | 3 | Malice (Valor) | 1/3 | 3 |
@@ -36,7 +36,7 @@
 | 49821 | Ancient Silver Dragon | Karma | 6 | Ambition | 3/7 | 1 |
 | 49822 | Kraken | Master Yi | 6 | Malice (Valor) | 3/6 | 1 |
 
-Итого 30 обычных + 10 чемпионов = 40 (NE-24, 2026-10-17: владелец убрал Adult Bronze Dragon, Sprite, Violet Fungus — в cards.json остались; Mage и Young Brass Dragon по 3).
+Итого 30 обычных + 10 чемпионов = 40. NE-24 (2026-10-17): владелец убрал Adult Bronze Dragon, Sprite, Violet Fungus, Mage и Young Brass Dragon по 3. NE-25: Young Brass Dragon заменён на Sprite (3 копии). Убранные остались в cards.json. PROTOCOL 33.
 
 ## Retain
 Правило мода: карта остаётся в руке после конца хода; новая рука — 5 карт без удержанных, потом удержанные добавляются.
