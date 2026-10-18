@@ -20,6 +20,8 @@ uniform float rim : hint_range(0.0, 1.0) = 0.0;
 uniform vec3 ember_hot : source_color = vec3(1.0, 0.85, 0.45);
 uniform vec3 ember_cold : source_color = vec3(0.85, 0.25, 0.12);
 uniform vec2 offset = vec2(0.0);
+// своя цветная обводка (0 — без неё: у готовых эффектов PixelLab тёмный край уже есть)
+uniform float outline = 1.0;
 // проявление снизу вверх: wipe 0 — клочьями (сгорает), 1 — снизу вверх с рваной кромкой;
 // region_uv — кадр в листе (u0, v0, u1, v1), чтобы знать высоту внутри кадра
 uniform float wipe : hint_range(0.0, 1.0) = 0.0;
@@ -79,6 +81,7 @@ void fragment() {
 		}
 		COLOR = vec4(c, 1.0);
 	} else {
+		if (outline < 0.5) discard;
 		// обводка: пустой пиксель рядом с непрозрачным (и не растворённым)
 		vec4 nb = vec4(0.0);
 		vec2 dirs[4] = vec2[4](vec2(1.0, 0.0), vec2(-1.0, 0.0), vec2(0.0, 1.0), vec2(0.0, -1.0));

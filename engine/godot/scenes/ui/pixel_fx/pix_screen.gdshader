@@ -9,7 +9,7 @@ render_mode unshaded;
 // - wave: ударная волна от рёва — кольцо преломляет картинку (сдвиг по радиусу);
 // - heat: горячий воздух над картой — строки дрожат на пиксель;
 // - art_glow: красное на арте карты раскаляется (дракон на арте «вспыхивает»);
-// - shadow: тень огромных крыльев проносится по экрану (силуэт сверху, край —
+// - shadow: тень дракона (кадры взмахов, PixelLab) проносится по экрану (край —
 //   растворяется узором: тень от высоко летящего — мягкая);
 // - wind: полосы ветра за тенью;
 // - sky: свет огненного вала на доске (вокруг band_y);
@@ -28,8 +28,12 @@ uniform float heat = 0.0;
 uniform float art_glow = 0.0;
 uniform float shadow_x = -9999.0;
 uniform float shadow_y = 270.0;
-uniform float shadow_scale = 1.0;
-uniform float band_y = 270.0;
+uniform float shadow_scale = 3.0;
+uniform float shadow_angle = 0.0;
+uniform sampler2D shadow_tex : filter_linear;
+uniform vec4 shadow_uv = vec4(0.0, 0.0, 1.0, 1.0);
+uniform vec2 shadow_size = vec2(160.0, 160.0);
+uniform vec2 sky_c = vec2(480.0, 270.0);
 uniform float wind = 0.0;
 uniform float sky = 0.0;
 uniform float vignette = 0.0;
@@ -71,55 +75,6 @@ float ellipse(vec2 p, vec2 c, vec2 r) {
 	return (length(q) - 1.0) * min(r.x, r.y);
 }
 
-// Знаковое расстояние до многоугольника из 9 точек (вогнутого тоже) — приём Иниго
-// Килеса (sdPolygon): минимум расстояний до сторон, знак — по чётности пересечений.
-float poly9(vec2 p, vec2 v[9]) {
-	float d = dot(p - v[0], p - v[0]);
-	float s = 1.0;
-	for (int i = 0, j = 8; i < 9; j = i, i++) {
-		vec2 e = v[j] - v[i];
-		vec2 w = p - v[i];
-		vec2 b = w - e * clamp(dot(w, e) / dot(e, e), 0.0, 1.0);
-		d = min(d, dot(b, b));
-		bvec3 c = bvec3(p.y >= v[i].y, p.y < v[j].y, e.x * w.y > e.y * w.x);
-		if (all(c) || all(not(c))) s *= -1.0;
-	}
-	return s * sqrt(d);
-}
-
-// Силуэт дракона сверху, летит влево (голова в -x), время tm — живой: крылья машут
-// (размах сжимается при подъёме и опускании, кончики заносятся вперёд на взмахе
-// вниз), по хвосту бежит волна, шея и голова покачиваются, тело чуть виляет.
-float dragon(vec2 p, float tm) {
-	float ph = tm * 6.2831 * 1.3;
-	float span = 0.42 + 0.58 * (0.5 + 0.5 * cos(ph));
-	float sweep = sin(ph) * 34.0;
-	float sway = sin(ph + 1.2) * 5.0;
-	p.y -= sway;
-	float d = ellipse(p, vec2(0.0, 0.0), vec2(120.0, 26.0));
-	float nb = sin(tm * 4.0) * 10.0;
-	d = min(d, capsule(p, vec2(-110.0, 0.0), vec2(-190.0, -6.0 + nb * 0.6), 14.0));
-	d = min(d, ellipse(p, vec2(-215.0, -8.0 + nb), vec2(34.0, 16.0)));
-	// хвост: пять звеньев, волна бежит от тела к кончику
-	vec2 a = vec2(110.0, 0.0);
-	for (int i = 1; i <= 5; i++) {
-		float fi = float(i);
-		vec2 b = vec2(110.0 + fi * 52.0, sin(tm * 5.5 - fi * 0.9) * 7.0 * fi);
-		d = min(d, capsule(p, a, b, 13.0 - fi * 2.0));
-		a = b;
-	}
-	for (int s = -1; s <= 1; s += 2) {
-		float k = float(s) * span;
-		float fs = float(s);
-		vec2 v[9] = vec2[9](
-			vec2(-40.0, 14.0 * fs), vec2(-12.0 - sweep * 0.3, 130.0 * k), vec2(-62.0 - sweep, 300.0 * k),
-			vec2(-4.0 - sweep * 0.7, 232.0 * k), vec2(40.0 - sweep * 0.8, 282.0 * k), vec2(66.0 - sweep * 0.5, 196.0 * k),
-			vec2(122.0 - sweep * 0.6, 212.0 * k), vec2(96.0 - sweep * 0.3, 104.0 * k), vec2(90.0, 24.0 * fs));
-		d = min(d, poly9(p, v));
-	}
-	return d;
-}
-
 void fragment() {
 	vec2 px = floor(SCREEN_UV * game_size);
 	vec2 off = vec2(0.0);
@@ -157,13 +112,24 @@ void fragment() {
 		col += vec3(1.0, 0.5, 0.18) * q * 0.55;
 	}
 
-	// тень крыльев
+	// тень дракона: кадр анимации взмахов (PixelLab, силуэт сверху) — маска с мягким
+	// краем (дракон высоко: тень размыта), повёрнута и увеличена; переход — узором
 	if (shadow_x > -2000.0) {
-		vec2 sp = px - vec2(shadow_x, shadow_y);
-		float d = dragon(sp / shadow_scale, t) * shadow_scale;
-		float k = clamp(-d / 14.0, 0.0, 1.0);
-		if (k > bayer(px) * 0.999) {
-			col *= mix(vec3(0.5, 0.44, 0.56), vec3(0.16, 0.13, 0.2), step(0.5, k));
+		vec2 rel = px + 0.5 - vec2(shadow_x, shadow_y);
+		float ca = cos(-shadow_angle);
+		float sa = sin(-shadow_angle);
+		vec2 loc = vec2(rel.x * ca - rel.y * sa, rel.x * sa + rel.y * ca) / shadow_scale + shadow_size * 0.5;
+		float k = 0.0;
+		if (loc.x > -4.0 && loc.y > -4.0 && loc.x < shadow_size.x + 4.0 && loc.y < shadow_size.y + 4.0) {
+			for (int i = 0; i < 5; i++) {
+				vec2 o = i == 0 ? vec2(0.0) : vec2(i == 1 ? 1.5 : (i == 2 ? -1.5 : 0.0), i == 3 ? 1.5 : (i == 4 ? -1.5 : 0.0));
+				vec2 q = clamp((loc + o) / shadow_size, 0.0, 1.0);
+				k += texture(shadow_tex, mix(shadow_uv.xy, shadow_uv.zw, q)).a;
+			}
+			k /= 5.0;
+		}
+		if (k > 0.05 && k > bayer(px) * 0.9) {
+			col *= mix(vec3(0.5, 0.44, 0.56), vec3(0.16, 0.13, 0.2), step(0.55, k));
 		}
 		// ветер за тенью: короткие светлые штрихи летят влево
 		if (wind > 0.0) {
@@ -176,9 +142,9 @@ void fragment() {
 		}
 	}
 
-	// свет огненного вала на доске: три полосы вокруг band_y, стыки — узором
+	// свет огня на доске: ступени вокруг sky_c (середина струи), стыки — узором
 	if (sky > 0.0) {
-		float g = (1.0 - abs(px.y - band_y) / 130.0) * sky;
+		float g = (1.0 - length((px - sky_c) * vec2(0.7, 1.0)) / 150.0) * sky;
 		g += (vnoise(vec2(px.x / 60.0, t * 0.8)) - 0.5) * 0.25 * sky;
 		float q = floor(clamp(g, 0.0, 1.0) * 3.0 + bayer(px) * 0.999) / 3.0;
 		col += vec3(0.85, 0.32, 0.08) * q * 0.45;

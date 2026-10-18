@@ -27,9 +27,9 @@ const RECIPES := {
 	# Red Dragon, фаза A (сценарий владельца 2026-10-18): дракон не рисуется (он на арте),
 	# его присутствие — заряд, рёв (волна), тень крыльев, ветер, зарево и пепел.
 	"48426": {"len": 3.4, "sound": "", "screen": true, "dim": 0.5,
-		"stops": [[0.7, 0.1]], "shakes": [[0.7, 3.5, 5.0], [1.9, 1.5, 4.0]], "trembles": [[0.05, 0.7, 1.6]],
+		"stops": [[0.7, 0.1]], "shakes": [[0.7, 3.5, 5.0], [1.2, 1.5, 4.0]], "trembles": [[0.05, 0.7, 1.6]],
 		"jolts": [0.7],
-		"cues": [[0.0, "red_dragon_rumble"], [0.68, "red_dragon_roar"], [0.95, "red_dragon_wings"], [1.85, "red_dragon_breath"]]},
+		"cues": [[0.0, "red_dragon_rumble"], [0.68, "red_dragon_roar"], [0.95, "red_dragon_wings"], [1.15, "red_dragon_breath"]]},
 }
 
 static var _layers: Dictionary = {}
@@ -316,6 +316,7 @@ class Stage extends Control:
 			m.set_shader_parameter("rim", float(it.get("rim", 0.0)))
 			m.set_shader_parameter("rim_dir", it.get("rim_dir", Vector2(-1, -1)))
 			m.set_shader_parameter("rim_color", it.get("rim_color", Color(1.0, 0.55, 0.25)))
+			m.set_shader_parameter("outline", float(it.get("outline", 1.0)))
 
 	func _fill(holder: Control, items: Array, t: float) -> void:
 		while holder.get_child_count() < items.size():
@@ -419,14 +420,16 @@ class ScreenFx extends ColorRect:
 #   2.90-3.40 пепел оседает, рамка гаснет.
 
 const RD_ROAR := 0.7
-const RD_SHADOW := Vector2(0.85, 2.35)
-const RD_BREATH := Vector2(1.9, 3.0)
+const RD_SHADOW := Vector2(0.85, 2.45)
+const RD_BREATH := Vector2(1.2, 2.25)
 const RD_END := 3.4
-
-
-## Высота огненного вала — середина экрана.
-static func _rd_band_y(area: Rect2) -> float:
-	return floorf(area.size.y * 0.5)
+## Лист тени (PixelLab: силуэт сверху + анимация взмахов) и огня (vfx_workbench).
+const RD_SHADOW_SHEET := "48426/shadow"
+const RD_BREATH_SHEET := "48426/breath"
+const RD_SCORCH_SHEET := "48426/scorch"
+## Силуэт на листе смотрит вверх-влево; поворот, чтобы летел влево; увеличение.
+const RD_SHADOW_ANGLE := -PI * 0.25
+const RD_SHADOW_SCALE := 3.0
 
 
 ## Жар рамки карты 0..1: растёт к рёву, на рёве — добела, потом остывает.
@@ -436,18 +439,38 @@ static func _rd_heat(t: float) -> float:
 	return 1.0 - 0.7 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.8), 2.0) - 0.3 * PixKit.span(t, 2.6, RD_END)
 
 
+## Где тень дракона: центр, кадр взмаха (12 к/с по кругу), пасть на экране; пусто —
+## тени нет. Летит справа налево через середину экрана, чуть покачиваясь.
+static func _rd_shadow(t: float) -> Dictionary:
+	var s := PixKit.span(t, RD_SHADOW.x, RD_SHADOW.y)
+	if s <= 0.0 or s >= 1.0:
+		return {}
+	var sheet_d := sheet(RD_SHADOW_SHEET)
+	var n := int(sheet_d["anims"]["flap"][1])
+	var frame := anim_frame(RD_SHADOW_SHEET, "flap", int(t * 12.0) % n)
+	var c := Vector2(lerpf(1380.0, -420.0, s), 250.0 + sin(t * 5.0) * 6.0)
+	var size := Vector2(float(sheet_d["w"]), float(sheet_d["h"]))
+	var m: Array = sheet_d["mouths"][frame]
+	var mouth := c + ((Vector2(float(m[0]), float(m[1])) - size * 0.5) * RD_SHADOW_SCALE).rotated(RD_SHADOW_ANGLE)
+	return {"c": c, "frame": frame, "mouth": mouth.floor(), "size": size, "sheet": sheet_d}
+
+
+## Сила дыхания 0..1 (разгорается и гаснет).
+static func _rd_breath_k(t: float) -> float:
+	return PixKit.ease_out(PixKit.span(t, RD_BREATH.x, RD_BREATH.x + 0.15), 2.0) \
+		* (1.0 - PixKit.span(t, RD_BREATH.y - 0.2, RD_BREATH.y))
+
+
 static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
 	var fade_out := 1.0 - PixKit.span(t, 2.9, RD_END)
-	var shadow := PixKit.span(t, RD_SHADOW.x, RD_SHADOW.y)
-	var sx := lerpf(1450.0, -560.0, shadow) if shadow > 0.0 and shadow < 1.0 else -1e4
+	var sh := _rd_shadow(t)
 	var art_pulse := 0.0
 	if t < RD_ROAR:
 		art_pulse = 0.2 + 0.3 * absf(sin(t * 17.0)) * t / RD_ROAR
 	else:
 		art_pulse = 1.0 - 0.7 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.6), 2.0)
-	var breath := PixKit.ease_out(PixKit.span(t, RD_BREATH.x, RD_BREATH.x + 0.3), 2.0) \
-		* (1.0 - PixKit.span(t, RD_BREATH.y - 0.4, RD_BREATH.y + 0.2))
-	return {
+	var breath := _rd_breath_k(t)
+	var p := {
 		"time": t,
 		"card": Vector4(card.position.x, card.position.y, card.size.x, card.size.y),
 		"art": Vector4(card.position.x + 4.0, card.position.y + 22.0, card.size.x - 8.0, 112.0),
@@ -456,14 +479,26 @@ static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
 		"wave_r": 600.0,
 		"heat": PixKit.span(t, 0.05, RD_ROAR) * (1.0 - 0.4 * PixKit.span(t, RD_ROAR, 1.6)) * fade_out,
 		"art_glow": maxf(art_pulse, breath * 0.6) * fade_out,
-		"shadow_x": sx,
-		"shadow_y": card.get_center().y + 30.0 - 90.0 * shadow,
-		"shadow_scale": 0.9 + 0.25 * sin(shadow * PI),
-		"wind": 1.0 if shadow > 0.0 and shadow < 1.0 else 0.0,
-		"sky": breath * (0.85 + 0.15 * sin(t * 31.0)),
-		"band_y": 270.0,
+		"shadow_x": -1e4,
+		"wind": 0.0,
+		"sky": 0.0,
 		"vignette": 0.85 * PixKit.ease_out(PixKit.span(t, 0.0, 0.6), 2.0) * fade_out,
 	}
+	if not sh.is_empty():
+		var sd: Dictionary = sh["sheet"]
+		var tex: Texture2D = sd["tex"]
+		var ts := Vector2(tex.get_size())
+		var fw := float(sd["w"])
+		var fh := float(sd["h"])
+		var cols := int(sd["cols"])
+		var f := int(sh["frame"])
+		var o := Vector2(float(f % cols) * fw, float(f / cols) * fh)
+		p.merge({"shadow_x": (sh["c"] as Vector2).x, "shadow_y": (sh["c"] as Vector2).y,
+			"shadow_tex": tex, "shadow_uv": Vector4(o.x / ts.x, o.y / ts.y, (o.x + fw) / ts.x, (o.y + fh) / ts.y),
+			"shadow_size": Vector2(fw, fh), "shadow_angle": RD_SHADOW_ANGLE, "shadow_scale": RD_SHADOW_SCALE,
+			"wind": 1.0, "sky": breath * (0.85 + 0.15 * sin(t * 31.0)),
+			"sky_c": (sh["mouth"] as Vector2) + Vector2(-130.0, 0.0)}, true)
+	return p
 
 
 static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
@@ -472,7 +507,6 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 	var fire := PixPal.ramp("fire", Pix.LIGHT)
 	var ash := PixPal.ramp("smoke", Pix.LIGHT)
 	var heat := _rd_heat(t)
-	var by := _rd_band_y(L["area"])
 
 	# раскалённая рамка: внешний ряд и ряд по краю карты, ступень огня по жару,
 	# по периметру мерцает кусками (у каждого куска свой шум, меняется по кадрам)
@@ -537,27 +571,49 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 				ash.slice(0, 4), float(e[2]))
 
 	# ветер за тенью: угли и пепел несёт влево
-	var sh := PixKit.span(t, RD_SHADOW.x, RD_SHADOW.y)
-	if sh > 0.03 and sh < 0.98:
-		var sx := lerpf(1450.0, -560.0, sh)
-		PixKit.embers(front, 91, Vector2(sx + 320.0, card.get_center().y), t - RD_SHADOW.x, 60, PI, 0.3, 420.0,
-			Vector2(-160, 10), 0.9, fire.slice(1, 7), 420.0)
+	var sd := _rd_shadow(t)
+	if not sd.is_empty():
+		var sc: Vector2 = sd["c"]
+		PixKit.embers(front, 91, sc + Vector2(300.0, 0.0), t - RD_SHADOW.x, 60, PI, 0.3, 420.0,
+			Vector2(-160, 10), 0.9, fire.slice(1, 7), 380.0)
 
-	# огненный вал посередине поля, за картой: голова пробегает справа налево, хвост
-	# догоняет; поверх — живые языки (шейдер), дым над валом после, угли с него
-	var bh := 1.5 * PixKit.ease_out(PixKit.span(t, RD_BREATH.x, RD_BREATH.x + 0.45), 1.4)
-	var bt := 1.5 * PixKit.ease_in(PixKit.span(t, RD_BREATH.x + 0.55, RD_BREATH.y), 1.3)
-	if bh > 0.0 and bt < 1.45:
-		fluid(L, "back", true, 0, Vector2(1020, by - 6.0), Vector2(-60, by + 10.0), 22.0, 46.0,
-			{"head": bh, "tail": bt, "power": 1.2, "cool": 0.0, "seed": 9.0, "pad": 90.0, "warp": 1.0})
-		PixKit.embers(back, 111, Vector2(480.0, by), t - RD_BREATH.x, 70,
-			-PI * 0.5, 2.2, 90.0, Vector2(-60, 40), 1.1, fire.slice(0, 6), 900.0)
+	# дыхание сверху: огонь льётся из пасти тени вперёд (влево), летит вместе с ней;
+	# там, где он ложится на землю, остаются тлеющие выжженные пятна
+	var by := 250.0
+	var breath := _rd_breath_k(t)
+	if breath > 0.0 and not sd.is_empty():
+		var bs := sheet(RD_BREATH_SHEET)
+		var bf := int(t * 20.0) % int(bs["anims"]["loop"][1])
+		var mouth: Vector2 = sd["mouth"]
+		by = mouth.y
+		var bm: Array = bs["mouths"][bf]
+		var pos := mouth - Vector2(float(int(bs["w"]) - 1 - int(bm[0])), float(bm[1]))
+		sprite(L, "front", RD_BREATH_SHEET, anim_frame(RD_BREATH_SHEET, "loop", bf), pos,
+			{"flip": true, "outline": 0.0, "dissolve": 1.0 - breath, "wipe": 0.0})
+	# выжженные пятна: появляются, когда конец огня (≈200 px перед пастью) проходит их
+	var sc_sheet := sheet(RD_SCORCH_SHEET)
+	var sn := int(sc_sheet["anims"]["loop"][1])
+	for i in 11:
+		var x := 900.0 - 80.0 * float(i) + PixKit.rnd_range(121, i, -18.0, 18.0)
+		# когда пасть была на x + 200: обратная функция полёта тени
+		var s_at := inverse_lerp(1380.0, -420.0, x + 200.0)
+		var t_at := lerpf(RD_SHADOW.x, RD_SHADOW.y, s_at)
+		if t < t_at or t_at < RD_BREATH.x + 0.05 or t_at > RD_BREATH.y - 0.1:
+			continue
+		var appear := PixKit.span(t, t_at, t_at + 0.15)
+		var gone := PixKit.span(t, 2.9, RD_END)
+		var y := 250.0 + PixKit.rnd_range(122, i, -16.0, 16.0)
+		var f := anim_frame(RD_SCORCH_SHEET, "loop", (int(t * 10.0) + i * 3) % sn)
+		sprite(L, "back", RD_SCORCH_SHEET, f, Vector2(x - 45.0, y - 20.0),
+			{"outline": 0.0, "dissolve": maxf(1.0 - appear, gone), "wipe": 0.0})
+		PixKit.embers(back, 130 + i, Vector2(x, y), t - t_at, 8, -PI * 0.5, 1.4, 50.0, Vector2(0, -30), 0.9,
+			fire.slice(0, 6), 50.0)
 	var sm := PixKit.span(t, RD_BREATH.x + 0.4, RD_BREATH.x + 0.8) * (1.0 - PixKit.span(t, 3.0, RD_END))
 	if sm > 0.0:
 		for i in 4:
-			var p0 := Vector2(120.0 + 230.0 * float(i), by - 26.0)
+			var p0 := Vector2(120.0 + 230.0 * float(i), by - 16.0)
 			fluid(L, "back", false, 2, p0, p0 + Vector2(12, -150), 22.0, 46.0,
-				{"power": sm * (0.75 + 0.25 * float(i % 2)), "seed": 7.0 + float(i) * 13.0})
+				{"power": sm * (0.65 + 0.25 * float(i % 2)), "seed": 7.0 + float(i) * 13.0})
 
 	# пепел оседает после вала: медленные хлопья, качаются
 	var fall := t - RD_BREATH.x - 0.4
