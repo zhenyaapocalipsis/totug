@@ -23,10 +23,7 @@ const SPRITE_SHADER := preload("res://scenes/ui/pixel_fx/pix_sprite.gdshader")
 ## [когда, сила, затухание]; trembles — дрожь [с, по, сила]; flashes — белые вспышки
 ## карты (когда).
 const RECIPES := {
-	# Red Dragon: призыв как в Hearthstone — пламя из-за карты, из огня проступает дракон, встаёт на дыбы, бьёт огнём по доске, сгорает в угли.
-	"48426": {"len": 3.0, "sound": "kill",
-		"stops": [[1.6, 0.1]], "shakes": [[0.3, 2.0, 8.0], [1.6, 3.5, 5.0]], "trembles": [[0.0, 0.3, 1.2]],
-		"flashes": []},
+	# пока пусто: постановка Red Dragon снята владельцем (2026-10-18)
 }
 
 static var _layers: Dictionary = {}
@@ -209,9 +206,7 @@ static func texture(layers: Dictionary, name: String) -> Texture2D:
 
 
 static func draw_recipe(cid: String, L: Dictionary, card: Rect2, t: float) -> void:
-	match cid:
-		"48426":
-			_red_dragon(L, card, t)
+	pass
 
 
 ## Сцена одной стороны эффекта (позади карты или поверх): шейдерный огонь/дым под
@@ -325,112 +320,3 @@ class Stage extends Control:
 			m.set_shader_parameter("colours", (PixPal.RAMPS[ramp] as Array).size())
 
 
-# --- Red Dragon -----------------------------------------------------------------
-# Призыв как у легендарок Hearthstone: заряд -> извержение -> существо проявляется
-# -> замах -> удар -> уход. Карта призывает дракона: из-за неё рвётся пламя, из огня
-# перед картой проступает дракон (спрайт Cethiel, OpenGameArt CC0, переведён в
-# пиксель-арт tools/sprite_pixelize.gd), встаёт на дыбы и бьёт огнём по доске влево,
-# потом сгорает в угли. Сама карта не горит — только светится огнём.
-
-const RD_SHEET := "48426/dragon"
-const RD_ERUPT := 0.3
-const RD_SHOW := 0.32
-const RD_REAR := 0.9
-const RD_BREATH := 1.6
-const RD_BREATH_END := 2.3
-const RD_GONE := 2.45
-
-
-## Левый верхний угол спрайта: стоит перед картой, ногами у её низа, туловищем
-## правее центра (голова — у левого края); при проявлении поднимается из огня.
-static func _rd_pos(card: Rect2, t: float) -> Vector2:
-	var s := sheet(RD_SHEET)
-	var rise := 24.0 * (1.0 - PixKit.ease_out(PixKit.span(t, RD_SHOW, RD_SHOW + 0.45), 2.0))
-	return Vector2(card.get_center().x + 70.0 - float(s["w"]) * 0.5, card.end.y + 24.0 - float(s["h"]) + rise).floor()
-
-
-## Кадр листа: покой -> атака 12..42 (на дыбы, вдох) -> бросок 42..46 -> пока дышит
-## огнём, качается 46..50 -> возврат 50..64.
-static func _rd_frame(t: float) -> int:
-	if t < RD_REAR:
-		var n := int(sheet(RD_SHEET)["anims"]["idle"][1])
-		return anim_frame(RD_SHEET, "idle", int(t * 20.0) % n)
-	if t < RD_BREATH:
-		return anim_frame(RD_SHEET, "attack", 12 + int(30.0 * PixKit.span(t, RD_REAR, RD_BREATH)))
-	if t < RD_BREATH_END:
-		var dt := t - RD_BREATH
-		if dt < 0.2:
-			return anim_frame(RD_SHEET, "attack", 42 + int(dt * 20.0))
-		var k := int((dt - 0.2) * 20.0) % 8
-		return anim_frame(RD_SHEET, "attack", 46 + (k if k < 4 else 8 - k))
-	return anim_frame(RD_SHEET, "attack", 50 + int((t - RD_BREATH_END) * 40.0))
-
-
-static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
-	var back: Pix = L["back"]
-	var front: Pix = L["front"]
-	var glow: Pix = L["glow"]
-	glow.set_clip(card)
-	var fire := PixPal.ramp("fire", Pix.LIGHT)
-	var gfire := PixPal.ramp("glow_fire", Pix.LIGHT)
-	var c := card.get_center()
-	var corner := card.position
-
-	# 1. Заряд: из-за карты пробивается пламя по краям, растёт; угли.
-	var charge := PixKit.ease_in(PixKit.span(t, 0.0, RD_ERUPT), 1.5)
-	var flare := PixKit.ease_out(PixKit.span(t, RD_ERUPT, RD_ERUPT + 0.08), 2.0) * (1.0 - PixKit.span(t, RD_ERUPT + 0.1, 1.3))
-	var edge := maxf(charge * 0.55, flare)
-	if edge > 0.0:
-		fluid(L, "back", false, 1, corner, corner + Vector2(card.size.x, 0), 0.0, 22.0 + 60.0 * flare,
-			{"power": edge, "seed": 11.0})
-		fluid(L, "back", false, 1, corner + Vector2(0, card.size.y), corner, 0.0, 18.0 + 30.0 * flare,
-			{"power": edge * 0.8, "seed": 17.0})
-		fluid(L, "back", false, 1, corner + card.size, corner + Vector2(card.size.x, 0), 0.0, 18.0 + 30.0 * flare,
-			{"power": edge * 0.8, "seed": 23.0, "flip": -1.0})
-	PixKit.embers(back, 31, Vector2(c.x, card.end.y), t, 36, -PI * 0.5, 0.6, 80.0, Vector2(0, -50),
-		1.5, fire.slice(0, 7), card.size.x + 30.0)
-
-	# 2. Извержение: звезда над картой, свет.
-	PixKit.burst(front, 5, c.x, corner.y + 2.0, 70.0, PixKit.span(t, RD_ERUPT, RD_ERUPT + 0.22), 13, fire[0], fire[2])
-
-	# 3-6. Дракон: проявляется из огня (силуэт -> рисунок, тлеющая кромка), замах,
-	# огонь, уход в угли.
-	if t >= RD_SHOW and t < RD_GONE + 0.55:
-		var pos := _rd_pos(card, t)
-		var frame := _rd_frame(t)
-		var show := PixKit.ease_out(PixKit.span(t, RD_SHOW, RD_SHOW + 0.4), 1.6)
-		var gone := PixKit.ease_in(PixKit.span(t, RD_GONE, RD_GONE + 0.5), 1.3)
-		var breathing := t >= RD_BREATH and t < RD_BREATH_END + 0.1
-		var opts := {
-			"dissolve": maxf(1.0 - show, gone),
-			"wipe": 1.0,
-			"silhouette": 1.0 - PixKit.span(t, RD_SHOW + 0.15, RD_SHOW + 0.55),
-			"rim": 0.85 if breathing else 0.5 * flare + 0.35,
-			"rim_dir": Vector2(-1, 0) if breathing else Vector2(0, -1),
-			"rim_color": Color("ffb52e") if breathing else Color("d04a2e"),
-		}
-		sprite(L, "front", RD_SHEET, frame, pos, opts)
-		# угли с тлеющей кромки при уходе
-		if gone > 0.0:
-			PixKit.embers(front, 51, pos + Vector2(150, 90), t - RD_GONE, 60, -PI * 0.5, 2.2, 90.0,
-				Vector2(0, -60), 1.0, fire.slice(0, 6), 200.0)
-		# 5. Огонь из пасти: метёт по доске слева-сверху вниз
-		var breath := PixKit.span(t, RD_BREATH, RD_BREATH + 0.05) * (1.0 - PixKit.span(t, RD_BREATH_END - 0.1, RD_BREATH_END + 0.05))
-		if breath > 0.0:
-			var mouth := mouth_at(RD_SHEET, frame, pos)
-			var sw := PixKit.span(t, RD_BREATH, RD_BREATH_END)
-			var aim := lerpf(PI + 0.12, PI - 0.5, (1.0 - cos(sw * PI)) * 0.5)
-			var dirv := Vector2(cos(aim), sin(aim))
-			var head_k := 1.5 * PixKit.ease_out(PixKit.span(t, RD_BREATH, RD_BREATH + 0.1), 1.6)
-			fluid(L, "front", true, 0, mouth + dirv * 4.0, mouth + dirv * 300.0, 3.0, 48.0,
-				{"head": head_k, "tail": 0.0, "power": breath, "seed": 3.0, "pad": 100.0})
-			PixKit.burst(front, 7, mouth.x - 2.0, mouth.y, 20.0, PixKit.span(t, RD_BREATH, RD_BREATH + 0.15), 7, fire[0], fire[1])
-	# дым там, где прошёл огонь, и угли с него
-	var sm := PixKit.span(t, RD_BREATH + 0.2, RD_BREATH + 0.6) * (1.0 - PixKit.span(t, 2.5, 3.0))
-	if sm > 0.0:
-		for i in 3:
-			var p0 := corner + Vector2(-70.0 - 80.0 * float(i), 150.0 + 40.0 * float(i))
-			fluid(L, "back", false, 2, p0, p0 + Vector2(10, -130), 16.0, 40.0,
-				{"power": sm * (0.75 + 0.25 * float(i % 2)), "seed": 7.0 + float(i) * 13.0})
-	PixKit.embers(front, 41, corner + Vector2(-150, 150), t - RD_BREATH - 0.15, 40, -PI * 0.5, 2.4, 50.0,
-		Vector2(0, 60), 1.4, fire.slice(0, 6), 220.0)
