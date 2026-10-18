@@ -1371,6 +1371,8 @@ func _react_to_events(events: Array) -> void:
 			# Уникальная карта: вспышка, свой эффект вокруг неё и встряска доски.
 			"play_card":
 				var played := String(evt.get("card_id", ""))
+				# реплика карты (флейвор), если она озвучена
+				Sfx.voice(played, pid != viewer_id)
 				if CardFx.has(played):
 					_showcase_card(pid, played, "PLAYS", null, "", false, false, true)
 					Sfx.play(CardFx.sound(played), pid != viewer_id)

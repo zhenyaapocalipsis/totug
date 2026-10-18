@@ -1,0 +1,12 @@
+{
+	"_comment": "Реплики карт (флейвор-текст со скана карты). text — что сказать (у eleven_v3 можно теги [whispers], [scared], [shouts]); flavor — как на карте; speaker — кто говорит; voice — голос ElevenLabs (id или имя из --list); model; settings — voice_settings API. Генерация: tools/voice_gen.gd -> assets/voice/<card_id>.mp3.",
+	"48426": {
+		"card": "Red Dragon",
+		"flavor": "\"If you ever see one of these, run.\" — Blacksoot, the Charred",
+		"speaker": "Blacksoot, the Charred: an old survivor, voice burnt hoarse by dragonfire, haunted",
+		"text": "[hoarse, haunted whisper] If you ever see one of these... [terrified, urgent] run.",
+		"voice": "Callum",
+		"model": "eleven_v3",
+		"settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.6, "use_speaker_boost": true}
+	}
+}

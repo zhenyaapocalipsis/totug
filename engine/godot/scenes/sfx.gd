@@ -46,6 +46,7 @@ static var volume := 1.0
 
 var _streams: Dictionary = {}
 var _voices: Array[AudioStreamPlayer] = []
+var _voice_player := AudioStreamPlayer.new()
 var _next := 0
 ## Сколько раз за ход уже звучал каждый звук из COMBO.
 var _combo: Dictionary = {}
@@ -59,6 +60,26 @@ static var _starts: Dictionary = {}
 static func play(sound: String, quiet: bool = false, step: int = -1) -> void:
 	if _instance != null:
 		_instance._play(sound, OTHER_DB if quiet else 0.0, step)
+
+
+## Реплики карт (флейвор-текст, озвучен ElevenLabs — tools/voice_gen.gd):
+## res://assets/voice/<card_id>.mp3. Звучит одна реплика за раз (новая обрывает
+## прежнюю), на той же шине SFX; у карты без файла — тишина.
+const VOICE_DIR := "res://assets/voice/"
+## Реплика громче щелчков на столько дБ (речь тише ударов карт).
+const VOICE_DB := 2.0
+
+
+static func voice(card_id: String, quiet: bool = false) -> void:
+	if _instance == null or volume <= 0.0:
+		return
+	var path := "%s%s.mp3" % [VOICE_DIR, card_id]
+	if not ResourceLoader.exists(path):
+		return
+	var p := _instance._voice_player
+	p.stream = load(path)
+	p.volume_db = VOICE_DB + (OTHER_DB if quiet else 0.0)
+	p.play()
 
 
 ## Новый ход — лесенки тона начинаются заново.
@@ -110,6 +131,8 @@ func _ready() -> void:
 	if cfg.load(GameSettings.path()) == OK:
 		volume = float(cfg.get_value("audio", "sfx_volume", 1.0))
 	_apply_volume()
+	_voice_player.bus = BUS
+	add_child(_voice_player)
 	for i in VOICES:
 		var p := AudioStreamPlayer.new()
 		p.bus = BUS
