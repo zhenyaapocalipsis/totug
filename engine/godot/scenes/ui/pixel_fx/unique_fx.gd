@@ -27,9 +27,9 @@ const RECIPES := {
 	# Red Dragon, фаза A (сценарий владельца 2026-10-18): дракон не рисуется (он на арте),
 	# его присутствие — заряд, рёв (волна), тень крыльев, ветер, зарево и пепел.
 	"48426": {"len": 3.4, "sound": "", "screen": true, "dim": 0.5,
-		"stops": [[0.7, 0.1]], "shakes": [[0.7, 3.5, 5.0], [1.2, 1.5, 4.0]], "trembles": [[0.05, 0.7, 1.6]],
+		"stops": [[0.7, 0.1]], "shakes": [[0.7, 3.5, 5.0], [1.65, 1.5, 4.0]], "trembles": [[0.05, 0.7, 1.6]],
 		"jolts": [0.7],
-		"cues": [[0.0, "red_dragon_rumble"], [0.68, "red_dragon_roar"], [0.95, "red_dragon_wings"], [1.15, "red_dragon_breath"]]},
+		"cues": [[0.0, "red_dragon_rumble"], [0.68, "red_dragon_roar"], [0.95, "red_dragon_wings"], [1.6, "red_dragon_breath"]]},
 }
 
 static var _layers: Dictionary = {}
@@ -421,11 +421,13 @@ class ScreenFx extends ColorRect:
 
 const RD_ROAR := 0.7
 const RD_SHADOW := Vector2(0.85, 2.45)
-const RD_BREATH := Vector2(1.2, 2.25)
+const RD_TRAIL_Y := 250.0
+const RD_TRAIL_LAG := 0.35
+const RD_PATCHES := 46
 const RD_END := 3.4
 ## Лист тени (PixelLab: силуэт сверху + анимация взмахов) и огня (vfx_workbench).
 const RD_SHADOW_SHEET := "48426/shadow"
-const RD_BREATH_SHEET := "48426/breath"
+const RD_FIRE_SHEET := "48426/fire"
 const RD_SCORCH_SHEET := "48426/scorch"
 ## Силуэт на листе смотрит вверх-влево; поворот, чтобы летел влево; увеличение.
 const RD_SHADOW_ANGLE := -PI * 0.25
@@ -455,10 +457,18 @@ static func _rd_shadow(t: float) -> Dictionary:
 	return {"c": c, "frame": frame, "mouth": mouth.floor(), "size": size, "sheet": sheet_d}
 
 
-## Сила дыхания 0..1 (разгорается и гаснет).
-static func _rd_breath_k(t: float) -> float:
-	return PixKit.ease_out(PixKit.span(t, RD_BREATH.x, RD_BREATH.x + 0.15), 2.0) \
-		* (1.0 - PixKit.span(t, RD_BREATH.y - 0.2, RD_BREATH.y))
+## Когда вспыхивает земля в точке x: центр тени прошёл над ней RD_TRAIL_LAG секунд назад.
+static func _rd_ignite_at(x: float) -> float:
+	var s := (1380.0 - x) / 1800.0
+	return lerpf(RD_SHADOW.x, RD_SHADOW.y, s) + RD_TRAIL_LAG
+
+
+## Где сейчас фронт огненного следа (x) и горит ли след (y, 0..1).
+static func _rd_front(t: float) -> Vector2:
+	var s := PixKit.span(t - RD_TRAIL_LAG, RD_SHADOW.x, RD_SHADOW.y)
+	var x := lerpf(1380.0, -420.0, s)
+	var on := PixKit.span(t, _rd_ignite_at(940.0), _rd_ignite_at(900.0)) * (1.0 - PixKit.span(t, 2.7, 3.2))
+	return Vector2(clampf(x, 40.0, 920.0), on)
 
 
 static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
@@ -469,7 +479,7 @@ static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
 		art_pulse = 0.2 + 0.3 * absf(sin(t * 17.0)) * t / RD_ROAR
 	else:
 		art_pulse = 1.0 - 0.7 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.6), 2.0)
-	var breath := _rd_breath_k(t)
+	var front := _rd_front(t)
 	var p := {
 		"time": t,
 		"card": Vector4(card.position.x, card.position.y, card.size.x, card.size.y),
@@ -478,7 +488,7 @@ static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
 		"wave_c": card.get_center() + Vector2(0, -40),
 		"wave_r": 600.0,
 		"heat": PixKit.span(t, 0.05, RD_ROAR) * (1.0 - 0.4 * PixKit.span(t, RD_ROAR, 1.6)) * fade_out,
-		"art_glow": maxf(art_pulse, breath * 0.6) * fade_out,
+		"art_glow": maxf(art_pulse, front.y * 0.5) * fade_out,
 		"shadow_x": -1e4,
 		"wind": 0.0,
 		"sky": 0.0,
@@ -496,8 +506,9 @@ static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
 		p.merge({"shadow_x": (sh["c"] as Vector2).x, "shadow_y": (sh["c"] as Vector2).y,
 			"shadow_tex": tex, "shadow_uv": Vector4(o.x / ts.x, o.y / ts.y, (o.x + fw) / ts.x, (o.y + fh) / ts.y),
 			"shadow_size": Vector2(fw, fh), "shadow_angle": RD_SHADOW_ANGLE, "shadow_scale": RD_SHADOW_SCALE,
-			"wind": 1.0, "sky": breath * (0.85 + 0.15 * sin(t * 31.0)),
-			"sky_c": (sh["mouth"] as Vector2) + Vector2(-130.0, 0.0)}, true)
+			"wind": 1.0}, true)
+	if front.y > 0.0:
+		p.merge({"sky": front.y * (0.85 + 0.15 * sin(t * 31.0)), "sky_c": Vector2(front.x + 60.0, RD_TRAIL_Y)}, true)
 	return p
 
 
@@ -577,46 +588,48 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 		PixKit.embers(front, 91, sc + Vector2(300.0, 0.0), t - RD_SHADOW.x, 60, PI, 0.3, 420.0,
 			Vector2(-160, 10), 0.9, fire.slice(1, 7), 380.0)
 
-	# дыхание сверху: огонь льётся из пасти тени вперёд (влево), летит вместе с ней;
-	# там, где он ложится на землю, остаются тлеющие выжженные пятна
-	var by := 250.0
-	var breath := _rd_breath_k(t)
-	if breath > 0.0 and not sd.is_empty():
-		var bs := sheet(RD_BREATH_SHEET)
-		var bf := int(t * 20.0) % int(bs["anims"]["loop"][1])
-		var mouth: Vector2 = sd["mouth"]
-		by = mouth.y
-		var bm: Array = bs["mouths"][bf]
-		var pos := mouth - Vector2(float(int(bs["w"]) - 1 - int(bm[0])), float(bm[1]))
-		sprite(L, "front", RD_BREATH_SHEET, anim_frame(RD_BREATH_SHEET, "loop", bf), pos,
-			{"flip": true, "outline": 0.0, "dissolve": 1.0 - breath, "wipe": 0.0})
-	# выжженные пятна: появляются, когда конец огня (≈200 px перед пастью) проходит их
+	# огненный след (вид сверху): тень пролетела — и за ней с задержкой волной справа
+	# налево вспыхивает земля посередине поля: пятна пламени (PixelLab, сверху)
+	# разгораются, горят, догорают до тлеющих выжженных пятен; дым над следом
+	var by := RD_TRAIL_Y
+	var fire_s := sheet(RD_FIRE_SHEET)
+	var fn := int(fire_s["anims"]["loop"][1])
+	var fw := float(fire_s["w"])
+	var fh := float(fire_s["h"])
 	var sc_sheet := sheet(RD_SCORCH_SHEET)
 	var sn := int(sc_sheet["anims"]["loop"][1])
-	for i in 11:
-		var x := 900.0 - 80.0 * float(i) + PixKit.rnd_range(121, i, -18.0, 18.0)
-		# когда пасть была на x + 200: обратная функция полёта тени
-		var s_at := inverse_lerp(1380.0, -420.0, x + 200.0)
-		var t_at := lerpf(RD_SHADOW.x, RD_SHADOW.y, s_at)
-		if t < t_at or t_at < RD_BREATH.x + 0.05 or t_at > RD_BREATH.y - 0.1:
+	for i in RD_PATCHES:
+		var x := 40.0 + 880.0 * float(i) / float(RD_PATCHES - 1) + PixKit.rnd_range(141, i, -10.0, 10.0)
+		var y := by + PixKit.rnd_range(142, i, -28.0, 28.0)
+		var t0 := _rd_ignite_at(x)
+		if t < t0:
 			continue
-		var appear := PixKit.span(t, t_at, t_at + 0.15)
+		var life := PixKit.rnd_range(143, i, 0.8, 1.2)
+		var appear := PixKit.span(t, t0, t0 + 0.1)
+		var burnt := PixKit.span(t, t0 + life, t0 + life + 0.35)
 		var gone := PixKit.span(t, 2.9, RD_END)
-		var y := 250.0 + PixKit.rnd_range(122, i, -16.0, 16.0)
-		var f := anim_frame(RD_SCORCH_SHEET, "loop", (int(t * 10.0) + i * 3) % sn)
-		sprite(L, "back", RD_SCORCH_SHEET, f, Vector2(x - 45.0, y - 20.0),
-			{"outline": 0.0, "dissolve": maxf(1.0 - appear, gone), "wipe": 0.0})
-		PixKit.embers(back, 130 + i, Vector2(x, y), t - t_at, 8, -PI * 0.5, 1.4, 50.0, Vector2(0, -30), 0.9,
-			fire.slice(0, 6), 50.0)
-	var sm := PixKit.span(t, RD_BREATH.x + 0.4, RD_BREATH.x + 0.8) * (1.0 - PixKit.span(t, 3.0, RD_END))
+		# выжженное пятно под огнём — с середины горения и до конца
+		if t >= t0 + 0.3:
+			var sf := anim_frame(RD_SCORCH_SHEET, "loop", (int(t * 10.0) + i * 5) % sn)
+			sprite(L, "back", RD_SCORCH_SHEET, sf, Vector2(x - 45.0, y - 20.0),
+				{"outline": 0.0, "dissolve": maxf(1.0 - PixKit.span(t, t0 + 0.3, t0 + 0.6), gone), "wipe": 0.0})
+		if burnt < 1.0:
+			var ff := anim_frame(RD_FIRE_SHEET, "loop", (int(t * 16.0) + i * 3) % fn)
+			sprite(L, "back", RD_FIRE_SHEET, ff, Vector2(x - fw * 0.5, y - fh * 0.5),
+				{"outline": 0.0, "flip": i % 2 == 1, "dissolve": maxf(1.0 - appear, maxf(burnt, gone)), "wipe": 0.0})
+		PixKit.embers(back, 150 + i, Vector2(x, y), t - t0, 6, -PI * 0.5, 2.0, 40.0, Vector2(-15, -25), 1.0,
+			fire.slice(0, 6), 30.0)
+	var sm := PixKit.span(t, _rd_ignite_at(900.0) + 0.3, _rd_ignite_at(900.0) + 0.7) * (1.0 - PixKit.span(t, 3.0, RD_END))
 	if sm > 0.0:
 		for i in 4:
-			var p0 := Vector2(120.0 + 230.0 * float(i), by - 16.0)
-			fluid(L, "back", false, 2, p0, p0 + Vector2(12, -150), 22.0, 46.0,
-				{"power": sm * (0.65 + 0.25 * float(i % 2)), "seed": 7.0 + float(i) * 13.0})
+			var p0 := Vector2(860.0 - 230.0 * float(i), by - 10.0)
+			var on := PixKit.span(t, _rd_ignite_at(p0.x) + 0.25, _rd_ignite_at(p0.x) + 0.6)
+			if on > 0.0:
+				fluid(L, "back", false, 2, p0, p0 + Vector2(-14, -150), 22.0, 46.0,
+					{"power": sm * on * (0.65 + 0.25 * float(i % 2)), "seed": 7.0 + float(i) * 13.0})
 
 	# пепел оседает после вала: медленные хлопья, качаются
-	var fall := t - RD_BREATH.x - 0.4
+	var fall := t - _rd_ignite_at(900.0) - 0.4
 	if fall > 0.0:
 		for i in 80:
 			var born := PixKit.rnd(101, i) * 0.8
