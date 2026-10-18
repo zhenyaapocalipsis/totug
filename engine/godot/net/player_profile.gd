@@ -134,7 +134,7 @@ static func save_favourite(cid: String) -> int:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("profile", "favourite", clean_favourite(cid))
-	return cfg.save(path())
+	return save_cfg(cfg)
 
 
 static func favourite() -> String:
@@ -147,7 +147,7 @@ static func save_ban(deck: String) -> int:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("profile", "ban", deck if GameSetup.available_half_decks().has(deck) else "")
-	return cfg.save(path())
+	return save_cfg(cfg)
 
 
 static func ban() -> String:
@@ -223,6 +223,20 @@ static func path() -> String:
 	return PATH
 
 
+## Запись файла профиля. Папку игры (user://) Godot создаёт при запуске, но
+## бывает, что её нет (2026-10-18: у друга владельца «error 7» = файл не найден
+## при первом сохранении) — тогда создаём её сами прямо перед записью.
+static func save_cfg(cfg: ConfigFile) -> int:
+	ensure_dir(path())
+	return cfg.save(path())
+
+
+## Создаёт папку, в которой лежит файл (user://... или полный путь).
+static func ensure_dir(file: String) -> int:
+	var dir := ProjectSettings.globalize_path(file).get_base_dir()
+	return OK if DirAccess.dir_exists_absolute(dir) else DirAccess.make_dir_recursive_absolute(dir)
+
+
 static func load_local() -> Dictionary:
 	var cfg := ConfigFile.new()
 	if cfg.load(path()) != OK:
@@ -249,7 +263,7 @@ static func save_local(profile: Dictionary) -> int:
 	cfg.set_value("profile", "emblem", p["emblem"])
 	if profile.has("colour"):
 		cfg.set_value("profile", "colour", p["colour"])
-	return cfg.save(path())
+	return save_cfg(cfg)
 
 
 ## Колесо чата (Tab зажат): фразы по сторонам — вверх, вправо, вниз, влево
@@ -292,7 +306,7 @@ static func save_phrases(phrases: Array) -> int:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("chat", "phrases", clean_list)
-	return cfg.save(path())
+	return save_cfg(cfg)
 
 
 ## Выбранная рубашка (сейчас рубашка одна — CardBack.CLASSIC, это "").
@@ -300,7 +314,7 @@ static func save_back(back: String) -> int:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("profile", "back", clean_back(back))
-	return cfg.save(path())
+	return save_cfg(cfg)
 
 
 ## Секретный ключ игрока для рейтинга (RatingBook). Создаётся при первом
@@ -313,7 +327,7 @@ static func key() -> String:
 		var bytes := Crypto.new().generate_random_bytes(16)
 		k = bytes.hex_encode()
 		cfg.set_value("rating", "key", k)
-		cfg.save(path())
+		save_cfg(cfg)
 	return k
 
 
@@ -333,7 +347,7 @@ static func cache_stats(stats: Dictionary) -> void:
 	for field in ["games", "wins"]:
 		if stats.has(field):
 			cfg.set_value("rating", field, int(stats[field]))
-	cfg.save(path())
+	save_cfg(cfg)
 
 
 ## Для карточки игрока: {rating (-1 — ещё не играл онлайн), games, wins}.
@@ -422,7 +436,7 @@ static func add_history(entry: Dictionary) -> void:
 	var list := history()
 	list.push_front(entry)
 	cfg.set_value("history", "games", list.slice(0, HISTORY_MAX))
-	cfg.save(path())
+	save_cfg(cfg)
 
 
 ## Выжимки партий для сводки (ReplayStats.summary_for): файл реплея -> выжимка;
@@ -438,7 +452,7 @@ static func set_history_summaries(by_file: Dictionary) -> void:
 		if file != "" and by_file.has(file):
 			game["summary"] = by_file[file]
 	cfg.set_value("history", "games", list)
-	cfg.save(path())
+	save_cfg(cfg)
 
 
 ## Место в итоге партии (result — место -> {vp, won}): победитель первый;
@@ -544,7 +558,7 @@ static func add_totals(entry: Dictionary) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	cfg.set_value("totals", "all", t)
-	cfg.save(path())
+	save_cfg(cfg)
 
 
 static func name_of(seat: String) -> String:

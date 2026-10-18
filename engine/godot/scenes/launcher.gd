@@ -33,6 +33,11 @@ func _ready() -> void:
 			port = int(arg.get_slice("=", 1))
 	# Номер версии — в журнал (user://logs/godot.log): видно, какая игра запущена.
 	print("Tyrants build %d" % Updater.own_build())
+	# Папка игры (профиль, настройки, записи партий): если её нет, все записи
+	# падают с error 7 — создаём заранее, а неудачу видно в журнале.
+	var data_err := DirAccess.make_dir_recursive_absolute(OS.get_user_data_dir())
+	if data_err != OK:
+		printerr("Tyrants: cannot create %s (error %d)" % [OS.get_user_data_dir(), data_err])
 	if server:
 		_start_server.call_deferred(port)
 		return

@@ -425,7 +425,9 @@ func _save() -> void:
 		_saved_note.text = "Saved."
 		closed.emit()
 	else:
-		_saved_note.text = "Could not save the profile (error %d)." % err
+		# путь к папке — чтобы игрок мог прислать его (антивирус, запрет записи)
+		_saved_note.text = "Could not save the profile (error %d).\n%s" % [err,
+			ProjectSettings.globalize_path(PlayerProfile.path()).get_base_dir()]
 
 
 func _new_name_edit(text: String) -> LineEdit:
