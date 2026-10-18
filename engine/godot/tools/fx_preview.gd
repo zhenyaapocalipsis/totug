@@ -15,6 +15,7 @@ var _bg: TextureRect
 var _back: UniqueFx.Stage
 var _card: TextureRect
 var _front: UniqueFx.Stage
+var _screen: UniqueFx.ScreenFx
 var _flash: ColorRect
 
 
@@ -49,7 +50,8 @@ func _run() -> void:
 		else Image.create_empty(960, 540, false, Image.FORMAT_RGBA8)
 	bg.convert(Image.FORMAT_RGBA8)
 	var dim := Image.create_empty(bg.get_width(), bg.get_height(), false, Image.FORMAT_RGBA8)
-	dim.fill(PixelTheme.DIM)
+	var dk := UniqueFx.dim(cid) if UniqueFx.has(cid) else 1.0
+	dim.fill(Color(PixelTheme.DIM, PixelTheme.DIM.a * dk))
 	bg.blend_rect(dim, Rect2i(Vector2i.ZERO, dim.get_size()), Vector2i.ZERO)
 	_bg.texture = ImageTexture.create_from_image(bg)
 	_back = UniqueFx.Stage.new("back")
@@ -63,6 +65,8 @@ func _run() -> void:
 	_port.add_child(_flash)
 	_front = UniqueFx.Stage.new("front")
 	_port.add_child(_front)
+	_screen = UniqueFx.ScreenFx.new()
+	_port.add_child(_screen)
 
 	var n := ceili(UniqueFx.hold_end(cid) * UniqueFx.FPS)
 	var sheet_idx: Array[int] = []
@@ -87,6 +91,7 @@ func _run() -> void:
 		var L := UniqueFx.frame(cid, card, raw, Vector2(960, 540))
 		_back.show_frame(L)
 		_front.show_frame(L)
+		_screen.show_params(UniqueFx.screen_params(cid, card, UniqueFx.fx_time(cid, raw)))
 		worst = maxi(worst, Time.get_ticks_usec() - tf)
 		_card.position = card.position
 		_flash.position = card.position

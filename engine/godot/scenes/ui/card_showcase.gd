@@ -67,6 +67,8 @@ var _card_rect := Rect2()
 var _layers: Array[SlotLayer] = []
 ## Плашки над картами: по одной на каждую карту ряда (обычно одна).
 var _banners: Array[PanelContainer] = []
+## Экранный проход пиксельных постановок (UniqueFx.ScreenFx) — всегда последний ребёнок.
+var _screen_fx: UniqueFx.ScreenFx
 ## Промежуток между картами ряда.
 const ROW_GAP := 8.0
 
@@ -273,6 +275,9 @@ func _process(delta: float) -> void:
 		# с начала ожидания и до конца — без затемнения: видно рынок и куда тянется щупальце
 		if bool(_item["fx_waited"]) or float(st["reach_at"]) < INF:
 			want = 0.0
+	# пиксельная постановка играет на доске: витрина затемняет её слабее (UniqueFx "dim")
+	if want > 0.0 and _has_fx() and UniqueFx.has(String(_item["cid"])):
+		want = UniqueFx.dim(String(_item["cid"]))
 	_dim = move_toward(_dim, want, delta * DIM_SPEED)
 
 	match _phase:
@@ -401,6 +406,11 @@ func _draw() -> void:
 		var layer := SlotLayer.new(self, _layers.size())
 		add_child(layer)
 		_layers.append(layer)
+	if _screen_fx == null:
+		_screen_fx = UniqueFx.ScreenFx.new(self)
+		add_child(_screen_fx)
+	if _screen_fx.get_index() != get_child_count() - 1:
+		move_child(_screen_fx, -1)
 	for i in _layers.size():
 		_layers[i].visible = i < slots
 		if i < slots:

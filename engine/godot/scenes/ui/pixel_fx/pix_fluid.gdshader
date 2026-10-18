@@ -29,6 +29,8 @@ uniform float time = 0.0;
 uniform float seed = 0.0;
 uniform float power = 1.0;
 uniform float flip = 1.0;
+// насколько струя остывает к концу (0 — горячая на всём пути)
+uniform float cool = 0.22;
 uniform sampler2D palette : filter_nearest;
 uniform int colours = 7;
 
