@@ -1556,7 +1556,7 @@ const RECAP_STATS := {
 
 
 ## Проверка эффектов уникальных карт прямо в партии (только из редактора или с
-## аргументом --debug-keys): F9 — показать эффект следующей карты (по кругу),
+## аргументом --debug-keys): F9 — показать эффект следующей карты (по кругу: Red Dragon, Ulitharid),
 ## F10 — сменить сетку эффекта (1 / 2) и показать ту же карту ещё раз.
 var _fx_test_i := -1
 ## Где на рынке лежала карта, которую проткнуло щупальце Ulitharid (её показ — вылетом
@@ -1569,7 +1569,8 @@ func _fx_test_key(keycode: Key) -> bool:
 		return false
 	if not (OS.is_debug_build() or "--debug-keys" in OS.get_cmdline_user_args()):
 		return false
-	var ids: Array = CardFx.FX.keys()
+	# пиксельные постановки (UniqueFx) первыми, потом щупальца Ulitharid
+	var ids: Array = UniqueFx.RECIPES.keys() + CardFx.FX.keys()
 	if ids.is_empty():
 		return false
 	if keycode == KEY_F9 or _fx_test_i < 0:
@@ -1579,8 +1580,9 @@ func _fx_test_key(keycode: Key) -> bool:
 	var cid := String(ids[_fx_test_i])
 	_showcase_card(viewer_id, cid, "PLAYS (TEST GRID %d)" % CardFx.grid, null, "", false, false, true)
 	Sfx.play(CardFx.sound(cid), false)
-	# проба фазы 2: щупальце тянется к третьей карте рынка
-	_showcase.fx_reach(_market_panel.card_rect(2), _market_panel.card_id_at(2))
+	if CardFx.FX.has(cid):
+		# проба фазы 2: щупальце тянется к третьей карте рынка
+		_showcase.fx_reach(_market_panel.card_rect(2), _market_panel.card_id_at(2))
 	return true
 
 
