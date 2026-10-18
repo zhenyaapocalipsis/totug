@@ -98,19 +98,12 @@ static func build(card_id: String) -> CardEffect:
 			return ChooseEffect.new([DevourCard.new("hand", "", DrawCards.new(1), false), SupplantTroop.new(1)],
 				["Devour a card in your hand -> draw a card", "Supplant a troop"])
 		MAGMA_MEPHIT:
-			var parts: Array = [
-				["+1 Influence", func(): return GainInfluence.new(1)],
-				["+1 Power", func(): return GainPower.new(1)],
-				["Place a spy", func(): return PlaceSpy.new(1)],
-				["Deploy 2 troops", func(): return DeployTroop.new(2)],
-			]
-			var opts: Array[CardEffect] = []
-			var labels: Array[String] = []
-			for i in range(parts.size()):
-				for j in range(i + 1, parts.size()):
-					opts.append(SequenceEffect.new([parts[i][1].call(), parts[j][1].call()]))
-					labels.append("%s, %s" % [parts[i][0], parts[j][0]])
-			return ChooseEffect.new(opts, labels, "Choose two:")
+			# "Choose 2 times" (владелец, 2026-10-18): два вопроса по одному
+			# варианту, как у Mummy Lord, а не одна пара из шести.
+			var step := func(): return ChooseEffect.new([
+				GainInfluence.new(1), GainPower.new(1), PlaceSpy.new(1), DeployTroop.new(2),
+			], ["+1 Influence", "+1 Power", "Place a spy", "Deploy 2 troops"])
+			return SequenceEffect.new([step.call(), step.call()])
 		ROPER:
 			return SequenceEffect.new([GainPower.new(3), _SetNaafiri.new()])
 		ANCIENT_BRASS:

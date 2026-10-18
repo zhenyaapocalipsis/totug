@@ -374,6 +374,16 @@ static func art_of(seat: String, cid: String) -> String:
 ## чужими).
 static var live_data: Dictionary = {}
 var live := false
+## Цена именно этой карты сейчас (слот рынка: скидки слота, войска Performer
+## Maestro...); -1 — как в live_data. Ставит MarketPanel (set_cost_now).
+var cost_now := -1
+
+
+func set_cost_now(cost: int) -> void:
+	if cost == cost_now:
+		return
+	cost_now = cost
+	refresh_live()
 
 
 ## Показывать живой текст (числа по нынешнему положению зрителя).
@@ -395,8 +405,14 @@ func refresh_live() -> void:
 
 
 func _face(cid: String, face_art: String) -> Texture2D:
-	if live and live_data.has(cid):
-		var entry: Dictionary = live_data[cid]
+	if live and (live_data.has(cid) or cost_now >= 0):
+		var entry: Dictionary = live_data.get(cid, {})
+		if cost_now >= 0:
+			entry = entry.duplicate()
+			if cost_now != CardLibrary.card_cost(cid):
+				entry["cost"] = cost_now
+			else:
+				entry.erase("cost")
 		var tex := CardLiveFace.mini(cid, face_art, entry) if _mini else CardLiveFace.full(cid, face_art, entry)
 		if tex != null:
 			return tex

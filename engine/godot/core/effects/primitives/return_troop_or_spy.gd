@@ -138,7 +138,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		return
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
-	pd.prompt = "Return a troop or spy"
+	pd.prompt = "Return a troop" if troop_only else ("Return a spy" if spy_only else "Return a troop or spy")
 	pd.choice_type = "target_return"
 	pd.legal_options = legal
 	if up_to:

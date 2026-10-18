@@ -22,6 +22,8 @@ const BOARD_CHOICES := ["target_slot", "target_site", "target_return"]
 const OPTION_HEIGHT := 15
 const MAX_LIST_HEIGHT := 150
 const WIDTH := 300.0
+## Карт-вариантов "Choose one" в ряд — больше не влезает в 960 px (дальше списком).
+const MAX_OPTION_CARDS := 4
 ## Выбор карты (promote, discard, devour...) — сетка мелких лиц карт вместо
 ## строк с названиями: карту узнают по арту, а полную читают через Alt.
 const CARD_SIZE := CardView.MINI_SIZE
@@ -564,6 +566,10 @@ static func _can_show_option_cards(pd: Dictionary) -> bool:
 	var labels: Array = pd.get("option_labels", [])
 	var options: Array = pd.get("legal_options", [])
 	if labels.size() != options.size():
+		return false
+	# Больше 4 карт-вариантов в 960 px не влезает (Magma Mephit "Choose two" —
+	# 6 пар, Homunculus "All of them" к 4 вариантам): крайние уходили за экран.
+	if options.size() > MAX_OPTION_CARDS:
 		return false
 	for label in labels:
 		if String(label) == "":

@@ -2957,7 +2957,7 @@
     "type": "CALIMSHAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
-    "ability_text": "Devotion: +1 Influence.\nChoose two:\n• +1 Influence.\n• +1 Power.\n• Place a spy.\n• Deploy 2 troops."
+    "ability_text": "Devotion: +1 Influence.\nChoose 2 times:\n• +1 Influence.\n• +1 Power.\n• Place a spy.\n• Deploy 2 troops."
   },
   {
     "card_id": 49711,
@@ -3217,7 +3217,7 @@
     "type": "KARA-TUR",
     "deck_vp": 3,
     "inner_circle_vp": 6,
-    "ability_text": "Choose two:\n• Double your Power.\n• Return all enemy spies from a site.\n• Supplant a white troop.\n• Deploy 3 troops."
+    "ability_text": "Choose 2 times:\n• Double your Power.\n• Return all enemy spies from a site.\n• Supplant a white troop.\n• Deploy 3 troops."
   },
   {
     "card_id": 49816,

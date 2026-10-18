@@ -52,7 +52,8 @@ static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
 		if entry.has("cost"):
 			img.fill_rect(Rect2i(MINI_COST_X, 2, PC.MINI_W - MINI_COST_X, 8), PC.C_FRAME)
 			img.fill_rect(Rect2i(PC.MINI_W - 1, 2, 1, 8), PC.C_OUTLINE)
-			_text(img, MINI_COST_X, 2, str(int(entry["cost"])), OK_LIGHT, 1, PC.C_OUTLINE)
+			var cheaper := int(entry["cost"]) <= CardLibrary.card_cost(cid)  # дороже — красным (Performer Maestro соперника)
+			_text(img, MINI_COST_X, 2, str(int(entry["cost"])), OK_LIGHT if cheaper else NO_LIGHT, 1, PC.C_OUTLINE)
 		var notes: Array = entry.get("notes", [])
 		if not notes.is_empty():
 			var note: Dictionary = notes[-1] if String(notes[0]["text"]).begins_with("(-") \
@@ -255,7 +256,7 @@ static func _draw_cost_full(img: Image, cost: int, printed: int) -> void:
 	var printed_w := _width(str(printed), 2)
 	img.fill_rect(Rect2i(w - 7 - printed_w - 1, 5, printed_w + 4, 17), PC.C_FRAME)
 	var s := str(cost)
-	_text(img, w - 7 - _width(s, 2), 6, s, OK_LIGHT, 2, PC.C_OUTLINE)
+	_text(img, w - 7 - _width(s, 2), 6, s, OK_LIGHT if cost <= printed else NO_LIGHT, 2, PC.C_OUTLINE)
 
 
 static func _width(s: String, scale: int) -> int:

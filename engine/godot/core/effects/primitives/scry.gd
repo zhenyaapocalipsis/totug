@@ -50,7 +50,10 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	pd.player_id = player_id
 	pd.prompt = "Scry: discard a card from the top of your deck"
 	pd.choice_type = "target_card"
-	pd.legal_options = Array(_revealed)
+	# Копия: Array(_revealed) — та же ссылка, и "" дописывался бы в сам
+	# _revealed (после сброса всех карт оставался пустой вопрос с одним Skip).
+	pd.legal_options = []
+	pd.legal_options.append_array(_revealed)
 	pd.legal_options.append("")
 	pd.target_effect = self
 	resolver.request_decision(pd)

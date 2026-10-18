@@ -83,6 +83,15 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 				Supplies.PURCHASABLE]:
 			seen.append_array(pile)
 		view["live"] = CardLive.for_view(state, viewer_id, seen)
+		# Цена карты в слоте рынка для ходящего — со скидками слота (Bugbear
+		# Stalker, Faerie Borrower), войсками Performer Maestro, шпионом Blue
+		# Slaad, скидками найма (Beast Tamer) и аспекта (Minotaur Archaeologist):
+		# CardLive считает цену по карте, а не по слоту. -1 — нанять нельзя.
+		if viewer_id == state.current_player():
+			var costs: Array = []
+			for i in range(state.market.display.size()):
+				costs.append(Actions.market_cost(state, i) if String(state.market.display[i]) != "" else -1)
+			view["market_costs"] = costs
 	# Партия окончена — итоговый счёт по статьям и победители (ничья — все
 	# с лучшим счётом). Колоды здесь уже не тайна: подсчёт открытый.
 	if state.game_over:

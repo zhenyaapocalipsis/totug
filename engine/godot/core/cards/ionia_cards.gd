@@ -123,23 +123,12 @@ static func build(card_id: String) -> CardEffect:
 				s.players[pid].power += n
 				r.log_event("gain_power", {"player_id": pid, "amount": n}))
 		IRELIA:
-			var parts: Array = [
-				["Double your Power", func(): return _DoublePower.new()],
-				["Return all enemy spies from a site", func(): return _ReturnAllSpies.new()],
-				["Supplant a white troop", func(): return SupplantTroop.new(1, true)],
-				["Deploy 3 troops", func(): return DeployTroop.new(3)],
-			]
-			var opts: Array[CardEffect] = []
-			var labels: Array[String] = []
-			for i in range(parts.size()):
-				for j in range(i + 1, parts.size()):
-					# Удвоение Power — вторым, чтобы удвоить и то, что даст пара.
-					var pair: Array[CardEffect] = [parts[i][1].call(), parts[j][1].call()]
-					if i == 0:
-						pair.reverse()
-					opts.append(SequenceEffect.new(pair))
-					labels.append("%s, %s" % [parts[i][0], parts[j][0]])
-			return ChooseEffect.new(opts, labels, "Choose two:")
+			# "Choose 2 times" (владелец, 2026-10-18): два вопроса по одному
+			# варианту, как у Mummy Lord; порядок (когда удваивать Power) — за игроком.
+			var step := func(): return ChooseEffect.new([
+				_DoublePower.new(), _ReturnAllSpies.new(), SupplantTroop.new(1, true), DeployTroop.new(3),
+			], ["Double your Power", "Return all enemy spies from a site", "Supplant a white troop", "Deploy 3 troops"])
+			return SequenceEffect.new([step.call(), step.call()])
 		PATHLESS:
 			return SequenceEffect.new([GainPower.new(2), ShadowCards._AddFlag.new("retain_power")])
 		LIFEBLADE:

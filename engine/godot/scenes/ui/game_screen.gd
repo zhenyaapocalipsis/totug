@@ -167,6 +167,7 @@ var _forced_glow: ForcedGlow
 ## задач — чтобы не повторять на каждом обновлении среза.
 var _banner_player := ""
 var _attention_key := ""
+static var _DIGITS := RegEx.create_from_string("[0-9]+")
 ## Цвет кнопки End turn и фаза её пульсации, пока ход свой.
 var _end_turn_colour := Color(0.6, 0.6, 0.6)
 var _pulse_time := 0.0
@@ -2092,7 +2093,9 @@ func _announce_turn(view: Dictionary) -> void:
 				_request_attention()
 	var pending: Dictionary = view.get("pending_decision", {})
 	var decider := String(pending.get("player_id", ""))
-	var key := "%s|%s" % [decider, String(pending.get("prompt", ""))]
+	# Без цифр: "(3 left)" -> "(2 left)" — тот же вопрос, баннер «FORCED BY»
+	# не должен заново закрывать доску на каждом шаге (Faerie Pathlighter).
+	var key := "%s|%s" % [decider, _DIGITS.sub(String(pending.get("prompt", "")), "", true)]
 	if not pending.is_empty() and decider == viewer_id and not watching \
 			and current != viewer_id and key != _attention_key:
 		_request_attention()

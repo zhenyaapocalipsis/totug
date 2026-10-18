@@ -127,9 +127,12 @@ func update_from_view(view: Dictionary) -> void:
 
 	var market_spies: Dictionary = view.get("market_spies", {})
 	var market_troops: Dictionary = view.get("market_troops", {})
+	var costs: Array = view.get("market_costs", [])
 	for i in range(DISPLAY_SLOTS):
 		var cid: String = String(display[i]) if i < display.size() else ""
 		_fill_slot(i, cid, affordable.has(i))
+		if cid != "":
+			_cards[i].set_cost_now(int(costs[i]) if i < costs.size() else -1)
 		_mark_spy(i, String(market_spies.get(i, market_spies.get(str(i), ""))))
 		_mark_troops(i, market_troops.get(i, market_troops.get(str(i), {})))
 
@@ -224,7 +227,7 @@ func _ensure_card(i: int, cid: String) -> CardView:
 
 
 ## FAR REALM (Blue Slaad): шпион игрока owner на карте слота ("" — нет).
-## Ромбик цвета хозяина в углу карты; соперник покупает её только за 3 Power.
+## Надпись SPY цвета хозяина в углу арта; соперник покупает её только за 3 Power.
 func _mark_spy(i: int, owner: String) -> void:
 	var mark: Label = _boxes[i].get_node_or_null("MarketSpy")
 	if owner == "":
@@ -236,9 +239,8 @@ func _mark_spy(i: int, owner: String) -> void:
 		mark.name = "MarketSpy"
 		mark.text = "SPY"
 		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		mark.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		mark.offset_left = -16
-		mark.offset_top = 1
+		# В левом верхнем углу арта: в углу карты надпись закрывала цену.
+		mark.position = Vector2(3, 27)
 		mark.add_theme_color_override("font_outline_color", PixelTheme.BG)
 		mark.add_theme_constant_override("outline_size", 2)
 		_boxes[i].add_child(mark)
@@ -249,7 +251,7 @@ func _mark_spy(i: int, owner: String) -> void:
 
 
 ## CHULT (Performer Maestro): войска игроков на карте слота — {игрок: n}.
-## Надпись "T2" цвета хозяина в левом верхнем углу; своим дешевле, чужим дороже.
+## Надпись "T2" цвета хозяина в левом нижнем углу арта; своим дешевле, чужим дороже.
 func _mark_troops(i: int, troops: Dictionary) -> void:
 	var mark: RichTextLabel = _boxes[i].get_node_or_null("MarketTroops")
 	if troops.is_empty():
@@ -264,7 +266,8 @@ func _mark_troops(i: int, troops: Dictionary) -> void:
 		mark.scroll_active = false
 		mark.autowrap_mode = TextServer.AUTOWRAP_OFF
 		mark.mouse_filter = Control.MOUSE_FILTER_PASS
-		mark.position = Vector2(2, 1)
+		# В левом нижнем углу арта: в углу карты надпись лезла на название.
+		mark.position = Vector2(3, SLOT.y - 15)
 		mark.add_theme_color_override("font_outline_color", PixelTheme.BG)
 		mark.add_theme_constant_override("outline_size", 2)
 		_boxes[i].add_child(mark)

@@ -181,7 +181,8 @@ class Bribe extends CardEffect:
 				out.append(pid)
 		return out
 	func is_available(state: GameState, player_id: String) -> bool:
-		return state.players[player_id].vp_tokens > 0 and not _rivals(state, player_id).is_empty()
+		return state.players[player_id].vp_tokens > 0 and not _rivals(state, player_id).is_empty() \
+			and then_effect.is_available(state, player_id)
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		if not is_available(state, player_id):
 			return
@@ -456,6 +457,8 @@ class _GiftPlayed extends CardEffect:
 			if state.is_opponent(player_id, pid):
 				out.append(pid)
 		return out
+	func is_available(state: GameState, player_id: String) -> bool:
+		return not _pool(state, player_id).is_empty() and not _rivals(state, player_id).is_empty()
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		if is_answered():
 			var value := String(answer())
