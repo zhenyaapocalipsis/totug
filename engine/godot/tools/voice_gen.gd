@@ -6,7 +6,7 @@ extends SceneTree
 ##   Godot --headless --path . --script res://tools/voice_gen.gd -- --card=48426
 ##   ... -- --all            все реплики, у которых ещё нет файла (--force — заново)
 ##   ... -- --list           голоса аккаунта (имя, id, описание)
-##   ... -- --card=48426 --take=2   ещё один вариант рядом: 48426_take2.mp3
+##   ... -- --card=48426 --take=2 --voice=George   ещё вариант (другим голосом): 48426_take2.mp3
 ## Если модель eleven_v3 недоступна, реплика повторяется на eleven_multilingual_v2
 ## (без тегов в квадратных скобках).
 
@@ -14,8 +14,17 @@ const LINES := "res://data/voice_lines.json"
 const OUT := "res://assets/voice/"
 const API := "https://api.elevenlabs.io"
 
+## Стандартные голоса ElevenLabs (есть у любого аккаунта): имя -> id.
+const KNOWN := {
+	"callum": "N2lVS1w4EtoT3dr4eOWO",
+	"george": "JBFqnCBsd6RMkjVDRZzb",
+	"bill": "pqHfZKP75CvOlQylNhV4",
+	"brian": "nPczCjzI2devNBz1zQrb",
+	"daniel": "onwK4e9ZLuTAKqWW03F9",
+	"clyde": "2EiwWnXFnvU5JabPnv8n",
+}
+
 var _key := ""
-var _http: HTTPRequest
 var _voices: Dictionary = {}
 
 
@@ -32,14 +41,24 @@ func _arg(name: String) -> String:
 	return ""
 
 
+## Запрос через системный curl (HTTPRequest Godot терял POST на перенаправлении):
+## тело и ответ — через временные файлы, ключ — только в заголовке. -> [код, байты].
 func _request(url: String, method: int, body: String = "") -> Array:
-	var headers := PackedStringArray(["xi-api-key: " + _key, "Content-Type: application/json",
-		"Accept: application/json, audio/mpeg"])
-	var err := _http.request(url, headers, method, body)
-	if err != OK:
-		return [0, PackedByteArray()]
-	var res: Array = await _http.request_completed
-	return [int(res[1]), res[3] as PackedByteArray]
+	var tmp := OS.get_user_data_dir() + "/voice_gen_"
+	var args := PackedStringArray(["-s", "-L", "-w", "%{http_code}", "-o", tmp + "out.bin",
+		"-H", "xi-api-key: " + _key, "-H", "Content-Type: application/json", url])
+	if method == HTTPClient.METHOD_POST:
+		var f := FileAccess.open(tmp + "body.json", FileAccess.WRITE)
+		f.store_string(body)
+		f.close()
+		args.append_array(["-X", "POST", "--data-binary", "@" + tmp + "body.json"])
+	var out: Array = []
+	OS.execute("curl", args, out, true)
+	var code := int(String(out[0]).strip_edges().right(3)) if not out.is_empty() else 0
+	var data := FileAccess.get_file_as_bytes(tmp + "out.bin")
+	DirAccess.remove_absolute(tmp + "out.bin")
+	DirAccess.remove_absolute(tmp + "body.json")
+	return [code, data]
 
 
 func _run() -> void:
@@ -48,16 +67,14 @@ func _run() -> void:
 		printerr("нет ключа: задайте переменную окружения ELEVENLABS_API_KEY")
 		quit(1)
 		return
-	_http = HTTPRequest.new()
-	_http.timeout = 120.0
-	root.add_child(_http)
+	_voices = KNOWN.duplicate()
+	# список голосов аккаунта — если у ключа есть право voices_read; иначе хватит KNOWN
 	var got := await _request(API + "/v1/voices", HTTPClient.METHOD_GET)
-	if int(got[0]) != 200:
-		printerr("голоса не получены, код %d: %s" % [got[0], (got[1] as PackedByteArray).get_string_from_utf8().left(300)])
-		quit(1)
-		return
-	var vj: Dictionary = JSON.parse_string((got[1] as PackedByteArray).get_string_from_utf8())
-	for v: Dictionary in vj.get("voices", []):
+	var vj: Variant = JSON.parse_string((got[1] as PackedByteArray).get_string_from_utf8()) if int(got[0]) == 200 else null
+	if not vj is Dictionary:
+		print("список голосов недоступен (код %d) — беру известные: %s" % [got[0], ", ".join(KNOWN.keys())])
+		vj = {}
+	for v: Dictionary in (vj as Dictionary).get("voices", []):
 		_voices[String(v["name"]).to_lower()] = String(v["voice_id"])
 		if _arg("list") != "":
 			var labels: Dictionary = v.get("labels", {})
@@ -93,7 +110,7 @@ func _run() -> void:
 
 ## Одна реплика -> mp3. Сначала заданная модель, при отказе — multilingual_v2 без тегов.
 func _make(line: Dictionary, path: String) -> bool:
-	var voice := String(line.get("voice", "Callum"))
+	var voice := _arg("voice") if _arg("voice") != "" else String(line.get("voice", "Callum"))
 	var vid: String = _voices.get(voice.to_lower(), voice)
 	var models := [String(line.get("model", "eleven_v3"))]
 	if models[0] != "eleven_multilingual_v2":
