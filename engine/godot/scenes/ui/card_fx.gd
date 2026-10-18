@@ -174,17 +174,23 @@ const FX := {
 static var _cache: Dictionary = {}
 ## Отладка (tests/ui_shot.gd --isolate): рисовать только щупальца на чёрном фоне.
 static var debug_isolate := false
+## Отладка: рисовать только щупальце с этим номером (-1 — все; 99 — только к рынку).
+static var debug_only := -1
 static var _spines: Dictionary = {}
 ## Сетка эффекта: эффект рисуется на холсте в grid раз меньше экрана и растягивается
 ## без сглаживания — все точки эффекта одного размера. 1 — сетка экрана игры.
 static var grid := 1
 
 
+## Карты с постановкой: щупальца Ulitharid (FX) и пиксельные постановки UniqueFx
+## (scenes/ui/pixel_fx) — их всё ниже передаёт туда.
 static func has(cid: String) -> bool:
-	return FX.has(cid)
+	return FX.has(cid) or UniqueFx.has(cid)
 
 
 static func sound(cid: String) -> String:
+	if UniqueFx.has(cid):
+		return UniqueFx.sound(cid)
 	return String(FX[cid]["sound"]) if FX.has(cid) else ""
 
 
@@ -219,6 +225,8 @@ static func _retract_at(cid: String, st: Dictionary) -> float:
 
 ## Сколько секунд выдержки длится эффект (INF — пока не выбрана карта рынка).
 static func hold_end(cid: String, st: Dictionary) -> float:
+	if UniqueFx.has(cid):
+		return UniqueFx.hold_end(cid)
 	var r := _retract_at(cid, st)
 	if r == INF:
 		return INF
@@ -422,7 +430,12 @@ static func draw_front(c: CanvasItem, cid: String, card: Rect2, raw: float, st: 
 
 ## Белая вспышка на карте в момент удара (рисуется в полном разрешении, не на сетке
 ## эффекта: края карты должны остаться резкими).
-static func draw_flash(c: CanvasItem, card: Rect2, raw: float) -> void:
+static func draw_flash(c: CanvasItem, card: Rect2, raw: float, cid: String = "") -> void:
+	if UniqueFx.has(cid):
+		var a := UniqueFx.flash_alpha(cid, raw)
+		if a > 0.0:
+			c.draw_rect(card, Color(1, 1, 1, a))
+		return
 	var kf := (raw - ANTIC - IMPACT_T) / FLASH_T
 	if kf >= 0.0 and kf < 1.0:
 		c.draw_rect(card, Color(1, 1, 1, FLASH_ALPHA * (1.0 - kf)))
@@ -459,18 +472,31 @@ class Canvas extends Control:
 		port.add_child(self)
 		layer.add_child(holder)
 
+	## Сцена пиксельной постановки UniqueFx (появляется, когда играет такая карта).
+	var stage: UniqueFx.Stage
+
 	func _process(_delta: float) -> void:
-		# сетку можно сменить на лету (F10 в игре)
-		if holder.stretch_shrink != CardFx.grid:
-			holder.stretch_shrink = CardFx.grid
 		var v: Dictionary = host.call("fx_view")
+		var area := get_viewport_rect().size
+		var unique := not v.is_empty() and UniqueFx.has(v["cid"]) and area.x >= 1.0 and area.y >= 1.0
+		# сетку можно сменить на лету (F10 в игре); пиксельные постановки — всегда сетка 1
+		var want := 1 if unique else CardFx.grid
+		if holder.stretch_shrink != want:
+			holder.stretch_shrink = want
 		holder.visible = not v.is_empty()
-		if holder.visible:
+		if stage != null:
+			stage.visible = unique
+		if unique:
+			if stage == null:
+				stage = UniqueFx.Stage.new("front" if front else "back")
+				add_child(stage)
+			stage.show_frame(UniqueFx.frame(v["cid"], v["rect"], v["t"], area))
+		elif holder.visible:
 			queue_redraw()
 
 	func _draw() -> void:
 		var v: Dictionary = host.call("fx_view")
-		if v.is_empty():
+		if v.is_empty() or UniqueFx.has(v["cid"]):
 			return
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE / float(CardFx.grid))
 		(material as ShaderMaterial).set_shader_parameter("palette", CardFx.palette_of(v["cid"]))
@@ -483,6 +509,8 @@ class Canvas extends Control:
 ## На сколько пикселей вздрагивает карта: в замахе дрожит всё сильнее, на ударе — толчок
 ## и затухающая тряска.
 static func card_shift(cid: String, raw: float) -> Vector2:
+	if UniqueFx.has(cid):
+		return UniqueFx.card_shift(cid, raw)
 	if not FX.has(cid):
 		return Vector2.ZERO
 	if raw < ANTIC:
@@ -496,7 +524,7 @@ static func card_shift(cid: String, raw: float) -> Vector2:
 
 ## Ступенчатое свечение вокруг карты (слои-рамки, как «пиксельное» гало).
 static func draw_glow(c: CanvasItem, cid: String, card: Rect2, raw: float) -> void:
-	if debug_isolate:
+	if debug_isolate or UniqueFx.has(cid):
 		return
 	var g := _glow_level(raw)
 	var colour: Color = FX[cid]["tint"]
@@ -725,6 +753,8 @@ static func _ease_unclamped(kind: String, x: float) -> float:
 ## шевеление и «дыхание», на фазе 3 — назад по той же линии.
 static func _draw_tentacle(c: CanvasItem, cid: String, index: int, tent: Dictionary, card: Rect2,
 		t: float, st: Dictionary, front: bool) -> void:
+	if debug_only >= 0 and debug_only != index:
+		return
 	var sp := _spine_of(cid, index, card.size)
 	var seg := float(sp["seg"])
 	var total := float(sp["total"])

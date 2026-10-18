@@ -1,0 +1,3 @@
+Dragon sprite: "Dragon - Fully Animated" by Cethiel, OpenGameArt, CC0
+https://opengameart.org/content/dragon-fully-animated
+Converted to pixel art (scale 0.75, 20 fps, red palette) by tools/sprite_pixelize.gd.
