@@ -31,6 +31,8 @@ uniform float power = 1.0;
 uniform float flip = 1.0;
 // насколько струя остывает к концу (0 — горячая на всём пути)
 uniform float cool = 0.22;
+// живой огонь: вихри, дышащая ширина, языки всплывают вверх (0 — прежняя струя)
+uniform float warp = 0.0;
 uniform sampler2D palette : filter_nearest;
 uniform int colours = 7;
 
@@ -86,16 +88,26 @@ int band(vec2 px) {
 	float lo;
 	float f;
 	if (mode == 0) {
-		// струя: ширина растёт к концу, за концом расплёскивается
-		float hw = mix(w0, w1, clamp(u, 0.0, 1.0)) + max(0.0, u - 0.85) * len * 0.9;
-		// шум уносится по течению и вытянут вдоль него -> языки острые по движению
-		float n1 = fbm(vec2(u * len / 13.0 - time * 15.0, v / 7.0 + seed));
-		float n2 = fbm(vec2(u * len / 6.0 - time * 26.0, v / 4.0 - seed * 1.7));
-		float across = 1.0 - abs(v) / max(hw, 1.0);
+		float lu = u * len;
+		// вихри (domain warping): поле сдвигается шумом, который сам течёт, — клубы
+		// перекатываются, края струи волнистые, а не ровные полосы
+		vec2 q = vec2(lu, v);
+		vec2 wv = vec2(fbm(q / 46.0 + vec2(time * 2.6, seed)), fbm(q / 46.0 + vec2(seed * 1.3, -time * 2.1))) - 0.5;
+		q += wv * vec2(34.0, 20.0) * warp;
+		// ширина дышит вдоль струи; за концом струя расплёскивается
+		float hw = mix(w0, w1, clamp(u, 0.0, 1.0)) * mix(1.0, 0.75 + 0.5 * fbm(vec2(lu / 90.0 - time * 3.5, seed + 3.0)), warp)
+			+ max(0.0, u - 0.85) * len * 0.9;
+		// огонь поднимается: верхняя сторона (v > 0) выше, нижняя короче
+		float vv = q.y > 0.0 ? q.y / mix(1.0, 1.45, warp) : q.y / mix(1.0, 0.85, warp);
+		// шум уносится по течению и вытянут вдоль него -> языки острые по движению;
+		// с warp ещё и всплывает вверх
+		float n1 = fbm(vec2(q.x / 13.0 - time * 15.0, (q.y - time * 22.0 * warp) / 7.0 + seed));
+		float n2 = fbm(vec2(q.x / 6.0 - time * 26.0, (q.y - time * 30.0 * warp) / 3.5 - seed * 1.7));
+		float across = 1.0 - abs(vv) / max(hw, 1.0);
 		float along = smoothstep(tail - 0.04, tail + 0.12, u) * (1.0 - smoothstep(head - 0.14, head + 0.02, u));
 		along *= 1.0 - smoothstep(1.05, 1.45, u);
-		f = across * 1.15 + (n1 - 0.5) * 1.35 + (n2 - 0.5) * 0.35;
-		f = f * along * power - u * 0.2;
+		f = across * 1.15 + (n1 - 0.5) * 1.35 + (n2 - 0.5) * 0.35 * (1.0 - 0.5 * warp);
+		f = f * along * power - u * cool;
 		lo = 0.12;
 		if (f < lo) return -1;
 		return clamp(int(floor((1.0 - (f - lo) / 0.85) * float(colours))), 0, colours - 1);

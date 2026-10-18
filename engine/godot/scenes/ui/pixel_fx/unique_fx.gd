@@ -26,9 +26,10 @@ const SCREEN_SHADER := preload("res://scenes/ui/pixel_fx/pix_screen.gdshader")
 const RECIPES := {
 	# Red Dragon, фаза A (сценарий владельца 2026-10-18): дракон не рисуется (он на арте),
 	# его присутствие — заряд, рёв (волна), тень крыльев, ветер, зарево и пепел.
-	"48426": {"len": 2.05, "sound": "kill", "screen": true, "dim": 0.5,
-		"stops": [[0.45, 0.08]], "shakes": [[0.45, 3.0, 6.0]], "trembles": [[0.05, 0.45, 1.6]],
-		"jolts": [0.45]},
+	"48426": {"len": 3.4, "sound": "", "screen": true, "dim": 0.5,
+		"stops": [[0.7, 0.1]], "shakes": [[0.7, 3.5, 5.0], [1.9, 1.5, 4.0]], "trembles": [[0.05, 0.7, 1.6]],
+		"jolts": [0.7],
+		"cues": [[0.0, "red_dragon_rumble"], [0.68, "red_dragon_roar"], [0.95, "red_dragon_wings"], [1.85, "red_dragon_breath"]]},
 }
 
 static var _layers: Dictionary = {}
@@ -346,6 +347,7 @@ class Stage extends Control:
 			m.set_shader_parameter("seed", float(it.get("seed", 0.0)))
 			m.set_shader_parameter("flip", float(it.get("flip", 1.0)))
 			m.set_shader_parameter("cool", float(it.get("cool", 0.22)))
+			m.set_shader_parameter("warp", float(it.get("warp", 0.0)))
 			m.set_shader_parameter("time", t)
 			var ramp := String(it.get("ramp", "fire" if int(it["mode"]) != 2 else "smoke"))
 			m.set_shader_parameter("palette", UniqueFx.palette_texture(ramp))
@@ -377,7 +379,22 @@ class ScreenFx extends ColorRect:
 		var p: Dictionary = {}
 		if not v.is_empty() and UniqueFx.has(v["cid"]):
 			p = UniqueFx.screen_params(v["cid"], v["rect"], UniqueFx.fx_time(v["cid"], v["t"]))
+			_cues(String(v["cid"]), float(v["t"]))
+		else:
+			_cue_t = -1.0
 		show_params(p)
+
+	## Звуки постановки (RECIPES "cues": [секунда, имя в assets/sfx/fx/]): каждый — когда
+	## время его проходит; новая постановка (время пошло заново) начинает сначала.
+	var _cue_t := -1.0
+
+	func _cues(cid: String, t: float) -> void:
+		if t < _cue_t:
+			_cue_t = -1.0
+		for c: Array in UniqueFx.RECIPES[cid].get("cues", []):
+			if _cue_t < float(c[0]) and t >= float(c[0]):
+				Sfx.play_file("res://assets/sfx/fx/%s.mp3" % c[1])
+		_cue_t = t
 
 	## Задать параметры шейдера (пусто — спрятать проход).
 	func show_params(p: Dictionary) -> void:
@@ -391,54 +408,61 @@ class ScreenFx extends ColorRect:
 
 
 # --- Red Dragon, фаза A -------------------------------------------------------------
-# Сценарий (владелец утвердил 2026-10-18): дракон не рисуется — он на арте карты.
-#   0.00-0.45 заряд: виньетка в багровый, рамка карты раскаляется, марево над картой,
-#             карта дрожит, искры с верхнего края;
-#   0.45      рёв: толчок карты, стоп-кадр, ударная волна по экрану, пепел с краёв,
-#             красное на арте вспыхивает;
-#   0.55-1.35 тень огромных крыльев проносится справа налево, за ней ветер и угли;
-#   1.10-1.70 зарево сверху (дракон дышит огнём над полем), сверху сыплется пепел;
-#   1.70-2.05 затихание: рамка тлеет и гаснет.
+# Сценарий (владелец утвердил 2026-10-18; правки: огонь посередине, тень живая, огонь
+# живой, рык вместо реплики, медленнее): дракон не рисуется — он на арте карты.
+#   0.00-0.70 заряд: гул, виньетка в багровый, рамка раскаляется, марево, дрожь;
+#   0.70      рёв: рык, толчок, стоп-кадр, волна по доске, пепел, красное арта вспыхивает;
+#   0.85-2.35 тень дракона пролетает справа налево: крылья машут, хвост и шея волной,
+#             за ней ветер и угли; взмахи крыльев слышны;
+#   1.90-3.00 огненный вал проносится посередине поля за картой (рёв огня), свечение,
+#             дым над ним;
+#   2.90-3.40 пепел оседает, рамка гаснет.
 
-const RD_ROAR := 0.45
-const RD_SHADOW := Vector2(0.55, 1.35)
-const RD_SKY := Vector2(1.1, 1.7)
+const RD_ROAR := 0.7
+const RD_SHADOW := Vector2(0.85, 2.35)
+const RD_BREATH := Vector2(1.9, 3.0)
+const RD_END := 3.4
+
+
+## Высота огненного вала — середина экрана.
+static func _rd_band_y(area: Rect2) -> float:
+	return floorf(area.size.y * 0.5)
 
 
 ## Жар рамки карты 0..1: растёт к рёву, на рёве — добела, потом остывает.
 static func _rd_heat(t: float) -> float:
 	if t < RD_ROAR:
 		return 0.15 + 0.6 * PixKit.ease_in(t / RD_ROAR, 1.6)
-	return 1.0 - 0.75 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.2), 2.0) - 0.25 * PixKit.span(t, 1.5, 2.05)
+	return 1.0 - 0.7 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.8), 2.0) - 0.3 * PixKit.span(t, 2.6, RD_END)
 
 
 static func _red_dragon_screen(card: Rect2, t: float) -> Dictionary:
-	var fade_out := 1.0 - PixKit.span(t, 1.7, 2.05)
-	var sx := 1e5
+	var fade_out := 1.0 - PixKit.span(t, 2.9, RD_END)
 	var shadow := PixKit.span(t, RD_SHADOW.x, RD_SHADOW.y)
-	if shadow > 0.0 and shadow < 1.0:
-		sx = lerpf(1400.0, -500.0, shadow)
+	var sx := lerpf(1450.0, -560.0, shadow) if shadow > 0.0 and shadow < 1.0 else -1e4
 	var art_pulse := 0.0
 	if t < RD_ROAR:
-		art_pulse = 0.25 + 0.25 * absf(sin(t * 23.0)) * t / RD_ROAR
+		art_pulse = 0.2 + 0.3 * absf(sin(t * 17.0)) * t / RD_ROAR
 	else:
-		art_pulse = 1.0 - 0.7 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.0), 2.0)
+		art_pulse = 1.0 - 0.7 * PixKit.ease_out(PixKit.span(t, RD_ROAR, 1.6), 2.0)
+	var breath := PixKit.ease_out(PixKit.span(t, RD_BREATH.x, RD_BREATH.x + 0.3), 2.0) \
+		* (1.0 - PixKit.span(t, RD_BREATH.y - 0.4, RD_BREATH.y + 0.2))
 	return {
 		"time": t,
 		"card": Vector4(card.position.x, card.position.y, card.size.x, card.size.y),
 		"art": Vector4(card.position.x + 4.0, card.position.y + 22.0, card.size.x - 8.0, 112.0),
-		"wave_t": PixKit.span(t, RD_ROAR, RD_ROAR + 0.6) if t >= RD_ROAR else -1.0,
+		"wave_t": PixKit.span(t, RD_ROAR, RD_ROAR + 0.8) if t >= RD_ROAR else -1.0,
 		"wave_c": card.get_center() + Vector2(0, -40),
-		"wave_r": 560.0,
-		"heat": PixKit.span(t, 0.05, RD_ROAR) * (1.0 - 0.4 * PixKit.span(t, RD_ROAR, 1.0)) * fade_out,
-		"art_glow": art_pulse * fade_out,
-		"shadow_x": sx if sx < 1e4 else -1e4,
-		"shadow_y": card.get_center().y + 10.0 - 60.0 * shadow,
-		"shadow_flap": absf(sin(t * 9.0)),
+		"wave_r": 600.0,
+		"heat": PixKit.span(t, 0.05, RD_ROAR) * (1.0 - 0.4 * PixKit.span(t, RD_ROAR, 1.6)) * fade_out,
+		"art_glow": maxf(art_pulse, breath * 0.6) * fade_out,
+		"shadow_x": sx,
+		"shadow_y": card.get_center().y + 30.0 - 90.0 * shadow,
+		"shadow_scale": 0.9 + 0.25 * sin(shadow * PI),
 		"wind": 1.0 if shadow > 0.0 and shadow < 1.0 else 0.0,
-		"sky": PixKit.ease_out(PixKit.span(t, RD_SKY.x, RD_SKY.x + 0.15), 2.0) * (1.0 - PixKit.span(t, 1.4, 1.95))
-			* (0.85 + 0.15 * sin(t * 31.0)),
-		"vignette": 0.85 * PixKit.ease_out(PixKit.span(t, 0.0, 0.4), 2.0) * fade_out,
+		"sky": breath * (0.85 + 0.15 * sin(t * 31.0)),
+		"band_y": 270.0,
+		"vignette": 0.85 * PixKit.ease_out(PixKit.span(t, 0.0, 0.6), 2.0) * fade_out,
 	}
 
 
@@ -448,15 +472,16 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 	var fire := PixPal.ramp("fire", Pix.LIGHT)
 	var ash := PixPal.ramp("smoke", Pix.LIGHT)
 	var heat := _rd_heat(t)
+	var by := _rd_band_y(L["area"])
 
 	# раскалённая рамка: внешний ряд и ряд по краю карты, ступень огня по жару,
 	# по периметру мерцает кусками (у каждого куска свой шум, меняется по кадрам)
 	var frame_i := floori(t * FPS)
-	var per := PackedVector2Array()
 	var x0 := int(card.position.x) - 1
 	var y0 := int(card.position.y) - 1
 	var x1 := int(card.end.x)
 	var y1 := int(card.end.y)
+	var per := PackedVector2Array()
 	for x in range(x0, x1 + 1):
 		per.append(Vector2(x, y0))
 		per.append(Vector2(x, y1))
@@ -465,13 +490,10 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 		per.append(Vector2(x1, y))
 	for q in per:
 		var seg := int(q.x + q.y) / 6
-		var n := PixKit.rnd(frame_i, seg)
-		var h := clampf(heat * (0.75 + 0.5 * n), 0.0, 1.0)
+		var h := clampf(heat * (0.75 + 0.5 * PixKit.rnd(frame_i / 2, seg)), 0.0, 1.0)
 		if h < 0.12:
 			continue
-		var c := PixPal.at(fire, 1.0 - h)
-		front.put(int(q.x), int(q.y), c)
-		# внутренний ряд — ступенью темнее, только где жарко
+		front.put(int(q.x), int(q.y), PixPal.at(fire, 1.0 - h))
 		if h > 0.45:
 			var inner := q + (card.get_center() - q).sign()
 			front.put(int(inner.x), int(inner.y), PixPal.at(fire, minf(1.25 - h, 1.0)))
@@ -490,23 +512,15 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 		back.rect(gx, gy + 3, 3, gh - 6, c, k)
 		back.rect(gx + gw - 3, gy + 3, 3, gh - 6, c, k)
 
-	# видимый фронт ударной волны: огненное кольцо и тёмное за ним
+	# фронт ударной волны: огненное кольцо, растворяется
 	var wc := card.get_center() + Vector2(0, -40)
-	var wt := PixKit.span(t, RD_ROAR, RD_ROAR + 0.6) if t >= RD_ROAR else -1.0
-	PixKit.shock(back, wc.x, wc.y, 560.0, wt, fire[2], 6.0)
-	PixKit.shock(back, wc.x, wc.y, 530.0, wt, fire[4], 4.0)
-
-	# дыхание над полем: струя огня проносится по верху экрана справа налево
-	var b0 := RD_SKY.x
-	var bh := 1.5 * PixKit.ease_out(PixKit.span(t, b0, b0 + 0.25), 1.5)
-	var bt := 1.5 * PixKit.ease_in(PixKit.span(t, b0 + 0.35, b0 + 0.6), 1.3)
-	if bh > 0.0 and bt < 1.45:
-		fluid(L, "front", true, 0, Vector2(1010, 52), Vector2(-40, 74), 16.0, 44.0,
-			{"head": bh, "tail": bt, "power": 1.25, "cool": 0.0, "seed": 9.0, "pad": 60.0})
+	var wt := PixKit.span(t, RD_ROAR, RD_ROAR + 0.8) if t >= RD_ROAR else -1.0
+	PixKit.shock(back, wc.x, wc.y, 600.0, wt, fire[2], 6.0)
+	PixKit.shock(back, wc.x, wc.y, 570.0, wt, fire[4], 4.0)
 
 	# искры с верхнего края, пока карта раскаляется
-	PixKit.embers(front, 61, Vector2(card.get_center().x, card.position.y), t, 24, -PI * 0.5, 1.2, 70.0,
-		Vector2(0, -40), 0.9, fire.slice(0, 6), card.size.x)
+	PixKit.embers(front, 61, Vector2(card.get_center().x, card.position.y), t, 30, -PI * 0.5, 1.2, 60.0,
+		Vector2(0, -35), 1.2, fire.slice(0, 6), card.size.x)
 
 	# рёв: пепел и угли разлетаются со всех краёв карты
 	var since := t - RD_ROAR
@@ -517,31 +531,45 @@ static func _red_dragon(L: Dictionary, card: Rect2, t: float) -> void:
 			[Vector2(card.end.x, card.get_center().y), 0.0, card.size.y]]
 		for i in edges.size():
 			var e: Array = edges[i]
-			PixKit.embers(front, 70 + i, e[0], since, 22, float(e[1]), 1.0, 230.0, Vector2(0, 90), 0.75,
+			PixKit.embers(front, 70 + i, e[0], since, 22, float(e[1]), 1.0, 200.0, Vector2(0, 80), 1.0,
 				fire.slice(0, 7), float(e[2]))
-			PixKit.embers(back, 80 + i, e[0], since, 14, float(e[1]), 1.3, 150.0, Vector2(0, 60), 0.9,
+			PixKit.embers(back, 80 + i, e[0], since, 14, float(e[1]), 1.3, 130.0, Vector2(0, 50), 1.2,
 				ash.slice(0, 4), float(e[2]))
 
 	# ветер за тенью: угли и пепел несёт влево
 	var sh := PixKit.span(t, RD_SHADOW.x, RD_SHADOW.y)
-	if sh > 0.05 and sh < 0.98:
-		var sx := lerpf(1400.0, -500.0, sh)
-		PixKit.embers(front, 91, Vector2(sx + 300.0, card.get_center().y), t - RD_SHADOW.x, 50, PI, 0.25, 520.0,
-			Vector2(-200, 10), 0.6, fire.slice(1, 7), 420.0)
+	if sh > 0.03 and sh < 0.98:
+		var sx := lerpf(1450.0, -560.0, sh)
+		PixKit.embers(front, 91, Vector2(sx + 320.0, card.get_center().y), t - RD_SHADOW.x, 60, PI, 0.3, 420.0,
+			Vector2(-160, 10), 0.9, fire.slice(1, 7), 420.0)
 
-	# пепел сверху после зарева: медленные хлопья, качаются
-	var fall := t - RD_SKY.x
+	# огненный вал посередине поля, за картой: голова пробегает справа налево, хвост
+	# догоняет; поверх — живые языки (шейдер), дым над валом после, угли с него
+	var bh := 1.5 * PixKit.ease_out(PixKit.span(t, RD_BREATH.x, RD_BREATH.x + 0.45), 1.4)
+	var bt := 1.5 * PixKit.ease_in(PixKit.span(t, RD_BREATH.x + 0.55, RD_BREATH.y), 1.3)
+	if bh > 0.0 and bt < 1.45:
+		fluid(L, "back", true, 0, Vector2(1020, by - 6.0), Vector2(-60, by + 10.0), 22.0, 46.0,
+			{"head": bh, "tail": bt, "power": 1.2, "cool": 0.0, "seed": 9.0, "pad": 90.0, "warp": 1.0})
+		PixKit.embers(back, 111, Vector2(480.0, by), t - RD_BREATH.x, 70,
+			-PI * 0.5, 2.2, 90.0, Vector2(-60, 40), 1.1, fire.slice(0, 6), 900.0)
+	var sm := PixKit.span(t, RD_BREATH.x + 0.4, RD_BREATH.x + 0.8) * (1.0 - PixKit.span(t, 3.0, RD_END))
+	if sm > 0.0:
+		for i in 4:
+			var p0 := Vector2(120.0 + 230.0 * float(i), by - 26.0)
+			fluid(L, "back", false, 2, p0, p0 + Vector2(12, -150), 22.0, 46.0,
+				{"power": sm * (0.75 + 0.25 * float(i % 2)), "seed": 7.0 + float(i) * 13.0})
+
+	# пепел оседает после вала: медленные хлопья, качаются
+	var fall := t - RD_BREATH.x - 0.4
 	if fall > 0.0:
-		for i in 70:
-			var born := PixKit.rnd(101, i) * 0.6
+		for i in 80:
+			var born := PixKit.rnd(101, i) * 0.8
 			var a := fall - born
 			if a < 0.0:
 				continue
 			var x := PixKit.rnd(102, i) * 960.0 + sin(a * 3.0 + float(i)) * 8.0
-			var y := -4.0 + a * PixKit.rnd_range(103, i, 45.0, 90.0) * 1.6
-			if y > 540.0:
-				continue
-			var hot := PixKit.rnd(104, i) < 0.35 and a < 0.5
+			var y := by - 120.0 + PixKit.rnd(105, i) * 60.0 + a * PixKit.rnd_range(103, i, 30.0, 70.0)
+			var hot := PixKit.rnd(104, i) < 0.35 and a < 0.6
 			var c := fire[2] if hot else ash[mini(i % 3, ash.size() - 1)]
 			back.put(floori(x), floori(y), c)
 			if i % 3 == 0:

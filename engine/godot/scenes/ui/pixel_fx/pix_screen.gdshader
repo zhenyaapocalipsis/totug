@@ -12,7 +12,7 @@ render_mode unshaded;
 // - shadow: тень огромных крыльев проносится по экрану (силуэт сверху, край —
 //   растворяется узором: тень от высоко летящего — мягкая);
 // - wind: полосы ветра за тенью;
-// - sky: зарево сверху (дракон дышит огнём где-то над полем);
+// - sky: свет огненного вала на доске (вокруг band_y);
 // - vignette: края экрана темнеют и уходят в багровый.
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_nearest;
@@ -28,7 +28,8 @@ uniform float heat = 0.0;
 uniform float art_glow = 0.0;
 uniform float shadow_x = -9999.0;
 uniform float shadow_y = 270.0;
-uniform float shadow_flap = 0.0;
+uniform float shadow_scale = 1.0;
+uniform float band_y = 270.0;
 uniform float wind = 0.0;
 uniform float sky = 0.0;
 uniform float vignette = 0.0;
@@ -86,22 +87,34 @@ float poly9(vec2 p, vec2 v[9]) {
 	return s * sqrt(d);
 }
 
-// Силуэт дракона сверху, летит влево (голова в -x): тело, шея, голова, хвост и два
-// крыла — каждое одним контуром: передний край до острия, зубчатый задний край
-// (провисы перепонки между пальцами) и назад к телу.
-float dragon(vec2 p, float flap) {
-	float span = mix(0.62, 1.0, flap);
+// Силуэт дракона сверху, летит влево (голова в -x), время tm — живой: крылья машут
+// (размах сжимается при подъёме и опускании, кончики заносятся вперёд на взмахе
+// вниз), по хвосту бежит волна, шея и голова покачиваются, тело чуть виляет.
+float dragon(vec2 p, float tm) {
+	float ph = tm * 6.2831 * 1.3;
+	float span = 0.42 + 0.58 * (0.5 + 0.5 * cos(ph));
+	float sweep = sin(ph) * 34.0;
+	float sway = sin(ph + 1.2) * 5.0;
+	p.y -= sway;
 	float d = ellipse(p, vec2(0.0, 0.0), vec2(120.0, 26.0));
-	d = min(d, capsule(p, vec2(-110.0, 0.0), vec2(-190.0, -6.0), 14.0));
-	d = min(d, ellipse(p, vec2(-215.0, -8.0), vec2(34.0, 16.0)));
-	d = min(d, capsule(p, vec2(110.0, 0.0), vec2(250.0, 22.0), 12.0));
-	d = min(d, capsule(p, vec2(250.0, 22.0), vec2(360.0, 4.0), 6.0));
+	float nb = sin(tm * 4.0) * 10.0;
+	d = min(d, capsule(p, vec2(-110.0, 0.0), vec2(-190.0, -6.0 + nb * 0.6), 14.0));
+	d = min(d, ellipse(p, vec2(-215.0, -8.0 + nb), vec2(34.0, 16.0)));
+	// хвост: пять звеньев, волна бежит от тела к кончику
+	vec2 a = vec2(110.0, 0.0);
+	for (int i = 1; i <= 5; i++) {
+		float fi = float(i);
+		vec2 b = vec2(110.0 + fi * 52.0, sin(tm * 5.5 - fi * 0.9) * 7.0 * fi);
+		d = min(d, capsule(p, a, b, 13.0 - fi * 2.0));
+		a = b;
+	}
 	for (int s = -1; s <= 1; s += 2) {
 		float k = float(s) * span;
+		float fs = float(s);
 		vec2 v[9] = vec2[9](
-			vec2(-40.0, 14.0 * float(s)), vec2(-12.0, 130.0 * k), vec2(-62.0, 300.0 * k),
-			vec2(-4.0, 232.0 * k), vec2(40.0, 282.0 * k), vec2(66.0, 196.0 * k),
-			vec2(122.0, 212.0 * k), vec2(96.0, 104.0 * k), vec2(90.0, 24.0 * float(s)));
+			vec2(-40.0, 14.0 * fs), vec2(-12.0 - sweep * 0.3, 130.0 * k), vec2(-62.0 - sweep, 300.0 * k),
+			vec2(-4.0 - sweep * 0.7, 232.0 * k), vec2(40.0 - sweep * 0.8, 282.0 * k), vec2(66.0 - sweep * 0.5, 196.0 * k),
+			vec2(122.0 - sweep * 0.6, 212.0 * k), vec2(96.0 - sweep * 0.3, 104.0 * k), vec2(90.0, 24.0 * fs));
 		d = min(d, poly9(p, v));
 	}
 	return d;
@@ -147,7 +160,7 @@ void fragment() {
 	// тень крыльев
 	if (shadow_x > -2000.0) {
 		vec2 sp = px - vec2(shadow_x, shadow_y);
-		float d = dragon(sp, shadow_flap);
+		float d = dragon(sp / shadow_scale, t) * shadow_scale;
 		float k = clamp(-d / 14.0, 0.0, 1.0);
 		if (k > bayer(px) * 0.999) {
 			col *= mix(vec3(0.5, 0.44, 0.56), vec3(0.16, 0.13, 0.2), step(0.5, k));
@@ -163,9 +176,9 @@ void fragment() {
 		}
 	}
 
-	// зарево сверху: три полосы, стыки — узором
+	// свет огненного вала на доске: три полосы вокруг band_y, стыки — узором
 	if (sky > 0.0) {
-		float g = (1.0 - px.y / 150.0) * sky;
+		float g = (1.0 - abs(px.y - band_y) / 130.0) * sky;
 		g += (vnoise(vec2(px.x / 60.0, t * 0.8)) - 0.5) * 0.25 * sky;
 		float q = floor(clamp(g, 0.0, 1.0) * 3.0 + bayer(px) * 0.999) / 3.0;
 		col += vec3(0.85, 0.32, 0.08) * q * 0.45;

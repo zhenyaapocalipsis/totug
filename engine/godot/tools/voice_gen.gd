@@ -6,12 +6,15 @@ extends SceneTree
 ##   Godot --headless --path . --script res://tools/voice_gen.gd -- --card=48426
 ##   ... -- --all            все реплики, у которых ещё нет файла (--force — заново)
 ##   ... -- --list           голоса аккаунта (имя, id, описание)
+##   ... -- --sfx=all        звуки постановок из data/fx_sounds.json -> assets/sfx/fx/
 ##   ... -- --card=48426 --take=2 --voice=George   ещё вариант (другим голосом): 48426_take2.mp3
 ## Если модель eleven_v3 недоступна, реплика повторяется на eleven_multilingual_v2
 ## (без тегов в квадратных скобках).
 
 const LINES := "res://data/voice_lines.json"
 const OUT := "res://assets/voice/"
+const SFX_LINES := "res://data/fx_sounds.json"
+const SFX_OUT := "res://assets/sfx/fx/"
 const API := "https://api.elevenlabs.io"
 
 ## Стандартные голоса ElevenLabs (есть у любого аккаунта): имя -> id.
@@ -66,6 +69,10 @@ func _run() -> void:
 	if _key == "":
 		printerr("нет ключа: задайте переменную окружения ELEVENLABS_API_KEY")
 		quit(1)
+		return
+	if _arg("sfx") != "":
+		await _make_sfx(_arg("sfx"))
+		quit()
 		return
 	_voices = KNOWN.duplicate()
 	# список голосов аккаунта — если у ключа есть право voices_read; иначе хватит KNOWN
@@ -137,3 +144,36 @@ func _make(line: Dictionary, path: String) -> bool:
 static func _strip_tags(text: String) -> String:
 	var re := RegEx.create_from_string("\\[[^\\]]*\\]\\s*")
 	return re.sub(text, "", true).strip_edges()
+
+
+## Звуки постановок (ElevenLabs sound-generation): data/fx_sounds.json ->
+## assets/sfx/fx/<имя>.mp3; which — имя или all (all пропускает готовые без --force).
+## --take=N пишет вариант <имя>_takeN.mp3 рядом.
+func _make_sfx(which: String) -> void:
+	var sounds: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SFX_LINES))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SFX_OUT))
+	var names: Array = []
+	for n: String in sounds:
+		if not n.begins_with("_") and (which == "all" or which == n):
+			names.append(n)
+	var made := 0
+	for n: String in names:
+		var take := _arg("take")
+		var file := n if take == "" else "%s_take%s" % [n, take]
+		var path := ProjectSettings.globalize_path(SFX_OUT + file + ".mp3")
+		if FileAccess.file_exists(path) and which == "all" and _arg("force") == "":
+			continue
+		var s: Dictionary = sounds[n]
+		var body := JSON.stringify({"text": s["text"], "duration_seconds": float(s.get("duration", 2.0)),
+			"prompt_influence": float(s.get("influence", 0.5))})
+		var got := await _request(API + "/v1/sound-generation?output_format=mp3_44100_128", HTTPClient.METHOD_POST, body)
+		var data: PackedByteArray = got[1]
+		if int(got[0]) == 200 and data.size() > 1000:
+			var f := FileAccess.open(path, FileAccess.WRITE)
+			f.store_buffer(data)
+			f.close()
+			made += 1
+			print("%s: %s" % [file, path])
+		else:
+			printerr("%s: код %d: %s" % [n, got[0], data.get_string_from_utf8().left(300)])
+	print("готово: %d" % made)

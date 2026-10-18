@@ -1,0 +1,19 @@
+{
+	"_comment": "Звуки постановок уникальных карт (ElevenLabs sound-generation): имя -> text (описание звука), duration (сек), influence (0..1, насколько строго следовать описанию). Генерация: tools/voice_gen.gd --sfx=<имя> или --sfx=all -> assets/sfx/fx/<имя>.mp3.",
+	"red_dragon_rumble": {
+		"text": "Deep low earth rumble slowly building, distant heavy footsteps of a giant beast, ominous dark fantasy tension, no music",
+		"duration": 1.2, "influence": 0.5
+	},
+	"red_dragon_roar": {
+		"text": "Massive ancient dragon roar, deep guttural monstrous growl rising into a thunderous bellow with rasping fire in the throat, dark fantasy, cinematic, close",
+		"duration": 2.6, "influence": 0.55
+	},
+	"red_dragon_wings": {
+		"text": "Giant leathery dragon wings beating three times overhead, heavy whooshes of wind passing from right to left, flapping cloth membrane, cinematic",
+		"duration": 1.8, "influence": 0.5
+	},
+	"red_dragon_breath": {
+		"text": "Dragon fire breath torrent, roaring blast of flames sweeping past, crackling fire and rushing air, cinematic",
+		"duration": 1.4, "influence": 0.5
+	}
+}
