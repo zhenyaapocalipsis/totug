@@ -360,6 +360,27 @@ func _run_scenario() -> void:
 			# Баннер хода в начале партии закрыл бы витрину — в игре карта не
 			# разыгрывается в первую же секунду хода.
 			_screen._turn_banner.hide()
+		"hs_play":
+			# Розыгрыш карты с эффектом Hearthstone (HsPlay): --card=ID (по умолчанию Red
+			# Dragon) кладётся в руку ходящему, рука показывает её, потом карта
+			# разыгрывается. --gif=N — записать N кадров (20 к/с) в <out>.gif и лист.
+			while _screen.server.resolver.is_waiting():
+				var pd14: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd14.player_id, pd14.legal_options[0]))
+			var st14 := _screen.server.state
+			var mover14: String = st14.current_player()
+			var cid14 := _arg("card", "48426")
+			(st14.players[mover14].deck.hand as Array)[0] = cid14
+			_screen.refresh(StateView.for_player_with_pending(st14, _screen.viewer_id, _screen.server.resolver.pending))
+			_screen._turn_banner.hide()
+			for _i in 50:
+				await process_frame
+			HsPlay.fixed_dt = 1.0 / 60.0
+			_screen.send(Intent.play_card(mover14, cid14))
+			_screen._turn_banner.hide()
+			_gif_left = _count_arg("gif", 0)
+			# без --gif — один снимок через --wait=N кадров
+			_shot_at = _frame + _count_arg("wait", 60)
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
 			# сопернику, чужой сброс, действия и VP. События подаём прямо в
@@ -601,8 +622,59 @@ func _hand_settled() -> bool:
 	return true
 
 
+## Запись GIF (сценарий hs_play, --gif=N): сколько кадров осталось, кадры и лист.
+var _gif_left := 0
+var _gif: GifWriter
+var _gif_n := 0
+var _gif_sheet: Array[Image] = []
+
+
+## Кадр экрана в расчётном размере (960x540), пиксель в пиксель.
+func _design_image() -> Image:
+	var image: Image = root.get_texture().get_image()
+	var design := Vector2i(
+		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
+		ProjectSettings.get_setting("display/window/size/viewport_height", 360))
+	if image.get_size() != design:
+		image.resize(design.x, design.y, Image.INTERPOLATE_NEAREST)
+	image.convert(Image.FORMAT_RGBA8)
+	return image
+
+
+## Каждый третий кадр (60 -> 20 к/с) — в GIF, каждый шестой записанный — в лист.
+func _record_gif() -> bool:
+	if _frame % 3 != 0:
+		return false
+	var img := _design_image()
+	if _gif == null:
+		_gif = GifWriter.new(img.get_width(), img.get_height())
+	_gif.add_frame(img, 5)
+	if _gif_n % 6 == 0:
+		_gif_sheet.append(img)
+	_gif_n += 1
+	_gif_left -= 1
+	if _gif_left > 0:
+		return false
+	var base := _out.get_basename()
+	_gif.save(ProjectSettings.globalize_path(base + ".gif"))
+	var cols := 3
+	var w := _gif_sheet[0].get_width()
+	var h := _gif_sheet[0].get_height()
+	var sheet := Image.create_empty(w * cols, h * ceili(float(_gif_sheet.size()) / cols), false, Image.FORMAT_RGBA8)
+	for i in _gif_sheet.size():
+		sheet.blit_rect(_gif_sheet[i], Rect2i(0, 0, w, h), Vector2i((i % cols) * w, (i / cols) * h))
+	sheet.save_png(ProjectSettings.globalize_path(base + "_sheet.png"))
+	print("gif: %s.gif, кадров %d" % [base, _gif_n])
+	return true
+
+
 func _process(_delta: float) -> bool:
 	_frame += 1
+	if _gif_left > 0:
+		return _record_gif()
+	# hs_play: карта разыгрывается не сразу (рука должна показать её) — ждём сценарий
+	if _scenario == "hs_play" and _shot_at < 0:
+		return false
 	_fake_hover()
 	if _frame < SETTLE_FRAMES + 12:
 		return false

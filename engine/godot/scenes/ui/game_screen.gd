@@ -160,6 +160,8 @@ var _barracks: BarracksBar
 var _players_panel: PlayersPanel
 var _hand_panel: HandPanel
 var _showcase: CardShowcase
+## Розыгрыш карты с эффектом в духе Hearthstone (карта летит в центр доски).
+var _hs_play: HsPlay
 var _turn_banner: TurnBanner
 ## Рамка по краю экрана, пока чужая карта заставляет отвечать (см. _announce_turn).
 var _forced_glow: ForcedGlow
@@ -570,6 +572,14 @@ func _build_layout() -> void:
 	_showcase.finished.connect(func():
 		if not _view.is_empty():
 			_show_decision(_view))
+	# Розыгрыш с эффектом: под витриной, над доской и рукой; без затемнения.
+	_hs_play = HsPlay.new()
+	_hs_play.board_area = _board_area
+	_hs_play.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hs_play.z_index = 940
+	add_child(_hs_play)
+	_hs_play.shake.connect(func(power: float): _board_panel.shake(power))
+	_hs_play.released.connect(_hs_flush)
 	_turn_banner = TurnBanner.new()
 	add_child(_turn_banner)
 	_forced_glow = ForcedGlow.new()
@@ -1172,8 +1182,59 @@ func _refuse(text: String) -> void:
 	_note(text)
 
 
-## Ответ сервера — свой или пришедший по сети: перерисовка, сводка, тряска.
+## Ответы сервера, которые ждут конца розыгрыша с эффектом (HsPlay): [err, events, view].
+var _hs_pending: Array = []
+
+
+## Ответ сервера — свой или пришедший по сети. Если в нём разыгрывается карта с эффектом
+## (HsPlay), карта сразу уходит из руки, идёт эффект, а сам ответ (доска, счётчики,
+## вопросы, действия карты) применяется после него — как в Hearthstone (владелец,
+## 2026-10-19). Ответы, пришедшие во время эффекта, ждут в очереди по порядку.
 func _on_result(err: int, events: Array, view: Dictionary) -> void:
+	if _hs_play.is_busy() or not _hs_pending.is_empty():
+		_hs_pending.append([err, events, view])
+		return
+	for evt: Dictionary in events:
+		if String(evt.get("type", "")) == "play_card" and HsPlay.has(String(evt.get("card_id", ""))) \
+				and not evt.has("hs_started"):
+			_hs_start(evt, view)
+			evt["hs_started"] = true
+			_hs_pending.append([err, events, view])
+			return
+	_apply_result(err, events, view)
+
+
+## Розыгрыш с эффектом: своя карта исчезает из руки (рука обновляется сразу), эффект
+## начинается.
+func _hs_start(evt: Dictionary, view: Dictionary) -> void:
+	var pid := String(evt.get("player_id", ""))
+	var cid := String(evt.get("card_id", ""))
+	if pid == viewer_id:
+		_hand_panel.update_from_view(view, viewer_id)
+		for card: CardView in _hand_panel.leaving_cards():
+			if card.card_id == cid:
+				card.visible = false
+	_decision_dialog.visible = false
+	_hs_play.play(cid, CardView.pixel_texture(cid, PlayerProfile.art_of(pid, cid)), pid != viewer_id)
+
+
+## Эффект закончился: отложенные ответы — по порядку (следующий может снова начать эффект).
+func _hs_flush() -> void:
+	while not _hs_pending.is_empty() and not _hs_play.is_busy():
+		var r: Array = _hs_pending.pop_front()
+		var evts: Array = r[1]
+		var again := false
+		for evt: Dictionary in evts:
+			if String(evt.get("type", "")) == "play_card" and HsPlay.has(String(evt.get("card_id", ""))) \
+					and not evt.has("hs_started"):
+				again = true
+		if again:
+			_on_result(int(r[0]), evts, r[2])
+		else:
+			_apply_result(int(r[0]), evts, r[2])
+
+
+func _apply_result(err: int, events: Array, view: Dictionary) -> void:
 	if err != GameServer.Error.OK:
 		_refuse("Not allowed: %s" % _error_name(err))
 	refresh(view)
@@ -1182,7 +1243,7 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	# Витрина (крупный показ повышенной, купленной, съеденной карты) запускается
 	# событиями — уже после refresh. Вопрос ждёт конца показа: иначе два
 	# затемнения складываются в чёрный экран, а карту витрины закрывает окно.
-	if _showcase.is_busy():
+	if _showcase.is_busy() or _hs_play.is_busy():
 		_decision_dialog.visible = false
 
 
@@ -1228,7 +1289,7 @@ func _show_looks(events: Array, view: Dictionary) -> void:
 ## доску, а ответ всё равно придёт следующим шагом.
 func _show_decision(view: Dictionary) -> void:
 	_decision_dialog.update_from_view(view, viewer_id)
-	if _showcase.is_busy() or replay_bar != null or watching:
+	if _showcase.is_busy() or _hs_play.is_busy() or replay_bar != null or watching:
 		_decision_dialog.visible = false
 
 
@@ -1315,7 +1376,7 @@ func _on_replay_received(replay: Dictionary) -> void:
 
 ## Идёт показ (витрина карты): следующий шаг реплея подождёт.
 func replay_busy() -> bool:
-	return _showcase.is_busy()
+	return _showcase.is_busy() or _hs_play.is_busy()
 
 
 ## Чем громче событие на доске, тем сильнее её тряхнёт. Захват локации доска
@@ -1398,8 +1459,13 @@ func _react_to_events(events: Array) -> void:
 			"give_insane_outcast":
 				outcasts.append(evt)
 			"play_card":
-				# реплика карты (флейвор), если она озвучена
-				Sfx.voice(String(evt.get("card_id", "")), pid != viewer_id)
+				var played := String(evt.get("card_id", ""))
+				# реплика карты (флейвор), если она озвучена; у карты с эффектом — свои звуки
+				if not HsPlay.has(played):
+					Sfx.voice(played, pid != viewer_id)
+				# реплей (живая партия запускает эффект раньше, в _on_result)
+				if HsPlay.has(played) and not evt.has("hs_started"):
+					_hs_play.play(played, CardView.pixel_texture(played, PlayerProfile.art_of(pid, played)), pid != viewer_id)
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
@@ -1425,7 +1491,7 @@ const EVENT_SOUNDS := {
 
 
 func _sound_for(evt: Dictionary, pid: String) -> void:
-	var sound: String = EVENT_SOUNDS.get(String(evt.get("type", "")), "")
+	var sound: String = "" if evt.has("hs_started") else EVENT_SOUNDS.get(String(evt.get("type", "")), "")
 	if sound != "":
 		Sfx.play(sound, pid != viewer_id)
 
