@@ -67,8 +67,6 @@ var _card_rect := Rect2()
 var _layers: Array[SlotLayer] = []
 ## Плашки над картами: по одной на каждую карту ряда (обычно одна).
 var _banners: Array[PanelContainer] = []
-## Экранный проход пиксельных постановок (UniqueFx.ScreenFx) — всегда последний ребёнок.
-var _screen_fx: UniqueFx.ScreenFx
 ## Промежуток между картами ряда.
 const ROW_GAP := 8.0
 
@@ -88,8 +86,8 @@ func _init() -> void:
 ##   back      — рисунок рубашки владельца (PlayerProfile, "" — обычная).
 func show_card(cid: String, text: String, colour: Color, from: Variant, to: Variant,
 		face_down: bool = false, back: String = "", art: String = "", morph: bool = false,
-		shader: String = "", fx: bool = false) -> void:
-	_enqueue(cid, [{"text": text, "colour": colour, "to": to, "shader": shader}], from, face_down, back, art, morph, fx)
+		shader: String = "") -> void:
+	_enqueue(cid, [{"text": text, "colour": colour, "to": to, "shader": shader}], from, face_down, back, art, morph)
 
 
 ## Одна карта сразу нескольким игрокам (изгои от Ghoul, Demogorgon): ряд
@@ -101,16 +99,13 @@ func show_row(cid: String, slots: Array[Dictionary]) -> void:
 
 
 func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: String, art: String = "",
-		morph: bool = false, fx: bool = false) -> void:
+		morph: bool = false) -> void:
 	var alt := art if art != "" and AltArts.card_of(art) == cid and AltArts.full_texture(art) != null else ""
 	_queue.append({"cid": cid, "slots": slots, "from": from,
 		"face_down": face_down, "back": CardBack.texture(back),
 		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid),
 		"art": alt, "alt_face": AltArts.full_texture(alt), "alt_mini": AltArts.mini_texture(alt),
-		"morph": alt != "" and morph, "fx": fx and CardFx.has(cid),
-		# эффект карты: своё время (идёт от начала выдержки и дальше, пока карта тает),
-		# состояние постановки (CardFx.new_state) и было ли уже ожидание выбора
-		"fx_t": 0.0, "fx_state": CardFx.new_state(), "fx_waited": false})
+		"morph": alt != "" and morph})
 	if _item.is_empty():
 		_next()
 	set_process(true)
@@ -118,50 +113,12 @@ func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: S
 
 ## Карта рассыпается (съедена): у неё нет точки, куда улетать.
 func _crumbles() -> bool:
-	return (_item["slots"] as Array).size() == 1 and _item["slots"][0]["to"] == null and not _has_fx()
+	return (_item["slots"] as Array).size() == 1 and _item["slots"][0]["to"] == null
 
 
-## Сыгранная уникальная карта: вокруг неё играет эффект CardFx, а уходит она
-## не полётом и не крошкой, а тает на месте.
-func _has_fx() -> bool:
-	return bool(_item.get("fx", false))
-
-
-## Для проверок и чтобы не показывать лишнего: идёт ли сейчас показ. Эффект, который
-## ждёт выбора карты рынка (Ulitharid), показ не держит: вопрос виден, рынок открыт.
+## Для проверок и чтобы не показывать лишнего: идёт ли сейчас показ.
 func is_busy() -> bool:
-	return not _item.is_empty() and not fx_waiting()
-
-
-## Эффект карты ждёт выбора карты рынка (фаза 1 сыграна, щупальца живут).
-func fx_waiting() -> bool:
-	return not _item.is_empty() and _has_fx() and _phase == "hold" \
-		and CardFx.waiting(String(_item["cid"]), float(_item["fx_t"]), _item["fx_state"])
-
-
-## Фаза 2 эффекта: игрок выбрал карту рынка cid (rect — где она на экране, глобально) —
-## к ней тянется щупальце. Пустой rect — просто отпустить.
-func fx_reach(rect: Rect2, cid: String) -> void:
-	if _item.is_empty() or not _has_fx():
-		return
-	var st: Dictionary = _item["fx_state"]
-	if float(st["reach_at"]) < INF or float(st["release"]) < INF:
-		return
-	if rect.size.x < 1.0:
-		fx_release()
-		return
-	st["reach_at"] = maxf(CardFx.fx_time(float(_item["fx_t"])), CardFx.WAIT_T)
-	st["reach_rect"] = Rect2(rect.position - get_global_position(), rect.size)
-	st["reach_cid"] = cid
-
-
-## Выбора карты рынка не будет (нечего выбрать): щупальца уходят без фазы 2.
-func fx_release() -> void:
-	if _item.is_empty() or not _has_fx():
-		return
-	var st: Dictionary = _item["fx_state"]
-	if float(st["reach_at"]) == INF and float(st["release"]) == INF:
-		st["release"] = maxf(CardFx.fx_time(float(_item["fx_t"])), CardFx.WAIT_T)
+	return not _item.is_empty()
 
 
 func queued() -> int:
@@ -222,8 +179,6 @@ func _morph_time() -> float:
 
 
 func _hold_time() -> float:
-	if _has_fx():
-		return CardFx.hold_end(String(_item["cid"]), _item["fx_state"])
 	return HOLD_TIME_LEGENDARY if bool(_item["morph"]) and _is_legendary() else HOLD_TIME
 
 
@@ -256,28 +211,11 @@ func _set_phase(phase: String) -> void:
 
 
 func _process(delta: float) -> void:
-	# эффект карты идёт в своём темпе: очередь (например, «съел карту» следом) его не торопит
-	var speed := 1.0 if _has_fx() else minf(1.0 + SPEED_PER_QUEUED * _queue.size(), MAX_SPEED)
+	var speed := minf(1.0 + SPEED_PER_QUEUED * _queue.size(), MAX_SPEED)
 	var step := delta * speed
 	_t += step
 	_flash = maxf(0.0, _flash - step)
 	var want := 1.0 if not _item.is_empty() else 0.0
-	if _has_fx() and (_phase == "hold" or _phase == "exit"):
-		_item["fx_t"] = float(_item["fx_t"]) + step
-		var st: Dictionary = _item["fx_state"]
-		var waiting := fx_waiting()
-		if waiting and not bool(_item["fx_waited"]):
-			# фаза 1 сыграна: рынок открывается, вопрос «какую карту» можно показать
-			_item["fx_waited"] = true
-			finished.emit()
-		if waiting and CardFx.fx_time(float(_item["fx_t"])) > CardFx.WAIT_T + CardFx.WAIT_MAX:
-			fx_release()
-		# с начала ожидания и до конца — без затемнения: видно рынок и куда тянется щупальце
-		if bool(_item["fx_waited"]) or float(st["reach_at"]) < INF:
-			want = 0.0
-	# пиксельная постановка играет на доске: витрина затемняет её слабее (UniqueFx "dim")
-	if want > 0.0 and _has_fx() and UniqueFx.has(String(_item["cid"])):
-		want = UniqueFx.dim(String(_item["cid"]))
 	_dim = move_toward(_dim, want, delta * DIM_SPEED)
 
 	match _phase:
@@ -334,13 +272,6 @@ class SlotLayer extends Control:
 	## Какой образ и на каком лице (мелком или полном) сейчас настроен.
 	var skin := ""
 	var mini := false
-	## Холсты эффекта (CardFx.Canvas): появляются, когда карта с эффектом.
-	var fx_canvases: Array[Control] = []
-
-	func ensure_fx() -> void:
-		if fx_canvases.is_empty() and index == 0:
-			fx_canvases.append(CardFx.Canvas.new(self, host, false))
-			fx_canvases.append(CardFx.Canvas.new(self, host, true))
 
 	func _init(showcase: CardShowcase, slot: int) -> void:
 		host = showcase
@@ -367,19 +298,6 @@ class SlotLayer extends Control:
 		CardView.configure_skin(mat, SkinCollection.SHADER_INDEX[shader], small)
 
 
-## Что рисовать холстам эффекта (CardFx.Canvas) сейчас: карта, её рамка (со сдвигом от
-## ударов) и время эффекта; пусто — эффект не идёт.
-func fx_view() -> Dictionary:
-	if _item.is_empty() or not _has_fx() or CardFx.debug_isolate \
-			or not (_phase == "hold" or _phase == "exit"):
-		return {}
-	var cid := String(_item["cid"])
-	var t := float(_item["fx_t"])
-	var rect := _row_rects(_area())[0]
-	rect.position += CardFx.card_shift(cid, t)
-	return {"cid": cid, "rect": rect, "t": t, "st": _item["fx_state"]}
-
-
 func _area() -> Rect2:
 	if board_area == null:
 		return Rect2(Vector2.ZERO, size)
@@ -393,11 +311,6 @@ func _draw() -> void:
 		# Затемняем весь экран, а не только доску: вокруг доски стоят сводка,
 		# рука и рынок, и тёмный прямоугольник обрывался бы посреди экрана.
 		draw_rect(Rect2(Vector2.ZERO, size), Color(PixelTheme.DIM, PixelTheme.DIM.a * _dim))
-	# свечение эффекта карты — под слоями (там же холсты эффекта); полупрозрачные слои
-	# на прозрачном холсте SubViewport темнеют, поэтому рисуем его здесь, на экране
-	var view := fx_view()
-	if not view.is_empty():
-		CardFx.draw_glow(self, view["cid"], view["rect"], view["t"])
 	for banner in _banners:
 		banner.visible = false
 	_card_rect = Rect2()
@@ -406,11 +319,6 @@ func _draw() -> void:
 		var layer := SlotLayer.new(self, _layers.size())
 		add_child(layer)
 		_layers.append(layer)
-	if _screen_fx == null:
-		_screen_fx = UniqueFx.ScreenFx.new(self)
-		add_child(_screen_fx)
-	if _screen_fx.get_index() != get_child_count() - 1:
-		move_child(_screen_fx, -1)
 	for i in _layers.size():
 		_layers[i].visible = i < slots
 		if i < slots:
@@ -437,10 +345,9 @@ func _draw_slot(c: SlotLayer, slot: int) -> void:
 	var rects := _row_rects(area)
 	var face: Texture2D = _face()
 	var slots: Array = _item["slots"]
-	var small := (_phase == "exit" and not _crumbles() and not _has_fx()) \
+	var small := (_phase == "exit" and not _crumbles()) \
 		or (_phase == "enter" and _item["from"] != null)
 	c.set_skin(_slot_skin(slot), small)
-	c.modulate.a = 1.0 - _ease_in(_t / EXIT_TIME) if _phase == "exit" and _has_fx() else 1.0
 
 	match _phase:
 		"enter":
@@ -458,9 +365,7 @@ func _draw_slot(c: SlotLayer, slot: int) -> void:
 		"hold":
 			_draw_big(c, slot, rects[slot], face, false)
 		"exit":
-			if _has_fx():
-				_draw_big(c, slot, rects[slot], face, false)
-			elif _crumbles():
+			if _crumbles():
 				if slot == 0:
 					_draw_crumble(c, rects[0], face, _t / CRUMBLE_TIME)
 					_show_banner(0, rects[0])
@@ -493,32 +398,14 @@ func _row_rects(area: Rect2) -> Array[Rect2]:
 ## Крупная карта ряда: лицом или рубашкой, в первые мгновения — вспышка.
 func _draw_big(c: SlotLayer, slot: int, rect: Rect2, face: Texture2D, down: bool) -> void:
 	_card_rect = rect if _card_rect == Rect2() else _card_rect.merge(rect)
-	var fx := _has_fx() and slot == 0 and (_phase == "hold" or _phase == "exit")
-	# эффект идёт от начала выдержки и дальше, пока карта тает
-	var fx_t := float(_item.get("fx_t", 0.0))
-	var cid := String(_item["cid"])
-	var banner_rect := rect
-	if fx and CardFx.debug_isolate:
-		# отладка: только щупальца на чёрном, сразу на экране без сетки (CardFx.debug_isolate)
-		c.draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
-		CardFx.draw_behind(c, cid, rect, fx_t, _item["fx_state"])
-		CardFx.draw_front(c, cid, rect, fx_t, _item["fx_state"])
-		return
-	if fx:
-		# эффект рисуют холсты слоя (на сетке эффекта): позади и поверх карты, с той же
-		# рамкой, что и у карты (fx_view)
-		c.ensure_fx()
-		rect.position += CardFx.card_shift(cid, fx_t)
 	if down or face == null:
 		_draw_back(c, rect)
 	else:
 		c.draw_texture_rect(face, rect, false)
-	if fx:
-		CardFx.draw_flash(c, rect, fx_t, cid)
 	if _flash > 0.0:
 		c.draw_rect(rect, Color(_flash_tint, 0.8 * _flash / FLASH_TIME))
 	_draw_glow(c, rect)
-	_show_banner(slot, banner_rect)
+	_show_banner(slot, rect)
 
 
 ## Обводка цвета ступени вокруг карты с артом: у EPIC вспыхивает и гаснет после

@@ -568,9 +568,6 @@ func _build_layout() -> void:
 	_showcase.z_index = 950
 	add_child(_showcase)
 	_showcase.finished.connect(func():
-		# эффект Ulitharid дошёл до ожидания выбора: нет вопроса про рынок — отпустить
-		if String((_view.get("pending_decision", {}) as Dictionary).get("tag", "")) != "market":
-			_showcase.fx_release()
 		if not _view.is_empty():
 			_show_decision(_view))
 	_turn_banner = TurnBanner.new()
@@ -968,9 +965,6 @@ func _input(event: InputEvent) -> void:
 	# Отпускание пробела сбрасывает удержание при любом состоянии экрана.
 	if GameSettings.is_key(key, "end_turn") and not key.pressed:
 		_space_held = false
-	if key.pressed and not key.echo and _fx_test_key(key.keycode):
-		get_viewport().set_input_as_handled()
-		return
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if replay_bar != null and not _pause_menu.visible and not _game_over_panel.visible \
 			and not (stats_panel != null and stats_panel.visible) and replay_bar.handle_key(key):
@@ -1185,10 +1179,6 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	refresh(view)
 	_react_to_events(events)
 	_show_looks(events, view)
-	# эффект Ulitharid ждёт выбора карты рынка; если такого вопроса нет (нечего
-	# выбрать) — щупальца уходят без фазы 2
-	if String((view.get("pending_decision", {}) as Dictionary).get("tag", "")) != "market":
-		_showcase.fx_release()
 	# Витрина (крупный показ повышенной, купленной, съеденной карты) запускается
 	# событиями — уже после refresh. Вопрос ждёт конца показа: иначе два
 	# затемнения складываются в чёрный экран, а карту витрины закрывает окно.
@@ -1407,31 +1397,16 @@ func _react_to_events(events: Array) -> void:
 			# Выдачи одной карты (идут подряд) собираются в один показ.
 			"give_insane_outcast":
 				outcasts.append(evt)
-			# Уникальная карта: вспышка, свой эффект вокруг неё и встряска доски.
 			"play_card":
-				var played := String(evt.get("card_id", ""))
 				# реплика карты (флейвор), если она озвучена
-				Sfx.voice(played, pid != viewer_id)
-				if CardFx.has(played):
-					_showcase_card(pid, played, "PLAYS", null, "", false, false, true)
-					Sfx.play(CardFx.sound(played), pid != viewer_id)
-					power = maxf(power, SHAKE_KILL)
-			# Ulitharid: выбрана карта рынка — к ней тянется щупальце (фаза 2 эффекта)
-			"play_from_market":
-				var idx := int(evt.get("market_index", -1))
-				_pierced_rect = _market_panel.card_rect(idx)
-				_showcase.fx_reach(_pierced_rect, String(evt.get("card_id", "")))
+				Sfx.voice(String(evt.get("card_id", "")), pid != viewer_id)
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")
 			"devour":
 				# Свою карту из руки или из игры игрок съел сам и знает об этом.
 				if pid != viewer_id or String(evt.get("source", "")) == "market":
-					# карта, проткнутая щупальцем Ulitharid, вылетает со своего места на рынке
-					var from: Variant = _pierced_rect if String(evt.get("source", "")) == "market" \
-						and _pierced_rect.size.x > 0.0 else null
-					_pierced_rect = Rect2()
-					_showcase_card(pid, String(evt.get("card_id", "")), "DEVOURS", from, "")
+					_showcase_card(pid, String(evt.get("card_id", "")), "DEVOURS", null, "")
 		if started:
 			launched += 1
 	if not outcasts.is_empty():
@@ -1598,44 +1573,13 @@ const RECAP_STATS := {
 }
 
 
-## Проверка эффектов уникальных карт прямо в партии (только из редактора или с
-## аргументом --debug-keys): F9 — показать эффект следующей карты (по кругу: Red Dragon, Ulitharid),
-## F10 — сменить сетку эффекта (1 / 2) и показать ту же карту ещё раз.
-var _fx_test_i := -1
-## Где на рынке лежала карта, которую проткнуло щупальце Ulitharid (её показ — вылетом
-## оттуда).
-var _pierced_rect := Rect2()
-
-
-func _fx_test_key(keycode: Key) -> bool:
-	if keycode != KEY_F9 and keycode != KEY_F10:
-		return false
-	if not (OS.is_debug_build() or "--debug-keys" in OS.get_cmdline_user_args()):
-		return false
-	# пиксельные постановки (UniqueFx) первыми, потом щупальца Ulitharid
-	var ids: Array = UniqueFx.RECIPES.keys() + CardFx.FX.keys()
-	if ids.is_empty():
-		return false
-	if keycode == KEY_F9 or _fx_test_i < 0:
-		_fx_test_i = (_fx_test_i + 1) % ids.size()
-	else:
-		CardFx.grid = 3 - CardFx.grid if CardFx.grid <= 2 else 1
-	var cid := String(ids[_fx_test_i])
-	_showcase_card(viewer_id, cid, "PLAYS (TEST GRID %d)" % CardFx.grid, null, "", false, false, true)
-	Sfx.play(CardFx.sound(cid), false)
-	if CardFx.FX.has(cid):
-		# проба фазы 2: щупальце тянется к третьей карте рынка
-		_showcase.fx_reach(_market_panel.card_rect(2), _market_panel.card_id_at(2))
-	return true
-
-
 ## Крупный показ карты cid, которую взял pid (см. CardShowcase).
 ##   from — прямоугольник, откуда карта прилетает (глобальный), или null;
 ##   dest — куда улетает: "barracks" (к игроку), "discard", "inner" (для
 ##          зрителя — в его стопку, для соперника — в его барак) или "" —
 ##          рассыпается (съедена).
 func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest: String,
-		face_down: bool = false, morph: bool = false, fx: bool = false) -> void:
+		face_down: bool = false, morph: bool = false) -> void:
 	if cid == "":
 		return
 	var start: Variant = null
@@ -1645,7 +1589,7 @@ func _showcase_card(pid: String, cid: String, verb: String, from: Variant, dest:
 	var colour: Color = BoardPanel.colour(pid, PixelTheme.GOLD)
 	_showcase.show_card(cid, "%s %s" % [EventLogPanel.player_name(pid).to_upper(), verb],
 		colour, start, to, face_down, PlayerProfile.back_of(pid), PlayerProfile.art_of(pid, cid), morph,
-		PlayerProfile.shader_of(pid), fx)
+		PlayerProfile.shader_of(pid))
 
 
 ## Куда улетает карта витрины, взятая pid: для зрителя — в его стопку

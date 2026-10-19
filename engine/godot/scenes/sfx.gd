@@ -82,8 +82,7 @@ static func voice(card_id: String, quiet: bool = false) -> void:
 	p.play()
 
 
-## Проиграть звук-файл (res://..., например звуки постановок assets/sfx/fx/ —
-## UniqueFx "cues"); db — поправка громкости.
+## Проиграть звук-файл (res://...); db — поправка громкости.
 static func play_file(path: String, quiet: bool = false, db: float = 0.0) -> void:
 	if _instance == null or volume <= 0.0 or not ResourceLoader.exists(path):
 		return

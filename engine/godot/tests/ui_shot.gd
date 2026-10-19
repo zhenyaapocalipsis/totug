@@ -52,12 +52,6 @@ func _initialize() -> void:
 			# Полуколоды, например demons,undead (с Demons в запасе есть изгои).
 			for name in arg.get_slice("=", 1).split(","):
 				decks.append(name)
-		elif arg.begins_with("--fxgrid="):
-			# Сетка эффекта карты: 1 — как экран игры, 2 — вдвое крупнее.
-			CardFx.grid = maxi(int(arg.get_slice("=", 1)), 1)
-		elif arg == "--isolate":
-			# Отладка эффектов карт: только щупальца на чёрном (для подсчёта разрывов).
-			CardFx.debug_isolate = true
 		elif arg.begins_with("--scenario="):
 			_scenario = arg.get_slice("=", 1)
 		elif arg.begins_with("--bg="):
@@ -74,7 +68,7 @@ func _initialize() -> void:
 	root.add_child(_screen)
 	# Вопрос карты надо задавать, когда экран уже в дереве: вне дерева окно
 	# вопроса меряет свои варианты нулём и выходит пустым.
-	if _scenario == "decision" or _scenario == "outcasts" or _scenario == "unique_fx":
+	if _scenario == "decision" or _scenario == "outcasts":
 		_run_scenario.call_deferred()
 	else:
 		_run_scenario()
@@ -366,39 +360,6 @@ func _run_scenario() -> void:
 			# Баннер хода в начале партии закрыл бы витрину — в игре карта не
 			# разыгрывается в первую же секунду хода.
 			_screen._turn_banner.hide()
-		"unique_fx":
-			# Розыгрыш уникальной карты (--card=ID, по умолчанию Ulitharid): витрина
-			# с эффектом CardFx. Снимать через --wait=N кадров (60 кадров ~ 1 с).
-			await process_frame
-			await process_frame
-			while _screen.server.resolver.is_waiting():
-				var pd12: PendingDecision = _screen.server.resolver.pending
-				_screen.send(Intent.make_decision(pd12.player_id, pd12.legal_options[0]))
-			var st12 := _screen.server.state
-			var mover12: String = st12.current_player()
-			# --delay=N: подождать N кадров (баннер хода успевает уйти, как в игре).
-			for _i in _count_arg("delay", 0):
-				await process_frame
-			if _arg("presskey", "") != "":
-				# Проверка горячей клавиши F9 (эффект без розыгрыша карты): --presskey=1
-				var press := InputEventKey.new()
-				press.keycode = KEY_F9
-				press.pressed = true
-				Input.parse_input_event(press)
-				_screen._turn_banner.hide()
-				return
-			var cid12 := _arg("card", "48701")
-			st12.players[mover12].deck.hand.append(cid12)
-			_screen.send(Intent.play_card(mover12, cid12))
-			_screen._turn_banner.hide()
-			# --choose=N: через N кадров выбрать карту рынка (вопрос Ulitharid) — фаза 2
-			if _arg("choose", "") != "":
-				for _i in int(_arg("choose", "60")):
-					await process_frame
-				var pd13: PendingDecision = _screen.server.resolver.pending
-				if pd13 != null and pd13.tag == "market":
-					_screen.send(Intent.make_decision(pd13.player_id,
-						pd13.legal_options[mini(1, pd13.legal_options.size() - 1)]))
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
 			# сопернику, чужой сброс, действия и VP. События подаём прямо в
@@ -675,7 +636,7 @@ func _process(_delta: float) -> bool:
 			if arg.begins_with("--wait="):
 				_shot_at = _frame + int(arg.get_slice("=", 1))
 	# Окно вопроса проявляется с анимацией: --wait=N — снять через N кадров.
-	if (_scenario == "decision" or _scenario == "outcasts" or _scenario == "unique_fx") and _shot_at < 0:
+	if (_scenario == "decision" or _scenario == "outcasts") and _shot_at < 0:
 		_shot_at = _frame + 60
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--wait="):
