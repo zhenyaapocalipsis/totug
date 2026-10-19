@@ -156,8 +156,8 @@ static func build(card_id: String) -> CardEffect:
 		"49021":  # Shield Guardian (Galio) — реакция из руки: core/effects/primitives/shield_guard.gd
 			return GainPower.new(5)
 		"49022":  # Gold Dragon (Shyvana)
-			var pick := func(): return ChooseEffect.new([GainPower.new(2), MoveTroop.new(1, false, true)],
-				["+2 Power", "Move one of your troops"])
+			var pick := func(): return ChooseEffect.new([GainPower.new(2), MoveTroop.any(1)],
+				["+2 Power", "Move a troop"])
 			return SequenceEffect.new([pick.call(), pick.call(), pick.call(), pick.call(),
 				_Transform.new(GOLD_DRAGON, ANCIENT_GOLD_DRAGON)])
 		"49023":  # Giant Eagle (Valor)

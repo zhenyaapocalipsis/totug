@@ -37,6 +37,17 @@ static func shuffle_array(arr: Array, rng: RandomNumberGenerator) -> void:
 		arr[j] = tmp
 
 
+## Ответ на вопрос "карта из руки или сброса" (tag "hand_or_discard"): ряд руки
+## шлёт "hand:<id>" или "discard:<id>" — одна и та же карта может лежать в обеих
+## стопках (Goblin Boss: выбрали Noble в сбросе, а съедался Noble из руки).
+## Просто id (бот, старые реплеи) — из любой. Возвращает [стопка или "", id].
+static func zone_pick(value: String) -> Array:
+	for zone: String in ["hand", "discard"]:
+		if value.begins_with(zone + ":"):
+			return [zone, value.substr(zone.length() + 1)]
+	return ["", value]
+
+
 func shuffle_draw_pile(rng: RandomNumberGenerator) -> void:
 	shuffle_array(draw_pile, rng)
 

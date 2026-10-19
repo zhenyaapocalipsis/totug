@@ -78,7 +78,7 @@ func _place_at(state: GameState, player_id: String, site_id: String, resolver: E
 	IxtalCards.note_spy(state)  # CHULT, Dao: цель "place a spy"
 	# Manticore (New Era): "this turn, whenever you place a spy, you may move a troop".
 	if state.turn_flags.get("spy_move", false) and player_id == state.current_player():
-		var move := MoveTroop.new(1)
+		var move := MoveTroop.any(1)
 		if move.is_available(state, player_id):
 			var ask := OptionalEffect.new(move, "Move a troop?")
 			ask.source_card = "49214"

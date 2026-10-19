@@ -95,7 +95,7 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49512":  # Hobgoblin Captain (Incisive Tactician)
 			return SequenceEffect.new([
-				ChooseEffect.new([MoveTroop.new(1), DeployTroop.new(3)], ["Move a troop", "Deploy 3 troops"]),
+				ChooseEffect.new([MoveTroop.any(1), DeployTroop.new(3)], ["Move a troop", "Deploy 3 troops"]),
 				Might.new(1, func(): return GainInfluence.new(2)),
 				Might.new(2, func(): return DrawCards.new(1)),
 			])
@@ -308,14 +308,16 @@ class _Devour extends CardEffect:
 		pd.legal_options = options
 		pd.target_effect = self
 		resolver.request_decision(pd)
-	func _take_own(state: GameState, player_id: String, cid: String, resolver: EffectResolver) -> void:
+	func _take_own(state: GameState, player_id: String, value: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
+		var pick := Deck.zone_pick(value)
+		var cid: String = pick[1]
 		var src := "hand"
-		if zones.has("hand") and d.hand.has(cid):
+		if zones.has("hand") and pick[0] != "discard" and d.hand.has(cid):
 			if MercenaryCards.sylgar_saves(state, player_id, cid, resolver):
 				return
 			d.hand.remove_at(d.hand.find(cid))
-		elif zones.has("discard") and d.discard_pile.has(cid):
+		elif zones.has("discard") and pick[0] != "hand" and d.discard_pile.has(cid):
 			if MercenaryCards.sylgar_saves(state, player_id, cid, resolver):
 				return
 			d.discard_pile.remove_at(d.discard_pile.find(cid))
@@ -568,14 +570,17 @@ class _FetchBlade extends CardEffect:
 			Deck.shuffle_array(refill, state.rng)
 			refill.append_array(d.draw_pile)
 			d.draw_pile = refill
+		var looked: Array = []
 		var taken := 0
 		for i in range(mini(5, d.draw_pile.size())):
 			var cid: String = d.draw_pile.pop_back()
+			looked.append(cid)
 			if cid == NoxusCards.BLADE_FRAGMENT or cid == NoxusCards.HALF_DRAGON:
 				d.hand.append(cid)
 				taken += 1
 			else:
 				d.discard_pile.append(cid)
+		resolver.log_look(player_id, looked, "Top %d cards of your deck" % looked.size())
 		resolver.log_event("fetch_blade", {"player_id": player_id, "count": taken})
 
 

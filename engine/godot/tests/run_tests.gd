@@ -67,6 +67,7 @@ func _initialize() -> void:
 	test_piltover_zaun()
 	test_siege_deck()
 	test_mercenaries_deck()
+	test_owner_fixes_1019()
 	test_avernus_deck()
 	test_icewind_deck()
 	test_calimshan_deck()
@@ -6832,7 +6833,8 @@ func test_mercenaries_deck() -> void:
 	check(r5.is_waiting() and r5.pending.player_id == "red", "вопрос карты blue задают red")
 	TurnEngine.resume_card(state, 0, r5)
 	check_eq([blue.power, blue.influence], [1, 2], "эффект достался blue")
-	check(blue.deck.discard_pile.has("49305") and not blue.deck.hand.has("49305"), "карта blue ушла в его сброс")
+	check(blue.deck.played_pile.has("49305") and not blue.deck.hand.has("49305") and not blue.deck.discard_pile.has("49305"),
+		"карта blue лежит в его сыгранных, а не в сбросе")
 	check(r5.deciders.is_empty(), "после карты вопросы снова задают владельцу")
 
 	# Bregan D'aerthe Spy: украденный маркер — до начала следующего хода вора
@@ -7174,3 +7176,137 @@ func test_avernus_deck() -> void:
 	check_eq(state.instant_winner, "red", "Horned Devil при пустой колоде рынка: победа")
 	check_eq(Scoring.winners(state), ["red"] as Array[String], "Scoring.winners — только он")
 	check_eq(state.final_round_ends_after_index, state.current_player_index, "партия кончается после его хода")
+
+
+func test_owner_fixes_1019() -> void:
+	section("Правки владельца 2026-10-19: Jarlaxle, Nihiloor, move, look, Devour")
+	var state := _build_rich_state(41)
+	var red: PlayerState = state.players["red"]
+	var blue: PlayerState = state.players["blue"]
+	var green: PlayerState = state.players["green"]
+	TurnEngine.start_turn(state, "red")
+
+	# Devour из руки или сброса: выбранная в сбросе копия, а не та, что в руке
+	red.deck.hand.clear()
+	red.deck.discard_pile.clear()
+	red.deck.hand.append("48342")
+	red.deck.discard_pile.append("48342")
+	var rd := EffectResolver.new()
+	rd.apply(NoxusCards._Devour.new(["hand", "discard"], true), "red", state)
+	check(rd.is_waiting() and rd.pending.tag == "hand_or_discard", "Devour: выбор в руке или сбросе")
+	TurnEngine.resume_card(state, "discard:48342", rd)
+	check(red.deck.hand.has("48342") and not red.deck.discard_pile.has("48342"), "съеден Noble из сброса, Noble в руке цел")
+	check_eq(Deck.zone_pick("hand:48344"), ["hand", "48344"], "zone_pick: стопка и id")
+	check_eq(Deck.zone_pick("48344"), ["", "48344"], "zone_pick: просто id — из любой")
+	# Promote из руки или сброса: так же
+	red.deck.discard_pile.append("48342")
+	var rp := EffectResolver.new()
+	rp.apply(PromoteCard.new("hand_or_discard"), "red", state)
+	TurnEngine.resume_card(state, "hand:48342", rp)
+	check(not red.deck.hand.has("48342") and red.deck.discard_pile.has("48342"), "promote взял Noble из руки, Noble в сбросе цел")
+
+	# "adjacent": локации, связанные напрямую, — соседи (Nihiloor)
+	var graph := MapGraph.new()
+	graph.add_site("site_a", "A", 1, "TEST")
+	graph.add_site("site_b", "B", 1, "TEST")
+	graph.add_slot("a1", "TEST", Vector2(0, 0), "site_a")
+	graph.add_slot("b1", "TEST", Vector2(4, 0), "site_b")
+	graph.connect_sites("site_a", "site_b")
+	graph.finalize()
+	var tiny := GameState.new(graph, 1)
+	check(MercenaryCards.near_slots(tiny, "a1").has("b1"), "войско в соседней (прямая связь) локации — рядом")
+	tiny.add_player("red", [])
+	tiny.troops["a1"] = "red"
+	tiny.troops["b1"] = "white"
+	var strike := MercenaryCards._NihiloorStrike.new(["a1"])
+	var rs := EffectResolver.new()
+	rs.apply(strike, "red", tiny)
+	check(rs.is_waiting() and rs.pending.legal_options == ["b1"], "Nihiloor: белое войско в соседней локации — цель")
+
+	# "Move a troop": и своё войско, и чужое в Присутствии
+	var mine := ""
+	var theirs := ""
+	for slot_id: String in state.graph.slots.keys():
+		var owner := String(state.troops.get(slot_id, ""))
+		if owner == "red" and mine == "":
+			mine = slot_id
+		elif owner == "blue" and theirs == "" and state.presence.has_presence_at_slot("red", slot_id, state.troops, state.spies):
+			theirs = slot_id
+	var any_sources := MoveTroop.any(1)._legal_sources(state, "red")
+	check(any_sources.has(mine), "Move a troop: своё войско можно")
+	check(theirs == "" or any_sources.has(theirs), "Move a troop: чужое в Присутствии можно")
+	check(not MoveTroop.new(1)._legal_sources(state, "red").has(mine), "Move an enemy troop: своё нельзя")
+	var hc: Array = _collect_choose(CardLibrary.get_effect("49512"))   # Hobgoblin Captain
+	check(not hc.is_empty() and (hc[0] as ChooseEffect).options[0] is MoveTroop
+		and ((hc[0] as ChooseEffect).options[0] as MoveTroop).any_troop, "Hobgoblin Captain: Move a troop — любое войско")
+
+	# "Move a spy": свой где угодно и чужой в Присутствии
+	var site := state.graph.site_of_slot(mine)
+	var spies: Array = state.spies.get(site, [])
+	if not spies.has("blue"):
+		spies.append("blue")
+	state.spies[site] = spies
+	var ms := SiegeCards.MoveSpy.new(false, true)
+	check(ms._sources(state, "red").any(func(o): return String(o).ends_with(ReturnTroopOrSpy.SEP + "blue")),
+		"Move a spy: чужой шпион в Присутствии можно")
+	check(not SiegeCards.MoveSpy.new(false)._sources(state, "red").any(func(o): return String(o).ends_with(ReturnTroopOrSpy.SEP + "blue")),
+		"Move one of your spies: чужого нельзя")
+
+	# Look at the top N: игрок видит карты, другим по сети — без карт
+	red.deck.draw_pile.clear()
+	red.deck.draw_pile.append_array(["48344", "48340", "48342"] as Array[String])
+	var rl := EffectResolver.new()
+	rl.apply(FetchFromTop.new(6, func(c): return c == "48340"), "red", state)
+	var looks := rl.events.filter(func(e): return e["type"] == "look_cards")
+	check(looks.size() == 1 and (looks[0]["cards"] as Array).size() == 3, "FetchFromTop: событие look_cards с тремя картами")
+	check_eq((StateView.events_for(rl.events, "red").filter(func(e): return e["type"] == "look_cards")[0]["cards"] as Array).size(), 3,
+		"сам игрок получает карты")
+	check_eq((StateView.events_for(rl.events, "blue").filter(func(e): return e["type"] == "look_cards")[0]["cards"] as Array).size(), 0,
+		"соперник — без карт")
+
+	# Jarlaxle: карта blue остаётся в его сыгранных; её "at end of turn" в конце
+	# хода blue решает red
+	blue.deck.hand.clear()
+	blue.deck.played_pile.clear()
+	blue.deck.hand.append("49414")  # Xanathar Smuggler: Bribe -> promote в конце хода
+	blue.vp_tokens = 1
+	green.deck.hand.clear()
+	red.vp_tokens = 0
+	var rj := _play_with(state, "49413")
+	if rj.is_waiting() and rj.pending.choice_type == "target_card":
+		TurnEngine.resume_card(state, "49414", rj)
+	check(rj.is_waiting() and rj.pending.player_id == "red" and rj.pending.choice_type == "confirm",
+		"Jarlaxle: подкупить ли за blue — решает red")
+	TurnEngine.resume_card(state, true, rj)
+	if rj.is_waiting() and rj.pending.choice_type == "target_player":
+		TurnEngine.resume_card(state, "green", rj)
+	check(blue.deck.played_pile.has("49414"), "Smuggler лежит в сыгранных blue")
+	check_eq(blue.pending_end_of_turn.size(), 1, "promote отложен до конца хода blue")
+	TurnEngine.end_turn(state, "red", rj)
+	TurnEngine.start_turn(state, "blue")
+	blue.deck.hand.append("48344")
+	TurnEngine.play_card(state, "blue", "48344", rj)
+	TurnEngine.end_turn(state, "blue", rj)
+	check(rj.is_waiting() and rj.pending.player_id == "red", "в конце хода blue карту для promote выбирает red")
+	check(rj.is_waiting() and rj.pending.legal_options.has("48344") and not rj.pending.legal_options.has("49414"),
+		"на выбор — другие сыгранные карты blue")
+	TurnEngine.resume_card(state, "48344", rj)
+	check(state.stock("blue").deck.inner_circle.has("48344"), "Soldier продвинут во Внутренний круг blue")
+	check(rj.deciders.is_empty(), "после promote вопросы снова задают владельцу")
+
+	# MOVES: действие другого игрока в чужой ход — своей строкой; Bribe — строкой
+	var feed := TurnFeed.new()
+	feed.add_stat("red", "deploy", 1)
+	feed.add_stat("blue", "vp", 4)
+	feed.add_stat("red", "bribe", 1, "blue")
+	check_eq(feed.last_stat("vp"), 0, "VP blue не записаны ходящему red")
+	check_eq(int(feed._blocks.back().stats.get("vp:blue", 0)), 4, "VP blue — отдельной строкой")
+	check_eq(feed.last_stat("bribe"), 1, "BRIBE в сводке хода")
+	feed.free()
+
+	# MARKET: подсказка с полуколодами партии
+	var market := MarketPanel.new()
+	market.set_half_decks(["drow", "dragons"])
+	check(market._title.tooltip_text.contains("DROW") and market._title.tooltip_text.contains("DRAGONS"),
+		"MARKET: подсказка называет полуколоды")
+	market.free()

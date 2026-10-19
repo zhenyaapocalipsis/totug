@@ -137,7 +137,7 @@ static func build(card_id: String) -> CardEffect:
 		GORGON:
 			return _MoveThenSupplant.new()
 		ANKHEG:
-			return SequenceEffect.new([MoveTroop.new(1), DeployTroop.new(3)])
+			return SequenceEffect.new([MoveTroop.any(1), DeployTroop.new(3)])
 		DUST_MEPHIT:
 			return ChooseEffect.new([RecruitFree.new("", 5), RecruitFree.new("", 3, 2)],
 				["Recruit a card that costs 5 or less for free", "Recruit 2 cards that cost 3 or less for free"])
@@ -180,7 +180,7 @@ static func devotion_effect(card_id: String) -> CardEffect:
 		ADULT_BRASS:
 			return SequenceEffect.new([ScryCards.new(2), DrawCards.new(1)])
 		STONE_GIANT:
-			return MoveTroop.new(2)
+			return MoveTroop.any(2)
 		GORGON:
 			return GainPower.new(3)
 		DUST_MEPHIT:

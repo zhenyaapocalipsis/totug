@@ -262,6 +262,7 @@ const NAMES := {
 	"Supplant a troop and deploy 2 troops": "Unburrow",
 	"Move up to 2 troops or spies": "Tunnel",
 	"Move one of your spies": "Shift",
+	"Move a spy": "Shift",
 	"Done": "Hold",
 	"+1 Influence for every 2 sites you control": "Lavender Tithe",
 	"At end of turn, promote another card you played this turn": "Endless Banquet",

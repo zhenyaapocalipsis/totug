@@ -40,6 +40,8 @@ const WIDTH := SLOT.x * COLUMNS + 2 * (COLUMNS - 1) + PAD * 2
 var _grid: GridContainer
 var _supply_row: GridContainer
 var _deck_label: Label
+## Надпись MARKET: по наведению — из каких полуколод собран рынок партии.
+var _title: Label
 ## По слоту на карту дисплея плюс ghost последним; по слоту на общую стопку.
 var _cards: Array[CardView] = []
 var _empties: Array[Control] = []
@@ -61,6 +63,7 @@ func _init() -> void:
 	col.add_child(title_row)
 	var title := GameScreen.section_label("MARKET")
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title = title
 	title_row.add_child(title)
 	_deck_label = GameScreen.section_label("")
 	title_row.add_child(_deck_label)
@@ -109,6 +112,21 @@ func _init() -> void:
 
 	# Стопку Insane Outcast в маркете не показываем вовсе (решение владельца,
 	# 2026-09-19): её не вербуют, карты раздают её сами при розыгрыше.
+
+
+## Полуколоды рынка этой партии (board_snapshot "half_decks") — подсказкой при
+## наведении на MARKET (владелец, 2026-10-19). Одна полуколода дважды — "×2".
+func set_half_decks(decks: Array) -> void:
+	var lines := PackedStringArray()
+	var seen: Array = []
+	for deck in decks:
+		if seen.has(deck):
+			continue
+		seen.append(deck)
+		var n := decks.count(deck)
+		lines.append(SetupScreen.deck_title(String(deck)) + (" ×%d" % n if n > 1 else ""))
+	_title.tooltip_text = "Market half-decks:\n" + "\n".join(lines) if not lines.is_empty() else ""
+	_title.mouse_filter = Control.MOUSE_FILTER_PASS if not lines.is_empty() else Control.MOUSE_FILTER_IGNORE
 
 
 func update_from_view(view: Dictionary) -> void:

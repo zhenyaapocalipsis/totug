@@ -101,7 +101,7 @@ static func build(card_id: String) -> CardEffect:
 		ARCHAEOLOGIST:
 			return SequenceEffect.new([GainInfluence.new(2), _RevealDiscount.new()])
 		SKY_SQUAD:
-			return MoveTroop.new(1)
+			return MoveTroop.any(1)
 		ECOLOGIST:
 			return SequenceEffect.new([GainInfluence.new(1), _Peek.new(ECOLOGIST, "promote", "", Callable())])
 		MONK:
@@ -332,6 +332,7 @@ class _Peek extends CardEffect:
 				n = IxtalCards.EZREAL_LOOK
 			for i in range(mini(n, d.draw_pile.size())):
 				_shown.append(d.draw_pile.pop_back())
+			resolver.log_look(player_id, _shown, "Top %d cards of your deck" % _shown.size())
 			if mode == "explore":
 				resolver.log_event("explore", {"player_id": player_id, "looked": _shown.size(), "what": what})
 				if state.turn_flags.get("milio", false):

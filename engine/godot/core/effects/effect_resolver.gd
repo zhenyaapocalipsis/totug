@@ -87,5 +87,15 @@ func log_event(kind: String, data: Dictionary = {}) -> void:
 	events.append(evt)
 
 
+## Игрок посмотрел карты ("Look at the top N cards..."): экран покажет их ему
+## одному (владелец, 2026-10-19); другим по сети событие уходит без карт
+## (StateView.events_for). what — заголовок окна, owner — чьи это карты.
+func log_look(player_id: String, cards: Array, what: String, owner: String = "") -> void:
+	if cards.is_empty():
+		return
+	log_event("look_cards", {"player_id": player_id, "cards": cards.duplicate(), "what": what,
+		"owner": owner if owner != "" else player_id})
+
+
 func is_waiting() -> bool:
 	return pending != null

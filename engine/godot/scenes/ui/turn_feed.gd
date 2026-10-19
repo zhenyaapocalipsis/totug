@@ -48,6 +48,8 @@ const STATS := {
 	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",
 	"return": "RETURN", "spy": "SPY", "spy_back": "SPY BACK", "trophy": "TROPHY",
 	"vp": "VP",
+	# Bribe: 1 VP отдан сопернику, квадратик — цвета получившего
+	"bribe": "BRIBE",
 	# доход с маркеров контроля и бонуса гекса A2 (решение владельца,
 	# 2026-09-28: игроки его не замечали)
 	"mark_influence": "MARK INF", "mark_vp": "MARK VP",
@@ -165,6 +167,11 @@ func add_stat(pid: String, key: String, amount: int = 1, mark: String = "",
 		return
 	var follow := _at_bottom()
 	var block := _current_block(pid)
+	# Действие другого игрока посреди чужого хода (Shield Guardian поставил
+	# войска и взял VP за пустой барак) — своей строкой его цвета: иначе оно
+	# читалось как действие ходящего.
+	if pid != "" and block.pid != pid:
+		key = key + ":" + pid
 	var fresh := not block.has_row(key)
 	block.add_stat(key, amount, mark, places)
 	if fresh:
@@ -418,7 +425,9 @@ class Block extends PanelContainer:
 		(places[key] as Array).append_array(where)
 		var row: Array = _rows[key]
 		var label: Label = row[0]
-		match key:
+		# "vp:blue" — строка другого игрока: подпись та же, что у "vp".
+		var base := key.get_slice(":", 0)
+		match base:
 			"vp":
 				label.text = "+%d VP" % stats[key]
 			"a2_vp":
@@ -426,11 +435,11 @@ class Block extends PanelContainer:
 			"mark_vp":
 				label.text = "MARK +%d VP" % stats[key]
 			"kept":
-				label.text = TurnFeed.STATS[key]
+				label.text = TurnFeed.STATS[base]
 			"a2_power", "a2_influence", "mark_influence":
-				label.text = "%s +%d" % [TurnFeed.STATS[key], stats[key]]
+				label.text = "%s +%d" % [TurnFeed.STATS[base], stats[key]]
 			_:
-				label.text = "%s %d" % [TurnFeed.STATS[key], stats[key]]
+				label.text = "%s %d" % [TurnFeed.STATS[base], stats[key]]
 		var marks: HBoxContainer = row[1]
 		# Квадратики — пока влезают в ширину карты рядом с подписью: иначе
 		# строка раздвинула бы колонку.
@@ -466,26 +475,32 @@ class Block extends PanelContainer:
 		# Без обрезки "SUPPLANT 12" шире карты 58 и раздвигает колонку.
 		label.clip_text = true
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var base := key.get_slice(":", 0)
 		var colour := PixelTheme.TEXT_DIM
-		if key == "vp" or key == "a2_vp" or key == "mark_vp":
+		if base == "vp" or base == "a2_vp" or base == "mark_vp":
 			colour = PixelTheme.GOLD
-		elif key == "a2_power":
+		elif base == "a2_power":
 			colour = GameScreen.POWER_COLOR
-		elif key == "a2_influence" or key == "mark_influence":
+		elif base == "a2_influence" or base == "mark_influence":
 			colour = GameScreen.INFLUENCE_COLOR
-		elif key == "kill":
+		elif base == "kill":
 			colour = PixelTheme.DANGER
+		# Строка другого игрока ("vp:blue") — цвета этого игрока, как подпись
+		# чужого сброса.
+		if key.contains(":"):
+			colour = EventLogPanel.player_color(key.get_slice(":", 1))
 		label.add_theme_color_override("font_color", colour)
 		row.add_child(label)
 		var marks := HBoxContainer.new()
 		marks.add_theme_constant_override("separation", 1)
 		marks.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(marks)
+		# По порядку STATS; строка другого игрока — сразу под строкой ходящего.
+		var order: Array = TurnFeed.STATS.keys()
+		var rank := order.find(base)
 		var before := 0
-		for other: String in TurnFeed.STATS:
-			if other == key:
-				break
-			if _rows.has(other):
+		for other: String in _rows:
+			if order.find(other.get_slice(":", 0)) <= rank:
 				before += 1
 		_stats_box.add_child(row)
 		_stats_box.move_child(row, before)

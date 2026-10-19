@@ -193,6 +193,8 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s gains %d VP" % [who, amount]
 		"gain_per_n":
 			return "%s gains %d %s" % [who, amount, e.get("resource", "")]
+		"bribe":
+			return "%s bribes %s with %d VP" % [who, player_name(String(e.get("to", ""))), amount]
 		"draw_cards":
 			return "%s draws %d card%s" % [who, amount, "" if amount == 1 else "s"]
 		"discard":

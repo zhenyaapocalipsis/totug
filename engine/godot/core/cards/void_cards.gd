@@ -148,8 +148,8 @@ static func _choose(card_id: String, opts: Array[CardEffect], labels: Array[Stri
 
 ## Groundling Stalker (Rek'Sai): "move up to 2 troops or spies" — дважды выбор.
 static func _move_unit() -> ChooseEffect:
-	var c := ChooseEffect.new([MoveTroop.new(1), SiegeCards.MoveSpy.new(false), SequenceEffect.new()],
-		["Move a troop", "Move one of your spies", "Done"])
+	var c := ChooseEffect.new([MoveTroop.any(1), SiegeCards.MoveSpy.new(false, true), SequenceEffect.new()],
+		["Move a troop", "Move a spy", "Done"])
 	c.source_card = REKSAI
 	return c
 
@@ -646,6 +646,7 @@ class _TopCheap extends CardEffect:
 				d.shuffle_draw_pile(state.rng)
 			for i in range(mini(amount, d.draw_pile.size())):
 				_shown.append(d.draw_pile.pop_back())
+			resolver.log_look(player_id, _shown, "Top %d cards of your deck" % _shown.size())
 		elif is_answered():
 			var cid := String(answer()) if answer() != null else ""
 			_answered = false
@@ -692,6 +693,7 @@ class _MarketReveal extends CardEffect:
 			if _shown.is_empty():
 				return
 			resolver.log_event("market_reveal", {"player_id": player_id, "cards": _shown.duplicate()})
+			resolver.log_look(player_id, _shown, "Top %d cards of the market deck" % _shown.size())
 			var options: Array = []
 			for cid: String in _shown:
 				var cost := CardLibrary.card_cost(cid)

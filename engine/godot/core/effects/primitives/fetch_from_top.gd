@@ -23,6 +23,10 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	var n := mini(amount, deck.draw_pile.size())
 	var taken: Array[String] = []
 	var top := deck.draw_pile.size() - 1
+	var looked: Array = []
+	for i in range(n):
+		looked.append(deck.draw_pile[top - i])
+	resolver.log_look(player_id, looked, "Top %d cards of your deck" % n)
 	for i in range(n):
 		var idx := top - i
 		if filter.call(deck.draw_pile[idx]):

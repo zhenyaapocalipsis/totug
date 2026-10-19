@@ -82,6 +82,9 @@ var _played_card: CardView = null
 var _viewer := ""
 ## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
 var _choosing := false
+## Вопрос "из руки или сброса": щелчок шлёт "hand:<id>" или "discard:<id>",
+## чтобы сервер взял копию именно из той стопки (Deck.zone_pick).
+var _both := false
 ## С какого места ряда идут карты Inner Circle (выбор "play a card from your
 ## inner circle"); -1 — их в ряду нет. Перед ними промежуток с чертой и
 ## подпись INNER CIRCLE.
@@ -137,6 +140,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var tag := String(pd.get("tag", ""))
 	var both := tag == HAND_OR_DISCARD
 	_choosing = mine and (tag == "hand" or both or ZONE_LABELS.has(tag))
+	_both = _choosing and both
 	var options: Array = pd.get("legal_options", []) if _choosing else []
 	if _choosing:
 		playable = options if tag == "hand" or both else []
@@ -146,6 +150,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# 2026-09-27). "" в вариантах — отказ, это Skip в строке вопроса.
 	var zone_ids: Array = options.filter(func(o): return String(o) != "") \
 		if ZONE_LABELS.has(tag) else []
+	# Сколько первых карт зоны — сама разыгранная карта ("this"), не сброс.
+	var this_count := 0
 	_label.text = ZONE_LABELS.get(tag, "")
 	if both:
 		# Рука или сброс (Necromancer, Wisp...): карты руки — золотые в самой
@@ -165,6 +171,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			else:
 				played.append(cid)
 		zone_ids = played + zone_ids
+		this_count = played.size()
 		_label.text = "THIS + DISCARD" if not played.is_empty() else "DISCARD"
 	# Kara-Tur: удержанные (Retain) карты — справа от руки, тусклые: вернутся
 	# в руку в конце хода. Вопрос с картами зоны важнее — тогда их не видно.
@@ -173,11 +180,11 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	if showing_retained:
 		zone_ids = retained.duplicate()
 		_label.text = "RETAINED"
-	var entries: Array = []   # [card_id, карта из Inner Circle]
+	var entries: Array = []   # [card_id, карта из зоны справа, стопка для ответа]
 	for cid in hand:
-		entries.append([String(cid), false])
-	for cid in zone_ids:
-		entries.append([String(cid), true])
+		entries.append([String(cid), false, "hand"])
+	for i in range(zone_ids.size()):
+		entries.append([String(zone_ids[i]), true, "discard" if both and i >= this_count else ""])
 	_split = hand.size() if not zone_ids.is_empty() and not hand.is_empty() else -1
 	_label.visible = not zone_ids.is_empty()
 
@@ -230,6 +237,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_deal_sound(fresh)
 			fresh += 1
 		keys.append(found if found >= 0 else old_cards.size() + keys.size())
+		_cards[_cards.size() - 1].set_meta("pile", entry[2])
 		_cards[_cards.size() - 1].set_clickable(
 			(zone_ids.has(cid) and not showing_retained) if from_zone else playable.has(cid))
 
@@ -323,7 +331,8 @@ func _make_card(cid: String) -> CardView:
 		# внутри card_clicked, и к тому моменту пометка уже нужна.
 		_played_card = card
 		if _choosing:
-			choice_clicked.emit(clicked)
+			var pile := String(card.get_meta("pile", ""))
+			choice_clicked.emit(pile + ":" + clicked if _both and pile != "" else clicked)
 		else:
 			card_clicked.emit(clicked))
 	# Ткнули в карту, которую сейчас играть нельзя — она дёргается и краснеет,

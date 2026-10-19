@@ -77,7 +77,7 @@ static func build(card_id: String) -> CardEffect:
 		"49318":  # Guardian Brute — реакция: brute_reaction
 			return DrawCards.new(1)
 		"49319":  # Schemer
-			return ChooseEffect.new([MoveSpy.new(true), MoveTroop.new(1)],
+			return ChooseEffect.new([MoveSpy.new(true), MoveTroop.any(1)],
 				["Move an enemy spy to another site", "Move a troop"])
 	return null
 
@@ -325,19 +325,28 @@ class _ConvertN extends CardEffect:
 
 
 ## "Move an enemy spy to another site" (Schemer, enemy=true; нужно Присутствие
-## на его локации) / "move a spy" — своего, где угодно (Shady Merchant).
+## на его локации) / "move one of your spies" — своего, где угодно (enemy=false) /
+## "move a spy" (any_spy: Shady Merchant, Groundling Stalker) — своего где угодно
+## или чужого в своём Присутствии (владелец, 2026-10-19: move — из зоны своего
+## Присутствия в любое место).
 class MoveSpy extends CardEffect:
 	var enemy: bool
+	var any_spy := false
 	var _spy := ""
-	func _init(of_enemy: bool) -> void:
+	func _init(of_enemy: bool, of_anyone: bool = false) -> void:
 		enemy = of_enemy
+		any_spy = of_anyone
 	func _sources(state: GameState, player_id: String) -> Array:
 		var out: Array = []
 		for site_id: String in state.spies.keys():
-			if enemy and not state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies):
+			var present: bool = state.presence.has_presence_at_site(player_id, site_id, state.troops, state.spies)
+			if enemy and not present:
 				continue
 			for owner: String in state.spies[site_id]:
-				if (enemy and state.is_opponent(player_id, owner)) or (not enemy and owner == player_id):
+				var movable := (enemy and state.is_opponent(player_id, owner)) or (not enemy and owner == player_id)
+				if any_spy:
+					movable = owner == player_id or (present and state.is_opponent(player_id, owner))
+				if movable:
 					var option := "spy%s%s%s%s" % [ReturnTroopOrSpy.SEP, site_id, ReturnTroopOrSpy.SEP, owner]
 					if not out.has(option):
 						out.append(option)
@@ -377,7 +386,8 @@ class MoveSpy extends CardEffect:
 		var sources := _sources(state, player_id)
 		if sources.is_empty():
 			return
-		_ask(player_id, resolver, "Move an enemy spy" if enemy else "Move one of your spies", "target_return", sources)
+		var prompt := "Move an enemy spy" if enemy else ("Move a spy" if any_spy else "Move one of your spies")
+		_ask(player_id, resolver, prompt, "target_return", sources)
 	func _ask(player_id: String, resolver: EffectResolver, prompt: String, kind: String, options: Array) -> void:
 		var pd := PendingDecision.new()
 		pd.player_id = player_id

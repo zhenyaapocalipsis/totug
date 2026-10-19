@@ -452,6 +452,7 @@ func _build_layout() -> void:
 	_market_panel.market_card_clicked.connect(_on_market_clicked)
 	_market_panel.supply_card_clicked.connect(_on_supply_clicked)
 	_market_panel.choice_clicked.connect(_on_decision_answer)
+	_market_panel.set_half_decks(board_data.get("half_decks", []))
 	add_child(_market_panel)
 
 	# Колода и сброс — дектрекер слева от рынка.
@@ -1183,6 +1184,7 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 		_refuse("Not allowed: %s" % _error_name(err))
 	refresh(view)
 	_react_to_events(events)
+	_show_looks(events, view)
 	# эффект Ulitharid ждёт выбора карты рынка; если такого вопроса нет (нечего
 	# выбрать) — щупальца уходят без фазы 2
 	if String((view.get("pending_decision", {}) as Dictionary).get("tag", "")) != "market":
@@ -1192,6 +1194,43 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	# затемнения складываются в чёрный экран, а карту витрины закрывает окно.
 	if _showcase.is_busy():
 		_decision_dialog.visible = false
+
+
+## "Look at the top N cards..." / "Reveal the top card": карты, которые эффект
+## показал игроку, — окном (владелец, 2026-10-19: игрок должен их увидеть).
+## Если следующий вопрос и так про эти же карты (Scry, "положи одну в руку"),
+## окно не нужно. В реплее и у зрителя окна нет.
+func _show_looks(events: Array, view: Dictionary) -> void:
+	if replay_bar != null or watching:
+		return
+	var pd: Dictionary = view.get("pending_decision", {})
+	var mine := String(pd.get("player_id", "")) == viewer_id
+	var asked: Array = pd.get("legal_options", []) if mine else []
+	var shown: Array = []
+	var title := ""
+	var owner := viewer_id
+	for e in events:
+		var evt: Dictionary = e
+		var type := String(evt.get("type", ""))
+		if String(evt.get("player_id", "")) != viewer_id:
+			continue
+		var cards: Array = []
+		var what := "Top card of your deck"
+		if type == "look_cards":
+			cards = evt.get("cards", [])
+			what = String(evt.get("what", "You look at"))
+		elif type == "reveal_top":
+			cards = [String(evt.get("card_id", ""))]
+		if cards.is_empty():
+			continue
+		var covered := cards.all(func(c): return asked.has(c)) \
+			or (mine and cards.size() == 1 and String(pd.get("source_card", "")) == String(cards[0]))
+		if not covered:
+			shown = cards
+			title = what
+			owner = String(evt.get("owner", viewer_id))
+	if not shown.is_empty():
+		_pile_dialog.open_pile(title, shown, owner)
 
 
 ## Окно вопроса по виду (или скрыть его). Пока идёт витрина — скрыто, его
@@ -1458,6 +1497,9 @@ func _note_recap(events: Array) -> void:
 				_feed.add(pid, cid, RECAP_TAGS[type])
 		elif type == "play_card":
 			_feed.add_played(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
+		elif type == "jarlaxle":
+			# Карту соперника разыграли за него: она — его сыгранная карта.
+			_feed.add_to_turn(String(evt.get("rival", "")), String(evt.get("card_id", "")), "PLAYED")
 		elif type == "discard" or type == "force_discard":
 			_feed.add_discard(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
 		elif type == "give_insane_outcast":
@@ -1552,6 +1594,7 @@ const RECAP_STATS := {
 	"return_spy": ["spy_back", "spy_owner"], "return_own_spy": ["spy_back", "player_id"],
 	"take_trophy": ["trophy", "hall"],
 	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""],
+	"bribe": ["bribe", "to"],
 }
 
 

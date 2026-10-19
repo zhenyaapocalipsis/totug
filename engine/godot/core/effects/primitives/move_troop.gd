@@ -32,6 +32,10 @@ var only_slots: Array = []
 var _moved_to: Array = []
 ## Blink Dog: ставить можно только на пустые места рядом с этой локацией.
 var dest_near_site: String = ""
+## "Move a troop" (без "enemy" и без "your"): любое войско — своё где угодно,
+## чужое или белое — в своём Присутствии (владелец, 2026-10-19: move — это
+## действие из зоны своего Присутствия в любое место на карте).
+var any_troop := false
 
 
 func _init(count: int = 1, allow_fewer: bool = false, own_troops: bool = false,
@@ -42,6 +46,13 @@ func _init(count: int = 1, allow_fewer: bool = false, own_troops: bool = false,
 	single_site = restrict_single_site or preset_site != ""
 	locked_site = preset_site
 	on_done = done_cb
+
+
+## "Move a troop" / "Move N troops": любое войско (см. any_troop).
+static func any(count: int = 1, allow_fewer: bool = false) -> MoveTroop:
+	var move := MoveTroop.new(count, allow_fewer)
+	move.any_troop = true
+	return move
 
 
 func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -63,7 +74,7 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 			if value != null and value != "":
 				var from: String = _picked_source
 				var owner: String = state.troops.get(from, "")
-				if not own and ShieldGuard.can_react(state, player_id, owner):
+				if not own and owner != player_id and ShieldGuard.can_react(state, player_id, owner):
 					# Сначала вопрос жертве (Shield Guardian), потом продолжение.
 					var me := self
 					resolver.push(CallbackEffect.new(func(s, pid, r): me._after_move(s, pid, r)), player_id)
@@ -102,7 +113,7 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 		return
 	var pd := PendingDecision.new()
 	pd.player_id = player_id
-	pd.prompt = "Move one of your troops" if own else "Move an enemy troop"
+	pd.prompt = "Move one of your troops" if own else ("Move a troop" if any_troop else "Move an enemy troop")
 	pd.choice_type = "target_slot"
 	pd.legal_options = legal.duplicate()
 	if up_to:
@@ -140,6 +151,9 @@ func _legal_sources(state: GameState, player_id: String) -> Array:
 		if own:
 			if owner == player_id:
 				legal.append(slot_id)
+			continue
+		if any_troop and owner == player_id:
+			legal.append(slot_id)
 			continue
 		if state.is_ally(player_id, owner):
 			continue

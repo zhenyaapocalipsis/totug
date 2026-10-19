@@ -102,7 +102,7 @@ static func build(card_id: String) -> CardEffect:
 				_PerOutcast.new("deploy"),
 				ChooseEffect.new([
 					_DeployNearEnemy.new(),
-					MoveTroop.new(1),
+					MoveTroop.any(1),
 				], ["Deploy 3 troops (next to another player's troop: each opponent recruits an Insane Outcast)",
 					"Move a troop"]),
 			])
@@ -303,11 +303,7 @@ class _DeployNearEnemy extends CardEffect:
 
 
 static func _next_to_enemy(state: GameState, player_id: String, slot_id: String) -> bool:
-	var near: Array = Array(state.graph.adjacent_slots(slot_id))
-	var site: String = state.graph.site_of_slot(slot_id)
-	if site != "":
-		near.append_array(state.graph.slots_of_site(site))
-	for other: String in near:
+	for other: String in MercenaryCards.near_slots(state, slot_id):
 		var owner: String = state.troops.get(other, "")
 		if owner != "white" and state.is_enemy(player_id, owner):
 			return true
@@ -453,10 +449,11 @@ class _HagDevour extends CardEffect:
 			var chosen = answer()
 			if chosen == null or String(chosen) == "":
 				return
-			var cid := String(chosen)
-			if d.hand.has(cid):
+			var pick := Deck.zone_pick(String(chosen))
+			var cid: String = pick[1]
+			if pick[0] != "discard" and d.hand.has(cid):
 				d.hand.remove_at(d.hand.find(cid))
-			elif d.discard_pile.has(cid):
+			elif pick[0] != "hand" and d.discard_pile.has(cid):
 				d.discard_pile.remove_at(d.discard_pile.find(cid))
 			else:
 				return

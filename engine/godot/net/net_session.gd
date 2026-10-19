@@ -81,7 +81,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 38
+const PROTOCOL := 39
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -1201,7 +1201,8 @@ func _room_apply(sender: int, d: Dictionary) -> void:
 		if err != GameServer.Error.OK and peer != sender:
 			continue
 		var own_err := err if peer == sender else GameServer.Error.OK
-		_send(peer, "_result", [own_err, result["events"], views[room.seats[peer]]])
+		_send(peer, "_result", [own_err, StateView.events_for(result["events"], room.seats[peer]),
+			views[room.seats[peer]]])
 	if err != GameServer.Error.OK:
 		return
 	_feed_watchers(room, result["events"])
@@ -1221,7 +1222,8 @@ func _abandon_room(room: GameRoom, pid: String) -> void:
 	GameJournal.erase(room.code, saves_dir)
 	var views: Dictionary = result["views"]
 	for peer: int in room.seats:
-		_send(peer, "_result", [GameServer.Error.OK, result["events"], views[room.seats[peer]]])
+		_send(peer, "_result", [GameServer.Error.OK, StateView.events_for(result["events"], room.seats[peer]),
+			views[room.seats[peer]]])
 	_feed_watchers(room, result["events"])
 	_broadcast_pause(room)
 	_send_replay(room)
@@ -1721,7 +1723,7 @@ func _start_watching(peer: int, me: String, other: String, shown: String) -> Str
 ## кончилась) — всё накопленное уходит зрителям, отсечка сдвигается.
 func _feed_watchers(room: GameRoom, events: Array) -> void:
 	var state := room.server.state
-	room.watch_buffer.append([events, _public_view(room)])
+	room.watch_buffer.append([StateView.events_for(events, ""), _public_view(room)])
 	var now := state.current_player()
 	if not state.game_over and now == room.watch_player:
 		return

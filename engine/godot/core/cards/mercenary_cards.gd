@@ -13,8 +13,9 @@ extends RefCounted
 ## Толкования:
 ##   Sylgar — "put it back where it was": карта остаётся на месте, VP получает
 ##       хозяин карты (на рынке — тот, кто сожрал);
-##   Jarlaxle — карта соперника идёт в его сброс, её эффект работает на него,
-##       а все её вопросы задают разыгравшему Jarlaxle (EffectResolver.deciders);
+##   Jarlaxle — карта соперника лежит в его сыгранных до конца его хода, её
+##       эффект работает на него, а все её вопросы (и отложенные до конца его
+##       хода) задают разыгравшему Jarlaxle (EffectResolver.deciders);
 ##   Nar'l Xibrindas — взятая карта ложится в твой сброс, Nar'l — в чужой;
 ##   "adjacent" — соседний слот или та же локация (как в Waterdeep).
 
@@ -79,7 +80,7 @@ static func build(card_id: String) -> CardEffect:
 		"49415":  # Shady Merchant
 			return SequenceEffect.new([
 				ReturnTroopOrSpy.new(1, false, true),
-				SiegeCards.MoveSpy.new(false),
+				SiegeCards.MoveSpy.new(false, true),
 				maybe_bribe(_GiftPlayed.new(card_id), "Put another card played this turn on top of an opponent's deck"),
 			])
 		"49416":  # Sylgar — своего эффекта нет: sylgar_saves
@@ -146,14 +147,23 @@ static func _entreri_vp(state: GameState, before: Dictionary) -> CardEffect:
 	return null
 
 
-## Соседство для "adjacent": соседние слоты и слоты той же локации.
+## Соседство для "adjacent" / "next to": соседние слоты, слоты той же локации,
+## места тоннелей у всей локации и слоты локаций, связанных с ней напрямую
+## (туннель без мест под войска). Без прямых связей Nihiloor не видел белое
+## войско в соседней локации и убивал меньше, чем мог.
 static func near_slots(state: GameState, slot_id: String) -> Array:
-	var near: Array = Array(state.graph.adjacent_slots(slot_id))
-	var site := state.graph.site_of_slot(slot_id)
+	var g := state.graph
+	var near: Array = Array(g.adjacent_slots(slot_id))
+	var site := g.site_of_slot(slot_id)
+	var extra: Array = []
 	if site != "":
-		for other: String in state.graph.slots_of_site(site):
-			if other != slot_id and not near.has(other):
-				near.append(other)
+		extra.append_array(Array(g.slots_of_site(site)))
+		extra.append_array(Array(g.slots_adjacent_to_site(site)))
+		for other_site: String in g.adjacent_sites(site):
+			extra.append_array(Array(g.slots_of_site(other_site)))
+	for other: String in extra:
+		if other != slot_id and not near.has(other):
+			near.append(other)
 	return near
 
 
@@ -416,13 +426,12 @@ class _Jarlaxle extends CardEffect:
 		resolver.log_event("jarlaxle", {"player_id": player_id, "rival": _rival, "card_id": card})
 		var rival := _rival
 		resolver.push(MercenaryCards.maybe_bribe(MercenaryCards._PlayAs.new(card), "Copy that card's effect"), player_id, card)
-		resolver.push(CallbackEffect.new(func(s: GameState, _pid: String, r: EffectResolver):
-			r.deciders.erase(rival)
-			var d: Deck = s.players[rival].deck
-			var at := d.played_pile.find(card)
-			if at != -1:
-				d.played_pile.remove_at(at)
-				d.discard_pile.append(card)), player_id)
+		# Карта остаётся сыгранной картой соперника (его played_pile) до конца его
+		# хода, а не уходит сразу в сброс (владелец, 2026-10-19). Её "at end of
+		# turn" сработает в конце хода соперника, решать снова будет разыгравший
+		# Jarlaxle (AtEndOfTurn запоминает решающего).
+		resolver.push(CallbackEffect.new(func(_s: GameState, _pid: String, r: EffectResolver):
+			r.deciders.erase(rival)), player_id)
 		resolver.deciders[rival] = player_id
 		resolver.push(CardLibrary.get_effect(card), rival, card)
 

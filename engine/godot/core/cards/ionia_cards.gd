@@ -109,7 +109,7 @@ static func build(card_id: String) -> CardEffect:
 				ConditionalEffect.new(func(state, pid): return state.stock(pid).trophy_hall_count >= 10, DrawCards.new(1)),
 			])
 		HIGHWAYMAN:
-			return ChooseEffect.new([_DeployPerAspect.new(), MoveTroop.new(1), AssassinateTroop.new(1, true)],
+			return ChooseEffect.new([_DeployPerAspect.new(), MoveTroop.any(1), AssassinateTroop.new(1, true)],
 				["Deploy a troop for each different Aspect you played this turn", "Move a troop", "Assassinate a white troop"])
 		GREENGLADE:
 			return SequenceEffect.new([
@@ -697,4 +697,5 @@ class _StrikersFromTop extends CardEffect:
 				dropped.append(card)
 		deck.hand.append_array(taken)
 		deck.discard_pile.append_array(dropped)
+		resolver.log_look(player_id, taken + dropped, "Top %d cards of your deck" % (taken.size() + dropped.size()))
 		resolver.log_event("fetch_from_top", {"player_id": player_id, "looked": taken.size() + dropped.size(), "cards": taken})

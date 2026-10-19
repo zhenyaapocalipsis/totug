@@ -350,6 +350,20 @@ static func _pending_decision_view(state: GameState, viewer_id: String) -> Dicti
 	return {}
 
 
+## События ответа сервера глазами viewer_id: карты, которые посмотрел другой
+## игрок ("look_cards", EffectResolver.log_look), — тайна, их из события
+## убираем. "" — зритель: убираем у всех.
+static func events_for(events: Array, viewer_id: String) -> Array:
+	var out: Array = []
+	for e in events:
+		var evt: Dictionary = e
+		if String(evt.get("type", "")) == "look_cards" and String(evt.get("player_id", "")) != viewer_id:
+			evt = evt.duplicate()
+			evt["cards"] = []
+		out.append(evt)
+	return out
+
+
 ## Вариант for_player(), которым в реальности пользуется GameServer: pending
 ## живёт в EffectResolver, а не в GameState, поэтому его передают отдельно.
 static func for_player_with_pending(state: GameState, viewer_id: String, pending: PendingDecision) -> Dictionary:

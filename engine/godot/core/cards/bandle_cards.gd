@@ -82,7 +82,7 @@ static func build(card_id: String) -> CardEffect:
 			], ["This turn, you may put cards you recruit on top of your deck",
 				"Gain 1 VP for each card you recruit this turn"])])
 		NORRA:
-			return SequenceEffect.new([_NorraTokens.new(), MoveTroop.new(1), DeployTroop.new(2)])
+			return SequenceEffect.new([_NorraTokens.new(), MoveTroop.any(1), DeployTroop.new(2)])
 		GNAR:
 			return SequenceEffect.new([GainPower.new(2), DrawCards.new(1),
 				ConditionalEffect.new(func(state, pid): return power_gained(state, pid) >= 6,
@@ -447,6 +447,7 @@ class _FromTopWithWord extends CardEffect:
 				dropped.append(card)
 		deck.hand.append_array(taken)
 		deck.discard_pile.append_array(dropped)
+		resolver.log_look(player_id, taken + dropped, "Top %d cards of your deck" % (taken.size() + dropped.size()))
 		resolver.log_event("fetch_from_top", {"player_id": player_id, "looked": taken.size() + dropped.size(), "cards": taken})
 
 

@@ -27,7 +27,7 @@ static func build(card_id: String) -> CardEffect:
 	match card_id:
 		"49200":  # Tough Boss (Officer Squad)
 			return SequenceEffect.new([
-				_AfterTroops.new(ChooseEffect.new([DeployTroop.new(3), MoveTroop.new(1)],
+				_AfterTroops.new(ChooseEffect.new([DeployTroop.new(3), MoveTroop.any(1)],
 					["Deploy 3 troops", "Move a troop"]),
 					func(s, pid, before): return ScryCards.new(1) if _moved_next_to_other(s, pid, before) else null),
 				FocusEffect.new("CONQUEST", DrawCards.new(1)),
@@ -71,7 +71,7 @@ static func build(card_id: String) -> CardEffect:
 				_AfterTroops.new(AssassinateTroop.new(1),
 					func(s, _pid, before): return GainPower.new(1) if _victims(s, before).has("white") else null),
 				_promote_obedience(card_id),
-				FocusEffect.new("CONQUEST", MoveTroop.new(1)),
+				FocusEffect.new("CONQUEST", MoveTroop.any(1)),
 			])
 		"49207":  # Clay Golem (Plaza Guardian)
 			return SequenceEffect.new([GainPower.new(2), _promote_obedience(card_id)])
@@ -202,13 +202,7 @@ static func _moved_next_to_other(state: GameState, player_id: String, before: Di
 		var owner: String = state.troops[slot_id]
 		if owner == "" or owner == "white" or String(before.get(slot_id, "")) == owner:
 			continue
-		var near: Array = Array(state.graph.adjacent_slots(slot_id))
-		var site: String = state.graph.site_of_slot(slot_id)
-		if site != "":
-			near.append_array(state.graph.slots_of_site(site))
-		for other: String in near:
-			if other == slot_id:
-				continue
+		for other: String in MercenaryCards.near_slots(state, slot_id):
 			var other_owner: String = state.troops.get(other, "")
 			if other_owner != "white" and state.is_enemy(player_id, other_owner):
 				return true
@@ -316,6 +310,7 @@ class _FocusFromTop extends CardEffect:
 				dropped.append(card)
 		deck.hand.append_array(taken)
 		deck.discard_pile.append_array(dropped)
+		resolver.log_look(player_id, taken + dropped, "Top %d cards of your deck" % (taken.size() + dropped.size()))
 		resolver.log_event("fetch_from_top", {"player_id": player_id, "looked": taken.size() + dropped.size(), "cards": taken})
 
 

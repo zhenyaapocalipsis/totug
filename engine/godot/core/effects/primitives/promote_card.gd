@@ -113,13 +113,20 @@ func _candidates(state: GameState, player_id: String) -> Array:
 	return pool
 
 
-func _promote_from(state: GameState, player_id: String, chosen: String, resolver: EffectResolver) -> void:
+func _promote_from(state: GameState, player_id: String, value: String, resolver: EffectResolver) -> void:
+	# "hand:<id>" / "discard:<id>" — щёлкнули карту в руке или в сбросе (Deck.zone_pick).
+	var pick := Deck.zone_pick(value)
+	var chosen: String = pick[1]
 	if MercenaryCards.sylgar_saves(state, player_id, chosen, resolver):
 		return
 	var p: PlayerState = state.players[player_id]
 	var removed := false
 	# Из руки ищем сначала в руке: та же карта может лежать и в played_pile.
 	var piles: Array = [p.deck.hand] if source == "hand" else [p.deck.played_pile, p.deck.discard_pile, p.deck.hand]
+	if pick[0] == "hand":
+		piles = [p.deck.hand]
+	elif pick[0] == "discard":
+		piles = [p.deck.discard_pile]
 	for pile in piles:
 		var idx: int = pile.find(chosen)
 		if idx != -1:
