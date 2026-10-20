@@ -10,6 +10,7 @@
 - Play: open `engine/godot/project.godot` in `C:\godot\Godot_v4.7.2-stable_win64.exe`, press F5.
 - Online: `start-server.bat` = local room-code server (UDP 7780, `-- --server`); `start-game.bat` opens one game window (run twice to test).
 - Build exe: `GAME 1v1/build-game.bat`.
+- Hearthstone card-play effects are baked, not ported: recipe `hs_unity/recipes/<name>.json` -> `"C:\Program Files\Unity\Hub\Editor\6000.6.6f1\Editor\Unity.exe" -batchmode -quit -projectPath hs_unity -executeMethod HsRender.Run -hsr-win C:/Games/Hearthstone/Data/Win -hsr-recipe hs_unity/recipes/<name>.json -hsr-out engine/godot/assets/hs_fx/baked/<name>` (frames + meta.json; then `--import` and set `process/fix_alpha_border=false` in the frames' .import); HsPlay plays them (SCRIPTS). Check frames: `tools/bake_sheet.gd`.
 
 ## Workflow
 - One stage at a time: change → tests pass → git commit "Stage N: ..." → short Russian checklist for the owner.
