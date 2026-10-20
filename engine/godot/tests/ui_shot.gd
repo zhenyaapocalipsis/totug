@@ -381,6 +381,17 @@ func _run_scenario() -> void:
 			_gif_left = _count_arg("gif", 0)
 			# без --gif — один снимок через --wait=N кадров
 			_shot_at = _frame + _count_arg("wait", 60)
+		"fx_menu":
+			# Меню по Esc -> CARD ANIMATIONS (список карт с анимацией розыгрыша);
+			# --play=1 — нажать первую карту: анимация на доске (--gif=N).
+			_screen._turn_banner.hide()
+			_screen._pause_menu.visible = true
+			_press(_screen._pause_menu, "CARD ANIMATIONS")
+			if _arg("play", "") == "1":
+				HsPlay.fixed_dt = 1.0 / 60.0
+				_press(_screen._pause_menu, EventLogPanel.card_name(HsPlay.RECIPES.keys()[0]).to_upper())
+				_gif_left = _count_arg("gif", 0)
+			_shot_at = _frame + _count_arg("wait", 30)
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
 			# сопернику, чужой сброс, действия и VP. События подаём прямо в
@@ -615,6 +626,15 @@ func _run_deploy() -> void:
 
 
 ## Доехал ли ряд карт руки до своих мест.
+## Нажать видимую кнопку с этим текстом внутри root (как щелчок мышью).
+func _press(root: Node, text: String) -> void:
+	for b in root.find_children("*", "Button", true, false):
+		if (b as Button).text == text:
+			(b as Button).pressed.emit()
+			return
+	push_error("нет кнопки " + text)
+
+
 func _hand_settled() -> bool:
 	for child in _screen.get_children():
 		if child is HandPanel:

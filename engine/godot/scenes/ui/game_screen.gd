@@ -631,6 +631,14 @@ func _build_layout() -> void:
 		_pause_menu.add_button("PAUSE FOR ALL", func():
 			_pause_menu.visible = false
 			net.request_pause(true))
+	# Посмотреть анимации розыгрыша (HsPlay) прямо на доске — только картинка, ход не
+	# меняется (владелец, 2026-10-20).
+	var fx_items := []
+	for cid: String in HsPlay.RECIPES:
+		fx_items.append([EventLogPanel.card_name(cid).to_upper(), func():
+			if not _hs_play.is_busy():
+				_hs_play.play(cid, CardView.mini_texture(cid, PlayerProfile.art_of(viewer_id, cid)))])
+	_pause_menu.add_list_page("CARD ANIMATIONS", "CARD ANIMATIONS", fx_items)
 	add_child(_pause_menu)
 
 	# Связь оборвалась (этап 7): заметная плашка сверху с кнопкой переподключения.
