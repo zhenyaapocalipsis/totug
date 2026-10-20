@@ -20,8 +20,11 @@ signal released
 signal camera_offset(offset: Vector2)
 
 const BAKED := "res://assets/hs_fx/baked/"
-## Сколько кадров вперёд подгружать в фоне (кадры идут 60 в секунду).
+## Сколько кадров вперёд подгружать в фоне (кадры идут 60 в секунду, WebP распаковывается
+## несколько миллисекунд).
 const AHEAD := 12
+## Сколько первых кадров должно быть готово до старта часов эффекта.
+const WARM := 8
 
 ## Карта -> сценарий.
 const RECIPES := {"48426": "worldbreaker"}
@@ -70,6 +73,9 @@ var _released := false
 var _cue_t := -1.0
 var _shown_frame := -1
 var _cache: Dictionary = {}
+## Сколько первых кадров ещё ждём перед стартом (0 — эффект идёт) и сколько уже запрошено.
+var _warm := 0
+var _warm_asked := 0
 ## Тряска камеры: для каждой дорожки shakers — 30 точек на эллипсе амплитуды.
 var _shake_points: Array = []
 
@@ -142,15 +148,29 @@ func _next() -> void:
 	_shake_points = []
 	for sh: Array in _script.get("shakers", []):
 		_shake_points.append(_shake_path(float(sh[2])))
+	# часы эффекта идут, когда первые кадры уже распакованы (WebP) — иначе первые
+	# кадры ждут загрузки и дёргаются
+	_warm = mini(WARM, int(_meta["frames"]))
+	_warm_asked = 0
 	visible = true
 	set_process(true)
-	_frame()
 
 
 func _process(delta: float) -> void:
 	# Godot сам включает _process при входе в дерево — без розыгрыша выключаем
 	if _item.is_empty():
 		set_process(false)
+		return
+	if _warm > 0:
+		# по два кадра за кадр игры: готовые кадры уходят в видеокарту понемногу
+		for k in range(_warm_asked, mini(_warm_asked + 2, _warm)):
+			_request("f", k)
+		_warm_asked = mini(_warm_asked + 2, _warm)
+		for k in _warm:
+			if k >= _warm_asked or ResourceLoader.load_threaded_get_status(_path("f", k)) != ResourceLoader.THREAD_LOAD_LOADED:
+				return
+		_warm = 0
+		_frame()
 		return
 	_t += fixed_dt if fixed_dt > 0.0 else delta
 	var cs: Dictionary = _script["card"]
@@ -338,14 +358,22 @@ func _card_rect() -> Rect2:
 	return Rect2((c - s * 0.5).round(), s.round())
 
 
-## Кадр эффекта на весь экран: premultiplied-альфа (One, OneMinusSrcAlpha).
+## Кадр эффекта на весь экран: premultiplied-альфа (One, OneMinusSrcAlpha). Кадры сжаты
+## WebP с потерями: цвет шумит, альфа точная — пиксель с нулевой альфой пустой, его шум
+## не рисуется (у настоящих пикселей эффекта альфа не ниже 1/255).
+const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;\n" \
+	+ "void fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tCOLOR = c.a > 0.0 ? c : vec4(0.0);\n}\n"
+
+
 class _FrameLayer extends Control:
 	var _tex: Texture2D
 
 	func _init() -> void:
 		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		var m := CanvasItemMaterial.new()
-		m.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
+		var sh := Shader.new()
+		sh.code = FRAME_SHADER
+		var m := ShaderMaterial.new()
+		m.shader = sh
 		material = m
 
 	func show_frame(tex: Texture2D) -> void:

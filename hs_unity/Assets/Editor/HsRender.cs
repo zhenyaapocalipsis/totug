@@ -485,7 +485,11 @@ public static class HsRender
                         r += cb.r; g += cb.g; bl += cb.b;
                         a += 1f - ((cw.r - cb.r) + (cw.g - cb.g) + (cw.b - cb.b)) / 3f;
                     }
-                po[y * (W / 2) + x] = new Color(Mathf.Clamp01(r / 4), Mathf.Clamp01(g / 4), Mathf.Clamp01(bl / 4), Mathf.Clamp01(a / 4));
+                Color32 c32 = new Color(Mathf.Clamp01(r / 4), Mathf.Clamp01(g / 4), Mathf.Clamp01(bl / 4), Mathf.Clamp01(a / 4));
+                // чисто аддитивный пиксель — альфа 1/255: игра сжимает кадры WebP с потерями
+                // (альфа без потерь) и не рисует пиксели с нулевой альфой — там только шум
+                if (c32.a == 0 && (c32.r | c32.g | c32.b) != 0) c32.a = 1;
+                po[y * (W / 2) + x] = c32;
             }
         if (nans > 0) Log($"{name}: NaN samples {nans}");
         return po;
