@@ -1,6 +1,6 @@
 {
   "deps": "../deps_worldbreaker.txt",
-  "fps": 20,
+  "fps": 60,
   "len": 4.6,
   "space": "gamma",
   "ldr": true,
@@ -10,7 +10,13 @@
       "spell": "CATAFX_Deathwing_CustomSummon_Spell",
       "at": 0.0,
       "pos": [-7.8, 0.1, -8.0], "usePos": true,
-      "hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot"],
+      "move": [
+        {"node": "TimelineRoot/AnimRoot/DiveRoot", "by": [0, 0, 3.64]},
+        {"node": "TimelineRoot/AnimRoot/HeroRoot", "by": [0, 0, 3.64]},
+        {"node": "TimelineRoot/AnimRoot/Mesh_WaveFire", "by": [0, 0, 3.64]}
+      ],
+      "hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow_Edge"],
+      "measure": ["TimelineRoot/AnimRoot/HeroRoot/Mesh_CracksDark"],
       "mats": [
         {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_MiddlePointPos", "value": 0.5},
         {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_LastColor", "color": [0.311, 0.311, 0.311, 0]},
@@ -20,10 +26,10 @@
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
-      "at": 1.7,
+      "at": 1.15,
       "only": "Root/Bursts_Root/Burst0_New",
       "place": [-7.8, 3.802, -4.659], "usePlace": true,
-      "scale": 0.743,
+      "scale": 0.3715,
       "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
       "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"]
     }

@@ -49,6 +49,15 @@ public static class HsRender
         // узлы, которые игра кладёт ПОД карту (своя дорожка кадров u###.png)
         public string[] under = new string[0];
         public MatSet[] mats = new MatSet[0];
+        // сдвиг узлов в мире (позиция которых не анимирована): node, by [x, y, z]
+        public Move[] move = new Move[0];
+    }
+
+    [Serializable]
+    public class Move
+    {
+        public string node;
+        public float[] by = new float[3];
     }
 
     // правка свойства материала узла: value для float, color (rgba) для цвета
@@ -197,6 +206,11 @@ public static class HsRender
             focus.localScale *= spec.scale;
         }
 
+        foreach (var mv in spec.move)
+        {
+            var t = go.transform.Find(mv.node);
+            if (t != null) t.position += V(mv.by); else Log("move: not found " + mv.node);
+        }
         foreach (var ms in spec.mats)
         {
             var t = go.transform.Find(ms.node);
@@ -335,18 +349,20 @@ public static class HsRender
         int n = Mathf.CeilToInt(recipe.len * recipe.fps);
         var only = Arg("frames", "");
         var pick = only == "" ? null : new HashSet<int>(only.Split(',').Select(int.Parse));
+        // -hsr-from N: дозапечь с кадра N (после сбоя)
+        int from = int.Parse(Arg("from", "0"));
         var all = lives.SelectMany(l => l.root.GetComponentsInChildren<Renderer>(true)).ToArray();
         var underAll = new HashSet<Renderer>(lives.SelectMany(l => l.under));
         var underFrames = new List<int>();
         void Save(string file)
         {
             png.SetPixels32(Shot(cam, rt, black, white, file));
-            png.Apply();
+            // без Apply: EncodeToPNG читает пиксели из памяти, выгрузка в видеопамять не нужна
             File.WriteAllBytes(Path.Combine(outDir, file), png.EncodeToPNG());
         }
         for (int i = 0; i <= n; i++)
         {
-            if (pick != null && !pick.Contains(i)) continue;
+            if (pick != null && !pick.Contains(i) || i < from) continue;
             Pose(lives, (double)i / recipe.fps);
             if (i % 10 == 0) Measure(lives, cam, i);
             // дорожка «над картой»: всё, кроме узлов under
@@ -365,9 +381,12 @@ public static class HsRender
                 underFrames.Add(i);
             }
         }
+        // дорожка «под картой» — по файлам в папке: запекание можно доделывать по частям
+        var unders = Directory.GetFiles(outDir, "u*.png").Select(p => Path.GetFileNameWithoutExtension(p).Substring(1))
+            .Select(int.Parse).OrderBy(x => x);
         File.WriteAllText(Path.Combine(outDir, "meta.json"),
             "{\"fps\": " + recipe.fps + ", \"frames\": " + (n + 1) + ", \"premultiplied\": true, \"under\": [" +
-            string.Join(", ", underFrames) + "]}\n");
+            string.Join(", ", unders) + "]}\n");
         Log($"frames {n + 1}");
     }
 
@@ -381,7 +400,6 @@ public static class HsRender
             cam.Render();
             RenderTexture.active = rt;
             tx.ReadPixels(new Rect(0, 0, W, H), 0, 0);
-            tx.Apply();
             RenderTexture.active = null;
         }
         var pb = black.GetPixels();

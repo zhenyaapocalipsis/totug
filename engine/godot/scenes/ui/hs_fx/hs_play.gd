@@ -19,10 +19,10 @@ signal released
 signal shake(power: float)
 
 const BAKED := "res://assets/hs_fx/baked/"
-## Миниатюра карты в центре доски — во столько раз крупнее своих пикселей.
-const MINI_SCALE := 2
-## Сколько кадров вперёд подгружать в фоне.
-const AHEAD := 6
+## Миниатюра карты в центре доски — в своём размере (владелец, 2026-10-20).
+const MINI_SCALE := 1
+## Сколько кадров вперёд подгружать в фоне (кадры идут 60 в секунду).
+const AHEAD := 12
 
 ## Карта -> сценарий.
 const RECIPES := {"48426": "worldbreaker"}
@@ -32,12 +32,13 @@ const RECIPES := {"48426": "worldbreaker"}
 ## cues — звуки [секунда, файл в папке сценария], shakes — толчки доски [секунда, сила].
 const SCRIPTS := {
 	# Deathwing, Worldbreaker (CATA_190h): CATAFX_Deathwing_CustomSummon_Spell (тень
-	# дракона с огненным шлейфом проносится над доской, пике, огненная волна, вспышка,
-	# дым, угли) и CATAFX_Deathwing_Choice_Reveal (одна карта вместо четырёх, с 1.7 с).
+	# дракона с огненным шлейфом проносится над доской, пике в центр доски (1.13 с),
+	# огненная волна, вспышка, дым, угли) и сразу за ударом CATAFX_Deathwing_Choice_Reveal
+	# (одна карта вместо четырёх, с 1.15 с; миниатюра — через 0.45 с, WaitToShowCards).
 	"worldbreaker": {"len": 4.6, "frames": "worldbreaker",
-		"card": {"reveal": 2.15, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(480, 247)},
+		"card": {"reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(480, 247)},
 		"cues": [[0.0, "CATA_190h_Enter_01"], [0.0, "CATA_190h_Enter_Dragon_01"], [0.85, "CATA_190h_Enter_02"],
-			[1.0, "CATA_190h_Enter_Dragon_02"], [1.7, "CATA_190h_CardReveal_01"]],
+			[1.0, "CATA_190h_Enter_Dragon_02"], [1.15, "CATA_190h_CardReveal_01"]],
 		"shakes": [[0.0, 3.0], [1.133, 5.0]]},
 }
 

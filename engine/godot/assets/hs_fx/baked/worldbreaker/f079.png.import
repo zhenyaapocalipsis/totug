@@ -2,21 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://vphaidtygdfn"
-path="res://.godot/imported/f079.png-a62e2c9b5aaac174d834f9c95f7b81ba.ctex"
+uid="uid://b0tkbwq5lcet5"
+path.bptc="res://.godot/imported/f079.png-a62e2c9b5aaac174d834f9c95f7b81ba.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/hs_fx/baked/worldbreaker/f079.png"
-dest_files=["res://.godot/imported/f079.png-a62e2c9b5aaac174d834f9c95f7b81ba.ctex"]
+dest_files=["res://.godot/imported/f079.png-a62e2c9b5aaac174d834f9c95f7b81ba.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

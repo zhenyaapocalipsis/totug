@@ -19,12 +19,13 @@ func _initialize() -> void:
 	bg.convert(Image.FORMAT_RGBA8)
 	var scale := float(_arg("scale", "1"))
 	var shots: Array[Image] = []
-	# --card=ID --card-at=x,y --card-from=N: миниатюра x2 между дорожками u (под картой) и f
+	# --card=ID --card-at=x,y --card-from=N [--mini-scale=1]: миниатюра между дорожками u (под картой) и f
 	var mini: Image = null
 	if _arg("card", "") != "":
 		mini = CardView.mini_texture(_arg("card", "")).get_image()
 		mini.convert(Image.FORMAT_RGBA8)
-		mini.resize(mini.get_width() * 2, mini.get_height() * 2, Image.INTERPOLATE_NEAREST)
+		var ms := int(_arg("mini-scale", "1"))
+		mini.resize(mini.get_width() * ms, mini.get_height() * ms, Image.INTERPOLATE_NEAREST)
 	var at := _arg("card-at", "422,163").split(",")
 	for s in _arg("frames", "0").split(","):
 		var f := Image.load_from_file(dir.path_join("f%03d.png" % int(s)))
