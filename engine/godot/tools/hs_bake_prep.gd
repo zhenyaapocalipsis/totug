@@ -20,46 +20,62 @@ func _arg(name: String, fallback: String) -> String:
 func _initialize() -> void:
 	var cid := _arg("card", "48426")
 	var f := _arg("frac", "0.55,0.76").split(",")
-	var img := echo_image(CardView.mini_texture(cid), Vector2(float(f[0]), float(f[1])))
+	# --full=1: полноформатная карта (cards_pixel), иначе мини (cards_mini)
+	var full := _arg("full", "") == "1"
+	var face := CardView.pixel_texture(cid) if full else CardView.mini_texture(cid)
+	var img := echo_image(face, Vector2(float(f[0]), float(f[1])), full)
 	img.save_png(_arg("out", "echo.png"))
 	print("echo: ", _arg("out", "echo.png"), " ", img.get_size())
 	quit()
 
 
-static func echo_image(face: Texture2D, frac: Vector2) -> Image:
-	var w := int(CardView.MINI_SIZE.x)
-	var h := int(CardView.MINI_SIZE.y)
+static func echo_image(face: Texture2D, frac: Vector2, full: bool = false) -> Image:
+	var src := face.get_image()
+	src.decompress()
+	src.convert(Image.FORMAT_RGBA8)
+	var w := src.get_width()
+	var h := src.get_height()
 	var lines := PackedFloat32Array()
 	lines.resize(w * h)
 	var mark := func(x: int, y: int) -> void:
 		if x >= 0 and y >= 0 and x < w and y < h:
 			lines[y * w + x] = 1.0
-	for x in w:
-		mark.call(x, 0)
-		mark.call(x, h - 1)
-	for y in h:
-		mark.call(0, y)
-		mark.call(w - 1, y)
-	# окно арта (tools/pixel_cards.gd render_mini: обводка от y=27, ширина 54)
-	for x in range(2, 56):
-		mark.call(x, 27)
-		mark.call(x, 82)
-	for y in range(27, 83):
-		mark.call(2, y)
-		mark.call(55, y)
-	# черта между именем и ценой
-	for y in range(2, 18):
-		mark.call(50, y)
+	var box := func(x0: int, y0: int, x1: int, y1: int) -> void:
+		for x in range(x0, x1 + 1):
+			mark.call(x, y0)
+			mark.call(x, y1)
+		for y in range(y0, y1 + 1):
+			mark.call(x0, y)
+			mark.call(x1, y)
+	box.call(0, 0, w - 1, h - 1)
+	var head_h := 27
+	if full:
+		# tools/pixel_cards.gd render: окно арта rect(5, 33, W-10, ART_H+2), текстовый блок
+		# на пергаменте (ищется по цвету посередине), полоса низа с H-19
+		head_h = 22
+		box.call(5, 33, w - 6, 33 + 101)
+		var top := -1
+		var bottom := -1
+		for y in range(136, h - 19):
+			var c := src.get_pixel(w / 2, y)
+			if c.r > 0.75 and c.g > 0.7 and c.b > 0.55:
+				if top < 0:
+					top = y
+				bottom = y
+		if top > 0:
+			box.call(7, top - 1, w - 8, bottom + 1)
+		for x in range(2, w - 2):
+			mark.call(x, h - 19)
+	else:
+		# render_mini: окно арта (обводка от y=27, ширина 54) и черта между именем и ценой
+		box.call(2, 27, 55, 82)
+		for y in range(2, 18):
+			mark.call(50, y)
 	# буквы имени и цена — светлые пиксели шапки
-	if face != null:
-		var src := face.get_image()
-		src.decompress()
-		src.convert(Image.FORMAT_RGBA8)
-		if src.get_size() == Vector2i(w, h):
-			for y in range(1, 27):
-				for x in range(1, w - 1):
-					if src.get_pixel(x, y).get_luminance() > 0.7:
-						mark.call(x, y)
+	for y in range(1, head_h):
+		for x in range(1, w - 1):
+			if src.get_pixel(x, y).get_luminance() > 0.7:
+				mark.call(x, y)
 	# сетка вдвое мельче пикселя карты: линии, ореол (размытие) и серая середина
 	var k := 2
 	var pad := Vector2i(roundi(w * k * (1.0 / frac.x - 1.0) * 0.5), roundi(h * k * (1.0 / frac.y - 1.0) * 0.5))
@@ -80,7 +96,9 @@ static func echo_image(face: Texture2D, frac: Vector2) -> Image:
 			if inside:
 				v = maxf(v, 0.32)
 			out.set_pixel(x, y, Color(v, v, v, 1.0))
-	out.resize(gw * 4, gh * 4, Image.INTERPOLATE_BILINEAR)
+	# текстура ~1300 px по большей стороне — как у Echo_BW HS (512) с запасом на увеличение
+	var up := 4 if w < 100 else 2
+	out.resize(gw * up, gh * up, Image.INTERPOLATE_BILINEAR)
 	return out
 
 

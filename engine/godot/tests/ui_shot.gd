@@ -647,6 +647,7 @@ var _gif_left := 0
 var _gif: GifWriter
 var _gif_n := 0
 var _gif_sheet: Array[Image] = []
+var _gif_strip: Array[Image] = []
 
 
 ## Кадр экрана в расчётном размере (960x540), пиксель в пиксель.
@@ -669,6 +670,19 @@ func _record_gif() -> bool:
 	if _gif == null:
 		_gif = GifWriter.new(img.get_width(), img.get_height())
 	_gif.add_frame(img, 5)
+	# --strip=x,y,w,h — этот кусок экрана из КАЖДОГО записанного кадра (лист <out>_strip.png)
+	var strip := _arg("strip", "")
+	if strip != "":
+		var s := strip.split(",")
+		_gif_strip.append(img.get_region(Rect2i(int(s[0]), int(s[1]), int(s[2]), int(s[3]))))
+		if _gif_left == 1:
+			var sw := _gif_strip[0].get_width()
+			var sh := _gif_strip[0].get_height()
+			var per := 24
+			var st := Image.create_empty(sw * per, sh * ceili(float(_gif_strip.size()) / per), false, Image.FORMAT_RGBA8)
+			for i in _gif_strip.size():
+				st.blit_rect(_gif_strip[i], Rect2i(0, 0, sw, sh), Vector2i((i % per) * sw, (i / per) * sh))
+			st.save_png(ProjectSettings.globalize_path(_out.get_basename() + "_strip.png"))
 	if _gif_n % 6 == 0:
 		_gif_sheet.append(img)
 	_gif_n += 1

@@ -129,6 +129,7 @@ public static class HsRender
             var space = recipe.space == "gamma" ? ColorSpace.Gamma : ColorSpace.Linear;
             if (PlayerSettings.colorSpace != space) PlayerSettings.colorSpace = space;
             Log("color space " + QualitySettings.activeColorSpace);
+            EnsureTimeFeature();
             Main(recipe, Path.GetDirectoryName(Path.GetFullPath(recipePath)), outDir);
         }
         catch (Exception e) { Log("ERROR " + e); }
@@ -137,6 +138,26 @@ public static class HsRender
             File.WriteAllText(Path.Combine(outDir, "hsr_log.txt"), log.ToString());
             foreach (var b in Bundles) b.Unload(true);
             Bundles.Clear();
+        }
+    }
+
+    // время шейдеров = время кадра (HsTimeFeature) — во всех рендерерах URP проекта
+    static void EnsureTimeFeature()
+    {
+        foreach (var guid in AssetDatabase.FindAssets("t:UniversalRendererData"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (!path.StartsWith("Assets/")) continue;
+            var data = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(path);
+            if (data == null || data.rendererFeatures.Any(f => f is HsTimeFeature)) continue;
+            var feature = ScriptableObject.CreateInstance<HsTimeFeature>();
+            feature.name = "HsTime";
+            AssetDatabase.AddObjectToAsset(feature, data);
+            data.rendererFeatures.Add(feature);
+            data.SetDirty();
+            EditorUtility.SetDirty(data);
+            AssetDatabase.SaveAssets();
+            Log("time feature added to " + path);
         }
     }
 
@@ -364,6 +385,8 @@ public static class HsRender
         {
             if (pick != null && !pick.Contains(i) || i < from) continue;
             Pose(lives, (double)i / recipe.fps);
+            HsTimeFeature.time = (float)i / recipe.fps;
+            HsTimeFeature.delta = 1f / recipe.fps;
             if (i % 10 == 0) Measure(lives, cam, i);
             // дорожка «над картой»: всё, кроме узлов under
             var shown = all.Where(r => r.enabled && r.gameObject.activeInHierarchy).ToArray();
@@ -387,6 +410,7 @@ public static class HsRender
         File.WriteAllText(Path.Combine(outDir, "meta.json"),
             "{\"fps\": " + recipe.fps + ", \"frames\": " + (n + 1) + ", \"premultiplied\": true, \"under\": [" +
             string.Join(", ", unders) + "]}\n");
+        HsTimeFeature.time = -1f;
         Log($"frames {n + 1}");
     }
 

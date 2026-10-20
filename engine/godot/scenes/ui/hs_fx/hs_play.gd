@@ -19,24 +19,23 @@ signal released
 signal shake(power: float)
 
 const BAKED := "res://assets/hs_fx/baked/"
-## Миниатюра карты в центре доски — в своём размере (владелец, 2026-10-20).
-const MINI_SCALE := 1
 ## Сколько кадров вперёд подгружать в фоне (кадры идут 60 в секунду).
 const AHEAD := 12
 
 ## Карта -> сценарий.
 const RECIPES := {"48426": "worldbreaker"}
 ## Сценарий: len — длина (с); frames — папка запечённых кадров; card — появление
-## миниатюры: reveal (секунда), sweep (проявляется снизу вверх), hold (стоит), out
-## (гаснет), center (центр на экране 960x540 — центр квада Quad_CardGlow в кадрах);
+## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
+## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
+## (стоит), out (гаснет), center (центр на экране 960x540 — центр квада Quad_CardGlow);
 ## cues — звуки [секунда, файл в папке сценария], shakes — толчки доски [секунда, сила].
 const SCRIPTS := {
 	# Deathwing, Worldbreaker (CATA_190h): CATAFX_Deathwing_CustomSummon_Spell (тень
 	# дракона с огненным шлейфом проносится над доской, пике в центр доски (1.13 с),
 	# огненная волна, вспышка, дым, угли) и сразу за ударом CATAFX_Deathwing_Choice_Reveal
-	# (одна карта вместо четырёх, с 1.15 с; миниатюра — через 0.45 с, WaitToShowCards).
+	# (одна карта вместо четырёх, с 1.15 с; сама карта — через 0.45 с, WaitToShowCards).
 	"worldbreaker": {"len": 4.6, "frames": "worldbreaker",
-		"card": {"reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(480, 247)},
+		"card": {"face": "full", "reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(480, 247)},
 		"cues": [[0.0, "CATA_190h_Enter_01"], [0.0, "CATA_190h_Enter_Dragon_01"], [0.85, "CATA_190h_Enter_02"],
 			[1.0, "CATA_190h_Enter_Dragon_02"], [1.15, "CATA_190h_CardReveal_01"]],
 		"shakes": [[0.0, 3.0], [1.133, 5.0]]},
@@ -211,10 +210,18 @@ func _render_card() -> void:
 	_card.show_card(_item["face"], _card_rect(), a, shown)
 
 
-## Где миниатюра на экране: центр сценария в координатах 960x540 -> размер HsPlay.
+## Лицо карты для розыгрыша cid: полноформатное или миниатюра — как в сценарии (под него
+## запечён горящий контур появления).
+static func face_of(cid: String, art: String = "") -> Texture2D:
+	var cs: Dictionary = SCRIPTS[RECIPES[cid]]["card"]
+	return CardView.mini_texture(cid, art) if String(cs.get("face", "full")) == "mini" else CardView.pixel_texture(cid, art)
+
+
+## Где карта на экране: в своём размере, центр сценария (960x540) -> размер HsPlay.
 func _card_rect() -> Rect2:
 	var k := size / Vector2(960, 540)
-	var s := CardView.MINI_SIZE * MINI_SCALE * k
+	var face: Texture2D = _item["face"]
+	var s := (face.get_size() if face != null else CardView.PIXEL_SIZE) * k
 	var c := Vector2(_script["card"]["center"]) * k
 	return Rect2((c - s * 0.5).round(), s.round())
 

@@ -15,8 +15,7 @@
         {"node": "TimelineRoot/AnimRoot/HeroRoot", "by": [0, 0, 3.64]},
         {"node": "TimelineRoot/AnimRoot/Mesh_WaveFire", "by": [0, 0, 3.64]}
       ],
-      "hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow_Edge"],
-      "measure": ["TimelineRoot/AnimRoot/HeroRoot/Mesh_CracksDark"],
+      "hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow_Edge", "TimelineRoot/AnimRoot/HeroRoot/Mesh_CracksDark"],
       "mats": [
         {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_MiddlePointPos", "value": 0.5},
         {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_LastColor", "color": [0.311, 0.311, 0.311, 0]},
@@ -29,7 +28,7 @@
       "at": 1.15,
       "only": "Root/Bursts_Root/Burst0_New",
       "place": [-7.8, 3.802, -4.659], "usePlace": true,
-      "scale": 0.3715,
+      "scale": 1.1234,
       "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
       "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"]
     }
@@ -38,6 +37,6 @@
     {"name": "GenFX_HeroGlow_Soft_TransparentCenter", "file": "../../engine/godot/assets/hs_fx/own/ring.png"},
     {"name": "GenFX_HeroShadow_Internal", "file": "../../engine/godot/assets/hs_fx/own/disc.png"},
     {"name": "Cracks_HeroSocket_FriendlySide", "file": "../../engine/godot/assets/hs_fx/own/cracks.png"},
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48426.png"}
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_full_48426.png"}
   ]
 }

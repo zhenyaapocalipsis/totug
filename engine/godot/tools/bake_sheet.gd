@@ -19,10 +19,11 @@ func _initialize() -> void:
 	bg.convert(Image.FORMAT_RGBA8)
 	var scale := float(_arg("scale", "1"))
 	var shots: Array[Image] = []
-	# --card=ID --card-at=x,y --card-from=N [--mini-scale=1]: миниатюра между дорожками u (под картой) и f
+	# --card=ID [--full=1] --card-at=x,y --card-from=N [--mini-scale=1]: карта (миниатюра или полная) между дорожками u (под картой) и f
 	var mini: Image = null
 	if _arg("card", "") != "":
-		mini = CardView.mini_texture(_arg("card", "")).get_image()
+		var cid := _arg("card", "")
+		mini = (CardView.pixel_texture(cid) if _arg("full", "") == "1" else CardView.mini_texture(cid)).get_image()
 		mini.convert(Image.FORMAT_RGBA8)
 		var ms := int(_arg("mini-scale", "1"))
 		mini.resize(mini.get_width() * ms, mini.get_height() * ms, Image.INTERPOLATE_NEAREST)
