@@ -97,6 +97,7 @@ func _initialize() -> void:
 	test_half_deck_ban()
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
+	test_god_mode()
 	test_market_mulligan()
 	test_auto_decision_answer()
 	test_recruit_from_supply()
@@ -2699,6 +2700,108 @@ func test_market_mulligan() -> void:
 ## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный
 ## сетап должны работать не только вдвоём. Раньше экран всегда собирал партию
 ## на red/blue, и эти ветки pick_hexes не проверялись ни одним тестом.
+func test_god_mode() -> void:
+	section("Хотсит: режим бога (проверка карт)")
+	var state := GameSetup.new_game(["red", "blue"], 31, [], false, true, true)
+	var server := GameServer.new(state)
+	check_eq(server.apply_god({"op": "set_turn", "player_id": "blue"})["error"], GameServer.Error.AWAITING_DECISION,
+		"пока идёт стартовая расстановка, ход не передать")
+	while server.resolver.is_waiting():
+		var pd := server.resolver.pending
+		server.apply_intent(Intent.make_decision(pd.player_id, BotPlayer.answer(state, pd, pd.player_id)))
+	var me := state.current_player()
+	var other := "blue" if me == "red" else "red"
+	var p: PlayerState = state.players[me]
+	var hand := p.deck.hand.size()
+
+	# Карты: любые, сколько угодно, в любую стопку.
+	var res := server.apply_god({"op": "give", "player_id": me, "card_id": "49022", "count": 3, "zone": "hand"})
+	check_eq(res["error"], GameServer.Error.OK, "выдать карту можно")
+	check_eq(p.deck.hand.size(), hand + 3, "три копии в руке")
+	check_eq((res["views"][me]["players"][me]["hand"] as Array).count("49022"), 3, "срез игрока видит выданные карты")
+	server.apply_god({"op": "give", "player_id": me, "card_id": "48342", "count": 1, "zone": "deck"})
+	check_eq(p.deck.draw_pile.back(), "48342", "DECK: карта ложится на верх колоды")
+	server.apply_god({"op": "draw", "player_id": me, "count": 1})
+	check_eq(p.deck.hand.back(), "48342", "DRAW 1 добирает её")
+	server.apply_god({"op": "give", "player_id": me, "card_id": "48342", "count": 2, "zone": "inner"})
+	check_eq(state.stock(me).deck.inner_circle.count("48342"), 2, "INNER: во Внутренний круг")
+	check_eq(server.apply_god({"op": "give", "player_id": me, "card_id": "nope"})["error"],
+		GameServer.Error.INVALID_ACTION, "несуществующую карту не выдать")
+	server.apply_god({"op": "discard_hand", "player_id": me})
+	check(p.deck.hand.is_empty() and p.deck.discard_pile.count("49022") == 3, "рука целиком уходит в сброс")
+
+	# Войска и шпионы любого цвета — из бараков и обратно.
+	var slot := ""
+	for s: String in state.graph.slots.keys():
+		if String(state.troops.get(s, "")) == "" and state.graph.site_of_slot(s) != "":
+			slot = s
+			break
+	var barracks := state.stock(other).troops_in_barracks
+	server.apply_god({"op": "troop", "slot_id": slot, "owner": other})
+	check_eq(String(state.troops.get(slot, "")), other, "войско соперника поставлено")
+	check_eq(state.stock(other).troops_in_barracks, barracks - 1, "войско взято из его бараков")
+	server.apply_god({"op": "troop", "slot_id": slot, "owner": GameState.WHITE})
+	check_eq(state.stock(other).troops_in_barracks, barracks, "заменённое войско вернулось в бараки")
+	check_eq(String(state.troops.get(slot, "")), GameState.WHITE, "на месте — белое войско")
+	var site := state.graph.site_of_slot(slot)
+	server.apply_god({"op": "spy", "site_id": site, "owner": me})
+	check((state.spies.get(site, []) as Array).has(me), "шпион поставлен")
+	server.apply_god({"op": "clear_site", "site_id": site})
+	check(not state.spies.has(site) and not state.troops.has(slot), "локация очищена от войск и шпионов")
+
+	# Ресурсы и VP.
+	var power := p.power
+	server.apply_god({"op": "resources", "player_id": me, "power": 5, "influence": 1, "vp": 5})
+	check_eq(p.power, power + 5, "+5 Power")
+	check_eq(p.vp_tokens, 5, "+5 VP")
+	server.apply_god({"op": "resources", "player_id": me, "power": -100})
+	check_eq(p.power, 0, "Power ниже нуля не уходит")
+
+	# Ход — любому игроку сразу, руки на месте.
+	var my_hand := p.deck.hand.size()
+	server.apply_god({"op": "give", "player_id": me, "card_id": "48344", "count": 1, "zone": "hand"})
+	check_eq(server.apply_god({"op": "set_turn", "player_id": other})["error"], GameServer.Error.OK, "ход передан")
+	check_eq(state.current_player(), other, "теперь ходит другой игрок")
+	check_eq(p.deck.hand.size(), my_hand + 1, "рука прежнего ходящего не тронута")
+	check_eq(server.apply_intent(Intent.end_turn(other))["error"], GameServer.Error.OK, "и он может закончить ход")
+
+	# Экран: панель бога, таймера нет, щелчок по доске ставит войско.
+	var screen := GameScreen.new(31, [], ["red", "blue"], GameSetup.MODE_STANDARD, {}, [], false, true)
+	screen.size = Vector2(960, 540)
+	root.add_child(screen)
+	check(screen._god_panel != null, "в режиме бога есть панель")
+	check(screen._replay_ids.is_empty(), "партия бога не пишется в статистику")
+	var srv := screen.server
+	while srv.resolver.is_waiting():
+		var pd := srv.resolver.pending
+		screen.send(Intent.make_decision(pd.player_id, BotPlayer.answer(srv.state, pd, pd.player_id)))
+	screen._process(0.1)
+	check_eq(screen._timer_label.text, "GOD", "вместо таймера — GOD")
+	var viewer := screen.viewer_id
+	var panel := screen._god_panel
+	panel.set_search("red dragon")
+	check(not panel.visible_cards().is_empty() and panel.visible_cards().size() < 10, "поиск сужает список карт")
+	panel.set_count(2)
+	var before := (srv.state.players[viewer] as PlayerState).deck.hand.size()
+	panel.give(panel.visible_cards()[0])
+	check_eq((srv.state.players[viewer] as PlayerState).deck.hand.size(), before + 2, "щелчок по карте в панели — две копии в руку")
+	check_eq((screen._view["players"][viewer]["hand"] as Array).size(), before + 2, "экран показывает новую руку")
+	var free := ""
+	for s: String in srv.state.graph.slots.keys():
+		if String(srv.state.troops.get(s, "")) == "":
+			free = s
+			break
+	panel.set_tool(GodPanel.TOOL_TROOP)
+	panel.set_colour("blue")
+	screen._on_slot_clicked(free)
+	check_eq(String(srv.state.troops.get(free, "")), "blue", "TROOP: щелчок по месту ставит войско выбранного цвета")
+	screen._on_slot_clicked(free)
+	check_eq(String(srv.state.troops.get(free, "")), "", "повторный щелчок его убирает")
+	screen.toggle_god_panel()
+	check(not panel.visible and panel.tool == GodPanel.TOOL_OFF, "G прячет панель и выключает инструмент")
+	screen.queue_free()
+
+
 func test_hotseat_three_and_four_players() -> void:
 	section("Хотсит: партии на 3 и 4 игроков")
 	check_eq(GameScreen.player_ids_for(3), ["red", "blue", "green"] as Array[String],
@@ -4199,8 +4302,8 @@ func test_main_menu() -> void:
 	_test_settings(panel)
 
 	var got := {}
-	menu.started.connect(func(ids: Array[String], m: String, b: bool, t: bool):
-		got["start"] = [ids.size(), m, b] if not t else [ids.size(), m, b, "2v2"])
+	menu.started.connect(func(ids: Array[String], m: String, b: bool, t: bool, g: bool):
+		got["start"] = ([ids.size(), m, b] if not t else [ids.size(), m, b, "2v2"]) + (["god"] if g else []))
 	menu.online_requested.connect(func(k: String, c: int, m: String, a: String): got["online"] = [k, c, m, a])
 	_find_button(menu, "PLAY").pressed.emit()
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "PLAY возвращает в последний раздел")
@@ -4213,6 +4316,10 @@ func test_main_menu() -> void:
 	_find_button(menu, "BOTS").pressed.emit()
 	_find_button(menu, "START").pressed.emit()
 	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4, true], "BOTS: соперники — боты")
+	_find_button(menu, "PEOPLE").pressed.emit()
+	_find_button(menu, "GOD MODE").button_pressed = true
+	_find_button(menu, "START").pressed.emit()
+	check_eq(got.get("start"), [3, GameSetup.MODE_RANDOM_4, false, "god"], "GOD MODE: хотсит в режиме бога")
 	_find_button(menu, "PEOPLE").pressed.emit()
 	if SetupScreen.TEAMS_ENABLED:
 		_find_button(menu, "2V2").pressed.emit()

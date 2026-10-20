@@ -7,7 +7,7 @@ extends Control
 ##
 ## Параметры запуска:
 ##   godot47 --path . res://scenes/ui/game_scene.tscn -- --seed=123 --players=4 --mode=random4
-## --players=2..4 пропускает меню и сразу раздаёт столько цветов.
+## --players=2..4 пропускает меню и сразу раздаёт столько цветов; --god — режим бога.
 
 ## Файлом, а не глобальным именем класса: так экран виден и без кэша редактора.
 const TutorialOfferScreen := preload("res://scenes/ui/tutorial_offer_screen.gd")
@@ -19,6 +19,7 @@ func _ready() -> void:
 	var mode := GameSetup.MODE_STANDARD
 	var bots := false
 	var teams := false
+	var god := false
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
 			game_seed = int(arg.get_slice("=", 1))
@@ -28,11 +29,13 @@ func _ready() -> void:
 			mode = arg.get_slice("=", 1)
 		elif arg == "--teams":
 			teams = true
+		elif arg == "--god":
+			god = true
 		elif arg == "--bots":
 			bots = true
 
 	if players >= GameScreen.MIN_PLAYERS:
-		_start_game(GameScreen.player_ids_for(players), game_seed, mode, bots, teams)
+		_start_game(GameScreen.player_ids_for(players), game_seed, mode, bots, teams, god)
 		return
 
 	# Первый запуск: профиля ещё нет — сначала создать его, потом спросить,
@@ -75,8 +78,8 @@ func _show_setup(game_seed: int, page: String = SetupScreen.PAGE_ONLINE) -> void
 	# связи приходит LEADERBOARD (владелец, 2026-10-11).
 	setup.presence = _open_net()
 	setup.presence.watch(SetupScreen.LeaderboardPage.server_address(), NetSession.SERVER_PORT)
-	setup.started.connect(func(ids: Array[String], m: String, bots: bool, teams: bool):
-		_start_game(ids, game_seed, m, bots, teams))
+	setup.started.connect(func(ids: Array[String], m: String, bots: bool, teams: bool, god: bool):
+		_start_game(ids, game_seed, m, bots, teams, god))
 	setup.online_requested.connect(func(k: String, c: int, m: String, a: String):
 		_show_lobby(k, c, m, a, "", setup.wants_teams(k)))
 	setup.replay_requested.connect(_start_replay)
@@ -200,7 +203,7 @@ func _start_replay(file: String) -> void:
 
 
 func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: bool = false,
-		teams: bool = false) -> void:
+		teams: bool = false, god: bool = false) -> void:
 	for child in get_children():
 		child.queue_free()
 	# За одним экраном профиль на компьютере один — он у первого цвета, и этот
@@ -216,7 +219,7 @@ func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: 
 		for pid: String in bot_ids:  # у ботов свои имена и гербы (BotNames)
 			if BotNames.BOTS.has(pid):
 				PlayerProfile.seats[pid] = BotNames.profile(pid)
-	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids, teams)
+	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids, teams, god)
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():
 		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))

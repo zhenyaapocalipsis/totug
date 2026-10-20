@@ -177,6 +177,30 @@ func apply_intent(intent: Intent) -> Dictionary:
 	}
 
 
+## Режим бога в хотсите (GodMode): правка партии мимо правил. Возвращает то
+## же, что apply_intent. Передать ход можно только в спокойной точке (нет
+## вопроса карты и недоигранного конца хода).
+func apply_god(action: Dictionary) -> Dictionary:
+	resolver.events.clear()
+	var err: int = Error.OK
+	if state.game_over:
+		err = Error.GAME_OVER
+	elif String(action.get("op", "")) == "set_turn" and not is_quiet():
+		err = Error.AWAITING_DECISION
+	elif not GodMode.apply(state, action, resolver):
+		err = Error.INVALID_ACTION
+	if err == Error.OK:
+		if _first_turn_started:
+			TurnEngine.grant_control_income(state, state.current_player(), resolver)
+		# Копии для бота (clone) начинаются с новой точки: намерения до правки
+		# на изменённой партии уже не повторить.
+		if _track and is_quiet():
+			_checkpoint = StateCopy.copy_state(state)
+			_checkpoint_fresh = false
+			_since.clear()
+	return {"error": err, "events": resolver.events.duplicate(), "views": _build_views()}
+
+
 ## Сетевая партия: игрок player_id отключился и не вернулся вовремя — партия
 ## кончается прямо сейчас, по текущему счёту (решение владельца, 2026-09-27).
 ## Недорешённый вопрос карты и отложенный конец хода отбрасываются. Возвращает

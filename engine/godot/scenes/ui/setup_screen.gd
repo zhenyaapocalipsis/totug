@@ -28,7 +28,8 @@ extends Control
 
 ## bots — за всех, кроме первого цвета, играют боты (BotPlayer).
 ## teams — режим 2 на 2 (этап Team-2): четверо, красные против синих.
-signal started(player_ids: Array[String], mode: String, bots: bool, teams: bool)
+## god — режим бога: проверка карт (GodPanel), без таймера.
+signal started(player_ids: Array[String], mode: String, bots: bool, teams: bool, god: bool)
 ## Сетевая игра. kind: "create" / "join_code" — через сервер с кодами комнат,
 ## "host" / "join_ip" — напрямую по IP (локальная сеть, Radmin VPN),
 ## "find" — поиск игры на сервере (режим по размеру стола: NetSession.match_mode),
@@ -150,6 +151,8 @@ var _new_era_buttons := {}
 var _count: int = GameScreen.MIN_PLAYERS
 ## HOTSEAT: соперники — боты (иначе люди за этим же компьютером).
 var _bots := false
+## HOTSEAT: режим бога для проверки карт (владелец, 2026-10-20).
+var _god := false
 ## Режим 2 на 2 спрятан (решение владельца, 2026-10-13: идея неудачна, может,
 ## вернёмся): без этого флага нет кнопок 2V2 в HOTSEAT, своей комнате и SEARCH,
 ## вкладок 2V2 в LEADERBOARD и клавиши T в настройках. Движок, сеть и рейтинг
@@ -610,9 +613,14 @@ func _build_hotseat() -> void:
 	_col.add_child(_row([people, bots]))
 	_hotseat_note = _add_dim("")
 	_select_bots(_bots)
+	var god := _toggle("GOD MODE", null, _god, 80)
+	god.tooltip_text = "Card testing: give yourself any cards, place troops and spies,\n" \
+		+ "add Power, Influence and VP, switch turns. No turn timer."
+	god.toggled.connect(func(on: bool): _god = on)
+	_col.add_child(_row([god]))
 	_col.add_child(HSeparator.new())
 	_add_game_options(true)
-	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _chosen_mode(), _bots, _teams))
+	_set_action("START", func(): started.emit(GameScreen.player_ids_for(_count), _chosen_mode(), _bots, _teams, _god))
 
 
 func _select_bots(on: bool) -> void:

@@ -255,6 +255,11 @@ const BOT_DELAY := 0.6
 var _bot_wait := BOT_DELAY
 ## Сколько намерений бота подряд сервер отклонил (тогда — запасной ход).
 var _bot_rejects := 0
+## Режим бога (хотсит): панель GodPanel слева, правка партии мимо правил
+## (GodMode, GameServer.apply_god), таймеров хода и ответа нет.
+var god := false
+var _god_panel: GodPanel
+
 ## Сколько бот думает над решением (BotSearch, мс); 0 — простой Bot-1 сразу.
 var bot_budget_ms := BotSearch.DEFAULT_BUDGET_MS
 ## Поток, в котором бот ищет ход; null — не думает.
@@ -326,8 +331,9 @@ static func player_ids_for(count: int) -> Array[String]:
 ## teams — хотсит 2 на 2 (этап Team-2).
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
 		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {},
-		bot_ids: Array[String] = [], teams: bool = false) -> void:
+		bot_ids: Array[String] = [], teams: bool = false, god_mode: bool = false) -> void:
 	bots = bot_ids.duplicate()
+	god = god_mode and online.is_empty()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = PixelTheme.theme()
 	if online.has("replay"):
@@ -377,7 +383,8 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		player_ids = ids.duplicate()
 	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode, teams)
 	server = GameServer.new(state)
-	if half_decks.is_empty():
+	# В режиме бога партию по ходам не повторить — ни статистики, ни записи.
+	if half_decks.is_empty() and not god:
 		_replay_seed = game_seed
 		_replay_ids = player_ids.duplicate()
 		_replay_mode = mode
@@ -385,6 +392,8 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 	viewer_id = _local_viewer()
 	_build_layout()
 	refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
+	if god:
+		_note("God mode: no turn timer. G hides the god panel.")
 
 
 ## Общий вид зон экрана: рамка в один пиксель, без скруглений.
@@ -590,6 +599,14 @@ func _build_layout() -> void:
 	# Наведение на строку действия сводки — доска зажигает, где это было.
 	_feed.places_hovered.connect(func(places: Array) -> void: _board_panel.show_places(places))
 	add_child(_feed)
+
+	# Режим бога: панель поверх сводки и дектрекера (доска открыта щелчкам),
+	# над рукой — её поднятая карта рисуется с z_index до 901.
+	if god:
+		_god_panel = GodPanel.new(player_ids)
+		_god_panel.z_index = 930
+		_god_panel.action_requested.connect(send_god)
+		add_child(_god_panel)
 
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
 	_pile_dialog = PileDialog.new()
@@ -1020,6 +1037,9 @@ func _input(event: InputEvent) -> void:
 		if key.pressed and not key.echo:
 			toggle_ally_hand()
 		get_viewport().set_input_as_handled()
+	elif key.keycode == KEY_G and key.pressed and not key.echo and _god_panel != null:
+		toggle_god_panel()
+		get_viewport().set_input_as_handled()
 	elif key.keycode == KEY_B and key.pressed and not key.echo:
 		# Stage 0 фонового арта гексов (PixelLab) — временная клавиша, пока
 		# владелец не решил, входит ли это в игру насовсем.
@@ -1089,6 +1109,8 @@ func _layout() -> void:
 	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, h - MARGIN - top_y)
 	var board_x := tracker_x + TRACKER_W + GAP
 	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
+	if _god_panel != null:
+		_place(_god_panel, a_x, top_y, board_x - GAP - a_x, h - MARGIN - top_y)
 	if replay_bar != null and replay_bar.is_inside_tree():
 		# Полоса реплея — поверх верха доски, во всю её ширину.
 		_place(replay_bar, board_x, top_y, d_x - GAP - board_x, replay_bar.get_combined_minimum_size().y)
@@ -1177,6 +1199,63 @@ func send(intent: Intent) -> void:
 	# заново целиком, это доли секунды.
 	if server.state.game_over and _stats.is_empty():
 		_collect_hotseat_stats.call_deferred()
+
+
+## Режим бога: правка партии (GodMode) от имени того, чьими глазами смотрим, —
+## тем же путём ответа, что и намерение.
+func send_god(action: Dictionary) -> void:
+	if not god or server == null:
+		return
+	if not action.has("player_id"):
+		action["player_id"] = viewer_id
+	var result: Dictionary = server.apply_god(action)
+	if not server.state.game_over:
+		viewer_id = _local_viewer()
+	var view: Dictionary = (result["views"] as Dictionary).get(viewer_id, {})
+	if view.is_empty():
+		view = StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending)
+	_on_result(int(result["error"]), result["events"], view)
+
+
+## Клавиша G: спрятать панель бога (инструмент доски выключается) или показать.
+func toggle_god_panel() -> void:
+	_god_panel.visible = not _god_panel.visible
+	if not _god_panel.visible:
+		_god_panel.set_tool(GodPanel.TOOL_OFF)
+
+
+## Щелчок по доске с инструментом панели бога. slot_id / site_id / spy_owner —
+## что попало под курсор (шпион — site_id и spy_owner). false — инструмента
+## нет, щелчок идёт обычным путём.
+func _god_board_click(slot_id: String, site_id: String, spy_owner: String = "") -> bool:
+	if _god_panel == null or not _god_panel.visible or _god_panel.tool == GodPanel.TOOL_OFF:
+		return false
+	var colour := _god_panel.colour
+	var troops: Dictionary = _view.get("troops", {})
+	match _god_panel.tool:
+		GodPanel.TOOL_TROOP:
+			if slot_id == "":
+				_refuse("Click a troop space")
+			else:
+				var same := String(troops.get(slot_id, "")) == colour
+				send_god({"op": "troop", "slot_id": slot_id, "owner": "" if same else colour})
+		GodPanel.TOOL_SPY:
+			if site_id == "":
+				site_id = _site_of_slot(slot_id)
+			if site_id == "":
+				_refuse("Click a site")
+			else:
+				send_god({"op": "spy", "site_id": site_id, "owner": colour})
+		GodPanel.TOOL_ERASE:
+			if spy_owner != "":
+				send_god({"op": "spy", "site_id": site_id, "owner": spy_owner})
+			elif slot_id != "" and String(troops.get(slot_id, "")) != "":
+				send_god({"op": "troop", "slot_id": slot_id, "owner": ""})
+			elif site_id != "" or _site_of_slot(slot_id) != "":
+				send_god({"op": "clear_site", "site_id": site_id if site_id != "" else _site_of_slot(slot_id)})
+			else:
+				_refuse("Nothing to remove here")
+	return true
 
 
 ## Подсказка или отказ — всплывающей строкой над счётчиками Power/Influence.
@@ -1922,6 +2001,11 @@ func _process(delta: float) -> void:
 		_timer_label.text = "--:--"
 		_timer_label.add_theme_color_override("font_color", Color(0.5, 0.49, 0.56))
 		return
+	if god:
+		# Режим бога: ход без таймера, вопросы карт тоже ждут сколько угодно.
+		_timer_label.text = "GOD"
+		_timer_label.add_theme_color_override("font_color", PixelTheme.GOLD)
+		return
 	var current := acting_player(_view)
 	# Под таймером — единственная оставшаяся пометка о состоянии партии:
 	# начался последний круг, дальше подсчёт очков. Отдельной строкой: рядом с
@@ -2098,6 +2182,8 @@ func refresh(view: Dictionary) -> void:
 	_refresh_played(view)
 	_refresh_piles(view)
 	_refresh_actions(view)
+	if _god_panel != null:
+		_god_panel.show_turn(String(view.get("current_player", "")))
 	# Появился или ушёл ghost — рынок вырос или сжался на ряд, колонку
 	# раскладываем заново.
 	if not is_equal_approx(_market_panel.get_combined_minimum_size().y, _market_panel.size.y):
@@ -2424,6 +2510,8 @@ func _fly_to_discard(from: Rect2, cid: String) -> void:
 ## если допустимо и то и другое (так не бывает — слот либо занят, либо нет),
 ## приоритет у Assassinate как у более редкого намеренного действия.
 func _on_slot_clicked(slot_id: String) -> void:
+	if _god_board_click(slot_id, ""):
+		return
 	var pending: Dictionary = _view.get("pending_decision", {})
 	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
 		if _try_resolve_board_decision(pending, slot_id, _site_of_slot(slot_id)):
@@ -2530,6 +2618,8 @@ func _slot_name(slot_id: String) -> String:
 ## Клик по названию локации — ответ на решение с целью-локацией. Вражеского
 ## шпиона так не вернуть: только кликом по его ромбику (_on_spy_clicked).
 func _on_site_clicked(site_id: String) -> void:
+	if _god_board_click("", site_id):
+		return
 	var pending: Dictionary = _view.get("pending_decision", {})
 	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
 		if _try_resolve_board_decision(pending, "", site_id):
@@ -2549,6 +2639,8 @@ func _on_site_clicked(site_id: String) -> void:
 ## шпиона вернуть нельзя (свой, нет Присутствия...), клик считается кликом по
 ## локации — там работают "вернуть своего шпиона" и прочие цели-локации.
 func _on_spy_clicked(site_id: String, owner: String) -> void:
+	if _god_board_click("", site_id, owner):
+		return
 	var pending: Dictionary = _view.get("pending_decision", {})
 	if not pending.is_empty() and String(pending["player_id"]) == viewer_id:
 		var composite := "spy|%s|%s" % [site_id, owner]
