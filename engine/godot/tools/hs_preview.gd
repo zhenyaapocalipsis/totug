@@ -49,7 +49,12 @@ func _run() -> void:
 	port.add_child(hs)
 	HsPlay.debug_only = _arg("only", "")
 	var cid := _arg("card", "48426")
+	await process_frame
+	await process_frame
 	hs.play(cid, CardView.pixel_texture(cid), true)
+	# эффект берёт снимок экрана под себя — ждём его
+	while not hs.is_ready():
+		await process_frame
 	hs.set_process(false)
 	var times: Array[float] = []
 	for s in _arg("times", "0.2,0.5,0.8,1.1,1.4,1.7,2.0,2.4,2.8").split(","):

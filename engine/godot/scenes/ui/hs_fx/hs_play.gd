@@ -4,54 +4,64 @@ extends Control
 ## Розыгрыш карты в духе Hearthstone (решения владельца 2026-10-19): без витрины и без
 ## затемнения; нажатую карту рука прячет сразу, и начинается эффект — префабы Hearthstone
 ## (HsFx: частицы, меши, анимации, материалы FX/CommonFX), перенесённые из Unity, по их
-## же сценарию (Timeline / анимация). После «акта появления» в центре доски на секунду
-## встаёт полноформатная карта (горящее появление Hearthstone), гаснет — и только потом
-## игра показывает действия карты (released).
+## же сценарию (Timeline / анимация). После «акта появления» в центре на секунду встаёт
+## полноформатная карта (горящее появление Hearthstone), гаснет — и только потом игра
+## показывает действия карты (released).
 ##
-## Пиксель-арт: всё рисуется в сетке игры 960x540, кадры ступенями (HsFx.FPS), шейдеры
-## дают прозрачность и цвет ступенями с узором Байера.
+## Эффект стоит в своих мировых координатах Hearthstone и снят камерой Hearthstone
+## (BoardCameras/Main Camera) на весь экран — как в
+## игре. Материалы: шейдер hs_commonfx (пиксельная часть FX/CommonFX по его коду),
+## вершинная часть — здесь (_vertex), тоже по коду. Пиксель-арт: сетка игры 960x540,
+## кадры ступенями (HsFx.FPS).
 
 ## Акт появления закончился, карта погасла: можно показывать действия и вопросы.
 signal released
 ## Толчок доски (сила в пикселях, BoardPanel.shake).
 signal shake(power: float)
 
-const PARTICLE_SHADER := preload("res://scenes/ui/hs_fx/hs_particle.gdshader")
 const COMMON_SHADER := preload("res://scenes/ui/hs_fx/hs_commonfx.gdshader")
-## Проекция мира Hearthstone (камера над центром доски, перспектива): ширина доски в
-## единицах (AOE_full_mesh), высота камеры над доской (что выше — крупнее и дальше от центра).
-const BOARD_UNITS := 13.45
-const CAMERA := 14.0
+## Камера доски Hearthstone (BoardCameras/Main Camera): где стоит, куда смотрит, вертикальный угол обзора.
+const CAM_POS := Vector3(-7.795, 19.598, -5.965)
+const CAM_FWD := Vector3(0.0, -0.998, 0.056)
+const CAM_UP := Vector3(0.0, 0.056, 0.998)
+const CAM_RIGHT := Vector3(1.0, 0.0, 0.0)
+const CAM_FOV := 34.87
 ## Кусок текстуры «горящей копии» карты (GenFX_AbilityCard_Echo_BW), занятый картой.
 const ECHO_CARD := Vector2(0.55, 0.76)
 
 ## Карта -> сценарий.
 const RECIPES := {"48426": "worldbreaker"}
-## Сценарий: len — длина; layers — префабы: fx, at (секунда старта), anchor ("board" —
-## центр доски, "card" — карта в центре), clip (анимация) и clip_root (путь аниматора),
-## only (рисовать только это поддерево), controls — [путь, с, по] (дорожки Timeline:
-## объект включён и его частицы идут только в эти секунды), play_all — все частицы с
-## начала слоя. card — горящее появление карты: reveal (секунда), sweep (линия огня
-## проходит карту), hold (карта стоит), out (гаснет). cues — звуки, shakes — толчки.
+## Сценарий: len — длина; layers — префабы: fx, at (секунда старта), clip (анимация) и
+## clip_root (путь аниматора), only (только это поддерево) и place (где его корень в
+## мире), controls — [путь, с, по] (дорожки Timeline: объект включён и его частицы идут
+## только в эти секунды), play_all — все частицы с начала слоя, under — узлы под картой.
+## card — горящее появление карты: reveal (секунда), sweep (огонь проходит карту), hold
+## (стоит), out (гаснет), place (точка карты в мире). cues — звуки, shakes — толчки.
 const SCRIPTS := {
 	# Deathwing, Worldbreaker (CATA_190h): CATAFX_Deathwing_CustomSummon_Spell (тень
-	# пролетает над доской, дракон пикирует и врезается — огненная волна, вспышка,
-	# дым, угли) и CATAFX_Deathwing_Choice_Reveal (карта проявляется полосой огня).
-	"worldbreaker": {"len": 4.9,
+	# с огненным шлейфом проносится над доской, дракон пикирует в героя — огненная
+	# волна, вспышка, дым, угли) и CATAFX_Deathwing_Choice_Reveal (одна карта вместо
+	# четырёх — в центральной позиции выбора, actorPosition_1).
+	"worldbreaker": {"len": 4.6,
 		"layers": [
-			{"fx": "worldbreaker/summon", "at": 0.0, "anchor": "board",
+			{"fx": "worldbreaker/summon", "at": 0.0,
 				"clip": "worldbreaker/summon_anim", "clip_root": "TimelineRoot/AnimRoot",
 				"controls": [["TimelineRoot/AnimRoot/TrailRoot/PS_Embers", 0.0, 6.0],
 					["TimelineRoot/AnimRoot/TrailRoot/PS_Smoke", 0.067, 4.167],
 					["TimelineRoot/AnimRoot/HeroRoot/PS_BurstFlames", 1.133, 4.717]],
-				"hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot"]},
-			{"fx": "worldbreaker/reveal", "at": 2.2, "anchor": "card",
+				"hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot"],
+				# тень дракона в HS — серая полупрозрачная, под светлую деревянную доску;
+				# на нашей тёмной доске серый светлее фона — оставляем только затемнение
+				"dark": ["TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep"]},
+			{"fx": "worldbreaker/reveal", "at": 1.7,
 				"clip": "worldbreaker/reveal_anim", "clip_root": "Root/Bursts_Root/Burst0_New",
-				"only": "Root/Bursts_Root/Burst0_New", "play_all": true},
+				"only": "Root/Bursts_Root/Burst0_New", "place": Vector3(-7.8, 3.802, -4.659),
+				"play_all": true, "under": ["Quad_CardGlow_Backer"]},
 		],
-		"card": {"reveal": 2.2, "sweep": 0.5, "hold": 1.0, "out": 0.35},
+		"card": {"reveal": 2.15, "sweep": 0.6, "hold": 1.0, "out": 0.35, "place": Vector3(-7.8, 3.802, -4.659),
+			"half": 2.41 * 0.89},
 		"cues": [[0.0, "CATA_190h_Enter_01"], [0.0, "CATA_190h_Enter_Dragon_01"], [0.85, "CATA_190h_Enter_02"],
-			[1.0, "CATA_190h_Enter_Dragon_02"], [2.2, "CATA_190h_CardReveal_01"]],
+			[1.0, "CATA_190h_Enter_Dragon_02"], [1.7, "CATA_190h_CardReveal_01"]],
 		"shakes": [[0.0, 3.0], [1.133, 5.0]]},
 }
 
@@ -60,7 +70,6 @@ static var fixed_dt := 0.0
 ## Отладка (tools/hs_preview.gd): рисовать только узлы с этими именами (через запятую)
 ## и их потомков.
 static var debug_only := ""
-static var _shaders: Dictionary = {}
 
 var board_area: Control
 var _queue: Array[Dictionary] = []
@@ -71,9 +80,23 @@ var _cue_t := -1.0
 var _script: Dictionary = {}
 var _layers: Array[Dictionary] = []
 
+## Эффект смешивается в буфере с плавающей точкой (HDR 2D), где альфа больше 1 вычитает фон, а яркость не обрезается.
+## Для этого он рисуется в своём SubViewport поверх снимка экрана игры (снимок — в момент
+## розыгрыша), и готовый кадр переводится в sRGB и кладётся поверх экрана.
+const OUT_SHADER := preload("res://scenes/ui/hs_fx/hs_out.gdshader")
+## Цвет FX считается в гамме, как задуманы материалы HS (серый 0.5 = «без изменений»,
+## удвоение цвета вершины), и только результат переводится в линейный буфер кадра;
+## в линейном счёте огонь и контур карты выходили тусклыми, а дым — розовым.
+const GAMMA := true
+const GAMMA_CLIP := 1.0
+
+var _port := SubViewport.new()
+var _bg := TextureRect.new()
+var _view := TextureRect.new()
 var _back := Control.new()
 var _card := _CardLayer.new()
 var _front := Control.new()
+var _starting := false
 
 
 static func has(cid: String) -> bool:
@@ -82,9 +105,26 @@ static func has(cid: String) -> bool:
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for c: Control in [_back, _card, _front]:
+	_port.use_hdr_2d = true
+	_port.transparent_bg = false
+	_port.disable_3d = true
+	_port.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	add_child(_port)
+	_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	for c: Control in [_bg, _back, _card, _front]:
 		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(c)
+		_port.add_child(c)
+	_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_view.stretch_mode = TextureRect.STRETCH_SCALE
+	_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	var m := ShaderMaterial.new()
+	m.shader = OUT_SHADER
+	_view.material = m
+	_view.texture = _port.get_texture()
+	add_child(_view)
 	visible = false
 
 
@@ -93,13 +133,18 @@ func play(cid: String, face: Texture2D, quiet: bool = false) -> void:
 	if not has(cid):
 		return
 	_queue.append({"cid": cid, "face": face, "quiet": quiet})
-	if _item.is_empty():
+	if _item.is_empty() and not _starting:
 		_next()
 
 
 ## Идёт ли розыгрыш, который ещё держит действия карты.
 func is_busy() -> bool:
-	return not _item.is_empty() and not _released
+	return (not _item.is_empty() and not _released) or _starting
+
+
+## Готов ли кадр эффекта (снимок экрана взят) — для превью и снимков.
+func is_ready() -> bool:
+	return not _item.is_empty() and not _starting
 
 
 func _next() -> void:
@@ -107,11 +152,28 @@ func _next() -> void:
 		for c in layer.get_children():
 			c.queue_free()
 	_layers.clear()
+	_item = {}
+	visible = false
+	set_process(false)
+	_port.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	if _queue.is_empty():
-		_item = {}
-		visible = false
-		set_process(false)
 		return
+	# снимок экрана без эффекта: ждём, пока кадр (уже без нас) дорисуется
+	_starting = true
+	await RenderingServer.frame_post_draw
+	var shot := get_viewport().get_texture().get_image()
+	# окно может быть больше расчётного экрана (полный экран 1920x1080) — снимок в 960x540
+	if shot.get_size() != Vector2i(size):
+		shot.resize(int(size.x), int(size.y), Image.INTERPOLATE_NEAREST)
+	_bg.texture = ImageTexture.create_from_image(shot)
+	_starting = false
+	_port.size = Vector2i(size)
+	for c: Control in [_bg, _back, _card, _front]:
+		c.position = Vector2.ZERO
+		c.size = size
+	_view.position = Vector2.ZERO
+	_view.size = size
+	_port.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_item = _queue.pop_front()
 	_script = SCRIPTS[RECIPES[_item["cid"]]]
 	for spec: Dictionary in _script["layers"]:
@@ -172,26 +234,34 @@ func _cues(t: float) -> void:
 	_cue_t = t
 
 
-func _board_rect() -> Rect2:
-	if board_area == null:
-		return Rect2(Vector2.ZERO, size)
-	var r := board_area.get_global_rect()
-	r.position -= get_global_position()
-	return r
+# --- камера --------------------------------------------------------------------------
+
+## Точка мира -> экран (x, y в пикселях игры) и глубина (z).
+func _project(p: Vector3) -> Vector3:
+	var d := p - CAM_POS
+	var z := maxf(d.dot(CAM_FWD), 0.05)
+	var k := (size.y * 0.5) / tan(deg_to_rad(CAM_FOV) * 0.5)
+	return Vector3(size.x * 0.5 + d.dot(CAM_RIGHT) / z * k, size.y * 0.5 - d.dot(CAM_UP) / z * k, z)
+
+
+## Сколько пикселей экрана в одной единице мира на глубине z.
+func _px_per_unit(z: float) -> float:
+	return (size.y * 0.5) / tan(deg_to_rad(CAM_FOV) * 0.5) / maxf(z, 0.05)
 
 
 # --- слой (один префаб) --------------------------------------------------------------
 
 func _make_layer(spec: Dictionary) -> Dictionary:
 	var fx := HsFx.load_fx(String(spec["fx"]))
-	var L := {"spec": spec, "fx": fx, "drawers": {}, "holder": Control.new(), "under": Control.new()}
-	var holder: Control = L["holder"]
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	(_front if String(spec["anchor"]) == "card" else _back).add_child(holder)
-	# подложки (Backer) — под картой
-	var under: Control = L["under"]
-	under.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_back.add_child(under)
+	var L := {"spec": spec, "fx": fx, "drawers": {}, "holder": Control.new(), "under_holder": Control.new()}
+	for h: Control in [L["holder"], L["under_holder"]]:
+		h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# поверх карты — слой карты (only), остальное — под ней; подложки (under) — под картой
+	if spec.has("only"):
+		_front.add_child(L["holder"])
+	else:
+		_back.add_child(L["holder"])
+	_back.add_child(L["under_holder"])
 	var root := 0
 	if spec.has("only"):
 		root = fx.find_path(0, String(spec["only"]))
@@ -199,7 +269,6 @@ func _make_layer(spec: Dictionary) -> Dictionary:
 	L["nodes"] = fx.subtree(root)
 	L["clip"] = HsFx.load_clip(String(spec["clip"])) if spec.has("clip") else {}
 	L["clip_root"] = fx.find_path(0, String(spec.get("clip_root", "")))
-	# кривые анимации -> узлы
 	var curves: Array = []
 	if not (L["clip"] as Dictionary).is_empty():
 		for c: Dictionary in L["clip"]["curves"]:
@@ -207,7 +276,6 @@ func _make_layer(spec: Dictionary) -> Dictionary:
 			if idx >= 0:
 				curves.append([idx, String(c["attr"]), c])
 	L["curves"] = curves
-	# дорожки включения: узел -> [с, по] для него и всех его потомков
 	var spans := {}
 	for ctl: Array in spec.get("controls", []):
 		var idx := fx.find_path(0, String(ctl[0]))
@@ -223,25 +291,17 @@ func _make_layer(spec: Dictionary) -> Dictionary:
 			for j in fx.subtree(idx):
 				hidden[j] = true
 	L["hidden"] = hidden
+	var dark := {}
+	for p: String in spec.get("dark", []):
+		var idx := fx.find_path(0, p)
+		if idx >= 0:
+			for j in fx.subtree(idx):
+				dark[j] = true
+	L["dark"] = dark
 	return L
 
 
-var _origin := Vector2.ZERO
-var _scale := 40.0
-
-
-func _to_screen(p: Vector3) -> Vector2:
-	return _origin + Vector2(p.x, -p.z) * _scale * _persp(p.y)
-
-
-static func _persp(y: float) -> float:
-	return CAMERA / maxf(CAMERA - y, 1.0)
-
-
 func _frame() -> void:
-	var br := _board_rect()
-	_origin = br.get_center().round()
-	_scale = br.size.x / BOARD_UNITS
 	for c: Control in [_back, _card, _front]:
 		c.size = size
 	var t := floorf(_t * HsFx.FPS) / HsFx.FPS
@@ -250,22 +310,29 @@ func _frame() -> void:
 	_render_card(t)
 
 
-## Карта в центре доски: проявляется снизу вверх за полосой огня, стоит, гаснет.
+## Где карта на экране: её точка в мире и высота (полувысота half в единицах мира).
+func _card_rect() -> Rect2:
+	var cs: Dictionary = _script["card"]
+	var c := _project(cs["place"])
+	var h := 2.0 * float(cs["half"]) * _px_per_unit(c.z)
+	var w := h * CardView.PIXEL_SIZE.x / CardView.PIXEL_SIZE.y
+	return Rect2(Vector2(c.x - w * 0.5, c.y - h * 0.5).round(), Vector2(w, h).round())
+
+
+## Карта: проявляется снизу вверх за полосой огня, стоит, гаснет.
 func _render_card(t: float) -> void:
 	var cs: Dictionary = _script["card"]
 	var t0 := float(cs["reveal"])
 	if t < t0:
 		_card.show_card(null, Rect2(), 0.0, 1.0)
 		return
-	var big := CardView.PIXEL_SIZE
-	var r := Rect2((_origin - big * 0.5).round(), big)
 	var shown := clampf((t - t0) / float(cs["sweep"]), 0.0, 1.0)
 	var out_at := t0 + float(cs["sweep"]) + float(cs["hold"])
 	var a := 1.0 - clampf((t - out_at) / float(cs["out"]), 0.0, 1.0)
-	_card.show_card(_item["face"], r, a, shown)
+	_card.show_card(_item["face"], _card_rect(), a, shown)
 
 
-## Переопределения анимации узлов слоя в момент tau: узел -> {scale, pos, enabled, props}.
+## Переопределения анимации узлов слоя в момент tau: узел -> {scale, position, enabled, props}.
 func _clip_state(L: Dictionary, tau: float) -> Dictionary:
 	var out := {}
 	var clip: Dictionary = L["clip"]
@@ -290,10 +357,8 @@ func _clip_state(L: Dictionary, tau: float) -> Dictionary:
 		elif attr == "m_Enabled":
 			o["enabled"] = v > 0.5
 		elif attr.contains("#"):
-			# цвет: #4..#7 — r, g, b, a
 			var name := attr.get_slice("#", 0)
-			var ci := int(attr.get_slice("#", 1)) - 4
-			(o["props"] as Dictionary)[name + "/" + str(ci)] = v
+			(o["props"] as Dictionary)[name + "/" + str(int(attr.get_slice("#", 1)) - 4)] = v
 		elif k >= 0:
 			(o["props"] as Dictionary)[base + "/" + str(k)] = v
 		else:
@@ -305,28 +370,18 @@ func _world(L: Dictionary, i: int, st: Dictionary, cache: Dictionary) -> Transfo
 	if cache.has(i):
 		return cache[i]
 	var fx: HsFx = L["fx"]
+	var nd: Dictionary = fx.nodes[i]
+	var o: Dictionary = st.get(i, {})
 	var xf: Transform3D
 	if i == int(L["root"]):
-		xf = _anchor(L)
+		# корень слоя: свой мировой поворот и масштаб, место — из сценария или префаба
+		var spec: Dictionary = L["spec"]
+		var pos: Vector3 = spec.get("place", nd["pos"])
+		xf = fx.local_xf(i, pos, o.get("scale", null))
 	else:
-		var o: Dictionary = st.get(i, {})
-		var local := fx.local_xf(i, o.get("position", null), o.get("scale", null))
-		xf = _world(L, int(fx.nodes[i]["parent"]), st, cache) * local
+		xf = _world(L, int(nd["parent"]), st, cache) * fx.local_xf(i, o.get("position", null), o.get("scale", null))
 	cache[i] = xf
 	return xf
-
-
-## Где корень слоя в мире: место героя (у Hearthstone эффект стоит на портрете героя —
-## низ доски, HERO_Z от центра), или (карта) так, чтобы карта в его пространстве
-## (по z от -2.41 до 2.41) легла на карту в центре экрана.
-const HERO_Z := -3.0
-
-
-func _anchor(L: Dictionary) -> Transform3D:
-	if String((L["spec"] as Dictionary)["anchor"]) == "card":
-		var k := CardView.PIXEL_SIZE.y * 0.5 / (2.41 * _scale)
-		return Transform3D(Basis.from_scale(Vector3.ONE * k), Vector3.ZERO)
-	return Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, HERO_Z))
 
 
 ## Узел включён: в префабе (с родителями) или его включила дорожка в эти секунды.
@@ -352,146 +407,82 @@ func _render_layer(L: Dictionary, t: float) -> void:
 	var fx: HsFx = L["fx"]
 	var drawers: Dictionary = L["drawers"]
 	for d: _Drawer in drawers.values():
-		d.quads.clear()
-		d.tris.clear()
-	if tau < 0.0:
-		for d: _Drawer in drawers.values():
-			d.queue_redraw()
-		return
-	var st := _clip_state(L, tau)
-	var cache := {}
-	for i: int in L["nodes"]:
-		var nd: Dictionary = fx.nodes[i]
-		if not nd.has("shader") or not _on(L, i, tau) or _debug_skip(fx, i):
-			continue
-		var o: Dictionary = st.get(i, {})
-		if not bool(o.get("enabled", true)):
-			continue
-		var props: Dictionary = o.get("props", {})
-		if not (nd["ps"] as Dictionary).is_empty():
-			var span: Array = (L["spans"] as Dictionary).get(i, [0.0, INF])
-			var play := float(span[0]) if not bool(spec.get("play_all", false)) else 0.0
-			var xf_at := func(_time: float) -> Transform3D:
-				return _world(L, i, st, cache)
-			var parts := fx.particles(i, play, float(span[1]), tau, xf_at)
-			if parts.is_empty():
+		d.clear()
+	if tau >= 0.0:
+		var st := _clip_state(L, tau)
+		var cache := {}
+		for i: int in L["nodes"]:
+			var nd: Dictionary = fx.nodes[i]
+			if not nd.has("shader") or not String(nd["shader"]).contains("CommonFX"):
 				continue
-			var d := _drawer(L, i, props, tau, false)
-			var tex: Texture2D = d.tex
-			if tex == null:
+			if not _on(L, i, tau) or _debug_skip(fx, i):
 				continue
-			var tiles := fx.tiles(i)
-			var cell := Vector2(tex.get_size()) / Vector2(tiles)
-			var max_px := float(nd.get("max_size", 0.5)) * 540.0
-			var mode := int(nd["render_mode"])
-			for p: Dictionary in parts:
-				var pos: Vector3 = p["p"]
-				var px := clampf(float(p["size"]) * _scale * _persp(pos.y), 1.0, max_px)
-				var f := int(p["frame"])
-				var src := Rect2(Vector2(f % tiles.x, f / tiles.x) * cell, cell)
-				var rot := -float(p["rot"])
-				var sz := Vector2(px, px)
-				if mode == 1:
-					# вытянутая по скорости
-					var vel: Vector3 = p["v"]
-					var sv := _to_screen(pos + vel * 0.05) - _to_screen(pos)
-					sv *= 20.0
-					rot = sv.angle() + PI * 0.5
-					sz.y = px * float(nd.get("length_scale", 2.0)) + sv.length() * float(nd.get("velocity_scale", 0.0))
-				d.quads.append([_to_screen(pos).round(), sz.round(), rot, p["col"], src])
-		elif nd.has("geom"):
-			var d := _drawer(L, i, props, tau, true)
-			var g: Dictionary = nd["geom"]
-			var xf := _world(L, i, st, cache)
-			var pts := PackedVector2Array()
-			var behind := PackedByteArray()
-			for v: Vector3 in g["verts"]:
-				var w := xf * v
-				pts.append(_to_screen(w).round())
-				behind.append(1 if w.y > CAMERA - 1.5 else 0)
-			# треугольники у самой камеры и за ней не рисуются
-			var idx: PackedInt32Array = g["tris"]
-			var keep := PackedInt32Array()
-			for k in range(0, idx.size() - 2, 3):
-				if behind[idx[k]] + behind[idx[k + 1]] + behind[idx[k + 2]] == 0:
-					keep.append_array([idx[k], idx[k + 1], idx[k + 2]])
-			d.tris.append([keep, pts, g["colors"], g["uv"]])
-		else:
-			# плоскость без выгруженной геометрии — квад Unity 1x1 (XY)
-			var d := _drawer(L, i, props, tau, true)
-			var xf := _world(L, i, st, cache)
-			var pts := PackedVector2Array()
-			for c: Vector3 in [Vector3(-0.5, -0.5, 0), Vector3(0.5, -0.5, 0), Vector3(0.5, 0.5, 0), Vector3(-0.5, 0.5, 0)]:
-				pts.append(_to_screen(xf * c).round())
-			if String(spec["anchor"]) == "card":
-				pts = _echo_quad()
-			var w := Color.WHITE
-			d.tris.append([PackedInt32Array([0, 1, 2, 0, 2, 3]), pts, PackedColorArray([w, w, w, w]),
-				PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])])
+			var o: Dictionary = st.get(i, {})
+			if not bool(o.get("enabled", true)):
+				continue
+			var m := _material(nd, o.get("props", {}))
+			if (L["dark"] as Dictionary).has(i):
+				m["color_mul"] = 0.0
+			if OS.get_environment("HS_DEBUG") != "" and (nd["ps"] as Dictionary).is_empty():
+				print("t=%.2f %s tex=%s alpha_mul=%s color_mul=%s df=%s vm=%s color=%s kw=%s" % [tau, nd["name"],
+					m["main_tex"] != null, m["alpha_mul"], m["color_mul"], m["dissolve_factor"], m["vm_st"], m["color"], nd.get("keywords")])
+			if m["main_tex"] == null:
+				continue
+			var d := _drawer(L, i)
+			_apply(d, m, tau)
+			if not (nd["ps"] as Dictionary).is_empty():
+				_emit_particles(L, i, d, m, st, cache, tau)
+			elif nd.has("geom"):
+				var g: Dictionary = nd["geom"]
+				_emit_mesh(d, m, _world(L, i, st, cache), g["verts"], g["uv"], g["colors"], g["tris"], tau)
+			elif spec.has("only"):
+				# «горящая копия» карты: квад на карту (кусок ECHO_CARD текстуры — на её рамку)
+				var r := _card_rect()
+				var big := r.size / ECHO_CARD
+				var q := Rect2(r.get_center() - big * 0.5, big)
+				_emit_screen_quad(d, m, q, tau)
+			else:
+				var g := _grid_quad()
+				_emit_mesh(d, m, _world(L, i, st, cache), g[0], g[1], PackedColorArray(), g[2], tau)
 	for d: _Drawer in drawers.values():
-		d.queue_redraw()
+		d.commit()
 
 
-## Квад «горящей копии» карты: карта текстуры (ECHO_CARD) ложится на карту в центре.
-func _echo_quad() -> PackedVector2Array:
-	var big := CardView.PIXEL_SIZE / ECHO_CARD
-	var r := Rect2((_origin - big * 0.5).round(), big.round())
-	return PackedVector2Array([Vector2(r.position.x, r.end.y), r.end, Vector2(r.end.x, r.position.y), r.position])
-
-
-func _drawer(L: Dictionary, i: int, props: Dictionary, tau: float, mesh: bool) -> _Drawer:
+func _drawer(L: Dictionary, i: int) -> _Drawer:
 	var drawers: Dictionary = L["drawers"]
-	var fx: HsFx = L["fx"]
-	var nd: Dictionary = fx.nodes[i]
-	var d: _Drawer
 	if drawers.has(i):
-		d = drawers[i]
-	else:
-		d = _Drawer.new()
-		d.node = i
-		d.size = size
-		var mat := ShaderMaterial.new()
-		var common := String(nd.get("shader", "")).contains("CommonFX")
-		mat.shader = COMMON_SHADER if common else _particle_shader(int(nd.get("blend", HsFx.Blend.MIX)))
-		d.material = mat
-		d.common = common
-		var holder: Control = L["under"] if String(nd["name"]).contains("Backer") else L["holder"]
-		var at := 0
-		for c in holder.get_children():
-			if (c as _Drawer).node < i:
-				at += 1
-		holder.add_child(d)
-		holder.move_child(d, at)
-		drawers[i] = d
-	var mat: ShaderMaterial = d.material
-	if d.common:
-		_common_params(mat, nd, props, tau, mesh)
-		d.tex = mat.get_shader_parameter("main_tex")
-	else:
-		d.tex = nd.get("tex")
-		mat.set_shader_parameter("alpha_mode", int(nd.get("alpha_mode", 0)))
-		mat.set_shader_parameter("kind", 2 if int(nd.get("blend", 0)) == HsFx.Blend.MUL else 0)
+		return drawers[i]
+	var fx: HsFx = L["fx"]
+	var d := _Drawer.new()
+	d.node = i
+	d.size = size
+	var mat := ShaderMaterial.new()
+	mat.shader = COMMON_SHADER
+	d.material = mat
+	var holder: Control = L["holder"]
+	if String(fx.nodes[i]["name"]) in (L["spec"] as Dictionary).get("under", []):
+		holder = L["under_holder"]
+	var at := 0
+	for c in holder.get_children():
+		if (c as _Drawer).node < i:
+			at += 1
+	holder.add_child(d)
+	holder.move_child(d, at)
+	drawers[i] = d
 	return d
 
 
-static func _particle_shader(blend: int) -> Shader:
-	if not _shaders.has(blend):
-		var s := Shader.new()
-		var mode := "blend_add" if blend == HsFx.Blend.ADD else ("blend_mul" if blend == HsFx.Blend.MUL else "blend_mix")
-		s.code = PARTICLE_SHADER.code.replace("render_mode blend_mix;", "render_mode %s;" % mode)
-		_shaders[blend] = s
-	return _shaders[blend]
+# --- материал FX/CommonFX -------------------------------------------------------------
 
-
-## Параметры шейдера CommonFX из материала узла и анимации (props: "имя" или "имя/компонента").
-func _common_params(mat: ShaderMaterial, nd: Dictionary, props: Dictionary, tau: float, mesh: bool) -> void:
+## Параметры материала узла с поправками анимации (props: "имя" или "имя/компонента").
+func _material(nd: Dictionary, props: Dictionary) -> Dictionary:
 	var floats: Dictionary = nd.get("floats", {})
 	var colors: Dictionary = nd.get("colors", {})
 	var texs: Dictionary = nd.get("textures", {})
 	var F := func(n: String, def: float) -> float:
 		return float(props.get(n, floats.get(n, def)))
-	var C := func(n: String) -> Color:
-		var c := HsFx._color(colors.get(n)) if colors.has(n) else Color(0, 0, 0, 0)
+	var C := func(n: String, def: Color = Color(0, 0, 0, 0)) -> Color:
+		var c := HsFx._color(colors.get(n)) if colors.has(n) else def
 		for k in 4:
 			var key := n + "/" + str(k)
 			if props.has(key):
@@ -507,12 +498,10 @@ func _common_params(mat: ShaderMaterial, nd: Dictionary, props: Dictionary, tau:
 			if props.has(key):
 				v[k] = float(props[key])
 		return v
+	var kw: Array = nd.get("keywords", [])
 	var base := String(nd.get("tex_base", ""))
 	var main := String((texs.get("_MainTex", {}) as Dictionary).get("tex", ""))
 	var second := String((texs.get("_SecondTex", {}) as Dictionary).get("tex", ""))
-	mat.set_shader_parameter("main_tex", HsFx._texture(base, main))
-	# режимы шейдера — по его ключевым словам (как их включил материал)
-	var kw: Array = nd.get("keywords", [])
 	var second_mode := 0
 	if "_SECONDTEXTURE_MASK" in kw:
 		second_mode = 1
@@ -521,77 +510,298 @@ func _common_params(mat: ShaderMaterial, nd: Dictionary, props: Dictionary, tau:
 	elif "_SECONDTEXTURE_NOISEUV" in kw:
 		second_mode = 3
 	var dissolve := 1 if "_DISSOLVE_MAINALPHA" in kw else (2 if "_DISSOLVE_SECONDALPHA" in kw else 0)
-	var use_second: bool = (second_mode > 0 or dissolve == 2) and second != ""
-	mat.set_shader_parameter("has_second", use_second)
-	if use_second:
-		mat.set_shader_parameter("second_tex", HsFx._texture(base, second))
-	mat.set_shader_parameter("unity_uv", mesh)
-	mat.set_shader_parameter("main_st", ST.call("_MainTex"))
-	var scr: Color = C.call("_ScrollingSpeed")
-	mat.set_shader_parameter("scroll", Vector2(scr.r, scr.g) * (1.0 if "_SCROLLING_ON" in kw else 0.0))
-	mat.set_shader_parameter("clamp_uv", F.call("_ClampUV", 0.0) > 0.0)
-	mat.set_shader_parameter("second_st", ST.call("_SecondTex"))
-	var sn: Color = C.call("_SecondTexSpeed_NoiseForce")
-	mat.set_shader_parameter("second_speed", Vector2(sn.r, sn.g))
-	mat.set_shader_parameter("noise_force", sn.b)
-	mat.set_shader_parameter("second_mode", second_mode)
-	mat.set_shader_parameter("dissolve", dissolve)
-	mat.set_shader_parameter("dissolve_factor", F.call("_DissolveFactor", 0.0))
-	mat.set_shader_parameter("dissolve_smooth", F.call("_DissolveSmoothness", 0.1))
-	var coloring: bool = "_COLORING_RAMP" in kw
-	mat.set_shader_parameter("coloring", coloring)
-	mat.set_shader_parameter("white_color", C.call("_WhiteColor"))
-	mat.set_shader_parameter("mid_color", C.call("_MidColor"))
-	mat.set_shader_parameter("last_color", C.call("_LastColor"))
-	mat.set_shader_parameter("mid_pos", F.call("_MiddlePointPos", 0.5))
-	mat.set_shader_parameter("tint", Color.WHITE if coloring else C.call("_Color"))
-	mat.set_shader_parameter("color_mul", F.call("_ColorMul", 1.0))
-	mat.set_shader_parameter("color_add", F.call("_ColorAdd", 0.0))
-	mat.set_shader_parameter("alpha_mul", F.call("_AlphaMul", 1.0))
-	mat.set_shader_parameter("min_alpha", F.call("_MinAlpha", 0.0))
-	mat.set_shader_parameter("vmask", "_VERTEXMASK_ON" in kw)
-	var vm: Color = C.call("_VertexMaskUVScaleOffset")
-	mat.set_shader_parameter("vmask_st", Vector4(vm.r, vm.g, vm.b, vm.a))
-	mat.set_shader_parameter("time", tau)
-	mat.set_shader_parameter("fade", 1.0 - clampf((_t - (float(_script["len"]) - 0.6)) / 0.6, 0.0, 1.0))
+	var m := {
+		"main_tex": HsFx._texture(base, main),
+		"second_tex": HsFx._texture(base, second) if second != "" and (second_mode > 0 or dissolve == 2) else null,
+		"rgbr": not ("_TEXTURETYPE_RGBA" in kw), "ramp": "_COLORING_RAMP" in kw,
+		"second_mode": second_mode, "dissolve": dissolve,
+		"scrolling": "_SCROLLING_ON" in kw, "global_uv": "_SECONDTEXGLOBALUV_ON" in kw,
+		"rotation": "_SECONDTEXROTATION_ON" in kw, "vmask": "_VERTEXMASK_ON" in kw,
+		"color": C.call("_Color", Color.WHITE), "main_st": ST.call("_MainTex"), "second_st": ST.call("_SecondTex"),
+		"swap": F.call("_SwapUV", 0.0), "second_swap": F.call("_SecondTexSwapUV", 0.0),
+		"scroll": C.call("_ScrollingSpeed"), "second_speed": C.call("_SecondTexSpeed_NoiseForce"),
+		"rot_speed": F.call("_SecondTexRotSpeed", 0.0), "init_rot": F.call("_SecondTexInitRot", 0.0),
+		"color2": C.call("_Color2", Color.WHITE), "color_mul2": F.call("_ColorMul2", 1.0),
+		"white": C.call("_WhiteColor"), "mid": C.call("_MidColor"), "last": C.call("_LastColor"),
+		"mid_pos": F.call("_MiddlePointPos", 0.5), "color_mul": F.call("_ColorMul", 1.0),
+		"color_add": F.call("_ColorAdd", 0.0), "alpha_mul": F.call("_AlphaMul", 1.0),
+		"premul": F.call("_PremultipliedRGBTexture", 1.0), "clamp_uv": F.call("_ClampUV", 0.0),
+		"second_clamp": F.call("_SecondTexClampUV", 0.0), "dissolve_factor": F.call("_DissolveFactor", 0.0),
+		"smooth": F.call("_DissolveSmoothness", 0.1), "min_alpha": F.call("_MinAlpha", 0.0),
+		"ignore_va": F.call("_IgnoreVertexAlpha", 0.0), "vm_alpha_mul": F.call("_VertexMaskAlphaMul", 1.0),
+		"vm_st": C.call("_VertexMaskUVScaleOffset", Color(1, 1, 0, 0)),
+		"vm_grad": C.call("_VertexMaskLinearGradient", Color(1, 1, 1, 1)),
+	}
+	return m
+
+
+func _apply(d: _Drawer, m: Dictionary, tau: float) -> void:
+	var mat: ShaderMaterial = d.material
+	d.tex = m["main_tex"]
+	mat.set_shader_parameter("main_tex", m["main_tex"])
+	mat.set_shader_parameter("linear_space", not GAMMA)
+	mat.set_shader_parameter("gamma_clip", GAMMA_CLIP)
+	mat.set_shader_parameter("has_second", m["second_tex"] != null)
+	if m["second_tex"] != null:
+		mat.set_shader_parameter("second_tex", m["second_tex"])
+	mat.set_shader_parameter("rgbr", m["rgbr"])
+	mat.set_shader_parameter("ramp", m["ramp"])
+	mat.set_shader_parameter("second_mode", m["second_mode"])
+	mat.set_shader_parameter("dissolve", m["dissolve"])
+	mat.set_shader_parameter("clamp_uv", m["clamp_uv"])
+	mat.set_shader_parameter("second_clamp", m["second_clamp"])
+	var sp: Color = m["second_speed"]
+	mat.set_shader_parameter("noise_force", Vector2(sp.b, sp.a))
+	mat.set_shader_parameter("color_mul", m["color_mul"])
+	mat.set_shader_parameter("color_add", m["color_add"])
+	mat.set_shader_parameter("premul", m["premul"])
+	for k: String in ["white", "mid", "last"]:
+		var c: Color = m[k]
+		mat.set_shader_parameter(k + "_color", Vector3(c.r, c.g, c.b))
+	mat.set_shader_parameter("mid_pos", m["mid_pos"])
+	var c2: Color = m["color2"]
+	mat.set_shader_parameter("color2", Vector4(c2.r, c2.g, c2.b, c2.a))
+	mat.set_shader_parameter("color_mul2", m["color_mul2"])
+	mat.set_shader_parameter("dissolve_factor", m["dissolve_factor"])
+	mat.set_shader_parameter("smoothness", m["smooth"])
+	mat.set_shader_parameter("fade", 1.0 - clampf((_t - (float(_script["len"]) - 0.5)) / 0.5, 0.0, 1.0))
+
+
+## Цвет материала Unity: при счёте в гамме — как есть, иначе rgb из sRGB в линейный.
+static func _lin(c: Color) -> Color:
+	if GAMMA:
+		return c
+	return Color(pow(c.r, 2.2), pow(c.g, 2.2), pow(c.b, 2.2), c.a)
+
+
+## Вершинная часть FX/CommonFX (по коду вершинного шейдера): uv, world — точка в мире,
+## vcol — цвет вершины. -> [uv основной, CUSTOM0 (uv второй, порог, альфа вершины),
+## цвет o3, CUSTOM1 (второй цвет o2)].
+static func _vertex(m: Dictionary, uv: Vector2, world: Vector3, vcol: Color, time2: float) -> Array:
+	var st: Vector4 = m["main_st"]
+	var muv := Vector2(uv.x * st.x + st.z, uv.y * st.y + st.w)
+	muv = muv.lerp(Vector2(muv.y, muv.x), float(m["swap"]))
+	var scroll: Color = m["scroll"]
+	if m["scrolling"]:
+		muv += Vector2(fposmod(time2 * scroll.r, 1.0), fposmod(time2 * scroll.g, 1.0))
+	var sst: Vector4 = m["second_st"]
+	var base := Vector2(world.x, world.z) if m["global_uv"] else uv
+	var suv := Vector2(base.x * sst.x + sst.z, base.y * sst.y + sst.w)
+	suv = suv.lerp(Vector2(suv.y, suv.x), float(m["second_swap"]))
+	var sp: Color = m["second_speed"]
+	suv += Vector2(fposmod(time2 * sp.r, 1.0), fposmod(time2 * sp.g, 1.0))
+	if m["rotation"]:
+		var half := Vector2(sst.x, sst.y) * 0.5
+		suv -= half
+		var ang := float(m["rot_speed"]) * time2 - float(m["init_rot"]) * 0.017453
+		var cs := cos(ang)
+		var sn := sin(ang)
+		suv = Vector2(cs * suv.x + sn * suv.y, -sn * suv.x + cs * suv.y) + half
+	var mask := 1.0
+	if m["vmask"]:
+		var vm: Color = m["vm_st"]
+		var u2 := Vector2(uv.x * vm.r + vm.b, uv.y * vm.g + vm.a)
+		var g: Color = m["vm_grad"]
+		var grad := lerpf(lerpf(g.r, g.g, u2.x), lerpf(g.b, g.a, u2.x), u2.y)
+		var e := u2 * 2.0 - Vector2.ONE
+		var radial := clampf((1.0 - e.dot(e)) * float(m["vm_alpha_mul"]), 0.0, 1.0)
+		mask = clampf(grad * radial, 0.0, 1.0)
+	var va := vcol.a * mask
+	var aa := maxf(va, float(m["ignore_va"]))
+	var col: Color = _lin(m["color"])
+	var rgb := Vector3(vcol.r * col.r, vcol.g * col.g, vcol.b * col.b)
+	var second_alpha := int(m["dissolve"]) == 2
+	var k := (col.a if second_alpha else aa * col.a) * float(m["alpha_mul"])
+	var bright := clampf(maxf(rgb.x, maxf(rgb.y, rgb.z)) * 2.0 - 1.0, 0.0, 1.0)
+	var o3 := Color(2.0 * rgb.x * k, 2.0 * rgb.y * k, 2.0 * rgb.z * k, (1.0 - bright) * k)
+	var smooth := float(m["smooth"])
+	var thr := maxf(float(m["dissolve_factor"]) * 1.01, 1.0 - va - float(m["min_alpha"])) * (2.0 * smooth + 1.0) - smooth
+	var o2 := Color(0, 0, 0, 0)
+	if int(m["second_mode"]) == 2:
+		var c2: Color = _lin(m["color2"])
+		var rgb2 := Vector3(vcol.r * c2.r, vcol.g * c2.g, vcol.b * c2.b)
+		var a2 := aa * c2.a
+		var b2 := clampf(maxf(rgb2.x, maxf(rgb2.y, rgb2.z)) * 2.0 - 1.0, 0.0, 1.0)
+		var cm2 := float(m["color_mul2"])
+		o2 = Color(2.0 * rgb2.x * cm2 * a2, 2.0 * rgb2.y * cm2 * a2, 2.0 * rgb2.z * cm2 * a2, (1.0 - b2) * a2)
+	return [muv, Color(suv.x, suv.y, thr, aa if second_alpha else 0.0), o3, o2]
+
+
+func _emit_mesh(d: _Drawer, m: Dictionary, xf: Transform3D, verts: PackedVector3Array, uvs: PackedVector2Array,
+		cols: PackedColorArray, tris: PackedInt32Array, tau: float) -> void:
+	var base := d.points.size()
+	var behind := PackedByteArray()
+	for k in verts.size():
+		var w := xf * verts[k]
+		var p := _project(w)
+		behind.append(1 if (w - CAM_POS).dot(CAM_FWD) < 0.3 else 0)
+		var vs := _vertex(m, uvs[k] if k < uvs.size() else Vector2.ZERO, w,
+			cols[k] if k < cols.size() else Color.WHITE, tau * 2.0)
+		d.add_vertex(Vector2(p.x, p.y), vs[0], vs[2], vs[1], vs[3])
+	for k in range(0, tris.size() - 2, 3):
+		if behind[tris[k]] + behind[tris[k + 1]] + behind[tris[k + 2]] == 0:
+			d.indices.append_array([base + tris[k], base + tris[k + 1], base + tris[k + 2]])
+
+
+## Плоскость сеткой GRID x GRID: маска по вершинам считается в вершинах, и на четырёх
+## углах она нулевая — нужна сетка, как у мешей Hearthstone.
+const GRID := 16
+
+
+## Квад 1x1 Unity (плоскость XY, UV 0..1) сеткой: [вершины, uv, индексы].
+static func _grid_quad() -> Array:
+	var verts := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var idx := PackedInt32Array()
+	for y in GRID + 1:
+		for x in GRID + 1:
+			var u := Vector2(float(x) / GRID, float(y) / GRID)
+			uvs.append(u)
+			verts.append(Vector3(u.x - 0.5, u.y - 0.5, 0.0))
+	for y in GRID:
+		for x in GRID:
+			var a := y * (GRID + 1) + x
+			idx.append_array([a, a + 1, a + GRID + 2, a, a + GRID + 2, a + GRID + 1])
+	return [verts, uvs, idx]
+
+
+func _emit_screen_quad(d: _Drawer, m: Dictionary, r: Rect2, tau: float) -> void:
+	var g := _grid_quad()
+	var base := d.points.size()
+	for k in (g[1] as PackedVector2Array).size():
+		var u: Vector2 = g[1][k]
+		var p := Vector2(r.position.x + u.x * r.size.x, r.end.y - u.y * r.size.y)
+		var vs := _vertex(m, u, Vector3.ZERO, Color.WHITE, tau * 2.0)
+		d.add_vertex(p, vs[0], vs[2], vs[1], vs[3])
+	for k: int in g[2]:
+		d.indices.append(base + k)
+
+
+func _emit_particles(L: Dictionary, i: int, d: _Drawer, m: Dictionary, st: Dictionary, cache: Dictionary, tau: float) -> void:
+	var fx: HsFx = L["fx"]
+	var nd: Dictionary = fx.nodes[i]
+	var spec: Dictionary = L["spec"]
+	var span: Array = (L["spans"] as Dictionary).get(i, [0.0, INF])
+	var play := 0.0 if bool(spec.get("play_all", false)) else float(span[0])
+	var xf_at := func(_time: float) -> Transform3D:
+		return _world(L, i, st, cache)
+	var parts := fx.particles(i, play, float(span[1]), tau, xf_at)
+	if OS.get_environment("HS_DEBUG") != "" and not parts.is_empty():
+		var avg := Vector3.ZERO
+		for p: Dictionary in parts:
+			avg += p["p"]
+		var xf: Transform3D = xf_at.call(tau)
+		print("t=%.2f %s n=%d emitter=%s avg=%s basis=%s" % [tau, nd["name"], parts.size(), xf.origin, avg / parts.size(), xf.basis])
+	var tiles := fx.tiles(i)
+	var mode := int(nd["render_mode"])
+	for p: Dictionary in parts:
+		var pos: Vector3 = p["p"]
+		var size := float(p["size"])
+		var f := int(p["frame"])
+		# кусок раскадровки в UV Unity: кадр 0 — левый верхний
+		var col_i := f % tiles.x
+		var row_i := f / tiles.x
+		var u0 := float(col_i) / tiles.x
+		var u1 := float(col_i + 1) / tiles.x
+		var v1 := 1.0 - float(row_i) / tiles.y
+		var v0 := 1.0 - float(row_i + 1) / tiles.y
+		var uvs := [Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1), Vector2(u0, v1)]
+		var corners: Array = []
+		var rot := float(p["rot"])
+		if mode == 2:
+			# горизонтальный (лежит на земле): углы в мире, поворот вокруг вертикали
+			var h := size * 0.5
+			for c: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+				var rc := c.rotated(-rot) * h
+				var w := pos + Vector3(rc.x, 0.0, rc.y)
+				var sp := _project(w)
+				corners.append(Vector2(sp.x, sp.y))
+		elif mode == 1:
+			# вытянутый по скорости: длина = размер x lengthScale + скорость x velocityScale
+			var vel: Vector3 = p["v"]
+			var dir := vel.normalized() if vel.length() > 1e-4 else Vector3(0, 0, 1)
+			var length := size * float(nd.get("length_scale", 2.0)) + vel.length() * float(nd.get("velocity_scale", 0.0))
+			var a := _project(pos)
+			var b := _project(pos - dir * length)
+			var axis := Vector2(b.x - a.x, b.y - a.y)
+			var side := axis.orthogonal().normalized() * size * 0.5 * _px_per_unit(a.z)
+			var a2 := Vector2(a.x, a.y)
+			corners = [a2 - side, a2 + side, a2 + side + axis, a2 - side + axis]
+		else:
+			var c := _project(pos)
+			var half := size * 0.5 * _px_per_unit(c.z)
+			for k: Vector2 in [Vector2(-1, 1), Vector2(1, 1), Vector2(1, -1), Vector2(-1, -1)]:
+				corners.append(Vector2(c.x, c.y) + (k * half).rotated(-rot))
+		var base := d.points.size()
+		for k in 4:
+			var vs := _vertex(m, uvs[k], pos, p["col"], tau * 2.0)
+			d.add_vertex(corners[k], vs[0], vs[2], vs[1], vs[3])
+		d.indices.append_array([base, base + 1, base + 2, base, base + 2, base + 3])
 
 
 # --- слои отрисовки ------------------------------------------------------------------
 
-## Слой одной системы частиц или меша: свой материал (шейдер), свои кадры.
+## Слой одного узла: свой материал CommonFX; кадр — 2D-меш (вершины, UV, цвет, CUSTOM0/1).
 class _Drawer extends Control:
 	var node := -1
-	var common := false
 	var tex: Texture2D
-	## [центр, размер, поворот, цвет, кусок текстуры]
-	var quads: Array = []
-	## [индексы, точки, цвета, uv]
-	var tris: Array = []
+	var points := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	var colors := PackedColorArray()
+	var custom0 := PackedFloat32Array()
+	var custom1 := PackedFloat32Array()
+	var indices := PackedInt32Array()
+	var _mesh := ArrayMesh.new()
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 
+	func clear() -> void:
+		points.clear()
+		uvs.clear()
+		colors.clear()
+		custom0.clear()
+		custom1.clear()
+		indices.clear()
+
+	func add_vertex(p: Vector2, uv: Vector2, col: Color, c0: Color, c1: Color) -> void:
+		points.append(p.round())
+		uvs.append(uv)
+		# HDR 2D сам переводит цвет вершины из sRGB в линейный — отдаём его в sRGB, чтобы
+		# в шейдер пришло ровно посчитанное (o3); альфа не переводится
+		colors.append(Color(_to_srgb(col.r), _to_srgb(col.g), _to_srgb(col.b), col.a))
+		custom0.append_array([c0.r, c0.g, c0.b, c0.a])
+		custom1.append_array([c1.r, c1.g, c1.b, c1.a])
+
+	static func _to_srgb(c: float) -> float:
+		if c <= 0.0031308:
+			return maxf(c, 0.0) * 12.92
+		return 1.055 * pow(c, 1.0 / 2.4) - 0.055
+
+	func commit() -> void:
+		_mesh.clear_surfaces()
+		if not indices.is_empty():
+			var arr := []
+			arr.resize(Mesh.ARRAY_MAX)
+			arr[Mesh.ARRAY_VERTEX] = points
+			arr[Mesh.ARRAY_TEX_UV] = uvs
+			arr[Mesh.ARRAY_COLOR] = colors
+			arr[Mesh.ARRAY_CUSTOM0] = custom0
+			arr[Mesh.ARRAY_CUSTOM1] = custom1
+			arr[Mesh.ARRAY_INDEX] = indices
+			var fmt := (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT) \
+				| (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT) | Mesh.ARRAY_FLAG_USE_2D_VERTICES
+			_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr, [], {}, fmt)
+		queue_redraw()
+
 	func _draw() -> void:
-		if tex == null:
-			return
-		for q: Array in quads:
-			var sz: Vector2 = q[1]
-			draw_set_transform(q[0], float(q[2]), Vector2.ONE)
-			draw_texture_rect_region(tex, Rect2(-sz * 0.5, sz), q[4], q[3])
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		for m: Array in tris:
-			var cols: PackedColorArray = m[2]
-			if cols.size() != (m[1] as PackedVector2Array).size():
-				cols = PackedColorArray()
-				cols.resize((m[1] as PackedVector2Array).size())
-				cols.fill(Color.WHITE)
-			RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), m[0], m[1], cols, m[3],
-				PackedInt32Array(), PackedFloat32Array(), tex.get_rid())
+		if tex != null and _mesh.get_surface_count() > 0:
+			draw_mesh(_mesh, tex)
 
 
-## Карта в центре доски: видна нижняя часть shown (0..1) — огонь проявляет её снизу вверх.
+## Карта: видна нижняя часть shown (0..1) — огонь проявляет её снизу вверх.
 class _CardLayer extends Control:
 	var _face: Texture2D
 	var _rect := Rect2()

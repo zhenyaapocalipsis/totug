@@ -369,7 +369,7 @@ func particles(i: int, t_play: float, t_stop: float, t: float, xf_at: Callable) 
 		var sim_scale := world_scale if scaling == 0 else (local_scale if scaling == 1 else Vector3.ONE)
 		var sim_k := (sim_scale.x + sim_scale.y + sim_scale.z) / 3.0
 
-		var sh := _shape_sample(ps, shape, seed, n)
+		var sh := _shape_sample(ps, shape, seed, n, ts)
 		var p_loc: Vector3 = (sh[0] as Vector3) * start_scale
 		var v_loc: Vector3 = (sh[1] as Vector3) * mmc(im.get("startSpeed"), xs, rnd(seed, 2, n)) * sim_scale
 		var p_w := Vector3.ZERO
@@ -468,8 +468,29 @@ func _spawn_times(ps: Dictionary, seed: int, dur: float, until: float, emit_end:
 	return out
 
 
+## Доля дуги (0..1), где родится частица: mode 0 — случайно, 1 — бегущей точкой по кругу
+## (speed — оборотов дуги в секунду), 2 — туда-обратно, 3 — равномерно по залпу; spread —
+## шаг (доля дуги), к которому прилипает точка. ts — когда частица родилась.
+static func _arc_phi(arc: Variant, r: float, ts: float) -> float:
+	if not (arc is Dictionary):
+		return r
+	var a: Dictionary = arc
+	var speed := mmc(a.get("speed"), 0.0, 0.0)
+	var x := r
+	match int(a.get("mode", 0)):
+		1:
+			x = fposmod(ts * speed, 1.0)
+		2:
+			var k := fposmod(ts * speed, 2.0)
+			x = k if k <= 1.0 else 2.0 - k
+	var spread := float(a.get("spread", 0.0))
+	if spread > 0.0:
+		x = floorf(x / spread) * spread
+	return x
+
+
 ## Точка и направление вылета по форме (ShapeModule) в пространстве системы.
-func _shape_sample(ps: Dictionary, sm: Dictionary, seed: int, n: int) -> Array:
+func _shape_sample(ps: Dictionary, sm: Dictionary, seed: int, n: int, ts: float = 0.0) -> Array:
 	var r1 := rnd(seed, 30, n)
 	var r2 := rnd(seed, 31, n)
 	var r3 := rnd(seed, 32, n)
@@ -481,7 +502,7 @@ func _shape_sample(ps: Dictionary, sm: Dictionary, seed: int, n: int) -> Array:
 	var radius := float((sm.get("radius", {}) as Dictionary).get("value", 1.0)) if sm.get("radius") is Dictionary else 1.0
 	var arc := deg_to_rad(float((sm.get("arc", {}) as Dictionary).get("value", 360.0))) if sm.get("arc") is Dictionary else TAU
 	var thick := float(sm.get("radiusThickness", 1.0))
-	var phi := r1 * arc
+	var phi := _arc_phi(sm.get("arc"), r1, ts) * arc
 	match type:
 		4, 7, 8, 9:   # конус: основание — круг, направление наклоняется к краю
 			var rr := radius * sqrt(lerpf(1.0 - thick, 1.0, r2) if thick < 1.0 else r2)
@@ -548,9 +569,9 @@ static func _uv_frame(uv: Dictionary, u: float, r: float) -> int:
 	var count := tx * ty if int(uv.get("animationType", 0)) == 0 else tx
 	var cycles := maxf(float(uv.get("cycles", 1.0)), 1.0)
 	var x := fmod(u * cycles, 1.0)
-	var v := mmc(uv.get("frameOverTime"), x, r) + mmc(uv.get("startFrame"), 0.0, r)
-	var f := floori(v * float(count)) if v <= 1.0001 else floori(v)
-	f = clampi(f, 0, count - 1)
+	# frameOverTime и startFrame — доли листа (0..1), как их хранит Unity
+	var fot := clampf(mmc(uv.get("frameOverTime"), x, r), 0.0, 0.9999)
+	var f := posmod(floori((fot + mmc(uv.get("startFrame"), 0.0, r)) * float(count)), count)
 	if int(uv.get("animationType", 0)) == 1:
 		f += int(uv.get("rowIndex", 0)) * tx
 	return f
