@@ -578,7 +578,7 @@ func _build_layout() -> void:
 	_hs_play.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hs_play.z_index = 940
 	add_child(_hs_play)
-	_hs_play.shake.connect(func(power: float): _board_panel.shake(power))
+	_hs_play.camera_offset.connect(func(off: Vector2): _board_panel.camera_offset = off)
 	_hs_play.released.connect(_hs_flush)
 	_turn_banner = TurnBanner.new()
 	add_child(_turn_banner)

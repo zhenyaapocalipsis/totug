@@ -44,6 +44,10 @@ public static class HsRender
         public bool usePlace;
         public float scale = 1f;
         public string clip = "";
+        // клипы аниматора по очереди (состояния FSM): name, at — секунда от начала слоя
+        public ClipAt[] clips = new ClipAt[0];
+        // секунда (от начала слоя), когда частицы перестают рождаться (ParticleStopAction); < 0 — никогда
+        public float stopAt = -1f;
         public string[] hide = new string[0];
         public string[] measure = new string[0];
         // узлы, которые игра кладёт ПОД карту (своя дорожка кадров u###.png)
@@ -51,6 +55,13 @@ public static class HsRender
         public MatSet[] mats = new MatSet[0];
         // сдвиг узлов в мире (позиция которых не анимирована): node, by [x, y, z]
         public Move[] move = new Move[0];
+    }
+
+    [Serializable]
+    public class ClipAt
+    {
+        public string name;
+        public float at;
     }
 
     [Serializable]
@@ -88,7 +99,7 @@ public static class HsRender
         public Layer spec;
         public GameObject root;
         public PlayableDirector[] dirs;
-        public (GameObject go, AnimationClip clip)[] clips;
+        public (GameObject go, AnimationClip clip, float at)[] clips;
         public ParticleSystem[] loose;
         public Renderer[] under = new Renderer[0];
     }
@@ -251,14 +262,24 @@ public static class HsRender
             d.playOnAwake = false;
             d.RebuildGraph();
         }
-        var clips = new List<(GameObject, AnimationClip)>();
+        var clips = new List<(GameObject, AnimationClip, float)>();
         foreach (var an in focus.GetComponentsInChildren<Animator>(true))
         {
             var cs = an.runtimeAnimatorController ? an.runtimeAnimatorController.animationClips : new AnimationClip[0];
             Log($"animator {an.name}: " + string.Join(", ", cs.Select(c => $"{c.name} {c.length:0.###}s")));
-            var clip = spec.clip != "" ? cs.FirstOrDefault(c => c.name == spec.clip) : cs.OrderByDescending(c => c.length).FirstOrDefault();
             an.enabled = false;
-            if (clip != null) clips.Add((an.gameObject, clip));
+            if (spec.clips.Length > 0)
+            {
+                // состояния аниматора по сценарию (FSM): клип с секунды at от начала слоя
+                foreach (var ca in spec.clips)
+                {
+                    var c = cs.FirstOrDefault(x => x.name == ca.name);
+                    if (c != null) clips.Add((an.gameObject, c, ca.at)); else Log("clip not found " + ca.name);
+                }
+                continue;
+            }
+            var clip = spec.clip != "" ? cs.FirstOrDefault(c => c.name == spec.clip) : cs.OrderByDescending(c => c.length).FirstOrDefault();
+            if (clip != null) clips.Add((an.gameObject, clip, 0f));
         }
         live.clips = clips.ToArray();
         // частицы, которыми не управляет Timeline, проигрываются с начала слоя; зерно
@@ -331,8 +352,21 @@ public static class HsRender
             if (l.root.activeSelf != on) l.root.SetActive(on);
             if (!on) continue;
             foreach (var d in l.dirs) { d.time = tau; d.Evaluate(); }
-            foreach (var (go, clip) in l.clips) clip.SampleAnimation(go, (float)Math.Min(tau, clip.length));
-            foreach (var p in l.loose) p.Simulate((float)tau, false, true, true);
+            // у каждого аниматора — последний начавшийся клип
+            foreach (var g in l.clips.GroupBy(c => c.go))
+            {
+                var cur = g.Where(c => c.at <= tau).OrderBy(c => c.at).LastOrDefault();
+                if (cur.clip != null) cur.clip.SampleAnimation(g.Key, (float)Math.Min(tau - cur.at, cur.clip.length));
+            }
+            foreach (var p in l.loose)
+            {
+                float stop = l.spec.stopAt;
+                if (stop < 0f || tau <= stop) { p.Simulate((float)tau, false, true, true); continue; }
+                // частицы родились до stopAt, дальше только живут (ParticleStopAction)
+                p.Simulate(stop, false, true, true);
+                p.Stop(false, ParticleSystemStopBehavior.StopEmitting);
+                p.Simulate((float)tau - stop, false, false, true);
+            }
         }
     }
 

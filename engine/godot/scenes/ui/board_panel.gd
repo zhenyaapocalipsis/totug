@@ -912,13 +912,23 @@ func _process(delta: float) -> void:
 ## Смещение всей картинки доски при тряске. Только целые пиксели: на дробном
 ## сдвиге пиксельная схема мылится.
 func _shake_offset() -> Vector2:
+	var cam := camera_offset.round()
 	if _shake_left <= 0.0:
-		return Vector2.ZERO
+		return cam
 	var k := _shake_left / SHAKE_TIME
 	var a := _shake_power * k * k
-	return Vector2(
+	return cam + Vector2(
 		roundf(sin(_shake_left * SHAKE_FREQ) * a),
 		roundf(cos(_shake_left * SHAKE_FREQ * 1.37) * a * 0.7))
+
+
+## Сдвиг «камеры» от розыгрыша Hearthstone (HsPlay, тряска камеры HS) — прибавляется
+## к своей тряске доски.
+var camera_offset := Vector2.ZERO:
+	set(v):
+		if v != camera_offset:
+			camera_offset = v
+			queue_redraw()
 
 
 func _load_textures() -> void:

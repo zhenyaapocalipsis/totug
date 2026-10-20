@@ -6,6 +6,13 @@
   "ldr": true,
   "layers": [
     {
+      "prefab": "c8c343812f074a8459fe7c7fcbe7e52f",
+      "spell": "CATAFX_Deathwing_YoggFogg",
+      "at": 0.1,
+      "clips": [{"name": "CATAFX_Deathwing_YoggFog_Intro_Anim", "at": 0.0}, {"name": "CATAFX_Deathwing_YoggFog_End_Anim", "at": 2.5}],
+      "stopAt": 2.5
+    },
+    {
       "prefab": "48f4a33b86882dc488161bcbae364c0d",
       "spell": "CATAFX_Deathwing_CustomSummon_Spell",
       "at": 0.0,
