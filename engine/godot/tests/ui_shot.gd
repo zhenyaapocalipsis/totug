@@ -381,6 +381,17 @@ func _run_scenario() -> void:
 			_gif_left = _count_arg("gif", 0)
 			# без --gif — один снимок через --wait=N кадров
 			_shot_at = _frame + _count_arg("wait", 60)
+		"layout":
+			# Прямоугольники руки и счётчика Power/Influence (для места эффекта HsPlay).
+			for _i in 60:
+				await process_frame
+			for nm: String in ["_hand_panel", "_res_frame", "_board_area"]:
+				var c: Control = _screen.get(nm)
+				print("%s: %s" % [nm, c.get_global_rect()])
+			for card in _screen._hand_panel.find_children("*", "CardView", true, false):
+				print("hand card: ", (card as Control).get_global_rect())
+				break
+			_shot_at = _frame + 2
 		"fx_menu":
 			# Меню по Esc -> CARD ANIMATIONS (список карт с анимацией розыгрыша);
 			# --play=1 — нажать первую карту: анимация на доске (--gif=N).
@@ -707,7 +718,7 @@ func _process(_delta: float) -> bool:
 	if _gif_left > 0:
 		return _record_gif()
 	# hs_play: карта разыгрывается не сразу (рука должна показать её) — ждём сценарий
-	if _scenario == "hs_play" and _shot_at < 0:
+	if _scenario in ["hs_play", "layout"] and _shot_at < 0:
 		return false
 	_fake_hover()
 	if _frame < SETTLE_FRAMES + 12:

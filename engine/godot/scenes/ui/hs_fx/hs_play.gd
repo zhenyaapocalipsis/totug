@@ -35,7 +35,7 @@ const SCRIPTS := {
 	# огненная волна, вспышка, дым, угли) и сразу за ударом CATAFX_Deathwing_Choice_Reveal
 	# (одна карта вместо четырёх, с 1.15 с; сама карта — через 0.45 с, WaitToShowCards).
 	"worldbreaker": {"len": 4.6, "frames": "worldbreaker",
-		"card": {"face": "full", "reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(480, 247)},
+		"card": {"face": "mini", "reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		"cues": [[0.0, "CATA_190h_Enter_01"], [0.0, "CATA_190h_Enter_Dragon_01"], [0.85, "CATA_190h_Enter_02"],
 			[1.0, "CATA_190h_Enter_Dragon_02"], [1.15, "CATA_190h_CardReveal_01"]],
 		"shakes": [[0.0, 3.0], [1.133, 5.0]]},

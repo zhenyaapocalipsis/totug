@@ -343,6 +343,13 @@ public static class HsRender
             {
                 var t = l.root.transform.Find(path);
                 var r = t ? t.GetComponent<Renderer>() : null;
+                if (t != null && r == null)
+                {
+                    // узел без сетки — точка его позиции на экране 960x540
+                    var p = cam.WorldToScreenPoint(t.position);
+                    Log($"measure f{frame} {path}: point {p.x / 2:0.#}, {(H - p.y) / 2:0.#}");
+                    continue;
+                }
                 if (r == null) continue;
                 var b = r.bounds;
                 float x0 = 1e9f, y0 = 1e9f, x1 = -1e9f, y1 = -1e9f;
