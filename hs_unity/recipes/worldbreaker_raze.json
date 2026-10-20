@@ -1,0 +1,20 @@
+{
+  "deps": "../deps_worldbreaker.txt",
+  "fps": 60,
+  "len": 4.9,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "6f6e7e32f2a0f2a4d906ef4aa79b185e",
+      "spell": "CATAFX_DeathWing_AE_HalfBoard",
+      "at": 0.0,
+      "move": [{"node": "AnimRoot/BoardRoot", "by": [0, 0, -0.286]}],
+      "controls": [
+        {"node": "AnimRoot/BoardRoot/PS_Embers", "start": 0.0, "end": 3.033},
+        {"node": "AnimRoot/BoardRoot/PS_Embers_Board", "start": 0.617, "end": 4.483}
+      ],
+      "measure": ["AnimRoot/BoardRoot"]
+    }
+  ]
+}

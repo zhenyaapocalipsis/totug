@@ -4,9 +4,11 @@ extends Control
 ## Розыгрыш карты как в Hearthstone (решения владельца 2026-10-19/20): без витрины и
 ## без затемнения; нажатую карту рука прячет сразу, и идёт эффект Hearthstone, затем в
 ## центре доски на секунду проявляется миниатюра карты и гаснет — и только потом игра
-## показывает действия карты (released).
+## показывает действия карты (released). Действия карты (вытеснение, возврат шпиона, VP)
+## тоже играют эффекты HS — на месте цели (action). Всё время розыгрыша, пока карта не
+## отыграла все действия, по краям экрана висит дымка эффекта розыгрыша (fog_on/fog_off).
 ##
-## Эффект — запечённые кадры (assets/hs_fx/baked/<имя>/): Unity рисует оригинальные
+## Эффекты — запечённые кадры (assets/hs_fx/baked/<имя>/): Unity рисует оригинальные
 ## префабы Hearthstone из файлов игры его же шейдерами, частицами и Timeline, с камеры
 ## доски HS, и пишет кадры 960x540 с premultiplied-альфой (hs_unity, HsRender; рецепт —
 ## hs_unity/recipes/<имя>.json). Дорожка f### рисуется над картой, u### — под ней
@@ -16,100 +18,171 @@ extends Control
 ## Акт появления закончился, карта погасла: можно показывать действия и вопросы.
 signal released
 ## Сдвиг «камеры» (тряска камеры Hearthstone) в пикселях экрана: доска сдвигается так же,
-## как кадры эффекта (BoardPanel.camera_offset). В конце розыгрыша — ноль.
+## как кадры эффектов (BoardPanel.camera_offset); дымка по краям экрана стоит.
 signal camera_offset(offset: Vector2)
 
 const BAKED := "res://assets/hs_fx/baked/"
+const SOUNDS := "res://assets/hs_fx/"
+## Расчётный экран: кадры запечены под него.
+const DESIGN := Vector2(960, 540)
 ## Сколько кадров вперёд подгружать в фоне (кадры идут 60 в секунду, WebP распаковывается
 ## несколько миллисекунд).
 const AHEAD := 12
 ## Сколько первых кадров должно быть готово до старта часов эффекта.
 const WARM := 8
+## Пикселей экрана 960x540 на единицу мира HS на уровне доски (камера доски HS: высота
+## 19.6, вертикальный угол обзора 34.87).
+const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
 const RECIPES := {"48426": "worldbreaker"}
-## Сценарий: len — длина (с); frames — папка запечённых кадров; card — появление
+## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
 ## (стоит), out (гаснет), center (центр на экране 960x540 — центр квада Quad_CardGlow);
-## cues — звуки [секунда, файл в папке сценария, громкость 0..1]; loop — звук-петля
-## [файл, старт, появление, стоп, затухание, громкость]; shakers — тряска камеры HS (дорожка
+## cues — звуки [секунда, файл, громкость 0..1]; shakers — тряска камеры HS (дорожка
 ## CameraShaker2 в Timeline спелла): [с, по, амплитуда (единицы мира HS), кривая силы
-## [[доля клипа, сила], ...], интервал смены точки, с].
+## [[доля клипа, сила], ...], интервал смены точки, с]; fog — дымка розыгрыша (FOGS) и
+## секунда её появления; actions — эффекты действий карты: событие -> frames, anchor
+## (точка удара в кадрах на экране 960x540 — по центру огня в кадрах), follow (xy — кадр сдвигается в точку цели,
+## y — только по высоте), cues, shakers, lead (через сколько секунд может начаться
+## следующее действие).
 const SCRIPTS := {
 	# Deathwing, Worldbreaker (CATA_190h): CATAFX_Deathwing_CustomSummon_Spell (тень
 	# дракона с огненным шлейфом проносится над доской, пике в центр доски (1.13 с),
 	# огненная волна, вспышка, дым, угли) и сразу за ударом CATAFX_Deathwing_Choice_Reveal
-	# (одна карта вместо четырёх, с 1.15 с; сама карта — через 0.45 с, WaitToShowCards).
-	"worldbreaker": {"len": 4.6, "frames": "worldbreaker",
+	# (одна карта вместо четырёх, с 1.15 с; сама карта — через 0.45 с, WaitToShowCards;
+	# огонь появления убран, осталось выжигание — владелец 2026-10-20). Действия — эффекты
+	# выборов этой карты в HS: Raze (CATA_190t12, огненное дыхание полосой) на вытеснение,
+	# Topple (CATA_190t11, огненный удар когтем) на возврат шпиона, огонь появления карты
+	# на каждой локации под полным контролем (VP).
+	"worldbreaker": {"frames": "worldbreaker", "sounds": "worldbreaker",
 		"card": {"face": "mini", "reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# громкости — AudioSource префабов HS; стингер — m_PlayEffectDef карты; дымка
-		# YoggFogg (эффект розыгрыша, с 0.1 с): петля с появлением 0.5 с, уход в 2.6 с
-		# (анимация End, частицы гаснут, петля затухает 1.5 с, звук ухода — 0.3)
+		# громкости — AudioSource префабов HS; стингер — m_PlayEffectDef карты
 		"cues": [[0.0, "CATA_190h_DeathwingWorldbreaker_Stinger", 0.5],
 			[0.0, "CATA_190h_Enter_01", 0.7], [0.0, "CATA_190h_Enter_Dragon_01", 0.7], [0.85, "CATA_190h_Enter_02", 0.7],
-			[1.0, "CATA_190h_Enter_Dragon_02", 0.7], [1.15, "CATA_190h_CardReveal_01", 0.8],
-			[2.6, "CATA_190h_YoggFogg_End", 0.3]],
-		"loop": ["CATA_190h_YoggFogg_Loop", 0.1, 0.5, 2.6, 1.5, 0.8],
+			[1.0, "CATA_190h_Enter_Dragon_02", 0.7], [1.15, "CATA_190h_CardReveal_01", 0.8]],
 		"shakers": [[0.0, 1.133, 0.08, [[0.0, 0.5], [0.3, 0.99], [0.51, 0.23], [1.0, 0.0]], 0.075],
-			[1.133, 2.533, 0.12, [[0.0, 0.5], [0.1, 0.99], [0.21, 0.98], [0.67, 0.15], [1.0, 0.0]], 0.075]]},
+			[1.133, 2.533, 0.12, [[0.0, 0.5], [0.1, 0.99], [0.21, 0.98], [0.67, 0.15], [1.0, 0.0]], 0.075]],
+		"fog": ["worldbreaker_fog", 0.1],
+		"actions": {
+			"supplant": {"frames": "worldbreaker_raze", "anchor": Vector2(480, 222), "follow": "y", "lead": 0.7,
+				"cues": [[0.0, "CATA_190t12_Raze_01", 0.8], [0.0, "CATA_190t12_Raze_Dragon_01", 0.8]],
+				"shakers": [[0.15, 1.633, 0.1, [[0.0, 0.5], [0.3, 0.99], [0.51, 0.23], [1.0, 0.0]], 0.075]]},
+			"return_spy": {"frames": "worldbreaker_topple", "anchor": Vector2(495, 285), "follow": "xy", "lead": 0.55,
+				"cues": [[0.0, "CATA_190t11_Topple_01", 0.8], [0.0, "CATA_190t11_Topple_Dragon_01", 0.8]],
+				"shakers": [[0.367, 0.75, 0.25, [[0.0, 1.0], [0.51, 0.4], [0.6, 0.16], [1.0, 0.0]], 0.1988]]},
+			"vp_site": {"frames": "worldbreaker_vpfire", "anchor": Vector2(480, 269), "follow": "xy", "lead": 0.35,
+				"cues": [[0.0, "CATA_190h_CardReveal_01", 0.5]], "shakers": []},
+		}},
 }
-
-## Пикселей экрана 960x540 на единицу мира HS на уровне доски (камера доски HS: высота
-## 19.6, вертикальный угол обзора 34.87).
-const PX_PER_UNIT := 44.1
+## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
+## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
+## Средний кусок [loop[0], loop[1]] повторяется по кругу со сменой через fade секунд;
+## уход — переход за end_fade в кадры с end. sound — петля [файл, появление, громкость,
+## затухание], end_sound — звук ухода [файл, громкость].
+const FOGS := {
+	"worldbreaker_fog": {"sounds": "worldbreaker", "loop": [1.5, 4.5], "fade": 0.6, "end": 6.0, "end_fade": 0.3,
+		"sound": ["CATA_190h_YoggFogg_Loop", 0.5, 0.8, 1.5], "end_sound": ["CATA_190h_YoggFogg_End", 0.3]},
+}
 
 ## Для снимков: шаг времени за кадр (0 — настоящее время).
 static var fixed_dt := 0.0
 
 var board_area: Control
 var _queue: Array[Dictionary] = []
+## Розыгрыш (основной эффект): карта, сценарий, его кадры.
 var _item: Dictionary = {}
 var _script: Dictionary = {}
-var _meta: Dictionary = {}
-var _under: Dictionary = {}
-var _t := 0.0
+var _main: _Clip
 var _released := false
-var _cue_t := -1.0
-var _shown_frame := -1
-var _cache: Dictionary = {}
-## Сколько первых кадров ещё ждём перед стартом (0 — эффект идёт) и сколько уже запрошено.
-var _warm := 0
-var _warm_asked := 0
-## Тряска камеры: для каждой дорожки shakers — 30 точек на эллипсе амплитуды.
-var _shake_points: Array = []
+## Эффекты действий: идут или ждут своей очереди.
+var _actions: Array[_Clip] = []
+## Часы HsPlay и время, раньше которого не начинается следующее действие.
+var _clock := 0.0
+var _action_free_at := 0.0
+## Дымка.
+var _fog: _Fog
+var _fog_end_at := -1.0
+var _fog_snd := AudioStreamPlayer.new()
 
-## Звук-петля сценария (loop).
-var _loop := AudioStreamPlayer.new()
-
-var _under_layer := _FrameLayer.new()
+var _fog_box := Control.new()
+var _under_box := Control.new()
 var _card := _CardLayer.new()
-var _over_layer := _FrameLayer.new()
+var _over_box := Control.new()
 
 
 static func has(cid: String) -> bool:
 	return RECIPES.has(cid)
 
 
+## Есть ли у карты cid эффект для события kind (supplant, return_spy, vp_site).
+static func has_action(cid: String, kind: String) -> bool:
+	return has(cid) and (SCRIPTS[RECIPES[cid]].get("actions", {}) as Dictionary).has(kind)
+
+
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for c: Control in [_under_layer, _card, _over_layer]:
+	for c: Control in [_fog_box, _under_box, _card, _over_box]:
 		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		c.set_anchors_preset(Control.PRESET_FULL_RECT)
 		add_child(c)
-	_loop.bus = Sfx.BUS
-	add_child(_loop)
+	_fog_snd.bus = Sfx.BUS
+	add_child(_fog_snd)
 	visible = false
 	set_process(false)
 
 
-## Разыграть карту cid: face — её миниатюра, quiet — чужая (тише).
-func play(cid: String, face: Texture2D, quiet: bool = false) -> void:
+## Разыграть карту cid: face — её лицо, quiet — чужая (тише); preview — только
+## посмотреть (меню CARD ANIMATIONS): действий не будет, дымка уходит после эффекта.
+func play(cid: String, face: Texture2D, quiet: bool = false, preview: bool = false) -> void:
 	if not has(cid):
 		return
-	_queue.append({"cid": cid, "face": face, "quiet": quiet})
+	_queue.append({"cid": cid, "face": face, "quiet": quiet, "preview": preview})
 	if _item.is_empty():
 		_next()
+
+
+## Эффект действия карты cid (событие kind) с целью в точке at (глобальные координаты):
+## действия идут по очереди, каждое начинается, когда прежнее дошло до своего удара.
+func action(cid: String, kind: String, at: Vector2, quiet: bool = false) -> void:
+	if not has_action(cid, kind):
+		return
+	var spec: Dictionary = SCRIPTS[RECIPES[cid]]["actions"][kind]
+	var target := _design(at)
+	var off := target - Vector2(spec["anchor"])
+	if String(spec["follow"]) == "y":
+		off.x = 0.0
+	var c := _Clip.new(self, String(spec["frames"]), String(SCRIPTS[RECIPES[cid]]["sounds"]), quiet, false)
+	c.offset = off
+	c.cues = spec.get("cues", [])
+	c.set_shakers(spec.get("shakers", []))
+	c.delay = maxf(0.0, _action_free_at - _clock)
+	_action_free_at = _clock + c.delay + float(spec["lead"])
+	_actions.append(c)
+	_wake()
+
+
+## Дымка розыгрыша карты cid: появляется через delay секунд (если её ещё нет).
+func fog_on(cid: String, delay: float = 0.0, quiet: bool = false) -> void:
+	if not has(cid) or not SCRIPTS[RECIPES[cid]].has("fog"):
+		return
+	_fog_end_at = -1.0
+	if _fog != null and not _fog.ending:
+		return
+	if _fog != null:
+		_fog.free_layers()
+	var f: Array = SCRIPTS[RECIPES[cid]]["fog"]
+	_fog = _Fog.new(self, String(f[0]), quiet)
+	_fog.delay = delay
+	_wake()
+
+
+## Карта отыграла действия: дымка уходит, когда закончится очередь действий.
+func fog_off() -> void:
+	if _fog == null or _fog.ending:
+		return
+	_fog_end_at = maxf(_clock, _action_free_at) + 0.6
 
 
 ## Идёт ли розыгрыш, который ещё держит действия карты.
@@ -122,91 +195,120 @@ func is_ready() -> bool:
 	return not _item.is_empty()
 
 
-func _next() -> void:
-	_item = {}
-	_cache.clear()
-	_under_layer.show_frame(null)
-	_over_layer.show_frame(null)
-	_card.show_card(null, Rect2(), 0.0, 1.0)
-	_set_camera(Vector2.ZERO)
-	_loop.stop()
-	visible = false
-	set_process(false)
-	if _queue.is_empty():
-		return
-	_item = _queue.pop_front()
-	_script = SCRIPTS[RECIPES[_item["cid"]]]
-	var dir := BAKED + String(_script["frames"]) + "/"
-	_meta = JSON.parse_string(FileAccess.get_file_as_string(dir + "meta.json"))
-	_under = {}
-	for i in _meta.get("under", []):
-		_under[int(i)] = true
-	_t = 0.0
-	_released = false
-	_cue_t = -1.0
-	_shown_frame = -1
-	_shake_points = []
-	for sh: Array in _script.get("shakers", []):
-		_shake_points.append(_shake_path(float(sh[2])))
-	# часы эффекта идут, когда первые кадры уже распакованы (WebP) — иначе первые
-	# кадры ждут загрузки и дёргаются
-	_warm = mini(WARM, int(_meta["frames"]))
-	_warm_asked = 0
+func _wake() -> void:
 	visible = true
 	set_process(true)
 
 
+## Точка из глобальных координат в координаты расчётного экрана 960x540.
+func _design(at: Vector2) -> Vector2:
+	return (get_global_transform().affine_inverse() * at) * DESIGN / size
+
+
+func _next() -> void:
+	if _main != null:
+		_main.free_layers()
+	_main = null
+	_item = {}
+	_card.show_card(null, Rect2(), 0.0, 1.0)
+	if _queue.is_empty():
+		return
+	_item = _queue.pop_front()
+	_script = SCRIPTS[RECIPES[_item["cid"]]]
+	_main = _Clip.new(self, String(_script["frames"]), String(_script["sounds"]), bool(_item["quiet"]), true)
+	_main.cues = _script["cues"]
+	_main.set_shakers(_script.get("shakers", []))
+	_released = false
+	var f: Array = _script.get("fog", [])
+	if not f.is_empty():
+		fog_on(_item["cid"], float(f[1]), bool(_item["quiet"]))
+	_wake()
+
+
 func _process(delta: float) -> void:
-	# Godot сам включает _process при входе в дерево — без розыгрыша выключаем
-	if _item.is_empty():
+	var dt := fixed_dt if fixed_dt > 0.0 else delta
+	_clock += dt
+	if _main != null:
+		_main.step(dt)
+		_render_card()
+		var cs: Dictionary = _script["card"]
+		if not _released and _main.t >= float(cs["reveal"]) + float(cs["sweep"]) + float(cs["hold"]) + float(cs["out"]):
+			_released = true
+			released.emit()
+		if _main.finished():
+			if bool(_item.get("preview", false)):
+				fog_off()
+			_next()
+	for c in _actions.duplicate():
+		c.step(dt)
+		if c.finished():
+			c.free_layers()
+			_actions.erase(c)
+	if _fog != null:
+		if _fog_end_at >= 0.0 and _clock >= _fog_end_at and not _fog.ending:
+			_fog.end()
+			_fog_end_at = -1.0
+		_fog.step(dt)
+		if _fog.finished():
+			_fog.free_layers()
+			_fog = null
+	_set_camera(_camera())
+	if _main == null and _actions.is_empty() and _fog == null:
+		visible = false
 		set_process(false)
-		return
-	if _warm > 0:
-		# по два кадра за кадр игры: готовые кадры уходят в видеокарту понемногу
-		for k in range(_warm_asked, mini(_warm_asked + 2, _warm)):
-			_request("f", k)
-		_warm_asked = mini(_warm_asked + 2, _warm)
-		for k in _warm:
-			if k >= _warm_asked or ResourceLoader.load_threaded_get_status(_path("f", k)) != ResourceLoader.THREAD_LOAD_LOADED:
-				return
-		_warm = 0
-		_frame()
-		return
-	_t += fixed_dt if fixed_dt > 0.0 else delta
-	var cs: Dictionary = _script["card"]
-	if not _released and _t >= float(cs["reveal"]) + float(cs["sweep"]) + float(cs["hold"]) + float(cs["out"]):
-		_released = true
-		released.emit()
-	if _t >= float(_script["len"]):
-		_next()
-		return
-	_cues(_t)
-	_set_camera(_shake_offset(_t))
-	_frame()
 
 
-## Кадр в момент t (секунды от начала розыгрыша), без звуков — для снимков.
+## Кадр розыгрыша в момент t (секунды от начала), без звуков — для снимков.
 func debug_seek(t: float) -> void:
-	_t = t
-	_frame()
+	if _main != null:
+		_main.seek(t)
+		_render_card()
 
 
-## Звуки сценария — каждый, когда время его проходит; петля — с появлением и затуханием.
-func _cues(t: float) -> void:
-	var dir := "res://assets/hs_fx/%s/" % _script["frames"]
-	for c: Array in _script["cues"]:
-		if _cue_t < float(c[0]) and t >= float(c[0]):
-			var vol := float(c[2]) if c.size() > 2 else 1.0
-			Sfx.play_file(dir + String(c[1]) + ".wav", bool(_item["quiet"]), linear_to_db(vol))
-	var lp: Array = _script.get("loop", [])
-	if not lp.is_empty():
-		if _cue_t < float(lp[1]) and t >= float(lp[1]) and Sfx.volume > 0.0:
-			_loop.stream = load(dir + String(lp[0]) + ".wav")
-			_loop.play()
-		var k := clampf((t - float(lp[1])) / float(lp[2]), 0.0, 1.0) \
-			* (1.0 - clampf((t - float(lp[3])) / float(lp[4]), 0.0, 1.0))
-		_loop.volume_db = linear_to_db(maxf(k * float(lp[5]), 0.0001)) + (Sfx.OTHER_DB if bool(_item["quiet"]) else 0.0)
-	_cue_t = t
+## Сдвиг камеры от тряски всех идущих эффектов (дымка не трясётся).
+func _camera() -> Vector2:
+	var off := Vector2.ZERO
+	if _main != null:
+		off += _main.shake_offset()
+	for c in _actions:
+		off += c.shake_offset()
+	return off * PX_PER_UNIT * size.y / DESIGN.y
+
+
+func _set_camera(off: Vector2) -> void:
+	off = off.round()
+	for c: Control in [_under_box, _card, _over_box]:
+		c.position = off
+	camera_offset.emit(off)
+
+
+## Карта: проявляется снизу вверх, стоит, гаснет.
+func _render_card() -> void:
+	var cs: Dictionary = _script["card"]
+	var t0 := float(cs["reveal"])
+	if _main.t < t0:
+		_card.show_card(null, Rect2(), 0.0, 1.0)
+		return
+	var shown := clampf((_main.t - t0) / float(cs["sweep"]), 0.0, 1.0)
+	var out_at := t0 + float(cs["sweep"]) + float(cs["hold"])
+	var a := 1.0 - clampf((_main.t - out_at) / float(cs["out"]), 0.0, 1.0)
+	_card.show_card(_item["face"], _card_rect(), a, shown)
+
+
+## Лицо карты для розыгрыша cid: полноформатное или миниатюра — как в сценарии (под него
+## запечён горящий контур появления).
+static func face_of(cid: String, art: String = "") -> Texture2D:
+	var cs: Dictionary = SCRIPTS[RECIPES[cid]]["card"]
+	return CardView.mini_texture(cid, art) if String(cs.get("face", "full")) == "mini" else CardView.pixel_texture(cid, art)
+
+
+## Где карта на экране: в своём размере, центр сценария (960x540) -> размер HsPlay.
+func _card_rect() -> Rect2:
+	var k := size / DESIGN
+	var face: Texture2D = _item["face"]
+	var s := (face.get_size() if face != null else CardView.PIXEL_SIZE) * k
+	var c := Vector2(_script["card"]["center"]) * k
+	return Rect2((c - s * 0.5).round(), s.round())
 
 
 ## Точки тряски, как ShakerHelper.Initialize в Hearthstone: 30 направлений, каждое
@@ -220,31 +322,6 @@ static func _shake_path(amount: float) -> PackedVector2Array:
 			a = randf_range(a + 1.745, a + 4.538)
 		pts.append(Vector2(cos(a), sin(a)) * amount)
 	return pts
-
-
-## Сдвиг камеры в момент t, как ShakerHelper.UpdateTarget: доля клипа -> номер точки
-## (каждые interval секунд — следующая), переход между точками с двойным косинусным
-## сглаживанием, умножение на кривую силы. В мире HS вверх экрана — +z, сдвиг камеры
-## вверх двигает картинку вниз.
-func _shake_offset(t: float) -> Vector2:
-	var off := Vector2.ZERO
-	var shakers: Array = _script.get("shakers", [])
-	for k in shakers.size():
-		var sh: Array = shakers[k]
-		var t0 := float(sh[0])
-		var t1 := float(sh[1])
-		if t < t0 or t >= t1:
-			continue
-		var u := (t - t0) / (t1 - t0)
-		var steps := (t1 - t0) / float(sh[4])
-		var s := u * steps
-		var i := floori(s)
-		var w := 1.0 - (0.5 + 0.5 * cos((s - i) * PI))
-		w = 1.0 - (0.5 + 0.5 * cos(w * PI))
-		var pts: PackedVector2Array = _shake_points[k]
-		var p := pts[i % pts.size()].lerp(pts[(i + 1) % pts.size()], w) * _curve(sh[3], u)
-		off += Vector2(-p.x, p.y)
-	return off * PX_PER_UNIT * size.y / 540.0
 
 
 ## Кривая силы HS [[доля, сила], ...]: гладкая (кубическая Эрмита с наклонами,
@@ -279,106 +356,343 @@ static func _slope(keys: Array, j: int) -> float:
 	return 2.0 / (1.0 / d0 + 1.0 / d1)
 
 
-func _set_camera(off: Vector2) -> void:
-	off = off.round()
-	for c: Control in [_under_layer, _card, _over_layer]:
-		c.position = off
-	camera_offset.emit(off)
+## Набор запечённых кадров: meta, подгрузка в фоне, кадр по времени.
+class _Frames:
+	var dir: String
+	var fps := 60.0
+	var count := 0
+	var under := {}
+	var _cache := {}
 
+	func _init(name: String) -> void:
+		dir = BAKED + name + "/"
+		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(dir + "meta.json"))
+		fps = float(meta["fps"])
+		count = int(meta["frames"])
+		for i in meta.get("under", []):
+			under[int(i)] = true
 
-func _frame() -> void:
-	var n := int(_meta["frames"])
-	var i := mini(floori(_t * float(_meta["fps"])), n - 1)
-	if i != _shown_frame:
-		_shown_frame = i
-		_over_layer.show_frame(_texture("f", i))
-		_under_layer.show_frame(_texture("u", i) if _under.has(i) else null)
-		for k in range(i + 1, mini(i + 1 + AHEAD, n)):
-			_request("f", k)
-			if _under.has(k):
-				_request("u", k)
+	func length() -> float:
+		return count / fps
+
+	func index(t: float) -> int:
+		return clampi(floori(t * fps), 0, count - 1)
+
+	func path(track: String, i: int) -> String:
+		return dir + "%s%03d.png" % [track, i]
+
+	func request(track: String, i: int) -> void:
+		if i < 0 or i >= count or (track == "u" and not under.has(i)):
+			return
+		var key := track + str(i)
+		if _cache.has(key):
+			return
+		_cache[key] = null
+		ResourceLoader.load_threaded_request(path(track, i), "Texture2D")
+
+	func ready(i: int) -> bool:
+		return ResourceLoader.load_threaded_get_status(path("f", i)) == ResourceLoader.THREAD_LOAD_LOADED
+
+	func texture(track: String, i: int) -> Texture2D:
+		if track == "u" and not under.has(i):
+			return null
+		var key := track + str(i)
+		if _cache.has(key):
+			var t: Texture2D = _cache[key]
+			if t == null:
+				t = ResourceLoader.load_threaded_get(path(track, i))
+				_cache[key] = t
+			return t
+		var tex := load(path(track, i)) as Texture2D
+		_cache[key] = tex
+		return tex
+
+	## Держать подгруженными кадры starts[j]..starts[j]+AHEAD (и подгрузить их в фоне),
+	## остальные забыть.
+	func keep(starts: Array) -> void:
+		var need := {}
+		for s: int in starts:
+			for k in range(maxi(s, 0), mini(s + AHEAD, count)):
+				need[k] = true
+				request("f", k)
+				request("u", k)
 		for key: String in _cache.keys():
-			if int(key.substr(1)) < i:
+			if not need.has(int(key.substr(1))):
 				_cache.erase(key)
-	_render_card()
 
 
-func _path(track: String, i: int) -> String:
-	return BAKED + String(_script["frames"]) + "/%s%03d.png" % [track, i]
+## Один идущий эффект: кадры (над картой и под ней), сдвиг на экране, звуки, тряска.
+class _Clip:
+	var host: HsPlay
+	var frames: _Frames
+	var sounds: String
+	var quiet := false
+	var t := 0.0
+	var delay := 0.0
+	var offset := Vector2.ZERO
+	var cues: Array = []
+	var shakers: Array = []
+	var shake_points: Array = []
+	var over := _FrameLayer.new()
+	var under_layer := _FrameLayer.new()
+	var _cue_t := -1.0
+	var _warm := WARM
+	var _warm_asked := 0
+	var _shown := -1
+
+	func _init(h: HsPlay, name: String, sound_dir: String, q: bool, with_under: bool) -> void:
+		host = h
+		frames = _Frames.new(name)
+		sounds = sound_dir
+		quiet = q
+		_warm = mini(WARM, frames.count)
+		host._over_box.add_child(over)
+		if with_under or not frames.under.is_empty():
+			host._under_box.add_child(under_layer)
+
+	func set_shakers(list: Array) -> void:
+		shakers = list
+		shake_points = []
+		for sh: Array in list:
+			shake_points.append(HsPlay._shake_path(float(sh[2])))
+
+	func finished() -> bool:
+		return _warm == 0 and delay <= 0.0 and t >= frames.length()
+
+	func free_layers() -> void:
+		over.queue_free()
+		under_layer.queue_free()
+
+	func step(dt: float) -> void:
+		if delay > 0.0:
+			delay -= dt
+			_preload()
+			return
+		if not _preload():
+			return
+		t += dt
+		_cues()
+		_show()
+
+	func seek(time: float) -> void:
+		t = time
+		_warm = 0
+		_show()
+
+	## Первые кадры распаковываются (по два за кадр игры: готовые уходят в видеокарту
+	## понемногу); часы эффекта стоят, пока они не готовы.
+	func _preload() -> bool:
+		if _warm == 0:
+			return true
+		for k in range(_warm_asked, mini(_warm_asked + 2, _warm)):
+			frames.request("f", k)
+			frames.request("u", k)
+		_warm_asked = mini(_warm_asked + 2, _warm)
+		for k in _warm:
+			if k >= _warm_asked or not frames.ready(k):
+				return false
+		_warm = 0
+		return delay <= 0.0
+
+	func _show() -> void:
+		var i := frames.index(t)
+		var k := host.size / DESIGN
+		for l: _FrameLayer in [over, under_layer]:
+			l.position = (offset * k).round()
+			l.size = host.size
+		if i != _shown:
+			_shown = i
+			over.show_frame(frames.texture("f", i))
+			under_layer.show_frame(frames.texture("u", i))
+			frames.keep([i])
+
+	func _cues() -> void:
+		for c: Array in cues:
+			if _cue_t < float(c[0]) and t >= float(c[0]):
+				var vol := float(c[2]) if c.size() > 2 else 1.0
+				Sfx.play_file(SOUNDS + sounds + "/" + String(c[1]) + ".wav", quiet, linear_to_db(vol))
+		_cue_t = t
+
+	## Сдвиг камеры в момент t, как ShakerHelper.UpdateTarget: доля клипа -> номер точки
+	## (каждые interval секунд — следующая), переход между точками с двойным косинусным
+	## сглаживанием, умножение на кривую силы. В мире HS вверх экрана — +z, сдвиг камеры
+	## вверх двигает картинку вниз. В единицах мира HS.
+	func shake_offset() -> Vector2:
+		var off := Vector2.ZERO
+		if delay > 0.0 or _warm > 0:
+			return off
+		for n in shakers.size():
+			var sh: Array = shakers[n]
+			var t0 := float(sh[0])
+			var t1 := float(sh[1])
+			if t < t0 or t >= t1:
+				continue
+			var u := (t - t0) / (t1 - t0)
+			var s := u * (t1 - t0) / float(sh[4])
+			var i := floori(s)
+			var w := 1.0 - (0.5 + 0.5 * cos((s - i) * PI))
+			w = 1.0 - (0.5 + 0.5 * cos(w * PI))
+			var pts: PackedVector2Array = shake_points[n]
+			var p := pts[i % pts.size()].lerp(pts[(i + 1) % pts.size()], w) * HsPlay._curve(sh[3], u)
+			off += Vector2(-p.x, p.y)
+		return off
 
 
-func _request(track: String, i: int) -> void:
-	var key := track + str(i)
-	if _cache.has(key):
-		return
-	_cache[key] = null
-	ResourceLoader.load_threaded_request(_path(track, i), "Texture2D")
+## Дымка: появление, средний кусок по кругу (смена через fade), уход по запросу; две
+## дорожки кадров для плавных переходов. Не трясётся.
+class _Fog:
+	var host: HsPlay
+	var frames: _Frames
+	var spec: Dictionary
+	var quiet := false
+	var t := 0.0
+	var delay := 0.0
+	var ending := false
+	var _end_t := 0.0
+	var _end_phase := 0.0
+	var _a := _FrameLayer.new()
+	var _b := _FrameLayer.new()
+	var _warm := WARM
+	var _warm_asked := 0
+	var _started := false
 
+	func _init(h: HsPlay, name: String, q: bool) -> void:
+		host = h
+		frames = _Frames.new(name)
+		spec = FOGS[name]
+		quiet = q
+		_warm = mini(WARM, frames.count)
+		host._fog_box.add_child(_b)
+		host._fog_box.add_child(_a)
 
-func _texture(track: String, i: int) -> Texture2D:
-	var key := track + str(i)
-	var path := _path(track, i)
-	if _cache.has(key):
-		var t: Texture2D = _cache[key]
-		if t == null:
-			t = ResourceLoader.load_threaded_get(path)
-			_cache[key] = t
-		return t
-	var tex := load(path) as Texture2D
-	_cache[key] = tex
-	return tex
+	func free_layers() -> void:
+		_a.queue_free()
+		_b.queue_free()
+		host._fog_snd.stop()
 
+	var _dead := false
 
-## Миниатюра: проявляется снизу вверх, стоит, гаснет.
-func _render_card() -> void:
-	var cs: Dictionary = _script["card"]
-	var t0 := float(cs["reveal"])
-	if _t < t0:
-		_card.show_card(null, Rect2(), 0.0, 1.0)
-		return
-	var shown := clampf((_t - t0) / float(cs["sweep"]), 0.0, 1.0)
-	var out_at := t0 + float(cs["sweep"]) + float(cs["hold"])
-	var a := 1.0 - clampf((_t - out_at) / float(cs["out"]), 0.0, 1.0)
-	_card.show_card(_item["face"], _card_rect(), a, shown)
+	func finished() -> bool:
+		return _dead or (ending and float(spec["end"]) + (t - _end_t) >= frames.length())
 
+	func end() -> void:
+		if not _started:
+			# дымка ещё не появилась — просто не показываем её
+			ending = true
+			_dead = true
+			return
+		ending = true
+		_end_t = t
+		_end_phase = _phase(t)
+		var snd: Array = spec["end_sound"]
+		Sfx.play_file(SOUNDS + String(spec["sounds"]) + "/" + String(snd[0]) + ".wav", quiet, linear_to_db(float(snd[1])))
 
-## Лицо карты для розыгрыша cid: полноформатное или миниатюра — как в сценарии (под него
-## запечён горящий контур появления).
-static func face_of(cid: String, art: String = "") -> Texture2D:
-	var cs: Dictionary = SCRIPTS[RECIPES[cid]]["card"]
-	return CardView.mini_texture(cid, art) if String(cs.get("face", "full")) == "mini" else CardView.pixel_texture(cid, art)
+	## Время в кадрах дымки до ухода: появление, затем средний кусок по кругу.
+	func _phase(time: float) -> float:
+		var a := float(spec["loop"][0])
+		var b := float(spec["loop"][1])
+		if time < b:
+			return time
+		return a + fmod(time - b, b - a)
 
+	func step(dt: float) -> void:
+		if delay > 0.0:
+			delay -= dt
+			_preload()
+			return
+		if not _preload():
+			return
+		if not _started:
+			_started = true
+			var snd: Array = spec["sound"]
+			host._fog_snd.stream = load(SOUNDS + String(spec["sounds"]) + "/" + String(snd[0]) + ".wav")
+			if Sfx.volume > 0.0:
+				host._fog_snd.play()
+		t += dt
+		_sound()
+		_show()
 
-## Где карта на экране: в своём размере, центр сценария (960x540) -> размер HsPlay.
-func _card_rect() -> Rect2:
-	var k := size / Vector2(960, 540)
-	var face: Texture2D = _item["face"]
-	var s := (face.get_size() if face != null else CardView.PIXEL_SIZE) * k
-	var c := Vector2(_script["card"]["center"]) * k
-	return Rect2((c - s * 0.5).round(), s.round())
+	func _preload() -> bool:
+		if _warm == 0:
+			return true
+		for k in range(_warm_asked, mini(_warm_asked + 2, _warm)):
+			frames.request("f", k)
+		_warm_asked = mini(_warm_asked + 2, _warm)
+		for k in _warm:
+			if k >= _warm_asked or not frames.ready(k):
+				return false
+		_warm = 0
+		return delay <= 0.0
+
+	func _sound() -> void:
+		var snd: Array = spec["sound"]
+		var k := clampf(t / float(snd[1]), 0.0, 1.0)
+		if ending:
+			k *= 1.0 - clampf((t - _end_t) / float(snd[3]), 0.0, 1.0)
+		host._fog_snd.volume_db = linear_to_db(maxf(k * float(snd[2]), 0.0001)) + (Sfx.OTHER_DB if quiet else 0.0)
+
+	func _show() -> void:
+		var main_t: float
+		var side_t := -1.0
+		var side_w := 0.0
+		if ending:
+			var d := t - _end_t
+			main_t = float(spec["end"]) + d
+			side_t = _end_phase + d
+			side_w = 1.0 - clampf(d / float(spec["end_fade"]), 0.0, 1.0)
+		else:
+			main_t = _phase(t)
+			var a := float(spec["loop"][0])
+			var b := float(spec["loop"][1])
+			if t >= b:
+				# начало нового круга: прошлый круг продолжается за b и тает
+				side_t = main_t + (b - a)
+				side_w = 1.0 - clampf((main_t - a) / float(spec["fade"]), 0.0, 1.0)
+		var i := frames.index(main_t)
+		_a.size = host.size
+		_b.size = host.size
+		_a.show_frame(frames.texture("f", i), 1.0 - side_w if side_w > 0.0 else 1.0)
+		var keep := [i]
+		if side_w > 0.0:
+			var j := frames.index(side_t)
+			_b.show_frame(frames.texture("f", j), side_w)
+			keep.append(j)
+		else:
+			_b.show_frame(null)
+		# заранее в памяти: начало круга (переход с конца куска) и начало ухода
+		if not ending:
+			keep.append(frames.index(float(spec["loop"][0])))
+			keep.append(frames.index(float(spec["end"])))
+		frames.keep(keep)
 
 
 ## Кадр эффекта на весь экран: premultiplied-альфа (One, OneMinusSrcAlpha). Кадры сжаты
 ## WebP с потерями: цвет шумит, альфа точная — пиксель с нулевой альфой пустой, его шум
-## не рисуется (у настоящих пикселей эффекта альфа не ниже 1/255).
-const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;\n" \
-	+ "void fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tCOLOR = c.a > 0.0 ? c : vec4(0.0);\n}\n"
+## не рисуется (у настоящих пикселей эффекта альфа не ниже 1/255). alpha — общая
+## прозрачность кадра (переходы дымки).
+const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;\nuniform float alpha = 1.0;\n" \
+	+ "void fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tCOLOR = c.a > 0.0 ? c * alpha : vec4(0.0);\n}\n"
+static var _frame_shader: Shader
 
 
 class _FrameLayer extends Control:
 	var _tex: Texture2D
+	var _mat := ShaderMaterial.new()
 
 	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		var sh := Shader.new()
-		sh.code = FRAME_SHADER
-		var m := ShaderMaterial.new()
-		m.shader = sh
-		material = m
+		if HsPlay._frame_shader == null:
+			HsPlay._frame_shader = Shader.new()
+			HsPlay._frame_shader.code = FRAME_SHADER
+		_mat.shader = HsPlay._frame_shader
+		material = _mat
 
-	func show_frame(tex: Texture2D) -> void:
-		_tex = tex
-		queue_redraw()
+	func show_frame(tex: Texture2D, alpha: float = 1.0) -> void:
+		_mat.set_shader_parameter("alpha", alpha)
+		if tex != _tex:
+			_tex = tex
+			queue_redraw()
 
 	func _draw() -> void:
 		if _tex != null:

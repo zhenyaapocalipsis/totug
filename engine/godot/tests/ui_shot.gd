@@ -381,6 +381,42 @@ func _run_scenario() -> void:
 			_gif_left = _count_arg("gif", 0)
 			# без --gif — один снимок через --wait=N кадров
 			_shot_at = _frame + _count_arg("wait", 60)
+		"hs_dragon":
+			# Red Dragon целиком: на доске есть кого вытеснить (вражеский отряд рядом),
+			# вражеский шпион и локация под полным контролем; после эффекта розыгрыша
+			# вопросы отвечаются первым вариантом. --gif=N (кадры каждые 3).
+			while _screen.server.resolver.is_waiting():
+				var pd15: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pd15.player_id, pd15.legal_options[0]))
+			var st15 := _screen.server.state
+			var me: String = st15.current_player()
+			var foe := ""
+			for p15: String in st15.turn_order:
+				if p15 != me:
+					foe = p15
+			var home := ""
+			for slot15: String in st15.troops.keys():
+				if String(st15.troops[slot15]) == me and st15.graph.site_of_slot(slot15) != "":
+					home = st15.graph.site_of_slot(slot15)
+			# своя локация — под полным контролем: все места свои
+			for slot15: String in st15.graph.slots_of_site(home):
+				st15.troops[slot15] = me
+			# вражеский отряд на дороге у своей локации (цель вытеснения) и вражеский
+			# шпион в ней самой: после его возврата локация — под полным контролем (VP)
+			st15.troops[st15.graph.slots_adjacent_to_site(home)[0]] = foe
+			st15.spies[home] = [foe]
+			(st15.players[me].deck.hand as Array)[0] = "48426"
+			_screen.refresh(StateView.for_player_with_pending(st15, _screen.viewer_id, _screen.server.resolver.pending))
+			_screen._turn_banner.hide()
+			for _i in 50:
+				await process_frame
+			HsPlay.fixed_dt = 1.0 / 60.0
+			_screen.send(Intent.play_card(me, "48426"))
+			_screen._turn_banner.hide()
+			_gif_left = _count_arg("gif", 0)
+			# ответы на вопросы карты — когда эффект отпустит
+			_answer_hs = true
+			_shot_at = _frame + _count_arg("wait", 400)
 		"layout":
 			# Прямоугольники руки и счётчика Power/Influence (для места эффекта HsPlay).
 			for _i in 60:
@@ -659,6 +695,8 @@ var _gif: GifWriter
 var _gif_n := 0
 var _gif_sheet: Array[Image] = []
 var _gif_strip: Array[Image] = []
+## hs_dragon: отвечать на вопросы карты первым вариантом, когда эффект отпустит.
+var _answer_hs := false
 
 
 ## Кадр экрана в расчётном размере (960x540), пиксель в пиксель.
@@ -715,10 +753,14 @@ func _record_gif() -> bool:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
+	if _answer_hs and _frame % 30 == 0 and not _screen._hs_play.is_busy() and _screen._hs_pending.is_empty() \
+			and _screen.server.resolver.is_waiting():
+		var pdh: PendingDecision = _screen.server.resolver.pending
+		_screen.send(Intent.make_decision(pdh.player_id, pdh.legal_options[0]))
 	if _gif_left > 0:
 		return _record_gif()
 	# hs_play: карта разыгрывается не сразу (рука должна показать её) — ждём сценарий
-	if _scenario in ["hs_play", "layout"] and _shot_at < 0:
+	if _scenario in ["hs_play", "layout", "hs_dragon"] and _shot_at < 0:
 		return false
 	_fake_hover()
 	if _frame < SETTLE_FRAMES + 12:

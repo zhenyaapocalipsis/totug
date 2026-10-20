@@ -55,6 +55,19 @@ public static class HsRender
         public MatSet[] mats = new MatSet[0];
         // сдвиг узлов в мире (позиция которых не анимирована): node, by [x, y, z]
         public Move[] move = new Move[0];
+        // узлы, частицы которых не рисовать (всё поддерево; сетки остаются)
+        public string[] hidePS = new string[0];
+        // частицы под своей дорожкой HS (ControlRandomizedTrack — без кода игры Timeline
+        // её не играет): node, start, end — секунды от начала слоя
+        public Control[] controls = new Control[0];
+    }
+
+    [Serializable]
+    public class Control
+    {
+        public string node;
+        public float start;
+        public float end;
     }
 
     [Serializable]
@@ -102,6 +115,7 @@ public static class HsRender
         public (GameObject go, AnimationClip clip, float at)[] clips;
         public ParticleSystem[] loose;
         public Renderer[] under = new Renderer[0];
+        public (GameObject go, ParticleSystem[] ps, float start, float end)[] controls = new (GameObject, ParticleSystem[], float, float)[0];
     }
 
     // камера доски HS (BoardCameras/Main Camera)
@@ -293,6 +307,20 @@ public static class HsRender
             p.useAutoRandomSeed = false;
             p.randomSeed = 7919u * seed++;
         }
+        foreach (var p in spec.hidePS)
+        {
+            var t = go.transform.Find(p);
+            if (t == null) { Log("hidePS: not found " + p); continue; }
+            foreach (var r in t.GetComponentsInChildren<ParticleSystemRenderer>(true)) r.enabled = false;
+        }
+        var ctl = new List<(GameObject, ParticleSystem[], float, float)>();
+        foreach (var c in spec.controls)
+        {
+            var t = go.transform.Find(c.node);
+            if (t == null) { Log("controls: not found " + c.node); continue; }
+            ctl.Add((t.gameObject, t.GetComponentsInChildren<ParticleSystem>(true), c.start, c.end));
+        }
+        live.controls = ctl.ToArray();
         return live;
     }
 
@@ -357,6 +385,14 @@ public static class HsRender
             {
                 var cur = g.Where(c => c.at <= tau).OrderBy(c => c.at).LastOrDefault();
                 if (cur.clip != null) cur.clip.SampleAnimation(g.Key, (float)Math.Min(tau - cur.at, cur.clip.length));
+            }
+            // свои дорожки HS: объект включён только на своём отрезке, частицы — с его начала
+            foreach (var (cgo, cps, s0, s1) in l.controls)
+            {
+                bool act = tau >= s0 && tau < s1;
+                if (cgo.activeSelf != act) cgo.SetActive(act);
+                if (!act) continue;
+                foreach (var p in cps) p.Simulate((float)(tau - s0), false, true, true);
             }
             foreach (var p in l.loose)
             {

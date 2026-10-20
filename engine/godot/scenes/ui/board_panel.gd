@@ -788,6 +788,14 @@ func slot_global(slot_id: String) -> Variant:
 	return get_global_transform() * _to_screen(at)
 
 
+## Центр локации site_id в глобальных координатах или null.
+func site_global(site_id: String) -> Variant:
+	var at: Variant = _site_centre(site_id)
+	if at == null or _zoom <= 0.0:
+		return null
+	return get_global_transform() * _to_screen(at)
+
+
 ## Центр ромбика шпиона owner у локации site_id в глобальных координатах или null.
 func spy_global(site_id: String, owner: String) -> Variant:
 	var owners: Array = (_view.get("spies", {}) as Dictionary).get(site_id, [])

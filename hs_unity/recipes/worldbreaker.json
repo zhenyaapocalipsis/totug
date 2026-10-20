@@ -1,50 +1,126 @@
 {
   "deps": "../deps_worldbreaker.txt",
-  "fps": 60,
+  "fps": 60.0,
   "len": 4.6,
   "space": "gamma",
   "ldr": true,
   "layers": [
     {
-      "prefab": "c8c343812f074a8459fe7c7fcbe7e52f",
-      "spell": "CATAFX_Deathwing_YoggFogg",
-      "at": 0.1,
-      "clips": [{"name": "CATAFX_Deathwing_YoggFog_Intro_Anim", "at": 0.0}, {"name": "CATAFX_Deathwing_YoggFog_End_Anim", "at": 2.5}],
-      "stopAt": 2.5
-    },
-    {
       "prefab": "48f4a33b86882dc488161bcbae364c0d",
       "spell": "CATAFX_Deathwing_CustomSummon_Spell",
       "at": 0.0,
-      "pos": [-7.8, 0.1, -8.0], "usePos": true,
-      "move": [
-        {"node": "TimelineRoot/AnimRoot/DiveRoot", "by": [0.227, 0, 0.964]},
-        {"node": "TimelineRoot/AnimRoot/HeroRoot", "by": [0.227, 0, 0.964]},
-        {"node": "TimelineRoot/AnimRoot/Mesh_WaveFire", "by": [0.227, 0, 0.964]}
+      "pos": [
+        -7.8,
+        0.1,
+        -8.0
       ],
-      "hide": ["TimelineRoot/AnimRoot/HeroRoot/TokenRoot", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow", "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow_Edge", "TimelineRoot/AnimRoot/HeroRoot/Mesh_CracksDark"],
-      "measure": ["TimelineRoot/AnimRoot/HeroRoot"],
+      "usePos": true,
+      "move": [
+        {
+          "node": "TimelineRoot/AnimRoot/DiveRoot",
+          "by": [
+            0.227,
+            0.0,
+            0.964
+          ]
+        },
+        {
+          "node": "TimelineRoot/AnimRoot/HeroRoot",
+          "by": [
+            0.227,
+            0.0,
+            0.964
+          ]
+        },
+        {
+          "node": "TimelineRoot/AnimRoot/Mesh_WaveFire",
+          "by": [
+            0.227,
+            0.0,
+            0.964
+          ]
+        }
+      ],
+      "hide": [
+        "TimelineRoot/AnimRoot/HeroRoot/TokenRoot",
+        "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow",
+        "TimelineRoot/AnimRoot/HeroRoot/Quad_HeroGlow_Edge",
+        "TimelineRoot/AnimRoot/HeroRoot/Mesh_CracksDark"
+      ],
+      "measure": [
+        "TimelineRoot/AnimRoot/HeroRoot"
+      ],
       "mats": [
-        {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_MiddlePointPos", "value": 0.5},
-        {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_LastColor", "color": [0.311, 0.311, 0.311, 0]},
-        {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_MidColor", "color": [0.311, 0.311, 0.311, 0]},
-        {"node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep", "prop": "_ColorMul", "value": 0.0}
+        {
+          "node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep",
+          "prop": "_MiddlePointPos",
+          "value": 0.5
+        },
+        {
+          "node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep",
+          "prop": "_LastColor",
+          "color": [
+            0.311,
+            0.311,
+            0.311,
+            0.0
+          ]
+        },
+        {
+          "node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep",
+          "prop": "_MidColor",
+          "color": [
+            0.311,
+            0.311,
+            0.311,
+            0.0
+          ]
+        },
+        {
+          "node": "TimelineRoot/AnimRoot/TrailRoot/Deathwing_Sweep",
+          "prop": "_ColorMul",
+          "value": 0.0
+        }
       ]
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.15,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81], "usePlace": true,
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
+      "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"]
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "measure": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ]
     }
   ],
   "textures": [
-    {"name": "GenFX_HeroGlow_Soft_TransparentCenter", "file": "../../engine/godot/assets/hs_fx/own/ring.png"},
-    {"name": "GenFX_HeroShadow_Internal", "file": "../../engine/godot/assets/hs_fx/own/disc.png"},
-    {"name": "Cracks_HeroSocket_FriendlySide", "file": "../../engine/godot/assets/hs_fx/own/cracks.png"},
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48426.png"}
+    {
+      "name": "GenFX_HeroGlow_Soft_TransparentCenter",
+      "file": "../../engine/godot/assets/hs_fx/own/ring.png"
+    },
+    {
+      "name": "GenFX_HeroShadow_Internal",
+      "file": "../../engine/godot/assets/hs_fx/own/disc.png"
+    },
+    {
+      "name": "Cracks_HeroSocket_FriendlySide",
+      "file": "../../engine/godot/assets/hs_fx/own/cracks.png"
+    },
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_48426.png"
+    }
   ]
 }

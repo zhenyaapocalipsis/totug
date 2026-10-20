@@ -654,7 +654,7 @@ func _build_layout() -> void:
 	for cid: String in HsPlay.RECIPES:
 		fx_items.append([EventLogPanel.card_name(cid).to_upper(), func():
 			if not _hs_play.is_busy():
-				_hs_play.play(cid, HsPlay.face_of(cid, PlayerProfile.art_of(viewer_id, cid)))])
+				_hs_play.play(cid, HsPlay.face_of(cid, PlayerProfile.art_of(viewer_id, cid)), false, true)])
 	_pause_menu.add_list_page("CARD ANIMATIONS", "CARD ANIMATIONS", fx_items)
 	add_child(_pause_menu)
 
@@ -1473,7 +1473,57 @@ func replay_busy() -> bool:
 ## Заодно здесь запускаются полёты фишек: из барака на доску (деплой,
 ## шпион), с места на место (move) и с доски обратно в барак (return).
 ## Фишки одного ответа сервера летят друг за другом (launched).
+## Карта с эффектом Hearthstone, чьи действия сейчас идут: {cid, pid} или пусто.
+var _hs_source: Dictionary = {}
+
+
+## Действия карты с эффектом Hearthstone (владелец, 2026-10-20): вытеснение, возврат
+## шпиона, VP за локации под полным контролем — эффекты HS на месте цели; пока карта
+## не отыграла все свои вопросы, по краям экрана висит её дымка.
+func _hs_actions(events: Array) -> void:
+	for e in events:
+		var evt: Dictionary = e
+		var kind := String(evt.get("type", ""))
+		var pid := String(evt.get("player_id", ""))
+		if kind == "play_card":
+			var cid := String(evt.get("card_id", ""))
+			if not _hs_source.is_empty():
+				_hs_play.fog_off()
+				_hs_source = {}
+			if HsPlay.has(cid):
+				_hs_source = {"cid": cid, "pid": pid}
+			continue
+		if _hs_source.is_empty() or pid != String(_hs_source["pid"]):
+			continue
+		var src := String(_hs_source["cid"])
+		var quiet := pid != viewer_id
+		var at: Variant = null
+		match kind:
+			"supplant":
+				at = _board_panel.slot_global(String(evt.get("slot_id", "")))
+			"return_spy":
+				at = _board_panel.spy_departure_global(String(evt.get("site_id", "")))
+			"gain_per_n":
+				var control: Dictionary = _view.get("site_control", {})
+				for site_id in _view.get("site_total_control", []):
+					if String(control.get(site_id, "")) == pid:
+						var p: Variant = _board_panel.site_global(String(site_id))
+						if p != null:
+							_hs_play.action(src, "vp_site", p, quiet)
+		if at != null:
+			_hs_play.action(src, kind, at, quiet)
+	if _hs_source.is_empty():
+		return
+	# карта отыграла всё (вопросов больше нет) или ход ушёл — дымка уходит
+	var pending: Dictionary = _view.get("pending_decision", {})
+	if pending.is_empty() or String(_view.get("current_player", "")) != String(_hs_source["pid"]) \
+			or bool(_view.get("game_over", false)):
+		_hs_play.fog_off()
+		_hs_source = {}
+
+
 func _react_to_events(events: Array) -> void:
+	_hs_actions(events)
 	var power := 0.0
 	var launched := 0
 	var kills := 0

@@ -1,0 +1,16 @@
+{
+  "deps": "../deps_worldbreaker.txt",
+  "fps": 60,
+  "len": 8.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "c8c343812f074a8459fe7c7fcbe7e52f",
+      "spell": "CATAFX_Deathwing_YoggFogg",
+      "at": 0.0,
+      "clips": [{"name": "CATAFX_Deathwing_YoggFog_Intro_Anim", "at": 0.0}, {"name": "CATAFX_Deathwing_YoggFog_End_Anim", "at": 6.0}],
+      "stopAt": 6.0
+    }
+  ]
+}
