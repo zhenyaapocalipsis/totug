@@ -51,7 +51,7 @@ func _run() -> void:
 	var cid := _arg("card", "48426")
 	await process_frame
 	await process_frame
-	hs.play(cid, CardView.pixel_texture(cid), true)
+	hs.play(cid, CardView.mini_texture(cid), true)
 	# эффект берёт снимок экрана под себя — ждём его
 	while not hs.is_ready():
 		await process_frame

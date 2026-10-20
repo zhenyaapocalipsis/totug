@@ -1215,7 +1215,7 @@ func _hs_start(evt: Dictionary, view: Dictionary) -> void:
 			if card.card_id == cid:
 				card.visible = false
 	_decision_dialog.visible = false
-	_hs_play.play(cid, CardView.pixel_texture(cid, PlayerProfile.art_of(pid, cid)), pid != viewer_id)
+	_hs_play.play(cid, CardView.mini_texture(cid, PlayerProfile.art_of(pid, cid)), pid != viewer_id)
 
 
 ## Эффект закончился: отложенные ответы — по порядку (следующий может снова начать эффект).
@@ -1465,7 +1465,7 @@ func _react_to_events(events: Array) -> void:
 					Sfx.voice(played, pid != viewer_id)
 				# реплей (живая партия запускает эффект раньше, в _on_result)
 				if HsPlay.has(played) and not evt.has("hs_started"):
-					_hs_play.play(played, CardView.pixel_texture(played, PlayerProfile.art_of(pid, played)), pid != viewer_id)
+					_hs_play.play(played, CardView.mini_texture(played, PlayerProfile.art_of(pid, played)), pid != viewer_id)
 			"promote":
 				_showcase_card(pid, String(evt.get("card_id", "")), "PROMOTES", null, "inner",
 					String(evt.get("from", "")) == "top_of_deck")

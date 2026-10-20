@@ -26,8 +26,19 @@ const CAM_FWD := Vector3(0.0, -0.998, 0.056)
 const CAM_UP := Vector3(0.0, 0.056, 0.998)
 const CAM_RIGHT := Vector3(1.0, 0.0, 0.0)
 const CAM_FOV := 34.87
-## Кусок текстуры «горящей копии» карты (GenFX_AbilityCard_Echo_BW), занятый картой.
+## Кусок текстуры «горящей копии» карты, занятый картой: как у GenFX_AbilityCard_Echo_BW
+## в HS, чтобы анимация маски и растворения ложилась на карту так же. Сама текстура —
+## своя (_echo_texture), по макету нашей мелкой карты, а не по рамке карты HS.
 const ECHO_CARD := Vector2(0.55, 0.76)
+## Миниатюра карты в центре доски — во столько раз крупнее своих пикселей.
+const MINI_SCALE := 2
+## Текстуры HS, нарисованные под его макет (портрет героя — арка), -> свои
+## (tools/hs_own_textures.gd): у нас героя нет.
+const OWN_TEXTURES := {
+	"GenFX_HeroGlow_Soft_TransparentCenter": "res://assets/hs_fx/own/ring.png",
+	"GenFX_HeroShadow_Internal": "res://assets/hs_fx/own/disc.png",
+	"Cracks_HeroSocket_FriendlySide": "res://assets/hs_fx/own/cracks.png",
+}
 
 ## Карта -> сценарий.
 const RECIPES := {"48426": "worldbreaker"}
@@ -58,8 +69,7 @@ const SCRIPTS := {
 				"only": "Root/Bursts_Root/Burst0_New", "place": Vector3(-7.8, 3.802, -4.659),
 				"play_all": true, "under": ["Quad_CardGlow_Backer"]},
 		],
-		"card": {"reveal": 2.15, "sweep": 0.6, "hold": 1.0, "out": 0.35, "place": Vector3(-7.8, 3.802, -4.659),
-			"half": 2.41 * 0.89},
+		"card": {"reveal": 2.15, "sweep": 0.6, "hold": 1.0, "out": 0.35, "place": Vector3(-7.8, 3.802, -4.659)},
 		"cues": [[0.0, "CATA_190h_Enter_01"], [0.0, "CATA_190h_Enter_Dragon_01"], [0.85, "CATA_190h_Enter_02"],
 			[1.0, "CATA_190h_Enter_Dragon_02"], [1.7, "CATA_190h_CardReveal_01"]],
 		"shakes": [[0.0, 3.0], [1.133, 5.0]]},
@@ -175,6 +185,7 @@ func _next() -> void:
 	_view.size = size
 	_port.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_item = _queue.pop_front()
+	_item["echo"] = _echo_texture(_item["face"])
 	_script = SCRIPTS[RECIPES[_item["cid"]]]
 	for spec: Dictionary in _script["layers"]:
 		_layers.append(_make_layer(spec))
@@ -310,13 +321,102 @@ func _frame() -> void:
 	_render_card(t)
 
 
-## Где карта на экране: её точка в мире и высота (полувысота half в единицах мира).
+## Где карта на экране: миниатюра в MINI_SCALE раз с центром в точке place сценария.
 func _card_rect() -> Rect2:
 	var cs: Dictionary = _script["card"]
 	var c := _project(cs["place"])
-	var h := 2.0 * float(cs["half"]) * _px_per_unit(c.z)
-	var w := h * CardView.PIXEL_SIZE.x / CardView.PIXEL_SIZE.y
-	return Rect2(Vector2(c.x - w * 0.5, c.y - h * 0.5).round(), Vector2(w, h).round())
+	var s := CardView.MINI_SIZE * MINI_SCALE
+	return Rect2((Vector2(c.x, c.y) - s * 0.5).round(), s)
+
+
+## «Горящая копия» нашей мелкой карты для Choice_Reveal: светлые линии по её макету
+## (рамка, окно арта, черта у цены, буквы имени и цена) с ореолом и серой серединой —
+## как устроена GenFX_AbilityCard_Echo_BW у HS (RGBR: яркость = альфа).
+static func _echo_texture(face: Texture2D) -> Texture2D:
+	var w := int(CardView.MINI_SIZE.x)
+	var h := int(CardView.MINI_SIZE.y)
+	var lines := PackedFloat32Array()
+	lines.resize(w * h)
+	var mark := func(x: int, y: int) -> void:
+		if x >= 0 and y >= 0 and x < w and y < h:
+			lines[y * w + x] = 1.0
+	for x in w:
+		mark.call(x, 0)
+		mark.call(x, h - 1)
+	for y in h:
+		mark.call(0, y)
+		mark.call(w - 1, y)
+	# окно арта (tools/pixel_cards.gd render_mini: обводка от y=27, ширина 54)
+	for x in range(2, 56):
+		mark.call(x, 27)
+		mark.call(x, 82)
+	for y in range(27, 83):
+		mark.call(2, y)
+		mark.call(55, y)
+	# черта между именем и ценой
+	for y in range(2, 18):
+		mark.call(50, y)
+	# буквы имени и цена — светлые пиксели шапки
+	if face != null:
+		var img := face.get_image()
+		img.decompress()
+		img.convert(Image.FORMAT_RGBA8)
+		if img.get_size() == Vector2i(w, h):
+			for y in range(1, 27):
+				for x in range(1, w - 1):
+					if img.get_pixel(x, y).get_luminance() > 0.7:
+						mark.call(x, y)
+	# сетка вдвое мельче пикселя карты: линии, ореол (размытие) и серая середина
+	var k := 2
+	var pad := Vector2i(roundi(w * k * (1.0 / ECHO_CARD.x - 1.0) * 0.5), roundi(h * k * (1.0 / ECHO_CARD.y - 1.0) * 0.5))
+	var gw := w * k + pad.x * 2
+	var gh := h * k + pad.y * 2
+	var base := PackedFloat32Array()
+	base.resize(gw * gh)
+	for y in h * k:
+		for x in w * k:
+			base[(y + pad.y) * gw + x + pad.x] = lines[(y / k) * w + x / k]
+	var glow := _box_blur(_box_blur(base, gw, gh, 3), gw, gh, 3)
+	var out := Image.create(gw, gh, false, Image.FORMAT_RGBA8)
+	for y in gh:
+		for x in gw:
+			var i := y * gw + x
+			var inside := x >= pad.x and y >= pad.y and x < pad.x + w * k and y < pad.y + h * k
+			var v := maxf(base[i], minf(glow[i] * 1.6, 0.85))
+			if inside:
+				v = maxf(v, 0.32)
+			out.set_pixel(x, y, Color(v, v, v, 1.0))
+	out.resize(gw * 3, gh * 3, Image.INTERPOLATE_BILINEAR)
+	out.generate_mipmaps()
+	return ImageTexture.create_from_image(out)
+
+
+static func _own_texture(base: String, tex_name: String) -> Texture2D:
+	if OWN_TEXTURES.has(tex_name):
+		return load(OWN_TEXTURES[tex_name]) as Texture2D
+	return HsFx._texture(base, tex_name)
+
+
+## Размытие окном (2r+1) по строкам и столбцам.
+static func _box_blur(src: PackedFloat32Array, w: int, h: int, r: int) -> PackedFloat32Array:
+	var tmp := PackedFloat32Array()
+	tmp.resize(w * h)
+	var n := float(2 * r + 1)
+	for y in h:
+		for x in w:
+			var s := 0.0
+			for d in range(-r, r + 1):
+				s += src[y * w + clampi(x + d, 0, w - 1)]
+			tmp[y * w + x] = s / n
+	var out := PackedFloat32Array()
+	out.resize(w * h)
+	for y in h:
+		for x in w:
+			var s := 0.0
+			for d in range(-r, r + 1):
+				s += tmp[clampi(y + d, 0, h - 1) * w + x]
+			out[y * w + x] = s / n
+	return out
 
 
 ## Карта: проявляется снизу вверх за полосой огня, стоит, гаснет.
@@ -428,6 +528,8 @@ func _render_layer(L: Dictionary, t: float) -> void:
 					m["main_tex"] != null, m["alpha_mul"], m["color_mul"], m["dissolve_factor"], m["vm_st"], m["color"], nd.get("keywords")])
 			if m["main_tex"] == null:
 				continue
+			if String(m["main_tex"].resource_path).get_file().begins_with("GenFX_AbilityCard_Echo"):
+				m["main_tex"] = _item["echo"]
 			var d := _drawer(L, i)
 			_apply(d, m, tau)
 			if not (nd["ps"] as Dictionary).is_empty():
@@ -511,8 +613,8 @@ func _material(nd: Dictionary, props: Dictionary) -> Dictionary:
 		second_mode = 3
 	var dissolve := 1 if "_DISSOLVE_MAINALPHA" in kw else (2 if "_DISSOLVE_SECONDALPHA" in kw else 0)
 	var m := {
-		"main_tex": HsFx._texture(base, main),
-		"second_tex": HsFx._texture(base, second) if second != "" and (second_mode > 0 or dissolve == 2) else null,
+		"main_tex": _own_texture(base, main),
+		"second_tex": _own_texture(base, second) if second != "" and (second_mode > 0 or dissolve == 2) else null,
 		"rgbr": not ("_TEXTURETYPE_RGBA" in kw), "ramp": "_COLORING_RAMP" in kw,
 		"second_mode": second_mode, "dissolve": dissolve,
 		"scrolling": "_SCROLLING_ON" in kw, "global_uv": "_SECONDTEXGLOBALUV_ON" in kw,
