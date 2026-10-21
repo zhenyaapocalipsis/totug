@@ -52,29 +52,17 @@ const SCRIPTS := {
 	# дракона с огненным шлейфом проносится над доской, пике в центр доски (1.13 с),
 	# огненная волна, вспышка, дым, угли) и сразу за ударом CATAFX_Deathwing_Choice_Reveal
 	# (одна карта вместо четырёх, с 1.15 с; сама карта — через 0.45 с, WaitToShowCards;
-	# огонь появления убран, осталось выжигание — владелец 2026-10-20). Действия — эффекты
-	# выборов этой карты в HS: Raze (CATA_190t12, огненное дыхание полосой) на вытеснение,
-	# Topple (CATA_190t11, огненный удар когтем) на возврат шпиона, огонь появления карты
-	# на каждой локации под полным контролем (VP).
+	# огонь появления убран, осталось выжигание — владелец 2026-10-20). Действия карты
+	# (вытеснение, возврат шпиона, VP) — обычные анимации игры (владелец 2026-10-21:
+	# эффекты Raze/Topple HS убраны); дымка YoggFogg висит до конца розыгрыша карты.
 	"worldbreaker": {"frames": "worldbreaker", "sounds": "worldbreaker",
 		"card": {"face": "mini", "reveal": 1.6, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# громкости — AudioSource префабов HS; стингер — m_PlayEffectDef карты
-		"cues": [[0.0, "CATA_190h_DeathwingWorldbreaker_Stinger", 0.5],
-			[0.0, "CATA_190h_Enter_01", 0.7], [0.0, "CATA_190h_Enter_Dragon_01", 0.7], [0.85, "CATA_190h_Enter_02", 0.7],
+		# громкости — AudioSource префабов HS; стингеры карт (m_PlayEffectDef) не нужны (владелец)
+		"cues": [[0.0, "CATA_190h_Enter_01", 0.7], [0.0, "CATA_190h_Enter_Dragon_01", 0.7], [0.85, "CATA_190h_Enter_02", 0.7],
 			[1.0, "CATA_190h_Enter_Dragon_02", 0.7], [1.15, "CATA_190h_CardReveal_01", 0.8]],
 		"shakers": [[0.0, 1.133, 0.08, [[0.0, 0.5], [0.3, 0.99], [0.51, 0.23], [1.0, 0.0]], 0.075],
 			[1.133, 2.533, 0.12, [[0.0, 0.5], [0.1, 0.99], [0.21, 0.98], [0.67, 0.15], [1.0, 0.0]], 0.075]],
-		"fog": ["worldbreaker_fog", 0.1],
-		"actions": {
-			"supplant": {"frames": "worldbreaker_raze", "anchor": Vector2(480, 222), "follow": "y", "lead": 0.7,
-				"cues": [[0.0, "CATA_190t12_Raze_01", 0.8], [0.0, "CATA_190t12_Raze_Dragon_01", 0.8]],
-				"shakers": [[0.15, 1.633, 0.1, [[0.0, 0.5], [0.3, 0.99], [0.51, 0.23], [1.0, 0.0]], 0.075]]},
-			"return_spy": {"frames": "worldbreaker_topple", "anchor": Vector2(495, 285), "follow": "xy", "lead": 0.55,
-				"cues": [[0.0, "CATA_190t11_Topple_01", 0.8], [0.0, "CATA_190t11_Topple_Dragon_01", 0.8]],
-				"shakers": [[0.367, 0.75, 0.25, [[0.0, 1.0], [0.51, 0.4], [0.6, 0.16], [1.0, 0.0]], 0.1988]]},
-			"vp_site": {"frames": "worldbreaker_vpfire", "anchor": Vector2(480, 269), "follow": "xy", "lead": 0.35,
-				"cues": [[0.0, "CATA_190h_CardReveal_01", 0.5]], "shakers": []},
-		}},
+		"fog": ["worldbreaker_fog", 0.1]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
@@ -670,8 +658,26 @@ class _Fog:
 ## WebP с потерями: цвет шумит, альфа точная — пиксель с нулевой альфой пустой, его шум
 ## не рисуется (у настоящих пикселей эффекта альфа не ниже 1/255). alpha — общая
 ## прозрачность кадра (переходы дымки).
-const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;\nuniform float alpha = 1.0;\n" \
-	+ "void fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tCOLOR = c.a > 0.0 ? c * alpha : vec4(0.0);\n}\n"
+## Пиксель-арт (владелец, 2026-10-21): кадр рисуется крупным пикселем PIXEL_BLOCK x
+## PIXEL_BLOCK пикселей игры (без сглаживания), яркость — PIXEL_LEVELS ровными ступенями
+## с сохранением оттенка (поканальные ступени давали грязные оливковые тона), прозрачность
+## — PIXEL_ALPHA ступенями; без дизеринга (решётка Байера по дымке рябила поверх
+## интерфейса). Ступени — в premultiplied-виде: чистый свет (альфа ~0) остаётся светом.
+const PIXEL_LEVELS := 6.0
+const PIXEL_ALPHA := 8.0
+const PIXEL_BLOCK := 2.0
+const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;\n" \
+	+ "uniform float alpha = 1.0;\nuniform float levels = 7.0;\nuniform float alpha_levels = 4.0;\n" \
+	+ "uniform float block = 1.0;\n" \
+	+ "float step_to(float v, float n, float d) { return clamp(floor(v * n + d) / n, 0.0, 1.0); }\n" \
+	+ "void fragment() {\n" \
+	+ "\tvec2 tsz = vec2(textureSize(TEXTURE, 0));\n\tvec2 px = floor(UV * tsz / block) * block;\n" \
+	+ "\tvec4 c = texture(TEXTURE, (px + 0.5 * block) / tsz);\n" \
+	+ "\tif (c.a <= 0.0) { COLOR = vec4(0.0); } else {\n" \
+	+ "\t\tfloat d = 0.5;\n" \
+	+ "\t\tfloat v = max(c.r, max(c.g, c.b));\n" \
+	+ "\t\tvec4 q = vec4(v > 0.0 ? c.rgb * (step_to(v, levels, d) / v) : vec3(0.0), step_to(c.a, alpha_levels, d));\n" \
+	+ "\t\tCOLOR = q * alpha;\n\t}\n}\n"
 static var _frame_shader: Shader
 
 
@@ -686,6 +692,9 @@ class _FrameLayer extends Control:
 			HsPlay._frame_shader = Shader.new()
 			HsPlay._frame_shader.code = FRAME_SHADER
 		_mat.shader = HsPlay._frame_shader
+		_mat.set_shader_parameter("levels", PIXEL_LEVELS)
+		_mat.set_shader_parameter("alpha_levels", PIXEL_ALPHA)
+		_mat.set_shader_parameter("block", PIXEL_BLOCK)
 		material = _mat
 
 	func show_frame(tex: Texture2D, alpha: float = 1.0) -> void:
