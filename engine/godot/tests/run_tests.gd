@@ -7065,6 +7065,38 @@ func test_icewind_deck() -> void:
 	check_eq(red.deck.hand.size(), red_hand + 1, "Bulette: Frostbite синего — красный тоже взял карту")
 	state.turn_flags.erase("frost_copy")
 
+	# Bulette: войско встало рядом с войском соперника — каждый соперник сбрасывает карту
+	blue.deck.hand = ["48342", "48344", "48343"]
+	green.deck.hand = ["48342", "48344"]
+	var rbu := _play_with(state, F.BULETTE)
+	var blue_disc := blue.deck.discard_pile.size()
+	var near_blue := false
+	for i in range(3):
+		check(rbu.is_waiting() and rbu.pending.choice_type == "target_slot", "Bulette: ставим войско %d" % (i + 1))
+		var pick := String(rbu.pending.legal_options[0])
+		if not near_blue:
+			for opt in rbu.pending.legal_options:
+				if ShadowCards._next_to_enemy(state, "red", String(opt)):
+					pick = String(opt)
+					break
+		near_blue = near_blue or ShadowCards._next_to_enemy(state, "red", pick)
+		TurnEngine.resume_card(state, pick, rbu)
+	check(near_blue, "Bulette: нашлось место рядом с чужим войском")
+	_auto_resolve(state, rbu, false)
+	check_eq(blue.deck.discard_pile.size(), blue_disc + 1, "Bulette: синий сбросил карту")
+
+	# Соседство симметрично: место тоннеля у локации — рядом со всеми её слотами
+	# (партия CLERIC BMW 2026-10-20, ход 25: Bulette на месте тоннеля у локации с
+	# красными войсками — сброса не было, место касалось только белого слота локации)
+	var asym := 0
+	for seed_value in [1, 7, 42]:
+		var g4 := GameSetup.new_game(["red", "blue", "green", "purple"], seed_value)
+		for a: String in g4.graph.slots.keys():
+			for b: String in MercenaryCards.near_slots(g4, a):
+				if not MercenaryCards.near_slots(g4, b).has(a):
+					asym += 1
+	check_eq(asym, 0, "near_slots: если A рядом с B, то и B рядом с A (доски на четверых)")
+
 	# Конец хода: несыгранная карта с Frostbite не срабатывает (решение владельца)
 	state.turn_flags.erase("frostbite_any")
 	red.deck.end_of_turn_discard()

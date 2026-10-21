@@ -150,7 +150,9 @@ static func _entreri_vp(state: GameState, before: Dictionary) -> CardEffect:
 ## Соседство для "adjacent" / "next to": соседние слоты, слоты той же локации,
 ## места тоннелей у всей локации и слоты локаций, связанных с ней напрямую
 ## (туннель без мест под войска). Без прямых связей Nihiloor не видел белое
-## войско в соседней локации и убивал меньше, чем мог.
+## войско в соседней локации и убивал меньше, чем мог. Место тоннеля — рядом со
+## всеми слотами локаций, которых касается (соседство симметрично: раньше Bulette
+## на месте тоннеля не видел чужие войска в других слотах соседней локации).
 static func near_slots(state: GameState, slot_id: String) -> Array:
 	var g := state.graph
 	var near: Array = Array(g.adjacent_slots(slot_id))
@@ -161,6 +163,9 @@ static func near_slots(state: GameState, slot_id: String) -> Array:
 		extra.append_array(Array(g.slots_adjacent_to_site(site)))
 		for other_site: String in g.adjacent_sites(site):
 			extra.append_array(Array(g.slots_of_site(other_site)))
+	else:
+		for touched: String in g.sites_adjacent_to_slot(slot_id):
+			extra.append_array(Array(g.slots_of_site(touched)))
 	for other: String in extra:
 		if other != slot_id and not near.has(other):
 			near.append(other)
