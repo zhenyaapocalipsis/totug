@@ -1,0 +1,39 @@
+{
+  "deps": "../deps_rhonin.txt",
+  "fps": 60.0,
+  "len": 4.8,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "2c9c75b1574c2ea418c8bf26f8ef85e3",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "noTimeline": true,
+      "clip": "RhoninSummon",
+      "controls": [
+        {"node": "FX_MotesEmit", "start": 0.0, "end": 5.0},
+        {"node": "FX_RuneRing1", "start": 2.0, "end": 5.0}
+      ],
+      "under": ["Glow_Quad", "Flare_Quad", "Rune_Quad", "Swirl_Quad"],
+      "measure": ["Rune_Quad", "Glow_Quad"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 2.22,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.83,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48425.png"}
+  ]
+}

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -111,6 +111,17 @@ const SCRIPTS := {
 		"cues": [[0.0, "FrostQueenSindragosa_CustomSummon_Cast_Sound", 0.8], [0.0, "FrostQueenSindragosa_CustomSummon_PeicesForm_Sound", 0.8],
 			[1.183, "FrostQueenSindragosa_CustomSummon_Tail_Sound", 0.8]],
 		"shakers": [[0.0, 3.117, 0.08, [[0.0, 0.0], [0.26, 0.3], [0.42, 0.77], [0.54, 0.49], [1.0, 0.0]], 0.075]]},
+	# Rhonin (AT_009) — Rath Modar: ATFX_Rhonin_CustomSpawn (по FSM спелла): в точке посадки
+	# загорается овальный круг рун с лучами, вращается кольцо, растёт вспышка; на 2.0 с руны
+	# разлетаются кольцом, на 2.2 с удар — миньон HS появляется, тряска. Круг и вспышка — под
+	# картой, чтобы карта читалась. Овал круга — как в HS (владелец 2026-10-24). Выжигание
+	# фиолетовое в цвет эффекта (владелец). Дымки нет.
+	"rhonin": {"frames": "rhonin", "sounds": "rhonin",
+		"card": {"face": "mini", "reveal": 2.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlaythroughAction FSM с начала, AudioSource 1
+		"cues": [[0.0, "Rhonin_CustomSpawn_Sound", 1.0]],
+		# MainCameraShakerAction: 0.2 по осям, 0.4 с, сила линейно 1 -> 0
+		"shakers": [[2.2, 2.6, 0.16, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
