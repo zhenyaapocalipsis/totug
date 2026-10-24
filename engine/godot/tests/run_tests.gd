@@ -5501,6 +5501,18 @@ func test_celestial_order() -> void:
 	check_eq(red.deck.hand.count("48340"), hand_before + 2, "оба House Guard из верхних карт в руке")
 	check_eq(red.deck.draw_pile, ["48342", "48342"] as Array[String], "остальные карты остались в колоде")
 
+	# Warrior Veteran: все House Guard из сброса — в руку
+	for prefer_last in [true, false]:
+		var sv := _build_rich_state(8)
+		var pv: PlayerState = sv.players["red"]
+		TurnEngine.start_turn(sv, "red")
+		pv.deck.discard_pile = ["48340", "48342", "48340"] as Array[String]
+		var hg_before := pv.deck.hand.count("48340")
+		var rv := _play_with(sv, "49017")
+		_auto_resolve(sv, rv, prefer_last)
+		check_eq(pv.deck.hand.count("48340"), hg_before + 2, "Warrior Veteran: 2 House Guard из сброса в руке (prefer_last=%s)" % prefer_last)
+		check_eq(pv.deck.discard_pile.count("48340"), 0, "Warrior Veteran: в сбросе House Guard не осталось")
+
 	# Scry 2: сбросить одну из двух верхних
 	red.deck.draw_pile = ["48344", "48342", "48343"] as Array[String]
 	red.deck.discard_pile.clear()

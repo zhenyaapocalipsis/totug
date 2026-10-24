@@ -45,8 +45,12 @@ var _scroll: ScrollContainer
 var _asker_slot: HBoxContainer
 var _cards_slot: CardStairs
 var _style: StyleBoxFlat
-## Плашка сейчас у верхнего края (выбор цели на доске) — доске нужно отступить.
+## Плашка сейчас полосой под доской (выбор цели на доске), а не окном по центру.
+## Имя осталось с тех пор, когда полоса была у верхнего края.
 var at_top := false
+## Низ полосы — на столько выше низа зоны доски (ставит GameScreen: над счётчиком
+## Power/Influence).
+var strip_bottom := 0.0
 var _market_display: Array = []
 var _ghost_card := ""
 var _dim: ColorRect
@@ -385,14 +389,22 @@ func _process(delta: float) -> void:
 		_prompt.modulate.a = 0.35 + 0.65 * wave
 
 
-## Плашка у верхнего края (не закрывает доску) или окно по центру.
+func set_strip_bottom(value: float) -> void:
+	if is_equal_approx(value, strip_bottom):
+		return
+	strip_bottom = value
+	if at_top:
+		_place(true)
+
+
+## Полоса под доской (не закрывает её) или окно по центру.
 func _place(top: bool) -> void:
 	at_top = top
 	if at_top:
 		# Полоса во всю ширину доски: так вопрос влезает в одну-две строки и
-		# закрывает минимум схемы.
-		set_anchors_preset(Control.PRESET_TOP_WIDE)
-		grow_vertical = Control.GROW_DIRECTION_END
+		# закрывает минимум схемы. Низ стоит на месте, растёт вверх.
+		set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		grow_vertical = Control.GROW_DIRECTION_BEGIN
 		custom_minimum_size = Vector2.ZERO
 		offset_left = 2.0
 		offset_right = -2.0
@@ -410,8 +422,8 @@ func _place(top: bool) -> void:
 		# невидимо накрывала доску и съедала клики (выбор стартовой локации).
 		offset_left = 2.0
 		offset_right = -2.0
-		offset_top = 2.0
-		offset_bottom = 2.0
+		offset_top = -strip_bottom
+		offset_bottom = -strip_bottom
 	else:
 		# Размер считаем сами: reset_size() после полосы во всю ширину
 		# оставлял плашку смещённой влево (ловилось снимком экрана).

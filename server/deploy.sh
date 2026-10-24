@@ -75,3 +75,11 @@ systemctl restart tyrants
 sleep 3
 systemctl is-active tyrants
 journalctl -u tyrants -n 5 --no-pager -o cat'
+
+# Тот же архив — на GitHub (постоянная ссылка, см. server/github-release.sh).
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+  echo "== GitHub"
+  bash "$ROOT/server/github-release.sh"
+else
+  echo "== GitHub: skipped (no gh or not logged in: gh auth login)"
+fi

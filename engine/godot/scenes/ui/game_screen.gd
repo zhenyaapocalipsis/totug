@@ -100,6 +100,11 @@ const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
 const INFLUENCE_COLOR := Color(0.45, 0.75, 0.98)
+## Power от Young White Dragon (на войска её не потратить) — «лёд».
+const ICE_COLOR := Color(0.82, 0.96, 1.0)
+const RES_TIP := "Power and Influence of the player to move"
+const ICE_TIP := "ICE Power (Young White Dragon) cannot be spent to deploy troops." \
+	+ " Assassinate and returning a spy spend ICE Power first, then your normal Power."
 ## Таймер хода: две минуты на старте, по нулю ход завершается сам. Поздние ходы
 ## длиннее (колода сильнее, карт и вопросов больше), поэтому каждая сыгранная
 ## карта и каждый вопрос карты ходящему добавляют TURN_BONUS_SECONDS — но не
@@ -189,6 +194,7 @@ var _res_frame: PanelContainer
 var _res_zone: HBoxContainer
 var _res_title: Label
 var _res_power: CounterLabel
+var _res_ice: Label
 var _res_influence: CounterLabel
 ## Что на плашке ресурсов было показано в прошлый раз и чьё оно — по этому
 ## считается, на сколько всплыть цифре изменения.
@@ -542,7 +548,7 @@ func _build_layout() -> void:
 	# пришлось ужимать. Под поднятой картой руки: та рисуется выше.
 	_res_zone = HBoxContainer.new()
 	_res_zone.add_theme_constant_override("separation", 12)
-	_res_zone.tooltip_text = "Power and Influence of the player to move"
+	_res_zone.tooltip_text = RES_TIP
 	_res_zone.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	_res_frame = PanelContainer.new()
 	var no_frame := StyleBoxEmpty.new()
@@ -555,10 +561,17 @@ func _build_layout() -> void:
 	_res_zone.add_child(_res_title)
 	_res_power = CounterLabel.make("POWER %d", POWER_COLOR)
 	_res_zone.add_child(_res_power)
+	# Young White Dragon: POWER — обычная (на всё), рядом «+3 ICE» — только не на
+	# войска; видна, пока такая Power есть (владелец, 2026-10-24: было непонятно,
+	# какие мечи какие и какие тратятся).
+	_res_ice = Label.new()
+	_res_ice.add_theme_color_override("font_color", ICE_COLOR)
+	_res_ice.visible = false
+	_res_zone.add_child(_res_ice)
 	_res_influence = CounterLabel.make("INFLUENCE %d", INFLUENCE_COLOR)
 	_res_zone.add_child(_res_influence)
 	# Крупно — вдвое, целым масштабом шрифта; обводка — чтобы читалось на доске.
-	for label: Label in [_res_title, _res_power, _res_influence]:
+	for label: Label in [_res_title, _res_power, _res_ice, _res_influence]:
 		label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 		label.add_theme_color_override("font_outline_color", PixelTheme.BG)
 		label.add_theme_constant_override("outline_size", 2)
@@ -618,6 +631,7 @@ func _build_layout() -> void:
 	_note_toast = NoteToast.new()
 	_note_toast.area = _board_area
 	_note_toast.above = _res_frame
+	_note_toast.dialog = _decision_dialog
 	add_child(_note_toast)
 
 	# Пинги, облачка фраз и колесо чата (Tab) — поверх игры, под меню и паузой.
@@ -1111,9 +1125,6 @@ func _layout() -> void:
 	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
 	if _god_panel != null:
 		_place(_god_panel, a_x, top_y, board_x - GAP - a_x, h - MARGIN - top_y)
-	if replay_bar != null and replay_bar.is_inside_tree():
-		# Полоса реплея — поверх верха доски, во всю её ширину.
-		_place(replay_bar, board_x, top_y, d_x - GAP - board_x, replay_bar.get_combined_minimum_size().y)
 
 	# Рука — под доской, без подложки; запас сверху нужен карте под
 	# курсором — она выдвигается выше края ряда.
@@ -1161,6 +1172,16 @@ func _place_res_frame() -> void:
 		var width := maxf(_res_power.get_combined_minimum_size().x,
 				_deploy_vp_button.get_combined_minimum_size().x)
 		_place(_deploy_vp_button, power_x, y + res_size.y, width, deploy_h)
+	# Полоса вопроса — над счётчиком, под доской (владелец, 2026-10-24: доска
+	# сверху, вопросы снизу). От счётчика до низа полосы — столько же, сколько
+	# от счётчика до верха карт руки. Кнопка Deploy: 1 VP в зазор не входит.
+	var cards_top := _hand_panel.position.y + _hand_panel.size.y - HandPanel.BOTTOM_MARGIN - HandPanel.CARD_SIZE.y
+	var strip_y := y - (cards_top - _hand_panel.position.y)
+	_decision_dialog.set_strip_bottom(_board_area.position.y + _board_area.size.y - strip_y)
+	if replay_bar != null and replay_bar.is_inside_tree():
+		# Полоса реплея — там же, где вопрос (в реплее вопроса нет), во всю ширину доски.
+		var bar_h := replay_bar.get_combined_minimum_size().y
+		_place(replay_bar, _board_area.position.x, strip_y - bar_h, _board_area.size.x, bar_h)
 
 
 static func _place(control: Control, x: float, y: float, width: float, height: float) -> void:
@@ -2349,9 +2370,14 @@ func _refresh_played(view: Dictionary) -> void:
 	var p: Dictionary = (view["players"] as Dictionary).get(current, {})
 	_res_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
 	_res_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
+	# Young White Dragon: POWER — то, что можно тратить на всё, ICE — остальное.
+	var ice := int(p.get("power_locked", 0))
+	_res_ice.visible = ice > 0
+	_res_ice.text = "+%d ICE" % ice
+	_res_zone.tooltip_text = ICE_TIP if ice > 0 else RES_TIP
 	# Имя другой длины — плашка ужимается или растёт под него.
 	_place_res_frame()
-	var power := int(p.get("power", 0))
+	var power := int(p.get("power", 0)) - ice
 	var influence := int(p.get("influence", 0))
 	# Накручиваем только в пределах одного хода: когда ход перешёл к другому,
 	# цифры стали чужими, и накрутка от чужого значения врала бы.

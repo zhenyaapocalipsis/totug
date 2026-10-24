@@ -15,6 +15,8 @@ const GAP := 2.0
 ## Зона доски (ширина и центр) и плашка счётчиков: подсказка встаёт над ней.
 var area: Control
 var above: Control
+## Полоса вопроса над счётчиками: когда она видна, подсказка встаёт над ней.
+var dialog: DecisionDialog
 
 var _label: Label
 var _tween: Tween
@@ -60,6 +62,8 @@ func _place() -> void:
 	size = Vector2.ZERO  # ужаться под новую надпись
 	var box := get_combined_minimum_size()
 	var bottom := above.position.y if above != null else rect.end.y
+	if dialog != null and dialog.visible and dialog.at_top:
+		bottom = minf(bottom, rect.position.y + dialog.position.y)
 	position = Vector2(rect.position.x + (rect.size.x - box.x) * 0.5, bottom - GAP - box.y).round()
 	modulate.a = 1.0
 	visible = true
