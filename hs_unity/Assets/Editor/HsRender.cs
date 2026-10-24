@@ -334,6 +334,13 @@ public static class HsRender
             Log($"animator {an.name}: " + string.Join(", ", cs.Select(c => $"{c.name} {c.length:0.###}s")));
             // аниматор без своих клипов — цель дорожки Animation Timeline: остаётся включённым
             an.enabled = cs.Length == 0 && live.dirs.Length > 0;
+            // clip "timeline": все аниматоры ведёт Timeline (Lady Prestor: контроллеры взяты
+            // от других карт, их клипы — чужие)
+            if (spec.clip == "timeline")
+            {
+                an.enabled = live.dirs.Length > 0;
+                continue;
+            }
             if (spec.clips.Length > 0)
             {
                 // состояния аниматора по сценарию (FSM): клип с секунды at от начала слоя

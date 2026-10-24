@@ -13,13 +13,13 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: Red Dragon (Deathwing, Worldbreaker), Black Dragon (Onyxia the Broodmother), Blue Dragon (Malygos), Green Dragon (Ysera). Остальные — по очереди, по слову владельца.
+Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member). Остальные — по очереди, по слову владельца.
 
 ### drow
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Council Member (48315) | Lady Prestor (SW_078) | `SWFX_LadyPrestor_CustomSummon.prefab` | интриганка при дворе, тайно дракон — политика и влияние |
+| Council Member (48315) | Lady Prestor (SW_078) | `SWFX_LadyPrestor_CustomSummon.prefab` | СДЕЛАНО (HsFx-22) |
 | Deathblade (48316) | Valeera the Hollow (ICC_827) | `DK_Valeera_CustomSummon_FX.prefab` | убийца-разбойница из теней |
 | Inquisitor (48325) | High Inquisitor Whitemane (EX1_190) | `HighInquisitorWhitemane_CustomSummon.prefab` | инквизитор, суд и казнь |
 | Masters of Sorcere (48328) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | верховный маг-эльф, магическая школа |

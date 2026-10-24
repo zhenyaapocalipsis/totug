@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -133,6 +133,18 @@ const SCRIPTS := {
 		"cues": [[0.0, "ChoGallTwilightChieftain_CustomSummon_Sound", 1.0]],
 		# CameraShaker2: 0.2 по осям, сила линейно 1 -> 0
 		"shakers": [[0.933, 2.0, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Lady Prestor (SW_078) — Council Member: SWFX_LadyPrestor_CustomSummon (Timeline; аниматоры
+	# взяты от других карт — ведёт только Timeline, рецепт clip "timeline"): в точке посадки
+	# розовый магический круг с рунами, тени драконьих крыльев (тайный дракон), огненное
+	# кольцо на 1.5 с, на 1.6 с появляется миньон HS. Убраны жетон HS с сиянием и трещины.
+	# Выжигание розовое в цвет круга (владелец 2026-10-24). Эффект розыгрыша (снаряд в
+	# колоду HS) не берём. Дымки нет.
+	"prestor": {"frames": "prestor", "sounds": "prestor",
+		"card": {"face": "mini", "reveal": 2.07, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM (0.4) и дорожка Sound Timeline (AudioSource 0.4)
+		"cues": [[0.0, "LadyPrestor_CustomSummon_Sound", 0.4], [1.383, "LadyPrestor_CustomSummon_Impact_Sound", 0.4]],
+		# CameraShakerAction FSM: 0.05 по осям, с 1.5 с, 0.2 с
+		"shakers": [[1.5, 1.7, 0.04, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
