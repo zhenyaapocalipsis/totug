@@ -2,7 +2,57 @@
 
 Как делать анимации уникальных карт: что хочет владелец, как устроен конвейер, команды,
 проверки и ловушки. Собрано по работе над Red Dragon (Deathwing, Worldbreaker, этапы
-HsFx-0..12, октябрь 2026). Какая легендарка HS идёт к какой карте — `CARD_MAP.md`.
+HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green Dragon (HsFx-14..18,
+2026-10-24). Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово»).
+
+## 0. Быстрый старт: новая карта по шагам
+
+Так сделаны Black, Blue, Green Dragon. Пути `<R>` = `C:/tyrants of the underdark godot`,
+`<SP>` = scratchpad сессии, `G` = `C:\godot\Godot_v4.7.2-stable_win64_console.exe`,
+`U` = `C:\Program Files\Unity\Hub\Editor\6000.6.6f1\Editor\Unity.exe`.
+
+1. **hsx:** `dotnet build hs_unity/tools/hsx -c Release -o <SP>/hsx` (dotnet в Program
+   Files есть). `hsx extract C:/Games/Hearthstone/Data/Win <SP>/x <CARD_ID>` — первый
+   запуск строит `cabmap.tsv` (несколько минут), потом быстро. Смотреть `index.txt`
+   (m_CustomSummonSpellPath — основной эффект; m_PlayEffectDef.m_SpellPath — дымка или
+   что-то у героя), в папке префаба: `fsm_*.txt` (тайминги, звуки, тряска),
+   `timeline_*.txt`, `hierarchy.txt` (`grep "^ *GO '"` — узлы; `grep Card_InPlay` —
+   меши карты HS, прятать), `anim/*.json` (какие узлы двигаются, `m_IsActive`).
+2. **Логика:** понять, что эффект делает с миньоном HS, и адаптировать (§1): всё в
+   точке посадки, без полёта через экран; что повторяет макет HS — в `hide`; что
+   рисуется поверх места карты после удара — в `under`.
+3. **deps:** `hsx deps <Win> <SP>/hsx/cabmap.tsv <SP>/d.txt CAB-<из первой строки
+   hierarchy.txt>`, затем слить с Choice_Reveal: `awk '!seen[$0]++' <SP>/d.txt
+   hs_unity/deps_worldbreaker.txt > hs_unity/deps_<имя>.txt`.
+4. **Контур карты и тон:** `G --headless --path . --script res://tools/hs_bake_prep.gd --
+   --card=<cid> --frac=0.519,0.761 --out=<R>/hs_unity/recipes/textures/echo_<cid>.png`;
+   `res://tools/card_tone.gd -- --cards=<cid> --debug`.
+5. **Рецепт** `hs_unity/recipes/<имя>.json` по образцу `onyxia.json` / `malygos.json` /
+   `ysera.json`: слой эффекта (`pos [-7.59, 0, -7.01]` — посадка в (490, 365)) + слой
+   Choice_Reveal (`at` = удар + ~0.02, тон `tintHue/Sat/Val`).
+6. **Пробы:** `U -batchmode -quit -projectPath <R>/hs_unity -executeMethod HsRender.Run
+   -hsr-win C:/Games/Hearthstone/Data/Win -hsr-recipe <R>/hs_unity/recipes/<имя>.json
+   -hsr-out <R>/hs_unity/render/<проба> -hsr-frames 10,30,... -logFile ...` (пути
+   абсолютные; `hs_unity/render/` в .gitignore), лист `tools/bake_sheet.gd` поверх
+   `hs_unity/render/clean_bg.png` (снимок `ui_shot --scenario=hs_play --card=<cid>
+   --wait=1`), выжигание крупно `--crop=400,280,180,170 --scale=2 --card=<cid>
+   --card-at=461,323 --card-from=<кадр>`. **Показать владельцу и спросить спорное.**
+7. **Запекание** в `<R>/engine/godot/assets/hs_fx/baked/<имя>` в фоне (~10 мин на
+   300 кадров), удалить `hsr_log.txt` оттуда; `G --headless --path . --import`; в
+   `.import` кадров `sed -i 's/^compress\/mode=0/compress\/mode=1/;
+   s/^compress\/lossy_quality=0.7/compress\/lossy_quality=0.9/;
+   s/^process\/fix_alpha_border=true/process\/fix_alpha_border=false/'`; ещё `--import`.
+8. **Звуки:** `.fsb` → wav: `hs_unity/tools/vgmstream/vgmstream-cli.exe -o out.wav
+   in.fsb` (Windows-сборка vgmstream, только на этом ПК, в .gitignore) в
+   `engine/godot/assets/hs_fx/<имя>/`; громкость — m_Volume FSM × AudioSource;
+   стингеры и VO не брать.
+9. **HsPlay:** `RECIPES[cid]`, `SCRIPTS[<имя>]` (card.reveal = слой Choice_Reveal +
+   0.45; кадров должно хватить до reveal + 1.95 с), `cues`, `shakers`.
+10. **Проверка в партии** (не только листы!): `tests/ui_shot.gd -- --scenario=hs_play
+    --card=<cid> --gif=110 --out=../../hs_unity/render/x.png` (путь от res://),
+    `--wait=N` снимок (пиксель-арт виден только здесь), `--strip=...` соседние кадры;
+    `tools/hs_smoothness.gd -- --card=<cid>` (не headless); тесты; коммит
+    «Stage HsFx-N: …»; `CARD_MAP.md` — «СДЕЛАНО».
 
 ## 1. Правила владельца (не нарушать)
 
