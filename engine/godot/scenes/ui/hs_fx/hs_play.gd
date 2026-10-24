@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "whitemane"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -153,15 +153,17 @@ const SCRIPTS := {
 	"zayle": {"frames": "zayle", "sounds": "zayle",
 		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		"cues": [[0.0, "ZayleMasterCloak_CustomSummon", 1.0]]},
-	# High Inquisitor Whitemane (EX1_190) — Inquisitor: EX1FX_HighInquisitorWhitemane_CustomSummon
-	# (FSM и старая анимация Unity — компонент Animation): огненные ленты слетаются в точку
-	# посадки, на 0.4 с разгорается самоцвет, на 1.33 с вспышка, кольцо лучей, ударная волна
-	# и алый самоцвет-лотос, на 1.43 с появляется миньон HS. Весь эффект под картой; свечение
-	# миньона HS убрано. Выжигание исходное оранжевое — цвет огня анимации. Тряски нет.
-	"whitemane": {"frames": "whitemane", "sounds": "whitemane",
-		"card": {"face": "mini", "reveal": 1.9, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# AudioPlaythroughAction FSM: 0.7 × AudioSource 1
-		"cues": [[0.0, "HighInquisitorWhitemane_CustomSummon", 0.7]]},
+	# Darkbishop Benedictus (CORE_SW_448) — Inquisitor (вместо High Inquisitor Whitemane —
+	# владелец 2026-10-24: «выглядит странно»): SWFX_DarkBishopBenedictus_CustomSummon
+	# (Timeline): в точке посадки из теневого дыма собирается фиолетовый витраж со знаком
+	# церкви, на 1.17 с он разлетается осколками с синими искрами. Весь эффект под картой;
+	# жетон HS и свечение миньона убраны. Выжигание сине-фиолетовое — цвет эффекта.
+	"benedictus": {"frames": "benedictus", "sounds": "benedictus",
+		"card": {"face": "mini", "reveal": 1.64, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# два AudioPlayClipAction FSM: с начала и с задержкой 1.2 с (громкость из переменных FSM — 0.8)
+		"cues": [[0.0, "DarkbishopBenedictus_CustomSummon_Sound", 0.8], [1.2, "DarkbishopBenedictus_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2: 0.03 по осям, всплеск в начале клипа
+		"shakers": [[0.017, 1.65, 0.03, [[0.0, 0.0], [0.03, 0.99], [0.16, 0.12], [0.5, 0.0], [1.0, 0.0]], 0.0708]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
