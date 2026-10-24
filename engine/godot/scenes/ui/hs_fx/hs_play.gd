@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -185,6 +185,16 @@ const SCRIPTS := {
 		"cues": [[0.0, "QueenAzshara_CustomSummon_Sound", 0.7], [1.417, "QueenAzshara_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: 0.08 нарастает до 0.583 с, затем 0.12 и спад до 2.383 с
 		"shakers": [[0.0, 0.583, 0.08, [[0.0, 0.0], [1.0, 1.0]], 0.075], [0.583, 2.383, 0.12, [[0.0, 1.0], [0.19, 0.29], [1.0, 0.0]], 0.075]]},
+	# Blademaster Samuro (BAR_078) — Weaponmaster: BARFX_Samuro_CustomSummon (Timeline): в точке
+	# посадки золотой меч на огненном шаре, взмах кольцом, на 0.8 с вспышка и огненное кольцо.
+	# Весь эффект под картой; жетон и свечение миньона HS спрятаны. Выжигание оранжевое в цвет
+	# эффекта. Пробы Kargath, Okani, Remornia, Maiev владелец посмотрел — выбрал Samuro.
+	"samuro": {"frames": "samuro", "sounds": "samuro",
+		"card": {"face": "mini", "reveal": 1.27, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: 0.6 с начала, удар 0.6 на 0.9 с
+		"cues": [[0.0, "BlademasterSamuro_CustomSummon_Sound", 0.6], [0.9, "BlademasterSamuro_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShakerAction FSM: 0.035 по осям через 0.8 с, 0.25 с
+		"shakers": [[0.8, 1.05, 0.028, [[0.0, 0.19], [0.28, 1.0], [1.0, 0.0]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

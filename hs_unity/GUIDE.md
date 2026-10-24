@@ -11,9 +11,13 @@ HsFx-0..12, октябрь 2026), дополнено на остальных к�
   Green, White Dragon, Rath Modar, Severin) и из drow — Council Member (Lady Prestor),
   Deathblade (Zayle, Shadow Cloak), Inquisitor (Darkbishop Benedictus), Masters of
   Sorcere (Kael'thas). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
-  Сделано, не задеплоено: Matron Mother (Queen Azshara, HsFx-27).
-- **Дальше по колоде drow:** Weaponmaster (Blademaster Samuro, BAR_078). После drow —
-  следующую колоду называет владелец.
+  Сделано, не задеплоено: Matron Mother (Queen Azshara, HsFx-27), Weaponmaster
+  (Blademaster Samuro, HsFx-28) — колода drow готова целиком.
+- **Дальше:** следующую колоду называет владелец.
+- **Пробы замен до работы:** владелец может попросить «какие ещё есть варианты» — 3–4
+  свободные легендарки по смыслу, пробы всех (рецепты-пробы в `hs_unity/render/cand/`,
+  только слой эффекта; путь `textures/...` в рецепте — от папки рецепта), листы рядом,
+  выбор вопросом. Что владелец смотрел и отверг — в `CARD_MAP.md` у карты.
 - **Как владелец ведёт работу:** «делай дальше X, деплой потом» — коммит на каждую карту,
   push + `bash server/deploy.sh` только по слову. Пробы (лист + выжигание крупно) до
   полного запекания; спорное — вопросом с вариантами (AskUserQuestion). Тон выжигания

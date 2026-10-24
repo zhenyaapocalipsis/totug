@@ -13,7 +13,7 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member, Deathblade, Inquisitor, Masters of Sorcere, Matron Mother). Остальные — по очереди, по слову владельца.
+Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member, Deathblade, Inquisitor, Masters of Sorcere, Matron Mother, Weaponmaster). Остальные — по очереди, по слову владельца.
 
 ### drow
 
@@ -24,7 +24,7 @@
 | Inquisitor (48325) | Darkbishop Benedictus (CORE_SW_448) | `SWFX_DarkBishopBenedictus_CustomSummon.prefab` | СДЕЛАНО (HsFx-24); вместо High Inquisitor Whitemane (EX1_190): её огненные ленты и самоцвет владелец счёл странными (2026-10-24) |
 | Masters of Sorcere (48328) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-26); пробы Archmage Vargoth, Grand Magus Antonidas, Headmaster Kel'Thuzad владелец смотрел — оставил Kael'thas (2026-10-25) |
 | Matron Mother (48329) | Queen Azshara (TSC_641) | `TSCFX_Azshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-27); пробы Lady Deathwhisper, Kerrigan, Priestess Valishj владелец смотрел — оставил Azshara (2026-10-25) |
-| Weaponmaster (48339) | Blademaster Samuro (BAR_078) | `BARFX_Samuro_CustomSummon.prefab` | мастер клинка |
+| Weaponmaster (48339) | Blademaster Samuro (BAR_078) | `BARFX_Samuro_CustomSummon.prefab` | СДЕЛАНО (HsFx-28); пробы Kargath Bladefist, Blademaster Okani, Remornia, Maiev Shadowsong владелец смотрел — выбрал Samuro (2026-10-25) |
 
 ### dragons
 
