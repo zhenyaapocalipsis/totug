@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -175,6 +175,16 @@ const SCRIPTS := {
 		"cues": [[0.0, "Kael_thasSunstrider_CustomSummon_Sound", 0.5], [1.5, "Kael_thasSunstrider_CustomSummon_Impact_Sound", 0.6]],
 		# CameraShakerAction FSM: 0.15 по осям через 0.1 с после удара, 0.63 с
 		"shakers": [[1.6, 2.23, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Queen Azshara (TSC_641) — Matron Mother: TSCFX_Azshara_CustomSummon (Timeline): в точке
+	# посадки всплеск воды, из него поднимаются щупальца и три огненных глаза, на 1.42 с
+	# удар — фиолетовая волна. Весь эффект под картой; жетон HS спрятан. Выжигание
+	# фиолетовое в цвет эффекта.
+	"azshara": {"frames": "azshara", "sounds": "azshara",
+		"card": {"face": "mini", "reveal": 1.89, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7, удар на 1.417 с
+		"cues": [[0.0, "QueenAzshara_CustomSummon_Sound", 0.7], [1.417, "QueenAzshara_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: 0.08 нарастает до 0.583 с, затем 0.12 и спад до 2.383 с
+		"shakers": [[0.0, 0.583, 0.08, [[0.0, 0.0], [1.0, 1.0]], 0.075], [0.583, 2.383, 0.12, [[0.0, 1.0], [0.19, 0.29], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
