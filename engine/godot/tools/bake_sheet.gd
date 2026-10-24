@@ -4,6 +4,7 @@ extends SceneTree
 ## так же, как их кладёт игра (смешивание One, OneMinusSrcAlpha в гамме).
 ##   Godot --headless --path . --script res://tools/bake_sheet.gd -- --dir=<папка кадров>
 ##     --frames=0,6,12 --bg=<снимок 960x540.png> --out=<лист.png> [--cols=3] [--scale=1]
+##     [--crop=x,y,w,h]
 
 
 func _arg(name: String, fallback: String) -> String:
@@ -39,6 +40,11 @@ func _initialize() -> void:
 		if mini != null and int(s) >= int(_arg("card-from", "43")):
 			out.blend_rect(mini, Rect2i(Vector2i.ZERO, mini.get_size()), Vector2i(int(at[0]), int(at[1])))
 		_over(out, f)
+		# --crop=x,y,w,h: только этот кусок экрана (крупно смотреть карту)
+		var crop := _arg("crop", "")
+		if crop != "":
+			var c := crop.split(",")
+			out = out.get_region(Rect2i(int(c[0]), int(c[1]), int(c[2]), int(c[3])))
 		if scale != 1.0:
 			out.resize(int(out.get_width() * scale), int(out.get_height() * scale), Image.INTERPOLATE_NEAREST)
 		shots.append(out)

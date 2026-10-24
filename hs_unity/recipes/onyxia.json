@@ -33,7 +33,11 @@
       "scale": 0.3715,
       "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
       "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"]
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.0,
+      "tintSat": 0.0,
+      "tintVal": 0.25,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
     }
   ],
   "textures": [

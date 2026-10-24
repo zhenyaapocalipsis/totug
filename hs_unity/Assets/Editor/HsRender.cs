@@ -64,6 +64,14 @@ public static class HsRender
         public string[] show = new string[0];
         // не играть Timeline префаба: всё по FSM — clip/clips и controls
         public bool noTimeline;
+        // перекраска в тон карты: у материалов узлов tintNodes (с поддеревом) в цветах
+        // tintProps оттенок HSV заменяется на tintHue (0..1), насыщенность и яркость — как в HS
+        public float tintHue = -1f;
+        // насыщенность (>= 0 — заменить; 0 — серый/чёрный тон) и множитель яркости
+        public float tintSat = -1f;
+        public float tintVal = 1f;
+        public string[] tintNodes = new string[0];
+        public string[] tintProps = { "_WhiteColor", "_MidColor", "_LastColor" };
     }
 
     [Serializable]
@@ -120,6 +128,16 @@ public static class HsRender
         public ParticleSystem[] loose;
         public Renderer[] under = new Renderer[0];
         public (GameObject go, ParticleSystem[] ps, float start, float end)[] controls = new (GameObject, ParticleSystem[], float, float)[0];
+        // перекрашенные в тон карты: цвета, которые пишет анимация, перекрашиваются каждый кадр
+        public Renderer[] tinted = new Renderer[0];
+    }
+
+    static Color Tint(Color c, Layer l)
+    {
+        Color.RGBToHSV(c, out _, out var s, out var v);
+        var n = Color.HSVToRGB(l.tintHue, l.tintSat >= 0f ? l.tintSat : s, v * l.tintVal, true);
+        n.a = c.a;
+        return n;
     }
 
     // камера доски HS (BoardCameras/Main Camera)
@@ -275,7 +293,26 @@ public static class HsRender
             if (ms.color.Length == 4) m.SetColor(ms.prop, new Color(ms.color[0], ms.color[1], ms.color[2], ms.color[3]));
             else m.SetFloat(ms.prop, ms.value);
         }
-        var live = new Live { spec = spec, root = go };
+        var tinted = new List<Renderer>();
+        if (spec.tintHue >= 0f)
+            foreach (var p in spec.tintNodes)
+            {
+                var t = go.transform.Find(p);
+                if (t == null) { Log("tint: not found " + p); continue; }
+                foreach (var r in t.GetComponentsInChildren<Renderer>(true))
+                {
+                    tinted.Add(r);
+                    var m = r.material;  // свой экземпляр
+                    foreach (var prop in spec.tintProps)
+                    {
+                        if (!m.HasProperty(prop)) continue;
+                        var c = m.GetColor(prop);
+                        m.SetColor(prop, Tint(c, spec));
+                        Log($"tint {r.name} {prop}: {c} -> {m.GetColor(prop)}");
+                    }
+                }
+            }
+        var live = new Live { spec = spec, root = go, tinted = tinted.ToArray() };
         live.under = spec.under.Select(p => go.transform.Find(p)).Where(t => t != null)
             .SelectMany(t => t.GetComponentsInChildren<Renderer>(true)).ToArray();
         live.dirs = spec.noTimeline ? new PlayableDirector[0] : focus.GetComponentsInChildren<PlayableDirector>(true);
@@ -384,8 +421,11 @@ public static class HsRender
         return cam;
     }
 
+    static MaterialPropertyBlock Mpb;
+
     static void Pose(List<Live> lives, double t)
     {
+        Mpb ??= new MaterialPropertyBlock();
         foreach (var l in lives)
         {
             double tau = t - l.spec.at;
@@ -398,6 +438,19 @@ public static class HsRender
             {
                 var cur = g.Where(c => c.at <= tau).OrderBy(c => c.at).LastOrDefault();
                 if (cur.clip != null) cur.clip.SampleAnimation(g.Key, (float)Math.Min(tau - cur.at, cur.clip.length));
+            }
+            // анимация пишет цвета материала в блок свойств рендерера — перекрасить и их
+            foreach (var r in l.tinted)
+            {
+                r.GetPropertyBlock(Mpb);
+                bool any = false;
+                foreach (var prop in l.spec.tintProps)
+                    if (Mpb.HasVector(prop) || Mpb.HasColor(prop))
+                    {
+                        Mpb.SetColor(prop, Tint(Mpb.GetColor(prop), l.spec));
+                        any = true;
+                    }
+                if (any) r.SetPropertyBlock(Mpb);
             }
             // свои дорожки HS: объект включён только на своём отрезке, частицы — с его начала
             foreach (var (cgo, cps, s0, s1) in l.controls)

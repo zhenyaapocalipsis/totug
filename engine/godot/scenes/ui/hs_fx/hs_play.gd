@@ -67,8 +67,9 @@ const SCRIPTS := {
 	# спелла; без полёта миньона HS — владелец 2026-10-24: сгусток дыма и огня с нажатия
 	# формируется в точке посадки, на 0.72 с «крик» — огненное кольцо с лучами, удар 1.5 с
 	# — дым и угли; свечение миньона HS и трещины под ним убраны) и за ударом
-	# Choice_Reveal Deathwing, как у Red Dragon (у
-	# Onyxia своего нет). Эффекта розыгрыша (m_PlayEffectDef) у Onyxia нет — дымки нет.
+	# Choice_Reveal Deathwing, как у Red Dragon (у Onyxia своего нет), выжигание чёрное
+	# (владелец 2026-10-24: в тоне карты). Эффекта розыгрыша (m_PlayEffectDef) у Onyxia
+	# нет — дымки нет.
 	"onyxia": {"frames": "onyxia", "sounds": "onyxia",
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# громкости — AudioPlayClipAction FSM (AudioSource 1)
@@ -79,7 +80,8 @@ const SCRIPTS := {
 	# (Timeline спелла): в точке посадки искра раскрывается в синий магический портал со
 	# спиралью и лучами, из него поднимается вспышка с кольцом и на 1.7 с падает вниз —
 	# удар, фиолетовая вспышка газа и искры; свечение миньона HS и трещины убраны. За
-	# ударом Choice_Reveal Deathwing, как у Red Dragon. Дымки нет (нет m_PlayEffectDef).
+	# ударом Choice_Reveal Deathwing, как у Red Dragon, выжигание синее (тон карты).
+	# Дымки нет (нет m_PlayEffectDef).
 	"malygos": {"frames": "malygos", "sounds": "malygos",
 		"card": {"face": "mini", "reveal": 2.2, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# FSM: звук портала с начала, два звука удара в 1.7 с (второй — pitch 1.1)
