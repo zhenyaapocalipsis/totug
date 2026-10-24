@@ -2,12 +2,12 @@
 
 Как делать анимации уникальных карт: что хочет владелец, как устроен конвейер, команды,
 проверки и ловушки. Собрано по работе над Red Dragon (Deathwing, Worldbreaker, этапы
-HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White Dragon и Rath Modar (HsFx-14..20,
+HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White Dragon, Rath Modar, Severin (HsFx-14..21,
 2026-10-24). Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово»).
 
 ## 0. Быстрый старт: новая карта по шагам
 
-Так сделаны Black, Blue, Green, White Dragon, Rath Modar. Пути `<R>` = `C:/tyrants of the underdark godot`,
+Так сделаны Black, Blue, Green, White Dragon, Rath Modar, Severin. Пути `<R>` = `C:/tyrants of the underdark godot`,
 `<SP>` = scratchpad сессии, `G` = `C:\godot\Godot_v4.7.2-stable_win64_console.exe`,
 `U` = `C:\Program Files\Unity\Hub\Editor\6000.6.6f1\Editor\Unity.exe`.
 

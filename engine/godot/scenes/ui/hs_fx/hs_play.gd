@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -122,6 +122,17 @@ const SCRIPTS := {
 		"cues": [[0.0, "Rhonin_CustomSpawn_Sound", 1.0]],
 		# MainCameraShakerAction: 0.2 по осям, 0.4 с, сила линейно 1 -> 0
 		"shakers": [[2.2, 2.6, 0.16, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Cho'gall, Twilight Chieftain (YOG_530) — Severin Silrajin:
+	# YOGFX_Cho'gallTwilightChieftain_CustomSummon (Timeline): две цепи бьют крестом в точку
+	# посадки, сверху падает фиолетовый луч, на 0.95 с удар — кольцо, всплеск сумерек и
+	# осколки цепей. Весь эффект под картой (всплеск закрывал её). Убраны миньон HS, его
+	# свечение и трещины; затемнение доски в фиолетовый (SetAmbientColor FSM) не берём.
+	# Выжигание фиолетовое в цвет эффекта (владелец 2026-10-24). Дымки нет.
+	"chogall": {"frames": "chogall", "sounds": "chogall",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		"cues": [[0.0, "ChoGallTwilightChieftain_CustomSummon_Sound", 1.0]],
+		# CameraShaker2: 0.2 по осям, сила линейно 1 -> 0
+		"shakers": [[0.933, 2.0, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
