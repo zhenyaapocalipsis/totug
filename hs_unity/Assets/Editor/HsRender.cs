@@ -60,6 +60,10 @@ public static class HsRender
         // частицы под своей дорожкой HS (ControlRandomizedTrack — без кода игры Timeline
         // её не играет): node, start, end — секунды от начала слоя
         public Control[] controls = new Control[0];
+        // узлы, которые FSM включает сам (ActivateGameObject): включить с начала слоя
+        public string[] show = new string[0];
+        // не играть Timeline префаба: всё по FSM — clip/clips и controls
+        public bool noTimeline;
     }
 
     [Serializable]
@@ -234,6 +238,11 @@ public static class HsRender
         if (spec.usePos) go.transform.position = V(spec.pos);
         Log($"layer {go.name} at {spec.at}");
 
+        foreach (var p in spec.show)
+        {
+            var t = go.transform.Find(p);
+            if (t != null) t.gameObject.SetActive(true); else Log("show: not found " + p);
+        }
         foreach (var p in spec.hide)
         {
             var t = go.transform.Find(p);
@@ -269,7 +278,7 @@ public static class HsRender
         var live = new Live { spec = spec, root = go };
         live.under = spec.under.Select(p => go.transform.Find(p)).Where(t => t != null)
             .SelectMany(t => t.GetComponentsInChildren<Renderer>(true)).ToArray();
-        live.dirs = focus.GetComponentsInChildren<PlayableDirector>(true);
+        live.dirs = spec.noTimeline ? new PlayableDirector[0] : focus.GetComponentsInChildren<PlayableDirector>(true);
         foreach (var d in live.dirs)
         {
             d.timeUpdateMode = DirectorUpdateMode.Manual;
@@ -321,6 +330,9 @@ public static class HsRender
             ctl.Add((t.gameObject, t.GetComponentsInChildren<ParticleSystem>(true), c.start, c.end));
         }
         live.controls = ctl.ToArray();
+        // частицы своих дорожек идут только по ним
+        var owned = new HashSet<ParticleSystem>(ctl.SelectMany(c => c.Item2));
+        live.loose = live.loose.Where(p => !owned.Contains(p)).ToArray();
         return live;
     }
 

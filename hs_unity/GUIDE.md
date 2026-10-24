@@ -87,6 +87,8 @@ layers: [{ prefab (guid), spell (корень внутри обёртки), at (
            hide [пути] (не рисовать), hidePS [пути] (без частиц, сетки остаются),
            under [пути] (дорожка «под картой» u###), clip / clips [{name, at}] (клипы аниматора по FSM),
            stopAt (частицы перестают рождаться), controls [{node, start, end}],
+           show [пути] (узлы, которые включает FSM: ActivateGameObject),
+           noTimeline (не играть Timeline префаба — всё по FSM: clip и controls),
            mats [{node, prop, value|color}] (правка свойств материала), measure [пути] }],
 textures: [{name (текстура HS), file (своя PNG)}]
 ```
@@ -104,6 +106,8 @@ FOV 34.87). Мир → экран 960x540: x ≈ 480 + (X+7.8)·44.1, y по z �
   [-hsr-frames 6,20,40] [-hsr-from N] [-hsr-mode probe]
 ```
 
+- Пути `-hsr-recipe`/`-hsr-out` давать **абсолютными** (относительные Unity считает от
+  `hs_unity/`, то есть `hs_unity/hs_unity/...`).
 - Сначала `-hsr-mode probe` (список узлов, материалов, поддержка шейдеров) и пробные
   кадры `-hsr-frames` в отдельную папку (`hs_unity/render/...`, не в игру).
 - Лист кадров поверх снимка игры: `tools/bake_sheet.gd -- --dir=… --frames=… --bg=<снимок
@@ -156,6 +160,13 @@ FOV 34.87). Мир → экран 960x540: x ≈ 480 + (X+7.8)·44.1, y по z �
   выключать. BC7 — в 4 раза больше места.
 - **Unity падает** на долгом запекании при `Texture2D.Apply` на каждый кадр — не выгружать
   кадры в видеопамять; `-hsr-from` дозапекает.
+- **Спелл по FSM, а не по Timeline** (Onyxia): корень `Root` выключен, его включает
+  FSM, частицы запускает FSM (ParticlePlayAction) — в рецепт `show`, `noTimeline`,
+  `clip` и `controls` по секундам FSM (Wait); частицы из `controls` идут только по ним.
+  Тряска FSM (CameraShakerAction, CameraShakeMgr) — случайная точка каждый кадр, длина
+  = время последнего ключа кривой: в HsPlay интервал 1/60, амплитуда ×0.8.
+- **Свечение миньона HS** (`Mesh_FlashGlow`, GenFX_AllyInPlay_MinionGlow) и трещины под
+  миньоном (`Mesh_Crack`) — макет HS, прятать.
 - **Якорь не по точке префаба**, а по видимому огню (`bake_centroid`).
 - **Камера:** тряска — по коду HS `ShakerHelper` (30 точек, интервал, двойной косинус,
   кривая силы), сдвигает доску (`camera_offset`) и эффекты, не дымку.

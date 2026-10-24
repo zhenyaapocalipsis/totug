@@ -1,0 +1,42 @@
+{
+  "deps": "../deps_onyxia.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "f90e04a4753f2c44d8720815e52cb25b",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "show": ["Root"],
+      "noTimeline": true,
+      "clip": "Onyxia_CustomSummon",
+      "controls": [
+        {"node": "Root/Token_Root/FX_Smoke", "start": 0.0, "end": 5.0},
+        {"node": "Root/Token_Root/FX_Scream", "start": 0.717, "end": 2.967},
+        {"node": "Root/Impact_Root/FX_Smoke", "start": 1.45, "end": 3.45}
+      ],
+      "hide": [
+        "Root/Token_Root/Mesh_FlashGlow",
+        "Root/Impact_Root/Mesh_Crack"
+      ],
+      "measure": ["Root/Token_Root", "Root/Impact_Root"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.52,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48400.png"}
+  ]
+}

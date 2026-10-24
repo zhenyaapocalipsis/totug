@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -63,6 +63,17 @@ const SCRIPTS := {
 		"shakers": [[0.0, 1.133, 0.08, [[0.0, 0.5], [0.3, 0.99], [0.51, 0.23], [1.0, 0.0]], 0.075],
 			[1.133, 2.533, 0.12, [[0.0, 0.5], [0.1, 0.99], [0.21, 0.98], [0.67, 0.15], [1.0, 0.0]], 0.075]],
 		"fog": ["worldbreaker_fog", 0.1]},
+	# Onyxia the Broodmother (CS3_032) — Black Dragon: ds1FX_Onyxia_CustomSummon (по FSM
+	# спелла: сгусток дыма и огня влетает слева и петлёй падает в центр доски, на 0.72 с
+	# «крик» — огненное кольцо с лучами, удар 1.5 с — дым и угли; свечение миньона HS и
+	# трещины под ним убраны) и за ударом Choice_Reveal Deathwing, как у Red Dragon (у
+	# Onyxia своего нет). Эффекта розыгрыша (m_PlayEffectDef) у Onyxia нет — дымки нет.
+	"onyxia": {"frames": "onyxia", "sounds": "onyxia",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# громкости — AudioPlayClipAction FSM (AudioSource 1)
+		"cues": [[0.0, "Onyxia_CustomSummon_Cast", 0.8], [1.5, "Onyxia_CustomSummon_Impact", 0.7]],
+		# CameraShakerAction FSM в ударе: 0.2 по осям, случайная точка каждый кадр, 0.56 с
+		"shakers": [[1.5, 2.06, 0.16, [[0.0, 1.0], [0.161, 0.9], [0.393, 0.27], [1.0, 0.0]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
