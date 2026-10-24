@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -100,6 +100,17 @@ const SCRIPTS := {
 	"ysera": {"frames": "ysera", "sounds": "ysera",
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		"cues": [[0.0, "YseraEmeraldAspect_CustomSummon_Sound", 1.0]]},
+	# Frost Queen Sindragosa (NX2_037) — White Dragon: NX2FX_FrostQueenSindragosa_CustomSummon
+	# (Timeline): в точке посадки раскрываются ледяные крылья, вьются синие ленты, к 1.33 с
+	# вспышка, затем снежные крылья, трещины и морозный туман расходятся по столу и тают
+	# (под картой, чтобы карта читалась). Убраны осколки, собирающиеся в овальный жетон
+	# миньона HS (владелец 2026-10-24). Выжигание бело-ледяное (владелец). Дымки нет.
+	"sindragosa": {"frames": "sindragosa", "sounds": "sindragosa",
+		"card": {"face": "mini", "reveal": 1.8, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# громкости — AudioSource префаба (0.8)
+		"cues": [[0.0, "FrostQueenSindragosa_CustomSummon_Cast_Sound", 0.8], [0.0, "FrostQueenSindragosa_CustomSummon_PeicesForm_Sound", 0.8],
+			[1.183, "FrostQueenSindragosa_CustomSummon_Tail_Sound", 0.8]],
+		"shakers": [[0.0, 3.117, 0.08, [[0.0, 0.0], [0.26, 0.3], [0.42, 0.77], [0.54, 0.49], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

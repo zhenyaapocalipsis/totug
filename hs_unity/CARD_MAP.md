@@ -36,7 +36,7 @@
 | Rath Modar (48425) | Rhonin (AT_009) | `Rhonin_CustomSpawn.prefab` | красный волшебник |
 | Red Dragon (48426) | Deathwing, Worldbreaker (CATA_190h) | `CATAFX_Deathwing_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-1..12) |
 | Severin Silrajin (48429) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | глава культа драконов, тёмный культист |
-| White Dragon (48433) | Frost Queen Sindragosa (NX2_037) | `NX2FX_FrostQueenSindragosa_CustomSummon.prefab` | белая (ледяная) драконица |
+| White Dragon (48433) | Frost Queen Sindragosa (NX2_037) | `NX2FX_FrostQueenSindragosa_CustomSummon.prefab` | СДЕЛАНО (HsFx-19) |
 
 ### demons
 

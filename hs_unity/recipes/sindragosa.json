@@ -1,0 +1,35 @@
+{
+  "deps": "../deps_sindragosa.txt",
+  "fps": 60.0,
+  "len": 5.6,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "2ef01bdcf26779e4ab57112e43a81035",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "hide": ["AnimRoot/Sindragosa_TokenRoot/TokenPieces"],
+      "under": ["AnimRoot/OnToken", "AnimRoot/CracksRoot", "AnimRoot/Mesh_IceQuad_Root_Left", "AnimRoot/Mesh_IceQuad_Root_Right", "AnimRoot/PS_GlowBacker", "AnimRoot/PS_DarkSpiritFire", "AnimRoot/PS_Bones", "AnimRoot/RibbonRoot"],
+      "measure": ["AnimRoot/Sindragosa_TokenRoot"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.35,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.606,
+      "tintSat": 0.12,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48433.png"}
+  ]
+}

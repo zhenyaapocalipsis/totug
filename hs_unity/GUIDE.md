@@ -2,12 +2,12 @@
 
 Как делать анимации уникальных карт: что хочет владелец, как устроен конвейер, команды,
 проверки и ловушки. Собрано по работе над Red Dragon (Deathwing, Worldbreaker, этапы
-HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green Dragon (HsFx-14..18,
+HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White Dragon (HsFx-14..19,
 2026-10-24). Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово»).
 
 ## 0. Быстрый старт: новая карта по шагам
 
-Так сделаны Black, Blue, Green Dragon. Пути `<R>` = `C:/tyrants of the underdark godot`,
+Так сделаны Black, Blue, Green, White Dragon. Пути `<R>` = `C:/tyrants of the underdark godot`,
 `<SP>` = scratchpad сессии, `G` = `C:\godot\Godot_v4.7.2-stable_win64_console.exe`,
 `U` = `C:\Program Files\Unity\Hub\Editor\6000.6.6f1\Editor\Unity.exe`.
 
@@ -50,7 +50,7 @@ HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green Drago
    0.45; кадров должно хватить до reveal + 1.95 с), `cues`, `shakers`.
 10. **Проверка в партии** (не только листы!): `tests/ui_shot.gd -- --scenario=hs_play
     --card=<cid> --gif=110 --out=../../hs_unity/render/x.png` (путь от res://),
-    `--wait=N` снимок (пиксель-арт виден только здесь), `--strip=...` соседние кадры;
+    `--wait=N` снимок через N кадров, не секунд (пиксель-арт виден только здесь), `--strip=...` соседние кадры;
     `tools/hs_smoothness.gd -- --card=<cid>` (не headless); тесты; коммит
     «Stage HsFx-N: …»; `CARD_MAP.md` — «СДЕЛАНО».
 
@@ -251,6 +251,10 @@ FOV 34.87). Мир → экран 960x540: x ≈ 480 + (X+7.8)·44.1, y по z �
 - **Меши жетона миньона HS** (`Card_InPlay_Ally_*_mesh`: овальный портрет, рамка
   элитного дракона) в эффекте — макет HS, прятать (Ysera: Token_FX — владелец заметил
   овал в портале). Перед запеканием искать в `hierarchy.txt`: `grep Card_InPlay`.
+- **Жетон HS из осколков** (Sindragosa: `Sindragosa_TokenRoot/TokenPieces`, меши
+  `Kun_*` — рамка и портрет миньона, разбитые на куски) собирается в овал жетона HS —
+  макет HS, владелец убрал (2026-10-24). Всё, что после удара стелется по столу (крылья,
+  трещины, туман), — в `under`, иначе карту не видно.
 - **Свечение миньона HS** (`Mesh_FlashGlow`, GenFX_AllyInPlay_MinionGlow) и трещины под
   миньоном (`Mesh_Crack`) — макет HS, прятать.
 - **Якорь не по точке префаба**, а по видимому огню (`bake_centroid`).
