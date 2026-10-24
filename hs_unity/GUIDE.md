@@ -2,12 +2,12 @@
 
 Как делать анимации уникальных карт: что хочет владелец, как устроен конвейер, команды,
 проверки и ловушки. Собрано по работе над Red Dragon (Deathwing, Worldbreaker, этапы
-HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White Dragon, Rath Modar, Severin, Council Member, Deathblade (HsFx-14..23,
+HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White Dragon, Rath Modar, Severin, Council Member, Deathblade, Inquisitor (HsFx-14..24,
 2026-10-24). Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово»).
 
 ## 0. Быстрый старт: новая карта по шагам
 
-Так сделаны Black, Blue, Green, White Dragon, Rath Modar, Severin, Council Member, Deathblade. Пути `<R>` = `C:/tyrants of the underdark godot`,
+Так сделаны Black, Blue, Green, White Dragon, Rath Modar, Severin, Council Member, Deathblade, Inquisitor. Пути `<R>` = `C:/tyrants of the underdark godot`,
 `<SP>` = scratchpad сессии, `G` = `C:\godot\Godot_v4.7.2-stable_win64_console.exe`,
 `U` = `C:\Program Files\Unity\Hub\Editor\6000.6.6f1\Editor\Unity.exe`.
 
@@ -236,6 +236,10 @@ FOV 34.87). Мир → экран 960x540: x ≈ 480 + (X+7.8)·44.1, y по z �
   крыльях — Il'gynoth): HsRender по умолчанию проигрывает самый длинный клип
   контроллера — жетон летит не туда, крыльев нет. В лог `animator X: <клипы>` смотреть:
   клипы не этой карты → в рецепт `"clip": "timeline"` (все аниматоры ведёт Timeline).
+- **Старая анимация Unity** (компонент `Animation`, клип legacy; FSM
+  `AnimationPlaythroughAction`, Whitemane): HsRender (с 2026-10-24) проигрывает её клип
+  с начала слоя — клип по умолчанию, первое состояние или `clip` рецепта. События клипа
+  (`SendEvent` playFX…) — в дампе клипа `m_Events` (time): по ним `controls` частиц.
 - **MainCameraShakerAction** (m_Amount, m_Time, m_Delay) = CameraShakeMgr.Shake с
   кривой Linear(0, 1, time, 0): в HsPlay `[[0, 1], [1, 0]]`. Высота тона звука FSM
   (m_Pitch) — 4-е число в `cues`.

@@ -354,6 +354,20 @@ public static class HsRender
             var clip = spec.clip != "" ? cs.FirstOrDefault(c => c.name == spec.clip) : cs.OrderByDescending(c => c.length).FirstOrDefault();
             if (clip != null) clips.Add((an.gameObject, clip, 0f));
         }
+        // старая анимация Unity (компонент Animation, клип legacy; Whitemane: FSM
+        // AnimationPlaythroughAction) — клип по умолчанию (или clip рецепта) с начала слоя
+        foreach (var la in focus.GetComponentsInChildren<Animation>(true))
+        {
+            la.playAutomatically = false;
+            la.Stop();
+            la.enabled = false;
+            var named = spec.clip != "" ? la[spec.clip] : null;
+            var lc = named != null ? named.clip : la.clip;
+            if (lc == null)
+                foreach (AnimationState st in la) { lc = st.clip; break; }
+            Log($"legacy animation {la.name}: {(lc != null ? $"{lc.name} {lc.length:0.###}s" : "-")}");
+            if (lc != null) clips.Add((la.gameObject, lc, 0f));
+        }
         live.clips = clips.ToArray();
         // частицы, которыми не управляет Timeline, проигрываются с начала слоя; зерно
         // случайности постоянное, иначе каждый кадр — другой набор частиц

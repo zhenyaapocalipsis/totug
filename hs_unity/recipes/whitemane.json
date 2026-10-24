@@ -1,0 +1,37 @@
+{
+  "deps": "../deps_whitemane.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "3997d354025abf747ba138ff82bfe570",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "controls": [
+        {"node": "Root/StripFire/FireL", "start": 0.0, "end": 0.4},
+        {"node": "Root/StripFire2/FireR", "start": 0.0, "end": 0.4},
+        {"node": "Root/GemFireBack", "start": 0.4, "end": 5.0}
+      ],
+      "hide": ["Root/GlowMinion"],
+      "under": ["Root"],
+      "measure": ["Root/GemBase", "Root/Shockwave"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.45,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48325.png"}
+  ]
+}
