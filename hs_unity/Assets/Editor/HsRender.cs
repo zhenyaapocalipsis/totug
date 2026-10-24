@@ -130,6 +130,8 @@ public static class HsRender
         public (GameObject go, ParticleSystem[] ps, float start, float end)[] controls = new (GameObject, ParticleSystem[], float, float)[0];
         // перекрашенные в тон карты: цвета, которые пишет анимация, перекрашиваются каждый кадр
         public Renderer[] tinted = new Renderer[0];
+        // спрятанные (hide): анимация HS может включать их снова (m_IsActive) — прячутся каждый кадр
+        public GameObject[] hidden = new GameObject[0];
     }
 
     static Color Tint(Color c, Layer l)
@@ -261,10 +263,13 @@ public static class HsRender
             var t = go.transform.Find(p);
             if (t != null) t.gameObject.SetActive(true); else Log("show: not found " + p);
         }
+        var hidden = new List<GameObject>();
         foreach (var p in spec.hide)
         {
             var t = go.transform.Find(p);
-            if (t != null) t.gameObject.SetActive(false); else Log("hide: not found " + p);
+            if (t == null) { Log("hide: not found " + p); continue; }
+            t.gameObject.SetActive(false);
+            hidden.Add(t.gameObject);
         }
         Transform focus = go.transform;
         if (spec.only != "")
@@ -312,7 +317,7 @@ public static class HsRender
                     }
                 }
             }
-        var live = new Live { spec = spec, root = go, tinted = tinted.ToArray() };
+        var live = new Live { spec = spec, root = go, tinted = tinted.ToArray(), hidden = hidden.ToArray() };
         live.under = spec.under.Select(p => go.transform.Find(p)).Where(t => t != null)
             .SelectMany(t => t.GetComponentsInChildren<Renderer>(true)).ToArray();
         live.dirs = spec.noTimeline ? new PlayableDirector[0] : focus.GetComponentsInChildren<PlayableDirector>(true);
@@ -439,6 +444,8 @@ public static class HsRender
                 var cur = g.Where(c => c.at <= tau).OrderBy(c => c.at).LastOrDefault();
                 if (cur.clip != null) cur.clip.SampleAnimation(g.Key, (float)Math.Min(tau - cur.at, cur.clip.length));
             }
+            foreach (var h in l.hidden)
+                if (h.activeSelf) h.SetActive(false);
             // анимация пишет цвета материала в блок свойств рендерера — перекрасить и их
             foreach (var r in l.tinted)
             {
