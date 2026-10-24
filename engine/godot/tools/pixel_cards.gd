@@ -592,12 +592,17 @@ var sheets_cache := {}
 var alt_art: Image = null
 var alt_face := Vector2i(-1, -1)
 var full_png := OUT
+## card_id -> [x, y]: вырезы мини из tools/mini_crop_editor (data/cards/mini_faces.json).
+var mini_faces := {}
 
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 	DirAccess.make_dir_recursive_absolute(OUT_MINI)
 	var all: Array = JSON.parse_string(FileAccess.get_file_as_string(ROOT + "engine/godot/data/cards/cards.json"))
+	var faces_path := ROOT + "engine/godot/data/cards/mini_faces.json"
+	if FileAccess.file_exists(faces_path):
+		mini_faces = JSON.parse_string(FileAccess.get_file_as_string(faces_path))
 
 	# "-- mini": перерисовать только мелкие лица, не трогая большие карты. Полный
 	# прогон долгий (подбор палитры для каждого арта), а разметку мелкой карты
@@ -1091,6 +1096,10 @@ func render_mini(c: Dictionary) -> Image:
 	var full := Image.load_from_file(full_png if alt_art != null else OUT + "%d.png" % int(c["card_id"]))
 	full.convert(Image.FORMAT_RGBA8)
 	var face: Vector2i = MINI_FACE.get(int(c["card_id"]), MINI_FACE_DEFAULT)
+	# Вырез, подогнанный вручную в tools/mini_crop_editor, главнее MINI_FACE.
+	var hand: Array = mini_faces.get(str(int(c["card_id"])), [])
+	if not hand.is_empty():
+		face = Vector2i(int(hand[0]), int(hand[1]))
 	if alt_art != null:
 		face = alt_face
 	# Чёрная обводка в пиксель по всему периметру арта, как на большой карте.
