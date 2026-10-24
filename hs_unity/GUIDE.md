@@ -2,17 +2,38 @@
 
 Как делать анимации уникальных карт: что хочет владелец, как устроен конвейер, команды,
 проверки и ловушки. Собрано по работе над Red Dragon (Deathwing, Worldbreaker, этапы
-HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White Dragon, Rath Modar, Severin, Council Member, Deathblade, Inquisitor, Masters of Sorcere (HsFx-14..26,
-2026-10-24). Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово»).
+HsFx-0..12, октябрь 2026), дополнено на остальных картах (HsFx-14..26, 2026-10-24/25).
+Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово»).
+
+## Где остановились (2026-10-25)
+
+- **Готово и задеплоено** (сборка 1792871252): вся колода dragons (Red, Black, Blue,
+  Green, White Dragon, Rath Modar, Severin) и из drow — Council Member (Lady Prestor),
+  Deathblade (Zayle, Shadow Cloak), Inquisitor (Darkbishop Benedictus), Masters of
+  Sorcere (Kael'thas). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
+- **Дальше по колоде drow:** Matron Mother (Queen Azshara, TSC_641), затем Weaponmaster
+  (Blademaster Samuro, BAR_078). После drow — следующую колоду называет владелец.
+- **Как владелец ведёт работу:** «делай дальше X, деплой потом» — коммит на каждую карту,
+  push + `bash server/deploy.sh` только по слову. Пробы (лист + выжигание крупно) до
+  полного запекания; спорное — вопросом с вариантами (AskUserQuestion). Тон выжигания
+  почти всегда **в цвет анимации** (не арта): мерить `tools/hs_hue.gd` по кадру пробы.
+- **Если эффект HS плохой** (только полёт миньона, слабая дымка, «выглядит странно»):
+  найти 2–3 замены по смыслу в `data/hs_legendary_summons.tsv`, которых нет в
+  `CARD_MAP.md` (`grep -F <prefab> CARD_MAP.md`), сделать пробы всех и дать выбрать;
+  строку в `CARD_MAP.md` заменить с причиной. Так заменены Valeera → Zayle и
+  Whitemane → Benedictus.
+- **Почти всегда весь эффект — в `under`** (корневые узлы префаба): иначе после удара
+  он закрывает карту. Жетон HS, свечение миньона и трещины — в `hide`.
 
 ## 0. Быстрый старт: новая карта по шагам
 
-Так сделаны Black, Blue, Green, White Dragon, Rath Modar, Severin, Council Member, Deathblade, Inquisitor, Masters of Sorcere. Пути `<R>` = `C:/tyrants of the underdark godot`,
+Так сделаны все карты из «Где остановились». Пути `<R>` = `C:/tyrants of the underdark godot`,
 `<SP>` = scratchpad сессии, `G` = `C:\godot\Godot_v4.7.2-stable_win64_console.exe`,
 `U` = `C:\Program Files\Unity\Hub\Editor\6000.6.6f1\Editor\Unity.exe`.
 
 1. **hsx:** `dotnet build hs_unity/tools/hsx -c Release -o <SP>/hsx` (dotnet в Program
-   Files есть). `hsx extract C:/Games/Hearthstone/Data/Win <SP>/x <CARD_ID>` — первый
+   Files есть; или скопировать готовую папку `hsx` с `cabmap.tsv` из scratchpad прошлой
+   сессии: `ls /c/Users/JEKADI~1/AppData/Local/Temp/claude/*/*/scratchpad/hsx/cabmap.tsv`). `hsx extract C:/Games/Hearthstone/Data/Win <SP>/x <CARD_ID>` — первый
    запуск строит `cabmap.tsv` (несколько минут), потом быстро. Смотреть `index.txt`
    (m_CustomSummonSpellPath — основной эффект; m_PlayEffectDef.m_SpellPath — дымка или
    что-то у героя), в папке префаба: `fsm_*.txt` (тайминги, звуки, тряска),
@@ -26,7 +47,8 @@ HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White
    hs_unity/deps_worldbreaker.txt > hs_unity/deps_<имя>.txt`.
 4. **Контур карты и тон:** `G --headless --path . --script res://tools/hs_bake_prep.gd --
    --card=<cid> --frac=0.519,0.761 --out=<R>/hs_unity/recipes/textures/echo_<cid>.png`;
-   `res://tools/card_tone.gd -- --cards=<cid> --debug`.
+   `res://tools/card_tone.gd -- --cards=<cid> --debug` (тон арта; владелец обычно
+   берёт цвет эффекта — `res://tools/hs_hue.gd -- <кадр пробы>`).
 5. **Рецепт** `hs_unity/recipes/<имя>.json` по образцу `onyxia.json` / `malygos.json` /
    `ysera.json`: слой эффекта (`pos [-7.59, 0, -7.01]` — посадка в (490, 365)) + слой
    Choice_Reveal (`at` = удар + ~0.02, тон `tintHue/Sat/Val`).
@@ -45,7 +67,8 @@ HsFx-0..12, октябрь 2026), дополнено на Black/Blue/Green/White
 8. **Звуки:** `.fsb` → wav: `hs_unity/tools/vgmstream/vgmstream-cli.exe -o out.wav
    in.fsb` (Windows-сборка vgmstream, только на этом ПК, в .gitignore) в
    `engine/godot/assets/hs_fx/<имя>/`; громкость — m_Volume FSM × AudioSource;
-   стингеры и VO не брать.
+   стингеры и VO не брать. vgmstream пишет «not found» на длинных путях scratchpad —
+   скопировать `.fsb` в короткий путь (`<SP>/a.fsb`) и конвертировать оттуда.
 9. **HsPlay:** `RECIPES[cid]`, `SCRIPTS[<имя>]` (card.reveal = слой Choice_Reveal +
    0.45; кадров должно хватить до reveal + 1.95 с), `cues`, `shakers`.
 10. **Проверка в партии** (не только листы!): `tests/ui_shot.gd -- --scenario=hs_play
