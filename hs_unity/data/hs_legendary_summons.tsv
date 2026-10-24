@@ -1,0 +1,1293 @@
+card_id	name	kind	spell_prefab	carddef_bundle
+DALA_BOSS_06dk	"Scourgelord" Dazzik	CustomSummon	DK_Garrosh_CustomSummon_FX.prefab	carddef_base_global-17e09d12-prefab-1.unity3d
+VAC_446	A. F. Kay	CustomSummon	VACFX_AFKay_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+SCH_538	Ace Hunter Kreen	CustomSummon	SCHFX_AceHunterKreen_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+CS3_001	Aegwynn, the Guardian	CustomSummon	CS3FX_AegwynnTheGuardian_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+LEG_CS3_001	Aegwynn, the Guardian	CustomSummon	CS3FX_AegwynnTheGuardian_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+EDR_430	Aessina	CustomSummon	EDRFX_Aessina_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+EDR_489	Agamaggan	CustomSummon	EDRFX_Agamaggan_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+TTN_092	Aggramar, the Avenger	CustomSummon	TTNFX_AggramarTheAvenger_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+TRL_329	Akali, the Rhino	CustomSummon	Akali_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+BT_713	Akama	CustomSummon	Akama_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-2.unity3d
+CORE_NEW1_010	Al'Akir the Windlord	CustomSummon	AlAkir_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+NEW1_010	Al'Akir the Windlord	CustomSummon	AlAkir_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+VAN_NEW1_010	Al'Akir the Windlord	CustomSummon	AlAkir_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-3.unity3d
+CATA_153	Al'Akir, Lord of Storms	CustomSummon	CATAFX_Al'Akir_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+WON_092h	Al'Akir, the Winds of Time	CustomSummon	WONFX_AlAkir_Hero_CustomSummon_Spell.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+BT_735	Al'ar	CustomSummon	Alar_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-2.unity3d
+EDR_493	Alara'shi	CustomSummon	EDR493_Alarashi_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+CORE_RLK_706	Alexandros Mograine	CustomSummon	RLKFX_AlexandrosMograine_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+RLK_706	Alexandros Mograine	CustomSummon	RLKFX_AlexandrosMograine_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+CATA_307	Alexstrasza, Guardian of Life	CustomSummon	CATAFX_AlexstraszaGaurdianofLife_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+TTN_717	Algalon the Observer	CustomSummon	TTNFX_Algalon_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+CRED_340	Allen Koo	CustomSummon	TIMEFX_TimetheifRafaam_CustomSpawn.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+BT_937	Altruis the Outcast	CustomSummon	Altruis_CustomSummon.prefab	carddef_base_global-ef57b03f-prefab-0.unity3d
+TOY_401t2	Altruis the Outcast	CustomSummon	Altruis_CustomSummon.prefab	carddef_base_global-ef57b03f-prefab-0.unity3d
+LOOT_108	Aluneth	CustomSummon	Aluneth_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-2.unity3d
+TTN_429	Aman'Thul	CustomSummon	TTNFX_Amanthul_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+TSC_067	Ambassador Faelin	CustomSummon	TSCFX_Faelin_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+FIR_907	Amirdrassil	CustomSummon	FIRFX_Amirdrassil_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-2.unity3d
+TTN_858	Amitus, the Peacekeeper	CustomSummon	TTNFX_Amitus_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+BE_143	Amitut, Keeper of Amitus	CustomSummon	BE_143_Amitut_Keeper_CustomSummon_FX.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+BE_852	Ammunae	CustomSummon	BE_852_AmmunaeConstructOfLife_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+CORE_RLK_919	Anachronos	CustomSummon	RLKFX_Anachronos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+RLK_919	Anachronos	CustomSummon	RLKFX_Anachronos_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-2.unity3d
+DRG_025	Ancharrr	CustomSummon	Weapon_Ancharrr_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+SW_092	Anetheron	CustomSummon	SWFX_Anetheron_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-3.unity3d
+ULD_288	Anka, the Buried	CustomSummon	AnkaTheBuried_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+RLK_659	Anub'Rekhan	CustomSummon	RLKFX_AnubRekhan_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+BAR_324	Apothecary Helbrim	CustomSummon	BARFX_ApothecaryHelbrum_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+LETL_818H	Apothecary Helbrim	CustomSummon	BARFX_ApothecaryHelbrum_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-18.unity3d
+CORE_REV_363	Ara'lon	CustomSummon	REVFX_Aralon_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_363	Ara'lon	CustomSummon	REVFX_Aralon_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_780	Ara'lon	CustomSummon	REVFX_Aralon_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+VAC_501	Aranna, Thrill Seeker	CustomSummon	VACFX_ArannatheExtreme_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+MEND_804	Arator the Redeemer	CustomSummon	MEND_804_AratorTheRedeemer_CustomSummon.prefab	carddef_base_global-0647217b-prefab-2.unity3d
+CORE_DAL_422	Arch-Villain Rafaam	CustomSummon	ArchVillianRafaam_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+DAL_422	Arch-Villain Rafaam	CustomSummon	ArchVillianRafaam_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+BE_055	Archaedas	CustomSummon	BEFX_Archeadas_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+TLC_811	Archaios	CustomSummon	TLCFX_Archaios_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+CORE_ICC_215	Archbishop Benedictus	CustomSummon	ArchBishopBenedictus_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_215	Archbishop Benedictus	CustomSummon	ArchBishopBenedictus_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+WC_035	Archdruid Naralex	CustomSummon	WCFX_Archdruid_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-7.unity3d
+GDB_128	Archimonde	CustomSummon	GDBFX_Archimonde_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+DAL_736	Archivist Elysiana	CustomSummon	ArchivistElysiana_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+FB_Champs_DAL_736	Archivist Elysiana	CustomSummon	ArchivistElysiana_CustomSummon.prefab	carddef_base_global-48ae08f3-prefab-13.unity3d
+GIL_691	Archmage Arugal	CustomSummon	ArchmageArugal_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+CATA_458	Archmage Kalec	CustomSummon	CATA_ArchmageKalec_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+DAL_558	Archmage Vargoth	CustomSummon	ArchmageVargoth_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+BT_136	Archspore Msshi'fn	CustomSummon	ArchsporeMsshifn_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_SCH_181	Archwitch Willow	CustomSummon	SCHFX_ArchwitchWillow_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+SCH_181	Archwitch Willow	CustomSummon	SCHFX_ArchwitchWillow_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+CORE_ICC_854	Arfus	CustomSummon	Arfus_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_854	Arfus	CustomSummon	Arfus_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+TTN_862	Argus, the Emerald Star	CustomSummon	TTNFX_ArgusTheEmeraldStar_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+CATA_155	Arisen Onyxia	CustomSummon	CATA_155_ArisenOnyxia_Fab_CustomSummon_FX.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+CORE_ULD_258	Armagedillo	CustomSummon	Armagedillo_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+ULD_258	Armagedillo	CustomSummon	Armagedillo_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+SC_754	Artanis	CustomSummon	SCFX_Artanis_CustomSummon_Super.prefab	carddef_base_global-abe88014-prefab-2.unity3d
+CORE_REV_937	Artificer Xy'mox	CustomSummon	REVFX_Xymox_Uninfused_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_787	Artificer Xy'mox	CustomSummon	REVFX_Xymox_Uninfused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_937	Artificer Xy'mox	CustomSummon	REVFX_Xymox_Uninfused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+REV_937t	Artificer Xy'mox	CustomSummon	REVFX_Xymox_Infused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+EDR_527	Ashamane	CustomSummon	EDRFX_Ashamane_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+GDB_455	Askara	CustomSummon	GDBFX_Askara_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+RLK_222	Astalor Bloodsworn	CustomSummon	RLKFX_AstalorBloodsworn_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+BT_028	Astromancer Solarian	CustomSummon	AstromancerSolarian_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+RLK_608	Asvedon, the Grandshield	CustomSummon	RLK_AsvedonGrandShield_Summon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+SW_045	Auctioneer Jaxon	CustomSummon	SWFX_Jaxon_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+CFM_807	Auctionmaster Beardo	CustomSummon	Beardo_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+CORE_WON_145	Avatar of Hearthstone	CustomSummon	WONFX_AvatarofHeathstone_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+WON_145	Avatar of Hearthstone	CustomSummon	WONFX_AvatarofHeathstone_CustomSummon.prefab	carddef_base_global-4864763f-prefab-0.unity3d
+AT_045	Aviana	CustomSummon	Aviana_CustomSpawn.prefab	carddef_base_global-61754518-prefab-0.unity3d
+FB_Champs_AT_045	Aviana	CustomSummon	Aviana_CustomSpawn.prefab	carddef_base_global-48ae08f3-prefab-12.unity3d
+WON_012	Aviana	CustomSummon	Aviana_CustomSpawn.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+EDR_895	Aviana, Elune's Chosen	CustomSummon	EDRFX_AvianaElunesChosen_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-2.unity3d
+CFM_902	Aya Blackpaw	CustomSummon	AyaBlackpaw_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+WON_136	Aya Blackpaw	CustomSummon	AyaBlackpaw_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+JAIL_504	Aya, Lotus Kingpin	CustomSummon	JAILFX_AyaLotusKingpin_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+JAIL_430	Azalina Soulsever	CustomSummon	JAIL_430_AzalinaSoulsever_FAB_CustomSummon_FX.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+GIL_198	Azalina Soulthief	CustomSummon	AzalinaSoulthief_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+CATA_151	Azshara, Ocean Lord	CustomSummon	CATAFX_LadyAzshara_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+TIME_852	Azure Queen Sindragosa	CustomSummon	TIMEFX_AzureQueenSindragosa_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+CORE_GIL_826	Baku the Mooneater	CustomSummon	BakutheMooneater_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+GIL_826	Baku the Mooneater	CustomSummon	BakutheMooneater_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+AV_284	Balinda Stonehearth	CustomSummon	AVFX_BalindaStonehearth_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+LETL_857H	Balinda Stonehearth	CustomSummon	AVFX_BalindaStonehearth_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-21.unity3d
+LT22_002H_01	Balinda Stonehearth	CustomSummon	AVFX_BalindaStonehearth_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-25.unity3d
+LT22_002H_02	Balinda Stonehearth	CustomSummon	AVFX_BalindaStonehearth_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-25.unity3d
+LT22_002H_03	Balinda Stonehearth	CustomSummon	AVFX_BalindaStonehearth_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-25.unity3d
+DRG_096	Bandersmosh	CustomSummon	Bandersmosh_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+BAR_551	Barak Kodobane	CustomSummon	BAR_551_BarakKodobane_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+BOM_08_Kodobane_004t	Barak Kodobane	CustomSummon	BAR_551_BarakKodobane_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-2.unity3d
+CORE_BAR_551	Barak Kodobane	CustomSummon	BAR_551_BarakKodobane_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+LETL_820H	Barak Kodobane	CustomSummon	BAR_551_BarakKodobane_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-18.unity3d
+DAL_546	Barista Lynchen	CustomSummon	BaristaLynchen_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+REV_788	Baroness Vashj	CustomSummon	REVFX_BaronessVashj_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_925	Baroness Vashj	CustomSummon	REVFX_BaronessVashj_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+MEND_046	Bashana Runetotem	CustomSummon	MENDFX_BashanaRunetotem_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+AV_257	Bearon Gla'shear	CustomSummon	AVFX_BearonGlashear_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+DINO_430	Beast Speaker Taka	CustomSummon	TLCFX_BeastSpeakerTaka_Custom_Summon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+BT_214	Beastmaster Leoroxx	CustomSummon	BeastmasterLeoroxx_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+AV_113	Beaststalker Tavish	CustomSummon	AVFX_TavishBeastStalker_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+CRED_347	Ben Paulsen	CustomSummon	VACFX_MistahVistah_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CRED_172	Bijan Beglari	CustomSummon	TSCFX_KotoriLightblade_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+GIL_152	Blackhowl Gunspire	CustomSummon	BlackhowlGunspire_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+TSC_216	Blackwater Behemoth	CustomSummon	TSCFX_TheBlackwaterBehemoth_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+BE_227	Blade of The Black Empire	CustomSummon	BEFX_BladeoftheBlackEmpire_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+TSC_032	Blademaster Okani	CustomSummon	TSCFX_BlademasterOkani_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+BAR_078	Blademaster Samuro	CustomSummon	BARFX_Samuro_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+DAL_064	Blastmaster Boom	CustomSummon	BlastmasterBoom_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+RLK_225	Blightfang	CustomSummon	RLK_225_BlightFang_Spawn.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+JAIL_446	Blood Doctor Thal'ena	CustomSummon	JAIL_446_BloodDoctorThal'ena_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+RLK_924	Blood Matriarch Liadrin	CustomSummon	RLKFX_BloodMatriachLiadrin_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-2.unity3d
+CORE_ICC_841	Blood-Queen Lana'thel	CustomSummon	BloodQueenLanathel_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_841	Blood-Queen Lana'thel	CustomSummon	BloodQueenLanathel_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+CORE_EX1_012	Bloodmage Thalnos	CustomSummon	BloodmageThalnos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+EX1_012	Bloodmage Thalnos	CustomSummon	BloodmageThalnos_CustomSummon.prefab	carddef_base_global-775a814d-prefab-0.unity3d
+VAN_EX1_012	Bloodmage Thalnos	CustomSummon	BloodmageThalnos_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-1.unity3d
+CORE_ICC_831	Bloodreaver Gul'dan	CustomSummon	DK_Guldan_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_831	Bloodreaver Gul'dan	CustomSummon	DK_Guldan_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+BG31_BOB	Bob the Bartender	CustomSummon	BG31_Bob The Bartender_CustomSummon.prefab	carddef_base_global-4864763f-prefab-0.unity3d
+CRED_242	Bobby Loya	CustomSummon	EX1FX_Ysera_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+SW_115	Bolner Hammerbeak	CustomSummon	SWFX_BolnerHammerbeak_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-3.unity3d
+CORE_ICC_858	Bolvar, Fireblood	CustomSummon	BolvarFireblood_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_858	Bolvar, Fireblood	CustomSummon	BolvarFireblood_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+RLK_591	Bonelord Frostwhisper	CustomSummon	RLKFX_BonelordFrostwhisper_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+WW_372	Boomboss Tho'grun	CustomSummon	WWFX_BoombossTho'grun_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+BOT_034	Boommaster Flark	CustomSummon	BoommasterFlark_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+TOY_906	Botface	CustomSummon	TOYFX_ToyFace_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+TLC_228	Bralma Searstone	CustomSummon	TLCFX_BralmaSearstone_Summon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+CRED_331	Brandon Su	CustomSummon	DragoncallerAlanna_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CORE_LOE_077	Brann Bronzebeard	CustomSummon	Brann_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+LOE_077	Brann Bronzebeard	CustomSummon	Brann_CustomSummon.prefab	carddef_base_global-19c61f11-prefab-1.unity3d
+TB_BaconUps_045t	Brann Bronzebeard [Murloc/Dragon]	CustomSummon	Brann_CustomSummon.prefab	carddef_base_global-19c61f11-prefab-1.unity3d
+CRED_559	Brian Kan	CustomSummon	LeeroyJenkins_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CORE_EX1_189	Brightwing	CustomSummon	Brightwing_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_189	Brightwing	CustomSummon	Brightwing_CustomSummon.prefab	carddef_base_global-775a814d-prefab-1.unity3d
+EDR_853	Broll Bearmantle	CustomSummon	EDR853_BrollBearmantle_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+BE_565	Broodqueen Sha'kar	CustomSummon	BEFX_ShakartheSupreme_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+TIME_020	Broxigar	CustomSummon	TIME_020_Broxigar_Fab_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+BAR_048	Bru'kan	CustomSummon	BARFX_BruKan_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+AV_258	Bru'kan of the Elements	CustomSummon	AVFX_BrukanElements_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+BT_781	Bulwark of Azzinoth	CustomSummon	Weapon_BulwarkOfAzzinoth_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-2.unity3d
+CORE_BT_781	Bulwark of Azzinoth	CustomSummon	Weapon_BulwarkOfAzzinoth_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+VAC_437	Buttons	CustomSummon	VACFX_Buttons_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+TRL_260	Bwonsamdi, the Dead	CustomSummon	Bwonsamdi_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+LT24_001H_01	C'Thun	CustomSummon	DMFFX_CthunTheShattered_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-37.unity3d
+LT24_001H_02	C'Thun	CustomSummon	DMFFX_CthunTheShattered_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-37.unity3d
+LT24_001H_03	C'Thun	CustomSummon	DMFFX_GhuunTheBloodGod_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-37.unity3d
+BE_013	C'Thun, Eye of the Empire	CustomSummon	BEFX_CthunEyeoftheEmpire_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+DMF_254	C'Thun, the Shattered	CustomSummon	DMFFX_CthunTheShattered_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+ETC_526	Cage Head	CustomSummon	ETCFX_CageHead_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+CORE_CATA_002	Calia Menethil	CustomSummon	CATAFX_CaliaMenethil_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+BAR_879	Cannonmaster Smythe	CustomSummon	BARFX_Smythe_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-2.unity3d
+CAP_106	Captain Crowley	CustomSummon	CAPFX_CaptainCrowley_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+AV_145	Captain Galvangar	CustomSummon	AVFX_CaptainGalvangar_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+TRL_126	Captain Hooktusk	CustomSummon	CaptainHooktusk_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+VAC_450	Carefree Cookie	CustomSummon	VAC_450_CarefreeCookie_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+AV_267	Caria Felsoul	CustomSummon	AVFX_CariaFelsoul_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+BAR_902	Cariel Roame	CustomSummon	BARFX_CarielRoame_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-2.unity3d
+VAC_449	Carress, Cabaret Star	CustomSummon	VAC_449_Carress_CabaretStar_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+CRED_254	Casey Clay	CustomSummon	BeastmasterLeoroxx_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CORE_DAL_721	Catrina Muerte	CustomSummon	CatrinaMuerte_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+DAL_721	Catrina Muerte	CustomSummon	CatrinaMuerte_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+CORE_EX1_573	Cenarius	CustomSummon	Cenarius_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_573	Cenarius	CustomSummon	Cenarius_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+VAN_EX1_573	Cenarius	CustomSummon	Cenarius_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+AV_403	Cera'thine Fleetrunner	CustomSummon	AVFX_Cerathine_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+JAIL_384	Chainbreaker Hogger	CustomSummon	JAILFX_ChainbreakerHogger_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+GIL_142	Chameleos	CustomSummon	Chameleos_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+JAIL_860	Chef Neth'rek	CustomSummon	JAILFX_ChefNeth'rek_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+DAL_554	Chef Nomi	CustomSummon	ChefNomi_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+DRG_104	Chenvaala	CustomSummon	Shenvala_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+VAC_957	Chillin' Vol'jin	CustomSummon	VACFX_ChillinVoljin_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+WON_105	Cho'gall	CustomSummon	DMFFX_SaygeFortuneTeller_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+CATA_726	Cho'gall, Mastermind	CustomSummon	CATAFX_ChogallMastermind_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+YOG_530	Cho'gall, Twilight Chieftain	CustomSummon	YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-3.unity3d
+BRM_031	Chromaggus	CustomSummon	Chromaggus_CustomSummon.prefab	carddef_base_global-74f6be89-prefab-1.unity3d
+CATA_432	Chromatus	CustomSummon	CATAFX_Chromatus_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+TIME_103	Chromie	CustomSummon	TIME_Chromie_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+WON_041	Chromie, Timehopper	CustomSummon	TOTFX_Chromie_CustomSpawn.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+END_006	Chronikar	CustomSummon	ENDFX_Chronikar_CustomSummon.prefab	carddef_base_global-a312696e-prefab-2.unity3d
+TIME_064	Chrono-Lord Deios	CustomSummon	TIMEFX_ChronoLordDeios_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TIME_714	Chrono-Lord Epoch	CustomSummon	TIMEFX_ChronoLordEpoch_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+TIME_032	Chronogor	CustomSummon	TIMEFX_Chronogor_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TOY_913	Ci'Cigi	CustomSummon	TOYFX_Cicigi_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+TLC_110	City Chief Esho	CustomSummon	TLCFX_CityChiefEsho_CustomSummon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+CRED_188	Cliff Halasz	CustomSummon	Pyros_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+UNG_836	Clutchmother Zavas	CustomSummon	ClutchmotherZavas_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+TSC_026	Colaque	CustomSummon	TSCFX_Colaque_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+TOY_703	Colifero the Artist	CustomSummon	TOYFX_ColiferoTheArtist_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+ULD_721	Colossus of the Moon	CustomSummon	ColossusOfTheMoon_CustomSummon.prefab	carddef_base_global-9f363830-prefab-5.unity3d
+JAIL_397	Commander Beatrix	CustomSummon	JAIL_397_HighCommanderBeatrix_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+CATA_591	Commander Geddon	CustomSummon	CATAFX_CommanderGeddon_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+DAL_573	Commander Rhyssa	CustomSummon	CommanderRhyssa_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+TSC_087	Commander Sivara	CustomSummon	TSCFX_ComanderSivara_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+TID_719	Commander Ulthok	CustomSummon	TIDFX_CommanderUlthok_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+DED_522	Cookie the Cook	CustomSummon	HSFX_CookietheCook_Customsummon.prefab	carddef_base_global-40cb6b8d-prefab-1.unity3d
+CORE_SW_080	Cornelius Roame	CustomSummon	SWFX_Cornelius_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+SW_080	Cornelius Roame	CustomSummon	SWFX_Cornelius_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+GIL_578	Countess Ashmore	CustomSummon	CountessAshmore_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+TSC_937	Crabatoa	CustomSummon	TSCFX_Crabatoa_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+VAC_506	Cruise Captain Lora	CustomSummon	VACFX_CruiseCaptain_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+BOT_236	Crystalsmith Kangor	CustomSummon	CrystalsmithKangor_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+ETC_395	DJ Manastorm	CustomSummon	ETCFX_DJManastorm_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+TRL_537	Da Undatakah	CustomSummon	DaUndatakah_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-3.unity3d
+RLK_539	Dar'Khan Drathir	CustomSummon	RLKFX_DarkhanDrathir_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+CORE_GIL_547	Darius Crowley	CustomSummon	DariusCrowley_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+GILA_600h2	Darius Crowley	CustomSummon	Hero_Play_CustomSummon_FX.prefab	carddef_base_global-d2f4bda7-prefab-0.unity3d
+GIL_547	Darius Crowley	CustomSummon	DariusCrowley_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+TB_MagicalGuardians_Malygos	Dark Flight Malygos	CustomSummon	MalygosAspectOfMagic_CustomSummon.prefab	carddef_base_global-48ae08f3-prefab-31.unity3d
+YOP_007	Dark Inquisitor Xanesh	CustomSummon	YOPFX_DarkInquisitorXanesh_CustomSummon.prefab	carddef_base_global-384202c8-prefab-3.unity3d
+ULD_168	Dark Pharaoh Tekahn	CustomSummon	DarkPharaohTekahn_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+CORE_SW_448	Darkbishop Benedictus	CustomSummon	SWFX_DarkBishopBenedictus_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+SW_448	Darkbishop Benedictus	CustomSummon	SWFX_DarkBishopBenedictus_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-3.unity3d
+CRED_215	Dave Berard	CustomSummon	AVFX_BrukanElements_CustomSummon_Super.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CRED_251	David Carlock	CustomSummon	AVFX_DrekThar_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CRED_153	David Hura	CustomSummon	WCFX_Archdruid_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+BAR_329	Death Speaker Blackthorn	CustomSummon	BARFX_DeathSpeakerBlackthorn_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+LEG_RLK_082	Deathbringer Saurfang	CustomSummon	RLKFX_DeathbringerSaurfang_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+RLK_082	Deathbringer Saurfang	CustomSummon	RLKFX_DeathbringerSaurfang_CustomSummon.prefab	carddef_base_global-6aa9ba6a-prefab-0.unity3d
+RLK_Prologue_RLK_082	Deathbringer Saurfang	CustomSummon	RLKFX_DeathbringerSaurfang_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+CORE_ICC_828	Deathstalker Rexxar	CustomSummon	DK_Rexxar_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_828	Deathstalker Rexxar	CustomSummon	DK_Rexxar_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+TB_Zombeast_H	Deathstalker Rexxar	CustomSummon	DK_Rexxar_CustomSummon_FX.prefab	carddef_base_global-48ae08f3-prefab-33.unity3d
+LT22_013H_02	Deathwing	CustomSummon	Deathwing_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-27.unity3d
+NEW1_030	Deathwing	CustomSummon	Deathwing_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+VAN_NEW1_030	Deathwing	CustomSummon	Deathwing_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-3.unity3d
+CS3_036	Deathwing the Destroyer	CustomSummon	NEW1FX_Deathwing_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+LEG_CS3_036	Deathwing the Destroyer	CustomSummon	NEW1FX_Deathwing_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+CORE_DRG_026	Deathwing, Mad Aspect	CustomSummon	DeathwingMadAspect_CustomSummon_GroundBurst.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+DRG_026	Deathwing, Mad Aspect	CustomSummon	DeathwingMadAspect_CustomSummon_GroundBurst.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+CATA_190h	Deathwing, Worldbreaker	CustomSummon	CATAFX_Deathwing_CustomSummon_Super.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+CORE_REV_934	Decimator Olgra	CustomSummon	REVFX_DecimatorOlgra_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_783	Decimator Olgra	CustomSummon	REVFX_DecimatorOlgra_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_934	Decimator Olgra	CustomSummon	REVFX_DecimatorOlgra_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+DEEP_020	Deepminer Brann	CustomSummon	WWFX_DeepminerBrann_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-2.unity3d
+CORE_MAW_011	Defense Attorney Nathanos	CustomSummon	MAWFX_DefenseAttorneyNathanos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+MAW_011	Defense Attorney Nathanos	CustomSummon	MAWFX_DefenseAttorneyNathanos_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+CRED_303	Dennis Pan	CustomSummon	REVFX_MurlocHolmes_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+RLK_538	Devourer of Souls	CustomSummon	RLKFX_DevourerofSouls_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+ULD_156	Dinotamer Brann	CustomSummon	DinotamerBrann_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+GDB_117	Dirdra, Rebel Captain	CustomSummon	GCBFX_Dirada_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+SCH_126	Disciplinarian Gandling	CustomSummon	SCHFX_DisciplinarianGandling_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+WW_010	Doctor Holli'dae	CustomSummon	WWFX_WitchDoctorHollide_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+SCH_425	Doctor Krastinov	CustomSummon	Krastinov_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+GIL_620	Dollmaster Dorian	CustomSummon	DollmasterDorian_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+CRED_144	Dominic Calkosz	CustomSummon	Kalecgos_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CFM_685	Don Han'Cho	CustomSummon	HonCho_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+WON_137	Don Han'Cho	CustomSummon	HonCho_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-1.unity3d
+BOT_238	Dr. Boom, Mad Genius	CustomSummon	DrBoom_CustomSummon_FX.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+BOT_433	Dr. Morrigan	CustomSummon	DrMorrigan_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+TOY_830	Dr. Stitchensew	CustomSummon	TOYFX_DrStitchensew_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+LOOT_209	Dragon Soul	CustomSummon	DragonSoul_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-2.unity3d
+CORE_DRG_256	Dragonbane	CustomSummon	Dragonbane_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+DRG_256	Dragonbane	CustomSummon	Dragonbane_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+LOOT_535	Dragoncaller Alanna	CustomSummon	DragoncallerAlanna_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+DRG_089	Dragonqueen Alexstrasza	CustomSummon	DragonqueenAlexstrasza_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+BG_DRG_235	Dragonrider Talritha	CustomSummon	DragonriderTalritha_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+BG_DRG_235_G	Dragonrider Talritha	CustomSummon	DragonriderTalritha_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_235	Dragonrider Talritha	CustomSummon	DragonriderTalritha_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+AV_316	Dreadlich Tamsin	CustomSummon	AVFX_DreadlichTamsin_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+WORK_027	Dreamplanner Zephrys	CustomSummon	WORKFX_ZephrysOverworked_CustomSummon.prefab	carddef_base_global-23b69986-prefab-2.unity3d
+AV_100	Drek'Thar	CustomSummon	AVFX_DrekThar_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+LT22_003H_01	Drek'Thar	CustomSummon	AVFX_DrekThar_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-25.unity3d
+LT22_003H_02	Drek'Thar	CustomSummon	AVFX_DrekThar_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-25.unity3d
+LT22_003H_03	Drek'Thar	CustomSummon	AVFX_DrekThar_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-25.unity3d
+BE_703	Drest'agath	CustomSummon	BE_703_Drestagath_CustomSummon_FX.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+WW_417	Drilly the Kid	CustomSummon	WWFX_DrillytheKid_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+GIL_800	Duskfallen Aviana	CustomSummon	DuskfallenAviana_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+ETC_080	E.T.C., Band Manager	CustomSummon	ETCFX_ETCBandManager_CustomSummon.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+DMF_529	E.T.C., God of Metal	CustomSummon	DMF_ETCGodOfMetal_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+CATA_553	Ebyssian	CustomSummon	CATAFX_533_Ebyssian_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+CATA_553t	Ebyssian	CustomSummon	CATAFX_533t_Ebyssian_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+DED_510	Edwin, Defias Kingpin	CustomSummon	DEDFX_EdwinDefiasKingpin_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-1.unity3d
+LT21_01H_02	Edwin, Defias Kingpin	CustomSummon	DEDFX_EdwinDefiasKingpin_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-23.unity3d
+RLK_658	Elder Nadox	CustomSummon	RLKFX_ElderNadox_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+BOT_411	Electra Stormsurge	CustomSummon	ElectraStormsurge_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+CORE_LOE_079	Elise Starseeker	CustomSummon	Elise_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+LOE_079	Elise Starseeker	CustomSummon	Elise_CustomSummon.prefab	carddef_base_global-19c61f11-prefab-1.unity3d
+ULD_139	Elise the Enlightened	CustomSummon	Elise_Uldum_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+TLC_100	Elise the Navigator	CustomSummon	TLCFX_EliseTheNavigator_CustomSummon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+UNG_851	Elise the Trailblazer	CustomSummon	ElisetheTrailblazer_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+WW_392	Elise, Badlands Savior	CustomSummon	WWFX_EliseBadlandsSavior_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+JAM_037	Elite Tauren Champion	CustomSummon	ETCFX_EliteTaurenChampion_CustomSummon.prefab	carddef_base_global-786af98e-prefab-2.unity3d
+VAC_426	Eliza Goreblade	CustomSummon	VAC_ElizaGoreBlade_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+GIL_128	Emeriss	CustomSummon	Emeriss_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+BRM_028	Emperor Thaurissan	CustomSummon	ThaurissanMinion_CustomSummon.prefab	carddef_base_global-74f6be89-prefab-1.unity3d
+WON_133	Emperor Thaurissan	CustomSummon	ThaurissanMinion_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+LT23_815H	Empress Shek'zara	CustomSummon	DMFFX_GrandEmpressShakzara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-36.unity3d
+TLC_106	Endbringer Umbra	CustomSummon	TLCFX_EndbringerUmbra_CustomSummon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+END_037	Endtime Murozond	CustomSummon	ENDFX_EndtimeMurozond_CustomSummon.prefab	carddef_base_global-a312696e-prefab-2.unity3d
+TLC_841	Entomologist Toru	CustomSummon	TLCFX_Toru_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+YOP_004	Envoy Rustwix	CustomSummon	YOPFX_EnvoyRustwix_CustomSummon.prefab	carddef_base_global-384202c8-prefab-3.unity3d
+TTN_903	Eonar, the Life-Binder	CustomSummon	TTNFX_EonarTheLifebinder_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+CRED_255	Eric Dobbs	CustomSummon	SwampKingDred_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CRED_220	Eric Larson	CustomSummon	NEW1FX_Deathwing_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+TIME_435	Eternus	CustomSummon	TIME_Eternus_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+GDB_235	Exarch Akama	CustomSummon	GDBFX_ExarchAkama_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+GDB_136	Exarch Hataaru	CustomSummon	GDBFX_ExarchHataaru_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+GDB_470	Exarch Maladaar	CustomSummon	GDBFX_ExarchMaladaar_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+GDB_846	Exarch Naielle	CustomSummon	GDB_846_ExarchNaielle_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+GDB_856	Exarch Othaar	CustomSummon	GDBFX_ExarchOthaar_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+GIL_677	Face Collector	CustomSummon	FaceCollector_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+CORE_EDR_003	Falric	CustomSummon	EDRFX_Falric_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+BG_OG_044	Fandral Staghelm	CustomSummon	Fandral_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-1.unity3d
+BG_OG_044_G	Fandral Staghelm	CustomSummon	Fandral_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-1.unity3d
+CORE_OG_044	Fandral Staghelm	CustomSummon	Fandral_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+OG_044	Fandral Staghelm	CustomSummon	Fandral_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-0.unity3d
+TB_World_003	Fandral Staghelm	CustomSummon	Fandral_CustomSummon.prefab	carddef_base_global-48ae08f3-prefab-48.unity3d
+JAM_030	Fanottem, Lord of the Opera	CustomSummon	ETCFX_IrekkLordOfTheOpera_CustomSummon.prefab	carddef_base_global-786af98e-prefab-2.unity3d
+GDB_447	Farseer Nobundo	CustomSummon	GDBFX_FarsserNobundo_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+TIME_013	Farseer Wo	CustomSummon	TIME_FarseerWo_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+DAL_607	Fel Lord Betrug	CustomSummon	FelLordBetrug_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+Story_09_FelLordBetrug	Fel Lord Betrug	CustomSummon	FelLordBetrug_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+RLK_215	Felerin, the Forgotten	CustomSummon	RLKFX_FelerinTheForgotten_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+BE_781	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t1	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t10	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t11	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t12	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t13	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t14	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t15	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t16	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t17	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t18	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t19	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t2	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t3	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t4	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t5	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t6	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t7	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t8	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BE_781t9	Fetid Devourer	CustomSummon	BEFX_FetidDevourer_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+CFM_344	Finja, the Flying Star	CustomSummon	Finja_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+CORE_CFM_344	Finja, the Flying Star	CustomSummon	Finja_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+BAR_860	Firemancer Flurgl	CustomSummon	BARFX_860_FiremancerFlurgl_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-2.unity3d
+TTN_716	Flame Behemoth	CustomSummon	TTNFX_FlameBehemoth_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+SW_079	Flightmaster Dungar	CustomSummon	SWFX_FlightmasterDungar_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+CORE_DRG_037	Flik Skyshiv	CustomSummon	FlikSkyshiv_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+DRG_037	Flik Skyshiv	CustomSummon	FlikSkyshiv_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+WW_379	Flint Firearm	CustomSummon	WWFX_FlintFirearm_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+BOT_434	Flobbidinous Floop	CustomSummon	GreenOoze_CustomSpawn.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+EDR_209	Forest Lord Cenarius	CustomSummon	EDRFX_ForestLordCenarius_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+SCH_614	Forest Warden Omu	CustomSummon	SCHFX_WardenOmu_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+BE_856	Freya, Emerald Architect	CustomSummon	BEFX_FreyaEmeraldArchitect_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+TTN_940	Freya, Keeper of Nature	CustomSummon	TTNFX_Freya_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+DRG_257	Frizz Kindleroost	CustomSummon	FrizzKindleroost_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+CORE_ICC_833	Frost Lich Jaina	CustomSummon	DK_Jaina_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_833	Frost Lich Jaina	CustomSummon	DK_Jaina_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+NX2_037	Frost Queen Sindragosa	CustomSummon	NX2FX_FrostQueenSindragosa_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+CORE_RLK_086	Frostmourne	CustomSpawn	Weapon_Frostmourne_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+CORE_RLK_086	Frostmourne	CustomSummon	Weapon_Frostmourne_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+RLK_086	Frostmourne	CustomSpawn	Weapon_Frostmourne_CustomSummon.prefab	carddef_base_global-6aa9ba6a-prefab-0.unity3d
+RLK_086	Frostmourne	CustomSummon	Weapon_Frostmourne_CustomSummon.prefab	carddef_base_global-6aa9ba6a-prefab-0.unity3d
+RLK_Prologue_Frostmourne_001	Frostmourne	CustomSpawn	Weapon_Frostmourne_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-2.unity3d
+RLK_Prologue_Frostmourne_001	Frostmourne	CustomSummon	Weapon_Frostmourne_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-2.unity3d
+WW_825	Fye, the Setting Sun	CustomSummon	WWFX_FyeTheSettingSun_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+FIR_959	Fyrakk the Blazing	CustomSummon	FIRFX_FyrakkTheBlazing_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-2.unity3d
+BE_287	G'huun	CustomSummon	BE_287_GhuunTheCataStrophic_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+DMF_056	G'huun the Blood God	CustomSummon	DMFFX_GhuunTheBloodGod_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+Story_11_Gaia	Gaia, the Techtonic	CustomSummon	TSCFX_GaiaTheTechtonic_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-1.unity3d
+TSC_029	Gaia, the Techtonic	CustomSummon	TSCFX_GaiaTheTechtonic_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+DRG_600t3	Galakrond, Azeroth's End	CustomSummon	Hero_Galakrond_Warlock_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_610t3	Galakrond, Azeroth's End	CustomSummon	Hero_Galakrond_Rogue_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_620t3	Galakrond, Azeroth's End	CustomSummon	Hero_Galakrond_Shaman_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_650t3	Galakrond, Azeroth's End	CustomSummon	Hero_Galakrond_Warrior_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_660t3	Galakrond, Azeroth's End	CustomSummon	Hero_Galakrond_Priest_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_600t2	Galakrond, the Apocalypse	CustomSummon	Hero_Galakrond_Warlock_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_610t2	Galakrond, the Apocalypse	CustomSummon	Hero_Galakrond_Rogue_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_620t2	Galakrond, the Apocalypse	CustomSummon	Hero_Galakrond_Shaman_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_650t2	Galakrond, the Apocalypse	CustomSummon	Hero_Galakrond_Warrior_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_660t2	Galakrond, the Apocalypse	CustomSummon	Hero_Galakrond_Priest_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_610	Galakrond, the Nightmare	CustomSummon	Hero_Galakrond_Rogue_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_620	Galakrond, the Tempest	CustomSummon	Hero_Galakrond_Shaman_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_650	Galakrond, the Unbreakable	CustomSummon	Hero_Galakrond_Warrior_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_660	Galakrond, the Unspeakable	CustomSummon	Hero_Galakrond_Priest_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DRG_600	Galakrond, the Wretched	CustomSummon	Hero_Galakrond_Warlock_CustomSummon_FX.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+TOY_524	Game Master Nemsy	CustomSummon	TOYFX_GrandMasterNemsy_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TIME_875	Garona Halforcen	CustomSummon	TIME_875_Garona_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+TIME_009	Gelbin of Tomorrow	CustomSummon	TIMEFX_GelbinofTomorrow_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+YOG_500	General Vezax	CustomSummon	YOGFX_Vezax_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-3.unity3d
+CORE_GIL_692	Genn Greymane	CustomSummon	GennGreymane_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+GIL_692	Genn Greymane	CustomSummon	GennGreymane_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+CATA_615	Genn, Cursed King	CustomSummon	CATAFX_GennCursedKing_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+CATA_615t	Genn, Worgen King	CustomSummon	CATAFX_GennWorgenKing_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+CFM_808	Genzo, the Shark	CustomSummon	Genzo_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+LOOT_519	Geosculptor Yip	CustomSummon	GeosculptorYip_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+TSC_962	Gigafin	CustomSummon	TSCFX_Gigafin_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+GIL_618	Glinda Crowskin	CustomSummon	GlindaCrowskin_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+TSC_639	Glugg the Gulper	CustomSummon	TSCFX_GluggTheGulper_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+CORE_TOY_100	Gnomelia, S.A.F.E. Pilot	CustomSummon	TOYFX_GnomeliaSafePilot_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+TOY_100	Gnomelia, S.A.F.E. Pilot	CustomSummon	TOYFX_GnomeliaSafePilot_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+CAP_405	Godfather Kazakus	CustomSummon	CAPFX_GodfatherKazakus_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+JAIL_509	Godfrey the Betrayer	CustomSummon	JAILFX_Godfrey_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+EDR_480	Goldrinn	CustomSummon	EDR_Goldrinn_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+TTN_800	Golganneth, the Thunderer	CustomSummon	TTNFX_Golganneth_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+DED_525	Goliath, Sneed's Masterpiece	CustomSummon	DEDFX_GoliathSneedsMasterpiece_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-1.unity3d
+TRL_241	Gonk, the Raptor	CustomSummon	Gonk_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+VAC_955	Gorgonzormu	CustomSummon	VACFX_Gorgonzormu_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+GDB_842	Gorm the Worldeater	CustomSummon	GDBFX_GormtheWorldeater_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+DRG_319	Goru the Mightree	CustomSummon	GoruTheMightree_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+TRL_409	Gral, the Shark	CustomSummon	GralTheShark_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+DMF_516	Grand Empress Shek'zara	CustomSummon	DMFFX_GrandEmpressShakzara_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+YOD_035	Grand Lackey Erkh	CustomSummon	GrandLackeyErkh_CustomSummon.prefab	carddef_base_global-a9057597-prefab-1.unity3d
+RLK_803	Grand Magister Rommath	CustomSummon	RLKFX_GrandMagisterRommath_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+SW_113	Grand Magus Antonidas	CustomSummon	SWFX_GrandMagusAntonidas_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-3.unity3d
+CORE_DMF_709	Grand Totem Eys'or	CustomSummon	DMF_GrandTotemAmikwe_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+DMF_709	Grand Totem Eys'or	CustomSummon	DMF_GrandTotemAmikwe_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+CORE_DMF_734	Greybough	CustomSummon	DMFFX_GreyBough_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+DMF_734	Greybough	CustomSummon	DMFFX_GreyBough_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+TRL_096	Griftah	CustomSummon	Griftah_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+VAC_959	Griftah, Trusted Vendor	CustomSummon	VACFX_GriftahShopVendor_CustomSummon.prefab	carddef_base_global-23b69986-prefab-2.unity3d
+LOOT_358	Grumble, Worldshaker	CustomSummon	Grumble_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+SC_013	Grunty	CustomSummon	SC_013_Grunty_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+BAR_720	Guff Runetotem	CustomSummon	BARFX_GuffruneTotem_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+WW_401	Gunslinger Kurtrus	CustomSummon	WWFX_GunslingerKurtrus_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+CORE_ICC_835	Hadronox	CustomSummon	Hadronox_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_835	Hadronox	CustomSummon	Hadronox_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+TOY_504	Hagatha the Fabled	CustomSummon	TOYFX_HagathaSlimeShaper_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+GIL_504	Hagatha the Witch	CustomSummon	Hagatha_CustomSummon_FX.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+TRL_541	Hakkar, the Soulflayer	CustomSummon	Hakkar_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-3.unity3d
+CORE_TRL_900	Halazzi, the Lynx	CustomSummon	HalazziTheLynx_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+TRL_900	Halazzi, the Lynx	CustomSummon	HalazziTheLynx_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-3.unity3d
+RLK_820	Halduron Brightwing	CustomSummon	RLKFX_HalduronBrightwing_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+ONY_007	Haleh, Matron Protectorate	CustomSummon	ONYFX_HalehMatronProtectorate_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-4.unity3d
+CORE_REV_829	Halkias	CustomSummon	REVFX_Halkias_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_829	Halkias	CustomSummon	REVFX_Halkias_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+ETC_399	Halveria Darkraven	CustomSummon	ETCFX_HalveriaDarkraven_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+VAC_340	Hamm, the Hungry	CustomSummon	VACFX_HammytheHungry_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+EDR_845	Hamuul Runetotem	CustomSummon	EDRFX_HamuulRunetotem_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+CRED_375	Hannah Thomas	CustomSummon	TLCFX_EliseTheNavigator_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+BOT_555	Harbinger Celestia	CustomSummon	HarbingerCelestia_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+CORE_GIFT_01	Harth Stonebrew	CustomSummon	GIFTFX_HarthStonebrew_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+GIFT_01	Harth Stonebrew	CustomSummon	GIFTFX_HarthStonebrew_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+SCH_224	Headmaster Kel'Thuzad	CustomSummon	HeadmasterKelthuzad_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+ETC_334	Heartbreaker Hedanis	CustomSummon	ETCFX_HeartbreakerHedanis_CustomSummon.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+TSC_658	Hedra the Heretic	CustomSummon	TSCFX_Klessa_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+DAL_417	Heistbaron Togwaggle	CustomSummon	HeistbaronTogwaggle_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+TTN_850	Helya	CustomSummon	TTNFX_Helya_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+TOY_355	Hemet, Foam Marksman	CustomSummon	TOYFX_Hemet_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+UNG_840	Hemet, Jungle Hunter	CustomSummon	Hemet_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+TRL_318	Hex Lord Malacrass	CustomSummon	HexLordMalacrass_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+SCH_141	High Abbess Alura	CustomSummon	SCHFX_HighAbbessAlura_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+RLK_832	High Cultist Basaleph	CustomSummon	RLK_HPBasaleph_Summon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+TLC_810	High Cultist Herenn	CustomSummon	TLCFX_HighCultistHerenn_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+DMF_241	High Exarch Yrel	CustomSummon	DMFFX_HighExarchYrel_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+CORE_EX1_190	High Inquisitor Whitemane	CustomSummon	HighInquisitorWhitemane_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_190	High Inquisitor Whitemane	CustomSummon	HighInquisitorWhitemane_CustomSummon.prefab	carddef_base_global-775a814d-prefab-1.unity3d
+ULD_262	High Priest Amet	CustomSummon	HighPriestAmet_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+TRL_308	High Priest Thekal	CustomSummon	HighPriestThekal_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+CORE_TRL_252	High Priestess Jeklik	CustomSummon	HighPriestessJeklik_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+TRL_252	High Priestess Jeklik	CustomSummon	HighPriestessJeklik_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+CORE_SW_047	Highlord Fordragon	CustomSummon	SWFX_HighlordFordragon_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+SW_047	Highlord Fordragon	CustomSummon	SWFX_HighlordFordragon_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+TRL_253	Hir'eek, the Bat	CustomSummon	Hireek_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+CFM_643	Hobart Grapplehammer	CustomSummon	Hobart_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+WON_117	Hobart Grapplehammer	CustomSummon	Hobart_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+TTN_752	Hodir, Father of Giants	CustomSummon	TTNFX_HodirFatherGiants_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+RLK_828	Hope of Quel'Thalas	CustomSummon	RLKFX_HopeOfQuelthalas_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+CORE_GIL_650	Houndmaster Shaw	CustomSummon	HoundmasterShaw_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+GIL_650	Houndmaster Shaw	CustomSummon	HoundmasterShaw_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+CRED_183	Hunter Curren	CustomSummon	DMFFX_NamelessOne_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CORE_REV_353	Huntsman Altimor	CustomSummon	REVFX_HunstmanAltimor_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_353	Huntsman Altimor	CustomSummon	REVFX_HunstmanAltimor_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_353t	Huntsman Altimor	CustomSummon	REVFX_HunstmanAltimor_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_353t2	Huntsman Altimor	CustomSummon	REVFX_HunstmanAltimor_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+TIME_618	Husk, Eternal Reaper	CustomSummon	TIMEFX_Husk_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+TSC_950	Hydralodon	CustomSummon	TSCFX_Hydralodon_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+AT_125	Icehowl	CustomSummon	IceHowl_CustomSpawn.prefab	carddef_base_global-61754518-prefab-1.unity3d
+TLC_241	Ido of the Threshfleet	CustomSummon	TLCFX_IdoOfTheThreshfleet_CustomSummon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+TTN_751	Ignis, the Eternal Flame	CustomSummon	TTNFX_Ignis_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+DMF_230	Il'gynoth	CustomSummon	DMFFX_Ilgynoth_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+LETL_003H_01	Illidan Stormrage	CustomSummon	TRLFX_HexLordMalacrass_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-2.unity3d
+LETL_003H_02	Illidan Stormrage	CustomSummon	BTFX_KaynSunfury_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-2.unity3d
+LETL_003H_03	Illidan Stormrage	CustomSummon	BTFX_KaynSunfury_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-2.unity3d
+VAN_EX1_614	Illidan Stormrage	CustomSummon	Illidan_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+CORE_REV_835	Imp King Rafaam	CustomSummon	REVFX_ImpKingRafaam_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_789	Imp King Rafaam	CustomSummon	REVFX_ImpKingRafaam_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_835	Imp King Rafaam	CustomSummon	REVFX_ImpKingRafaam_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+REV_835t	Imp King Rafaam	CustomSummon	REVFX_ImpKingRafaam_Infused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+DMF_708	Inara Stormcrash	CustomSummon	DMFFX_InaraStormcrash_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+VAC_321	Incindius	CustomSummon	VACFX_Incindius_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+SCH_426	Infiltrator Lilian	CustomSummon	InfiltratorLillian_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+TSC_649	Ini Stormcoil	CustomSummon	TSCFX_IniStormcoil_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+CFM_687	Inkmaster Solia	CustomSummon	Irelia_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+JAIL_851	Inspector Murloc Holmes	CustomSummon	JAILFX_InspectorMurlockHolmes_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+SCH_507	Instructor Fireheart	CustomSummon	SCHFX_InstructorFireheart_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+TOY_607	Inventor Boom	CustomSummon	TOYFX_BoomInventorExtraordinaire_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+RLK_592	Invincible	CustomSummon	RLKFX_Invincible_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+ETC_371	Inzah	CustomSummon	ETCFX_Inzah_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+CRED_330	Irene Sizemore	CustomSummon	ETCFX_836_MisterMukla_CustomSpawn.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+JAIL_719	Irida Sinseeker	CustomSummon	JAIL_719_IridaSinseeker_CustomSummon_FX.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+BE_259	Isiset	CustomSummon	BE_IsisetConstructofMagic_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+CATA_481	Iso'rath	CustomSummon	CATAFX_Iso'rath_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+AV_142t	Ivus, the Forest Lord	CustomSummon	AVFX_Ivus_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+LETL_858H	Ivus, the Forest Lord	CustomSummon	AVFX_Ivus_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-21.unity3d
+LOOT_329	Ixlid, Fungal Lord	CustomSummon	Ixlid_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+SW_044	Jace Darkweaver	CustomSummon	SWFX_JaceDarkweaver_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+JAIL_122	Jailhouse Manastorm	CustomSummon	JAILFX_JailhouseManastorm_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+CRED_281	James Wright	CustomSummon	DMFFX_KiriChosenofElune_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+TRL_316	Jan'alai, the Dragonhawk	CustomSummon	JanalaiTheDragonhawk_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+LT25_020H_03	Jandice Barov	CustomSummon	SCHFX_JandiceBarov_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-45.unity3d
+SCH_351	Jandice Barov	CustomSummon	SCHFX_JandiceBarov_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+CRED_126	Jay Axer	CustomSummon	SonyaShadowdancers_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+DAL_752	Jepetto Joybuzz	CustomSummon	JepettoJoybuzz_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+SC_400	Jim Raynor	CustomSummon	SC_400_JimRaynor_CustomSummon_Super.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+CRED_214	Joe Belousek	CustomSummon	DMFFX_NamelessOne_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CRED_157	John McIntyre	CustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CRED_384	Jordan Budisantoso	CustomSummon	SC_013_Grunty_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+TTN_842	Jotun, the Eternal	CustomSummon	TTNFX_JotunTheEternal_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+TOY_960	Joymancer Jepetto	CustomSummon	TOY_960_ToymancerJoybuzz_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+GDB_127	K'ara, the Dark Star	CustomSummon	GDBFX_Kara_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+GDB_442	K'ure, the Light Beyond	CustomSummon	GDBFX_Kure_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+CORE_REV_021	Kael'thas Sinstrider	CustomSummon	REVFX_KaelthasSinstrider_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_021	Kael'thas Sinstrider	CustomSummon	REVFX_KaelthasSinstrider_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+BT_255	Kael'thas Sunstrider	CustomSummon	KaelthasSunstrider_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_DAL_609	Kalecgos	CustomSummon	Kalecgos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+DAL_609	Kalecgos	CustomSummon	Kalecgos_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+Core_UNG_211	Kalimos, Primal Lord	CustomSummon	Kalimos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+UNG_211	Kalimos, Primal Lord	CustomSummon	Kalimos_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+ETC_329	Kangor, Dancing King	CustomSummon	ETCFX_KangorDancingKing_CustomSummon.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+BT_309	Kanrethad Ebonlocke	CustomSummon	KanrethadEbonlocke_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+BAR_077	Kargal Battlescar	CustomSummon	BARFX_077_Kargal_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+BT_123	Kargath Bladefist	CustomSummon	KargathBladefist_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+JAIL_448	Karov the Broken	CustomSummon	JAIL_448_KarovTheBroken_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+LOOT_511	Kathrena Winterwisp	CustomSummon	KathrenaWinterwisp_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+BT_187	Kayn Sunfury	CustomSummon	KaynSunfury_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_BT_187	Kayn Sunfury	CustomSummon	KaynSunfury_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+CFM_621	Kazakus	CustomSummon	Kazakus_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+BAR_079	Kazakus, Golem Shaper	CustomSummon	BARFX_KazakusGolemShaper_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+ONY_005	Kazakusan	CustomSummon	ONYFX_Kazakusan_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-3.unity3d
+DAL_732	Keeper Stalladris	CustomSummon	KeeperStalladris_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+FP1_013	Kel'Thuzad	CustomSummon	Kelthuzad_CustomSummon.prefab	carddef_base_global-5cbf025a-prefab-0.unity3d
+CORE_REV_514	Kel'Thuzad, the Inevitable	CustomSummon	REVFX_KelThuzadTheInevitable_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_514	Kel'Thuzad, the Inevitable	CustomSummon	REVFX_KelThuzadTheInevitable_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_786	Kel'Thuzad, the Inevitable	CustomSummon	REVFX_KelThuzadTheInevitable_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+BT_196	Keli'dan the Breaker	CustomSummon	KelidanTheBreaker_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+SC_004	Kerrigan, Queen of Blades	CustomSummon	SCFX_Kerrigan_CustomSummon_Super.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+CORE_SCH_717	Keymaster Alabaster	CustomSummon	KeysmithAboysus_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+SCH_717	Keymaster Alabaster	CustomSummon	KeysmithAboysus_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+YOP_018	Keywarden Ivory	CustomSummon	YODFX_KeywardenIvory_CustomSummon.prefab	carddef_base_global-384202c8-prefab-4.unity3d
+BG_DAL_575	Khadgar	CustomSummon	Khadgar_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-0.unity3d
+CORE_DAL_575	Khadgar	CustomSummon	Khadgar_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+DAL_575	Khadgar	CustomSummon	Khadgar_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+TB_BaconUps_034	Khadgar	CustomSummon	Khadgar_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+TTN_415	Khaz'goroth	CustomSummon	TTNFX_Khaz'Goroth_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+GDB_145	Kil'jaeden	CustomSummon	GDBFX_Kiljaeden_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+CORE_EX1_543	King Krush	CustomSummon	KingKrush_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_543	King Krush	CustomSummon	KingKrush_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+ULD_156t3	King Krush	CustomSummon	KingKrush_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+VAN_EX1_543	King Krush	CustomSummon	KingKrush_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+TIME_042	King Maluk	CustomSummon	TIMEFX_KingMaluk_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+UNG_933	King Mosh	CustomSummon	KingMosh_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+ULD_304	King Phaoris	CustomSummon	KingPharois_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+TOY_357	King Plush	CustomSummon	TOYFX_KingPlush_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+VAC_524	King Tide	CustomSummon	VACFX_KingTide_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+LOOT_541	King Togwaggle	CustomSummon	KingTogwaggle_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+JAIL_831	King of the Underbelly	CustomSummon	JAILFX_TunnelKing_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+WW_421	Kingpin Pud	CustomSummon	WWFX_KingpinPud_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+LOOT_542	Kingsbane	CustomSummon	Kingsbane_CustomSpawn.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+CORE_DMF_733	Kiri, Chosen of Elune	CustomSummon	DMFFX_KiriChosenofElune_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+DMF_733	Kiri, Chosen of Elune	CustomSummon	DMFFX_KiriChosenofElune_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+BE_090	Kith'ix	CustomSummon	BEFX_Kithix_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+CFM_333	Knuckles	CustomSummon	Knuckles_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+TTN_330	Kologarn	CustomSummon	TTNFX_Kologarn_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+CORE_CS3_019	Kor'vas Bloodthorn	CustomSummon	CS3FX_Korvas_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+CS3_019	Kor'vas Bloodthorn	CustomSummon	CS3FX_Korvas_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+AV_143	Korrak the Bloodrager	CustomSummon	AVFX_Korrak_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+LT22_023H_01	Korrak the Bloodrager	CustomSummon	AVFX_Korrak_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-28.unity3d
+LT22_023H_02	Korrak the Bloodrager	CustomSummon	AVFX_Korrak_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-28.unity3d
+LT22_023H_03	Korrak the Bloodrager	CustomSummon	AVFX_Korrak_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-28.unity3d
+CRED_259	Kory Heinichen	CustomSummon	Pyros_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+TSC_074	Kotori Lightblade	CustomSummon	TSCFX_KotoriLightblade_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+CORE_TRL_345	Krag'wa, the Frog	CustomSummon	Kragwa_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+TRL_345	Krag'wa, the Frog	CustomSummon	Kragwa_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+WC_026	Kresh, Lord of Turtling	CustomSummon	BARFX_KreshLordofTurtling_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-6.unity3d
+TLC_480	Krog, Crater King	CustomSummon	TLCFX_KrogCraterKing_Custom_Summon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TIME_705	Krona, Keeper of Eons	CustomSummon	TIMEFX_Krona_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+BE_732	Kronn the Impaler	CustomSummon	BEFX_KronntheImapler_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+DRG_099	Kronx Dragonhoof	CustomSummon	KronxDragonhoof_CustomSummon_Snowy.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+CFM_750	Krul the Unshackled	CustomSummon	Krul_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+WON_324	Krul the Unshackled	CustomSummon	Krul_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-1.unity3d
+CORE_REV_510	Kryxis the Voracious	CustomSummon	REVFX_Kryxis_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_510	Kryxis the Voracious	CustomSummon	REVFX_Kryxis_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+CFM_308	Kun the Forgotten King	CustomSummon	Kun_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+BAR_333	Kurtrus Ashfallen	CustomSummon	BARFX_Kurtrus_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+AV_204	Kurtrus, Demon-Render	CustomSummon	AVFX_KurtrusDemonRender_CustomSummon_HeroSpell.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+WC_006	Lady Anacondra	CustomSummon	BARFX_LadyAnacondra_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-6.unity3d
+TSC_943	Lady Ashvane	CustomSummon	TSCFX_LadyAshvane_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+TIME_211	Lady Azshara	CustomSummon	TIMEFX_LadyAzshara_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+CORE_REV_373	Lady Darkvein	CustomSummon	REVFX_LadyDarkvein_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_373	Lady Darkvein	CustomSummon	REVFX_LadyDarkvein_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+RLK_713	Lady Deathwhisper	CustomSummon	RLKFX_LadyDeathWhisper_CustomSummon.prefab	carddef_base_global-6aa9ba6a-prefab-0.unity3d
+BT_334	Lady Liadrin	CustomSummon	LadyLiadrin_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_BT_334	Lady Liadrin	CustomSummon	LadyLiadrin_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+TID_709	Lady Naz'jar	CustomSummon	TIDFX_LadyNazjar_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+TID_709t	Lady Naz'jar	CustomSummon	TIDFX_LadyNazjar_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+TID_709t2	Lady Naz'jar	CustomSummon	TIDFX_LadyNazjar_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+TID_709t3	Lady Naz'jar	CustomSummon	TIDFX_LadyNazjar_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+LETL_982	Lady Prestor	CustomSummon	SWFX_LadyPrestor_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-23.unity3d
+SW_078	Lady Prestor	CustomSummon	SWFX_LadyPrestor_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+Story_11_LadyStheno	Lady S'theno	CustomSummon	TSCFX_LadyStheno_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-1.unity3d
+TSC_218	Lady S'theno	CustomSummon	TSCFX_LadyStheno_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+BT_109	Lady Vashj	CustomSummon	LadyVashj_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+GIL_840	Lady in White	CustomSummon	LadyinWhite_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+TOY_531	Li'Na, Shop Manager	CustomSummon	TOYFX_LiNa_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+AV_206	Lightforged Cariel	CustomSummon	AVFX_LightforgedCariel_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+CORE_ICC_811	Lilian Voss	CustomSummon	LilianVoss_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_811	Lilian Voss	CustomSummon	LilianVoss_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+TIME_850	Lo'Gosh, Blood Fighter	CustomSummon	TIME_LoGosh_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+TLC_257	Loh, the Living Legend	CustomSummon	TLCFX_LohLivingLegend_Summon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+TTN_487	Loken, Jailer of Yogg-Saron	CustomSummon	ETCVFX_LokenJailerOfYoggSaron_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+AV_141t	Lokholar the Ice Lord	CustomSummon	AVFX_Lokholar_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+LT22_007H_01	Long'xin	CustomSummon	BOTFX_HarbingerCelestia_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-26.unity3d
+LT22_007H_02	Long'xin	CustomSummon	SWFX_SheldrasMoontree_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-26.unity3d
+LT22_007H_03	Long'xin	CustomSummon	SWFX_SheldrasMoontree_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-26.unity3d
+RLK_593	Lor'themar Theron	CustomSummon	RLKFX_LorthemarTheron_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+SCH_526	Lord Barov	CustomSummon	LordBarov_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+GIL_825	Lord Godfrey	CustomSummon	LordGodfrey_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+CORE_EX1_323	Lord Jaraxxus	CustomSummon	EX1_Hero_Jaraxxus_Warlock_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_323	Lord Jaraxxus	CustomSummon	EX1_Hero_Jaraxxus_Warlock_CustomSummon_FX.prefab	carddef_base_global-775a814d-prefab-1.unity3d
+LEG_RLK_085	Lord Marrowgar	CustomSummon	RLKFX_LordMarrowgar_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+RLK_085	Lord Marrowgar	CustomSummon	RLKFX_LordMarrowgar_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+SCH_428	Lorekeeper Polkelt	CustomSummon	SCHFX_LorekeeperPolkeit_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+SW_024	Lothar	CustomSummon	SWFX_Lothar_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+CORE_DMF_240	Lothraxion the Redeemed	CustomSummon	DMFFX_Lothraxion_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+DMF_240	Lothraxion the Redeemed	CustomSummon	DMFFX_Lothraxion_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+ETC_335	Love Everlasting	CustomSpawn	ETCFX_LoveEverlasting_Trigger_BuffImpact.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+DAL_357	Lucentbark	CustomSummon	Lucentbark_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+GDB_144	Lumia	CustomSummon	GDB_144_Lumia_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+LOOT_216	Lynessa Sunsorrow	CustomSummon	LynessaSunsorrow_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-2.unity3d
+CORE_UNG_963	Lyra the Sunshard	CustomSummon	Aurelia_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+UNG_963	Lyra the Sunshard	CustomSummon	Aurelia_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+BE_036	M.O.T.H.E.R.	CustomSummon	BEFX_MOTHER_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+ETC_078	MC Blingtron	CustomSummon	ETC_078_FX_MCBlingtron_CustomSummon.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+CFM_672	Madam Goya	CustomSummon	MadamGoya_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+CORE_DAL_729	Madame Lazul	CustomSummon	MadameLazul_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+DAL_729	Madame Lazul	CustomSummon	MadameLazul_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+SW_050	Maestra of the Masquerade	CustomSummon	SWFX_MaestraOfTheMasquerade_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+VAC_336	Maestra, Mask Merchant	CustomSummon	VACFX_MaestraMaskMerchant_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+JAM_036	Magatha, Bane of Music	CustomSummon	ETCFX_Magatha_CustomSummon.prefab	carddef_base_global-786af98e-prefab-2.unity3d
+AV_200	Magister Dawngrasp	CustomSummon	AVFX_MagisterDawngrasp_CustomSummon_HeroSpell.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+CATA_550	Magmaw	CustomSummon	CATAFX_Magmaw_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+BT_850	Magtheridon	CustomSummon	Magtheridon_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-2.unity3d
+TOY_647	Magtheridon, Unreleased	CustomSummon	TOYFX_MagtheridonUnreleased_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+BT_737	Maiev Shadowsong	CustomSummon	MaievShadowsong_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-2.unity3d
+LT23_035H_01	Maiev Shadowsong	CustomSummon	BTFX_MaievShadowsong_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-35.unity3d
+LT23_035H_02	Maiev Shadowsong	CustomSummon	BTFX_MaievShadowsong_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-35.unity3d
+LT23_035H_03	Maiev Shadowsong	CustomSummon	BTFX_MaievShadowsong_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-35.unity3d
+BRM_027	Majordomo Executus	CustomSummon	Majordomo_CustomSummon.prefab	carddef_base_global-74f6be89-prefab-1.unity3d
+CORE_ICC_832	Malfurion the Pestilent	CustomSummon	DK_Malfurion_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_832	Malfurion the Pestilent	CustomSummon	DK_Malfurion_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+CATA_494	Maloriak	CustomSummon	CATAFX_Maloriak_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+GVG_035	Malorne	CustomSummon	Malorne_CustomSummon.prefab	carddef_base_global-3aaf7c48-prefab-0.unity3d
+WON_011	Malorne	CustomSummon	Malorne_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+EDR_888	Malorne the Waywatcher	CustomSummon	EDRFX_MalorneTheWayWatcher_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+EX1_563	Malygos	CustomSummon	Malygos_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+VAN_EX1_563	Malygos	CustomSummon	Malygos_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+CS3_034	Malygos the Spellweaver	CustomSummon	EX1FX_Malygos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+LEG_CS3_034	Malygos the Spellweaver	CustomSummon	EX1FX_Malygos_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+DRG_270	Malygos, Aspect of Magic	CustomSummon	MalygosAspectOfMagic_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+BAR_721	Mankrik	CustomSummon	BARFX_Mankrik_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+LOOT_357	Marin the Fox	CustomSummon	Marin_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+VAC_702	Marin the Manager	CustomSummon	VACFX_MarintheManager_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+DEEP_037	Maruut Stonebinder	CustomSummon	DEEPFX_MaruutStonebinder_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-2.unity3d
+LOOT_521	Master Oakheart	CustomSummon	MasterOakheart_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+BE_009	Mastermind Yogg-Saron	CustomSummon	BEFX_YoggSarontheMastermind_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+CAP_005	Mathias Shaw	CustomSummon	CAP_005_MathiasShaw_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+WW_357	Maw and Paw	CustomSummon	WWFX_MawAndPaw_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+DMF_089	Maxima Blastenheimer	CustomSummon	DMFFX_Maxima_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+CFM_670	Mayor Noggenfogger	CustomSummon	Noggenfogger_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+CORE_CFM_670	Mayor Noggenfogger	CustomSummon	Noggenfogger_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+BOT_424	Mecha'thun	CustomSummon	MechaThun_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+TIME_890	Medivh the Hallowed	CustomSummon	TIMEFX_MedivhtheHallowed_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+KAR_097	Medivh, the Guardian	CustomSummon	MedivhtheGuardian_CustomSummon.prefab	carddef_base_global-2173dfcb-prefab-1.unity3d
+EDR_238	Merithra	CustomSummon	EDRFX_Merithra_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+CATA_140	Merithra of the Dream	CustomSummon	CATAFX_MerithraoftheDream_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+WW_429	Mes'Adune the Fractured	CustomSummon	WWFX_MesAduneTheFractured_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+LETL_866H4	Mi'da, Pure Light	CustomSummon	ONYFX_Mida_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-21.unity3d
+ONY_028	Mi'da, Pure Light	CustomSummon	ONYFX_Mida_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-4.unity3d
+CRED_210	Michael Weschler	CustomSummon	AVFX_BalindaStonehearth_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CRED_274	Mike Mulen	CustomSummon	TheBoomReaver_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CRED_307	Mikyoung Choi	CustomSummon	TTNFX_Amanthul_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+BE_588	Mimiron	CustomSummon	BEFX_Mimiron_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+TTN_920	Mimiron, the Mastermind	CustomSummon	ETCFX_MimironTheMastermind_CustomSummon_Friendly.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+DRG_308	Mindflayer Kaahrj	CustomSummon	MindflayerKaahrj_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+SCH_159	Mindrender Illucia	CustomSummon	SCHFX_MindrenderIllucia_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+DINO_407	Mirrex, the Crystalline	CustomSummon	DINOFX_MirrextheCrystalline_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+VAC_519	Mistah Vistah	CustomSummon	VACFX_MistahVistah_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+TIME_038	Mister Clocksworth	CustomSummon	TIMEFX_MisterClocksWorth_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TIME_038t1	Mister Clocksworth	CustomSummon	TIMEFX_MisterClocksWorth_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TIME_038t2	Mister Clocksworth	CustomSummon	TIMEFX_MisterClocksWorth_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TIME_038t3	Mister Clocksworth	CustomSummon	TIMEFX_MisterClocksWorth_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+ETC_836	Mister Mukla	CustomSummon	ETCFX_836_MisterMukla_CustomSpawn.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+TRL_564	Mojomaster Zihi	CustomSummon	MojomasterZihi_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-3.unity3d
+YOP_035	Moonfang	CustomSummon	YOPFX_Moonfang_CustomSummon.prefab	carddef_base_global-384202c8-prefab-4.unity3d
+CORE_ICC_289	Moorabi	CustomSummon	Moorabi_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_289	Moorabi	CustomSummon	Moorabi_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+JAIL_906	Moragg	CustomSummon	JAILFX_Moragg_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+END_036	Morchie	CustomSummon	ENDFX_Morchie_CustomSummon.prefab	carddef_base_global-a312696e-prefab-2.unity3d
+CATA_570	Morchok	CustomSummon	CATAFX_Morchok_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+BAR_547	Mordresh Fire Eye	CustomSummon	Bar_MordreshFireEye_CS.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+KAR_044	Moroes	CustomSummon	Moroes_CustomSummon.prefab	carddef_base_global-2173dfcb-prefab-0.unity3d
+SCH_400	Mozaki, Master Duelist	CustomSummon	SCHFX_MozakiMasterDuelist_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+DED_006	Mr. Smite	CustomSummon	DEDFX_MrSmite_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-1.unity3d
+JAIL_800	Mug'Zee	CustomSummon	JAILFX_MugZee_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+LT23_823H2	Mukla, Tyrant of the Vale	CustomSummon	MuklaTyrant_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-36.unity3d
+OG_122	Mukla, Tyrant of the Vale	CustomSummon	MuklaTyrant_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-0.unity3d
+TIME_209	Muradin, High King	CustomSummon	TIMEFX_Muradin_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+BT_019	Murgur Murgurgle	CustomSummon	MurgurMurgurgle_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_REV_022	Murloc Holmes	CustomSummon	REVFX_MurlocHolmes_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+LT24_027H_01	Murloc Holmes	CustomSummon	REVFX_MurlocHolmes_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-43.unity3d
+LT24_027H_02	Murloc Holmes	CustomSummon	REVFX_MurlocHolmes_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-43.unity3d
+LT24_027H_03	Murloc Holmes	CustomSummon	REVFX_MurlocHolmes_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-43.unity3d
+REV_022	Murloc Holmes	CustomSummon	REVFX_MurlocHolmes_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+GDB_448	Murmur	CustomSummon	GDB_448_Murmur_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+CORE_DRG_090	Murozond the Infinite	CustomSummon	MurozondTheInfinite_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+DRG_090	Murozond the Infinite	CustomSummon	MurozondTheInfinite_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+WON_066	Murozond, Thief of Time	CustomSummon	DRGFX_Murozond_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+TIME_024	Murozond, Unbounded	CustomSummon	TIMEFX_MurozondUnbounded_Customsummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+WC_030	Mutanus the Devourer	CustomSummon	BARFX_MutanusTheDevourer_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-7.unity3d
+BOT_243	Myra Rotspring	CustomSummon	MyraRotspring_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+LT23_025H_01	N'Zoth	CustomSummon	DMFFX_NZothGodofTheDeep_CustomSpawn.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_025H_02	N'Zoth	CustomSummon	DMFFX_NZothGodofTheDeep_CustomSpawn.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_025H_03	N'Zoth	CustomSummon	DMFFX_NZothGodofTheDeep_CustomSpawn.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+BE_017	N'Zoth, Dream's End	CustomSummon	BE_017_NzothDreamsEnd_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+DMF_002	N'Zoth, God of the Deep	CustomSummon	DMFFX_NZothGodofTheDeep_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+OG_133	N'Zoth, the Corruptor	CustomSummon	JustAnim_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-0.unity3d
+TLC_624	Nablya, the Watcher	CustomSummon	TLCFX_NablyatheWatcher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+AV_331	Najak Hexxen	CustomSummon	AVFX_NajakHexxen_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+VAC_420	Narain Soothfancy	CustomSummon	VACFX_NarainSoothfancy_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+EDR_844	Naralex, Herald of the Flights	CustomSummon	EDRFX_Naralex_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+CORE_EX1_198	Natalie Seline	CustomSummon	NatalieSeline_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_198	Natalie Seline	CustomSummon	NatalieSeline_CustomSummon.prefab	carddef_base_global-775a814d-prefab-1.unity3d
+CRED_395	Nate Kaplan	CustomSummon	Deathwing_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CRED_120	Nathan Lyons-Smith	CustomSummon	LeeroyJenkins_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+CORE_REV_940	Necrolord Draka	CustomSummon	REVFX_Draka_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_785	Necrolord Draka	CustomSummon	REVFX_Draka_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_940	Necrolord Draka	CustomSummon	REVFX_Draka_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+BAR_919	Neeru Fireblade	CustomSummon	BARFX_NeeruFireblade_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-2.unity3d
+LETL_823H	Neeru Fireblade	CustomSummon	BARFX_NeeruFireblade_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-19.unity3d
+BRM_030	Nefarian	CustomSummon	NefarianMinion_CustomSummon.prefab	carddef_base_global-74f6be89-prefab-1.unity3d
+CRED_269	Neil Stephen Valdez	CustomSummon	DMFFX_Tickatus_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+TSC_660	Nellie, the Great Thresher	CustomSummon	TSCFX_NellieTheGreatThresher_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+GVG_042	Neptulon	CustomSummon	Neptulon_CustomSummon.prefab	carddef_base_global-3aaf7c48-prefab-0.unity3d
+TID_712	Neptulon the Tidehunter	CustomSummon	TIDFX_NeptulonTidehunter_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+BE_209	Neptulon, Lord of Tides	CustomSummon	BEFX_NeptulonLordofTides_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+CATA_527	Nespirah, Enthralled	CustomSummon	CATA_527_Nespirah_Enthralled_Ancient_CustomSummon_FX.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+BT_481	Nethrandamus	CustomSummon	Nethrandamus_CustomSummon.prefab	carddef_base_global-ef57b03f-prefab-0.unity3d
+GDB_143	Nexus-Prince Shaffar	CustomSummon	GDBFX_NexusPrinceShaffar_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+EDR_856	Nightmare Lord Xavius	CustomSummon	EDRFX_Xavius_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+TLC_836	Niri of the Crater	CustomSummon	TLCFX_NirioftheCrater_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+DRG_224	Nithogg	CustomSummon	Nithogg_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+TTN_075	Norgannon	CustomSummon	TTNFX_Norgannon_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+DAL_581	Nozari	CustomSummon	Nozari_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+DRG_309	Nozdormu the Timeless	CustomSummon	NozdormuTheTimeless_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+CATA_473	Nozdormu, Bronze Aspect	CustomSummon	CATAFX_NozdormuBronzeAspect_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+EDR_818	Nythendra	CustomSummon	EDRFX_Nythendra_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+DAL_376	Oblivitron	CustomSummon	Oblivitron_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+CORE_ULD_177	Octosari	CustomSummon	Octosari_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+ULD_177	Octosari	CustomSummon	Octosari_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+TTN_811	Odyn, Prime Designate	CustomSummon	ETCFX_OdynPrimeDesignate_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+EDR_031	Ohn'ahra	CustomSummon	EDRFX_Ohnahra_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+EDR_421	Omen	CustomSummon	EDRFX_Omen_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+EX1_562	Onyxia	CustomSummon	Onyxia_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+LETL_864H	Onyxia	CustomSummon	ONYFX_RaidBossOnyxia_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-21.unity3d
+VAN_EX1_562	Onyxia	CustomSummon	Onyxia_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+CS3_032	Onyxia the Broodmother	CustomSummon	ds1FX_Onyxia_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+LEG_CS3_032	Onyxia the Broodmother	CustomSummon	ds1FX_Onyxia_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+TRL_542	Oondasta	CustomSummon	Oondasta_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-3.unity3d
+TLC_522	Opu the Unseen	CustomSummon	TLCFX_OputheUnseen_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+CORE_REV_515	Orion, Mansion Manager	CustomSummon	REVFX_Orion_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_515	Orion, Mansion Manager	CustomSummon	REVFX_Orion_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+RLK_913	Overlord Drakuru	CustomSummon	RLKFX_Drakuru_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-2.unity3d
+CS3_025	Overlord Runthak	CustomSummon	CS3FX_Runthak_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+BAR_334	Overlord Saurfang	CustomSummon	BARFX_OverlordSaurfang_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+LEG_RLK_224	Overseer Frigidara	CustomSummon	RLKFX_Frigidara_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+RLK_224	Overseer Frigidara	CustomSummon	RLKFX_Frigidara_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+RLK_Prologue_RLK_224	Overseer Frigidara	CustomSummon	RLKFX_Frigidara_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+TOY_807	Owlonius	CustomSummon	TOYFX_Owlonius_CustomSummon_Final.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+UNG_907	Ozruk	CustomSummon	Ozruk_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+TID_711	Ozumat	CustomSummon	TIDFX_Ozumat_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+VAC_945	Party Planner Vona	CustomSummon	VACFX_PartyPlannerVona_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+VAC_933	Patches the Pilot	CustomSummon	VACFX_PatchesThePilot_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+CFM_637	Patches the Pirate	CustomSummon	Patches_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+FB_Champs_CFM_637	Patches the Pirate	CustomSummon	Patches_CustomSummon.prefab	carddef_base_global-48ae08f3-prefab-13.unity3d
+LEG_RLK_071	Patchwerk	CustomSummon	RLKFX_Patchwerk_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+RLK_071	Patchwerk	CustomSummon	RLKFX_Patchwerk_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+RLK_Prologue_RLK_071	Patchwerk	CustomSummon	RLKFX_Patchwerk_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+CRED_324	Paul Chung	CustomSummon	ETCFX_CageHead_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CORE_REV_250	Pelagos	CustomSummon	REVFX_Pelagos_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_250	Pelagos	CustomSummon	REVFX_Pelagos_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+REV_781	Pelagos	CustomSummon	REVFX_Pelagos_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+ETC_113	Photographer Fizzle	CustomSummon	ETCFX_PhotographerFizzle_CustomSummon.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+WW_394	Pip the Potent	CustomSummon	WWFX_PipThePotent_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+TOY_812	Pipsi Painthoof	CustomSummon	TOYFX_PipsiPainthoof_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+TSC_934	Pirate Admiral Hooktusk	CustomSummon	TSC_PirateAdmiralHooktusk_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+BAR_540	Plaguemaw the Rotting	CustomSummon	BARFX_Plaguemaw_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+LETL_822H	Plaguemaw the Rotting	CustomSummon	BARFX_Plaguemaw_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-19.unity3d
+WW_091	Pop'gar the Putrid	CustomSummon	WWFX_PopgarThePutrid_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WORK_063	Portalmancer Skyla	CustomSummon	WORKFX_PortalMaster_CustomSummon.prefab	carddef_base_global-23b69986-prefab-2.unity3d
+RLK_572	Potionmaster Putricide	CustomSummon	RLKFX_PotionmasterPutricide_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+ETC_425	Pozzik, Audio Engineer	CustomSummon	ETCFX_PozzikAudioEngineer_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+TSC_828	Priestess Valishj	CustomSummon	TSCFX_PriestessValishj_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+CORE_ICC_851	Prince Keleseth	CustomSummon	PrinceKeleseth_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_851	Prince Keleseth	CustomSummon	PrinceKeleseth_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+GIL_694	Prince Liam	CustomSummon	PrinceLiam_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+KAR_096	Prince Malchezaar	CustomSummon	Malchezaar_CustomSummon.prefab	carddef_base_global-2173dfcb-prefab-1.unity3d
+LT24_821H	Prince Malchezaar	CustomSummon	Malchezaar_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-44.unity3d
+CORE_REV_018	Prince Renathal	CustomSummon	REVFX_PrinceRenathal_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_018	Prince Renathal	CustomSummon	REVFX_PrinceRenathal_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+CORE_ICC_852	Prince Taldaram	CustomSummon	PrinceTaldaram_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_852	Prince Taldaram	CustomSummon	PrinceTaldaram_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+CORE_ICC_853	Prince Valanar	CustomSummon	PrinceValanar_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_853	Prince Valanar	CustomSummon	PrinceValanar_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+OG_309	Princess Huhuran	CustomSummon	PrincessHuhuran_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-1.unity3d
+TRL_259	Princess Talanji	CustomSummon	PrincessTalanji_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+LT23_808H	Priscilla Ashvane	CustomSummon	TSCFX_LadyAshvane_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-36.unity3d
+TTN_090	Prison of Yogg-Saron	CustomSummon	TTNFX_PrisonYoggSaron_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+MIS_914	Product 9	CustomSummon	MIS914_Product9_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+CORE_ICC_204	Professor Putricide	CustomSummon	ProfessorPutricide_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_204	Professor Putricide	CustomSummon	ProfessorPutricide_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+SCH_539	Professor Slate	CustomSummon	ProfessorSlate_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+EX1_350	Prophet Velen	CustomSummon	ProphetVelen_CustomSummon.prefab	carddef_base_global-775a814d-prefab-1.unity3d
+VAN_EX1_350	Prophet Velen	CustomSummon	ProphetVelen_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+CORE_MAW_014	Prosecutor Mel'tranix	CustomSummon	MAWFX_ProsecutorMeltranix_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+MAW_014	Prosecutor Mel'tranix	CustomSummon	MAWFX_ProsecutorMeltranix_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+MIS_026	Puppetmaster Dorian	CustomSummon	MISFX_PuppetmasterDorian_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+TOY_373	Puzzlemaster Khadgar	CustomSummon	TOY_373_ArchMageKhadgar_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+UNG_027	Pyros	CustomSummon	Pyros_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+UNG_027t2	Pyros	CustomSummon	Pyros_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+UNG_027t4	Pyros	CustomSummon	Pyros_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+EDR_517	Q'onzu	CustomSummon	EDRFX_Q'onzu_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+LT23_016H_01	Queen Azshara	CustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_01	Queen Azshara	DiamondCustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_01	Queen Azshara	GoldenCustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_02	Queen Azshara	CustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_02	Queen Azshara	DiamondCustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_02	Queen Azshara	GoldenCustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_03	Queen Azshara	CustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_03	Queen Azshara	DiamondCustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+LT23_016H_03	Queen Azshara	GoldenCustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-30.unity3d
+TSC_641	Queen Azshara	CustomSummon	TSCFX_Azshara_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+JAIL_882	R4T-C4TCH3R	CustomSummon	JAILFX_RatCatcher_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+TTN_481	Ra-den	CustomSummon	TTNFX_Ra-den_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+TSC_635	Radiance of Azshara	CustomSummon	TSCFX_RadianceAzshara_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+LETL_028H_01	Ragnaros	CustomSummon	EX1FX_Ragnaros_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-5.unity3d
+LETL_028H_02	Ragnaros	CustomSummon	EX1FX_Ragnaros_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-5.unity3d
+LETL_028H_03	Ragnaros	CustomSummon	EX1FX_Ragnaros_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-5.unity3d
+CORE_EX1_298	Ragnaros the Firelord	CustomSummon	Ragnaros_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+EX1_298	Ragnaros the Firelord	CustomSummon	Ragnaros_CustomSummon.prefab	carddef_base_global-775a814d-prefab-1.unity3d
+TRL_316t	Ragnaros the Firelord	CustomSummon	Ragnaros_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+VAN_EX1_298	Ragnaros the Firelord	CustomSummon	Ragnaros_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-1.unity3d
+CORE_OG_229	Ragnaros, Lightlord	CustomSummon	RagnarosLightlord_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+OG_229	Ragnaros, Lightlord	CustomSummon	RagnarosLightlord_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-0.unity3d
+CATA_150	Ragnaros, the Great Fire	CustomSummon	CATAFX_Ragnaros_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+CRED_198	Rahul Nagarkar	CustomSummon	TSCFX_BlademasterOkani_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+ONY_004	Raid Boss Onyxia	CustomSummon	ONYFX_RaidBossOnyxia_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-3.unity3d
+CAP_806	Raith Van Geist	CustomSummon	CAPFX_RaithVanGeist_CustomSummon.prefab	carddef_base_global-51b13101-prefab-2.unity3d
+TSC_073	Raj Naz'jan	CustomSummon	TSCFX_RajNazjan_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+BE_004	Rajh	CustomSummon	BEFX_RajhSunConstruct_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+CRED_399	Randy Flores	CustomSummon	BAR_VardenDawngrasp_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+TIME_609	Ranger General Sylvanas	CustomSummon	Time_609_RangerGeneralSylvanas_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+VAC_413	Ranger Gilly	CustomSummon	VACFX_RangerGilly_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+SCH_273	Ras Frostwhisper	CustomSummon	SCHFX_RasFrostwhisperer_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+SCH_621	Rattlegore	CustomSummon	Rattlegore_CustomSummon_Red.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+BE_230	Ravitz	CustomSummon	BE_230_Ravitz_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+VAC_424	Raylla, Sand Sculptor	CustomSummon	VACFX_RayllaSandSculptor_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+CFM_020	Raza the Chained	CustomSummon	Raza_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+FB_Champs_CFM_020	Raza the Chained	CustomSummon	Raza_CustomSummon.prefab	carddef_base_global-48ae08f3-prefab-12.unity3d
+TOY_383	Raza the Resealed	CustomSummon	TOYFX_RazatheUnsealed_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TLC_463	Razidir	CustomSummon	TLC463_Nazidir_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+CORE_CATA_004	Rehgar Earthfury	CustomSummon	CATAFX_RehgarEarthfury_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+BT_197	Reliquary of Souls	CustomSummon	ReliquaryOfSouls_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_REV_316	Remornia, Living Blade	CustomSummon	REVFX_RemorniaLivingBlade_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_316	Remornia, Living Blade	CustomSummon	REVFX_RemorniaLivingBlade_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+BRM_029	Rend Blackhand	CustomSummon	Rend_CustomSummon.prefab	carddef_base_global-74f6be89-prefab-1.unity3d
+EDR_526	Renferal, the Malignant	CustomSummon	EDRFX_RenferalTheMalignant_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+LT23_030H_01	Reno Jackson	CustomSummon	ULDFX_RenoJacksonRelicologist_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_030H_02	Reno Jackson	CustomSummon	ULDFX_RenoJacksonRelicologist_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_030H_03	Reno Jackson	CustomSummon	ULDFX_RenoJacksonRelicologist_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+ULD_238	Reno the Relicologist	CustomSummon	RenoJacksonRelicologist_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+WW_0700	Reno, Lone Ranger	CustomSummon	WWFX_RenoLoneRanger_CustomSummon_FX.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WW_373	Reska, the Pit Boss	CustomSummon	WWFX_ReskathePitBoss_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WW_824	Rheastrasza	CustomSummon	WWFX_Rheastrasza_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+LOOT_085	Rhok'delar	CustomSummon	Weapon_Rhok'delar_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-2.unity3d
+AT_009	Rhonin	CustomSummon	Rhonin_CustomSpawn.prefab	carddef_base_global-61754518-prefab-0.unity3d
+JAM_019	Rhythmdancer Risa	CustomSummon	JAMFX_RhythmdancerRisa_CustomSummon.prefab	carddef_base_global-786af98e-prefab-2.unity3d
+ETC_071	Rin, Orchestrator of Doom	CustomSummon	HS28-067_RinOrchestratorOfDoom_Spell.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+ETC_071	Rin, Orchestrator of Doom	GoldenCustomSummon	HS28-067_RinOrchestratorOfDoom_Spell.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+LOOT_415	Rin, the First Disciple	CustomSummon	Rin_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+DMF_525	Ringmaster Whatley	CustomSummon	DMFFX_Whatley_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+LT23_818H	Ringmaster Whatley	CustomSummon	DMFFX_Whatley_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-36.unity3d
+DMF_088	Rinling's Rifle	CustomSummon	DMFFX_RinlingsRifle_Weopan_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+NX2_034	Rivendare, Warrider	CustomSummon	NX2FX_RivendareWarrider_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+ETC_121	Rock Master Voone	CustomSummon	ETCFX_RockMasterVoone_CustomSummon.prefab	carddef_base_global-786af98e-prefab-0.unity3d
+BAR_847	Rokara	CustomSummon	BARFX_Rokara_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-2.unity3d
+AV_202	Rokara, the Valorous	CustomSummon	AVFX_RokaraValorous_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+CORE_ICC_405	Rotface	CustomSummon	RotFace_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_405	Rotface	CustomSummon	RotFace_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+RLK_550	Rotgill	CustomSummon	RLK_Rotgill_Summon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+TIME_EVENT_998	Runi, Temporal Guardian	CustomSummon	TIME_EVENTFX_RuniTemporalGuardian_CustomSummon.prefab	carddef_base_global-4864763f-prefab-0.unity3d
+WON_053	Runi, Time Explorer	CustomSummon	DRGFX_NozdormuTheTimeless_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+CRED_403	Ryan Hickman	CustomSummon	WORKFX_TravelMaster_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+CRED_273	Ryan Kohler	CustomSummon	SirMrrgglton_CustomSummon.prefab	carddef_base_global-bc10ad9a-prefab-1.unity3d
+BOT_700	SN1P-SN4P	CustomSummon	Sn1pSn4p_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+CRED_149	Sage Georgiou	CustomSpawn	LeeroyWhelp_CustomSpawn.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+AV_345	Saidan the Scarlet	CustomSummon	AVFX_SaidanTheScarlet_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+VAC_923	Sanc'Azel	CustomSummon	VACFX_SancAzel_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+TTN_960	Sargeras, the Destroyer	CustomSummon	TTNFX_SargerasTheDestroyer_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+GDB_304	Saruun	CustomSummon	GDBFX_Saruun_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+VAC_415	Sasquawk	CustomSummon	VACFX_Sasquawk_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+DRG_402	Sathrovarr	CustomSummon	Sathrovarr_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+DMF_109	Sayge, Seer of Darkmoon	CustomSummon	DMFFX_SaygeFortuneTeller_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+LT23_819H	Sayge, Seer of Darkmoon	CustomSummon	DMFFX_SaygeFortuneTeller_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-36.unity3d
+BAR_552	Scabbs Cutterbutter	CustomSummon	BARFX_ScabbsCutterbutter_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+BAR_552_bom_puzzle	Scabbs Cutterbutter	CustomSummon	BARFX_ScabbsCutterbutter_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-7.unity3d
+DAL_726	Scargil	CustomSummon	Scargil_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+CORE_ICC_834	Scourgelord Garrosh	CustomSummon	DK_Garrosh_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_834	Scourgelord Garrosh	CustomSummon	DK_Garrosh_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+BAR_315	Serena Bloodfeather	CustomSummon	BARFX_SerenaBloodFeather_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+LETL_817H	Serena Bloodfeather	CustomSummon	BARFX_SerenaBloodFeather_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-18.unity3d
+CFM_341	Sergeant Sally	CustomSummon	SgtSally_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+CORE_REV_319	Sesselie of the Fae Court	CustomSummon	REVFX_SesselieFaeCourt_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_319	Sesselie of the Fae Court	CustomSummon	REVFX_SesselieFaeCourt_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+REV_782	Sesselie of the Fae Court	CustomSummon	REVFX_SesselieFaeCourt_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+BE_557	Setesh	CustomSummon	BE_557_Setesh_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BAR_080	Shadow Hunter Vol'jin	CustomSummon	BARFX_ShadowhunterVoljin_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+AV_203	Shadowcrafter Scabbs	CustomSummon	AVFX_ShadowcrafterScabbs_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+TB_World007	Shadowcrafter Scabbs	CustomSummon	AVFX_ShadowcrafterScabbs_CustomSummon_Super.prefab	carddef_base_global-48ae08f3-prefab-48.unity3d
+BT_188	Shadowjeweler Hanar	CustomSummon	ShadowjewelerHanar_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_BT_188	Shadowjeweler Hanar	CustomSummon	ShadowjewelerHanar_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+CORE_ICC_830	Shadowreaper Anduin	CustomSummon	DK_Anduin_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_830	Shadowreaper Anduin	CustomSummon	DK_Anduin_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+CFM_781	Shaku, the Collector	CustomSummon	Shadowstealer_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+CORE_CFM_781	Shaku, the Collector	CustomSummon	Shadowstealer_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+SCH_607	Shan'do Wildclaw	CustomSummon	ShandoWildclaw_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+SW_447	Sheldras Moontree	CustomSummon	SWFX_SheldrasMoontree_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-3.unity3d
+UNG_065	Sherazin, Corpse Flower	CustomSummon	CorpseFlower_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+WW_359	Sheriff Barrelbrim	CustomSummon	WWFX_SheriffBarrelbrim_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+TRL_300	Shirvallah, the Tiger	CustomSummon	Shirvallah_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+TOY_511	Shoplifter Goldbeard	CustomSummon	TOYFX_ShoplifterGoldbeard_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+DRG_091	Shu'ma	CustomSummon	Shuma_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+TOY_501	Shudderblock	CustomSummon	TOYFX_Shudderblock_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_501t	Shudderblock	CustomSummon	TOYFX_Shudderblock_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+GIL_820	Shudderwock	CustomSummon	Shudderwock_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+CORE_ULD_178	Siamat	CustomSummon	Siamat_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+ULD_178	Siamat	CustomSummon	Siamat_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+TTN_071	Sif	CustomSummon	TTNFX_Sif_Custom_Summon.prefab	carddef_base_global-8e3e520f-prefab-0.unity3d
+DMF_074	Silas Darkmoon	CustomSummon	DMFFX_Silas_Darkmoon_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+CORE_ICC_838	Sindragosa	CustomSummon	Sindragosa_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_838	Sindragosa	CustomSummon	Sindragosa_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+CATA_154	Sinestra	CustomSummon	CATAFX_Sinestra_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+CORE_LOE_076	Sir Finley Mrrgglton	CustomSummon	SirMrrgglton_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+LOE_076	Sir Finley Mrrgglton	CustomSummon	SirMrrgglton_CustomSummon.prefab	carddef_base_global-19c61f11-prefab-1.unity3d
+ULD_500	Sir Finley of the Sands	CustomSummon	SirFinley_Uldum_CustomSummon.prefab	carddef_base_global-9f363830-prefab-5.unity3d
+LETL_983	Sir Finley, Sea Guide	CustomSummon	TSCFX_SirFinley_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-23.unity3d
+TSC_908	Sir Finley, Sea Guide	CustomSummon	TSCFX_SirFinley_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+DEEP_007	Sir Finley, the Intrepid	CustomSummon	WWFX_SirFinleyIntrepid_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+CORE_REV_906	Sire Denathrius	CustomSummon	REVFX_SireDenathrius_NotInfused_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_906	Sire Denathrius	CustomSummon	REVFX_SireDenathrius_NotInfused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+REV_906t	Sire Denathrius	CustomSummon	REVFX_SireDenathrius_Infused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+RLK_816	Sister Svalna	CustomSummon	RLKFX_Svalna_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+WW_026	Skarr, the Catastrophe	CustomSummon	WWFX_SkarrtheCatastrophe_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+LOOT_420	Skull of the Man'ari	CustomSummon	Weapon_Skull_of_the_Manari_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+YOD_038	Sky Gen'ral Kragg	CustomSummon	SkyGenralKragg_CustomSummon.prefab	carddef_base_global-a9057597-prefab-1.unity3d
+TOY_806	Sky Mother Aviana	CustomSummon	TOY_HarpyQueenAviana_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+AT_070	Skycap'n Kragg	CustomSummon	SkycapnKragg_CustomSummon.prefab	carddef_base_global-61754518-prefab-0.unity3d
+WW_375	Slagmaw the Slumbering	CustomSummon	WWFX_SlagmawtheSlumbering_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WW_400	Snake Eyes	CustomSummon	WWFX_SnakeEyes_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+OG_340	Soggoth the Slitherer	CustomSummon	Soggoth_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-1.unity3d
+LOOT_165	Sonya Shadowdancer	CustomSummon	SonyaShadowdancers_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-2.unity3d
+TOY_515	Sonya Waterdancer	CustomSummon	TOYFX_SonyaWaterDancer_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+WON_146	Soridormi	CustomSummon	RLKFX_Anachronos_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-1.unity3d
+YOG_520	Soulburner Varia	CustomSummon	YOGFX_SoulburnerVaria_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-3.unity3d
+SCH_703	Soulciologist Malicia	CustomSummon	SCHFX_Malicia_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+RLK_214	Souleater's Scythe	CustomSummon	RLKFX_SouleatersScythe_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+SCH_182	Speaker Gidra	CustomSummon	SpeakerGidra_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+SCH_259	Sphere of Sapience	CustomSummon	Weapon_CrystalBall_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+WW_337	Spirit of the Badlands	CustomSummon	WWFX_SpiritOfTheBadlands_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+BOTA_UNG_900	Spiritsinger Umbra	CustomSummon	QueenApril_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+UNG_900	Spiritsinger Umbra	CustomSummon	QueenApril_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+TOY_700	Splendiferous Whizbang	CustomSummon	TOYFX_SplendiferousWhizbang_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+GIL_658	Splintergraft	CustomSummon	Splintergraft_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+GDB_234	Spore Empress Moldara	CustomSummon	GDBFX_SporeEmpressMoldara_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+WW_814	Spurfang	CustomSummon	WWFX_Spurfang_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+JAIL_875	Staff of Trickery	CustomSummon	JAILFX_StaffofTrickery_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+TLC_EVENT_402	Staff of the Endbringer	CustomSummon	TLCFX_StaffEndbringer_CustomSummon.prefab	carddef_base_global-4864763f-prefab-0.unity3d
+SCH_603	Star Student Stelina	CustomSummon	SCHFX_StarStudentStelina_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-1.unity3d
+BOT_103	Stargazer Luna	CustomSummon	StargazerLuna_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+CORE_BOT_103	Stargazer Luna	CustomSummon	StargazerLuna_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+CORE_REV_955	Stewart the Steward	CustomSummon	REVFX_StewartTheSteward_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+REV_784	Stewart the Steward	CustomSummon	REVFX_StewartTheSteward_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-1.unity3d
+REV_955	Stewart the Steward	CustomSummon	REVFX_StewartTheSteward_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+BOT_573	Subject 9	CustomSummon	Subject9_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+VAC_503	Summoner Darkmarrow	CustomSummon	VAC_503_Darkmarrow_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+UNG_015	Sunkeeper Tarim	CustomSummon	SunkeeperTarim_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+VAC_507	Sunsapper Lynessa	CustomSummon	VACFX_SunsapperLynessa_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+UNG_919	Swamp King Dred	CustomSummon	SwampKingDred_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+DAL_431	Swampqueen Hagatha	CustomSummon	SwampqueenHagatha_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+CORE_MAW_033	Sylvanas, the Accused	CustomSummon	MAWFX_SylvanasTheAccused_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+MAW_033	Sylvanas, the Accused	CustomSummon	MAWFX_SylvanasTheAccused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+MAW_033t	Sylvanas, the Accused	CustomSummon	MAWFX_SylvanasTheAccused_Infused_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+WW_430	Tae'thelan Bloodwatcher	CustomSummon	WWFX_TaethanlanBloodwatcher_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+CS3_024	Taelan Fordring	CustomSummon	CS3FX_TaelanFordring_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+DAL_719	Tak Nozwhisker	CustomSummon	TakNozwhisker_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+TIME_619	Talanji of the Graves	CustomSummon	TIMEFX_TalanjioftheGraves_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+GDB_472	Talgath	CustomSummon	GDB_472_FX_Talgath_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+MEND_304	Talya Earthstrider	CustomSummon	MENDFX_TalyaEarthstrider_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+BAR_918	Tamsin Roame	CustomSummon	BARFX_TamsinRoame_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-2.unity3d
+BAR_038	Tavish Stormpike	CustomSummon	BARFX_TavishStormpike_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-0.unity3d
+LOOT_538	Temporus	CustomSummon	Temporus_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+DMF_071	Tenwu of the Red Smoke	CustomSummon	DMF_TenwuOfTheRedSmoke_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+BT_126	Teron Gorefiend	CustomSummon	TeronGorefiend_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+CORE_GIL_598	Tess Greymane	CustomSummon	TessGreymane_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-1.unity3d
+GILA_500h4	Tess Greymane	CustomSummon	Hero_Play_CustomSummon_FX.prefab	carddef_base_global-d2f4bda7-prefab-0.unity3d
+GIL_598	Tess Greymane	CustomSummon	TessGreymane_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+CRED_155	Tess Leiman	CustomSummon	Chromie_CustomSpawn.prefab	carddef_base_global-bc10ad9a-prefab-0.unity3d
+NX2_033	Thaddius, Monstrosity	CustomSummon	NX2FX_ThaddiusFleshTitan_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+RLK_223	Thassarian	CustomSummon	RLKFX_Thassarian_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+RLK_Prologue_RLK_223	Thassarian	CustomSummon	RLKFX_Thassarian_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+GDB_477	The 8 Hands From Beyond	CustomSummon	GDBFX_8HandsFromBeyond_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+YOD_009	The Amazing Reno	CustomSummon	TheAmazingReno_CustomSummon_FX.prefab	carddef_base_global-a9057597-prefab-1.unity3d
+DEEP_999t4	The Azerite Dragon	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-2.unity3d
+WW_001t24	The Azerite Hawk	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+DEEP_999t5	The Azerite Murloc	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-2.unity3d
+WW_001t27	The Azerite Ox	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WW_001t26	The Azerite Rat	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WW_001t23	The Azerite Scorpion	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+WW_001t25	The Azerite Snake	CustomSummon	WWFX_Azerite_Minion_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+CATA_300	The Black Blood	CustomSummon	CATA_300_TheBlackBlood_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+OG_300	The Boogeymonster	CustomSummon	BoogeyMonster_CustomSummon.prefab	carddef_base_global-e4a983b7-prefab-1.unity3d
+DAL_070	The Boom Reaver	CustomSummon	TheBoomReaver_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+GDB_142	The Ceaseless Expanse	CustomSummon	GDBFX_CeaselessExpanse_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+TB_World012	The Ceaseless Expanse	CustomSummon	GDBFX_CeaselessExpanse_CustomSummon.prefab	carddef_base_global-48ae08f3-prefab-48.unity3d
+CORE_REV_951	The Countess	CustomSummon	REVFX_TheCountess_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_951	The Countess	CustomSummon	REVFX_TheCountess_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+CORE_KAR_061	The Curator	CustomSummon	Curator_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+KAR_061	The Curator	CustomSummon	Curator_CustomSummon.prefab	carddef_base_global-2173dfcb-prefab-0.unity3d
+LT24_817H	The Curator	CustomSummon	Curator_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-44.unity3d
+DINO_410	The Egg of Khelos	CustomSummon	DINOFX_EggofKhelos_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+DINO_410t2	The Egg of Khelos	CustomSummon	DINOFX_EggofKhelos_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+DINO_410t3	The Egg of Khelos	CustomSummon	DINOFX_EggofKhelos_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+DINO_410t4	The Egg of Khelos	CustomSummon	DINOFX_EggofKhelos_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+DINO_410t5	The Egg of Khelos	CustomSummon	DINOFX_EggofKhelos_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+TIME_446	The Eternal Hold	CustomSummon	TIME_EternalHold_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+GDB_120	The Exodar	CustomSummon	GDBFX_TheExodar_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+TIME_706	The Fins Beyond Time	CustomSummon	TIMEFX_FinsBeyondTime_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+YOD_042	The Fist of Ra-den	CustomSummon	Weapon_TheFistOfRa-den_CustomSummon.prefab	carddef_base_global-a9057597-prefab-1.unity3d
+TOY_378	The Galactic Projection Orb	CustomSummon	TOYFX_GalacticProjectionOrb_AE.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+GIL_817	The Glass Knight	CustomSummon	GlassKnight_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-3.unity3d
+GDB_466	The Gravitational Displacer	CustomSummon	GDBFX_GravitationalDisplacer_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+DINO_401	The Great Dracorex	CustomSummon	DINOFX_TheGreatDracorex_CustomSummon.prefab	carddef_base_global-2f546934-prefab-2.unity3d
+CORE_REV_011	The Harvester of Envy	CustomSummon	REVFX_HarvesterOfEnvy_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_011	The Harvester of Envy	CustomSummon	REVFX_HarvesterOfEnvy_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+TOY_829	The Headless Horseman	CustomSummon	TOYFX_HeadlessHorseman_CustomSummon_Super.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+CORE_MAW_034	The Jailer	CustomSummon	MAWFX_TheJailer_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+MAW_034	The Jailer	CustomSummon	MAWFX_TheJailer_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+TSC_030	The Leviathan	CustomSummon	TSCFX_TheLeviathan_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-3.unity3d
+CORE_ICC_314	The Lich King	CustomSummon	LichKing_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_314	The Lich King	CustomSummon	LichKing_CustomSummon.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+LETL_041H_01	The Lich King	CustomSummon	TuralyonTheTenured_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-7.unity3d
+LETL_041H_02	The Lich King	CustomSummon	TBFX_LichKing_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-7.unity3d
+LETL_041H_03	The Lich King	CustomSummon	TBFX_LichKing_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-7.unity3d
+JAIL_443	The Living Plague	CustomSummon	JAIL_443_TheLivingPlague_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+BT_230	The Lurker Below	CustomSummon	TheLurkerBelow_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+DMF_116	The Nameless One	CustomSummon	DMFFX_NamelessOne_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+ETC_409	The One-Amalgam Band	CustomSummon	ETCFX_OneAmalgamBand_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+TTN_737	The Primus	CustomSummon	TTNFX_ThePrimus_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+NX2_023	The Purator	CustomSummon	NX2FX_Purator_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+SW_323	The Rat King	CustomSummon	HSFX_RatKing_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-3.unity3d
+MIS_025	The Replicator-inator	CustomSummon	TOYFX_TheReplicatorinator_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+MIS_025t	The Replicator-inator	CustomSummon	TOYFX_TheReplicatorinator_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+MIS_025t1	The Replicator-inator	CustomSummon	TOYFX_TheReplicatorinator_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+LOOT_506	The Runespear	CustomSummon	TBFX_Weapon_Runespear_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+VAC_525	The Ryecleaver	CustomSummon	VACFX_Ryecleaver_CustomSummon.prefab	carddef_base_global-23b69986-prefab-1.unity3d
+WON_079	The Scarab Lord	CustomSummon	RLKFX_AnubRekhan_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-0.unity3d
+CORE_REV_921	The Stonewright	CustomSummon	REVFX_TheStonewright_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_921	The Stonewright	CustomSummon	REVFX_TheStonewright_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-2.unity3d
+LT24_815H3	The Switch King	CustomSummon	LichKing_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-44.unity3d
+BE_725	The Unknowable One	CustomSummon	BEFX_UnknowableOne_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+UNG_843	The Voraxx	CustomSummon	Voraxx_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-0.unity3d
+WW_815	Theldurin the Lost	CustomSummon	WWFX_TheldurinTheLost_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+CORE_REV_238	Theotar, the Mad Duke	CustomSummon	REVFX_Theotar_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_238	Theotar, the Mad Duke	CustomSummon	REVFX_Theotar_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+DEEP_036	Therazane	CustomSummon	DEEPFX_Therazane_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-2.unity3d
+BE_337	Therazane the Earthmother	CustomSummon	BEFX_TherazaneEarthMother_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-0.unity3d
+RLK_604	Thori'belore	CustomSummon	RLKFX_Thoribelore_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-1.unity3d
+TTN_835	Thorim, Stormlord	CustomSummon	TTNFX_ThorimStormlord_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+CORE_ICC_481	Thrall, Deathseer	CustomSummon	DK_Thrall_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_481	Thrall, Deathseer	CustomSummon	DK_Thrall_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+WW_440	Thunderbringer	CustomSummon	WWFX_Thunderbringer_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+CORE_CATA_001	Tichondrius	CustomSummon	CORE_CATAFX_Tichondrius_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+DMF_118	Tickatus	CustomSummon	DMFFX_Tickatus_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+DMF_118t	Tickatus	CustomSummon	DMFFX_Tickatus_Corrupted_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+TIME_713	Time Adm'ral Hooktail	CustomSummon	TIMEFX_Timecap'nHooktail_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+TIME_861	Timelooper Toki	CustomSummon	TIMEFX_TimelooperToki_CustomSummon.prefab	carddef_base_global-a312696e-prefab-1.unity3d
+TIME_063	Timelord Nozdormu	CustomSummon	TIMEFX_TimelordNozdormu_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TIME_005	Timethief Rafaam	CustomSummon	TIMEFX_TimetheifRafaam_CustomSummon.prefab	carddef_base_global-a312696e-prefab-0.unity3d
+TOY_385	Timewinder Zarimi	CustomSummon	TOYFX_TimewinderZarimi_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+FIR_958	Tindral Sageswift	CustomSummon	FIRFX_TindralSageswift_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-2.unity3d
+JAIL_458	Tiny Pal	CustomSummon	JAILFX_TinyPal_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+TLC_452	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t1	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t13	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t14	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t15	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t16	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t17	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t18	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t19	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t2	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t20	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t21	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t22	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t23	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t24	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t26	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t27	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t28	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t29	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t3	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t30	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t31	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t32	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t33	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t34	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t35	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t4	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t5	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t6	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t7	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t8	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+TLC_452t9	Titanographer Osk	CustomSummon	TLCFX_Titangrapher_CustomSummon.prefab	carddef_base_global-2f546934-prefab-1.unity3d
+JAIL_852	Togwaggle, Smuggler King	CustomSummon	JAILFX_TogwaggleSmugglerKing_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+GILA_900h2	Toki, Time-Tinker	CustomSummon	Hero_Play_CustomSummon_FX.prefab	carddef_base_global-d2f4bda7-prefab-0.unity3d
+GIL_549	Toki, Time-Tinker	CustomSummon	Toki_CustomSummon.prefab	carddef_base_global-d2f4bda7-prefab-2.unity3d
+LETL_9994	Toki, Time-Tinker 	CustomSummon	Toki_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-23.unity3d
+ETC_541	Tony, King of Piracy	CustomSummon	ETCFX_TonyKingOfPiracy_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+CORE_REV_314	Topior the Shrubbagazzor	CustomSummon	REVFX_Topior_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-5.unity3d
+REV_314	Topior the Shrubbagazzor	CustomSummon	REVFX_Topior_CustomSummon.prefab	carddef_base_global-0516e06c-prefab-0.unity3d
+EDR_258	Toreth the Unbreaking	CustomSummon	EDRFX_Toreth_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+TLC_102	Torga	CustomSummon	TLCFX_TorgatheTurtle_Summon.prefab	carddef_base_global-2f546934-prefab-0.unity3d
+EDR_471	Tortolla	CustomSummon	EDRFX_Tortolla_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+GVG_115	Toshley	CustomSummon	Toshley_CustomSummon.prefab	carddef_base_global-3aaf7c48-prefab-1.unity3d
+TOY_813	Toy Captain Tarim	CustomSummon	TOYFX_ToyCaptainTarim_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+TOY_813t	Toy Captain Tarim	CustomSummon	TOYFX_ToyCaptainTarim_CustomSummon.prefab	carddef_base_global-383d0402-prefab-1.unity3d
+MIS_712	Toyrantus	CustomSummon	MISFX_TyrantusForeverRepaired_CustomSummon.prefab	carddef_base_global-383d0402-prefab-2.unity3d
+WW_437	Tram Conductor Gerry	CustomSummon	WWFX_TramConductorGerry_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-1.unity3d
+JAIL_721	Tras'tath, Soul Parasite	CustomSummon	JAIL_721_TrastathSoulParasite_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+WORK_043	Travelmaster Dungar	CustomSummon	WORKFX_TravelMaster_CustomSummon.prefab	carddef_base_global-23b69986-prefab-2.unity3d
+VAC_464	Treasure Hunter Eudora	CustomSummon	VACFX_SmugglerEudora_CustomSummon.prefab	carddef_base_global-23b69986-prefab-0.unity3d
+SCH_135	Turalyon, the Tenured	CustomSummon	TuralyonTheTenured_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+WORK_013	Turbulus	CustomSummon	WORKFX_Turbulus_CustomSummon.prefab	carddef_base_global-23b69986-prefab-2.unity3d
+LOOT_392	Twig of the World Tree	CustomSummon	Weapon_TwigoftheWorldTree_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+TTN_857	Tyr	CustomSummon	TTNFX_Tyr_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-2.unity3d
+EDR_464	Tyrande	CustomSummon	EDRFX_Tyrande_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+BOTA_UNG_852	Tyrantus	CustomSummon	Tyrantus_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+UNG_852	Tyrantus	CustomSummon	Tyrantus_CustomSummon.prefab	carddef_base_global-46708e9b-prefab-1.unity3d
+CORE_CATA_006	Ulfar	CustomSummon	CORE_CATA_006_Ulfar_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+CATA_497	Ultraxion	CustomSummon	CATAFX_Ultraxion_CustomSummon.prefab	carddef_base_global-0647217b-prefab-1.unity3d
+GDB_854	Uluu, the Everdrifter	CustomSummon	GDBFX_UluuTheEverdrifter_CustomSummon.prefab	carddef_base_global-abe88014-prefab-1.unity3d
+EDR_819	Ursoc	CustomSummon	EDRFX_Ursoc_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+EDR_259	Ursol	CustomSummon	EDRFX_Ursol_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+SWL_13H_01	Uther Lightbringer	CustomSummon	Bolvar_CustomSpawn_Beefy.prefab	carddef_base_global-fc6d50fb-prefab-47.unity3d
+SWL_13H_02	Uther Lightbringer	CustomSummon	Bolvar_CustomSpawn_Beefy.prefab	carddef_base_global-fc6d50fb-prefab-47.unity3d
+SWL_13H_03	Uther Lightbringer	CustomSummon	Bolvar_CustomSpawn_Beefy.prefab	carddef_base_global-fc6d50fb-prefab-47.unity3d
+CORE_ICC_829	Uther of the Ebon Blade	CustomSummon	DK_Uther_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_829	Uther of the Ebon Blade	CustomSummon	DK_Uther_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+JAIL_118	V'ama, Looming Death	CustomSummon	JAILFX_VamaLoomingDeath_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+TTN_721	V-07-TR-0N Prime	CustomSummon	TTNFX_V0L-TR0N_Prime_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-1.unity3d
+LOOT_500	Val'anyr	CustomSummon	Weapon_Valanyr_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+DRG_208	Valdris Felgorge	CustomSummon	ValdrisFelgorge_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+CORE_ICC_827	Valeera the Hollow	CustomSummon	DK_Valeera_CustomSummon_FX.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+ICC_827	Valeera the Hollow	CustomSummon	DK_Valeera_CustomSummon_FX.prefab	carddef_base_global-06d41e57-prefab-1.unity3d
+WON_345	Valstann Staghelm	CustomSummon	BTFX_KaynSunfury_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-1.unity3d
+CORE_CS3_005	Vanessa VanCleef	CustomSummon	CS3FX_VanessaVancleef_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+CS3_005	Vanessa VanCleef	CustomSummon	CS3FX_VanessaVancleef_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+JAIL_407	Vanessa the Ringleader	CustomSummon	JAIL_VanessatheRingleader_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+AV_223	Vanndar Stormpike	CustomSummon	AVFX_VanndarStormpike_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+LETL_859H	Vanndar Stormpike	CustomSummon	AVFX_VanndarStormpike_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-21.unity3d
+BAR_748	Varden Dawngrasp	CustomSummon	BAR_VardenDawngrasp_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+SW_081	Varian, King of Stormwind	CustomSummon	SWFX_KingVarian_CustomSummon.prefab	carddef_base_global-40cb6b8d-prefab-2.unity3d
+SCH_162	Vectus	CustomSummon	SCHFX_Vectus_CustomSummon.prefab	carddef_base_global-67d2d0c1-prefab-0.unity3d
+WW_364	Velarok Windblade	CustomSummon	WWFX_VelarokWindrunner_CustomSummon.prefab	carddef_base_global-b10736ab-prefab-0.unity3d
+GDB_131	Velen, Leader of the Exiled	CustomSummon	GDBFX_VelenLeader_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+CORE_DRG_095	Veranus	CustomSummon	Veranus_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+DRG_095	Veranus	CustomSummon	Veranus_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+DAL_379	Vereesa Windrunner	CustomSummon	VereesaWindrunner_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-4.unity3d
+ULD_173	Vessina	CustomSummon	Vessina_CustomSummon.prefab	carddef_base_global-9f363830-prefab-4.unity3d
+RLK_541	Vexallus	CustomSummon	RLKFX_Vexallus_CustomSummon.prefab	carddef_base_global-7a441cb3-prefab-0.unity3d
+CATA_470	Victor Nefarius	CustomSummon	CATA_4070_VictorNefarius_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+GVG_014	Vol'jin	CustomSummon	Voljin_CustomSummon.prefab	carddef_base_global-3aaf7c48-prefab-0.unity3d
+FIR_951	Volcoross	CustomSummon	FIR_951_Volcoross_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-2.unity3d
+CATA_488	Vulcanos	CustomSummon	CATA_488_Vulcanos_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+CATA_213	Vyranoth	CustomSummon	CATAFX_Vyranoth_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+EDR_487	Wallow, the Wretched	CustomSummon	EDRFX_WallowtheWeeping_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-1.unity3d
+TRL_328	War Master Voone	CustomSummon	WarMasterVoone_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-2.unity3d
+JAIL_850	Warden Maiev	CustomSummon	JAILFX_WardenMaiev_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+CATA_720	Warmaster Blackhorn	CustomSummon	CATA_720_WarmasterBlackhorn_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+JAIL_421	Warptooth	CustomSummon	JAILFX_Warptooth_CustomSummon.prefab	carddef_base_global-51b13101-prefab-0.unity3d
+JAIL_EVENT_100	Watfin	CustomSummon	JAILEVENTFX_Watfin_CustomSummon.prefab	carddef_base_global-4864763f-prefab-0.unity3d
+DRG_036	Waxadred	CustomSummon	Waxadred_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
+CFM_324	White Eyes	CustomSummon	WhiteEyes_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-0.unity3d
+BOT_914	Whizbang the Wonderful	CustomSummon	WhizbangTheWonderful_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+CATA_139	Wickerfang	CustomSummon	CATAFX_Wickerfang_CustomSummon.prefab	carddef_base_global-0647217b-prefab-0.unity3d
+CFM_815	Wickerflame Burnbristle	CustomSummon	Wickerflame_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+WON_312	Wickerflame Burnbristle	CustomSummon	Wickerflame_CustomSummon.prefab	carddef_base_global-2b3eccc7-prefab-1.unity3d
+AV_205	Wildheart Guff	CustomSummon	AVFX_GuffWildHeart_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+AT_027	Wilfred Fizzlebang	CustomSummon	WilfredFizzlebang_CustomSummon.prefab	carddef_base_global-61754518-prefab-0.unity3d
+AV_336	Wing Commander Ichman	CustomSummon	AVFX_WingCommanderIchman_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+AV_293	Wing Commander Mulverick	CustomSummon	AVFX_CommanderMulverick_CustomSummon.prefab	carddef_base_global-5fc02a26-prefab-1.unity3d
+LOOT_380	Woecleaver	CustomSummon	Weapon_Woecleaver_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+CFM_806	Wrathion	CustomSummon	Wrathion_CustomSummon.prefab	carddef_base_global-25e591d9-prefab-1.unity3d
+Story_06_Wrathion	Wrathion	CustomSummon	Wrathion_CustomSummon.prefab	carddef_base_global-384202c8-prefab-3.unity3d
+LETL_827H	Xaravan	CustomSpawn	FlameOfAzzinoth_CustomSpawn.prefab	carddef_base_global-fc6d50fb-prefab-19.unity3d
+TSC_219	Xhilag of the Abyss	CustomSummon	TSCFX_XhilagOfTheAbyss_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-4.unity3d
+GDB_118	Xor'toth, Breaker of Stars	CustomSummon	GDBFX_Xortoth_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+BAR_735	Xyrella	CustomSummon	BARFX_Xyrella_CustomSummon.prefab	carddef_base_global-fd9efb99-prefab-1.unity3d
+AV_207	Xyrella, the Devout	CustomSummon	AVFX_XyrellaTheDevout_CustomSummon_Super.prefab	carddef_base_global-5fc02a26-prefab-0.unity3d
+LT23_028H_01	Y'Shaarj	CustomSummon	DMFFX_YShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_028H_01	Y'Shaarj	DiamondCustomSummon	DMFFX_YShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_028H_01	Y'Shaarj	GoldenCustomSummon	DMFFX_YShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_028H_02	Y'Shaarj	CustomSummon	DMFFX_YShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_028H_02	Y'Shaarj	DiamondCustomSummon	DMFFX_YShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_028H_02	Y'Shaarj	GoldenCustomSummon	DMFFX_YShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+LT23_028H_03	Y'Shaarj	CustomSummon	DMFFX_Y'ShaarjDefiler_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-33.unity3d
+BE_784	Y'Shaarj, Titan Bane	CustomSummon	BEFX_YShaarjtheTitanBane_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+DMF_188	Y'Shaarj, the Defiler	CustomSummon	DMFFX_Y'ShaarjDefiler_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+LT23_026H_01	Yogg-Saron	CustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_01	Yogg-Saron	DiamondCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_01	Yogg-Saron	GoldenCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_02	Yogg-Saron	CustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_02	Yogg-Saron	DiamondCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_02	Yogg-Saron	GoldenCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_03	Yogg-Saron	CustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_03	Yogg-Saron	DiamondCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_03	Yogg-Saron	GoldenCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_03_Event	Yogg-Saron	CustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_03_Event	Yogg-Saron	DiamondCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+LT23_026H_03_Event	Yogg-Saron	GoldenCustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-fc6d50fb-prefab-32.unity3d
+DMF_004	Yogg-Saron, Master of Fate	CustomSummon	DMF_YoggSaronMasterOfFate_CustomSummon.prefab	carddef_base_global-384202c8-prefab-0.unity3d
+YOG_516	Yogg-Saron, Unleashed	CustomSummon	TTNFX_YoggSaronUnleashed_CustomSummon.prefab	carddef_base_global-8e3e520f-prefab-3.unity3d
+GDB_141	Yrel, Beacon of Hope	CustomSummon	GDB_141_YrelBeaconOfHope_CustomSummon.prefab	carddef_base_global-abe88014-prefab-0.unity3d
+CORE_VAN_EX1_572	Ysera	CustomSummon	Ysera_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-4.unity3d
+EX1_572	Ysera	CustomSummon	Ysera_CustomSummon.prefab	carddef_base_global-775a814d-prefab-2.unity3d
+VAN_EX1_572	Ysera	CustomSummon	Ysera_CustomSummon.prefab	carddef_base_global-a7b52ec8-prefab-2.unity3d
+CS3_033	Ysera the Dreamer	CustomSummon	EX1FX_Ysera_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-3.unity3d
+LEG_CS3_033	Ysera the Dreamer	CustomSummon	EX1FX_Ysera_CustomSummon.prefab	carddef_base_global-a1df76dc-prefab-0.unity3d
+EDR_000	Ysera, Emerald Aspect	CustomSummon	EDRFX_YseraEmeraldAspect_CustomSummon.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+DRG_320	Ysera, Unleashed	CustomSummon	YseraUnleashed_CustomSummon.prefab	carddef_base_global-6eb8705c-prefab-1.unity3d
+BT_131	Ysiel Windsinger	CustomSummon	YsielWindsinger_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+EDR_465	Ysondre	CustomSummon	EDRFX_Ysondre_CustomSummon_FIX.prefab	carddef_base_global-0fde4609-prefab-0.unity3d
+TSC_959	Za'qul	CustomSummon	TSCFX_Zaqul_CustomSummon.prefab	carddef_base_global-50dcdbf5-prefab-5.unity3d
+CORE_DMF_231	Zai, the Incredible	CustomSummon	DMFFX_ZaiTheIncredible_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-6.unity3d
+DMF_231	Zai, the Incredible	CustomSummon	DMFFX_ZaiTheIncredible_CustomSummon.prefab	carddef_base_global-384202c8-prefab-1.unity3d
+BE_728	Zakajz the Corruptor	CustomSummon	BE_728_ZakajzTheCorruptor_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+DAL_800	Zayle, Shadow Cloak	CustomSummon	ZayleShadowCloak_CustomSummon.prefab	carddef_base_global-17e09d12-prefab-5.unity3d
+TRL_085	Zentimo	CustomSummon	Zentimo_CustomSummon.prefab	carddef_base_global-eba3a536-prefab-1.unity3d
+ULD_003	Zephrys the Great	CustomSummon	Zephrys_CustomSummon.prefab	carddef_base_global-9f363830-prefab-3.unity3d
+BE_790	Zer'Ontu	CustomSummon	BE_790_ZerOntu_CustomSummon.prefab	carddef_base_global-0dbe0cab-prefab-1.unity3d
+BOT_258	Zerek, Master Cloner	CustomSummon	Zerek_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-1.unity3d
+BOT_548	Zilliax	CustomSummon	Zilliax_CustomSummon.prefab	carddef_base_global-74f91fa9-prefab-2.unity3d
+CORE_BOT_548	Zilliax	CustomSummon	Zilliax_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-0.unity3d
+TOY_330	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t10	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t11	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t12	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t5	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t6	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t7	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t8	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+TOY_330t9	Zilliax Deluxe 3000	CustomSummon	TOYFX_ZilliaxTheCustomizable_CustomSummon.prefab	carddef_base_global-383d0402-prefab-0.unity3d
+BT_210	Zixor, Apex Predator	CustomSummon	Zixor_CustomSummon.prefab	carddef_base_global-5c47a539-prefab-1.unity3d
+ETC_386	Zok Fogsnout	CustomSummon	ETCFX_ZokFogsnout_CustomSummon.prefab	carddef_base_global-786af98e-prefab-1.unity3d
+CORE_LOOT_516	Zola the Gorgon	CustomSummon	ZolaTheGorgon_CustomSummon.prefab	carddef_base_global-84b1a5c7-prefab-2.unity3d
+LOOT_516	Zola the Gorgon	CustomSummon	ZolaTheGorgon_CustomSummon.prefab	carddef_base_global-c8eab65e-prefab-3.unity3d
+TRL_065	Zul'jin	CustomSummon	ZulJin_CustomSummon_FX.prefab	carddef_base_global-eba3a536-prefab-1.unity3d
+JAIL_887	Zuramat's Prison	CustomSummon	JAILFX_ZuramatsPrison_CustomSummon.prefab	carddef_base_global-51b13101-prefab-1.unity3d
+DRG_209	Zzeraku the Warped	CustomSummon	ZzerakuTheWarped_CustomSummon 3.prefab	carddef_base_global-6eb8705c-prefab-0.unity3d
