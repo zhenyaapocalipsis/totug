@@ -12,7 +12,7 @@
       "usePos": true,
       "show": ["Root"],
       "noTimeline": true,
-      "clip": "Onyxia_CustomSummon",
+      "clip": "none",
       "controls": [
         {"node": "Root/Token_Root/FX_Smoke", "start": 0.0, "end": 5.0},
         {"node": "Root/Token_Root/FX_Scream", "start": 0.717, "end": 2.967},
