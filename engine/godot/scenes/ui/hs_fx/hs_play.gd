@@ -35,12 +35,12 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
 ## (стоит), out (гаснет), center (центр на экране 960x540 — центр квада Quad_CardGlow);
-## cues — звуки [секунда, файл, громкость 0..1]; shakers — тряска камеры HS (дорожка
+## cues — звуки [секунда, файл, громкость 0..1, высота тона (1)]; shakers — тряска камеры HS (дорожка
 ## CameraShaker2 в Timeline спелла): [с, по, амплитуда (единицы мира HS), кривая силы
 ## [[доля клипа, сила], ...], интервал смены точки, с]; fog — дымка розыгрыша (FOGS) и
 ## секунда её появления; actions — эффекты действий карты: событие -> frames, anchor
@@ -75,6 +75,18 @@ const SCRIPTS := {
 		"cues": [[0.0, "Onyxia_CustomSummon_Cast", 0.8], [1.5, "Onyxia_CustomSummon_Impact", 0.7]],
 		# CameraShakerAction FSM в ударе: 0.2 по осям, случайная точка каждый кадр, 0.56 с
 		"shakers": [[1.5, 2.06, 0.16, [[0.0, 1.0], [0.161, 0.9], [0.393, 0.27], [1.0, 0.0]], 0.0167]]},
+	# Malygos, Aspect of Magic (DRG_270) — Blue Dragon: DRGFX_MalygosAspectOfMagic_CustomSummon
+	# (Timeline спелла): в точке посадки искра раскрывается в синий магический портал со
+	# спиралью и лучами, из него поднимается вспышка с кольцом и на 1.7 с падает вниз —
+	# удар, фиолетовая вспышка газа и искры; свечение миньона HS и трещины убраны. За
+	# ударом Choice_Reveal Deathwing, как у Red Dragon. Дымки нет (нет m_PlayEffectDef).
+	"malygos": {"frames": "malygos", "sounds": "malygos",
+		"card": {"face": "mini", "reveal": 2.2, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# FSM: звук портала с начала, два звука удара в 1.7 с (второй — pitch 1.1)
+		"cues": [[0.0, "MalygosAspectOfMagic_CustomSummon_Sound", 0.7], [1.7, "FlikSkyshiv_CustomSummon_Impact_Sound", 0.6, 1.1],
+			[1.7, "AngelicaWarden_CustomSummon_Impact_Sound", 0.7]],
+		# MainCameraShakerAction: 0.15 по осям, сила линейно 1 -> 0 за время тряски
+		"shakers": [[0.7, 1.4, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167], [1.7, 2.0, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
@@ -510,7 +522,8 @@ class _Clip:
 		for c: Array in cues:
 			if _cue_t < float(c[0]) and t >= float(c[0]):
 				var vol := float(c[2]) if c.size() > 2 else 1.0
-				Sfx.play_file(SOUNDS + sounds + "/" + String(c[1]) + ".wav", quiet, linear_to_db(vol))
+				var pitch := float(c[3]) if c.size() > 3 else 1.0
+				Sfx.play_file(SOUNDS + sounds + "/" + String(c[1]) + ".wav", quiet, linear_to_db(vol), pitch)
 		_cue_t = t
 
 	## Сдвиг камеры в момент t, как ShakerHelper.UpdateTarget: доля клипа -> номер точки

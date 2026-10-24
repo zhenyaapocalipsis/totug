@@ -83,14 +83,14 @@ static func voice(card_id: String, quiet: bool = false) -> void:
 
 
 ## Проиграть звук-файл (res://...); db — поправка громкости.
-static func play_file(path: String, quiet: bool = false, db: float = 0.0) -> void:
+static func play_file(path: String, quiet: bool = false, db: float = 0.0, pitch: float = 1.0) -> void:
 	if _instance == null or volume <= 0.0 or not ResourceLoader.exists(path):
 		return
 	var p := _instance._voices[_instance._next]
 	_instance._next = (_instance._next + 1) % _instance._voices.size()
 	p.stream = load(path)
 	p.volume_db = db + (OTHER_DB if quiet else 0.0)
-	p.pitch_scale = 1.0
+	p.pitch_scale = pitch
 	p.play()
 
 

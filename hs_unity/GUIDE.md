@@ -168,6 +168,12 @@ FOV 34.87). Мир → экран 960x540: x ≈ 480 + (X+7.8)·44.1, y по z �
   `clip` и `controls` по секундам FSM (Wait); частицы из `controls` идут только по ним.
   Тряска FSM (CameraShakerAction, CameraShakeMgr) — случайная точка каждый кадр, длина
   = время последнего ключа кривой: в HsPlay интервал 1/60, амплитуда ×0.8.
+- **Анимация только в Timeline** (Malygos: клип `Recorded` есть лишь на дорожке
+  Animation, у контроллера аниматора клипов нет): такой аниматор HsRender оставляет
+  включённым, иначе дорожка ничего не двигает. Проверять по `measure`: узел движется?
+- **MainCameraShakerAction** (m_Amount, m_Time, m_Delay) = CameraShakeMgr.Shake с
+  кривой Linear(0, 1, time, 0): в HsPlay `[[0, 1], [1, 0]]`. Высота тона звука FSM
+  (m_Pitch) — 4-е число в `cues`.
 - **Свечение миньона HS** (`Mesh_FlashGlow`, GenFX_AllyInPlay_MinionGlow) и трещины под
   миньоном (`Mesh_Crack`) — макет HS, прятать.
 - **Якорь не по точке префаба**, а по видимому огню (`bake_centroid`).

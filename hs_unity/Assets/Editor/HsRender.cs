@@ -290,7 +290,8 @@ public static class HsRender
         {
             var cs = an.runtimeAnimatorController ? an.runtimeAnimatorController.animationClips : new AnimationClip[0];
             Log($"animator {an.name}: " + string.Join(", ", cs.Select(c => $"{c.name} {c.length:0.###}s")));
-            an.enabled = false;
+            // аниматор без своих клипов — цель дорожки Animation Timeline: остаётся включённым
+            an.enabled = cs.Length == 0 && live.dirs.Length > 0;
             if (spec.clips.Length > 0)
             {
                 // состояния аниматора по сценарию (FSM): клип с секунды at от начала слоя

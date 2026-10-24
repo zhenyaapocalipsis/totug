@@ -13,7 +13,7 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: Red Dragon (Deathwing, Worldbreaker), Black Dragon (Onyxia the Broodmother). Остальные — по очереди, по слову владельца.
+Готово: Red Dragon (Deathwing, Worldbreaker), Black Dragon (Onyxia the Broodmother), Blue Dragon (Malygos). Остальные — по очереди, по слову владельца.
 
 ### drow
 
@@ -31,7 +31,7 @@
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Black Dragon (48400) | Onyxia the Broodmother (CS3_032) | `ds1FX_Onyxia_CustomSummon.prefab` | СДЕЛАНО (HsFx-14) |
-| Blue Dragon (48403) | Malygos, Aspect of Magic (DRG_270) | `MalygosAspectOfMagic_CustomSummon.prefab` | синий дракон магии |
+| Blue Dragon (48403) | Malygos, Aspect of Magic (DRG_270) | `MalygosAspectOfMagic_CustomSummon.prefab` | СДЕЛАНО (HsFx-16) |
 | Green Dragon (48419) | Ysera, Emerald Aspect (EDR_000) | `EDRFX_YseraEmeraldAspect_CustomSummon.prefab` | зелёная драконица |
 | Rath Modar (48425) | Rhonin (AT_009) | `Rhonin_CustomSpawn.prefab` | красный волшебник |
 | Red Dragon (48426) | Deathwing, Worldbreaker (CATA_190h) | `CATAFX_Deathwing_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-1..12) |
