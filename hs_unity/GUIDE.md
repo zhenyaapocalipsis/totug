@@ -7,12 +7,11 @@ HsFx-0..12, октябрь 2026), дополнено на остальных к�
 
 ## Где остановились (2026-10-25)
 
-- **Готово и задеплоено** (сборка 1792871252): вся колода dragons (Red, Black, Blue,
-  Green, White Dragon, Rath Modar, Severin) и из drow — Council Member (Lady Prestor),
-  Deathblade (Zayle, Shadow Cloak), Inquisitor (Darkbishop Benedictus), Masters of
-  Sorcere (Kael'thas). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
-  Сделано, не задеплоено: Matron Mother (Queen Azshara, HsFx-27), Weaponmaster
-  (Blademaster Samuro, HsFx-28) — колода drow готова целиком.
+- **Готово и задеплоено** (сборка 1792878534): вся колода dragons (Red, Black, Blue,
+  Green, White Dragon, Rath Modar, Severin) и вся колода drow — Council Member (Lady
+  Prestor), Deathblade (Zayle, Shadow Cloak), Inquisitor (Darkbishop Benedictus),
+  Masters of Sorcere (Kael'thas), Matron Mother (Queen Azshara), Weaponmaster
+  (Blademaster Samuro). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
 - **Дальше:** следующую колоду называет владелец.
 - **Пробы замен до работы:** владелец может попросить «какие ещё есть варианты» — 3–4
   свободные легендарки по смыслу, пробы всех (рецепты-пробы в `hs_unity/render/cand/`,
