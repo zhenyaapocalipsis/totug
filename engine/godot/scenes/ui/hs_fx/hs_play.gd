@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -145,6 +145,14 @@ const SCRIPTS := {
 		"cues": [[0.0, "LadyPrestor_CustomSummon_Sound", 0.4], [1.383, "LadyPrestor_CustomSummon_Impact_Sound", 0.4]],
 		# CameraShakerAction FSM: 0.05 по осям, с 1.5 с, 0.2 с
 		"shakers": [[1.5, 1.7, 0.04, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Zayle, Shadow Cloak (DAL_800) — Deathblade (вместо Valeera the Hollow: у неё только
+	# полёт миньона HS на лиане — владелец 2026-10-24): DALFX_ZayleShadowCloak_CustomSummon
+	# (по FSM: все частицы с нажатия): в точке посадки фиолетовый разлом-молния, дым, знак
+	# глаза в треугольнике, на 1.0 с появляется миньон HS. Весь эффект под картой (молния
+	# шла поверх). Выжигание фиолетовое — тон арта совпал с цветом эффекта. Тряски нет.
+	"zayle": {"frames": "zayle", "sounds": "zayle",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		"cues": [[0.0, "ZayleMasterCloak_CustomSummon", 1.0]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

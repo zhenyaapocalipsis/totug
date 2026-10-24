@@ -13,14 +13,14 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member). Остальные — по очереди, по слову владельца.
+Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member, Deathblade). Остальные — по очереди, по слову владельца.
 
 ### drow
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Council Member (48315) | Lady Prestor (SW_078) | `SWFX_LadyPrestor_CustomSummon.prefab` | СДЕЛАНО (HsFx-22) |
-| Deathblade (48316) | Valeera the Hollow (ICC_827) | `DK_Valeera_CustomSummon_FX.prefab` | убийца-разбойница из теней |
+| Deathblade (48316) | Zayle, Shadow Cloak (DAL_800) | `ZayleShadowCloak_CustomSummon.prefab` | СДЕЛАНО (HsFx-23); вместо Valeera the Hollow (ICC_827): у неё только полёт миньона HS на лиане (владелец 2026-10-24) |
 | Inquisitor (48325) | High Inquisitor Whitemane (EX1_190) | `HighInquisitorWhitemane_CustomSummon.prefab` | инквизитор, суд и казнь |
 | Masters of Sorcere (48328) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | верховный маг-эльф, магическая школа |
 | Matron Mother (48329) | Queen Azshara (TSC_641) | `TSCFX_Azshara_CustomSummon.prefab` | властная королева-матриарх |
