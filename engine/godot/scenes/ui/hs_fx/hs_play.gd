@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -164,6 +164,17 @@ const SCRIPTS := {
 		"cues": [[0.0, "DarkbishopBenedictus_CustomSummon_Sound", 0.8], [1.2, "DarkbishopBenedictus_CustomSummon_Impact_Sound", 0.8]],
 		# CameraShaker2: 0.03 по осям, всплеск в начале клипа
 		"shakers": [[0.017, 1.65, 0.03, [[0.0, 0.0], [0.03, 0.99], [0.16, 0.12], [0.5, 0.0], [1.0, 0.0]], 0.0708]]},
+	# Kael'thas Sunstrider (BT_255) — Masters of Sorcere: BTFX_KaelthasSunstrider_CustomSummon
+	# (Timeline): в точке посадки огненная спираль, вокруг кружат три зелёные сферы Скверны
+	# с огненными шлейфами, растёт солнечный шар, на 1.5 с удар — зелёная вспышка и пламя.
+	# Весь эффект под картой; трещины в земле (макет HS) убраны. Выжигание зелёное в цвет
+	# Скверны (владелец 2026-10-25).
+	"kaelthas": {"frames": "kaelthas", "sounds": "kaelthas",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: 0.5 с начала, удар 0.6 на 1.5 с
+		"cues": [[0.0, "Kael_thasSunstrider_CustomSummon_Sound", 0.5], [1.5, "Kael_thasSunstrider_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShakerAction FSM: 0.15 по осям через 0.1 с после удара, 0.63 с
+		"shakers": [[1.6, 2.23, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
