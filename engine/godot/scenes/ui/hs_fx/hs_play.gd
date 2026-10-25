@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "wallow", "48713": "ghuun"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -412,6 +412,40 @@ const SCRIPTS := {
 		# CameraShaker2: дрожь 0.013 нарастает до удара, в ударе (0.2, 0.3) — у нас 0.25, рывок и спад
 		"shakers": [[0.0, 1.05, 0.013, [[0.0, 0.0], [0.49, 0.99], [1.0, 0.99]], 0.0708],
 			[1.05, 1.717, 0.25, [[0.0, 0.51], [0.5, 0.0], [1.0, 0.0]], 0.0708]]},
+	# The Black Blood (CATA_300) — Aboleth, древняя слизистая тварь из глубин (вместо Soggoth;
+	# пробы Maladaar, Uluu — владелец 2026-10-26): CATA_300_TheBlackBlood_CustomSummon (Timeline):
+	# из лужи вскипает фиолетовый ком слизи, на 1.1 с всплеск и вспышка, слизь расплёскивается,
+	# лужа остаётся под картой и дрожит. Жетон HS, свечение миньона и купол ShieldFX спрятаны,
+	# весь эффект под картой. Выжигание фиолетовое в цвет слизи.
+	"blackblood": {"frames": "blackblood", "sounds": "blackblood",
+		"card": {"face": "mini", "reveal": 1.57, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: начало с 0 с, удар с 1.267 с (AudioSource 0.7)
+		"cues": [[0.0, "CATA_300_TheBlackBlood_CustomSummon_Sound", 0.7], [1.267, "Buttons_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: 0.05 нарастает до удара, в ударе 0.07 рывком и спад
+		"shakers": [[0.198, 1.1, 0.05, [[0.0, 0.0], [1.0, 1.0]], 0.075],
+			[1.1, 3.15, 0.07, [[0.0, 0.26], [0.13, 0.67], [0.37, 0.11], [0.68, 0.02], [1.0, 0.0]], 0.075]]},
+	# Wallow, the Wretched (EDR_487) — Neogi, паук-рабовладелец (вместо Anub'Rekhan; пробы
+	# Renferal, Omen — владелец 2026-10-26): EDRFX_WallowtheWeeping_CustomSummon (Timeline):
+	# кровавый полумесяц-удар закручивается в алую сферу, на 1.32 с вспышка, красные осколки,
+	# ржаво-оранжевый пепел осыпается. Жетон HS спрятан, весь эффект под картой. Выжигание
+	# кроваво-красное в цвет удара.
+	"wallow": {"frames": "wallow", "sounds": "wallow",
+		"card": {"face": "mini", "reveal": 1.79, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: с 0.15 с (AudioSource 0.8)
+		"cues": [[0.15, "WallowtheWeeping_CustomSummon_Sound", 0.8]],
+		# CameraShaker2: 0.1 по осям в ударе, сила линейно 1 -> 0
+		"shakers": [[1.317, 2.65, 0.1, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# G'huun (BE_287) — Death Tyrant, мёртвый бехолдер (вместо C'Thun, the Shattered; пробы
+	# 8 Hands From Beyond, Darkmarrow, Drest'agath — владелец 2026-10-26):
+	# BE_287_GhuunTheCataStrophic_CustomSummon (Timeline): костяные щупальца стягиваются к месту
+	# карты, на 0.98 с кровавый взрыв, на 1.45 с второй — красные брызги и капли. Жетон HS и его
+	# свечение спрятаны, весь эффект под картой. Выжигание кроваво-красное.
+	"ghuun": {"frames": "ghuun", "sounds": "ghuun",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: начало с 0 с, удар с 1.467 с (AudioSource 0.7)
+		"cues": [[0.0, "BE_287_GhuunTheCataStrophic_CustomSummon_Sound", 0.7], [1.467, "BE_287_GhuunTheCataStrophic_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: 0.075 с 0.517 с, в ударе 0.15, сила линейно 1 -> 0
+		"shakers": [[0.517, 1.1, 0.075, [[0.0, 1.0], [1.0, 0.51]], 0.1], [1.1, 2.15, 0.15, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

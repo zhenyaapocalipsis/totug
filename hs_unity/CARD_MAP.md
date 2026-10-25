@@ -18,7 +18,7 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, вся колода drow, вся колода demons, вся колода elementals). Остальные — по очереди, по слову владельца.
+Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, drow, demons, elementals, aberrations). Остальные — по очереди, по слову владельца.
 
 В оставшихся 12 колодах почти все легендарки — из старых наборов (в каждой колоде свежих
 0–4): перед работой над колодой подобрать свежие замены (правило выше), сначала из запаса.
@@ -112,9 +112,9 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Elder Brain (48700) | Kith'ix (BE_090) | `BEFX_Kithix_CustomSummon.prefab` | СДЕЛАНО (HsFx-50); древний разум — фиолетовые молнии с неба, вспышка-мозг (BrainBlast); затемнение и дым на весь экран убраны; выжигание фиолетовое; вместо N'Zoth, God of the Deep (DMF_002, старый набор); пробы Umbra, N'Zoth Dream's End, Mastermind Yogg-Saron владелец смотрел (2026-10-26) |
 | Ulitharid (48701) | Irida Sinseeker (JAIL_719) | `JAIL_719_IridaSinseeker_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-49); иллитид — тёмный разрез, синий портал, удар с трещинами; выжигание сине-фиолетовое. Вместо Mindflayer Kaahrj (DRG_308, старый набор); набор JAIL старый, но Irida владелец назвал сам (2026-10-26). Смотрел и отверг: G'huun, Zer'Ontu, Herenn, 8 Hands, C'Thun Eye of the Empire (без глаза и клыков, щупальца перекрашены в лиловый и разведены по углам — «каша», не понравилось) |
-| Aboleth (48705) | The Black Blood (CATA_300) | `CATA_300_TheBlackBlood_CustomSummon.prefab` | древняя слизистая тварь из глубин; вместо Soggoth (OG_340, старый набор); пробы Maladaar, Uluu владелец смотрел (2026-10-26) |
-| Neogi (48710) | Wallow, the Wretched (EDR_487) | `EDRFX_WallowtheWeeping_CustomSummon.prefab` | кровавый удар-полумесяц; вместо Anub'Rekhan (RLK_659, старый набор); пробы Renferal (паутина), Omen владелец смотрел (2026-10-26) |
-| Death Tyrant (48713) | G'huun (BE_287) | `BE_287_GhuunTheCataStrophic_CustomSummon.prefab` | щупальца стягиваются в кровавый взрыв; вместо C'Thun, the Shattered (DMF_254, старый набор); пробы 8 Hands From Beyond, Darkmarrow, Drest'agath владелец смотрел (2026-10-26) |
+| Aboleth (48705) | The Black Blood (CATA_300) | `CATA_300_TheBlackBlood_CustomSummon.prefab` | СДЕЛАНО (HsFx-51); древняя слизистая тварь из глубин, купол ShieldFX спрятан, выжигание фиолетовое; вместо Soggoth (OG_340, старый набор); пробы Maladaar, Uluu владелец смотрел (2026-10-26) |
+| Neogi (48710) | Wallow, the Wretched (EDR_487) | `EDRFX_WallowtheWeeping_CustomSummon.prefab` | СДЕЛАНО (HsFx-52); кровавый удар-полумесяц, выжигание красное; вместо Anub'Rekhan (RLK_659, старый набор); пробы Renferal (паутина), Omen владелец смотрел (2026-10-26) |
+| Death Tyrant (48713) | G'huun (BE_287) | `BE_287_GhuunTheCataStrophic_CustomSummon.prefab` | СДЕЛАНО (HsFx-53); щупальца стягиваются в кровавый взрыв, выжигание красное; вместо C'Thun, the Shattered (DMF_254, старый набор); пробы 8 Hands From Beyond, Darkmarrow, Drest'agath владелец смотрел (2026-10-26) |
 | Beholder (48715) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-48); бехолдер — фиолетовый глаз-воронка, скромно (цена 5), выжигание фиолетовое; пробы Drest'agath, Ceaseless Expanse владелец смотрел (2026-10-26) |
 
 ### undead
