@@ -12,12 +12,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": ["Root/Token_Root/Mesh_RevealGlow", "Root/Token_Root/MinionEdgeGlow_2", "Root/Token_Root/Minion_CrackedEarth",
-        "Root/Token_Root/Minion_CrackedEarth_Glow Top", "Root/Token_Root/OnToken", "Root/Token_Root/MinionEdgeGlow_Top",
-        "Root/DetachRoot/Tornado_TrailWind"],
+        "Root/Token_Root/Minion_CrackedEarth_Glow Top", "Root/Token_Root/OnToken", "Root/Token_Root/MinionEdgeGlow_Top"],
       "under": ["Root"],
-      "pin": [{"node": "Root/Token_Root", "pos": [0.0, 0.0, 0.0]},
-        {"node": "Root/DetachRoot/Tornado_Root/Al'Akir_Tornado_Mesh", "pos": [-0.06, 0.44, -0.55]},
-        {"node": "Root/DetachRoot/DustTrail_FX", "pos": [-0.08, 1.26, -1.0]}],
       "measure": ["Root/Token_Root", "Root/DetachRoot/Tornado_Root/Al'Akir_Tornado_Mesh"]
     },
     {

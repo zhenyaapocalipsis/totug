@@ -99,14 +99,14 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Aerisi Kalinoth (48600) | Ohn'ahra (EDR_031) | `EDRFX_Ohnahra_CustomSummon.prefab` | СДЕЛАНО (HsFx-41); пророчица ветра; молния с левого края, шар бури у карты (как в HS, не прибито); выжигание бирюзовое |
+| Aerisi Kalinoth (48600) | Ohn'ahra (EDR_031) | `EDRFX_Ohnahra_CustomSummon.prefab` | СДЕЛАНО (HsFx-41); пророчица ветра; молния с левого края, шар бури у карты (как в HS — владелец); выжигание бирюзовое |
 | Gar Shatterkeel (48626) | Neptulon, Lord of Tides (BE_209) | `BEFX_NeptulonLordofTides_CustomSummon.prefab` | СДЕЛАНО (HsFx-40); пророк воды; синий водяной смерч с молниями; выжигание синее |
 | Imix (48629) | Commander Geddon (CATA_591) | `CATAFX_CommanderGeddon_CustomSummon.prefab` | СДЕЛАНО (HsFx-39); принц огня; огненный вихрь, шар магмы взрывается; овал жетона в кольце спрятан; выжигание оранжевое |
 | Marlos Urnrayle (48630) | Mirrex, the Crystalline (DINO_407) | `DINOFX_MirrextheCrystalline_CustomSummon.prefab` | СДЕЛАНО (HsFx-43); медуза, окаменение — кристаллы в облаке раскалываются; выжигание синее |
 | Ogrémoch (48631) | Therazane the Earthmother (BE_337) | `BEFX_TherazaneEarthMother_CustomSummon.prefab` | СДЕЛАНО (HsFx-36); самоцветы, кристалл раскалывается; выжигание бирюзовое |
 | Olhydra (48632) | Azshara, Ocean Lord (CATA_151) | `CATAFX_LadyAzshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-37); принцесса воды, волна снизу обрушивается на место карты; выжигание морской зелени |
 | Vanifer (48633) | Incindius (VAC_321) | `VACFX_Incindius_CustomSummon.prefab` | СДЕЛАНО (HsFx-42); огненная жрица; лавовый взрыв, огненная звезда; выжигание красно-оранжевое |
-| Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | СДЕЛАНО (HsFx-38); принц воздуха; смерч с молниями прибит к месту карты (`pin`, в HS летит справа); выжигание фиолетовое |
+| Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | СДЕЛАНО (HsFx-38, HsFx-44); принц воздуха; смерч с молниями прилетает справа, как в HS (прибитый `pin` владелец отверг: «появляется из ниоткуда сразу гигантским»); выжигание фиолетовое |
 
 ### aberrations
 
