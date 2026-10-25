@@ -43,19 +43,17 @@
 | Kith'ix (BE_090) | `kithix` | фиолетовые молнии; экран темнеет фиолетовым — затемнение убирать | void, 7–8 |
 | Nexus-Prince Shaffar (GDB_143) | `shaffar` | ленты и вспышка синих молний на весь экран | 7–8, магия/буря |
 | Aviana, Elune's Chosen (EDR_895) | `aviana` | огромные крылья с луной на весь экран, удар | celestial / птица, 7–8 |
-| Sasquawk (VAC_415) | `sasquawk` | призрачная зелёная птица ныряет в место карты | птица, 5–6 |
 | Harpy Queen Aviana (TOY_806) | `harpy` | зелёный ветер, птицы не видно | ветер, скромно |
 | Q'onzu (EDR_517) | `qonzu` | синий вихрь ветра и вспышка | воздух, ≤ 5 |
-| Owlonius (TOY_807) | `owlonius` | луч сверху и синяя вспышка магии | магия, ≤ 5 |
 | Lady Azshara (TIME_211) | `azshara_time` | синий водоворот, всплеск | вода/море, 5–6 |
 | Victor Nefarius (CATA_470) | `nefarius` | зелёный магический вихрь | магия, 5–6 |
 | Summoner Darkmarrow (VAC_503) | `darkmarrow` | фиолетовый разлом с костями и молниями | undead / некромант, 6 |
-| Carress, Cabaret Star (VAC_449) | `carress` | разноцветный фейерверк кабаре | bandle (Feywild), 5–6 |
 | Kronn the Impaler (BE_732) | `kronn` | маленькое синее ледяное копьё | лёд, ≤ 4 |
 | Murmur (GDB_448) | `murmur` | бирюзовые звуковые кольца | звук/магия, 5 |
 | Husk, Eternal Reaper (TIME_618) | `husk` | золотой знак-печать из песка | shurima (Calimshan), 6 |
 | King Tide (VAC_524) | `kingtide` | бирюзовая волна прилетает слева, брызги (полёт прибивать `pin`) | вода/море, 6 |
 | Morchok (CATA_570) | `morchok` | розовый удар из угла, фиолетовый взрыв, голубая искра (полёт — `pin`) | камень/магия, 5–6 |
+| Therazane (BE_337) | `therazane` (рецепт был recipes/therazane.json, коммит dabd4c66) | радужные самоцветы и бирюзовый кристалл — для дарк фэнтези слишком ярко | земля, 6 || Mirrex (DINO_407) | `mirrex` | синее облако, розовые кристаллы — для дарк фэнтези слишком ярко | кристаллы, 5 |
 
 ### drow
 
@@ -102,8 +100,8 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Aerisi Kalinoth (48600) | Ohn'ahra (EDR_031) | `EDRFX_Ohnahra_CustomSummon.prefab` | СДЕЛАНО (HsFx-41); пророчица ветра; молния с левого края, шар бури у карты (как в HS — владелец); выжигание бирюзовое |
 | Gar Shatterkeel (48626) | Neptulon, Lord of Tides (BE_209) | `BEFX_NeptulonLordofTides_CustomSummon.prefab` | СДЕЛАНО (HsFx-40); пророк воды; синий водяной смерч с молниями; выжигание синее |
 | Imix (48629) | Commander Geddon (CATA_591) | `CATAFX_CommanderGeddon_CustomSummon.prefab` | СДЕЛАНО (HsFx-39); принц огня; огненный вихрь, шар магмы взрывается; овал жетона в кольце спрятан; выжигание оранжевое |
-| Marlos Urnrayle (48630) | Mirrex, the Crystalline (DINO_407) | `DINOFX_MirrextheCrystalline_CustomSummon.prefab` | СДЕЛАНО (HsFx-43); медуза, окаменение — кристаллы в облаке раскалываются; выжигание синее |
-| Ogrémoch (48631) | Therazane the Earthmother (BE_337) | `BEFX_TherazaneEarthMother_CustomSummon.prefab` | СДЕЛАНО (HsFx-36); самоцветы, кристалл раскалывается; выжигание бирюзовое |
+| Marlos Urnrayle (48630) | Y'Shaarj, Titan Bane (BE_784) | `BEFX_YShaarjtheTitanBane_CustomSummon.prefab` | СДЕЛАНО (HsFx-47); медуза — ядовитые змеиные глаза в пурпурной тьме; выжигание ядовито-зелёное. Mirrex (HsFx-43) владелец снял 2026-10-26: розовые кристаллы не для дарк фэнтези; смотрел и отверг Nespirah, Wallow, Renferal, Unknowable One, Black Blood, Herenn, Eliza |
+| Ogrémoch (48631) | Nespirah, Enthralled (CATA_527) | `CATA_527_Nespirah_Enthralled_Ancient_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-46); каменный титан со скалой и изумрудами — изумрудный водоворот, брызги; выжигание изумрудное. Therazane (HsFx-36) владелец снял 2026-10-26: радужные самоцветы; смотрел и отверг Amitut, Vulcanos, Magtheridon Unreleased, изумрудный Therazane |
 | Olhydra (48632) | Azshara, Ocean Lord (CATA_151) | `CATAFX_LadyAzshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-37); принцесса воды, волна снизу обрушивается на место карты; выжигание морской зелени |
 | Vanifer (48633) | Incindius (VAC_321) | `VACFX_Incindius_CustomSummon.prefab` | СДЕЛАНО (HsFx-42, HsFx-45); огненная жрица; лавовый взрыв, огненная звезда; оболочка жетона `M_MinionShell_Goo` (жёлтая капсула) спрятана; выжигание красно-оранжевое |
 | Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | СДЕЛАНО (HsFx-38, HsFx-44); принц воздуха; смерч с молниями прилетает справа, как в HS (прибитый `pin` владелец отверг: «появляется из ниоткуда сразу гигантским»); выжигание фиолетовое |

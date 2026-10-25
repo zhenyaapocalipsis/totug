@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "therazane", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "mirrex"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -281,19 +281,20 @@ const SCRIPTS := {
 		"cues": [[0.0, "Razidir_CustomSummon_Sound", 0.85]],
 		# CameraShaker2: 0.1 по осям, рывок в ударе
 		"shakers": [[0.95, 1.85, 0.08, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
-	# Therazane the Earthmother (BE_337) — Ogrémoch (стоимость 6 — крупный эффект у места карты;
-	# владелец выбрал по пробам 2026-10-25 из Therazane, Morchok, Mirrex):
-	# BEFX_TherazaneEarthMother_CustomSummon (Timeline): разноцветные самоцветы кружат и
-	# собираются в бирюзовый кристалл над точкой посадки, на 1.35 с он раскалывается —
-	# вспышка, осколки самоцветов разлетаются, трещины. Жетон HS спрятан, весь эффект под
-	# картой. Выжигание бирюзовое в цвет кристалла.
-	"therazane": {"frames": "therazane", "sounds": "therazane",
-		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 1.0 с начала, удар 1.0 с 1.033 с
-		"cues": [[0.0, "BE_337_TherazanetheEarthmother_CustomSummon_Sound", 1.0],
-			[1.033, "BE_337_TherazanetheEarthmother_CustomSummon_ImpactSound", 1.0]],
-		# CameraShaker2: 0.06 в ударе, сила линейно 1 -> 0
-		"shakers": [[1.4, 1.7, 0.06, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Nespirah, Enthralled (CATA_527) — Ogrémoch (стоимость 6; вместо Therazane — владелец
+	# 2026-10-26: дарк фэнтези, разноцветные самоцветы не подходят; Огремоч на артах — скала с
+	# изумрудами; пробы Amitut, Vulcanos, Magtheridon Unreleased, изумрудный Therazane):
+	# CATA_527_Nespirah_Enthralled_Ancient_CustomSummon_FX (Timeline): над точкой посадки
+	# клубится изумрудный водоворот, сжимается, на 1.05 с удар — вспышка и брызги изумрудной
+	# жижи вокруг карты. Жетон HS и его свечение спрятаны, весь эффект под картой.
+	# Выжигание изумрудное в цвет водоворота.
+	"nespirah": {"frames": "nespirah", "sounds": "nespirah",
+		"card": {"face": "mini", "reveal": 1.55, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 1.0 с начала
+		"cues": [[0.0, "CATAFX_Nespirah_CustomSummon_Sound", 1.0]],
+		# CameraShaker2: 0.05 спадает, 0.1 нарастает к удару, в ударе 0.2 и спад
+		"shakers": [[0.0, 0.35, 0.05, [[0.0, 1.0], [1.0, 0.0]], 0.075], [0.35, 1.333, 0.1, [[0.0, 0.0], [1.0, 1.0]], 0.075],
+			[1.333, 1.683, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 	# Azshara, Ocean Lord (CATA_151) — Olhydra (вместо Neptulon the Tidehunter, TID — владелец
 	# 2026-10-25: только свежие; пробы Neptulon BE, King Tide, Lady Azshara TIME):
 	# CATAFX_LadyAzshara_CustomSummon (Timeline): в точке посадки фиолетовая вспышка с
@@ -365,18 +366,19 @@ const SCRIPTS := {
 		"cues": [[0.0, "Incindius_CustomSummon_Start_Sound", 0.9], [1.45, "Incindius_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: дрожь 0.1 в начале, в ударе 0.1, сила линейно 1 -> 0
 		"shakers": [[0.133, 0.683, 0.1, [[0.0, 0.0], [0.6, 0.4], [1.0, 0.28]], 0.075], [1.45, 2.75, 0.1, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
-	# Mirrex, the Crystalline (DINO_407) — Marlos Urnrayle (вместо Lady S'theno, TSC — владелец
-	# 2026-10-25: только свежие; проба Morchok): DINOFX_MirrextheCrystalline_CustomSummon
-	# (Timeline): в точке посадки клубится синее облако, в нём растут кристаллы (окаменение),
-	# на 1.37 с они раскалываются — вспышка, розовые осколки, бирюзовые искры. Жетон HS и его
-	# свечение спрятаны, весь эффект под картой. Выжигание синее в цвет кристаллов.
-	"mirrex": {"frames": "mirrex", "sounds": "mirrex",
-		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 0.9 с начала
-		"cues": [[0.0, "DINOFX_MirrextheCrystalline_CustomSummon_Sound", 0.9]],
-		# CameraShaker2: дрожь 0.05 при росте кристаллов, в ударе 0.1 рывком
-		"shakers": [[0.1, 1.183, 0.05, [[0.0, 0.01], [0.45, 0.5], [1.0, 0.0]], 0.075],
-			[1.367, 2.033, 0.1, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
+	# Y'Shaarj, Titan Bane (BE_784) — Marlos Urnrayle, медуза (вместо Mirrex — владелец
+	# 2026-10-26: дарк фэнтези, розовые кристаллы не подходят; пробы Nespirah, Wallow, Renferal,
+	# The Unknowable One, The Black Blood, Herenn, Eliza Goreblade и др.):
+	# BEFX_YShaarjtheTitanBane_CustomSummon (Timeline): в пурпурной тьме собирается ядовитое
+	# облако, на 0.55 с раскрываются ядовито-зелёные змеиные глаза (взгляд медузы), молнии,
+	# яд расползается и гаснет. Жетон HS и его контур спрятаны, весь эффект под картой.
+	# Выжигание ядовито-зелёное в цвет глаз.
+	"yshaarj": {"frames": "yshaarj", "sounds": "yshaarj",
+		"card": {"face": "mini", "reveal": 1.1, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7 с начала, удар 0.7 с 0.55 с
+		"cues": [[0.0, "BEFX_YShaarjtheTitanBane_CustomSummon_Sound", 0.7], [0.55, "BEFX_YShaarjtheTitanBane_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: 0.07 в ударе, сила линейно 1 -> 0
+		"shakers": [[0.583, 2.081, 0.07, [[0.0, 0.99], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
