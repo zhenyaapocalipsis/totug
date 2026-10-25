@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -208,6 +208,18 @@ const SCRIPTS := {
 		# MainCameraShakerAction 0.03 и 0.08 по 0.1 с; в ударе CameraShakerAction 0.1, кривая 2.5 с
 		"shakers": [[0.0, 0.1, 0.024, [[0.0, 1.0], [1.0, 0.0]], 0.0167], [0.5, 0.6, 0.064, [[0.0, 1.0], [1.0, 0.0]], 0.0167],
 			[1.0, 3.5, 0.08, [[0.0, 0.49], [0.064, 0.43], [0.116, 0.19], [1.0, 0.08]], 0.0167]]},
+	# Kil'jaeden (GDB_145) — Demogorgon (стоимость 8 — большой эффект на весь экран, правило
+	# владельца 2026-10-25): GDBFX_Kiljaeden_CustomSummon (Timeline): ленты Скверны со всего
+	# экрана закручиваются в вихрь с красным кольцом, открывается зелёный портал, на 1.5 с он
+	# схлопывается вспышкой, по столу расходятся трещины. Жетон HS и его свечение спрятаны,
+	# весь эффект под картой. Выжигание жёлто-зелёное в цвет Скверны. Эффект розыгрыша
+	# (портал в колоду HS) не берём.
+	"kiljaeden": {"frames": "kiljaeden", "sounds": "kiljaeden",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7, удар на 1.5 с
+		"cues": [[0.0, "Kiljaeden_CustomSummon_Cast_Sound", 0.7], [1.5, "Kiljaeden_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: 0.2 по осям, сила линейно 1 -> 0
+		"shakers": [[0.0, 0.65, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.5, 1.983, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

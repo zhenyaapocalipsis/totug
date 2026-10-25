@@ -1,0 +1,42 @@
+{
+  "deps": "../deps_kiljaeden.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "bb25cc5bd08645f4faaa8293bcae91e6",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": ["Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/TokenHider (Hidden)",
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Mesh_TokenGlow_Front",
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Mesh_TokenGlow_Back"],
+      "under": ["Root"],
+      "controls": [
+        {"node": "Root/VFX_Action/PS_Smoke_Token", "start": 0.0, "end": 1.783},
+        {"node": "Root/VFX_Action/PS_Smoke_Portal", "start": 0.0, "end": 1.783},
+        {"node": "Root/VFX_Finish/PS_Smoke_finish", "start": 1.483, "end": 3.0}
+      ],
+      "measure": ["Root/Token (Position)", "Root/VFX_Action/Root_Portal", "Root/VFX_Finish/Mesh_GroundCrack"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.52,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.24,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48501.png"}
+  ]
+}
