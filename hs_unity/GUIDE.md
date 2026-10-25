@@ -5,16 +5,22 @@
 HsFx-0..12, октябрь 2026), дополнено на остальных картах (HsFx-14..35, 2026-10-24/25).
 Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово» и запас проб).
 
-## Где остановились (2026-10-25, вечер)
+## Где остановились (2026-10-26)
 
-- **Готово и задеплоено — 3 колоды, 21 карта** (последняя сборка 1792941035, коммит
-  8356c4ab, всё запушено): dragons (Red, Black, Blue, Green, White Dragon, Rath Modar,
-  Severin), drow (Council Member, Deathblade, Inquisitor, Masters of Sorcere, Matron
-  Mother, Weaponmaster), demons (Balor — Magtheridon, Demogorgon — Kil'jaeden, Orcus —
-  Archimonde, Zuggtmoy — Moldara, Graz'zt — K'ara, Vrock — Nythendra, Glabrezu — Razidir).
-  Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
-- **elementals (HsFx-36..47; HsFx-36..45 задеплоены 2026-10-25, сборка 1792954566;
-  HsFx-46..47 — не задеплоены)**: Ogrémoch — Nespirah (HsFx-46, вместо Therazane), Olhydra —
+**Новый чат — начать отсюда.** Всё закоммичено, запушено и задеплоено (сборка
+1792957293). Сделано 4 колоды, 29 карт; следующий этап — **HsFx-48**; следующую колоду
+называет владелец — спросить вопросом с вариантами (aberrations, undead, celestial,
+shadow…). Перед пробами: §1 (свежие наборы, эпичность по цене, **дарк фэнтези**), арт и
+текст карт колоды (`engine/godot/data/cards/cards.json`), `CARD_MAP.md` (запас проб).
+Пробы пачкой — `hs_unity/tools/cand.sh` (ниже, «Порядок для новой колоды», шаг 2).
+
+- **Готово и задеплоено — 4 колоды, 29 карт.** dragons (Red, Black, Blue, Green, White
+  Dragon, Rath Modar, Severin), drow (Council Member, Deathblade, Inquisitor, Masters of
+  Sorcere, Matron Mother, Weaponmaster), demons (Balor — Magtheridon, Demogorgon —
+  Kil'jaeden, Orcus — Archimonde, Zuggtmoy — Moldara, Graz'zt — K'ara, Vrock — Nythendra,
+  Glabrezu — Razidir), elementals (ниже). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты —
+  `recipes/`.
+- **elementals (HsFx-36..47, всё задеплоено, сборка 1792957293)**: Ogrémoch — Nespirah (HsFx-46, вместо Therazane), Olhydra —
   Azshara Ocean Lord, Yan-C-Bin — Al'Akir CATA (смерч прилетает справа, как в HS — HsFx-44),
   Imix — Geddon (`PS_TokenGlow` в кольце спрятан), Gar Shatterkeel — Neptulon BE,
   Aerisi — Ohn'ahra (молния с левого края через левую панель — как в HS, владелец),
@@ -41,11 +47,14 @@ HsFx-0..12, октябрь 2026), дополнено на остальных к�
      старая — подобрать 2–3 свежих по смыслу (сначала из **запаса** в `CARD_MAP.md`,
      пробы уже есть; иначе `data/hs_legendary_summons.tsv`, наборы §1, нет в
      `CARD_MAP.md`: `grep -F <prefab> CARD_MAP.md`).
-  2. Пробы кандидатов пачкой: `hsx extract` всех, пути узлов `awk -f
-     hs_unity/tools/paths.awk hierarchy.txt`, рецепт-проба в `hs_unity/render/cand/` (слой
-     эффекта, жетон и контуры HS в `hide`, `under` на корень, `controls` для
-     ControlRandomizedTrack), рендер 10 кадров и лист `bake_sheet` по каждому в одном
-     фоновом цикле (Unity — строго по одному: проект один). Показать листы, спросить.
+  2. Пробы кандидатов пачкой — `hs_unity/tools/cand.sh` (рабочая папка = scratchpad с
+     `hsx`, §0 п.1): `bash hs_unity/tools/cand.sh <SP> make BE_784:yshaarj CATA_527:nespirah
+     …` (выгрузка, пути узлов, deps с Choice_Reveal, рецепт-проба в `hs_unity/render/cand/`:
+     жетон и контуры HS в `hide`, корень в `under`, ControlRandomizedTrack в `controls`),
+     затем в фоне `bash hs_unity/tools/cand.sh <SP> render yshaarj nespirah …` (Unity по
+     одному, лист `<имя>_sheet.png` и полоса `<имя>_strip.png` — 4 кадра у места карты,
+     удобно отсеивать). Смотреть полосы, отобрать 3–4 мрачных, владельцу — листы
+     (SendUserFile) и вопрос с вариантами. Ссылки на выгрузку — в выводе `make`.
   3. Выбранное — по §0 (выжигание крупно, запекание, звуки, HsPlay, проверка в партии,
      тесты, коммит «Stage HsFx-N»). Следующий номер — **HsFx-48**.
 - **Демоны — что решил владелец:** у Balor (единственная старая, BT — оставлена) кольцо
