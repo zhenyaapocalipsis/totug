@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -195,6 +195,19 @@ const SCRIPTS := {
 		"cues": [[0.0, "BlademasterSamuro_CustomSummon_Sound", 0.6], [0.9, "BlademasterSamuro_CustomSummon_Impact_Sound", 0.6]],
 		# CameraShakerAction FSM: 0.035 по осям через 0.8 с, 0.25 с
 		"shakers": [[0.8, 1.05, 0.028, [[0.0, 0.19], [0.28, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Magtheridon (BT_850) — Balor: BTFX_Magtheridon_CustomSummon (Timeline, корень Root
+	# включает FSM): в точке посадки зелёные трещины Скверны и печать, три вспышки огня
+	# (0, 0.43, 0.97 с), удар 1.0 с; на 2.6 с кольцо оков сжимается вокруг карты и гаснет к
+	# 4.5 с — перекрашено из фиолетового в огонь (владелец 2026-10-25: огненный хлыст Балора),
+	# карта стоит до конца оков (hold 2.4 вместо 1.0, владелец). Весь эффект под картой.
+	# Выжигание зелёное в цвет Скверны (владелец). Эффект розыгрыша (призыв стражей HS) не берём.
+	"magtheridon": {"frames": "magtheridon", "sounds": "magtheridon",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 2.4, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: 0.5, трещина на 0 и 0.5 с
+		"cues": [[0.0, "Magtheridon_CustomSummon_Crack_Impact01_Sound", 0.5], [0.5, "Magtheridon_CustomSummon_Crack_Impact02_Sound", 0.5]],
+		# MainCameraShakerAction 0.03 и 0.08 по 0.1 с; в ударе CameraShakerAction 0.1, кривая 2.5 с
+		"shakers": [[0.0, 0.1, 0.024, [[0.0, 1.0], [1.0, 0.0]], 0.0167], [0.5, 0.6, 0.064, [[0.0, 1.0], [1.0, 0.0]], 0.0167],
+			[1.0, 3.5, 0.08, [[0.0, 0.49], [0.064, 0.43], [0.116, 0.19], [1.0, 0.08]], 0.0167]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

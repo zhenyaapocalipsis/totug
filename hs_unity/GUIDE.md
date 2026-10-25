@@ -12,7 +12,11 @@ HsFx-0..12, октябрь 2026), дополнено на остальных к�
   Prestor), Deathblade (Zayle, Shadow Cloak), Inquisitor (Darkbishop Benedictus),
   Masters of Sorcere (Kael'thas), Matron Mother (Queen Azshara), Weaponmaster
   (Blademaster Samuro). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
-- **Дальше:** следующую колоду называет владелец.
+- **demons (идёт, владелец 2026-10-25):** Balor (Magtheridon, HsFx-29) сделан, не
+  задеплоен; дальше по таблице `CARD_MAP.md` — Demogorgon, Glabrezu, Graz'zt, Orcus,
+  Vrock, Zuggtmoy. У Balor владелец перекрасил кольцо оков в огонь (`tintHue` слоя
+  эффекта на `Binding_Root`) и держит карту до конца оков (`hold` 2.4) — если эффект
+  после удара долго идёт вокруг карты, спрашивать, держать ли карту дольше.
 - **Пробы замен до работы:** владелец может попросить «какие ещё есть варианты» — 3–4
   свободные легендарки по смыслу, пробы всех (рецепты-пробы в `hs_unity/render/cand/`,
   только слой эффекта; путь `textures/...` в рецепте — от папки рецепта), листы рядом,

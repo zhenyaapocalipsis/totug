@@ -13,7 +13,7 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member, Deathblade, Inquisitor, Masters of Sorcere, Matron Mother, Weaponmaster). Остальные — по очереди, по слову владельца.
+Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member, Deathblade, Inquisitor, Masters of Sorcere, Matron Mother, Weaponmaster; из demons — Balor). Остальные — по очереди, по слову владельца.
 
 ### drow
 
@@ -42,7 +42,7 @@
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Balor (48500) | Magtheridon (BT_850) | `Magtheridon_CustomSummon.prefab` | огненный повелитель демонов с плетью |
+| Balor (48500) | Magtheridon (BT_850) | `Magtheridon_CustomSummon.prefab` | СДЕЛАНО (HsFx-29); кольцо оков в конце владелец оставил и перекрасил в огонь (хлыст Балора), карта стоит до конца оков, выжигание зелёное (2026-10-25) |
 | Demogorgon (48501) | Kil'jaeden (GDB_145) | `GDBFX_Kiljaeden_CustomSummon.prefab` | принц демонов, разлом и вторжение |
 | Glabrezu (48513) | Fel Lord Betrug (DAL_607) | `FelLordBetrug_CustomSummon.prefab` | демон-громила |
 | Graz'zt (48514) | Prince Malchezaar (KAR_096) | `Malchezaar_CustomSummon.prefab` | обольстительный принц демонов |
