@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "therazane"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "therazane", "48632": "azshara_ocean"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -294,6 +294,18 @@ const SCRIPTS := {
 			[1.033, "BE_337_TherazanetheEarthmother_CustomSummon_ImpactSound", 1.0]],
 		# CameraShaker2: 0.06 в ударе, сила линейно 1 -> 0
 		"shakers": [[1.4, 1.7, 0.06, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Azshara, Ocean Lord (CATA_151) — Olhydra (вместо Neptulon the Tidehunter, TID — владелец
+	# 2026-10-25: только свежие; пробы Neptulon BE, King Tide, Lady Azshara TIME):
+	# CATAFX_LadyAzshara_CustomSummon (Timeline): в точке посадки фиолетовая вспышка с
+	# молниями, снизу поднимается бирюзовая волна и на 1.2 с обрушивается на место карты —
+	# всплеск брызг и пены. Жетон HS (с ним шлейф брызг) и копия для соперника спрятаны, весь
+	# эффект под картой. Выжигание морской зелени в цвет волны.
+	"azshara_ocean": {"frames": "azshara_ocean", "sounds": "azshara_ocean",
+		"card": {"face": "mini", "reveal": 1.7, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7 с начала, удар 0.7 с 1.217 с
+		"cues": [[0.0, "CATAFX_LadyAzshara_CustomSummon_Sound", 0.7], [1.217, "CATAFX_LadyAzshara_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: (0.2, 0.3, 0.1) — у нас 0.25, рывок в ударе
+		"shakers": [[1.233, 1.9, 0.25, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

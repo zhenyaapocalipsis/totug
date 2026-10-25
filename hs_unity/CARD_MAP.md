@@ -104,7 +104,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Imix (48629) | Commander Geddon (CATA_591) | `CATAFX_CommanderGeddon_CustomSummon.prefab` | принц огня; огненный вихрь, шар магмы |
 | Marlos Urnrayle (48630) | Mirrex, the Crystalline (DINO_407) | `DINOFX_MirrextheCrystalline_CustomSummon.prefab` | медуза, окаменение — кристаллы |
 | Ogrémoch (48631) | Therazane the Earthmother (BE_337) | `BEFX_TherazaneEarthMother_CustomSummon.prefab` | СДЕЛАНО (HsFx-36); самоцветы, кристалл раскалывается; выжигание бирюзовое |
-| Olhydra (48632) | Azshara, Ocean Lord (CATA_151) | `CATAFX_LadyAzshara_CustomSummon.prefab` | принцесса воды; волна снизу |
+| Olhydra (48632) | Azshara, Ocean Lord (CATA_151) | `CATAFX_LadyAzshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-37); принцесса воды, волна снизу обрушивается на место карты; выжигание морской зелени |
 | Vanifer (48633) | Incindius (VAC_321) | `VACFX_Incindius_CustomSummon.prefab` | огненная жрица; лавовый взрыв |
 | Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | принц воздуха; смерч с молниями (полёт справа — `pin`) |
 
