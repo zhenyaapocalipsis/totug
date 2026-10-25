@@ -12,7 +12,7 @@ HsFx-0..12, октябрь 2026), дополнено на остальных к�
   Prestor), Deathblade (Zayle, Shadow Cloak), Inquisitor (Darkbishop Benedictus),
   Masters of Sorcere (Kael'thas), Matron Mother (Queen Azshara), Weaponmaster
   (Blademaster Samuro). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
-- **demons — вся колода сделана, НЕ задеплоена** (2026-10-25, HsFx-29..35): Balor
+- **demons — вся колода сделана и задеплоена** (2026-10-25, HsFx-29..35, сборка 1792941035): Balor
   (Magtheridon), Demogorgon (Kil'jaeden), Orcus (Archimonde: виньетка и туман на весь
   экран убраны — пятна в пиксель-арте; хвосты метеоров владелец оставил), Zuggtmoy
   (Moldara), Graz'zt (K'ara), Vrock (Nythendra), Glabrezu (Razidir). У Balor кольцо оков
