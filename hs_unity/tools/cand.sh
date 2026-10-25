@@ -34,7 +34,7 @@ make_one() {
 		nm=$(echo "$line" | sed -E "s/^ *\[([0-9,]+) \.\. ([0-9,]+)\] '([^']+)'.*/\3/")
 		s=$(echo "$line" | sed -E "s/^ *\[([0-9,]+) .*/\1/" | tr , .)
 		e=$(echo "$line" | sed -E "s/^ *\[[0-9,]+ \.\. ([0-9,]+)\].*/\1/" | tr , .)
-		np=$(grep -E "(^|/)$nm\$" "$d/paths.txt" | head -1)
+		np=$(awk -v n="$nm" '$0 == n || substr($0, length($0) - length(n)) == "/" n' "$d/paths.txt" | head -1)
 		[ -n "$np" ] && ctl="$ctl{\"node\": \"$np\", \"start\": $s, \"end\": $e},"
 	done < <(grep "ControlRandomizedPlayableAsset" "$d"/timeline_*.txt)
 	cat > "$C/$n.json" <<J

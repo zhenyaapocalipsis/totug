@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj", "48715": "isorath"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -387,6 +387,31 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.8 с начала; тряски камеры в Timeline нет
 		"cues": [[0.0, "CATAFX_IsoRath_CustomSummon_Sound", 0.8]]},
+	# Irida Sinseeker (JAIL_719) — Ulitharid, иллитид (выбор владельца 2026-10-26 вместо
+	# Mindflayer Kaahrj; пробы C'Thun Eye of the Empire без глаза, с лиловыми и разведёнными
+	# щупальцами, 8 Hands, G'huun, Zer'Ontu, Herenn — не то): JAIL_719_IridaSinseeker_CustomSummon_FX
+	# (Timeline): тёмный разрез рассекает пространство по диагонали, раскрывается синий портал,
+	# на 1.48 с удар — ударная волна и синяя вспышка с трещинами. Жетон HS спрятан, весь эффект
+	# под картой. Выжигание сине-фиолетовое в цвет портала.
+	"irida": {"frames": "irida", "sounds": "irida",
+		"card": {"face": "mini", "reveal": 1.95, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: начало 0.6, удар 0.7 в 1.5 с (AudioSource 1)
+		"cues": [[0.0, "JAIL_719_IridaSinseeker_FAB_CustomSummon_FX_Sound", 0.6], [1.5, "JAIL_719_IridaSinseeker_FAB_CustomSummon_FX_Impact_Sound", 0.7]],
+		# CameraShaker2: 0.2 по осям в разрезе, 0.1 в ударе, сила линейно 1 -> 0
+		"shakers": [[0.0, 0.817, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.483, 1.917, 0.1, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Kith'ix (BE_090) — Elder Brain, древний разум (вместо N'Zoth, God of the Deep; пробы
+	# Umbra, N'Zoth Dream's End, Mastermind Yogg-Saron — владелец 2026-10-26): BEFX_Kithix_CustomSummon
+	# (Timeline): по краям экрана сверкают фиолетовые молнии, на 0.6 с с неба бьёт столб молнии
+	# в место карты, на 1.05 с удар — псионическая вспышка, ударная волна, дуги молний у земли.
+	# Затемнение экрана (Vignette_Backing*) убрано, жетон HS спрятан, весь эффект под картой.
+	# Выжигание фиолетовое в цвет молний.
+	"kithix": {"frames": "kithix", "sounds": "kithix",
+		"card": {"face": "mini", "reveal": 1.52, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: начало с 0 с, удар с 0.967 с (AudioSource 1)
+		"cues": [[0.0, "BE_090_Kithix_CustomSummon_Sound", 1.0], [0.967, "BE_090_Kithix_CustomSummon_ImpactSound", 1.0]],
+		# CameraShaker2: дрожь 0.013 нарастает до удара, в ударе (0.2, 0.3) — у нас 0.25, рывок и спад
+		"shakers": [[0.0, 1.05, 0.013, [[0.0, 0.0], [0.49, 0.99], [1.0, 0.99]], 0.0708],
+			[1.05, 1.717, 0.25, [[0.0, 0.51], [0.5, 0.0], [1.0, 0.0]], 0.0708]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
