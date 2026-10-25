@@ -18,7 +18,7 @@
 `shurima` = Calimshan, `ionia` = Kara-Tur, `piltover` = Waterdeep, `shadow` = Ravenloft,
 `bandle` = Feywild, `void` = Far Realm, `ixtal` = Chult).
 
-Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, из drow — Council Member, Deathblade, Inquisitor, Masters of Sorcere, Matron Mother, Weaponmaster; из demons — Balor). Остальные — по очереди, по слову владельца.
+Готово: строки «СДЕЛАНО» в таблицах (вся колода dragons, вся колода drow, вся колода demons). Остальные — по очереди, по слову владельца.
 
 ### drow
 
@@ -49,10 +49,10 @@
 |---|---|---|---|
 | Balor (48500) | Magtheridon (BT_850) | `Magtheridon_CustomSummon.prefab` | СДЕЛАНО (HsFx-29); кольцо оков в конце владелец оставил и перекрасил в огонь (хлыст Балора), карта стоит до конца оков, выжигание зелёное (2026-10-25) |
 | Demogorgon (48501) | Kil'jaeden (GDB_145) | `GDBFX_Kiljaeden_CustomSummon.prefab` | СДЕЛАНО (HsFx-30); стоимость 8 — вихрь Скверны на весь экран, выжигание жёлто-зелёное (2026-10-25) |
-| Glabrezu (48513) | Fel Lord Betrug (DAL_607) | `FelLordBetrug_CustomSummon.prefab` | демон-громила |
-| Graz'zt (48514) | Prince Malchezaar (KAR_096) | `Malchezaar_CustomSummon.prefab` | обольстительный принц демонов |
+| Glabrezu (48513) | Razidir (TLC_463) | `TLC463_Nazidir_CustomSummon.prefab` | СДЕЛАНО (HsFx-35); вместо Fel Lord Betrug (DAL_607, старый набор); пробы Zakajz (фиолетовый и красный), Talgath, Kronn, G'huun, Vulcanos, Drest'agath, Broxigar, Magtheridon Unreleased, Murmur, Husk, Kith'ix владелец смотрел — выбрал Razidir с адаптацией: разлом не летит из угла, формируется в месте карты (рецепт pin, 2026-10-25) |
+| Graz'zt (48514) | K'ara, the Dark Star (GDB_127) | `GDBFX_Kara_CustomSummon.prefab` | СДЕЛАНО (HsFx-33); вместо Prince Malchezaar (KAR_096, старый набор); пробы Sinestra, Nexus-Prince Shaffar, Carress, Summoner Darkmarrow, Victor Nefarius, Lady Azshara (TIME) владелец смотрел — выбрал K'ara (2026-10-25) |
 | Orcus (48535) | Archimonde (GDB_128) | `GDBFX_Archimonde_CustomSummon.prefab` | СДЕЛАНО (HsFx-31); стоимость 8 — метеоры Скверны на весь экран, выжигание жёлто-зелёное (2026-10-25) |
-| Vrock (48538) | Anetheron (SW_092) | `SWFX_Anetheron_CustomSummon.prefab` | демон, налетающий стаей |
+| Vrock (48538) | Nythendra (EDR_818) | `EDRFX_Nythendra_CustomSummon.prefab` | СДЕЛАНО (HsFx-34); вместо Anetheron (SW_092, старый набор); пробы Sasquawk, Q'onzu, Owlonius, Aviana, Ohn'ahra, Harpy Queen Aviana владелец смотрел — выбрал Nythendra: врок разносит споры (2026-10-25) |
 | Zuggtmoy (48539) | Spore Empress Moldara (GDB_234) | `GDBFX_SporeEmpressMoldara_CustomSummon.prefab` | СДЕЛАНО (HsFx-32); выжигание жёлтое в цвет вспышки спор (владелец 2026-10-25) |
 
 ### elementals

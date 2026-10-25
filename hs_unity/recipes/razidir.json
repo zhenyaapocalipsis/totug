@@ -1,0 +1,36 @@
+{
+  "deps": "../deps_razidir.txt",
+  "fps": 60.0,
+  "len": 3.5,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "2d00a9f74c630814a85d794fe13c102b",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": ["Root/Token_Root/OnToken", "Root/Flip_Root", "Root/Token_Root/MinionEdgeGlow_Top_Nightmare", "Root/Token_Root/MinionEdgeGlow_2"],
+      "under": ["Root"],
+      "pin": [{"node": "Root/Token_Root", "pos": [0.025, 0.0, 0.0]}],
+      "measure": ["Root/Token_Root", "Root/DetachRoot"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.0,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.8,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48513.png"}
+  ]
+}

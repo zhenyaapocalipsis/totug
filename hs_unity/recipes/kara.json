@@ -11,7 +11,7 @@
       "pos": [-7.59, 0.0, -7.01],
       "usePos": true,
       "clip": "timeline",
-      "hide": ["AnimRoot/OnToken"],
+      "hide": ["AnimRoot/OnToken", "AnimRoot/RevealRoot/TokenGlow"],
       "under": ["AnimRoot"],
       "controls": [
         {"node": "AnimRoot/BuildUpRoot/PS_Motes", "start": 0.0, "end": 3.567},

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -245,6 +245,42 @@ const SCRIPTS := {
 		"cues": [[0.0, "GDBFX_SporeEmpressMoldara_CustomSummon_Sound", 0.8], [1.35, "FX_MinionSummonLarge_Drop", 0.6]],
 		# CameraShaker2: 0.1 нарастает до 0.767 с, в ударе 0.2 и спад
 		"shakers": [[0.0, 0.767, 0.1, [[0.0, 0.0], [1.0, 1.0]], 0.075], [1.35, 2.1, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# K'ara, the Dark Star (GDB_127) — Graz'zt (вместо Prince Malchezaar, KAR — владелец
+	# 2026-10-25: только свежие анимации; пробы Sinestra, Shaffar, Carress, Darkmarrow,
+	# Nefarius, Lady Azshara): GDBFX_Kara_CustomSummon (Timeline): в точке посадки
+	# фиолетовый демонический силуэт, на 1.27 с он схлопывается в тёмную звезду-портал с
+	# кольцом искр, портал гаснет к 3.7 с. Жетон HS и его овальный контур (TokenGlow —
+	# владелец заметил 2026-10-25) спрятаны, весь эффект под картой.
+	# Выжигание фиолетовое в цвет эффекта. Тряски в HS нет.
+	"kara": {"frames": "kara", "sounds": "kara",
+		"card": {"face": "mini", "reveal": 1.74, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.35
+		"cues": [[0.0, "Kara_CustomSummon_Sound", 0.35]]},
+	# Nythendra (EDR_818) — Vrock (вместо Anetheron, SW — владелец 2026-10-25: только
+	# свежие; врок разносит споры): EDRFX_Nythendra_CustomSummon (Timeline): жёлтая чумная
+	# мошкара вихрем стягивается к точке посадки, на 1.38 с вспышка — рой разлетается и
+	# гаснет. Жетон HS, его свечение и осколки жетона спрятаны, весь эффект под картой.
+	# Выжигание жёлтое в цвет роя.
+	"nythendra": {"frames": "nythendra", "sounds": "nythendra",
+		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: каст AudioSource 0.6, удар 0.5 на 1.383 с
+		"cues": [[0.0, "EDRFX_Nythendra_CustomSummon_Cast_Sound", 0.6], [1.383, "EDRFX_Nythendra_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2: 0.05 до удара, в ударе 0.2, сила линейно 1 -> 0
+		"shakers": [[0.0, 1.383, 0.05, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.383, 1.85, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Razidir (TLC_463) — Glabrezu (вместо Fel Lord Betrug, DAL — владелец 2026-10-25: только
+	# свежие; пробы Zakajz, Talgath, Kronn, G'huun, Vulcanos, Drest'agath, Broxigar,
+	# Magtheridon Unreleased и др.): TLC463_Nazidir_CustomSummon (Timeline). Адаптация
+	# (владелец): в HS разлом-жетон летит из угла экрана — здесь он с нажатия формируется в
+	# точке посадки (рецепт pin), на 0.98 с удар — зелёные когти полосуют стол, всплеск
+	# слизи, трещины. Жетон HS, его свечение-овал и контур легендарной рамки (владелец
+	# 2026-10-25) и копия для соперника спрятаны, весь эффект под картой.
+	# Выжигание пурпурное в цвет разлома.
+	"razidir": {"frames": "razidir", "sounds": "razidir",
+		"card": {"face": "mini", "reveal": 1.45, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM 0.85
+		"cues": [[0.0, "Razidir_CustomSummon_Sound", 0.85]],
+		# CameraShaker2: 0.1 по осям, рывок в ударе
+		"shakers": [[0.95, 1.85, 0.08, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

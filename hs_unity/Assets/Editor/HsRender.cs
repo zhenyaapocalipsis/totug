@@ -55,6 +55,9 @@ public static class HsRender
         public MatSet[] mats = new MatSet[0];
         // сдвиг узлов в мире (позиция которых не анимирована): node, by [x, y, z]
         public Move[] move = new Move[0];
+        // узлы, чья позиция анимирована (полёт жетона HS): держать в локальной точке pos
+        // каждый кадр — эффект формируется в точке посадки
+        public Pin[] pin = new Pin[0];
         // узлы, частицы которых не рисовать (всё поддерево; сетки остаются)
         public string[] hidePS = new string[0];
         // частицы под своей дорожкой HS (ControlRandomizedTrack — без кода игры Timeline
@@ -96,6 +99,13 @@ public static class HsRender
         public float[] by = new float[3];
     }
 
+    [Serializable]
+    public class Pin
+    {
+        public string node;
+        public float[] pos = new float[3];
+    }
+
     // правка свойства материала узла: value для float, color (rgba) для цвета
     [Serializable]
     public class MatSet
@@ -116,6 +126,34 @@ public static class HsRender
         public bool ldr = true;
         public Layer[] layers = new Layer[0];
         public TexSwap[] textures = new TexSwap[0];
+        // перекраска готового кадра (цвет частиц и текстур, которого не достаёт tintProps):
+        // оттенки в полосе hueFrom [от, до] (от > до — через 0) сдвигаются к hueTo, разброс
+        // оттенков внутри полосы сохраняется долей hueKeep; насыщенность и яркость — как в HS
+        public float[] hueFrom = new float[0];
+        public float hueTo = -1f;
+        public float hueKeep = 0.25f;
+    }
+
+    static void HueMap(Color32[] px, Recipe r)
+    {
+        if (r.hueTo < 0f || r.hueFrom.Length != 2) return;
+        float lo = r.hueFrom[0], hi = r.hueFrom[1];
+        float width = hi >= lo ? hi - lo : hi + 1f - lo;
+        for (int i = 0; i < px.Length; i++)
+        {
+            var c = px[i];
+            if ((c.r | c.g | c.b) == 0) continue;
+            Color.RGBToHSV(c, out var h, out var s, out var v);
+            if (s < 0.05f) continue;
+            float d = h - lo;
+            if (d < 0f) d += 1f;
+            if (d > width) continue;
+            float nh = r.hueTo + (d - width / 2f) * r.hueKeep;
+            nh -= Mathf.Floor(nh);
+            Color32 n = Color.HSVToRGB(nh, s, v);
+            n.a = c.a;
+            px[i] = n;
+        }
     }
 
     // слой в сцене: корень, его директоры, аниматоры с клипами и «свои» частицы
@@ -467,6 +505,12 @@ public static class HsRender
             }
             foreach (var h in l.hidden)
                 if (h.activeSelf) h.SetActive(false);
+            // узел держится в точке посадки (без полёта из-за края экрана HS)
+            foreach (var p in l.spec.pin)
+            {
+                var t0 = l.root.transform.Find(p.node);
+                if (t0 != null) t0.localPosition = new Vector3(p.pos[0], p.pos[1], p.pos[2]);
+            }
             // анимация пишет цвета материала в блок свойств рендерера — перекрасить и их
             foreach (var r in l.tinted)
             {
@@ -548,7 +592,9 @@ public static class HsRender
         var underFrames = new List<int>();
         void Save(string file)
         {
-            png.SetPixels32(Shot(cam, rt, black, white, file));
+            var px = Shot(cam, rt, black, white, file);
+            HueMap(px, recipe);
+            png.SetPixels32(px);
             // без Apply: EncodeToPNG читает пиксели из памяти, выгрузка в видеопамять не нужна
             File.WriteAllBytes(Path.Combine(outDir, file), png.EncodeToPNG());
         }
