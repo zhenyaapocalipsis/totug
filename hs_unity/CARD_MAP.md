@@ -32,8 +32,6 @@
 | Эффект (id) | Проба | Что видно | Куда подойдёт |
 |---|---|---|---|
 | Ragnaros the Great Fire (CATA_150) | `ragnaros` | огненные языки с краёв экрана, огромный горящий рогатый череп | 9–10 / 7–8: Imix (elementals, принц огня) |
-| Incindius (VAC_321) | `incindius` | лавовый взрыв, огненная звезда у места карты | огонь, 5–6 |
-| Commander Geddon (CATA_591) | `geddon` | огненный вихрь-щупальце, шар магмы трескается | огонь/магма, 6–7 |
 | Vulcanos (CATA_488) | `vulcanos` | огненный валун падает и взрывается | земля/огонь, 5–6 |
 | Sinestra (CATA_154) | `sinestra` | огненное солнце раскрывается в пылающие крылья | огонь/дракон/феникс, 6–7 |
 | Drest'agath (BE_703) | `drestagath` | огненный глаз в пурпурном пламени, короткий | глаз, скромно (≤ 5) |
@@ -44,7 +42,6 @@
 | Zakajz the Corruptor (BE_728) | `zakajz` | фиолетовая клешня-раковина из разлома (владельцу не понравилась для Glabrezu) | void / aberrations |
 | Kith'ix (BE_090) | `kithix` | фиолетовые молнии; экран темнеет фиолетовым — затемнение убирать | void, 7–8 |
 | Nexus-Prince Shaffar (GDB_143) | `shaffar` | ленты и вспышка синих молний на весь экран | 7–8, магия/буря |
-| Ohn'ahra (EDR_031) | `ohnahra` | молния прилетает слева, шар бури | буря/воздух, 6 |
 | Aviana, Elune's Chosen (EDR_895) | `aviana` | огромные крылья с луной на весь экран, удар | celestial / птица, 7–8 |
 | Sasquawk (VAC_415) | `sasquawk` | призрачная зелёная птица ныряет в место карты | птица, 5–6 |
 | Harpy Queen Aviana (TOY_806) | `harpy` | зелёный ветер, птицы не видно | ветер, скромно |
@@ -57,6 +54,8 @@
 | Kronn the Impaler (BE_732) | `kronn` | маленькое синее ледяное копьё | лёд, ≤ 4 |
 | Murmur (GDB_448) | `murmur` | бирюзовые звуковые кольца | звук/магия, 5 |
 | Husk, Eternal Reaper (TIME_618) | `husk` | золотой знак-печать из песка | shurima (Calimshan), 6 |
+| King Tide (VAC_524) | `kingtide` | бирюзовая волна прилетает слева, брызги (полёт прибивать `pin`) | вода/море, 6 |
+| Morchok (CATA_570) | `morchok` | розовый удар из угла, фиолетовый взрыв, голубая искра (полёт — `pin`) | камень/магия, 5–6 |
 
 ### drow
 
@@ -95,16 +94,19 @@
 
 ### elementals
 
+Все стоят 5–6. Выбор владельца по пробам 2026-10-25 (старые Ysiel, Naz'jar, Ragnaros EX1,
+S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
+
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Aerisi Kalinoth (48600) | Ysiel Windsinger (BT_131) | `YsielWindsinger_CustomSummon.prefab` | пророчица ветра |
-| Gar Shatterkeel (48626) | Lady Naz'jar (TID_709) | `TIDFX_LadyNazjar_CustomSummon.prefab` | пророк воды, морская буря |
-| Imix (48629) | Ragnaros the Firelord (EX1_298) | `Ragnaros_CustomSummon.prefab` | принц огня |
-| Marlos Urnrayle (48630) | Lady S'theno (TSC_218) | `TSCFX_LadyStheno_CustomSummon.prefab` | медуза-змея, окаменение |
-| Ogrémoch (48631) | Therazane the Earthmother (BE_337) | `BEFX_TherazaneEarthMother_CustomSummon.prefab` | принц земли |
-| Olhydra (48632) | Neptulon the Tidehunter (TID_712) | `TIDFX_NeptulonTidehunter_CustomSummon.prefab` | принцесса воды, прилив |
-| Vanifer (48633) | Neeru Fireblade (BAR_919) | `BARFX_NeeruFireblade_CustomSummon.prefab` | огненная жрица |
-| Yan-C-Bin (48639) | Al'Akir the Windlord (NEW1_010) | `AlAkir_CustomSummon.prefab` | принц воздуха |
+| Aerisi Kalinoth (48600) | Ohn'ahra (EDR_031) | `EDRFX_Ohnahra_CustomSummon.prefab` | пророчица ветра; молния и шар бури |
+| Gar Shatterkeel (48626) | Neptulon, Lord of Tides (BE_209) | `BEFX_NeptulonLordofTides_CustomSummon.prefab` | пророк воды; синий вихрь-торнадо |
+| Imix (48629) | Commander Geddon (CATA_591) | `CATAFX_CommanderGeddon_CustomSummon.prefab` | принц огня; огненный вихрь, шар магмы |
+| Marlos Urnrayle (48630) | Mirrex, the Crystalline (DINO_407) | `DINOFX_MirrextheCrystalline_CustomSummon.prefab` | медуза, окаменение — кристаллы |
+| Ogrémoch (48631) | Therazane the Earthmother (BE_337) | `BEFX_TherazaneEarthMother_CustomSummon.prefab` | СДЕЛАНО (HsFx-36); самоцветы, кристалл раскалывается; выжигание бирюзовое |
+| Olhydra (48632) | Azshara, Ocean Lord (CATA_151) | `CATAFX_LadyAzshara_CustomSummon.prefab` | принцесса воды; волна снизу |
+| Vanifer (48633) | Incindius (VAC_321) | `VACFX_Incindius_CustomSummon.prefab` | огненная жрица; лавовый взрыв |
+| Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | принц воздуха; смерч с молниями (полёт справа — `pin`) |
 
 ### aberrations
 

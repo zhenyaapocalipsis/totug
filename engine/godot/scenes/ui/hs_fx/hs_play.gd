@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "therazane"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -281,6 +281,19 @@ const SCRIPTS := {
 		"cues": [[0.0, "Razidir_CustomSummon_Sound", 0.85]],
 		# CameraShaker2: 0.1 по осям, рывок в ударе
 		"shakers": [[0.95, 1.85, 0.08, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
+	# Therazane the Earthmother (BE_337) — Ogrémoch (стоимость 6 — крупный эффект у места карты;
+	# владелец выбрал по пробам 2026-10-25 из Therazane, Morchok, Mirrex):
+	# BEFX_TherazaneEarthMother_CustomSummon (Timeline): разноцветные самоцветы кружат и
+	# собираются в бирюзовый кристалл над точкой посадки, на 1.35 с он раскалывается —
+	# вспышка, осколки самоцветов разлетаются, трещины. Жетон HS спрятан, весь эффект под
+	# картой. Выжигание бирюзовое в цвет кристалла.
+	"therazane": {"frames": "therazane", "sounds": "therazane",
+		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 1.0 с начала, удар 1.0 с 1.033 с
+		"cues": [[0.0, "BE_337_TherazanetheEarthmother_CustomSummon_Sound", 1.0],
+			[1.033, "BE_337_TherazanetheEarthmother_CustomSummon_ImpactSound", 1.0]],
+		# CameraShaker2: 0.06 в ударе, сила линейно 1 -> 0
+		"shakers": [[1.4, 1.7, 0.06, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
