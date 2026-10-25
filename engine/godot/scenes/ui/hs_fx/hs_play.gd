@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "therazane", "48632": "azshara_ocean"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "therazane", "48632": "azshara_ocean", "48639": "alakir"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -306,6 +306,18 @@ const SCRIPTS := {
 		"cues": [[0.0, "CATAFX_LadyAzshara_CustomSummon_Sound", 0.7], [1.217, "CATAFX_LadyAzshara_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: (0.2, 0.3, 0.1) — у нас 0.25, рывок в ударе
 		"shakers": [[1.233, 1.9, 0.25, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
+	# Al'Akir, Lord of Storms (CATA_153) — Yan-C-Bin (вместо Al'Akir the Windlord, EX1 — владелец
+	# 2026-10-25: только свежие; пробы Ohn'ahra, Shaffar): CATAFX_Al'Akir_CustomSummon
+	# (Timeline). Адаптация: в HS смерч с жетоном летит из-за правого края — здесь смерч,
+	# жетон и пыль прибиты к точке посадки (рецепт pin), шлейф полёта спрятан; смерч крутится
+	# на месте, сжимается, на 1.37 с удар — вспышка, фиолетовые молнии. Жетон HS и его
+	# свечение спрятаны, весь эффект под картой. Выжигание фиолетовое в цвет молний.
+	"alakir": {"frames": "alakir", "sounds": "alakir",
+		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 1.0 с начала
+		"cues": [[0.0, "AlAkirConduitofStorms_CustomSummon_Sound", 1.0]],
+		# CameraShaker2: (0.2, 0.25, 0.1) — у нас 0.22, рывок в ударе
+		"shakers": [[1.367, 2.033, 0.22, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

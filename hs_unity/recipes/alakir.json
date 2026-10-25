@@ -1,0 +1,39 @@
+{
+  "deps": "../deps_alakir.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "998d0a97d80e1d743ab13b898b05a2b1",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": ["Root/Token_Root/Mesh_RevealGlow", "Root/Token_Root/MinionEdgeGlow_2", "Root/Token_Root/Minion_CrackedEarth",
+        "Root/Token_Root/Minion_CrackedEarth_Glow Top", "Root/Token_Root/OnToken", "Root/Token_Root/MinionEdgeGlow_Top",
+        "Root/DetachRoot/Tornado_TrailWind"],
+      "under": ["Root"],
+      "pin": [{"node": "Root/Token_Root", "pos": [0.0, 0.0, 0.0]},
+        {"node": "Root/DetachRoot/Tornado_Root/Al'Akir_Tornado_Mesh", "pos": [-0.06, 0.44, -0.55]},
+        {"node": "Root/DetachRoot/DustTrail_FX", "pos": [-0.08, 1.26, -1.0]}],
+      "measure": ["Root/Token_Root", "Root/DetachRoot/Tornado_Root/Al'Akir_Tornado_Mesh"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.4,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.75,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48639.png"}
+  ]
+}
