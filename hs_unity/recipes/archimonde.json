@@ -1,0 +1,40 @@
+{
+  "deps": "../deps_archimonde.txt",
+  "fps": 60.0,
+  "len": 4.3,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "2b29237801faa284a821ecbb183fc098",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clip": "timeline",
+      "move": [{"node": "Root/ScreenFX", "by": [-0.24, -0.0476, 1.552]}],
+      "hide": ["Root_Opponent", "Root/ScreenFX/Cloud_Mirrored", "Root/ScreenFX/Cloud_Mirror_Helper", "Root/ScreenFX/Cloud_Mirror_Vignettte",
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/TokenHider (Hidden)",
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/Mesh_TokenGlow_Front",
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/Mesh_TokenGlow_Hider",
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/Mesh_TokenGlow_Back"],
+      "under": ["Root"],
+      "measure": ["Root/Token (Position)", "Root/ScreenFX", "Root/Board_Reparent", "Root/Outward_Triangle"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.7,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.24,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48535.png"}
+  ]
+}

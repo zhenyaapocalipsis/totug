@@ -13,8 +13,8 @@ HsFx-0..12, октябрь 2026), дополнено на остальных к�
   Masters of Sorcere (Kael'thas), Matron Mother (Queen Azshara), Weaponmaster
   (Blademaster Samuro). Скрипты — `SCRIPTS` в `hs_play.gd`, рецепты — `recipes/`.
 - **demons (идёт, владелец 2026-10-25):** Balor (Magtheridon, HsFx-29) сделан, не
-  задеплоен; Demogorgon (Kil'jaeden, HsFx-30) сделан, не задеплоен; дальше Orcus
-  (Archimonde, GDB, 8), Zuggtmoy (Moldara, GDB, 6); у Glabrezu (Betrug, DAL), Graz'zt
+  задеплоен; Demogorgon (Kil'jaeden, HsFx-30) сделан, не задеплоен; Orcus
+  (Archimonde, GDB, 8) — сделан (HsFx-31, виньетка и туман на весь экран убраны: пятна в пиксель-арте), Zuggtmoy (Moldara, GDB, 6); у Glabrezu (Betrug, DAL), Graz'zt
   (Malchezaar, KAR), Vrock (Anetheron, SW) легендарки старые — сначала свежие кандидаты. У Balor владелец перекрасил кольцо оков в огонь (`tintHue` слоя
   эффекта на `Binding_Root`) и держит карту до конца оков (`hold` 2.4) — если эффект
   после удара долго идёт вокруг карты, спрашивать, держать ли карту дольше.

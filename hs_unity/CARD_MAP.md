@@ -51,7 +51,7 @@
 | Demogorgon (48501) | Kil'jaeden (GDB_145) | `GDBFX_Kiljaeden_CustomSummon.prefab` | СДЕЛАНО (HsFx-30); стоимость 8 — вихрь Скверны на весь экран, выжигание жёлто-зелёное (2026-10-25) |
 | Glabrezu (48513) | Fel Lord Betrug (DAL_607) | `FelLordBetrug_CustomSummon.prefab` | демон-громила |
 | Graz'zt (48514) | Prince Malchezaar (KAR_096) | `Malchezaar_CustomSummon.prefab` | обольстительный принц демонов |
-| Orcus (48535) | Archimonde (GDB_128) | `GDBFX_Archimonde_CustomSummon.prefab` | принц демонов, смерть и разрушение |
+| Orcus (48535) | Archimonde (GDB_128) | `GDBFX_Archimonde_CustomSummon.prefab` | СДЕЛАНО (HsFx-31); стоимость 8 — метеоры Скверны на весь экран, выжигание жёлто-зелёное (2026-10-25) |
 | Vrock (48538) | Anetheron (SW_092) | `SWFX_Anetheron_CustomSummon.prefab` | демон, налетающий стаей |
 | Zuggtmoy (48539) | Spore Empress Moldara (GDB_234) | `GDBFX_SporeEmpressMoldara_CustomSummon.prefab` | королева грибов и спор |
 

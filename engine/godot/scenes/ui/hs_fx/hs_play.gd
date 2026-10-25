@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -220,6 +220,20 @@ const SCRIPTS := {
 		"cues": [[0.0, "Kiljaeden_CustomSummon_Cast_Sound", 0.7], [1.5, "Kiljaeden_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: 0.2 по осям, сила линейно 1 -> 0
 		"shakers": [[0.0, 0.65, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.5, 1.983, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Archimonde (GDB_128) — Orcus (стоимость 8 — эффект на весь экран): GDBFX_Archimonde_CustomSummon
+	# (Timeline): с краёв экрана падают метеоры Скверны, в точке посадки загорается треугольник
+	# рун, на 1.68 с удар — вспышка Скверны. Виньетка и зелёный туман на весь экран убраны: в
+	# пиксель-арте рвались на пятна по краям (как у Ysera). Копия эффекта для стороны соперника
+	# (Root_Opponent), жетон HS и его свечение спрятаны; ScreenFX сдвинут в центр экрана HS, как ставит FSM;
+	# перекраску доски (SetAmbientColor FSM) не берём. Выжигание жёлто-зелёное в цвет Скверны.
+	"archimonde": {"frames": "archimonde", "sounds": "archimonde",
+		"card": {"face": "mini", "reveal": 2.15, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7 (каст, удар на 1.683 с), метеоры 0.4 с 0.583 с
+		"cues": [[0.0, "Archimonde_CustomSummon_Cast_Sound", 0.7], [0.583, "Archimonde_CustomSpawn_Missiles_Sound", 0.4],
+			[1.683, "Archimonde_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2: дрожь 0.06 нарастает до удара, в ударе (0.25, 0.05, 0.15) — у нас круг 0.2
+		"shakers": [[0.4, 1.683, 0.06, [[0.0, 0.0], [0.73, 1.0], [1.0, 1.0]], 0.159],
+			[1.683, 2.517, 0.2, [[0.0, 0.0], [0.1, 1.0], [0.31, 0.93], [0.51, 0.36], [0.71, 0.14], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
