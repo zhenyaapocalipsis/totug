@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj", "48715": "isorath"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -379,6 +379,14 @@ const SCRIPTS := {
 		"cues": [[0.0, "BEFX_YShaarjtheTitanBane_CustomSummon_Sound", 0.7], [0.55, "BEFX_YShaarjtheTitanBane_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: 0.07 в ударе, сила линейно 1 -> 0
 		"shakers": [[0.583, 2.081, 0.07, [[0.0, 0.99], [1.0, 0.0]], 0.075]]},
+	# Iso'rath (CATA_481) — Beholder, глаз-пожиратель (цена 5 — скромно, у места карты):
+	# CATAFX_Iso'rath_CustomSummon (Timeline): фиолетовая воронка раскрывается, на 0.67 с
+	# удар — пасть-цветок в светящейся сфере, щупальца тьмы кружат и гаснут к 2.5 с. Жетон HS
+	# и его свечение спрятаны, весь эффект под картой. Выжигание фиолетовое в цвет портала.
+	"isorath": {"frames": "isorath", "sounds": "isorath",
+		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.8 с начала; тряски камеры в Timeline нет
+		"cues": [[0.0, "CATAFX_IsoRath_CustomSummon_Sound", 0.8]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

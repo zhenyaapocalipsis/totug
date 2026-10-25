@@ -110,12 +110,12 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Elder Brain (48700) | N'Zoth, God of the Deep (DMF_002) | `DMFFX_NZothGodofTheDeep_CustomSummon.prefab` | древний разум из глубин |
-| Ulitharid (48701) | Mindflayer Kaahrj (DRG_308) | `MindflayerKaahrj_CustomSummon.prefab` | иллитид, пожиратель разума |
-| Aboleth (48705) | Soggoth the Slitherer (OG_340) | `Soggoth_CustomSummon.prefab` | древнее существо с щупальцами из воды |
-| Neogi (48710) | Anub'Rekhan (RLK_659) | `RLKFX_AnubRekhan_CustomSummon.prefab` | паукообразный рабовладелец |
-| Death Tyrant (48713) | C'Thun, the Shattered (DMF_254) | `DMFFX_CthunTheShattered_CustomSummon.prefab` | мёртвый бехолдер — разбитый глаз |
-| Beholder (48715) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | бехолдер — гигантский глаз-пожиратель |
+| Elder Brain (48700) | Kith'ix (BE_090) | `BEFX_Kithix_CustomSummon.prefab` | древний разум — фиолетовые молнии с неба (псионика); вместо N'Zoth, God of the Deep (DMF_002, старый набор); пробы Umbra, N'Zoth Dream's End, Mastermind Yogg-Saron владелец смотрел (2026-10-26) |
+| Ulitharid (48701) | ? | | иллитид; вместо Mindflayer Kaahrj (DRG_308, старый набор). Владелец хочет щупальца (2026-10-26); G'huun, Zer'Ontu, Herenn смотрел — не то |
+| Aboleth (48705) | The Black Blood (CATA_300) | `CATA_300_TheBlackBlood_CustomSummon.prefab` | древняя слизистая тварь из глубин; вместо Soggoth (OG_340, старый набор); пробы Maladaar, Uluu владелец смотрел (2026-10-26) |
+| Neogi (48710) | Wallow, the Wretched (EDR_487) | `EDRFX_WallowtheWeeping_CustomSummon.prefab` | кровавый удар-полумесяц; вместо Anub'Rekhan (RLK_659, старый набор); пробы Renferal (паутина), Omen владелец смотрел (2026-10-26) |
+| Death Tyrant (48713) | G'huun (BE_287) | `BE_287_GhuunTheCataStrophic_CustomSummon.prefab` | щупальца стягиваются в кровавый взрыв; вместо C'Thun, the Shattered (DMF_254, старый набор); пробы 8 Hands From Beyond, Darkmarrow, Drest'agath владелец смотрел (2026-10-26) |
+| Beholder (48715) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-48); бехолдер — фиолетовый глаз-воронка, скромно (цена 5), выжигание фиолетовое; пробы Drest'agath, Ceaseless Expanse владелец смотрел (2026-10-26) |
 
 ### undead
 
