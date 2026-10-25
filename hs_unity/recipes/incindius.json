@@ -12,7 +12,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": ["Root/AnimRoot/Token_Root/Test_Minion_InPlay", "Root/AnimRoot/Token_Root/M_TokenFace",
-        "Root/AnimRoot/Token_Root/M_TokenLegendaryShell", "Root/AnimRoot/Token_Root/M_MinionGlow_Back"],
+        "Root/AnimRoot/Token_Root/M_TokenLegendaryShell", "Root/AnimRoot/Token_Root/M_MinionGlow_Back",
+        "Root/AnimRoot/Token_Root/M_MinionShell_Goo"],
       "under": ["Root"]
     },
     {
