@@ -1,0 +1,39 @@
+{
+  "deps": "../deps_geddon.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "211d33bb1c55bdf4a9b83d53c18ec844",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": ["AnimRoot/OnToken", "AnimRoot/Impact_Root/PS_Reveal_Ring/PS_TokenGlow"],
+      "under": ["AnimRoot"],
+      "controls": [
+        {"node": "AnimRoot/MagmaRoot/PS_MagmaTop_Smoke", "start": 0.05, "end": 4.417},
+        {"node": "AnimRoot/Impact_Root/PS_LavaSplash", "start": 0.317, "end": 3.717},
+        {"node": "AnimRoot/Impact_Root/PS_Reveal_Ring", "start": 1.0, "end": 6.0},
+        {"node": "AnimRoot/MagmaRoot/CornerRoot/Impact_FX", "start": 1.017, "end": 7.017}
+      ]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.05,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.06,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48629.png"}
+  ]
+}
