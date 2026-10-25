@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -234,6 +234,17 @@ const SCRIPTS := {
 		# CameraShaker2: дрожь 0.06 нарастает до удара, в ударе (0.25, 0.05, 0.15) — у нас круг 0.2
 		"shakers": [[0.4, 1.683, 0.06, [[0.0, 0.0], [0.73, 1.0], [1.0, 1.0]], 0.159],
 			[1.683, 2.517, 0.2, [[0.0, 0.0], [0.1, 1.0], [0.31, 0.93], [0.51, 0.36], [0.71, 0.14], [1.0, 0.0]], 0.075]]},
+	# Spore Empress Moldara (GDB_234) — Zuggtmoy (стоимость 6 — крупный эффект у места карты):
+	# GDBFX_SporeEmpressMoldara_CustomSummon (Timeline): зелёный шлейф спор закручивается к точке
+	# посадки, на 1.35 с вспышка жёлтых спор с трещинами, облако спор держится вокруг карты.
+	# Жетон HS и его свечение спрятаны, весь эффект под картой. Выжигание жёлтое в цвет
+	# вспышки спор (владелец 2026-10-25).
+	"moldara": {"frames": "moldara", "sounds": "moldara",
+		"card": {"face": "mini", "reveal": 1.82, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.8 с начала, удар 0.6 на 1.35 с
+		"cues": [[0.0, "GDBFX_SporeEmpressMoldara_CustomSummon_Sound", 0.8], [1.35, "FX_MinionSummonLarge_Drop", 0.6]],
+		# CameraShaker2: 0.1 нарастает до 0.767 с, в ударе 0.2 и спад
+		"shakers": [[0.0, 0.767, 0.1, [[0.0, 0.0], [1.0, 1.0]], 0.075], [1.35, 2.1, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

@@ -53,7 +53,7 @@
 | Graz'zt (48514) | Prince Malchezaar (KAR_096) | `Malchezaar_CustomSummon.prefab` | обольстительный принц демонов |
 | Orcus (48535) | Archimonde (GDB_128) | `GDBFX_Archimonde_CustomSummon.prefab` | СДЕЛАНО (HsFx-31); стоимость 8 — метеоры Скверны на весь экран, выжигание жёлто-зелёное (2026-10-25) |
 | Vrock (48538) | Anetheron (SW_092) | `SWFX_Anetheron_CustomSummon.prefab` | демон, налетающий стаей |
-| Zuggtmoy (48539) | Spore Empress Moldara (GDB_234) | `GDBFX_SporeEmpressMoldara_CustomSummon.prefab` | королева грибов и спор |
+| Zuggtmoy (48539) | Spore Empress Moldara (GDB_234) | `GDBFX_SporeEmpressMoldara_CustomSummon.prefab` | СДЕЛАНО (HsFx-32); выжигание жёлтое в цвет вспышки спор (владелец 2026-10-25) |
 
 ### elementals
 
