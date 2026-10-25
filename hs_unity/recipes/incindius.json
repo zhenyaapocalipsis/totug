@@ -1,0 +1,34 @@
+{
+  "deps": "../deps_incindius.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "63f393f6e54c59845adb7a4145a71847",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": ["Root/AnimRoot/Token_Root/Test_Minion_InPlay", "Root/AnimRoot/Token_Root/M_TokenFace",
+        "Root/AnimRoot/Token_Root/M_TokenLegendaryShell", "Root/AnimRoot/Token_Root/M_MinionGlow_Back"],
+      "under": ["Root"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.5,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.03,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48633.png"}
+  ]
+}
