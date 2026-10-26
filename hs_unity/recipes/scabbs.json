@@ -1,0 +1,41 @@
+{
+  "deps": "../deps_scabbs.txt",
+  "fps": 60.0,
+  "len": 4.0,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "14cec5cd1c37d0244b2b972b960677cc",
+      "spell": "AVFX_ShadowcrafterScabbs_CustomSummon_Spell",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "clips": [{"name": "AVFX_ShadowcrafterScabbs_CustomSummon_Anim", "at": 0.0}],
+      "hide": ["AnimRoot/HeroRoot/TokenRoot/TokenHide", "AnimRoot/HeroRoot/TokenRoot/Mesh_HeroGlow",
+        "AnimRoot/HeroRoot/TokenRoot/Mesh_HeroShadow", "AnimRoot/SocketShadowRoot"],
+      "under": ["AnimRoot"],
+      "controls": [
+        {"node": "AnimRoot/HeroRoot/TokenRoot/FX_BlackSmokeWisps", "start": 0, "end": 3},
+        {"node": "AnimRoot/SmokeBurstRoot/FX_BlackSmokeBurst", "start": 1.833, "end": 3.748},
+        {"node": "AnimRoot/TokenSwirlFXRoot/FX_BurstWisps", "start": 0.817, "end": 3.817},
+        {"node": "AnimRoot/SmokeBurstRoot/FXGatherSmoke", "start": 1.133, "end": 3.817}
+      ]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.85,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.0,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48713.png"}
+  ]
+}

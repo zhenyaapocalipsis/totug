@@ -47,8 +47,18 @@ J
 
 render_one() {
 	local n=$1
+	# проект, открытый в редакторе (HsBrowser), пакетный Unity не откроет
+	if wmic process where "name='Unity.exe'" get CommandLine 2> /dev/null | grep -v -i batchmode | grep -q hs_unity; then
+		echo "$n: проект hs_unity открыт в Unity (HsBrowser) — закрыть окно Unity"
+		return 1
+	fi
 	"$U" -batchmode -quit -projectPath "$RW/hs_unity" -executeMethod HsRender.Run -hsr-win C:/Games/Hearthstone/Data/Win \
 		-hsr-recipe "$RW/hs_unity/render/cand/$n.json" -hsr-out "$RW/hs_unity/render/cand/$n" -hsr-frames $FR -logFile "$RW/hs_unity/render/cand/$n.log"
+	# без кадров bake_sheet виснет; частая причина — проект открыт в Unity (HsBrowser)
+	if ! ls "$C/$n"/f*.png > /dev/null 2>&1; then
+		echo "$n: нет кадров — $(grep -m1 -E 'Multiple Unity instances|prefab not found|Exception' "$C/$n.log" "$C/$n/hsr_log.txt" 2>/dev/null | sed 's/.*:\([^:]*\)$/\1/')"
+		return 1
+	fi
 	"$G" --headless --path "$RW/engine/godot" --script res://tools/bake_sheet.gd -- --dir="$RW/hs_unity/render/cand/$n" --frames=$FR \
 		--bg="$RW/hs_unity/render/clean_bg.png" --cols=4 --scale=0.5 --out="$RW/hs_unity/render/cand/${n}_sheet.png" > /dev/null 2>&1
 	"$G" --headless --path "$RW/engine/godot" --script res://tools/bake_sheet.gd -- --dir="$RW/hs_unity/render/cand/$n" --frames=30,70,110,170 \

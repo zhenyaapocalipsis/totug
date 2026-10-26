@@ -6,10 +6,10 @@
 огнём), без повторов: у всех 150 разные легендарки и разные префабы эффектов. Все есть в
 файлах игры (`data/hs_legendary_summons.tsv`). Как делать — `GUIDE.md`.
 
-Правила подбора (владелец 2026-10-25, подробно — `GUIDE.md` §1): только свежие
-легендарки (наборы 2024+); эпичность по стоимости карты по одной шкале на всю игру
-(9–10 — весь экран, 7–8 — большие, 5–6 — крупные у места карты, до 4 — скромные).
-Старые строки ниже заменять по очереди, перед работой над картой.
+Правила подбора (владелец, подробно — `GUIDE.md` §1): легендарки из всех наборов HS
+(правило «только свежие 2024+» снято 2026-10-26); эпичность по стоимости карты по одной
+шкале на всю игру (9–10 — весь экран, 7–8 — большие, 5–6 — крупные у места карты, до 4 —
+скромные); дарк фэнтези.
 
 Это черновик для владельца: любую строку можно заменить. Перед работой над картой:
 `hsx extract` по id из таблицы, посмотреть эффект (пробные кадры), убедиться, что он
@@ -113,8 +113,8 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Elder Brain (48700) | Kith'ix (BE_090) | `BEFX_Kithix_CustomSummon.prefab` | СДЕЛАНО (HsFx-50); древний разум — фиолетовые молнии с неба, вспышка-мозг (BrainBlast); затемнение и дым на весь экран убраны; выжигание фиолетовое; вместо N'Zoth, God of the Deep (DMF_002, старый набор); пробы Umbra, N'Zoth Dream's End, Mastermind Yogg-Saron владелец смотрел (2026-10-26) |
 | Ulitharid (48701) | Irida Sinseeker (JAIL_719) | `JAIL_719_IridaSinseeker_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-49); иллитид — тёмный разрез, синий портал, удар с трещинами; выжигание сине-фиолетовое. Вместо Mindflayer Kaahrj (DRG_308, старый набор); набор JAIL старый, но Irida владелец назвал сам (2026-10-26). Смотрел и отверг: G'huun, Zer'Ontu, Herenn, 8 Hands, C'Thun Eye of the Empire (без глаза и клыков, щупальца перекрашены в лиловый и разведены по углам — «каша», не понравилось) |
 | Aboleth (48705) | The Black Blood (CATA_300) | `CATA_300_TheBlackBlood_CustomSummon.prefab` | СДЕЛАНО (HsFx-51); древняя слизистая тварь из глубин, купол ShieldFX спрятан, выжигание фиолетовое; вместо Soggoth (OG_340, старый набор); пробы Maladaar, Uluu владелец смотрел (2026-10-26) |
-| Neogi (48710) | Wallow, the Wretched (EDR_487) | `EDRFX_WallowtheWeeping_CustomSummon.prefab` | СДЕЛАНО (HsFx-52); кровавый удар-полумесяц, выжигание красное; вместо Anub'Rekhan (RLK_659, старый набор); пробы Renferal (паутина), Omen владелец смотрел (2026-10-26) |
-| Death Tyrant (48713) | G'huun (BE_287) | `BE_287_GhuunTheCataStrophic_CustomSummon.prefab` | СДЕЛАНО (HsFx-53); щупальца стягиваются в кровавый взрыв, выжигание красное; вместо C'Thun, the Shattered (DMF_254, старый набор); пробы 8 Hands From Beyond, Darkmarrow, Drest'agath владелец смотрел (2026-10-26) |
+| Neogi (48710) | Magmaw (CATA_550) | `CATAFX_Magmaw_CustomSummon.prefab` | СДЕЛАНО (HsFx-54); владелец выбрал сам из HsBrowser (2026-10-27): бурый дым по верху экрана, лавовый червь вырывается справа снизу (полёт как в HS), огненный взрыв; выжигание огненно-оранжевое. Wallow (HsFx-52) снят — не понравился; смотрел и отверг: Anub'Rekhan (без жетона только дым), Broodqueen Sha'kar, Kerrigan, Renferal, Omen |
+| Death Tyrant (48713) | Shadowcrafter Scabbs (AV_203) | `AVFX_ShadowcrafterScabbs_CustomSummon_Super.prefab` (спелл `..._Spell`) | СДЕЛАНО (HsFx-55); владелец выбрал сам из HsBrowser (2026-10-27): чёрный дым, алая лента влетает сверху, взрыв чёрного дыма — на тёмной доске тихо, владелец берёт всё равно; тень портрета героя спрятана; выжигание алое. G'huun (HsFx-53) снят — не понравился; смотрел и отверг: C'Thun the Shattered, C'Thun Eye of the Empire, Kel'Thuzad, Bonelord Frostwhisper |
 | Beholder (48715) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-48); бехолдер — фиолетовый глаз-воронка, скромно (цена 5), выжигание фиолетовое; пробы Drest'agath, Ceaseless Expanse владелец смотрел (2026-10-26) |
 
 ### undead
