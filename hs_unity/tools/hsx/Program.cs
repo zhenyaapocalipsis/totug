@@ -9,6 +9,7 @@ using AssetsTools.NET.Texture;
 // hsx summons <WinDir> <out.tsv>         - every CardDef with a custom summon / spawn spell
 // hsx cards <dbf.unity3d> <out.tsv>      - cardId, dbId, enUS name, rarity, type
 // hsx extract <WinDir> <outDir> <cardId>... - all effects of a card: dumps, PNG, audio
+// hsx gallery <WinDir> <cabmap.tsv> <legendary.tsv> <out.tsv> - list for the Unity browser HsBrowser
 var mode = args[0];
 var am = new AssetsManager();
 
@@ -420,6 +421,112 @@ else if (mode == "deps")
     }
     foreach (var f in files) w.WriteLine("bundle " + f);
     Console.WriteLine($"bundles {files.Count}, cabs {seenCab.Count}");
+}
+else if (mode == "gallery")
+{
+    // hsx gallery <WinDir> <cabmap.tsv> <legendary.tsv> <out.tsv> : for the Unity browser (HsBrowser):
+    // lines "b <bundle file>", then card_id, name, kind, spell guid, numbers of the bundles the
+    // spell needs (closure over externals), card dbId
+    var win = args[1];
+    var (cat, cardMap) = LoadCatalog(win);
+    var cabMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    var fileCabs = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+    foreach (var l in File.ReadLines(args[2]))
+    {
+        var s = l.Split('\t');
+        cabMap[s[0]] = s[1];
+        if (!fileCabs.TryGetValue(s[1], out var lst)) fileCabs[s[1]] = lst = new List<string>();
+        lst.Add(s[0]);
+    }
+    var locales = Directory.GetFiles(win, "asset_manifest_*.unity3d")
+        .Select(p => Path.GetFileNameWithoutExtension(p).Replace("asset_manifest_", "")).ToList();
+    string? Real(string file) => File.Exists(Path.Combine(win, file)) ? file
+        : locales.Select(l => file.Replace("_enus", "_" + l)).FirstOrDefault(f => File.Exists(Path.Combine(win, f)));
+    // CAB -> CABs it references (memo: shared shader / texture bundles are read once)
+    var exts = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+    List<string> Ext(string cab)
+    {
+        if (exts.TryGetValue(cab, out var r)) return r;
+        exts[cab] = r = new List<string>();
+        if (!cabMap.TryGetValue(cab, out var bf)) return r;
+        try
+        {
+            var bun = am.LoadBundleFile(Path.Combine(win, bf), true);
+            var dirs = bun.file.BlockAndDirInfo.DirectoryInfos;
+            int di = dirs.FindIndex(d => d.Name.Equals(cab, StringComparison.OrdinalIgnoreCase));
+            if (di >= 0 && bun.file.IsAssetsFile(di))
+                foreach (var ex in am.LoadAssetsFileFromBundle(bun, di, false).file.Metadata.Externals)
+                {
+                    var p = ex.PathName;
+                    var c = p.Contains('/') ? p[(p.LastIndexOf('/') + 1)..] : p;
+                    if (c.StartsWith("CAB-", StringComparison.OrdinalIgnoreCase)) r.Add(c);
+                }
+        }
+        catch { }
+        return r;
+    }
+    // card dbId: grows with every expansion — HsBrowser sorts sets by release with it
+    var dbIds = new Dictionary<string, int>();
+    foreach (var (inst, _) in Open(Path.Combine(win, "dbf.unity3d")))
+        foreach (var info in inst.file.GetAssetsOfType(AssetClassID.MonoBehaviour))
+        {
+            var bf = am.GetBaseField(inst, info);
+            if (bf["m_Name"].AsString == "CARD")
+                foreach (var r in bf["Records.Array"].Children) dbIds[r["m_noteMiniGuid"].AsString] = r["m_ID"].AsInt;
+        }
+    am.UnloadAll(true);
+    var want = File.ReadLines(args[3]).Skip(1).Select(l => l.Split('\t')).Where(s => s.Length >= 5).ToList();
+    // bundle names once (lines "b <file>", numbered from 0), rows refer to them by number
+    var bundleIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    var rows = new List<string>();
+    int done = 0, miss = 0;
+    foreach (var grp in want.GroupBy(s => s[4]))
+    {
+        // card id -> spell path field of the kind, from the CardDef bundle
+        var paths = new Dictionary<string, string>();
+        try
+        {
+            foreach (var (inst, _) in Open(Path.Combine(win, grp.Key)))
+                foreach (var info in inst.file.GetAssetsOfType(AssetClassID.MonoBehaviour))
+                {
+                    var cf = am.GetBaseField(inst, info);
+                    if (cf["m_CustomSummonSpellPath"].IsDummy) continue;
+                    var go = am.GetBaseField(inst, inst.file.GetAssetInfo(cf["m_GameObject.m_PathID"].AsLong));
+                    foreach (var s in grp.Where(s => s[0] == go["m_Name"].AsString))
+                    {
+                        var f = cf["m_" + s[2] + "SpellPath"];
+                        if (!f.IsDummy) paths[s[0] + "\t" + s[2]] = f.AsString;
+                    }
+                }
+        }
+        catch (Exception e) { Console.WriteLine($"{grp.Key}: {e.Message}"); }
+        foreach (var s in grp)
+        {
+            if (!paths.TryGetValue(s[0] + "\t" + s[2], out var sp) || !sp.Contains(':')) { miss++; continue; }
+            var guid = sp[(sp.LastIndexOf(':') + 1)..];
+            if (cardMap.TryGetValue("@" + guid, out var lg)) guid = lg;
+            var bfile = cat.TryGetValue(guid, out var b0) ? Real(b0) : null;
+            if (bfile == null || !fileCabs.TryGetValue(bfile, out var start)) { miss++; continue; }
+            var todo = new Queue<string>(start);
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var files = new List<string>();
+            while (todo.Count > 0)
+            {
+                var cab = todo.Dequeue();
+                if (!seen.Add(cab) || !cabMap.TryGetValue(cab, out var f)) continue;
+                if (!files.Contains(f)) files.Add(f);
+                foreach (var c in Ext(cab)) todo.Enqueue(c);
+            }
+            var ids = files.Select(f => bundleIds.TryGetValue(f, out var k) ? k : bundleIds[f] = bundleIds.Count);
+            rows.Add($"{s[0]}\t{s[1]}\t{s[2]}\t{guid}\t{string.Join(",", ids)}\t{(dbIds.TryGetValue(s[0], out var db) ? db : 0)}");
+            done++;
+        }
+        am.UnloadAll(true);
+    }
+    Console.WriteLine($"{done} cards, {miss} missing");
+    using var w = new StreamWriter(args[4]);
+    foreach (var kv in bundleIds.OrderBy(kv => kv.Value)) w.WriteLine("b " + kv.Key);
+    foreach (var r in rows) w.WriteLine(r);
 }
 else if (mode == "where")
 {

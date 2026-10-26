@@ -157,7 +157,7 @@ public static class HsRender
     }
 
     // слой в сцене: корень, его директоры, аниматоры с клипами и «свои» частицы
-    class Live
+    internal class Live
     {
         public Layer spec;
         public GameObject root;
@@ -187,7 +187,7 @@ public static class HsRender
     const float CamFov = 34.87f;
     const int W = 1920, H = 1080;
 
-    static readonly List<AssetBundle> Bundles = new List<AssetBundle>();
+    internal static readonly List<AssetBundle> Bundles = new List<AssetBundle>();
     static readonly StringBuilder log = new StringBuilder();
 
     static string Arg(string name, string def = "")
@@ -197,8 +197,14 @@ public static class HsRender
         return i >= 0 && i + 1 < a.Length ? a[i + 1] : def;
     }
 
+    // окно HsBrowser: без лога в консоль, последнее сообщение — в его строку состояния
+    internal static bool Quiet;
+    internal static string Last = "";
+
     static void Log(string s)
     {
+        Last = s;
+        if (Quiet) return;
         log.AppendLine(s);
         Debug.Log("[hsr] " + s);
     }
@@ -229,7 +235,7 @@ public static class HsRender
     }
 
     // время шейдеров = время кадра (HsTimeFeature) — во всех рендерерах URP проекта
-    static void EnsureTimeFeature()
+    internal static void EnsureTimeFeature()
     {
         foreach (var guid in AssetDatabase.FindAssets("t:UniversalRendererData"))
         {
@@ -277,7 +283,7 @@ public static class HsRender
         Bake(recipe, lives, cam, outDir);
     }
 
-    static Live Spawn(Layer spec)
+    internal static Live Spawn(Layer spec)
     {
         GameObject prefab = null;
         foreach (var b in Bundles)
@@ -472,7 +478,7 @@ public static class HsRender
         Log($"textures swapped {swapped}");
     }
 
-    static Camera MakeCamera()
+    internal static Camera MakeCamera()
     {
         var cam = new GameObject("HsCam").AddComponent<Camera>();
         cam.transform.position = CamPos;
@@ -487,7 +493,7 @@ public static class HsRender
 
     static MaterialPropertyBlock Mpb;
 
-    static void Pose(List<Live> lives, double t)
+    internal static void Pose(List<Live> lives, double t)
     {
         Mpb ??= new MaterialPropertyBlock();
         foreach (var l in lives)
