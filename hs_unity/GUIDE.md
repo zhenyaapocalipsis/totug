@@ -110,12 +110,29 @@ celestial, shadow…). Перед пробами: §1 (свежие наборы
 - Список — `hs_unity/render/hs_gallery.tsv` (не в git, после патча HS пересобрать):
   `<SP>/hsx/hsx.exe gallery C:/Games/Hearthstone/Data/Win <SP>/hsx/cabmap.tsv
   hs_unity/data/hs_legendary_summons.tsv hs_unity/render/hs_gallery.tsv` (~15 с).
-- Это предпросмотр: без звука, без `controls` (ControlRandomizedTrack — часть частиц
-  может не родиться), без шейдера пиксель-арта. Окончательно — пробы по §0.
+- Это предпросмотр: без звука и без шейдера пиксель-арта. Окончательно — пробы по §0.
+- **ControlRandomizedTrack теперь играет сам** (2026-10-26): в `Assets/HsBake/HsTimeline/`
+  заглушки `Hearthstone.Timeline.ControlRandomizedTrack` / `ControlRandomizedPlayableAsset`
+  (наследники `ControlTrack` / `ControlPlayableAsset`, поля те же) — Unity связывает их с
+  префабами HS, частицы новых наборов идут по Timeline. Для новых рецептов `controls` по
+  этим дорожкам больше не нужны (Timeline и `controls` вместе гоняют одни частицы — при
+  совпадении отрезков то же самое; старые запечённые карты не тронуты).
+- Что окно делает само: прятать жетон — только его сетки (`Card_InPlay`, `TokenGlow`…),
+  не узлы `OnToken`/`Token_Root` (у старых карт там весь эффект); всё выключено (спелл по
+  FSM, Onyxia) — включает узлы-контейнеры; обёртка (`*_Super`, героев `*_FX`; у рыцарей
+  смерти ICC в ней только лиана) — играет корневой префаб из её зависимостей, если в нём
+  рендереров больше (63 карты; строка состояния «обёртка → спелл»). Составные (Zul'jin:
+  закрутка, след, удар по FSM) — только крупнейшая часть. Бандлы не закрываются до
+  закрытия окна: новая карта набора — несколько секунд, дальше быстро.
+- Полная проверка 2026-10-26 (`all`): все 1291 видны, почти пустые — CFM_341, BOT_243.
 - **Пока у владельца открыт Unity с `hs_unity`, запекание (`-batchmode`) не запустится** —
   проект один; попросить закрыть Unity.
 - Проверка без окна: `-executeMethod HsBrowser.Test -hsb-cards ID,ID -hsb-out <папка>`
-  (кадры 0.5/1.5/2.5 с; `all` — только загрузка всех, в `progress.txt`).
+  (кадры 0.5/1.5/2.5 с и где рендереры; `all` с `-hsb-from/-hsb-to` — доля экрана с
+  эффектом и лучший кадр каждой карты, `progress.txt`). В настоящем окне —
+  `HsBrowser.Smoke` (Unity без `-batchmode`, сам закрывается). Пока владелец держит
+  `hs_unity` открытым — гонять на копии проекта (Assets, Packages, ProjectSettings,
+  Library, `render/hs_gallery.tsv`) в scratchpad.
 
 ## 0. Быстрый старт: новая карта по шагам
 

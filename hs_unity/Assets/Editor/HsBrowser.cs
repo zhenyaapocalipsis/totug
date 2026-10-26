@@ -6,8 +6,7 @@
 // (номер = порядок), затем card_id, имя, вид (CustomSummon…), guid спелла, номера бандлов,
 // номер карты в базе HS (по нему дополнения сортируются по дате выхода).
 // Избранное — hs_unity/data/hs_favorites.tsv (в git), просмотренные — hs_unity/render/hs_seen.txt.
-// Проверка без окна: Unity -batchmode -executeMethod HsBrowser.Test -hsb-cards ID,ID (или all — без
-// кадров, только загрузка всех) -hsb-out <папка>.
+// Проверка без окна — Test (Unity -batchmode -executeMethod HsBrowser.Test -hsb-cards … -hsb-out …).
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,8 +22,8 @@ public class HsBrowser : EditorWindow
     const string Win = "C:/Games/Hearthstone/Data/Win";
     // наборы 2024+ (GUIDE §1: только свежие анимации)
     static readonly string[] Fresh = { "VAC", "TOY", "GDB", "TLC", "DINO", "EDR", "TIME", "CATA", "BE" };
-    // жетон и контуры миньона HS — как в cand.sh
-    static readonly Regex TokenRx = new Regex(@"^(OnToken|Token_Root|TokenRoot|Token_Root_OP|Opponent_Token_Root|Token \(Position\))$|TokenGlow|MinionEdgeGlow|MinionShell|Nightmare|Card_InPlay|TokenHider|Test_Minion");
+    // сетки жетона и контуры миньона HS (имена — как в cand.sh, без узлов-контейнеров)
+    static readonly Regex TokenRx = new Regex(@"TokenGlow|MinionEdgeGlow|MinionShell|MinionGlow|Mesh_FlashGlow|Nightmare|Card_InPlay|TokenHider|Test_Minion");
     const string Mark = "HSB ";
 
     class Entry
@@ -90,6 +89,8 @@ public class HsBrowser : EditorWindow
     float t, len = 4f;
     bool playing = true, dirty;
     string status = "";
+    // префабы-кандидаты из зависимостей обёртки (для Test)
+    string innerInfo = "";
     static bool prepared;
 
     [MenuItem("Tyrants/HS Legendaries")]
@@ -182,18 +183,16 @@ public class HsBrowser : EditorWindow
         if (favOnly) Refilter();
     }
 
-    // загрузить бандлы карты (общие с прошлой остаются), поставить эффект в точку посадки
+    // открыть недостающие бандлы карты, поставить эффект в точку посадки
     void Select(Entry e, bool markSeen = true)
     {
         Clear(false);
         cur = e;
         var t0 = EditorApplication.timeSinceStartup;
         var need = new HashSet<string>(e.deps.Select(i => bundleNames[i]));
-        foreach (var k in loaded.Keys.Where(k => !need.Contains(k)).ToList())
-        {
-            if (loaded[k] != null) loaded[k].Unload(true);
-            loaded.Remove(k);
-        }
+        // бандлы остаются открытыми до закрытия окна (каждый открывается один раз — у карт
+        // одного набора они почти общие); память прошлого эффекта освобождается
+        Resources.UnloadUnusedAssets();
         int failed = 0;
         foreach (var f in need)
         {
@@ -208,22 +207,36 @@ public class HsBrowser : EditorWindow
             if (b.Contains(e.guid)) { prefab = b.LoadAsset<GameObject>(e.guid); break; }
         if (prefab == null) { status = $"Префаб {e.guid} не найден (бандлов {loaded.Count}, не загрузилось {failed})"; return; }
         var spec = new HsRender.Layer { prefab = e.guid, usePos = true, pos = new[] { -7.59f, 0f, -7.01f } };
+        innerInfo = "";
         // Timeline ведёт аниматоры (клипы контроллеров бывают чужие); без Timeline — самый длинный клип
         if (prefab.GetComponentsInChildren<PlayableDirector>(true).Length > 0) spec.clip = "timeline";
-        // обёртка *_Super: сам спелл загружен вместе с ней
-        if (prefab.name.EndsWith("_Super") && prefab.GetComponentsInChildren<Renderer>(true).Length == 0)
-            spec.spell = prefab.name.Substring(0, prefab.name.Length - 6);
+        // обёртка (*_Super, у героев *_FX; у рыцарей смерти ICC в ней лишь лиана): сам спелл —
+        // корневой префаб из её зависимостей, если в нём рендереров больше, чем в обёртке
+        var cands = EditorUtility.CollectDependencies(new UnityEngine.Object[] { prefab }).OfType<GameObject>()
+            .Where(g => g != prefab && g.transform.parent == null)
+            .OrderByDescending(g => g.GetComponentsInChildren<Renderer>(true).Length).ToList();
+        innerInfo = string.Join(", ", cands.Select(g => $"{g.name} {g.GetComponentsInChildren<Renderer>(true).Length}"));
+        var inner = cands.FirstOrDefault();
+        if (inner != null && inner.GetComponentsInChildren<Renderer>(true).Length > prefab.GetComponentsInChildren<Renderer>(true).Length)
+        {
+            spec.spell = inner.name;
+            spec.clip = inner.GetComponentsInChildren<PlayableDirector>(true).Length > 0 ? "timeline" : "";
+        }
         live = HsRender.Spawn(spec);
         if (live == null) { status = "Не вышло: " + HsRender.Last; return; }
         live.root.name = Mark + live.root.name;
         foreach (var tr in live.root.GetComponentsInChildren<Transform>(true)) tr.gameObject.hideFlags = HideFlags.HideAndDontSave;
+        // спелл по FSM (Onyxia): корень выключен, его включает код HS — включить узлы-контейнеры
+        var nodes = live.root.GetComponentsInChildren<Transform>(true);
+        if (!nodes.Any(tr => tr.gameObject.activeInHierarchy && tr.GetComponent<Renderer>() != null))
+            foreach (var tr in nodes)
+                if (!tr.gameObject.activeSelf && tr.GetComponent<Renderer>() == null && tr.GetComponent<ParticleSystem>() == null)
+                    tr.gameObject.SetActive(true);
+        // жетон HS: только его сетки (в узлах OnToken / Token_Root у старых карт — весь эффект)
         if (hideToken)
-        {
-            var tok = live.root.GetComponentsInChildren<Transform>(true).Where(tr => tr != live.root.transform && TokenRx.IsMatch(tr.name))
-                .Select(tr => tr.gameObject).ToList();
-            foreach (var g in tok) g.SetActive(false);
-            live.hidden = live.hidden.Concat(tok).ToArray();
-        }
+            foreach (var tr in nodes.Where(tr => TokenRx.IsMatch(tr.name)))
+                foreach (var r in tr.GetComponentsInChildren<Renderer>(true))
+                    if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
         lives.Add(live);
         // длина петли: Timeline и клипы + хвост
         float end = 0f;
@@ -242,7 +255,7 @@ public class HsBrowser : EditorWindow
             cam.aspect = 16f / 9f;
         }
         var n = live.root.GetComponentsInChildren<Renderer>(true).Length;
-        status = $"{prefab.name}: бандлов {loaded.Count}" + (failed > 0 ? $" (не загрузилось {failed})" : "") +
+        status = $"{prefab.name}{(spec.spell != "" ? " → " + spec.spell : "")}: бандлов {loaded.Count}" + (failed > 0 ? $" (не загрузилось {failed})" : "") +
             $", рендереров {n}{(n == 0 ? " — пусто" : "")}, {len:0.#} с, загрузка {EditorApplication.timeSinceStartup - t0:0.0} с";
         if (markSeen && seen.Add(e.Key)) File.AppendAllLines(SeenPath, new[] { e.Key });
         Restart();
@@ -399,7 +412,62 @@ public class HsBrowser : EditorWindow
         }
     }
 
-    // проверка без окна: эффекты карт в PNG (кадры 0.5, 1.5, 2.5 с)
+    Texture2D shotTex => tex ??= new Texture2D(1280, 720, TextureFormat.RGB24, false);
+    Texture2D tex;
+
+    // кадр окна в shotTex; доля точек, заметно отличных от фона (каждая 4-я по обеим осям)
+    float Grab()
+    {
+        RenderTexture.active = rt;
+        shotTex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+        RenderTexture.active = null;
+        var px = shotTex.GetPixels32();
+        var bg = (Color32)cam.backgroundColor;
+        int hit = 0, n = 0;
+        for (int y = 0; y < 720; y += 4)
+            for (int x = 0; x < 1280; x += 4, n++)
+            {
+                var c = px[y * 1280 + x];
+                if (Math.Abs(c.r - bg.r) + Math.Abs(c.g - bg.g) + Math.Abs(c.b - bg.b) > 40) hit++;
+            }
+        return (float)hit / n;
+    }
+
+    // проверка в настоящем окне (Unity без -batchmode): -hsb-cards ID,ID — каждая карта
+    // играет 1.5 с как по клику, доля экрана с эффектом — в smoke.txt; Unity закрывается сам
+    public static void Smoke()
+    {
+        var a = Environment.GetCommandLineArgs();
+        string Arg(string n) { int k = Array.IndexOf(a, "-hsb-" + n); return k >= 0 && k + 1 < a.Length ? a[k + 1] : ""; }
+        var outDir = Arg("out");
+        Directory.CreateDirectory(outDir);
+        var ids = Arg("cards").Split(',');
+        var w = GetWindow<HsBrowser>();
+        var res = new List<string>();
+        int i = -1;
+        double next = 0;
+        EditorApplication.CallbackFunction step = null;
+        step = () =>
+        {
+            if (EditorApplication.timeSinceStartup < next) return;
+            if (i >= 0)
+                res.Add($"{ids[i]}\t{(w.live != null && w.rt != null ? w.Grab().ToString("0.0000") : "-")}\t{w.status}");
+            if (++i >= ids.Length)
+            {
+                File.WriteAllLines(Path.Combine(outDir, "smoke.txt"), res);
+                EditorApplication.update -= step;
+                EditorApplication.Exit(0);
+                return;
+            }
+            var e = w.all.FirstOrDefault(x => x.id == ids[i]);
+            if (e != null) w.Select(e, false);
+            next = EditorApplication.timeSinceStartup + 1.5;
+        };
+        EditorApplication.update += step;
+    }
+
+    // проверка без окна: -hsb-cards ID,ID — кадры 0.5/1.5/2.5 с в PNG; all — все карты подряд
+    // (с -hsb-from N, -hsb-to M): сколько экрана занимает эффект (лучший кадр — JPG), в progress.txt
     public static void Test()
     {
         var a = Environment.GetCommandLineArgs();
@@ -407,35 +475,68 @@ public class HsBrowser : EditorWindow
         var outDir = Arg("out");
         Directory.CreateDirectory(outDir);
         var w = CreateInstance<HsBrowser>();
-        var log = new List<string>();
+        var tex = w.shotTex;
+        float Shot(float s)
+        {
+            w.t = s;
+            w.Render();
+            return w.Grab();
+        }
         try
         {
-            var ids = Arg("cards") == "all" ? w.all.Select(x => x.id).Distinct().ToArray() : Arg("cards").Split(',');
-            foreach (var id in ids)
+            if (Arg("cards") == "all")
+            {
+                int from = int.TryParse(Arg("from"), out var f0) ? f0 : 0;
+                var list = w.all.OrderBy(x => x.order).ThenBy(x => x.id).ToList();
+                int to = int.TryParse(Arg("to"), out var t0) ? Math.Min(t0, list.Count) : list.Count;
+                for (int i = from; i < to; i++)
+                {
+                    var e = list[i];
+                    w.Select(e, false);
+                    string line = $"{i}\t{e.id}\t{e.kind}\t";
+                    if (w.live != null)
+                    {
+                        float best = 0f, at = 0f;
+                        for (float s = 0.25f; s <= w.len; s += 0.25f)
+                        {
+                            float v = Shot(s);
+                            if (v > best) { best = v; at = s; }
+                        }
+                        if (best > 0f)
+                        {
+                            Shot(at);
+                            File.WriteAllBytes(Path.Combine(outDir, $"{e.id}_{e.kind}.jpg"), tex.EncodeToJPG(70));
+                        }
+                        line += $"{best:0.0000}\t{at:0.00}\t";
+                    }
+                    else line += "-\t-\t";
+                    File.AppendAllText(Path.Combine(outDir, "progress.txt"), line + w.status + "\n");
+                }
+                return;
+            }
+            var log = new List<string>();
+            foreach (var id in Arg("cards").Split(','))
             {
                 var e = w.all.FirstOrDefault(x => x.id == id);
                 if (e == null) { log.Add(id + ": нет в списке"); continue; }
                 w.Select(e, false);
                 log.Add(id + ": " + w.status);
-                File.AppendAllText(Path.Combine(outDir, "progress.txt"), log[log.Count - 1] + "\n");
-                if (w.live == null || ids.Length > 20) continue;
-                var tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+                if (w.innerInfo != "") log.Add("  обёртка: " + w.innerInfo);
+                if (w.live == null) continue;
                 foreach (var s in new[] { 0.5f, 1.5f, 2.5f })
                 {
-                    w.t = s;
-                    w.Render();
-                    RenderTexture.active = w.rt;
-                    tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
-                    RenderTexture.active = null;
+                    log.Add($"  {s:0.0} с: {Shot(s):0.0000}");
                     File.WriteAllBytes(Path.Combine(outDir, $"{id}_{s:0.0}.png"), tex.EncodeToPNG());
                 }
+                // где рендереры (пустой кадр: всё выключено или вне камеры)
+                foreach (var r in w.live.root.GetComponentsInChildren<Renderer>(true))
+                    log.Add($"    {r.name} active={r.gameObject.activeInHierarchy} enabled={r.enabled} visible={r.isVisible} " +
+                        $"center={r.bounds.center} size={r.bounds.size} {r.GetType().Name} " +
+                        string.Join(",", r.sharedMaterials.Where(m => m != null).Select(m => m.shader.name + (m.shader.isSupported ? "" : "!"))));
             }
-        }
-        catch (Exception ex) { log.Add("ERROR " + ex); }
-        finally
-        {
             File.WriteAllLines(Path.Combine(outDir, "test.txt"), log);
-            DestroyImmediate(w);
         }
+        catch (Exception ex) { File.AppendAllText(Path.Combine(outDir, "progress.txt"), "ERROR " + ex + "\n"); }
+        finally { DestroyImmediate(w); }
     }
 }
