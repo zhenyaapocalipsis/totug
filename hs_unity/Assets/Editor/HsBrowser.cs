@@ -32,6 +32,8 @@ public class HsBrowser : EditorWindow
         public int[] deps;
         // db — номер карты в базе HS, order — место дополнения по дате выхода
         public int db, order;
+        // id карт с тем же спеллом (повторы убраны из списка)
+        public string also = "";
         public string Key => id + "\t" + kind;
     }
 
@@ -141,6 +143,16 @@ public class HsBrowser : EditorWindow
                 deps = s[4].Split(',').Select(int.Parse).ToArray(), db = int.Parse(s[5]),
             });
         }
+        // повторы (тот же спелл: переиздания CORE/VAN, Galakrond t2/t3, потасовки TB…) — одна
+        // строка, самая поздняя карта (владелец); остальные id — в поиске
+        var uniq = all.GroupBy(e => e.guid).Select(g =>
+        {
+            var first = g.OrderByDescending(e => e.db).First();
+            first.also = string.Join(", ", g.Where(e => e != first).Select(e => e.id));
+            return first;
+        }).ToList();
+        all.Clear();
+        all.AddRange(uniq);
         // порядок выхода дополнений: номер карты в базе HS растёт с каждым дополнением —
         // дополнение стоит по самой ранней своей карте
         var sets = all.GroupBy(e => e.set).OrderBy(g => g.Min(e => e.db)).ToList();
@@ -166,7 +178,8 @@ public class HsBrowser : EditorWindow
             (setIdx != 1 || Fresh.Contains(e.set)) && (set == null || e.set == set) &&
             (!favOnly || favs.ContainsKey(e.Key)) && (!unseenOnly || !seen.Contains(e.Key)) &&
             (search == "" || e.name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-             e.id.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
+             e.id.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+             e.also.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
         int dir = sortIdx == 1 ? -1 : 1;
         shown.Sort((a, b) =>
         {
@@ -371,7 +384,8 @@ public class HsBrowser : EditorWindow
                 if (GUI.Button(new Rect(r.x, r.y, 22f, RowH), fav ? "★" : "☆", starStyle)) ToggleFav(e);
                 GUI.contentColor = seen.Contains(e.Key) && e != cur ? new Color(1f, 1f, 1f, 0.5f) : old;
                 GUI.Label(new Rect(r.x + 22f, r.y + 2f, 46f, RowH), e.set, EditorStyles.miniLabel);
-                var label = e.name + "   " + e.id + (e.kind != "CustomSummon" ? "  (" + e.kind.Replace("CustomSummon", "").Replace("Custom", "") + ")" : "");
+                var label = e.name + "   " + e.id + (e.kind != "CustomSummon" ? "  (" + e.kind.Replace("CustomSummon", "").Replace("Custom", "") + ")" : "") +
+                    (e.also != "" ? $"   +{e.also.Split(',').Length}" : "");
                 if (GUI.Button(new Rect(r.x + 66f, r.y, r.width - 66f, RowH), label, rowStyle)) Select(e);
                 GUI.contentColor = old;
             }
@@ -407,6 +421,7 @@ public class HsBrowser : EditorWindow
                     if (EditorGUI.EndChangeCheck()) { t = nt; playing = false; dirty = true; }
                 }
                 GUILayout.Label(status, EditorStyles.wordWrappedMiniLabel);
+                if (cur != null && cur.also != "") GUILayout.Label("Тот же эффект: " + cur.also, EditorStyles.wordWrappedMiniLabel);
                 GUILayout.Label("↑↓ — следующая/предыдущая, Пробел или F — избранное, R — заново. Избранное: hs_unity/data/hs_favorites.tsv", EditorStyles.miniLabel);
             }
         }
@@ -461,6 +476,7 @@ public class HsBrowser : EditorWindow
             }
             var e = w.all.FirstOrDefault(x => x.id == ids[i]);
             if (e != null) w.Select(e, false);
+            else { w.Clear(false); w.status = "нет в списке"; }
             next = EditorApplication.timeSinceStartup + 1.5;
         };
         EditorApplication.update += step;
