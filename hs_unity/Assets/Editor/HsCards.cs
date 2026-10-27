@@ -1,5 +1,5 @@
-// Окно «Карты Tyrants» рядом с HS Legendaries: уникальные карты по колодам, полная карта и
-// миниатюра, назначение на карту эффекта, выбранного в HS Legendaries. Меню Tyrants → Tyrants Cards.
+// Панель «Карты Tyrants» справа в окне HS Legendaries: уникальные карты по колодам, полная карта
+// и миниатюра, назначение на карту эффекта, выбранного в списке HS (кнопка «Карты Tyrants»).
 //
 // Уникальные — одна копия в полуколоде (engine/godot/data/cards/half_decks.json), картинки —
 // engine/godot/assets/cards_pixel и cards_mini. Уже подобранные эффекты — таблицы CARD_MAP.md.
@@ -13,7 +13,8 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
-public class HsCards : EditorWindow
+[Serializable]
+public class HsCards
 {
     class Card { public string id, name, cost, deck; }
     class Deck { public string key, name; public readonly List<Card> cards = new List<Card>(); }
@@ -41,33 +42,11 @@ public class HsCards : EditorWindow
     readonly Dictionary<string, Texture2D> texs = new Dictionary<string, Texture2D>();
     GUIStyle rowStyle, headStyle, boldWrap;
 
-    [MenuItem("Tyrants/Tyrants Cards")]
-    public static void OpenMenu() => OpenBeside(Resources.FindObjectsOfTypeAll<HsBrowser>().FirstOrDefault());
-
-    // рядом с окном эффектов (справа), оба видны сразу
-    public static void OpenBeside(EditorWindow b)
+    public void Free()
     {
-        bool was = HasOpenInstances<HsCards>();
-        var w = GetWindow<HsCards>("Tyrants Cards");
-        w.minSize = new Vector2(440, 400);
-        if (was || b == null) return;
-        // оба окна делят главное окно Unity: эффекты слева, карты справа (экран 1280 — тоже)
-        var main = EditorGUIUtility.GetMainWindowPosition();
-        float W = Mathf.Clamp(main.width * 0.38f, 460f, 720f), y = main.y + 40f, h = main.height - 40f;
-        if (!b.docked) b.position = new Rect(main.x, y, main.width - W - 4f, h);
-        w.position = new Rect(main.xMax - W, y, W, h);
-    }
-
-    void OnEnable() => Load();
-
-    void OnDisable()
-    {
-        foreach (var t in texs.Values) if (t != null) DestroyImmediate(t);
+        foreach (var t in texs.Values) if (t != null) UnityEngine.Object.DestroyImmediate(t);
         texs.Clear();
     }
-
-    // эффект в списке HS Legendaries меняется — подпись кнопки «Назначить» тоже
-    void OnInspectorUpdate() => Repaint();
 
     static void Load()
     {
@@ -174,31 +153,22 @@ public class HsCards : EditorWindow
         Save();
     }
 
-    void OnGUI()
+    // панель справа в окне HS Legendaries (отдельное окно Unity на экране 300% ставило за край)
+    public void Draw(HsBrowser b, float width, float height)
     {
         if (decks == null) Load();
         rowStyle ??= new GUIStyle(EditorStyles.label) { padding = new RectOffset(18, 4, 1, 1) };
         headStyle ??= new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
         boldWrap ??= new GUIStyle(EditorStyles.wordWrappedLabel) { fontStyle = FontStyle.Bold };
         byId.TryGetValue(selId, out var sel);
-        var b = Browser;
-        var bcur = b != null ? b.Cur : null;
+        var bcur = b.Cur;
 
         var ev = Event.current;
-        if (ev.type == EventType.KeyDown && !EditorGUIUtility.editingTextField)
+        if (ev.type == EventType.KeyDown && !EditorGUIUtility.editingTextField &&
+            (ev.keyCode == KeyCode.Return || ev.keyCode == KeyCode.KeypadEnter) && sel != null && bcur != null)
         {
-            var vis = Visible();
-            int i = sel == null ? -1 : vis.IndexOf(sel);
-            if ((ev.keyCode == KeyCode.DownArrow || ev.keyCode == KeyCode.UpArrow) && vis.Count > 0)
-            {
-                selId = vis[Mathf.Clamp(i + (ev.keyCode == KeyCode.DownArrow ? 1 : -1), 0, vis.Count - 1)].id;
-                ev.Use();
-            }
-            else if ((ev.keyCode == KeyCode.Return || ev.keyCode == KeyCode.KeypadEnter) && sel != null && bcur != null)
-            {
-                DoAssign(sel, bcur);
-                ev.Use();
-            }
+            DoAssign(sel, bcur);
+            ev.Use();
         }
 
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
@@ -207,14 +177,14 @@ public class HsCards : EditorWindow
             GUILayout.Label($" {byId.Count} карт, ● {assigns.Count}", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Свернуть", EditorStyles.toolbarButton)) closed = decks.Select(d => d.key).ToList();
-            if (GUILayout.Button("Обновить", EditorStyles.toolbarButton)) { Load(); OnDisable(); }
+            if (GUILayout.Button("Обновить", EditorStyles.toolbarButton)) { Load(); Free(); }
         }
         if (loadErr != "") { EditorGUILayout.HelpBox(loadErr, MessageType.Error); return; }
 
         using (new EditorGUILayout.HorizontalScope())
         {
             // колоды и их уникальные карты; ● — назначено здесь, ✓ — сделано по CARD_MAP
-            scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.Width(210));
+            scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.Width(200));
             foreach (var d in decks)
             {
                 var cards = d.cards.Where(Match).ToList();
@@ -239,12 +209,12 @@ public class HsCards : EditorWindow
 
             using (new EditorGUILayout.VerticalScope())
             {
-                if (sel == null) { GUILayout.Label("  Выбери карту слева (↑↓ — листать)", EditorStyles.boldLabel); return; }
+                if (sel == null) { GUILayout.Label("  Выбери карту в списке колод", EditorStyles.boldLabel); return; }
                 GUILayout.Label($"{sel.name}   {sel.deck}   {(sel.cost != "" ? "стоимость " + sel.cost : "")}   {sel.id}", EditorStyles.boldLabel);
                 // полная карта 176×254 и миниатюра 58×84 — целым масштабом, без размытия
                 var full = Tex("cards_pixel", sel.id);
                 var mini = Tex("cards_mini", sel.id);
-                float avW = position.width - 230f, avH = position.height - 200f;
+                float avW = width - 210f, avH = height - 200f;
                 int s = Mathf.Max(1, Mathf.FloorToInt(Mathf.Min(avH / 254f, (avW - 20f) / (176f + 58f))));
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -272,18 +242,17 @@ public class HsCards : EditorWindow
                     var showId = a?.hsId ?? pk?.hsId;
                     GUI.enabled = showId != null && b != null;
                     if (GUILayout.Button("Показать эффект", GUILayout.Height(22)) && !b.Show(showId))
-                        ShowNotification(new GUIContent($"{showId} нет в списке HS Legendaries"));
+                        b.ShowNotification(new GUIContent($"{showId} нет в списке HS Legendaries"));
                     GUI.enabled = true;
                 }
-                if (b == null) EditorGUILayout.HelpBox("Окно HS Legendaries закрыто: Tyrants → HS Legendaries.", MessageType.Info);
-                else if (bcur != null)
+                if (bcur != null)
                 {
                     // эффект без повторов: уже занят другой картой
                     var who = AssignedTo(bcur.id, bcur.also, "").Split(", ").Where(n => n != "" && n != sel.name).ToList();
                     if (who.Count > 0) EditorGUILayout.HelpBox($"{bcur.name} уже у: {string.Join(", ", who)}", MessageType.Warning);
                 }
                 GUILayout.FlexibleSpace();
-                GUILayout.Label("↑↓ — карты, Enter — назначить эффект из HS Legendaries. ● назначено, ✓ сделано. Файл: hs_unity/data/hs_assign.tsv", EditorStyles.wordWrappedMiniLabel);
+                GUILayout.Label("Enter — назначить выбранный эффект. ● назначено, ✓ сделано. Файл: hs_unity/data/hs_assign.tsv", EditorStyles.wordWrappedMiniLabel);
             }
         }
     }
@@ -302,49 +271,38 @@ public class HsCards : EditorWindow
         File.WriteAllLines(a[k + 1], res);
     }
 
-    // снимок обоих окон: -executeMethod HsCards.Shot -hsc-out <png> -hsc-card <id> -hsc-hs <id HS>
+    // снимок окна с панелью карт: -executeMethod HsCards.Shot -hsc-out <png> -hsc-card <id> -hsc-hs <id HS> [-hsc-assign 1]
     public static void Shot()
     {
         var a = Environment.GetCommandLineArgs();
         string Arg(string n) { int k = Array.IndexOf(a, "-hsc-" + n); return k >= 0 && k + 1 < a.Length ? a[k + 1] : ""; }
         HsBrowser.Open();
         var b = Browser;
-        var w = GetWindow<HsCards>();
+        var w = b.Cards;
         w.selId = Arg("card");
-        double at = EditorApplication.timeSinceStartup + 3;
+        double at = EditorApplication.timeSinceStartup + 3, shotAt = 0;
         bool shown = false;
         EditorApplication.CallbackFunction step = null;
         step = () =>
         {
-            if (!shown && EditorApplication.timeSinceStartup > at - 2) { b.Show(Arg("hs")); shown = true; }
-            if (EditorApplication.timeSinceStartup < at) return;
+            var now = EditorApplication.timeSinceStartup;
+            if (!shown && now > at - 2) { b.Show(Arg("hs")); shown = true; }
+            if (now < at) return;
+            if (shotAt == 0)
+            {
+                if (Arg("assign") == "1" && b.Cur != null) w.DoAssign(byId[w.selId], b.Cur);
+                b.Repaint();
+                shotAt = now + 0.5;
+                return;
+            }
+            if (now < shotAt) return;
             EditorApplication.update -= step;
-            if (Arg("assign") == "1" && b.Cur != null) w.DoAssign(byId[w.selId], b.Cur);
-            w.Repaint();
-            b.Repaint();
-            ReadyShot(w, b, Arg("out"));
-        };
-        EditorApplication.update += step;
-    }
-
-    static void ReadyShot(HsCards w, HsBrowser b, string outPath)
-    {
-        // кадр после перерисовки окон
-        double at = EditorApplication.timeSinceStartup + 0.5;
-        EditorApplication.CallbackFunction step = null;
-        step = () =>
-        {
-            if (EditorApplication.timeSinceStartup < at) return;
-            EditorApplication.update -= step;
-            string Arg(string n) => n == "out" ? outPath : "";
-            var r = Rect.MinMaxRect(Mathf.Min(b.position.x, w.position.x), Mathf.Min(b.position.y, w.position.y),
-                Mathf.Max(b.position.xMax, w.position.xMax), Mathf.Max(b.position.yMax, w.position.yMax));
+            var r = b.position;
             var px = UnityEditorInternal.InternalEditorUtility.ReadScreenPixel(r.position, (int)r.width, (int)r.height);
             var t = new Texture2D((int)r.width, (int)r.height, TextureFormat.RGB24, false);
             t.SetPixels(px);
             File.WriteAllBytes(Arg("out"), t.EncodeToPNG());
-            File.WriteAllText(Arg("out") + ".txt", $"main {EditorGUIUtility.GetMainWindowPosition()} screen {Screen.currentResolution} ppp {EditorGUIUtility.pixelsPerPoint}\n" +
-                $"browser {b.position} docked {b.docked}\ncards {w.position}\n");
+            File.WriteAllText(Arg("out") + ".txt", $"browser {b.position} docked {b.docked}");
             EditorApplication.Exit(0);
         };
         EditorApplication.update += step;

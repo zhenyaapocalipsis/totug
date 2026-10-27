@@ -96,13 +96,20 @@ public class HsBrowser : EditorWindow
     // префабы-кандидаты из зависимостей обёртки (для Test)
     string innerInfo = "";
     static bool prepared;
+    // панель уникальных карт Tyrants справа (назначение эффекта на карту)
+    [SerializeField] HsCards cards = new HsCards();
+    [SerializeField] bool showCards = true;
+    public HsCards Cards => cards;
 
     [MenuItem("Tyrants/HS Legendaries")]
     public static void Open()
     {
         var w = GetWindow<HsBrowser>("HS Legendaries");
-        w.minSize = new Vector2(600, 400);
-        HsCards.OpenBeside(w);
+        w.minSize = new Vector2(900, 480);
+        // место под панель карт; положение окна не трогать (на экране 300% Unity путает координаты)
+        var p = w.position;
+        if (w.showCards && !w.docked && p.width < 1240f) w.position = new Rect(p.x, p.y, 1240f, Mathf.Max(p.height, 600f));
+        w.Focus();
     }
 
     void OnEnable()
@@ -125,6 +132,7 @@ public class HsBrowser : EditorWindow
     void OnDisable()
     {
         EditorApplication.update -= Tick;
+        cards.Free();
         Clear(true);
         HsRender.Quiet = false;
     }
@@ -391,7 +399,7 @@ public class HsBrowser : EditorWindow
         {
             GUILayout.Label($"  {shown.Count} из {all.Count}, просмотрено {seen.Count}", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Карты Tyrants", EditorStyles.toolbarButton)) HsCards.OpenBeside(this);
+            showCards = GUILayout.Toggle(showCards, "Карты Tyrants", EditorStyles.toolbarButton);
             EditorGUI.BeginChangeCheck();
             hideToken = GUILayout.Toggle(hideToken, "Прятать жетон HS", EditorStyles.toolbarButton);
             if (EditorGUI.EndChangeCheck() && cur != null) Select(cur, false);
@@ -423,7 +431,8 @@ public class HsBrowser : EditorWindow
             }
             EditorGUILayout.EndScrollView();
 
-            using (new EditorGUILayout.VerticalScope())
+            float cw = showCards ? Mathf.Clamp(position.width * 0.4f, 430f, 640f) : 0f;
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(position.width - ListW - cw - 8f)))
             {
                 var box = GUILayoutUtility.GetRect(100f, 100f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                 float w = Mathf.Min(box.width, box.height * 16f / 9f), h = w * 9f / 16f;
@@ -456,6 +465,11 @@ public class HsBrowser : EditorWindow
                 if (cur != null && cur.also != "") GUILayout.Label("Тот же эффект: " + cur.also, EditorStyles.wordWrappedMiniLabel);
                 if (cur != null && HsCards.AssignedTo(cur.id, cur.also, "") != "") GUILayout.Label("Назначен на карту: " + HsCards.AssignedTo(cur.id, cur.also, ""), EditorStyles.boldLabel);
                 GUILayout.Label("↑↓ — следующая/предыдущая, Пробел или F — избранное, R — заново. Избранное: hs_unity/data/hs_favorites.tsv", EditorStyles.miniLabel);
+            }
+            if (showCards)
+            {
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(cw)))
+                    cards.Draw(this, cw, position.height - 40f);
             }
         }
     }

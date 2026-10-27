@@ -113,14 +113,15 @@ celestial, shadow…). Перед пробами: §1 (все наборы HS, �
 - **Избранное владельца** — `hs_unity/data/hs_favorites.tsv` (card_id, name, kind, set): отсюда
   брать кандидатов для колод. Просмотренные — `hs_unity/render/hs_seen.txt`. Фильтр «★: все /
   только избранное / без избранного» (владелец 2026-10-27).
-- **Окно карт — HsCards** (владелец 2026-10-27; открывается вместе с HsBrowser справа, меню
-  **Tyrants → Tyrants Cards**, кнопка «Карты Tyrants»): 150 уникальных карт по колодам (одна
+- **Панель карт — HsCards** (владелец 2026-10-27; справа внутри окна HsBrowser, кнопка «Карты
+  Tyrants» прячет; отдельное окно не годится: на экране 300% с двумя мониторами Unity ставил его
+  за край): 150 уникальных карт по колодам (одна
   копия в полуколоде), полная карта `cards_pixel` и миниатюра `cards_mini`, строка CARD_MAP.
   «Назначить» (Enter) кладёт эффект, выбранный в HsBrowser, на карту →
   **`hs_unity/data/hs_assign.tsv`** (card_id, card, deck, hs_id, hs_name, kind, date). **Назначение
   важнее CARD_MAP**: такие карты запекать по нему (новый рецепт, строку CARD_MAP обновить).
   ● — назначено, ✓ — сделано; в HsBrowser «→ карта» у занятых эффектов, предупреждение о
-  повторе. Проверка: `HsCards.Dump -hsc-out <txt>`, снимок окон `HsCards.Shot` (см. код).
+  повторе. Проверка: `HsCards.Dump -hsc-out <txt>`, снимок окна `HsCards.Shot` (см. код).
 - Список — `hs_unity/render/hs_gallery.tsv` (не в git, после патча HS пересобрать):
   `<SP>/hsx/hsx.exe gallery C:/Games/Hearthstone/Data/Win <SP>/hsx/cabmap.tsv
   hs_unity/data/hs_legendary_summons.tsv hs_unity/render/hs_gallery.tsv` (~15 с).
