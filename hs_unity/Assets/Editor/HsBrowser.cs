@@ -52,6 +52,7 @@ public class HsBrowser : EditorWindow
     string search = "";
     int setIdx;
     bool unseenOnly, hideToken = true;
+    [SerializeField] bool hideUsed;
     // 0 — все, 1 — только избранное, 2 — без избранного
     int favMode;
     // 0 — дополнения от первого к последнему, 1 — от последнего, 2 — по имени
@@ -186,12 +187,17 @@ public class HsBrowser : EditorWindow
         Refilter();
     }
 
+    // назначение в панели карт меняет, какие эффекты заняты
+    public void UsedChanged() { if (hideUsed) { Refilter(); Repaint(); } }
+    public bool HideUsed { get => hideUsed; set { hideUsed = value; Refilter(); Repaint(); } }
+
     void Refilter()
     {
         string set = setIdx >= 2 ? setNames[setIdx].Split(' ')[0] : null;
         shown = all.Where(e =>
             (setIdx != 1 || Fresh.Contains(e.set)) && (set == null || e.set == set) &&
             (favMode == 0 || favs.ContainsKey(e.Key) == (favMode == 1)) && (!unseenOnly || !seen.Contains(e.Key)) &&
+            (!hideUsed || HsCards.AssignedTo(e.id, e.also, "") == "") &&
             (search == "" || e.name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
              e.id.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
              e.also.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
@@ -351,7 +357,7 @@ public class HsBrowser : EditorWindow
     {
         var e = all.FirstOrDefault(x => x.id == id) ?? all.FirstOrDefault(x => x.also.Split(", ").Contains(id));
         if (e == null) return false;
-        if (!shown.Contains(e)) { search = ""; setIdx = 0; favMode = 0; unseenOnly = false; Refilter(); }
+        if (!shown.Contains(e)) { search = ""; setIdx = 0; favMode = 0; unseenOnly = false; hideUsed = false; Refilter(); }
         Select(e);
         ScrollTo(shown.IndexOf(e));
         Repaint();
@@ -391,6 +397,7 @@ public class HsBrowser : EditorWindow
             sortIdx = EditorGUILayout.Popup(sortIdx, Sorts, EditorStyles.toolbarPopup, GUILayout.Width(140));
             favMode = EditorGUILayout.Popup(favMode, new[] { "★: все", $"★: только избранное ({favs.Count})", "★: без избранного" }, EditorStyles.toolbarPopup, GUILayout.Width(120));
             unseenOnly = GUILayout.Toggle(unseenOnly, "Не смотрел", EditorStyles.toolbarButton);
+            hideUsed = GUILayout.Toggle(hideUsed, "Скрыть занятые", EditorStyles.toolbarButton);
             if (EditorGUI.EndChangeCheck()) Refilter();
             GUILayout.FlexibleSpace();
         }

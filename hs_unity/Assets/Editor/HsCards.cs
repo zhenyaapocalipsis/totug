@@ -118,6 +118,7 @@ public class HsCards
                     lines.Add($"{c.id}\t{c.name}\t{d.key}\t{a.hsId}\t{a.hsName}\t{a.kind}\t{a.date}");
         File.WriteAllLines(AssignPath, lines);
         Users();
+        Browser?.UsedChanged();
     }
 
     // карты Tyrants с эффектом этой легендарки HS (id и повторы того же спелла), для HS Legendaries
@@ -282,7 +283,7 @@ public class HsCards
         File.WriteAllLines(a[k + 1], res);
     }
 
-    // снимок окна с панелью карт: -executeMethod HsCards.Shot -hsc-out <png> -hsc-card <id> -hsc-hs <id HS> [-hsc-assign 1|nofx]
+    // снимок окна с панелью карт: -executeMethod HsCards.Shot -hsc-out <png> -hsc-card <id> -hsc-hs <id HS> [-hsc-assign 1|nofx] [-hsc-hideused 1]
     public static void Shot()
     {
         var a = Environment.GetCommandLineArgs();
@@ -301,6 +302,7 @@ public class HsCards
             if (now < at) return;
             if (shotAt == 0)
             {
+                if (Arg("hideused") == "1") b.HideUsed = true;
                 if (Arg("assign") == "1" && b.Cur != null) w.DoAssign(byId[w.selId], b.Cur);
                 if (Arg("assign") == "nofx") { assigns[w.selId] = new Assign { hsId = NoFx, hsName = "без анимации", kind = "", date = "test" }; Save(); }
                 b.Repaint();
