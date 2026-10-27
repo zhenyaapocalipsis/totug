@@ -815,6 +815,9 @@ func _process(_delta: float) -> bool:
 		var pdw: PendingDecision = _screen.server.resolver.pending
 		_screen._decision_dialog.update_from_view(StateView.for_player_with_pending(
 			_screen.server.state, pdw.player_id, pdw), "spectator")
+	# --hide-choice: у "Choose one" нажата Hide — окно ушло полосой под доску.
+	if _scenario == "decision" and _frame == _shot_at - 20 and OS.get_cmdline_user_args().has("--hide-choice"):
+		_screen._decision_dialog.toggle_cards()
 	# Баннер хода закрывает середину доски, а она тут и нужна.
 	if _scenario == "control":
 		_screen._turn_banner.hide()

@@ -60,6 +60,13 @@ var _blink_time := 0.0
 ## Вопрос задала чужая карта (GameScreen.is_forced): мерцает ярче, не тусклее.
 var _forced := false
 const FORCED_BRIGHT := 2.2
+## "Choose one" картами спрятан кнопкой Hide: вместо окна по центру — полоса
+## под доской с кнопкой Show, доска видна (владелец, 2026-10-27). Новый вопрос
+## снова показывает окно.
+var _cards_hidden := false
+var _cards_key := ""
+var _last_view: Dictionary = {}
+var _last_viewer := ""
 
 
 ## Подпись карты маркета по индексу: название и цена. Публичная — для тестов.
@@ -143,7 +150,10 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var pd: Dictionary = view.get("pending_decision", {})
 	if pd.is_empty():
 		visible = false
+		_cards_key = ""
 		return
+	_last_view = view
+	_last_viewer = viewer_id
 
 	_market_display = (view.get("market", {}) as Dictionary).get("display", [])
 	_ghost_card = String(view.get("ghost_market_card", ""))
@@ -274,8 +284,22 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		if options.has(""):
 			_add_strip_buttons([["Skip", ""]])
 	elif _can_show_option_cards(pd):
-		_add_option_cards(pd)
-		cards_mode = true
+		var key := "%s|%s|%s" % [pd.get("source_card", ""), _prompt.text, str(options)]
+		if key != _cards_key:
+			_cards_key = key
+			_cards_hidden = false
+		if _cards_hidden:
+			strip = true
+			_add_asker(pd, decider)
+			_add_strip_buttons([["Show", toggle_cards]])
+		else:
+			_add_option_cards(pd)
+			var hide := Button.new()
+			hide.text = "Hide"
+			hide.pressed.connect(toggle_cards)
+			make_plain(hide)
+			_options_box.add_child(hide)
+			cards_mode = true
 	else:
 		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
 		# берём их — только карта знает, что означает её вариант №2.
@@ -505,7 +529,14 @@ func _add_asker(pd: Dictionary, decider: String, yes_on_click: bool = false) -> 
 	_asker_slot.visible = true
 
 
-## Кнопки под вопросом в строку: [[подпись, ответ], ...]. Обычные кнопки
+## Hide / Show у "Choose one" картами: окно по центру <-> полоса под доской.
+func toggle_cards() -> void:
+	_cards_hidden = not _cards_hidden
+	update_from_view(_last_view, _last_viewer)
+
+
+## Кнопки под вопросом в строку: [[подпись, ответ], ...]. Ответ-Callable
+## не уходит серверу, а вызывается (Show). Обычные кнопки
 ## темы, с подложкой: надпись без фона терялась на белых табличках локаций
 ## у верхнего края доски.
 func _add_strip_buttons(pairs: Array) -> void:
@@ -518,7 +549,10 @@ func _add_strip_buttons(pairs: Array) -> void:
 		var b := Button.new()
 		b.text = String(pair[0])
 		var value: Variant = pair[1]
-		b.pressed.connect(func(): option_chosen.emit(value))
+		if value is Callable:
+			b.pressed.connect(value)
+		else:
+			b.pressed.connect(func(): option_chosen.emit(value))
 		b.custom_minimum_size = Vector2(40, OPTION_HEIGHT - 1)
 		row.add_child(b)
 	_options_box.add_child(row)
