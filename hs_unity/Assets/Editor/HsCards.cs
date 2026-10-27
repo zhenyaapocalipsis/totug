@@ -20,8 +20,9 @@ public class HsCards
     class Deck { public string key, name; public readonly List<Card> cards = new List<Card>(); }
     // строка CARD_MAP: легендарка HS и сделана ли карта
     class Pick { public string hsId, hsName; public bool done; }
-    // назначение владельца
+    // назначение владельца; hsId = NoFx — убрать анимацию у карты (сделанной по CARD_MAP)
     class Assign { public string hsId, hsName, kind, date; }
+    const string NoFx = "-";
 
     static string Root => Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
     static string Game => Path.GetFullPath(Path.Combine(Root, "..", "engine", "godot"));
@@ -101,7 +102,7 @@ public class HsCards
         foreach (var c in byId.Values)
         {
             var hs = assigns.TryGetValue(c.id, out var a) ? a.hsId : picks.TryGetValue(c.id, out var p) ? p.hsId : null;
-            if (hs == null) continue;
+            if (hs == null || hs == NoFx) continue;
             if (!users.TryGetValue(hs, out var l)) users[hs] = l = new List<string>();
             l.Add(c.name);
         }
@@ -183,15 +184,16 @@ public class HsCards
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            // колоды и их уникальные карты; ● — назначено здесь, ✓ — сделано по CARD_MAP
+            // колоды и их уникальные карты; ● — назначено здесь, ✗ — убрать анимацию, ✓ — сделано по CARD_MAP
             scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.Width(200));
             foreach (var d in decks)
             {
                 var cards = d.cards.Where(Match).ToList();
                 if (search != "" && cards.Count == 0) continue;
+                int nDone = d.cards.Count(c => picks.TryGetValue(c.id, out var p) && p.done), nAs = d.cards.Count(c => assigns.TryGetValue(c.id, out var x) && x.hsId != NoFx),
+                    nNo = d.cards.Count(c => assigns.TryGetValue(c.id, out var x) && x.hsId == NoFx);
                 bool open = !closed.Contains(d.key) || search != "";
-                int nDone = d.cards.Count(c => picks.TryGetValue(c.id, out var p) && p.done), nAs = d.cards.Count(c => assigns.ContainsKey(c.id));
-                bool now = EditorGUILayout.Foldout(open, $"{d.name}   {d.cards.Count}" + (nDone > 0 ? $"  ✓{nDone}" : "") + (nAs > 0 ? $"  ●{nAs}" : ""), true, headStyle);
+                bool now = EditorGUILayout.Foldout(open, $"{d.name}   {d.cards.Count}" + (nDone > 0 ? $"  ✓{nDone}" : "") + (nAs > 0 ? $"  ●{nAs}" : "") + (nNo > 0 ? $"  ✗{nNo}" : ""), true, headStyle);
                 if (now != open && search == "") { if (now) closed.Remove(d.key); else closed.Add(d.key); }
                 if (!now) continue;
                 foreach (var c in cards)
@@ -199,8 +201,8 @@ public class HsCards
                     var r = GUILayoutUtility.GetRect(200f, 18f, GUILayout.ExpandWidth(true));
                     if (c == sel) EditorGUI.DrawRect(r, new Color(0.17f, 0.36f, 0.53f));
                     var old = GUI.contentColor;
-                    string mark = assigns.ContainsKey(c.id) ? "●" : picks.TryGetValue(c.id, out var p) && p.done ? "✓" : "";
-                    GUI.contentColor = mark == "●" ? new Color(0.45f, 1f, 0.5f) : mark == "✓" ? new Color(1f, 1f, 1f, 0.55f) : old;
+                    string mark = assigns.TryGetValue(c.id, out var x) ? (x.hsId == NoFx ? "✗" : "●") : picks.TryGetValue(c.id, out var p) && p.done ? "✓" : "";
+                    GUI.contentColor = mark == "●" ? new Color(0.45f, 1f, 0.5f) : mark == "✗" ? new Color(1f, 0.45f, 0.4f) : mark == "✓" ? new Color(1f, 1f, 1f, 0.55f) : old;
                     if (GUI.Button(r, $"{mark} {c.name}" + (c.cost != "" ? $"   {c.cost}" : ""), rowStyle)) selId = c.id;
                     GUI.contentColor = old;
                 }
@@ -231,15 +233,24 @@ public class HsCards
                 picks.TryGetValue(sel.id, out var pk);
                 if (pk != null)
                     GUILayout.Label($"CARD_MAP: {pk.hsName} ({pk.hsId}) — {(pk.done ? "сделано" : "подобрано, не запечено")}", EditorStyles.wordWrappedLabel);
-                GUILayout.Label(a != null ? $"Назначено: {a.hsName} ({a.hsId}), {a.date}" : "Назначено: —", a != null ? boldWrap : EditorStyles.wordWrappedLabel);
+                bool noFx = a != null && a.hsId == NoFx;
+                GUILayout.Label(a == null ? "Назначено: —" : noFx ? $"Назначено: убрать анимацию, {a.date}" : $"Назначено: {a.hsName} ({a.hsId}), {a.date}",
+                    a != null ? boldWrap : EditorStyles.wordWrappedLabel);
                 GUI.enabled = bcur != null;
                 if (GUILayout.Button(bcur != null ? $"Назначить: {bcur.name}  [Enter]" : "Выбери эффект слева", GUILayout.Height(26)))
                     DoAssign(sel, bcur);
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     GUI.enabled = a != null;
-                    if (GUILayout.Button("Снять", GUILayout.Height(22))) { assigns.Remove(sel.id); Save(); }
-                    var showId = a?.hsId ?? pk?.hsId;
+                    if (GUILayout.Button("Отменить", GUILayout.Height(22))) { assigns.Remove(sel.id); Save(); }
+                    // у сделанной карты анимация уже в игре — пометка, чтобы Claude её убрал
+                    GUI.enabled = pk != null && pk.done && !noFx;
+                    if (GUILayout.Button("Без анимации", GUILayout.Height(22)))
+                    {
+                        assigns[sel.id] = new Assign { hsId = NoFx, hsName = "без анимации", kind = "", date = DateTime.Now.ToString("yyyy-MM-dd") };
+                        Save();
+                    }
+                    var showId = a != null && !noFx ? a.hsId : pk?.hsId;
                     GUI.enabled = showId != null && b != null;
                     if (GUILayout.Button("Показать эффект", GUILayout.Height(22)) && !b.Show(showId))
                         b.ShowNotification(new GUIContent($"{showId} нет в списке HS Legendaries"));
@@ -252,7 +263,7 @@ public class HsCards
                     if (who.Count > 0) EditorGUILayout.HelpBox($"{bcur.name} уже у: {string.Join(", ", who)}", MessageType.Warning);
                 }
                 GUILayout.FlexibleSpace();
-                GUILayout.Label("Enter — назначить выбранный эффект. ● назначено, ✓ сделано. Файл: hs_unity/data/hs_assign.tsv", EditorStyles.wordWrappedMiniLabel);
+                GUILayout.Label("Enter — назначить выбранный эффект. ● назначено, ✗ без анимации, ✓ сделано. Файл: hs_unity/data/hs_assign.tsv", EditorStyles.wordWrappedMiniLabel);
             }
         }
     }
@@ -271,7 +282,7 @@ public class HsCards
         File.WriteAllLines(a[k + 1], res);
     }
 
-    // снимок окна с панелью карт: -executeMethod HsCards.Shot -hsc-out <png> -hsc-card <id> -hsc-hs <id HS> [-hsc-assign 1]
+    // снимок окна с панелью карт: -executeMethod HsCards.Shot -hsc-out <png> -hsc-card <id> -hsc-hs <id HS> [-hsc-assign 1|nofx]
     public static void Shot()
     {
         var a = Environment.GetCommandLineArgs();
@@ -291,6 +302,7 @@ public class HsCards
             if (shotAt == 0)
             {
                 if (Arg("assign") == "1" && b.Cur != null) w.DoAssign(byId[w.selId], b.Cur);
+                if (Arg("assign") == "nofx") { assigns[w.selId] = new Assign { hsId = NoFx, hsName = "без анимации", kind = "", date = "test" }; Save(); }
                 b.Repaint();
                 shotAt = now + 0.5;
                 return;
