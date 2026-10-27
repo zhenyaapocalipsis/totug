@@ -279,11 +279,17 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	else:
 		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
 		# берём их — только карта знает, что означает её вариант №2.
+		# Тоже полосой под доской, кнопки в несколько рядов (владелец,
+		# 2026-10-27: все вопросы под доской, а не на ней).
+		strip = true
+		_add_asker(pd, decider)
 		var labels: Array = pd.get("option_labels", [])
+		var pairs: Array = []
 		for i in range(options.size()):
 			var text := String(labels[i]) if i < labels.size() and String(labels[i]) != "" \
 				else _board_label(options[i], choice_type)
-			_add_button(text, options[i])
+			pairs.append([text, options[i]])
+		_add_button_rows(pairs)
 
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
@@ -298,7 +304,12 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_set_dim(not waiting and not on_board and not strip and cards_mode)
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = MAX_LIST_HEIGHT
-	if _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
+	if on_board or waiting or strip:
+		# Полоса не выше места под доской (BoardSchematic.PROMPT_STRIP), иначе
+		# она залезает на схему; лишние ряды кнопок прокручиваются.
+		max_h = maxf(BoardSchematic.PROMPT_STRIP - _style.get_minimum_size().y - 4.0
+			- _who.get_combined_minimum_size().y - _prompt_height(), OPTION_HEIGHT)
+	elif _options_box.get_child_count() > 0 and _options_box.get_child(0) is HBoxContainer:
 		max_h = INF  # карты-варианты не прокручиваются: их всего два-три
 	_scroll.custom_minimum_size = Vector2(0, minf(_options_box.get_combined_minimum_size().y, max_h))
 	_scroll.visible = rows > 0
@@ -358,6 +369,17 @@ func _fit_strip() -> void:
 func _board_width() -> float:
 	var parent := get_parent() as Control
 	return parent.size.x if parent != null else get_viewport_rect().size.x
+
+
+## Высота вопроса с переносом по той ширине, что ему достанется: сама
+## подпись до раскладки знает только старую (или нулевую) ширину.
+func _prompt_height() -> float:
+	var width := _prompt.custom_minimum_size.x
+	if width <= 0.0:
+		width = _board_width() - 4.0 - _style.get_minimum_size().x
+	var font := _prompt.get_theme_font("font")
+	return font.get_multiline_string_size(_prompt.text, HORIZONTAL_ALIGNMENT_LEFT, width,
+		_prompt.get_theme_font_size("font_size")).y
 
 
 ## Ширина вопроса одной строкой, но не шире cap. Перенос слов не даёт
@@ -437,7 +459,9 @@ func _place(top: bool) -> void:
 func _add_note(text: String) -> void:
 	var label := Label.new()
 	label.text = text
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Без переноса: подпись короткая ("Waiting for X."), а с переносом она при
+	# первом замере (ширина 0) ложилась по слову в строку, и полоса "Waiting"
+	# вырастала вверх на пол-доски (владелец, 2026-10-27).
 	label.modulate = Color(0.8, 0.8, 0.85)
 	_options_box.add_child(label)
 
@@ -498,6 +522,29 @@ func _add_strip_buttons(pairs: Array) -> void:
 		b.custom_minimum_size = Vector2(40, OPTION_HEIGHT - 1)
 		row.add_child(b)
 	_options_box.add_child(row)
+
+
+## Кнопки вариантов рядами под вопросом: ряд не шире полосы (минус карта
+## слева), следующий вариант — на новый ряд.
+func _add_button_rows(pairs: Array) -> void:
+	var room := _board_width() - 4.0 - _style.get_minimum_size().x
+	if _asker_slot.visible:
+		room -= CARD_SIZE.x + HEAD_GAP
+	var font := get_theme_font("font", "Button")
+	var font_size := get_theme_font_size("font_size", "Button")
+	var pad := get_theme_stylebox("normal", "Button").get_minimum_size().x
+	var row: Array = []
+	var row_w := 0.0
+	for pair: Array in pairs:
+		var w := maxf(40.0, ceilf(font.get_string_size(String(pair[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x) + pad)
+		if not row.is_empty() and row_w + 6.0 + w > room:
+			_add_strip_buttons(row)
+			row = []
+			row_w = 0.0
+		row_w += w if row.is_empty() else 6.0 + w
+		row.append(pair)
+	if not row.is_empty():
+		_add_strip_buttons(row)
 
 
 ## Кнопка — одна надпись по центру: без фона и рамки, с тенью; под курсором

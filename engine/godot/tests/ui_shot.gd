@@ -209,6 +209,11 @@ func _run_scenario() -> void:
 				if _screen.server.resolver.is_waiting():
 					break
 				_screen.send(Intent.play_card(pid2, String(cid)))
+		"starting":
+			# Муллиганы пропущены — на экране выбор стартовой локации.
+			while _screen.server.resolver.is_waiting() and _screen.server.resolver.pending.tag != "starting_site":
+				var pds: PendingDecision = _screen.server.resolver.pending
+				_screen.send(Intent.make_decision(pds.player_id, pds.legal_options[0]))
 		"decision":
 			# Стартовая колода — только Noble и Soldier, они вопросов не задают,
 			# а дождаться карты с выбором честной игрой — это десятки ходов.
@@ -247,6 +252,10 @@ func _run_scenario() -> void:
 					var hall: PlayerState = _screen.server.state.players[order[i_t]]
 					hall.trophies["white"] = 2
 					hall.trophies[order[(i_t + 1) % order.size()]] = 1
+			# --choose-all: у "Choose one" вариант "All of them" (Homunculus) —
+			# пятый вариант, и вопрос идёт списком кнопок, а не картами.
+			if OS.get_cmdline_user_args().has("--choose-all"):
+				_screen.server.state.turn_flags["choose_all"] = true
 			_screen.refresh(StateView.for_player_with_pending(
 				_screen.server.state, pid3, _screen.server.resolver.pending))
 			_screen.send(Intent.play_card(pid3, card))
@@ -800,6 +809,12 @@ func _process(_delta: float) -> bool:
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--wait="):
 				_shot_at = _frame + int(arg.get_slice("=", 1))
+	# --waiting: тот же вопрос глазами соперника ("Waiting for ..."), как в сети.
+	if _scenario == "decision" and _frame == _shot_at - 20 and OS.get_cmdline_user_args().has("--waiting") \
+			and _screen.server.resolver.is_waiting():
+		var pdw: PendingDecision = _screen.server.resolver.pending
+		_screen._decision_dialog.update_from_view(StateView.for_player_with_pending(
+			_screen.server.state, pdw.player_id, pdw), "spectator")
 	# Баннер хода закрывает середину доски, а она тут и нужна.
 	if _scenario == "control":
 		_screen._turn_banner.hide()
