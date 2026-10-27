@@ -26,7 +26,7 @@ public class HsBrowser : EditorWindow
     static readonly Regex TokenRx = new Regex(@"TokenGlow|MinionEdgeGlow|MinionShell|MinionGlow|Mesh_FlashGlow|Nightmare|Card_InPlay|TokenHider|Test_Minion");
     const string Mark = "HSB ";
 
-    class Entry
+    public class Entry
     {
         public string id, name, kind, guid, set;
         public int[] deps;
@@ -51,7 +51,9 @@ public class HsBrowser : EditorWindow
     string[] setNames = { "Все" };
     string search = "";
     int setIdx;
-    bool favOnly, unseenOnly, hideToken = true;
+    bool unseenOnly, hideToken = true;
+    // 0 — все, 1 — только избранное, 2 — без избранного
+    int favMode;
     // 0 — дополнения от первого к последнему, 1 — от последнего, 2 — по имени
     int sortIdx;
     static readonly string[] Sorts = { "Выход: старые → новые", "Выход: новые → старые", "По имени" };
@@ -96,7 +98,12 @@ public class HsBrowser : EditorWindow
     static bool prepared;
 
     [MenuItem("Tyrants/HS Legendaries")]
-    public static void Open() => GetWindow<HsBrowser>("HS Legendaries").minSize = new Vector2(900, 480);
+    public static void Open()
+    {
+        var w = GetWindow<HsBrowser>("HS Legendaries");
+        w.minSize = new Vector2(600, 400);
+        HsCards.OpenBeside(w);
+    }
 
     void OnEnable()
     {
@@ -176,7 +183,7 @@ public class HsBrowser : EditorWindow
         string set = setIdx >= 2 ? setNames[setIdx].Split(' ')[0] : null;
         shown = all.Where(e =>
             (setIdx != 1 || Fresh.Contains(e.set)) && (set == null || e.set == set) &&
-            (!favOnly || favs.ContainsKey(e.Key)) && (!unseenOnly || !seen.Contains(e.Key)) &&
+            (favMode == 0 || favs.ContainsKey(e.Key) == (favMode == 1)) && (!unseenOnly || !seen.Contains(e.Key)) &&
             (search == "" || e.name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
              e.id.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
              e.also.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
@@ -193,7 +200,7 @@ public class HsBrowser : EditorWindow
         if (!favs.Remove(e.Key)) favs[e.Key] = $"{e.id}\t{e.name}\t{e.kind}\t{e.set}";
         Directory.CreateDirectory(Path.GetDirectoryName(FavPath));
         File.WriteAllLines(FavPath, new[] { "card_id\tname\tkind\tset" }.Concat(favs.Values));
-        if (favOnly) Refilter();
+        if (favMode != 0) Refilter();
     }
 
     // открыть недостающие бандлы карты, поставить эффект в точку посадки
@@ -326,13 +333,32 @@ public class HsBrowser : EditorWindow
         if (shown.Count == 0) return;
         int i = Mathf.Clamp((cur == null ? -1 : shown.IndexOf(cur)) + d, 0, shown.Count - 1);
         Select(shown[i]);
+        ScrollTo(i);
+    }
+
+    // для окна карт: выбранный эффект и переход к эффекту по id карты HS (в т.ч. из «Тот же эффект»)
+    public Entry Cur => cur;
+    public string KindOf(string id) => all.FirstOrDefault(e => e.id == id || e.also.Split(", ").Contains(id))?.kind ?? "";
+    public bool Show(string id)
+    {
+        var e = all.FirstOrDefault(x => x.id == id) ?? all.FirstOrDefault(x => x.also.Split(", ").Contains(id));
+        if (e == null) return false;
+        if (!shown.Contains(e)) { search = ""; setIdx = 0; favMode = 0; unseenOnly = false; Refilter(); }
+        Select(e);
+        ScrollTo(shown.IndexOf(e));
+        Repaint();
+        return true;
+    }
+
+    void ScrollTo(int i)
+    {
         // строка в поле списка
         float y = i * RowH, h = position.height - 60f;
         if (y < scroll.y) scroll.y = y;
         else if (y + RowH > scroll.y + h) scroll.y = y + RowH - h;
     }
 
-    const float RowH = 20f, ListW = 360f;
+    const float RowH = 20f, ListW = 320f;
     GUIStyle rowStyle, starStyle;
 
     void OnGUI()
@@ -352,14 +378,20 @@ public class HsBrowser : EditorWindow
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
             EditorGUI.BeginChangeCheck();
-            search = EditorGUILayout.TextField(search, EditorStyles.toolbarSearchField, GUILayout.Width(220));
-            setIdx = EditorGUILayout.Popup(setIdx, setNames, EditorStyles.toolbarPopup, GUILayout.Width(170));
-            sortIdx = EditorGUILayout.Popup(sortIdx, Sorts, EditorStyles.toolbarPopup, GUILayout.Width(160));
-            favOnly = GUILayout.Toggle(favOnly, $"★ Избранное ({favs.Count})", EditorStyles.toolbarButton);
+            search = EditorGUILayout.TextField(search, EditorStyles.toolbarSearchField, GUILayout.Width(140));
+            setIdx = EditorGUILayout.Popup(setIdx, setNames, EditorStyles.toolbarPopup, GUILayout.Width(140));
+            sortIdx = EditorGUILayout.Popup(sortIdx, Sorts, EditorStyles.toolbarPopup, GUILayout.Width(140));
+            favMode = EditorGUILayout.Popup(favMode, new[] { "★: все", $"★: только избранное ({favs.Count})", "★: без избранного" }, EditorStyles.toolbarPopup, GUILayout.Width(120));
             unseenOnly = GUILayout.Toggle(unseenOnly, "Не смотрел", EditorStyles.toolbarButton);
             if (EditorGUI.EndChangeCheck()) Refilter();
+            GUILayout.FlexibleSpace();
+        }
+        // вторая строка — окно бывает узким (рядом окно карт)
+        using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+        {
             GUILayout.Label($"  {shown.Count} из {all.Count}, просмотрено {seen.Count}", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Карты Tyrants", EditorStyles.toolbarButton)) HsCards.OpenBeside(this);
             EditorGUI.BeginChangeCheck();
             hideToken = GUILayout.Toggle(hideToken, "Прятать жетон HS", EditorStyles.toolbarButton);
             if (EditorGUI.EndChangeCheck() && cur != null) Select(cur, false);
@@ -385,7 +417,7 @@ public class HsBrowser : EditorWindow
                 GUI.contentColor = seen.Contains(e.Key) && e != cur ? new Color(1f, 1f, 1f, 0.5f) : old;
                 GUI.Label(new Rect(r.x + 22f, r.y + 2f, 46f, RowH), e.set, EditorStyles.miniLabel);
                 var label = e.name + "   " + e.id + (e.kind != "CustomSummon" ? "  (" + e.kind.Replace("CustomSummon", "").Replace("Custom", "") + ")" : "") +
-                    (e.also != "" ? $"   +{e.also.Split(',').Length}" : "");
+                    (e.also != "" ? $"   +{e.also.Split(',').Length}" : "") + HsCards.AssignedTo(e.id, e.also, "   → ");
                 if (GUI.Button(new Rect(r.x + 66f, r.y, r.width - 66f, RowH), label, rowStyle)) Select(e);
                 GUI.contentColor = old;
             }
@@ -405,7 +437,7 @@ public class HsBrowser : EditorWindow
                     {
                         bool fav = favs.ContainsKey(cur.Key);
                         if (GUILayout.Button(fav ? "★ В избранном" : "☆ В избранное", GUILayout.Width(130), GUILayout.Height(24))) ToggleFav(cur);
-                        GUILayout.Label($"{cur.name}   {cur.id}   {cur.set}", EditorStyles.boldLabel, GUILayout.Height(24));
+                        GUILayout.Label($"{cur.name}  {cur.id}", EditorStyles.boldLabel, GUILayout.Height(24));
                         GUILayout.FlexibleSpace();
                         if (GUILayout.Button(playing ? "Пауза" : "Играть", GUILayout.Width(70), GUILayout.Height(24)))
                         {
@@ -422,6 +454,7 @@ public class HsBrowser : EditorWindow
                 }
                 GUILayout.Label(status, EditorStyles.wordWrappedMiniLabel);
                 if (cur != null && cur.also != "") GUILayout.Label("Тот же эффект: " + cur.also, EditorStyles.wordWrappedMiniLabel);
+                if (cur != null && HsCards.AssignedTo(cur.id, cur.also, "") != "") GUILayout.Label("Назначен на карту: " + HsCards.AssignedTo(cur.id, cur.also, ""), EditorStyles.boldLabel);
                 GUILayout.Label("↑↓ — следующая/предыдущая, Пробел или F — избранное, R — заново. Избранное: hs_unity/data/hs_favorites.tsv", EditorStyles.miniLabel);
             }
         }

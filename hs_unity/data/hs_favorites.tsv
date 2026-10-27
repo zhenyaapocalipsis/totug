@@ -1,1 +1,182 @@
 card_id	name	kind	set
+AT_009	Rhonin	CustomSummon	AT
+AT_027	Wilfred Fizzlebang	CustomSummon	AT
+AV_113	Beaststalker Tavish	CustomSummon	AV
+AV_257	Bearon Gla'shear	CustomSummon	AV
+BAR_079	Kazakus, Golem Shaper	CustomSummon	BAR
+BAR_080	Shadow Hunter Vol'jin	CustomSummon	BAR
+BE_004	Rajh	CustomSummon	BE
+BE_009	Mastermind Yogg-Saron	CustomSummon	BE
+BE_017	N'Zoth, Dream's End	CustomSummon	BE
+BE_090	Kith'ix	CustomSummon	BE
+BE_143	Amitut, Keeper of Amitus	CustomSummon	BE
+BE_227	Blade of The Black Empire	CustomSummon	BE
+BE_230	Ravitz	CustomSummon	BE
+BE_259	Isiset	CustomSummon	BE
+BE_287	G'huun	CustomSummon	BE
+BE_557	Setesh	CustomSummon	BE
+BE_565	Broodqueen Sha'kar	CustomSummon	BE
+BE_703	Drest'agath	CustomSummon	BE
+BE_725	The Unknowable One	CustomSummon	BE
+BE_784	Y'Shaarj, Titan Bane	CustomSummon	BE
+BE_790	Zer'Ontu	CustomSummon	BE
+BE_852	Ammunae	CustomSummon	BE
+BT_131	Ysiel Windsinger	CustomSummon	BT
+BT_196	Keli'dan the Breaker	CustomSummon	BT
+BT_255	Kael'thas Sunstrider	CustomSummon	BT
+CAP_005	Mathias Shaw	CustomSummon	CAP
+CAP_106	Captain Crowley	CustomSummon	CAP
+CATA_150	Ragnaros, the Great Fire	CustomSummon	CATA
+CATA_151	Azshara, Ocean Lord	CustomSummon	CATA
+CATA_155	Arisen Onyxia	CustomSummon	CATA
+CATA_190h	Deathwing, Worldbreaker	CustomSummon	CATA
+CATA_213	Vyranoth	CustomSummon	CATA
+CATA_300	The Black Blood	CustomSummon	CATA
+CATA_458	Archmage Kalec	CustomSummon	CATA
+CATA_470	Victor Nefarius	CustomSummon	CATA
+CATA_473	Nozdormu, Bronze Aspect	CustomSummon	CATA
+CATA_481	Iso'rath	CustomSummon	CATA
+CATA_494	Maloriak	CustomSummon	CATA
+CATA_497	Ultraxion	CustomSummon	CATA
+CATA_527	Nespirah, Enthralled	CustomSummon	CATA
+CATA_550	Magmaw	CustomSummon	CATA
+CATA_553	Ebyssian	CustomSummon	CATA
+CATA_553t	Ebyssian	CustomSummon	CATA
+CATA_570	Morchok	CustomSummon	CATA
+CATA_615t	Genn, Worgen King	CustomSummon	CATA
+CATA_726	Cho'gall, Mastermind	CustomSummon	CATA
+CORE_CATA_001	Tichondrius	CustomSummon	CORE
+CORE_CATA_006	Ulfar	CustomSummon	CORE
+CORE_DAL_422	Arch-Villain Rafaam	CustomSummon	CORE
+CORE_EDR_003	Falric	CustomSummon	CORE
+CORE_EX1_198	Natalie Seline	CustomSummon	CORE
+CORE_ICC_215	Archbishop Benedictus	CustomSummon	CORE
+CORE_ICC_841	Blood-Queen Lana'thel	CustomSummon	CORE
+CORE_MAW_033	Sylvanas, the Accused	CustomSummon	CORE
+CORE_MAW_034	The Jailer	CustomSummon	CORE
+CORE_REV_373	Lady Darkvein	CustomSummon	CORE
+CORE_RLK_919	Anachronos	CustomSummon	CORE
+CORE_SCH_181	Archwitch Willow	CustomSummon	CORE
+CORE_SW_448	Darkbishop Benedictus	CustomSummon	CORE
+DAL_800	Zayle, Shadow Cloak	CustomSummon	DAL
+DEEP_037	Maruut Stonebinder	CustomSummon	DEEP
+DMF_071	Tenwu of the Red Smoke	CustomSummon	DMF
+DMF_708	Inara Stormcrash	CustomSummon	DMF
+DRG_096	Bandersmosh	CustomSummon	DRG
+DRG_308	Mindflayer Kaahrj	CustomSummon	DRG
+DRG_402	Sathrovarr	CustomSummon	DRG
+EDR_000	Ysera, Emerald Aspect	CustomSummon	EDR
+EDR_259	Ursol	CustomSummon	EDR
+EDR_421	Omen	CustomSummon	EDR
+EDR_464	Tyrande	CustomSummon	EDR
+EDR_489	Agamaggan	CustomSummon	EDR
+EDR_526	Renferal, the Malignant	CustomSummon	EDR
+EDR_818	Nythendra	CustomSummon	EDR
+EDR_819	Ursoc	CustomSummon	EDR
+EDR_856	Nightmare Lord Xavius	CustomSummon	EDR
+EDR_888	Malorne the Waywatcher	CustomSummon	EDR
+END_006	Chronikar	CustomSummon	END
+END_036	Morchie	CustomSummon	END
+END_037	Endtime Murozond	CustomSummon	END
+FIR_959	Fyrakk the Blazing	CustomSummon	FIR
+GDB_117	Dirdra, Rebel Captain	CustomSummon	GDB
+GDB_118	Xor'toth, Breaker of Stars	CustomSummon	GDB
+GDB_120	The Exodar	CustomSummon	GDB
+GDB_127	K'ara, the Dark Star	CustomSummon	GDB
+GDB_128	Archimonde	CustomSummon	GDB
+GDB_131	Velen, Leader of the Exiled	CustomSummon	GDB
+GDB_143	Nexus-Prince Shaffar	CustomSummon	GDB
+GDB_144	Lumia	CustomSummon	GDB
+GDB_145	Kil'jaeden	CustomSummon	GDB
+GDB_234	Spore Empress Moldara	CustomSummon	GDB
+GDB_447	Farseer Nobundo	CustomSummon	GDB
+GDB_477	The 8 Hands From Beyond	CustomSummon	GDB
+GDB_854	Uluu, the Everdrifter	CustomSummon	GDB
+JAIL_397	Commander Beatrix	CustomSummon	JAIL
+JAIL_430	Azalina Soulsever	CustomSummon	JAIL
+JAIL_443	The Living Plague	CustomSummon	JAIL
+JAIL_446	Blood Doctor Thal'ena	CustomSummon	JAIL
+JAIL_448	Karov the Broken	CustomSummon	JAIL
+JAIL_504	Aya, Lotus Kingpin	CustomSummon	JAIL
+JAIL_509	Godfrey the Betrayer	CustomSummon	JAIL
+JAIL_719	Irida Sinseeker	CustomSummon	JAIL
+JAIL_721	Tras'tath, Soul Parasite	CustomSummon	JAIL
+JAIL_800	Mug'Zee	CustomSummon	JAIL
+JAIL_875	Staff of Trickery	CustomSummon	JAIL
+JAIL_EVENT_100	Watfin	CustomSummon	JAIL
+LEG_CS3_034	Malygos the Spellweaver	CustomSummon	LEG
+LEG_RLK_224	Overseer Frigidara	CustomSummon	LEG
+LETL_823H	Neeru Fireblade	CustomSummon	LETL
+LT23_026H_03_Event	Yogg-Saron	CustomSummon	LT23
+LT23_028H_03	Y'Shaarj	CustomSummon	LT23
+LT24_821H	Prince Malchezaar	CustomSummon	LT24
+MAW_033t	Sylvanas, the Accused	CustomSummon	MAW
+MEND_804	Arator the Redeemer	CustomSummon	MEND
+NX2_033	Thaddius, Monstrosity	CustomSummon	NX2
+REV_788	Baroness Vashj	CustomSummon	REV
+REV_906t	Sire Denathrius	CustomSummon	REV
+RLK_215	Felerin, the Forgotten	CustomSummon	RLK
+RLK_225	Blightfang	CustomSummon	RLK
+RLK_541	Vexallus	CustomSummon	RLK
+RLK_658	Elder Nadox	CustomSummon	RLK
+RLK_913	Overlord Drakuru	CustomSummon	RLK
+Story_06_Wrathion	Wrathion	CustomSummon	Story
+SW_044	Jace Darkweaver	CustomSummon	SW
+SW_113	Grand Magus Antonidas	CustomSummon	SW
+TB_MagicalGuardians_Malygos	Dark Flight Malygos	CustomSummon	TB
+TB_World007	Shadowcrafter Scabbs	CustomSummon	TB
+TB_World012	The Ceaseless Expanse	CustomSummon	TB
+TID_709t3	Lady Naz'jar	CustomSummon	TID
+TID_711	Ozumat	CustomSummon	TID
+TID_719	Commander Ulthok	CustomSummon	TID
+TIME_005	Timethief Rafaam	CustomSummon	TIME
+TIME_013	Farseer Wo	CustomSummon	TIME
+TIME_020	Broxigar	CustomSummon	TIME
+TIME_024	Murozond, Unbounded	CustomSummon	TIME
+TIME_032	Chronogor	CustomSummon	TIME
+TIME_038t3	Mister Clocksworth	CustomSummon	TIME
+TIME_042	King Maluk	CustomSummon	TIME
+TIME_064	Chrono-Lord Deios	CustomSummon	TIME
+TIME_209	Muradin, High King	CustomSummon	TIME
+TIME_435	Eternus	CustomSummon	TIME
+TIME_713	Time Adm'ral Hooktail	CustomSummon	TIME
+TIME_714	Chrono-Lord Epoch	CustomSummon	TIME
+TIME_852	Azure Queen Sindragosa	CustomSummon	TIME
+TIME_875	Garona Halforcen	CustomSummon	TIME
+TIME_890	Medivh the Hallowed	CustomSummon	TIME
+TLC_106	Endbringer Umbra	CustomSummon	TLC
+TLC_228	Bralma Searstone	CustomSummon	TLC
+TLC_452t35	Titanographer Osk	CustomSummon	TLC
+TLC_463	Razidir	CustomSummon	TLC
+TLC_480	Krog, Crater King	CustomSummon	TLC
+TLC_624	Nablya, the Watcher	CustomSummon	TLC
+TLC_810	High Cultist Herenn	CustomSummon	TLC
+TLC_EVENT_402	Staff of the Endbringer	CustomSummon	TLC
+TOY_401t2	Altruis the Outcast	CustomSummon	TOY
+TOY_501t	Shudderblock	CustomSummon	TOY
+TOY_813t	Toy Captain Tarim	CustomSummon	TOY
+TRL_259	Princess Talanji	CustomSummon	TRL
+TSC_087	Commander Sivara	CustomSummon	TSC
+TSC_639	Glugg the Gulper	CustomSummon	TSC
+TSC_959	Za'qul	CustomSummon	TSC
+TTN_071	Sif	CustomSummon	TTN
+TTN_075	Norgannon	CustomSummon	TTN
+TTN_330	Kologarn	CustomSummon	TTN
+TTN_751	Ignis, the Eternal Flame	CustomSummon	TTN
+TTN_752	Hodir, Father of Giants	CustomSummon	TTN
+TTN_800	Golganneth, the Thunderer	CustomSummon	TTN
+TTN_835	Thorim, Stormlord	CustomSummon	TTN
+TTN_862	Argus, the Emerald Star	CustomSummon	TTN
+TTN_940	Freya, Keeper of Nature	CustomSummon	TTN
+TTN_960	Sargeras, the Destroyer	CustomSummon	TTN
+VAC_501	Aranna, Thrill Seeker	CustomSummon	VAC
+VAC_507	Sunsapper Lynessa	CustomSummon	VAC
+VAC_957	Chillin' Vol'jin	CustomSummon	VAC
+WC_030	Mutanus the Devourer	CustomSummon	WC
+WON_092h	Al'Akir, the Winds of Time	CustomSummon	WON
+WON_324	Krul the Unshackled	CustomSummon	WON
+WW_392	Elise, Badlands Savior	CustomSummon	WW
+WW_430	Tae'thelan Bloodwatcher	CustomSummon	WW
+YOG_516	Yogg-Saron, Unleashed	CustomSummon	YOG
+YOG_520	Soulburner Varia	CustomSummon	YOG
+YOG_530	Cho'gall, Twilight Chieftain	CustomSummon	YOG
