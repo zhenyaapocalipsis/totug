@@ -150,7 +150,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Rakshasa (49113) | Shirvallah, the Tiger (TRL_300) | `Shirvallah_CustomSummon.prefab` | демон-тигр |
 | Nightmare (49114) | Thunderbringer (WW_440) | `WWFX_Thunderbringer_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Chain Devil (49115) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
-| Barbed Devil (49116) | Kurtrus Ashfallen (BAR_333) | `BARFX_Kurtrus_CustomSummon.prefab` | колючий дьявол, клинки |
+| Barbed Devil (49116) | Wrathion (Story_06_Wrathion) | `Wrathion_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Ghast (49117) | Rotface (ICC_405) | `RotFace_CustomSummon.prefab` | гниющий упырь |
 | Treant (49118) | Greybough (DMF_734) | `DMFFX_GreyBough_CustomSummon.prefab` | ожившее дерево |
 | Bone Devil (49119) | Lord Marrowgar (RLK_085) | `RLKFX_LordMarrowgar_CustomSummon.prefab` | костяной дьявол |
@@ -167,7 +167,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Iron Golem (49213) | Mimiron, the Mastermind (TTN_920) | `ETCFX_MimironTheMastermind_CustomSummon_Friendly.prefab` | железный голем, механизм |
 | Manticore (49214) | Zixor, Apex Predator (BT_210) | `Zixor_CustomSummon.prefab` | хищное чудовище |
 | Homunculus (49215) | Kazakus, Golem Shaper (BAR_079) | `BARFX_KazakusGolemShaper_CustomSummon.prefab` | алхимическое создание |
-| Chimera (49216) | Chromaggus (BRM_031) | `Chromaggus_CustomSummon.prefab` | многоголовое чудовище |
+| Chimera (49216) | Dave Berard (CRED_215) | `AVFX_BrukanElements_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Archmage (49217) | Khadgar (DAL_575) | `Khadgar_CustomSummon.prefab` | архимаг |
 | Basilisk (49218) | Gonk, the Raptor (TRL_241) | `Gonk_CustomSummon.prefab` | ящер |
 | Behir (49219) | Thorim, Stormlord (TTN_835) | `TTNFX_ThorimStormlord_CustomSummon.prefab` | змей-молния |
@@ -200,12 +200,12 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Weretiger (49513) | Halazzi, the Lynx (TRL_900) | `HalazziTheLynx_CustomSummon.prefab` | оборотень-кошка |
+| Weretiger (49513) | Beaststalker Tavish (AV_113) | `AVFX_TavishBeastStalker_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Lamia (49514) | Lady Anacondra (WC_006) | `BARFX_LadyAnacondra_CustomSummon.prefab` | змеедева |
-| Horned Devil (49515) | Lord Jaraxxus (EX1_323) | `EX1_Hero_Jaraxxus_Warlock_CustomSummon_FX.prefab` | рогатый дьявол |
+| Horned Devil (49515) | Arch-Villain Rafaam (CORE_DAL_422) | `ArchVillianRafaam_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Efreeti (49516) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Azer Sentinel (49517) | Emperor Thaurissan (BRM_028) | `ThaurissanMinion_CustomSummon.prefab` | огненный дварф |
-| Ice Devil (49518) | Ras Frostwhisper (SCH_273) | `SCHFX_RasFrostwhisperer_CustomSummon.prefab` | ледяной дьявол |
+| Ice Devil (49518) | Moroes (KAR_044) | `Moroes_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Troll (49519) | Zul'jin (TRL_065) | `ZulJin_CustomSummon_FX.prefab` | тролль |
 | Fire Giant (49520) | Magmaw (CATA_550) | `CATAFX_Magmaw_CustomSummon.prefab` | огненный великан, лава |
 | Half-Dragon (49521) | Wrathion (CFM_806) | `Wrathion_CustomSummon.prefab` | полудракон |
@@ -215,13 +215,13 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Owlbear (49613) | Ursoc (EDR_819) | `EDRFX_Ursoc_CustomSummon.prefab` | медведь |
+| Owlbear (49613) | Kel'Thuzad (FP1_013) | `Kelthuzad_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Hill Giant (49614) | Hodir, Father of Giants (TTN_752) | `TTNFX_HodirFatherGiants_CustomSummon.prefab` | великан |
 | Cloud Giant (49615) | Hodir, Father of Giants (TTN_752) | `TTNFX_HodirFatherGiants_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Remorhaz (49616) | Mutanus the Devourer (WC_030) | `BARFX_MutanusTheDevourer_CustomSummon.prefab` | пожирающий червь |
 | Mammoth (49617) | Icehowl (AT_125) | `IceHowl_CustomSpawn.prefab` | ледяной зверь |
 | Storm Giant (49618) | Golganneth, the Thunderer (TTN_800) | `TTNFX_Golganneth_CustomSummon.prefab` | великан бури |
-| Frost Giant (49620) | Lokholar the Ice Lord (AV_141t) | `AVFX_Lokholar_CustomSummon.prefab` | ледяной великан |
+| Frost Giant (49620) | The Lich King (CORE_ICC_314) | `LichKing_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Pirate Captain (49634) | Eliza Goreblade (VAC_426) | `VAC_ElizaGoreBlade_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Blink Dog (49635) | Zer'Ontu (BE_790) | `BE_790_ZerOntu_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Young White Dragon (49636) | Bonelord Frostwhisper (RLK_591) | `RLKFX_BonelordFrostwhisper_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
@@ -261,13 +261,13 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Satyr Thornbearer (49900) | Nightmare Lord Xavius (EDR_856) | `EDRFX_Xavius_CustomSummon.prefab` | сатир |
-| High Fae Kindguard (49901) | Tyrande (EDR_464) | `EDRFX_Tyrande_CustomSummon.prefab` | страж-эльфийка |
+| High Fae Kindguard (49901) | Prince Malchezaar (LT24_821H) | `Malchezaar_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | High Fae Noble (49902) | Sesselie of the Fae Court (REV_319) | `REVFX_SesselieFaeCourt_CustomSummon.prefab` | феи-аристократы |
 | Lorehold Apprentice (49903) | Star Student Stelina (SCH_603) | `SCHFX_StarStudentStelina_CustomSummon.prefab` | ученица-маг |
 | Silverquill Apprentice (49904) | Inkmaster Solia (CFM_687) | `Irelia_CustomSummon.prefab` | ученица — чернила и слово |
 | Faerie Pathlighter (49905) | Kiri, Chosen of Elune (DMF_733) | `DMFFX_KiriChosenofElune_CustomSummon.prefab` | фея-проводник со светом |
 | Faerie Dragon Youth (49906) | Ysondre (EDR_465) | `EDRFX_Ysondre_CustomSummon_FIX.prefab` | дракончик фей |
-| Witherbloom Apprentice (49908) | Archwitch Willow (SCH_181) | `SCHFX_ArchwitchWillow_CustomSummon.prefab` | ведьма-травница |
+| Witherbloom Apprentice (49908) | Altruis the Outcast (TOY_401t2) | `Altruis_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Witchkite (49909) | Glinda Crowskin (GIL_618) | `GlindaCrowskin_CustomSummon.prefab` | ведьма-птица |
 
 ### void
@@ -279,7 +279,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Froghemoth Elder (50002) | Krag'wa, the Frog (TRL_345) | `Kragwa_CustomSummon.prefab` | гигантская лягушка |
 | Githzerai Zerth (50003) | Akama (BT_713) | `Akama_CustomSummon.prefab` | монах-аскет |
 | Thri-kreen Marauder (50004) | Grand Empress Shek'zara (DMF_516) | `DMFFX_GrandEmpressShakzara_CustomSummon.prefab` | богомол-воин |
-| Red Slaad (50005) | Kryxis the Voracious (REV_510) | `REVFX_Kryxis_CustomSummon.prefab` | хаотичный жабий демон |
+| Red Slaad (50005) | Blood-Queen Lana'thel (CORE_ICC_841) | `BloodQueenLanathel_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Inquisitor of the Mind Fire (50006) | Mindrender Illucia (SCH_159) | `SCHFX_MindrenderIllucia_CustomSummon.prefab` | огонь разума |
 | Groundling Stalker (50007) | Opu the Unseen (TLC_522) | `TLCFX_OputheUnseen_CustomSummon.prefab` | невидимый охотник |
 | Eye Monger (50008) | C'Thun, Eye of the Empire (BE_013) | `BEFX_CthunEyeoftheEmpire_CustomSummon.prefab` | существо-глаз |

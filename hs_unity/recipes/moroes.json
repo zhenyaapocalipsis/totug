@@ -1,0 +1,36 @@
+{
+  "deps": "../deps_moroes.txt",
+  "fps": 60.0,
+  "len": 3.8,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {
+      "prefab": "d93fd0d94d91bc44c8c61e6cf7f2be03",
+      "at": 0.0,
+      "pos": [-7.59, 0.0, -7.01],
+      "usePos": true,
+      "noTimeline": true,
+      "hide": [],
+      "controls": [{"node": "Root/OffscreenSmoke/fx_impact_smoke", "start": 0.0, "end": 3.8}, {"node": "Root/fx_smoke_dark", "start": 0.0, "end": 3.8}, {"node": "Root/fx_candle_main_glow", "start": 0.1, "end": 1.2}, {"node": "Root/fx_glow_soft_burst", "start": 0.1, "end": 3.8}, {"node": "Root/fx_sparkles", "start": 1.2, "end": 3.8}, {"node": "Root/fx_smoke_dark_endBurst", "start": 1.2, "end": 3.8}, {"node": "Root/OffscreenSmoke/fx_impact_smoke_endBurst", "start": 1.2, "end": 3.8}],
+      "under": ["Root"],
+      "measure": ["Root"]
+    },
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.22,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.75,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_49518.png"}
+  ]
+}

@@ -18,6 +18,10 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-78 (сделано, 10 карт без Timeline):** Frost Giant (Lich King), Owlbear (Kel'Thuzad), High Fae
+  Kindguard (Malchezaar), Witherbloom (Altruis), Red Slaad (Lana'thel), Barbed Devil (Wrathion), Ice
+  Devil (Moroes), Horned Devil (Rafaam: `evil_glow*` — оранжевый щит, спрятан), Chimera (Dave Berard =
+  Bru'kan, обёртка `spell`), Weretiger (Tavish, обёртка). Рецепты руками по FSM.
 - **HsFx-77 (сделано, 27 карт):** Lich, Revenant, Vampire, Shield Guardian, Silver Dragon, Solar,
   Green Hag, Nightmare, Sylgar, Xanathar, Blink Dog, Cloud Giant, Pirate Captain, Young White
   Dragon, Adult Brass, Ancient Brass, Ankheg, Deva, Dust Mephit, Stone Giant, Adult Gold, Ancient

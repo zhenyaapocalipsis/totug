@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49021": "omen", "49020": "azurequeensindrago", "49015": "medivhthehallowed", "49121": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "elizagoreblade", "49636": "bonelordfrostwhisp", "49715": "anachronos", "49712": "misterclocksworth", "49718": "gormtheworldeater", "49720": "sunsapperlynessa", "49719": "timeadmralhooktail", "49716": "toycaptaintarim", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "titanographerosk", "49800": "arannathrillseeker", "49821": "ultraxion"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49021": "omen", "49020": "azurequeensindrago", "49015": "medivhthehallowed", "49121": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "elizagoreblade", "49636": "bonelordfrostwhisp", "49715": "anachronos", "49712": "misterclocksworth", "49718": "gormtheworldeater", "49720": "sunsapperlynessa", "49719": "timeadmralhooktail", "49716": "toycaptaintarim", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "titanographerosk", "49800": "arannathrillseeker", "49821": "ultraxion", "49620": "thelichking", "49613": "kelthuzad", "49901": "princemalchezaar", "49908": "altruistheoutcast", "50005": "bloodqueenlanathel", "49116": "wrathion", "49518": "moroes", "49515": "archvillainrafaam", "49216": "daveberard", "49513": "beaststalkertavish"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -701,6 +701,99 @@ const SCRIPTS := {
 		"cues": [[0, "CATAFX_Ultraxion_CustomSummon_Sound", 0.7], [1.28, "CATAFX_Ultraxion_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2
 		"shakers": [[1.283, 1.75, 0.04, [[0, 1], [1, 0]], 0.075]]},
+	# The Lich King (CORE_ICC_314) — Frost Giant: LichKing_CustomSummon (старый префаб, по FSM без
+	# Timeline): падает снег, в точку посадки бьёт снежный вихрь, вспыхивает синее пламя, на 2.4 с
+	# ледяной удар и ударная волна. Морозная доска на весь экран (RenderTexture_Ground,
+	# Offscreen_Ground — без неё метель закрывала экран), души и сугробы доски, трещины спрятаны.
+	# Выжигание ледяное голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	"thelichking": {"frames": "thelichking", "sounds": "thelichking",
+		"card": {"face": "mini", "reveal": 2.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: ветер 0.7 с начала, удар 0.75 с 1.5 с
+		"cues": [[0.0, "LichKing_CustomSummon_Wind_Sound", 0.7], [1.5, "LichKing_CustomSummon_Impact_Sound", 0.75]],
+		# MainCameraShakerAction FSM: 0.5 (у нас 0.3) с 2.6 с, 1 с
+		"shakers": [[2.6, 3.6, 0.3, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Kel'Thuzad (FP1_013) — Owlbear: Kelthuzad_CustomSummon (старый префаб, по FSM): над точкой
+	# посадки клубится ледяной туман с аркановым кольцом, на 1.5 с туман оседает ударом. Свечение
+	# портрета (GlowQuad, клип legacy) спрятано. Выжигание голубое. Владелец выбрал в HsBrowser
+	# 2026-10-27.
+	"kelthuzad": {"frames": "kelthuzad", "sounds": "kelthuzad",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM 1.0 с начала
+		"cues": [[0.0, "KelThuzad_CustomSummon_Sound_01", 1.0]],
+		# MainCameraShakerAction FSM: 0.12 с 1.5 с, 0.6 с
+		"shakers": [[1.5, 2.1, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Prince Malchezaar (LT24_821H) — High Fae Kindguard: Malchezaar_CustomSummon (по FSM): в точке
+	# посадки открывается синий портал с кольцами и звёздами, на 1.5 с теневой удар. Свечение
+	# миньона и осколки (mesh_ImpactShatter) спрятаны. Выжигание фиолетовое. Владелец выбрал в
+	# HsBrowser 2026-10-27.
+	"princemalchezaar": {"frames": "princemalchezaar", "sounds": "princemalchezaar",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: портал 0.9 с начала, удар 0.7 с 1.5 с
+		"cues": [[0.0, "MalchezaarReturns_CustomSummon_Emerge_Sound", 0.9], [1.5, "MalchezaarReturns_CustomSummon_Land_Sound", 0.7]]},
+	# Altruis the Outcast (TOY_401t2) — Witherbloom Apprentice: Altruis_CustomSummon (по FSM,
+	# аниматор CustomSummon): фиолетовые и зелёные вихри скверны кружат над точкой посадки, на
+	# 0.95 с огненный выброс. Свечение миньона и трещины спрятаны. Выжигание фиолетовое. Владелец
+	# выбрал в HsBrowser 2026-10-27.
+	"altruistheoutcast": {"frames": "altruistheoutcast", "sounds": "altruistheoutcast",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM 0.7: с начала и удар с 0.95 с
+		"cues": [[0.0, "Altruis_CustomSummon_Sound", 0.7], [0.95, "Altruis_CustomSummon_Impact_Sound", 0.7]],
+		# MainCameraShakerAction FSM: 0.05, 0.25 с
+		"shakers": [[0.95, 1.2, 0.05, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Blood-Queen Lana'thel (CORE_ICC_841) — Red Slaad: BloodQueenLanathel_CustomSummon (старый
+	# префаб, по FSM): тьма втягивается в точку посадки, кружат кровавые лопасти, раскрываются
+	# крылья сан'лейн, на 1.0 с багровый выброс дыма. Выжигание алое. Владелец выбрал в HsBrowser
+	# 2026-10-27.
+	"bloodqueenlanathel": {"frames": "bloodqueenlanathel", "sounds": "bloodqueenlanathel",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlaythroughAction FSM 0.7 x AudioSource 0.6; втягивание (AudioSource частиц) 0.5
+		"cues": [[0.0, "BloodQueenLanathel_CustomSummon_Sound", 0.45], [0.0, "Warlock_SiphonSoul_CasterImpact_1", 0.5]],
+		# MainCameraShakerAction FSM: 0.15 с 1.0 с, 0.25 с
+		"shakers": [[1.0, 1.25, 0.15, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Wrathion (Story_06_Wrathion) — Barbed Devil: Wrathion_CustomSummon (по FSM, аниматор
+	# FX_Wrathion_CIP с 0.6 с): над точкой посадки бьют красные молнии, тёмный дым, на 1.0 с
+	# вспышка. Квад миньона (SummonMinion_quad) спрятан. Выжигание алое. Владелец выбрал в
+	# HsBrowser 2026-10-27.
+	"wrathion": {"frames": "wrathion", "sounds": "wrathion",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlaythroughAction FSM 1.0 x AudioSource 0.9
+		"cues": [[0.0, "Wrathion_CustomSummon_Sound", 0.9]]},
+	# Moroes (KAR_044) — Ice Devil: Moroes_CustomSummon (старый префаб, по FSM): в точке посадки
+	# клубится тёмный дым, загораются свечи, на 1.2 с белая вспышка и искры. Выжигание
+	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
+	"moroes": {"frames": "moroes", "sounds": "moroes",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlaythroughAction FSM 0.8
+		"cues": [[0.0, "Moroes_CustomSummon_Sound", 0.8]]},
+	# Arch-Villain Rafaam (CORE_DAL_422) — Horned Devil: ArchVillianRafaam_CustomSummon (по FSM,
+	# аниматор): багровые и фиолетовые ленты закручиваются у точки посадки, на 0.5 с молнии и
+	# вспышка. Свечение рамки (evil_glow*, оранжевый щит) и трещины спрятаны. Выжигание
+	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
+	"archvillainrafaam": {"frames": "archvillainrafaam", "sounds": "archvillainrafaam",
+		"card": {"face": "mini", "reveal": 0.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlaythroughAction FSM 0.5
+		"cues": [[0.0, "ArchVillianRafaam_CustomSummon", 0.5]],
+		# CameraShakerAction FSM: 0.5 (у нас 0.3) с 0.5 с
+		"shakers": [[0.5, 1.0, 0.3, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Dave Berard (CRED_215, эффект Stormcaller Bru'kan AVFX_BrukanElements, обёртка _Super: спелл
+	# AVFX_BrukanElements_CustomSummon_Spell) — Chimera: струи огня, воды и пыли стягиваются к
+	# точке посадки, на 1.05 с вспышка стихий, на 1.8 с огненное кольцо. Портрет героя HS и трещины
+	# спрятаны. Выжигание огненное. Владелец выбрал в HsBrowser 2026-10-28.
+	"daveberard": {"frames": "daveberard", "sounds": "daveberard",
+		"card": {"face": "mini", "reveal": 2.27, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# звуки FSM: начало и удар с 1.8 с
+		"cues": [[0.0, "AVFX_BrukanElements_CustomSummon_Start_Sound", 0.7], [1.8, "AVFX_BrukanElements_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.833, 3.717, 0.09, [[0, 1], [0.44, 0.12], [1, 0]], 0.075], [0, 1.083, 0.05, [[0, 0], [0.1, 0.08], [0.9, 0.08], [1, 0]], 0.075], [1.05, 1.733, 0.03, [[0, 0.31], [0.15, 0.8], [1, 0]], 0.075]]},
+	# Beaststalker Tavish (AV_113, обёртка _Super: спелл AVFX_TavishBeastStalker_CustomSummon_Spell)
+	# — Weretiger: огненный выстрел снизу, на 1.28 с удар — облако пыли. Портрет героя HS и
+	# трещины спрятаны. Выжигание оранжевое. Владелец выбрал в HsBrowser 2026-10-27.
+	"beaststalkertavish": {"frames": "beaststalkertavish", "sounds": "beaststalkertavish",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BeaststalkerTavish_CustomSummon_Sound", 0.6], [0.85, "BeaststalkerTavish_CustomSummon_GunShot_Sound", 0.4], [1.28, "BeaststalkerTavish_CustomSummon_Impact_Sound", 0.4]],
+		# CameraShaker2
+		"shakers": [[1, 1.567, 0.1, [[0, 1], [1, 0]], 0.075], [1.317, 1.85, 0.1, [[0, 0.82], [0.36, 0.08], [0.44, 0.89], [0.84, 0.03]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).
