@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "blackempire", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -142,6 +142,18 @@ const SCRIPTS := {
 	"zayle": {"frames": "zayle", "sounds": "zayle",
 		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		"cues": [[0.0, "ZayleMasterCloak_CustomSummon", 1.0]]},
+	# Blade of The Black Empire (BE_227) — Deathblade (вместо Zayle — владелец выбрал в
+	# HsBrowser 2026-10-27): BEFX_BladeoftheBlackEmpire_CustomSummon (Timeline): два
+	# фиолетовых разреза клинка крестом над точкой посадки, на 0.53 с удар — вихрь пустоты,
+	# всплеск и угли. Жетона HS в эффекте нет, весь эффект под картой. Выжигание фиолетовое.
+	"blackempire": {"frames": "blackempire", "sounds": "blackempire",
+		"card": {"face": "mini", "reveal": 1.0, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7 с начала, удар 0.7 с 0.533 с
+		"cues": [[0.0, "BE_227_BladeofTheBlackEmpire_CustomSummon_Sound", 0.7],
+			[0.533, "BE_227_BladeofTheBlackEmpire_CustomSummon_ImpactSound", 0.7]],
+		# CameraShaker2: три рывка разреза и удара, сила линейно 1 -> 0
+		"shakers": [[0.15, 0.3, 0.02, [[0.0, 1.0], [1.0, 0.0]], 0.036], [0.35, 0.5, 0.07, [[0.0, 1.0], [1.0, 0.0]], 0.036],
+			[0.567, 0.717, 0.09, [[0.0, 1.0], [1.0, 0.0]], 0.036]]},
 	# Darkbishop Benedictus (CORE_SW_448) — Inquisitor (вместо High Inquisitor Whitemane —
 	# владелец 2026-10-24: «выглядит странно»): SWFX_DarkBishopBenedictus_CustomSummon
 	# (Timeline): в точке посадки из теневого дыма собирается фиолетовый витраж со знаком

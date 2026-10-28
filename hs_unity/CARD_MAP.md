@@ -60,7 +60,7 @@
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Council Member (48315) | Lady Prestor (SW_078) | `SWFX_LadyPrestor_CustomSummon.prefab` | СДЕЛАНО (HsFx-22) |
-| Deathblade (48316) | Zayle, Shadow Cloak (DAL_800) | `ZayleShadowCloak_CustomSummon.prefab` | СДЕЛАНО (HsFx-23); вместо Valeera the Hollow (ICC_827): у неё только полёт миньона HS на лиане (владелец 2026-10-24) |
+| Deathblade (48316) | Blade of The Black Empire (BE_227) | `05_BEFX_BladeoftheBlackEmpire_CustomSummon.prefab` | СДЕЛАНО (HsFx-57; владелец выбрал в HsBrowser 2026-10-27 вместо Zayle); два фиолетовых разреза крестом, вихрь пустоты; выжигание фиолетовое |
 | Inquisitor (48325) | Darkbishop Benedictus (CORE_SW_448) | `SWFX_DarkBishopBenedictus_CustomSummon.prefab` | СДЕЛАНО (HsFx-24); вместо High Inquisitor Whitemane (EX1_190): её огненные ленты и самоцвет владелец счёл странными (2026-10-24) |
 | Masters of Sorcere (48328) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-26); пробы Archmage Vargoth, Grand Magus Antonidas, Headmaster Kel'Thuzad владелец смотрел — оставил Kael'thas (2026-10-25) |
 | Matron Mother (48329) | Queen Azshara (TSC_641) | `TSCFX_Azshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-27); пробы Lady Deathwhisper, Kerrigan, Priestess Valishj владелец смотрел — оставил Azshara (2026-10-25) |

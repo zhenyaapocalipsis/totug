@@ -18,6 +18,9 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-57 (сделано):** Deathblade → Blade of The Black Empire (`blackempire`). Кадры
+  `zayle` пока остаются — их перепечь для Masters of Sorcere (в `recipes/zayle.json` уже
+  `echo_48328`), после этого удалить `kaelthas`… нет: Kael'thas нужен Efreeti — перепечь.
 - **Без изменений (11):** Red Dragon, Demogorgon, Orcus, Vrock, Zuggtmoy, Marlos, Olhydra,
   Elder Brain, Aboleth, Neogi, Death Tyrant (TB_World007 = тот же префаб, что AV_203).
 - **Заменить у готовых (19), старые кадры удалять после замены:** Council Member → Wilfred
