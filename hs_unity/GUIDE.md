@@ -18,6 +18,10 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-61..63 (сделано):** Council Member → Wilfred Fizzlebang (FSM без Timeline: `noTimeline`,
+  `clips`, `stopAt`), Matron Mother → Renferal, Weaponmaster → Exarch Akama (старт сдвинут `move`);
+  `prestor`, `azshara`, `samuro` удалены. Колода drow перенесена. Помощник — `tools/port.sh`
+  (recipe / bake / rebake / sounds / check, описание в шапке).
 - **HsFx-57..60 (сделано):** Graz'zt → Endbringer Umbra (`umbra`); Inquisitor → K'ara
   (перепечена с `echo_48325`, `benedictus` удалён); Deathblade → Blade of The Black Empire (`blackempire`); Masters
   of Sorcere → Zayle (кадры `zayle` перепечены с `echo_48328`). Кадры и скрипт `kaelthas`

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -122,18 +122,37 @@ const SCRIPTS := {
 		"cues": [[0.0, "ChoGallTwilightChieftain_CustomSummon_Sound", 1.0]],
 		# CameraShaker2: 0.2 по осям, сила линейно 1 -> 0
 		"shakers": [[0.933, 2.0, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
-	# Lady Prestor (SW_078) — Council Member: SWFX_LadyPrestor_CustomSummon (Timeline; аниматоры
-	# взяты от других карт — ведёт только Timeline, рецепт clip "timeline"): в точке посадки
-	# розовый магический круг с рунами, тени драконьих крыльев (тайный дракон), огненное
-	# кольцо на 1.5 с, на 1.6 с появляется миньон HS. Убраны жетон HS с сиянием и трещины.
-	# Выжигание розовое в цвет круга (владелец 2026-10-24). Эффект розыгрыша (снаряд в
-	# колоду HS) не берём. Дымки нет.
-	"prestor": {"frames": "prestor", "sounds": "prestor",
-		"card": {"face": "mini", "reveal": 2.07, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# AudioPlayClipAction FSM (0.4) и дорожка Sound Timeline (AudioSource 0.4)
-		"cues": [[0.0, "LadyPrestor_CustomSummon_Sound", 0.4], [1.383, "LadyPrestor_CustomSummon_Impact_Sound", 0.4]],
-		# CameraShakerAction FSM: 0.05 по осям, с 1.5 с, 0.2 с
-		"shakers": [[1.5, 1.7, 0.04, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Wilfred Fizzlebang (AT_027) — Council Member (вместо Lady Prestor — владелец выбрал в
+	# HsBrowser 2026-10-27): ATFX_WilfredFizzlebang_CustomSummon (по FSM, без Timeline): в точке
+	# посадки загораются фиолетовые кольца призыва чернокнижника, тьма втягивается в центр,
+	# на 1.0 с появляется миньон HS, кольца гаснут (клип Fizzlebang_RingsFade). Весь эффект под
+	# картой. Выжигание фиолетовое в цвет колец. Тряски нет.
+	"fizzlebang": {"frames": "fizzlebang", "sounds": "fizzlebang",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlaythroughAction FSM с начала: AudioSource 1 x 0.7
+		"cues": [[0.0, "WilfredFizzlebang_CustomSummon_Sound", 0.7]]},
+	# Renferal, the Malignant (EDR_526) — Matron Mother (вместо Queen Azshara — владелец выбрал
+	# в HsBrowser 2026-10-27): EDRFX_RenferalTheMalignant_CustomSummon (Timeline): над точкой
+	# посадки сгущается тьма, на 0.67 с вспыхивает багровая паутина (паучья матрона Ллос),
+	# паутина тлеет и гаснет. Жетон HS спрятан, весь эффект под картой. Выжигание багровое.
+	"renferal": {"frames": "renferal", "sounds": "renferal",
+		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7 с начала
+		"cues": [[0.0, "RenferalTheMalignant_CustomSummon_Sound", 0.7]],
+		# CameraShaker2: (0.03, 0.05, 0.05) в ударе, сила линейно 1 -> 0
+		"shakers": [[0.667, 1.267, 0.05, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Exarch Akama (GDB_235) — Weaponmaster (вместо Blademaster Samuro — владелец выбрал в
+	# HsBrowser 2026-10-27): GDBFX_ExarchAkama_CustomSummon (Timeline): в точке посадки
+	# поднимается пыль и камни (в HS — ниже, у героя; сдвинуты `move` к месту карты), на 1.27 с
+	# удар — огненный крест двух клинков и облако пыли. Жетон HS спрятан, весь эффект под
+	# картой. Выжигание оранжевое в цвет клинков.
+	"akama": {"frames": "akama", "sounds": "akama",
+		"card": {"face": "mini", "reveal": 1.74, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.5 — замах с начала, удар с 1.283 с
+		"cues": [[0.0, "ExarchAkama_CustomSummon_Cast_Sound", 0.5], [1.283, "ExarchAkama_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2: рывок в начале 0.2, дрожь 0.1 нарастает перед ударом, удар 0.2
+		"shakers": [[0.0, 0.35, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075], [0.533, 0.872, 0.1, [[0.0, 0.0], [1.0, 1.0]], 0.25],
+			[1.267, 1.617, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 	# Zayle, Shadow Cloak (DAL_800) — Masters of Sorcere (владелец в HsBrowser 2026-10-27; до
 	# HsFx-58 стоял на Deathblade вместо Valeera the Hollow: у неё только
 	# полёт миньона HS на лиане — владелец 2026-10-24): DALFX_ZayleShadowCloak_CustomSummon
@@ -166,26 +185,6 @@ const SCRIPTS := {
 		"cues": [[0.0, "Kael_thasSunstrider_CustomSummon_Sound", 0.5], [1.5, "Kael_thasSunstrider_CustomSummon_Impact_Sound", 0.6]],
 		# CameraShakerAction FSM: 0.15 по осям через 0.1 с после удара, 0.63 с
 		"shakers": [[1.6, 2.23, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
-	# Queen Azshara (TSC_641) — Matron Mother: TSCFX_Azshara_CustomSummon (Timeline): в точке
-	# посадки всплеск воды, из него поднимаются щупальца и три огненных глаза, на 1.42 с
-	# удар — фиолетовая волна. Весь эффект под картой; жетон HS спрятан. Выжигание
-	# фиолетовое в цвет эффекта.
-	"azshara": {"frames": "azshara", "sounds": "azshara",
-		"card": {"face": "mini", "reveal": 1.89, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 0.7, удар на 1.417 с
-		"cues": [[0.0, "QueenAzshara_CustomSummon_Sound", 0.7], [1.417, "QueenAzshara_CustomSummon_Impact_Sound", 0.7]],
-		# CameraShaker2: 0.08 нарастает до 0.583 с, затем 0.12 и спад до 2.383 с
-		"shakers": [[0.0, 0.583, 0.08, [[0.0, 0.0], [1.0, 1.0]], 0.075], [0.583, 2.383, 0.12, [[0.0, 1.0], [0.19, 0.29], [1.0, 0.0]], 0.075]]},
-	# Blademaster Samuro (BAR_078) — Weaponmaster: BARFX_Samuro_CustomSummon (Timeline): в точке
-	# посадки золотой меч на огненном шаре, взмах кольцом, на 0.8 с вспышка и огненное кольцо.
-	# Весь эффект под картой; жетон и свечение миньона HS спрятаны. Выжигание оранжевое в цвет
-	# эффекта. Пробы Kargath, Okani, Remornia, Maiev владелец посмотрел — выбрал Samuro.
-	"samuro": {"frames": "samuro", "sounds": "samuro",
-		"card": {"face": "mini", "reveal": 1.27, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# AudioPlayClipAction FSM: 0.6 с начала, удар 0.6 на 0.9 с
-		"cues": [[0.0, "BlademasterSamuro_CustomSummon_Sound", 0.6], [0.9, "BlademasterSamuro_CustomSummon_Impact_Sound", 0.6]],
-		# CameraShakerAction FSM: 0.035 по осям через 0.8 с, 0.25 с
-		"shakers": [[0.8, 1.05, 0.028, [[0.0, 0.19], [0.28, 1.0], [1.0, 0.0]], 0.0167]]},
 	# Magtheridon (BT_850) — Balor: BTFX_Magtheridon_CustomSummon (Timeline, корень Root
 	# включает FSM): в точке посадки зелёные трещины Скверны и печать, три вспышки огня
 	# (0, 0.43, 0.97 с), удар 1.0 с; на 2.6 с кольцо оков сжимается вокруг карты и гаснет к
