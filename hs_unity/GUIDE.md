@@ -19,7 +19,7 @@ HsBrowser (память «Unity: edit in copy»).
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
 - **HsFx-79 (сделано, 53 карты):** остальные новые карты всех колод (CARD_MAP «HsFx-79»). Перенос
-  назначений закончен: 125 карт с анимацией HS. Без анимации: 19 карт без назначения, 4 «Без
+  назначений закончен: 125 карт с анимацией HS. Запушено и задеплоено 2026-10-29 (сборка 1793216777, game.pck 1.1 ГБ). Без анимации: 19 карт без назначения, 4 «Без
   анимации» и Dao / Lizardfolk Geomancer — ждут, пока владелец перевыберет Chrono-Lord Deios.
 - **HsFx-78 (сделано, 10 карт без Timeline):** Frost Giant (Lich King), Owlbear (Kel'Thuzad), High Fae
   Kindguard (Malchezaar), Witherbloom (Altruis), Red Slaad (Lana'thel), Barbed Devil (Wrathion), Ice
