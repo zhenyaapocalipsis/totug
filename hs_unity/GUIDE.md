@@ -5,6 +5,42 @@
 HsFx-0..12, октябрь 2026), дополнено на остальных картах (HsFx-14..35, 2026-10-24/25).
 Какая легендарка HS идёт к какой карте — `CARD_MAP.md` (там же «Готово» и запас проб).
 
+## Перенос назначений владельца (с 2026-10-28) — НОВЫЙ ЧАТ НАЧИНАТЬ ОТСЮДА
+
+Владелец сам выбрал эффекты для 131 карты в HsBrowser (`data/hs_assign.tsv`, «назначение
+важнее CARD_MAP») и сказал «начинай переносить утверждённые анимации в проект». Эффект
+владелец уже видел вживую — пробы кандидатов не нужны; адаптация как раньше (§0 п.2–10:
+жетон и контуры HS в `hide`, всё в `under`, `pin`/полёт по §1, выжигание в тон эффекта,
+эпичность по цене — если эффект явно мал/велик для цены, спросить). Одна карта = один
+коммит «Stage HsFx-N». Номер следующего — смотреть `git log --oneline | grep HsFx | head -1`.
+Пакетный Unity можно запускать из копии проекта в scratchpad, если у владельца открыт
+HsBrowser (память «Unity: edit in copy»).
+
+- **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
+  из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **Без изменений (11):** Red Dragon, Demogorgon, Orcus, Vrock, Zuggtmoy, Marlos, Olhydra,
+  Elder Brain, Aboleth, Neogi, Death Tyrant (TB_World007 = тот же префаб, что AV_203).
+- **Заменить у готовых (19), старые кадры удалять после замены:** Council Member → Wilfred
+  Fizzlebang (было prestor), Deathblade → Blade of The Black Empire (zayle), Inquisitor →
+  K'ara (benedictus; рецепт `kara` есть), Masters of Sorcere → Zayle (kaelthas; рецепт
+  `zayle` есть), Matron Mother → Renferal (azshara), Weaponmaster → Exarch Akama (samuro),
+  Black → Victor Nefarius (onyxia), Blue → Murozond Unbounded (malygos), Green → Y'Shaarj
+  LT23 (ysera), Severin → High Cultist Herenn (chogall), White → Vyranoth (sindragosa),
+  Balor → Ragnaros the Great Fire (magtheridon), Glabrezu → Nightmare Lord Xavius
+  (razidir), Graz'zt → Endbringer Umbra (kara), Aerisi → Inara Stormcrash (ohnahra), Gar →
+  Mutanus (neptulon), Ogrémoch → Ravitz (nespirah), Ulitharid → Azalina Soulsever
+  (irida), Beholder → Staff of the Endbringer (isorath).
+- **Готовые рецепты пригодятся новым картам:** Kael'thas → Efreeti, Cho'gall → Chain
+  Devil, Razidir → Guardian Naga, Irida → Oni, Iso'rath → Roper (перепечь с контуром и
+  тоном новой карты: `echo_<cid>.png`, `tintHue`).
+- **Новые (~100):** все остальные строки `hs_assign.tsv` (undead … ixtal).
+- **Без назначения (19, не трогать):** Death Knight, Mummy Lord, High Priest of Myrkul,
+  Berserker, Treant, Archmage, Harpy, Relentless Siege, Beast Tamer, Siege Beast,
+  Jarlaxle, Ahmaergo, Mammoth, Gorgon, Kraken, Satyr Thornbearer, Githyanki Knight,
+  Thri-kreen Marauder, Yuan-ti Infiltrator.
+- **Спросить владельца:** Chrono-Lord Deios (TIME_064) назначен двум картам — Dao и
+  Lizardfolk Geomancer.
+
 ## Где остановились (2026-10-27)
 
 **Новый чат — начать отсюда.** Задеплоено 4 колоды, 29 карт (сборка 1792957293). Потом

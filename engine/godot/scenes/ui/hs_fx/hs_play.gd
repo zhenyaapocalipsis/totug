@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48425": "rhonin", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48639": "alakir", "48629": "geddon", "48626": "neptulon", "48600": "ohnahra", "48633": "incindius", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "zayle", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -111,17 +111,6 @@ const SCRIPTS := {
 		"cues": [[0.0, "FrostQueenSindragosa_CustomSummon_Cast_Sound", 0.8], [0.0, "FrostQueenSindragosa_CustomSummon_PeicesForm_Sound", 0.8],
 			[1.183, "FrostQueenSindragosa_CustomSummon_Tail_Sound", 0.8]],
 		"shakers": [[0.0, 3.117, 0.08, [[0.0, 0.0], [0.26, 0.3], [0.42, 0.77], [0.54, 0.49], [1.0, 0.0]], 0.075]]},
-	# Rhonin (AT_009) — Rath Modar: ATFX_Rhonin_CustomSpawn (по FSM спелла): в точке посадки
-	# загорается овальный круг рун с лучами, вращается кольцо, растёт вспышка; на 2.0 с руны
-	# разлетаются кольцом, на 2.2 с удар — миньон HS появляется, тряска. Круг и вспышка — под
-	# картой, чтобы карта читалась. Овал круга — как в HS (владелец 2026-10-24). Выжигание
-	# фиолетовое в цвет эффекта (владелец). Дымки нет.
-	"rhonin": {"frames": "rhonin", "sounds": "rhonin",
-		"card": {"face": "mini", "reveal": 2.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# AudioPlaythroughAction FSM с начала, AudioSource 1
-		"cues": [[0.0, "Rhonin_CustomSpawn_Sound", 1.0]],
-		# MainCameraShakerAction: 0.2 по осям, 0.4 с, сила линейно 1 -> 0
-		"shakers": [[2.2, 2.6, 0.16, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
 	# Cho'gall, Twilight Chieftain (YOG_530) — Severin Silrajin:
 	# YOGFX_Cho'gallTwilightChieftain_CustomSummon (Timeline): две цепи бьют крестом в точку
 	# посадки, сверху падает фиолетовый луч, на 0.95 с удар — кольцо, всплеск сумерек и
@@ -307,30 +296,6 @@ const SCRIPTS := {
 		"cues": [[0.0, "CATAFX_LadyAzshara_CustomSummon_Sound", 0.7], [1.217, "CATAFX_LadyAzshara_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: (0.2, 0.3, 0.1) — у нас 0.25, рывок в ударе
 		"shakers": [[1.233, 1.9, 0.25, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
-	# Al'Akir, Lord of Storms (CATA_153) — Yan-C-Bin (вместо Al'Akir the Windlord, EX1 — владелец
-	# 2026-10-25: только свежие; пробы Ohn'ahra, Shaffar): CATAFX_Al'Akir_CustomSummon
-	# (Timeline), как в HS: смерч со шлейфом ветра и пыли прилетает из-за правого края к точке
-	# посадки, сжимается, на 1.37 с удар — вспышка, фиолетовые молнии. Прибитый к месту смерч
-	# (pin) владелец отверг 2026-10-25: «появляется из ниоткуда сразу гигантского размера».
-	# Жетон HS и его свечение спрятаны, весь эффект под картой. Выжигание фиолетовое.
-	"alakir": {"frames": "alakir", "sounds": "alakir",
-		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 1.0 с начала
-		"cues": [[0.0, "AlAkirConduitofStorms_CustomSummon_Sound", 1.0]],
-		# CameraShaker2: (0.2, 0.25, 0.1) — у нас 0.22, рывок в ударе
-		"shakers": [[1.367, 2.033, 0.22, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
-	# Commander Geddon (CATA_591) — Imix (вместо Ragnaros the Firelord, EX1 — владелец 2026-10-25:
-	# только свежие; пробы Incindius, Vulcanos, Sinestra): CATAFX_CommanderGeddon_CustomSummon
-	# (Timeline): огненное щупальце закручивается вихрем над точкой посадки, на 1.0 с шар магмы
-	# взрывается, остаётся застывающая лава с огненными трещинами. Жетон HS и овал жетона в
-	# кольце (PS_TokenGlow) спрятаны, весь эффект под картой. Выжигание оранжевое в цвет огня.
-	"geddon": {"frames": "geddon", "sounds": "geddon",
-		"card": {"face": "mini", "reveal": 1.5, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 0.8 с начала
-		"cues": [[0.0, "CommanderGeddon_CustomSummon_Sound", 0.8]],
-		# CameraShaker2: 0.05 нарастает до удара, в ударе 0.07 рывком и спад
-		"shakers": [[0.0, 1.0, 0.05, [[0.0, 0.0], [1.0, 1.0]], 0.075],
-			[1.0, 3.05, 0.07, [[0.0, 0.26], [0.12, 0.96], [0.21, 0.22], [1.0, 0.0]], 0.075]]},
 	# Neptulon, Lord of Tides (BE_209) — Gar Shatterkeel (вместо Lady Naz'jar, TID — владелец
 	# 2026-10-25: только свежие; пробы Azshara Ocean Lord, King Tide, Lady Azshara TIME):
 	# BEFX_NeptulonLordofTides_CustomSummon (Timeline): над точкой посадки собираются тучи,
@@ -354,18 +319,6 @@ const SCRIPTS := {
 		"cues": [[0.0, "Ohn_ahra_CustomSummon_Sound", 0.85]],
 		# CameraShaker2: 0.1 с 0.3 с, пик в ударе, спад
 		"shakers": [[0.3, 3.033, 0.1, [[0.0, 0.0], [0.33, 0.16], [0.41, 0.42], [1.0, 0.0]], 0.075]]},
-	# Incindius (VAC_321) — Vanifer (вместо Neeru Fireblade, BAR — владелец 2026-10-25: только
-	# свежие; пробы Sinestra, Vulcanos): VACFX_Incindius_CustomSummon (Timeline): в точке
-	# посадки вспыхивает искра, лава вскипает огненным шаром, на 1.45 с взрыв — огненная
-	# звезда, угли тлеют вокруг карты. Жетон HS, его рамка и лавовая оболочка (M_MinionShell_Goo —
-	# жёлтая капсула в начале, владелец заметил 2026-10-25) спрятаны, весь эффект под картой.
-	# Выжигание красно-оранжевое в цвет лавы.
-	"incindius": {"frames": "incindius", "sounds": "incindius",
-		"card": {"face": "mini", "reveal": 1.95, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: начало AudioSource 0.9, удар 0.7 с 1.45 с
-		"cues": [[0.0, "Incindius_CustomSummon_Start_Sound", 0.9], [1.45, "Incindius_CustomSummon_Impact_Sound", 0.7]],
-		# CameraShaker2: дрожь 0.1 в начале, в ударе 0.1, сила линейно 1 -> 0
-		"shakers": [[0.133, 0.683, 0.1, [[0.0, 0.0], [0.6, 0.4], [1.0, 0.28]], 0.075], [1.45, 2.75, 0.1, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 	# Y'Shaarj, Titan Bane (BE_784) — Marlos Urnrayle, медуза (вместо Mirrex — владелец
 	# 2026-10-26: дарк фэнтези, розовые кристаллы не подходят; пробы Nespirah, Wallow, Renferal,
 	# The Unknowable One, The Black Blood, Herenn, Eliza Goreblade и др.):

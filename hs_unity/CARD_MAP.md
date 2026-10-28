@@ -73,7 +73,7 @@
 | Black Dragon (48400) | Onyxia the Broodmother (CS3_032) | `ds1FX_Onyxia_CustomSummon.prefab` | СДЕЛАНО (HsFx-14) |
 | Blue Dragon (48403) | Malygos, Aspect of Magic (DRG_270) | `MalygosAspectOfMagic_CustomSummon.prefab` | СДЕЛАНО (HsFx-16) |
 | Green Dragon (48419) | Ysera, Emerald Aspect (EDR_000) | `EDRFX_YseraEmeraldAspect_CustomSummon.prefab` | СДЕЛАНО (HsFx-18) |
-| Rath Modar (48425) | Rhonin (AT_009) | `Rhonin_CustomSpawn.prefab` | СДЕЛАНО (HsFx-20) |
+| Rath Modar (48425) | Rhonin (AT_009) | `Rhonin_CustomSpawn.prefab` | БЕЗ АНИМАЦИИ (владелец 2026-10-27, HsFx-56: кадры и звуки удалены; рецепт оставлен); было — (HsFx-20) |
 | Red Dragon (48426) | Deathwing, Worldbreaker (CATA_190h) | `CATAFX_Deathwing_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-1..12) |
 | Severin Silrajin (48429) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | СДЕЛАНО (HsFx-21) |
 | White Dragon (48433) | Frost Queen Sindragosa (NX2_037) | `NX2FX_FrostQueenSindragosa_CustomSummon.prefab` | СДЕЛАНО (HsFx-19) |
@@ -99,12 +99,12 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Aerisi Kalinoth (48600) | Ohn'ahra (EDR_031) | `EDRFX_Ohnahra_CustomSummon.prefab` | СДЕЛАНО (HsFx-41); пророчица ветра; молния с левого края, шар бури у карты (как в HS — владелец); выжигание бирюзовое |
 | Gar Shatterkeel (48626) | Neptulon, Lord of Tides (BE_209) | `BEFX_NeptulonLordofTides_CustomSummon.prefab` | СДЕЛАНО (HsFx-40); пророк воды; синий водяной смерч с молниями; выжигание синее |
-| Imix (48629) | Commander Geddon (CATA_591) | `CATAFX_CommanderGeddon_CustomSummon.prefab` | СДЕЛАНО (HsFx-39); принц огня; огненный вихрь, шар магмы взрывается; овал жетона в кольце спрятан; выжигание оранжевое |
+| Imix (48629) | Commander Geddon (CATA_591) | `CATAFX_CommanderGeddon_CustomSummon.prefab` | БЕЗ АНИМАЦИИ (владелец 2026-10-27, HsFx-56: кадры и звуки удалены; рецепт оставлен); было — (HsFx-39); принц огня; огненный вихрь, шар магмы взрывается; овал жетона в кольце спрятан; выжигание оранжевое |
 | Marlos Urnrayle (48630) | Y'Shaarj, Titan Bane (BE_784) | `BEFX_YShaarjtheTitanBane_CustomSummon.prefab` | СДЕЛАНО (HsFx-47); медуза — ядовитые змеиные глаза в пурпурной тьме; выжигание ядовито-зелёное. Mirrex (HsFx-43) владелец снял 2026-10-26: розовые кристаллы не для дарк фэнтези; смотрел и отверг Nespirah, Wallow, Renferal, Unknowable One, Black Blood, Herenn, Eliza |
 | Ogrémoch (48631) | Nespirah, Enthralled (CATA_527) | `CATA_527_Nespirah_Enthralled_Ancient_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-46); каменный титан со скалой и изумрудами — изумрудный водоворот, брызги; выжигание изумрудное. Therazane (HsFx-36) владелец снял 2026-10-26: радужные самоцветы; смотрел и отверг Amitut, Vulcanos, Magtheridon Unreleased, изумрудный Therazane |
 | Olhydra (48632) | Azshara, Ocean Lord (CATA_151) | `CATAFX_LadyAzshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-37); принцесса воды, волна снизу обрушивается на место карты; выжигание морской зелени |
-| Vanifer (48633) | Incindius (VAC_321) | `VACFX_Incindius_CustomSummon.prefab` | СДЕЛАНО (HsFx-42, HsFx-45); огненная жрица; лавовый взрыв, огненная звезда; оболочка жетона `M_MinionShell_Goo` (жёлтая капсула) спрятана; выжигание красно-оранжевое |
-| Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | СДЕЛАНО (HsFx-38, HsFx-44); принц воздуха; смерч с молниями прилетает справа, как в HS (прибитый `pin` владелец отверг: «появляется из ниоткуда сразу гигантским»); выжигание фиолетовое |
+| Vanifer (48633) | Incindius (VAC_321) | `VACFX_Incindius_CustomSummon.prefab` | БЕЗ АНИМАЦИИ (владелец 2026-10-27, HsFx-56: кадры и звуки удалены; рецепт оставлен); было — (HsFx-42, HsFx-45); огненная жрица; лавовый взрыв, огненная звезда; оболочка жетона `M_MinionShell_Goo` (жёлтая капсула) спрятана; выжигание красно-оранжевое |
+| Yan-C-Bin (48639) | Al'Akir, Lord of Storms (CATA_153) | `CATAFX_Al'Akir_CustomSummon.prefab` | БЕЗ АНИМАЦИИ (владелец 2026-10-27, HsFx-56: кадры и звуки удалены; рецепт оставлен); было — (HsFx-38, HsFx-44); принц воздуха; смерч с молниями прилетает справа, как в HS (прибитый `pin` владелец отверг: «появляется из ниоткуда сразу гигантским»); выжигание фиолетовое |
 
 ### aberrations
 
