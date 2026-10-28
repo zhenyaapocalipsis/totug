@@ -18,6 +18,10 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-76 (сделано):** готовые эффекты перепечены для новых карт — Efreeti (Kael'thas), Chain
+  Devil (Cho'gall), Guardian Naga (Razidir), Oni (Irida), Roper (Iso'rath). Контуры `echo_<cid>.png`
+  сделаны для всех назначенных карт. Очередь новых карт — `render/port_queue.tsv` (90), выгрузки
+  сделаны (`render/port_make.txt`); без Timeline (FSM) 10, обёртки `_Super` — Brukan, Tavish.
 - **HsFx-69..75 (сделано):** Balor → Ragnaros the Great Fire, Glabrezu → Xavius, Aerisi → Inara,
   Gar → Mutanus, Ogrémoch → Ravitz, Ulitharid → Azalina, Beholder → Staff of the Endbringer;
   `magtheridon`, `nespirah`, `neptulon`, `ohnahra` удалены. Все замены у готовых колод сделаны.

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -119,8 +119,8 @@ const SCRIPTS := {
 		"cues": [[0.0, "Vyranoth_CustomSummon_Sound", 0.8]],
 		# CameraShaker2: 0.08, пик к 1.3 с
 		"shakers": [[0.0, 3.117, 0.08, [[0.0, 0.0], [0.26, 0.3], [0.42, 0.77], [0.54, 0.49], [1.0, 0.0]], 0.075]]},
-	# Cho'gall, Twilight Chieftain (YOG_530) — пока без карты (владелец 2026-10-27 отдал его Chain
-	# Devil, кадры перепечь с её контуром; до HsFx-64..68 — Severin Silrajin):
+	# Cho'gall, Twilight Chieftain (YOG_530) — Chain Devil (владелец в HsBrowser 2026-10-27; кадры
+	# перепечены с её контуром; до HsFx-64..68 — Severin Silrajin):
 	# YOGFX_Cho'gallTwilightChieftain_CustomSummon (Timeline): две цепи бьют крестом в точку
 	# посадки, сверху падает фиолетовый луч, на 0.95 с удар — кольцо, всплеск сумерек и
 	# осколки цепей. Весь эффект под картой (всплеск закрывал её). Убраны миньон HS, его
@@ -183,8 +183,8 @@ const SCRIPTS := {
 		# CameraShaker2: три рывка разреза и удара, сила линейно 1 -> 0
 		"shakers": [[0.15, 0.3, 0.02, [[0.0, 1.0], [1.0, 0.0]], 0.036], [0.35, 0.5, 0.07, [[0.0, 1.0], [1.0, 0.0]], 0.036],
 			[0.567, 0.717, 0.09, [[0.0, 1.0], [1.0, 0.0]], 0.036]]},
-	# Kael'thas Sunstrider (BT_255) — пока без карты (владелец 2026-10-27 отдал его Efreeti —
-	# перепечь; до HsFx-58 — Masters of Sorcere): BTFX_KaelthasSunstrider_CustomSummon
+	# Kael'thas Sunstrider (BT_255) — Efreeti (владелец в HsBrowser 2026-10-27; кадры перепечены
+	# перепечены с её контуром; до HsFx-58 — Masters of Sorcere): BTFX_KaelthasSunstrider_CustomSummon
 	# (Timeline): в точке посадки огненная спираль, вокруг кружат три зелёные сферы Скверны
 	# с огненными шлейфами, растёт солнечный шар, на 1.5 с удар — зелёная вспышка и пламя.
 	# Весь эффект под картой; трещины в земле (макет HS) убраны. Выжигание зелёное в цвет
@@ -289,7 +289,7 @@ const SCRIPTS := {
 		# CameraShaker2: 0.1 в начале и в ударе
 		"shakers": [[0.0, 0.783, 0.1, [[0.0, 0.5], [0.13, 1.0], [0.4, 0.2], [1.0, 0.0]], 0.075],
 			[1.15, 2.333, 0.1, [[0.0, 0.5], [0.13, 1.0], [0.4, 0.2], [1.0, 0.0]], 0.075]]},
-	# Razidir (TLC_463) — пока без карты (владелец 2026-10-27 отдал его Guardian Naga — перепечь;
+	# Razidir (TLC_463) — Guardian Naga (владелец в HsBrowser 2026-10-27, перепечён;
 	# до HsFx-69..75 — Glabrezu, (вместо Fel Lord Betrug, DAL — владелец 2026-10-25: только
 	# свежие; пробы Zakajz, Talgath, Kronn, G'huun, Vulcanos, Drest'agath, Broxigar,
 	# Magtheridon Unreleased и др.): TLC463_Nazidir_CustomSummon (Timeline). Адаптация
@@ -381,7 +381,7 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM с начала: 0.7 и 0.9
 		"cues": [[0.0, "SphereOfSapience_SocketIn_Sound", 0.7], [0.0, "Aessina_CustomSummon_Cast_Sound", 0.9]]},
-	# Iso'rath (CATA_481) — пока без карты (владелец 2026-10-27 отдал его Roper — перепечь; до
+	# Iso'rath (CATA_481) — Roper (владелец в HsBrowser 2026-10-27, перепечён; до
 	# HsFx-69..75 — Beholder), глаз-пожиратель (цена 5 — скромно, у места карты):
 	# CATAFX_Iso'rath_CustomSummon (Timeline): фиолетовая воронка раскрывается, на 0.67 с
 	# удар — пасть-цветок в светящейся сфере, щупальца тьмы кружат и гаснут к 2.5 с. Жетон HS
@@ -390,7 +390,7 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.8 с начала; тряски камеры в Timeline нет
 		"cues": [[0.0, "CATAFX_IsoRath_CustomSummon_Sound", 0.8]]},
-	# Irida Sinseeker (JAIL_719) — пока без карты (владелец 2026-10-27 отдал её Oni — перепечь; до
+	# Irida Sinseeker (JAIL_719) — Oni (владелец в HsBrowser 2026-10-27, перепечена; до
 	# HsFx-69..75 — Ulitharid), иллитид (выбор владельца 2026-10-26 вместо
 	# Mindflayer Kaahrj; пробы C'Thun Eye of the Empire без глаза, с лиловыми и разведёнными
 	# щупальцами, 8 Hands, G'huun, Zer'Ontu, Herenn — не то): JAIL_719_IridaSinseeker_CustomSummon_FX

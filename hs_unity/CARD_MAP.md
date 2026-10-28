@@ -149,7 +149,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Rakshasa (49113) | Shirvallah, the Tiger (TRL_300) | `Shirvallah_CustomSummon.prefab` | демон-тигр |
 | Nightmare (49114) | The Headless Horseman (TOY_829) | `TOYFX_HeadlessHorseman_CustomSummon_Super.prefab` | огненный конь кошмаров |
-| Chain Devil (49115) | Raza the Chained (CFM_020) | `Raza_CustomSummon.prefab` | дьявол в цепях |
+| Chain Devil (49115) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Barbed Devil (49116) | Kurtrus Ashfallen (BAR_333) | `BARFX_Kurtrus_CustomSummon.prefab` | колючий дьявол, клинки |
 | Ghast (49117) | Rotface (ICC_405) | `RotFace_CustomSummon.prefab` | гниющий упырь |
 | Treant (49118) | Greybough (DMF_734) | `DMFFX_GreyBough_CustomSummon.prefab` | ожившее дерево |
@@ -203,7 +203,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Weretiger (49513) | Halazzi, the Lynx (TRL_900) | `HalazziTheLynx_CustomSummon.prefab` | оборотень-кошка |
 | Lamia (49514) | Lady Anacondra (WC_006) | `BARFX_LadyAnacondra_CustomSummon.prefab` | змеедева |
 | Horned Devil (49515) | Lord Jaraxxus (EX1_323) | `EX1_Hero_Jaraxxus_Warlock_CustomSummon_FX.prefab` | рогатый дьявол |
-| Efreeti (49516) | Pyros (UNG_027) | `Pyros_CustomSummon.prefab` | огненный джинн |
+| Efreeti (49516) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Azer Sentinel (49517) | Emperor Thaurissan (BRM_028) | `ThaurissanMinion_CustomSummon.prefab` | огненный дварф |
 | Ice Devil (49518) | Ras Frostwhisper (SCH_273) | `SCHFX_RasFrostwhisperer_CustomSummon.prefab` | ледяной дьявол |
 | Troll (49519) | Zul'jin (TRL_065) | `ZulJin_CustomSummon_FX.prefab` | тролль |
@@ -230,10 +230,10 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Roper (49711) | Il'gynoth (DMF_230) | `DMFFX_Ilgynoth_CustomSummon.prefab` | чудовище-глаз с щупальцами |
+| Roper (49711) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Ancient Brass Dragon (49712) | Fyrakk the Blazing (FIR_959) | `FIRFX_FyrakkTheBlazing_CustomSummon.prefab` | древний дракон пустыни, пламя |
 | Purple Worm (49713) | Gorm the Worldeater (GDB_842) | `GDBFX_GormtheWorldeater_CustomSummon.prefab` | гигантский червь |
-| Guardian Naga (49714) | Lady Vashj (BT_109) | `LadyVashj_CustomSummon.prefab` | нага |
+| Guardian Naga (49714) | Razidir (TLC_463) | `TLC463_Nazidir_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Adult Brass Dragon (49715) | Dragonqueen Alexstrasza (DRG_089) | `DragonqueenAlexstrasza_CustomSummon.prefab` | дракон пустыни |
 | Stone Giant (49716) | Ozruk (UNG_907) | `Ozruk_CustomSummon.prefab` | каменный великан |
 | Gorgon (49717) | Gorgonzormu (VAC_955) | `VACFX_Gorgonzormu_CustomSummon.prefab` | горгона (по имени; при желании — заменить) |
@@ -246,7 +246,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Ancient Green Dragon (49800) | Ysera, Unleashed (DRG_320) | `YseraUnleashed_CustomSummon.prefab` | древняя зелёная драконица |
-| Oni (49801) | Tenwu of the Red Smoke (DMF_071) | `DMF_TenwuOfTheRedSmoke_CustomSummon.prefab` | демон-огр Востока |
+| Oni (49801) | Irida Sinseeker (JAIL_719) | `JAIL_719_IridaSinseeker_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Ancient Black Dragon (49803) | Deathwing, Mad Aspect (DRG_026) | `DeathwingMadAspect_CustomSummon_GroundBurst.prefab` | древний чёрный дракон |
 | Ancient Copper Dragon (49806) | Chromatus (CATA_432) | `CATAFX_Chromatus_CustomSummon.prefab` | древний дракон |
 | Ancient Blue Dragon (49807) | Malygos the Spellweaver (CS3_034) | `EX1FX_Malygos_CustomSummon.prefab` | древний синий дракон |

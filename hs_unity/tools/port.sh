@@ -122,6 +122,41 @@ sounds)
 	ls "$d"/fsm_*.txt > /dev/null 2>&1 && grep -hE "^STATE|^  on |Audio|Shake|Wait " "$d"/fsm_*.txt | grep -v "(disabled)" \
 		| sed -E 's/m_(SpecificCamera|NamedCamera|WhichCamera|ParentObject|SpatialBlend|Category|TemplateSource|IsMinionSummonVO|IsKeywordVO)=[^ ]* *//g' | cut -c1-220
 	;;
+script)
+	# заготовка SCRIPTS по Timeline: port.sh script <имя> <папка префаба> <reveal> — cues из
+	# SoundTimeline (громкость AudioSource узла), shakers из CameraShaker2; комментарий дописать руками
+	d=$3; rev=$4
+	awk -v n="$n" -v rev="$rev" '
+		function num(s) { gsub(/,/, ".", s); return s + 0 }
+		FNR == 1 { file++ }
+		file == 1 && /^ *GO \x27/ { go = $0; sub(/^ *GO \x27/, "", go); sub(/\x27.*/, "", go) }
+		file == 1 && /\[AudioSource\]/ { a = 1 }
+		file == 1 && a && /m_Volume =/ { vol[go] = num($3); a = 0 }
+		file == 2 && /^TRACK SoundTimelineTrack/ { snd = $0; sub(/.*on GO \x27/, "", snd); sub(/\x27.*/, "", snd) }
+		file == 2 && /^TRACK/ && !/SoundTimelineTrack/ { snd = "" }
+		file == 2 && /SoundTimelineAsset/ && snd != "" {
+			s = $0; sub(/^ *\[/, "", s); sub(/ \.\..*/, "", s)
+			v = (snd in vol) ? vol[snd] : 1.0
+			cues = cues (cues == "" ? "" : ", ") sprintf("[%.3g, \"%s\", %.2g]", num(s), snd, v)
+		}
+		file == 2 && /CameraShaker2Asset/ {
+			s = $0; sub(/^ *\[/, "", s); e = s; sub(/ \.\..*/, "", s); sub(/.*\.\. /, "", e); sub(/\].*/, "", e)
+			am = $0; sub(/.*m_Amount=\(/, "", am); sub(/\).*/, "", am); split(am, xy, ", ")
+			amp = num(xy[1]) > num(xy[2]) ? num(xy[1]) : num(xy[2])
+			cv = $0; sub(/.*curve\[/, "", cv); sub(/\].*/, "", cv); k = split(cv, pts, " "); c = ""
+			for (i = 1; i <= k; i++) { split(pts[i], tv, ":"); t = num(tv[1]); if (t < 0) t = 0; if (t > 1) t = 1; vv = num(tv[2]); if (vv < 0) vv = 0
+				c = c (c == "" ? "" : ", ") sprintf("[%.3g, %.3g]", t, vv) }
+			iv = $0; sub(/.*m_interval=/, "", iv); sub(/[^0-9,.].*/, "", iv)
+			sh = sh (sh == "" ? "" : ", ") sprintf("[%.4g, %.4g, %.3g, [%s], %.3g]", num(s), num(e), amp, c, num(iv))
+		}
+		END {
+			printf "\t\"%s\": {\"frames\": \"%s\", \"sounds\": \"%s\",\n", n, n, n
+			printf "\t\t\"card\": {\"face\": \"mini\", \"reveal\": %s, \"sweep\": 0.6, \"hold\": 1.0, \"out\": 0.35, \"center\": Vector2(490, 365)},\n", rev
+			printf "\t\t# Sound Timeline (громкость — AudioSource)\n\t\t\"cues\": [%s]", cues
+			if (sh != "") printf ",\n\t\t# CameraShaker2\n\t\t\"shakers\": [%s]", sh
+			printf "},\n"
+		}' "$d/hierarchy.txt" $(ls "$d"/timeline_*.txt 2> /dev/null | head -1)
+	;;
 check)
 	cid=$3
 	"$G" --path "$RW/engine/godot" --script res://tests/ui_shot.gd -- --scenario=hs_play --card=$cid --gif=110 \
