@@ -18,6 +18,26 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-77 (сделано, 27 карт):** Lich, Revenant, Vampire, Shield Guardian, Silver Dragon, Solar,
+  Green Hag, Nightmare, Sylgar, Xanathar, Blink Dog, Cloud Giant, Pirate Captain, Young White
+  Dragon, Adult Brass, Ancient Brass, Ankheg, Deva, Dust Mephit, Stone Giant, Adult Gold, Ancient
+  Black/Blue/Bronze/Copper/Green/Silver Dragon (CARD_MAP «HsFx-77»).
+- **Новые карты — поток (с HsFx-77):** очередь `render/port_queue.tsv` (cid, колода, HS id, имя,
+  карта), выгрузки `render/port_dirs.tsv` (имя → папка в scratchpad прошлой сессии), удар
+  `render/port_plan.tsv` (имя, cid, секунда удара — по Timeline: Impact-звук / VFX_Finish /
+  сильная тряска). Шаги: `cand.sh render` (пробы) → лист проб глазами → `port.sh recipe`
+  (сам прячет трещины и виньетки — `*Crack*`, `*Vignette*`, кроме папок `*Root`) → `port.sh
+  bake` (можно в копии проекта: `HSPROJ=<scratchpad>/hsu`, тогда открытый HsBrowser не мешает)
+  → `port.sh sounds` + `port.sh script` (заготовка SCRIPTS: cues по SoundTimeline с громкостью
+  AudioSource, shakers по CameraShaker2) → комментарий → `hs_play.gd` → `check` → тесты → коммит.
+  `cand.sh` прячет `*Nightmare*` — это контур жетона только у `*Top_Nightmare`; у Omen
+  `FX_Motes_Nightmare` — частицы эффекта, вернуть. **Эффекты без Timeline (только FSM)** —
+  Wrathion, Rafaam, Moroes, Lich King, Kel'Thuzad, Malchezaar, Altruis, Lana'thel, обёртки
+  `_Super` Brukan (Dave Berard) и Tavish — делать вручную по FSM (`noTimeline`, `clips`,
+  `controls`, `stopAt`), как Fizzlebang: без разбора у Lich King метель на весь экран.
+  **Ловушка:** TaskStop останавливает оболочку, но цикл `bash cand.sh render …` и Unity
+  продолжают работать сами и мешают новым запускам («another Unity instance») — не прерывать
+  пачки, а ждать; Stop-Process запрещён правилами авто-режима.
 - **HsFx-76 (сделано):** готовые эффекты перепечены для новых карт — Efreeti (Kael'thas), Chain
   Devil (Cho'gall), Guardian Naga (Razidir), Oni (Irida), Roper (Iso'rath). Контуры `echo_<cid>.png`
   сделаны для всех назначенных карт. Очередь новых карт — `render/port_queue.tsv` (90), выгрузки

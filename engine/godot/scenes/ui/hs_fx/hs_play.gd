@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49021": "omen", "49020": "azurequeensindrago", "49015": "medivhthehallowed", "49121": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "elizagoreblade", "49636": "bonelordfrostwhisp", "49715": "anachronos", "49712": "misterclocksworth", "49718": "gormtheworldeater", "49720": "sunsapperlynessa", "49719": "timeadmralhooktail", "49716": "toycaptaintarim", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "titanographerosk", "49800": "arannathrillseeker", "49821": "ultraxion"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -455,6 +455,252 @@ const SCRIPTS := {
 		"cues": [[0.0, "ShadowcrafterScabbs_CustomSummon_sound", 0.8]],
 		# CameraShaker2: 0.05 нарастает до 1.08 с, в ударе 0.09, сила 1 -> 0
 		"shakers": [[0.0, 1.083, 0.05, [[0.0, 0.0], [1.0, 1.0]], 0.075], [1.8, 3.683, 0.09, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Broxigar (TIME_020) — Lich: TIME_020_Broxigar_Fab_CustomSummon (Timeline): в точке посадки
+	# открывается ядовито-зелёный портал, на 1.0 с удар — зелёная вспышка и искры скверны. Жетон
+	# HS и трещины спрятаны, весь эффект под картой. Выжигание зелёное. Владелец выбрал в
+	# HsBrowser 2026-10-27.
+	"broxigar": {"frames": "broxigar", "sounds": "broxigar",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIME_020_Broxigar_Fab_CustomSummon_Sound", 0.8], [1, "TIME_020_Broxigar_Fab_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1, 1.75, 0.5, [[0, 1], [1, 0]], 0.075], [0, 0.35, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Sylvanas, the Accused (CORE_MAW_033) — Revenant: MAWFX_SylvanasTheAccused_CustomSummon
+	# (Timeline): тёмный плащ-дым и пряди крика банши стягиваются к точке посадки, на 1.67 с
+	# удар — багровая дымка. Жетон HS спрятан, весь эффект под картой. Выжигание фиолетовое.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"sylvanastheaccused": {"frames": "sylvanastheaccused", "sounds": "sylvanastheaccused",
+		"card": {"face": "mini", "reveal": 2.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "SylvanasTheAccused_CustomSummon_Sound", 0.6], [1.67, "SylvanasTheAccused_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[1.667, 2.867, 0.1, [[0, 1], [1, 0]], 0.075], [0.767, 1.467, 0.05, [[0, 0], [0.47, 0.97], [0.88, 0.8], [1, 0]], 0.075]]},
+	# Tichondrius (CORE_CATA_001) — Vampire: в точке посадки разгорается ядовито-зелёный шар
+	# скверны, на 0.95 с вспышка, разлетаются летучие мыши. Жетон HS спрятан, весь эффект под
+	# картой. Выжигание зелёное. Владелец выбрал в HsBrowser 2026-10-27.
+	"tichondrius": {"frames": "tichondrius", "sounds": "tichondrius",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Tichondrias_CustomSummon_Sound", 0.9]],
+		# CameraShaker2
+		"shakers": [[0, 0.35, 0.2, [[0, 1], [1, 0]], 0.075], [0.917, 1.667, 0.5, [[0, 1], [1, 0]], 0.075]]},
+	# Omen (EDR_421) — Shield Guardian: багровая лента прилетает слева (как в HS) и бьёт в точку
+	# посадки, на 0.7 с алая сфера, искры гаснут. Жетон HS и трещины спрятаны, весь эффект под
+	# картой. Выжигание алое. Владелец выбрал в HsBrowser 2026-10-27.
+	"omen": {"frames": "omen", "sounds": "omen",
+		"card": {"face": "mini", "reveal": 1.17, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Omen_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[0.717, 1.3, 0.2, [[0, 1], [1, 0]], 0.075], [0.017, 0.367, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Azure Queen Sindragosa (TIME_852) — Silver Dragon: фиолетовый вихрь-крыло проносится к
+	# точке посадки, на 0.95 с вспышка — белое сияние с фиолетовыми молниями и золотым светом.
+	# Жетон HS и трещины спрятаны, весь эффект под картой. Выжигание фиолетовое. Владелец выбрал
+	# в HsBrowser 2026-10-27.
+	"azurequeensindrago": {"frames": "azurequeensindrago", "sounds": "azurequeensindrago",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIMEFX_AzureQueenSindragosa_CustomSummon_Cast_Sound", 0.8], [0.967, "TIMEFX_AzureQueenSindragosa_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0.667, 0.917, 0.4, [[0, 1], [1, 0]], 0.044], [0, 0.667, 0.1, [[0, 1], [1, 0]], 0.055], [0.933, 1.967, 0.3, [[0, 1], [1, 0]], 0.038]]},
+	# Medivh the Hallowed (TIME_890) — Solar: у точки посадки встаёт витражная дверь портала в
+	# языках пламени, на 1.4 с огненный взрыв. Жетон HS и виньетка спрятаны, весь эффект под
+	# картой. Выжигание огненное. Владелец выбрал в HsBrowser 2026-10-27.
+	"medivhthehallowed": {"frames": "medivhthehallowed", "sounds": "medivhthehallowed",
+		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "MedivhTheHallowed_CustomSummon_Cast_Sound", 0.8], [1.55, "MedivhTheHallowed_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.45, 1.917, 0.04, [[0, 1], [1, 0]], 0.075]]},
+	# Jace Darkweaver (SW_044) — Green Hag: из точки посадки валит ядовито-зелёный дым скверны,
+	# на 1.4 с вспышка, дым тает. Трещины в земле спрятаны, весь эффект под картой. Выжигание
+	# зелёное. Владелец выбрал в HsBrowser 2026-10-27.
+	"jacedarkweaver": {"frames": "jacedarkweaver", "sounds": "jacedarkweaver",
+		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[1.4, "JaceDarkweaver_CustomSummon_Impact_Sound", 0.5]]},
+	# Thunderbringer (WW_440) — Nightmare: над точкой посадки клубятся грозовые тучи, бьют синие
+	# молнии, на 1.53 с удар — голубая вспышка. Жетон HS, виньетка бури и трещины спрятаны, весь
+	# эффект под картой. Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	"thunderbringer": {"frames": "thunderbringer", "sounds": "thunderbringer",
+		"card": {"face": "mini", "reveal": 2.00, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Thunderbringer_CustomSummon_Cast_Sound", 0.6], [1.53, "Thunderbringer_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[1.467, 2, 0.15, [[0, 1], [1, 0]], 0.075], [0.967, 1.467, 0.05, [[0, 0], [0.23, 0.5], [1, 0.5]], 0.075]]},
+	# Drest'agath (BE_703) — Sylgar: в точке посадки открывается огненный глаз в кольце пламени
+	# (скромно — карта стоит 1), на 1.17 с он гаснет искрами. Жетон HS спрятан, весь эффект под
+	# картой. Выжигание алое. Владелец выбрал в HsBrowser 2026-10-27.
+	"drestagath": {"frames": "drestagath", "sounds": "drestagath",
+		"card": {"face": "mini", "reveal": 1.64, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BE_703_Drestagath_CustomSummon_FX_Sound", 0.7], [1.2, "BE_703_Drestagath_CustomSummon_FX_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0, 0.167, 0.2, [[0, 1], [1, 0]], 0.075], [0.7, 1.167, 0.05, [[0, 0], [1, 1]], 0.075], [1.167, 1.633, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# N'Zoth, Dream's End (BE_017) — Xanathar: пурпурные тучи бездны и золотой свет, на 1.45 с
+	# огненное кольцо, раскалённые трещины гаснут. Жетон HS и трещины в земле спрятаны, весь
+	# эффект под картой. Выжигание огненное. Владелец выбрал в HsBrowser 2026-10-27.
+	"nzothdreamsend": {"frames": "nzothdreamsend", "sounds": "nzothdreamsend",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BE_017_NzothDreamsEnd_CustomSummon_Sound", 0.8], [1.43, "BE_017_NzothDreamsEnd_CustomSummon_ImpactSound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.567, 2.583, 0.2, [[0, 1], [1, 0]], 0.075], [0.517, 1.1, 0.075, [[0, 1], [0.99, 0.7]], 0.1]]},
+	# Zer'Ontu (BE_790) — Blink Dog: слева мерцает фиолетовый разлом, синий вихрь переносится к
+	# точке посадки, на 1.45 с вспышка, голубой дым. Жетон HS и трещины спрятаны, весь эффект
+	# под картой. Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	"zerontu": {"frames": "zerontu", "sounds": "zerontu",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BE_790_ZerOntu_CustomSummon_Sound", 1], [1.32, "BE_790_ZerOntu_CustomSummon_ImpactSound", 1]],
+		# CameraShaker2
+		"shakers": [[1.517, 2.533, 0.2, [[0, 1], [1, 0]], 0.075], [0.517, 1.1, 0.075, [[0, 1], [0.99, 0.7]], 0.1]]},
+	# Hodir, Father of Giants (TTN_752) — Cloud Giant: ледяной вихрь кружит над точкой посадки и
+	# сжимается, на 1.32 с голубая вспышка. Жетон HS и трещины спрятаны, весь эффект под картой.
+	# Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	"hodirfatherofgiant": {"frames": "hodirfatherofgiant", "sounds": "hodirfatherofgiant",
+		"card": {"face": "mini", "reveal": 1.79, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "HodirFatherGiants_CustomSummon_Sound", 0.9], [1.32, "HodirFatherGiants_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0.833, 1.267, 0.05, [[0, 0], [0.21, 0.51], [0.7, 1], [1, 0]], 0.174], [1.317, 1.783, 0.15, [[0, 1], [1, 0]], 0.131]]},
+	# Eliza Goreblade (VAC_426) — Pirate Captain: два кровавых клинка бьют крестом в точку
+	# посадки, на 1.08 с алая вспышка, кровавый знак гаснет. Трещины от клинков спрятаны, весь
+	# эффект под картой. Выжигание алое. Владелец выбрал в HsBrowser 2026-10-27.
+	"elizagoreblade": {"frames": "elizagoreblade", "sounds": "elizagoreblade",
+		"card": {"face": "mini", "reveal": 1.55, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [],
+		# CameraShaker2
+		"shakers": [[0.1, 0.9, 0.05, [[0, 0], [0.5, 1], [0.99, 0]], 0.075], [1.083, 2.75, 0.07, [[0, 0.26], [0.22, 0.64], [0.37, 0.11], [0.68, 0.02], [1, 0]], 0.075]]},
+	# Bonelord Frostwhisper (RLK_591) — Young White Dragon: снизу к точке посадки поднимается
+	# ледяной луч, на 1.63 с морозный взрыв, иней оседает. Жетон HS спрятан, весь эффект под
+	# картой. Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	"bonelordfrostwhisp": {"frames": "bonelordfrostwhisp", "sounds": "bonelordfrostwhisp",
+		"card": {"face": "mini", "reveal": 2.10, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BonelordFrostwhisper_CustomSummon_Sound", 0.8], [1.63, "BonelordFrostwhisper_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[1.633, 3.149, 0.15, [[0, 0.35], [1, 0]], 0.059]]},
+	# Anachronos (CORE_RLK_919) — Adult Brass Dragon: золотая лента времени прилетает слева
+	# снизу, закручивается кольцом у точки посадки, на 0.8 с вспышка — пылающее золотое кольцо.
+	# Жетон HS спрятан, весь эффект под картой. Выжигание золотое. Владелец выбрал в HsBrowser
+	# 2026-10-27.
+	"anachronos": {"frames": "anachronos", "sounds": "anachronos",
+		"card": {"face": "mini", "reveal": 1.27, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Anachronos_CustomSummon_Sound", 0.7], [0.8, "Anachronos_CustomSummon_Impact_Sound", 0.4]],
+		# CameraShaker2
+		"shakers": [[0.833, 2.183, 0.05, [[0, 1], [1, 0]], 0.075]]},
+	# Mister Clocksworth (TIME_038t3) — Ancient Brass Dragon: золотая спираль времени с синим
+	# светом закручивается в точке посадки, на 1.52 с взрыв голубого и золотого огня. Жетон HS
+	# спрятан, весь эффект под картой. Выжигание голубое. Владелец выбрал в HsBrowser
+	# 2026-10-27.
+	"misterclocksworth": {"frames": "misterclocksworth", "sounds": "misterclocksworth",
+		"card": {"face": "mini", "reveal": 1.99, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIMEFX_MisterClocksWorth_CustomSummon_Sound", 0.4], [1.52, "TIMEFX_MisterClocksWorth_CustomSummon_Impact_Sound", 0.4]],
+		# CameraShaker2
+		"shakers": [[0.4, 1.383, 0.07, [[0, 0.26], [0.25, 0.97], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.075], [1.383, 2.183, 0.07, [[0, 0.26], [0.25, 0.65], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.129]]},
+	# Gorm the Worldeater (GDB_842) — Ankheg: из точки посадки бьёт песок и пыль, земля
+	# разверзается, на 1.3 с выброс песка. Жетон HS и трещины спрятаны, весь эффект под картой.
+	# Выжигание песочное. Владелец выбрал в HsBrowser 2026-10-27.
+	"gormtheworldeater": {"frames": "gormtheworldeater", "sounds": "gormtheworldeater",
+		"card": {"face": "mini", "reveal": 1.77, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "GormtheWorldeater_CustomSummon_Sound", 0.5]],
+		# CameraShaker2
+		"shakers": [[0, 0.583, 0.1, [[0, 1], [1, 0]], 0.075], [0.617, 1.2, 0.1, [[0, 1], [1, 0]], 0.075], [1.3, 2.167, 0.1, [[0, 1], [1, 0]], 0.075]]},
+	# Sunsapper Lynessa (VAC_507) — Deva: в точке посадки разгорается солнце, вокруг извиваются
+	# огненные змеи, на 1.27 с вспышка, жар гаснет. Жетон HS спрятан, весь эффект под картой.
+	# Выжигание огненное. Владелец выбрал в HsBrowser 2026-10-27.
+	"sunsapperlynessa": {"frames": "sunsapperlynessa", "sounds": "sunsapperlynessa",
+		"card": {"face": "mini", "reveal": 1.74, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "SunsapperLynessa_CustomSummon_Cast_Sound_", 0.5], [1.27, "SunsapperLynessa_CustomSummon_Impact_Sound_", 0.5]],
+		# CameraShaker2
+		"shakers": [[1.233, 2.283, 0.07, [[0, 1], [1, 0]], 0.122], [0, 1.15, 0.07, [[0, 0], [1, 1]], 0.049]]},
+	# Time Adm'ral Hooktail (TIME_713) — Dust Mephit: золотой вихрь песка прилетает слева (как в
+	# HS), на 1.25 с сфера голубого времени. Жетон HS и трещины спрятаны, весь эффект под
+	# картой. Выжигание золотое. Владелец выбрал в HsBrowser 2026-10-27.
+	"timeadmralhooktail": {"frames": "timeadmralhooktail", "sounds": "timeadmralhooktail",
+		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Timecap_nHooktail_CustomSummon_Trigger_Sound", 0.6], [1, "Timecap_nHooktail_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.25, 2.233, 0.3, [[0, 0], [0.04, 0.72], [0.5, 0]], 0.0219]]},
+	# Toy Captain Tarim (TOY_813t) — Stone Giant: в точке посадки вспыхивают золотые искры и
+	# камни, на 1.5 с золотой взрыв щита. Жетон HS и трещины спрятаны, весь эффект под картой.
+	# Выжигание золотое. Владелец выбрал в HsBrowser 2026-10-27.
+	"toycaptaintarim": {"frames": "toycaptaintarim", "sounds": "toycaptaintarim",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TOY_813_ToyCaptainTarim_CustomSummon_Sound", 0.4], [1.5, "TOY_813_ToyCaptainTarim_CustomSummon_Impact_Sound", 0.4]],
+		# CameraShaker2
+		"shakers": [[0.367, 1.35, 0.04, [[0, 0.26], [0.12, 0.96], [0.39, 0.52], [0.98, 0.43]], 0.208], [1.467, 2.933, 0.06, [[0, 0.26], [0.12, 0.96], [0.47, 0.15], [1, 0]], 0.075]]},
+	# Elise, Badlands Savior (WW_392) — Adult Gold Dragon: золотые ленты света сходятся в точку
+	# посадки, на 1.43 с вспышка. Жетон HS спрятан, весь эффект под картой. Выжигание золотое.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"elisebadlandssavio": {"frames": "elisebadlandssavio", "sounds": "elisebadlandssavio",
+		"card": {"face": "mini", "reveal": 1.90, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "EliseBadlandsSavior_CustomSummon_Sound", 0.6], [1.43, "EliseBadlandsSavior_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[1.417, 2.417, 0.03, [[0, 1], [1, 0]], 0.075]]},
+	# Aya, Lotus Kingpin (JAIL_504) — Ancient Black Dragon: фиолетовая туча закрывает верх поля,
+	# зелёный удар клинка бьёт в точку посадки, на 1.5 с вспышка. Жетон HS и трещины спрятаны,
+	# весь эффект под картой. Выжигание фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
+	"ayalotuskingpin": {"frames": "ayalotuskingpin", "sounds": "ayalotuskingpin",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "AyaLotusKingpin_CustomSummon_Sound", 0.7], [1.5, "AyaLotusKingpin_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.483, 2.133, 0.06, [[0, 1], [1, 0]], 0.075]]},
+	# Endtime Murozond (END_037) — Ancient Blue Dragon: в точке посадки рождается синяя сфера,
+	# молнии бьют во все стороны, на 1.25 с удар. Жетон HS, виньетка-прожектор и трещины
+	# спрятаны, весь эффект под картой. Выжигание синее. Владелец выбрал в HsBrowser 2026-10-27.
+	"endtimemurozond": {"frames": "endtimemurozond", "sounds": "endtimemurozond",
+		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ENDFX_EndtimeMurozond_CustomSummon_Sound", 0.7], [1.25, "ENDFX_EndtimeMurozond_CustomSummon_Impact_Sound", 0.9]],
+		# CameraShaker2
+		"shakers": [[1.25, 1.917, 0.5, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219], [0.317, 0.983, 0.5, [[0, 0], [0.04, 0.75], [0.09, 0], [0.5, 0]], 0.0219]]},
+	# Nozdormu, Bronze Aspect (CATA_473) — Ancient Bronze Dragon: бронзовые кольца времени
+	# сходятся к точке посадки, на 1.53 с белая вспышка. Жетон HS и трещины спрятаны, весь
+	# эффект под картой. Выжигание бронзовое. Владелец выбрал в HsBrowser 2026-10-27.
+	"nozdormubronzeaspe": {"frames": "nozdormubronzeaspe", "sounds": "nozdormubronzeaspe",
+		"card": {"face": "mini", "reveal": 2.00, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "NozdormuBronzeAspect_CustomSummon_Sound", 0.9]],
+		# CameraShaker2
+		"shakers": [[1.429, 2.267, 0.15, [[0, 1], [1, 0]], 0.0407], [0.483, 1.05, 0.1, [[0, 0], [1, 1]], 0.0124]]},
+	# Titanographer Osk (TLC_452t35) — Ancient Copper Dragon: медно-синяя лента пролетает к
+	# точке посадки, на 1.48 с огненная вспышка. Жетон HS и трещины спрятаны, весь эффект под
+	# картой. Выжигание медное. Владелец выбрал в HsBrowser 2026-10-27.
+	"titanographerosk": {"frames": "titanographerosk", "sounds": "titanographerosk",
+		"card": {"face": "mini", "reveal": 1.95, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TLCFX_Titangrapher_CustomSummon_Sound", 0.5], [1.48, "TLCFX_Titangrapher_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2
+		"shakers": [[1.233, 1.9, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# Aranna, Thrill Seeker (VAC_501) — Ancient Green Dragon: ядовито-зелёный рывок слева, на
+	# 1.25 с зелёный взрыв скверны. Жетон HS и трещины спрятаны, весь эффект под картой.
+	# Выжигание зелёное. Владелец выбрал в HsBrowser 2026-10-27.
+	"arannathrillseeker": {"frames": "arannathrillseeker", "sounds": "arannathrillseeker",
+		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ArannaTheExtreme_CustomSummon_Cast_Sound", 0.8], [1.25, "ArannaTheExtreme_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.25, 1.917, 0.2, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# Ultraxion (CATA_497) — Ancient Silver Dragon: фиолетовый вихрь сумерек снизу, на 1.28 с
+	# фиолетовая сфера с молниями. Жетон HS спрятан, весь эффект под картой. Выжигание
+	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
+	"ultraxion": {"frames": "ultraxion", "sounds": "ultraxion",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CATAFX_Ultraxion_CustomSummon_Sound", 0.7], [1.28, "CATAFX_Ultraxion_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.283, 1.75, 0.04, [[0, 1], [1, 0]], 0.075]]},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

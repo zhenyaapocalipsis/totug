@@ -123,10 +123,10 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Death Knight (48721) | The Lich King (ICC_314) | `LichKing_CustomSummon.prefab` | рыцарь смерти |
 | Mummy Lord (48725) | Dark Pharaoh Tekahn (ULD_168) | `DarkPharaohTekahn_CustomSummon.prefab` | владыка-мумия |
-| Vampire (48728) | Blood-Queen Lana'thel (ICC_841) | `BloodQueenLanathel_CustomSummon.prefab` | вампир |
-| Lich (48732) | Kel'Thuzad, the Inevitable (REV_514) | `REVFX_KelThuzadTheInevitable_CustomSummon.prefab` | лич |
+| Vampire (48728) | Tichondrius (CORE_CATA_001) | `CORE_CATAFX_Tichondrius_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Lich (48732) | Broxigar (TIME_020) | `TIME_020_Broxigar_Fab_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | High Priest of Myrkul (48733) | Bwonsamdi, the Dead (TRL_260) | `Bwonsamdi_CustomSummon.prefab` | жрец бога смерти |
-| Revenant (48738) | Sylvanas, the Accused (MAW_033) | `MAWFX_SylvanasTheAccused_CustomSummon.prefab` | мститель, восставший из мёртвых |
+| Revenant (48738) | Sylvanas, the Accused (CORE_MAW_033) | `MAWFX_SylvanasTheAccused_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### celestial
 
@@ -134,13 +134,13 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Sphinx of Valor (49003) | King Phaoris (ULD_304) | `KingPharois_CustomSummon.prefab` | сфинкс, древний царь пустыни |
 | Djinni (49004) | Zephrys the Great (ULD_003) | `Zephrys_CustomSummon.prefab` | джинн |
-| Solar (49015) | Ragnaros, Lightlord (OG_229) | `RagnarosLightlord_CustomSummon.prefab` | ангел света и пламени |
+| Solar (49015) | Medivh the Hallowed (TIME_890) | `TIMEFX_MedivhtheHallowed_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Erinyes (49016) | Aggramar, the Avenger (TTN_092) | `TTNFX_AggramarTheAvenger_CustomSummon.prefab` | крылатая мстительница |
 | Warrior Veteran (49017) | Varian, King of Stormwind (SW_081) | `SWFX_KingVarian_CustomSummon.prefab` | воин-ветеран |
 | Berserker (49018) | Korrak the Bloodrager (AV_143) | `AVFX_Korrak_CustomSummon.prefab` | берсерк |
 | Scout (49019) | Vereesa Windrunner (DAL_379) | `VereesaWindrunner_CustomSummon.prefab` | разведчица-лучница |
-| Silver Dragon (49020) | Alexstrasza, Guardian of Life (CATA_307) | `CATAFX_AlexstraszaGaurdianofLife_CustomSummon.prefab` | добрая драконица-хранительница |
-| Shield Guardian (49021) | Kologarn (TTN_330) | `TTNFX_Kologarn_CustomSummon.prefab` | каменный страж-голем |
+| Silver Dragon (49020) | Azure Queen Sindragosa (TIME_852) | `TIMEFX_AzureQueenSindragosa_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Shield Guardian (49021) | Omen (EDR_421) | `EDRFX_Omen_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Gold Dragon (49022) | Nozdormu the Timeless (DRG_309) | `NozdormuTheTimeless_CustomSummon.prefab` | золотой дракон |
 
 ### shadow
@@ -148,14 +148,14 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Rakshasa (49113) | Shirvallah, the Tiger (TRL_300) | `Shirvallah_CustomSummon.prefab` | демон-тигр |
-| Nightmare (49114) | The Headless Horseman (TOY_829) | `TOYFX_HeadlessHorseman_CustomSummon_Super.prefab` | огненный конь кошмаров |
+| Nightmare (49114) | Thunderbringer (WW_440) | `WWFX_Thunderbringer_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Chain Devil (49115) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Barbed Devil (49116) | Kurtrus Ashfallen (BAR_333) | `BARFX_Kurtrus_CustomSummon.prefab` | колючий дьявол, клинки |
 | Ghast (49117) | Rotface (ICC_405) | `RotFace_CustomSummon.prefab` | гниющий упырь |
 | Treant (49118) | Greybough (DMF_734) | `DMFFX_GreyBough_CustomSummon.prefab` | ожившее дерево |
 | Bone Devil (49119) | Lord Marrowgar (RLK_085) | `RLKFX_LordMarrowgar_CustomSummon.prefab` | костяной дьявол |
 | Drider (49120) | Hadronox (ICC_835) | `Hadronox_CustomSummon.prefab` | паук-дроу |
-| Green Hag (49121) | Hagatha the Witch (GIL_504) | `Hagatha_CustomSummon_FX.prefab` | болотная ведьма |
+| Green Hag (49121) | Jace Darkweaver (SW_044) | `SWFX_JaceDarkweaver_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Shadow (49122) | Teron Gorefiend (BT_126) | `TeronGorefiend_CustomSummon.prefab` | живая тень |
 
 ### piltover
@@ -192,9 +192,9 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Nihiloor (49407) | Za'qul (TSC_959) | `TSCFX_Zaqul_CustomSummon.prefab` | иллитид, кошмар разума |
 | Nar'l Xibrindas (49412) | Archmage Arugal (GIL_691) | `ArchmageArugal_CustomSummon.prefab` | маг-дроу |
 | Jarlaxle (49413) | Heistbaron Togwaggle (DAL_417) | `HeistbaronTogwaggle_CustomSummon.prefab` | авантюрист, крадёт карту |
-| Sylgar (49416) | Sir Finley Mrrgglton (LOE_076) | `SirMrrgglton_CustomSummon.prefab` | рыбка Занатара |
+| Sylgar (49416) | Drest'agath (BE_703) | `BE_703_Drestagath_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Ahmaergo (49417) | Brann Bronzebeard (LOE_077) | `Brann_CustomSummon.prefab` | дварф |
-| Xanathar Zushaxx (49418) | King of the Underbelly (JAIL_831) | `JAILFX_TunnelKing_CustomSummon.prefab` | бехолдер — король преступного мира |
+| Xanathar Zushaxx (49418) | N'Zoth, Dream's End (BE_017) | `BE_017_NzothDreamsEnd_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### noxus
 
@@ -217,43 +217,43 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Owlbear (49613) | Ursoc (EDR_819) | `EDRFX_Ursoc_CustomSummon.prefab` | медведь |
 | Hill Giant (49614) | Hodir, Father of Giants (TTN_752) | `TTNFX_HodirFatherGiants_CustomSummon.prefab` | великан |
-| Cloud Giant (49615) | Aman'Thul (TTN_429) | `TTNFX_Amanthul_CustomSummon.prefab` | небесный великан |
+| Cloud Giant (49615) | Hodir, Father of Giants (TTN_752) | `TTNFX_HodirFatherGiants_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Remorhaz (49616) | Mutanus the Devourer (WC_030) | `BARFX_MutanusTheDevourer_CustomSummon.prefab` | пожирающий червь |
 | Mammoth (49617) | Icehowl (AT_125) | `IceHowl_CustomSpawn.prefab` | ледяной зверь |
 | Storm Giant (49618) | Golganneth, the Thunderer (TTN_800) | `TTNFX_Golganneth_CustomSummon.prefab` | великан бури |
 | Frost Giant (49620) | Lokholar the Ice Lord (AV_141t) | `AVFX_Lokholar_CustomSummon.prefab` | ледяной великан |
-| Pirate Captain (49634) | Captain Hooktusk (TRL_126) | `CaptainHooktusk_CustomSummon.prefab` | капитан пиратов |
-| Blink Dog (49635) | Goldrinn (EDR_480) | `EDR_Goldrinn_CustomSummon.prefab` | волшебный пёс-волк |
-| Young White Dragon (49636) | Azure Queen Sindragosa (TIME_852) | `TIMEFX_AzureQueenSindragosa_CustomSummon.prefab` | молодая ледяная драконица |
+| Pirate Captain (49634) | Eliza Goreblade (VAC_426) | `VAC_ElizaGoreBlade_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Blink Dog (49635) | Zer'Ontu (BE_790) | `BE_790_ZerOntu_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Young White Dragon (49636) | Bonelord Frostwhisper (RLK_591) | `RLKFX_BonelordFrostwhisper_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### shurima
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Roper (49711) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
-| Ancient Brass Dragon (49712) | Fyrakk the Blazing (FIR_959) | `FIRFX_FyrakkTheBlazing_CustomSummon.prefab` | древний дракон пустыни, пламя |
+| Ancient Brass Dragon (49712) | Mister Clocksworth (TIME_038t3) | `TIMEFX_MisterClocksWorth_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Purple Worm (49713) | Gorm the Worldeater (GDB_842) | `GDBFX_GormtheWorldeater_CustomSummon.prefab` | гигантский червь |
 | Guardian Naga (49714) | Razidir (TLC_463) | `TLC463_Nazidir_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
-| Adult Brass Dragon (49715) | Dragonqueen Alexstrasza (DRG_089) | `DragonqueenAlexstrasza_CustomSummon.prefab` | дракон пустыни |
-| Stone Giant (49716) | Ozruk (UNG_907) | `Ozruk_CustomSummon.prefab` | каменный великан |
+| Adult Brass Dragon (49715) | Anachronos (CORE_RLK_919) | `RLKFX_Anachronos_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Stone Giant (49716) | Toy Captain Tarim (TOY_813t) | `TOYFX_ToyCaptainTarim_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Gorgon (49717) | Gorgonzormu (VAC_955) | `VACFX_Gorgonzormu_CustomSummon.prefab` | горгона (по имени; при желании — заменить) |
-| Ankheg (49718) | Princess Huhuran (OG_309) | `PrincessHuhuran_CustomSummon.prefab` | гигантское роющее насекомое |
-| Dust Mephit (49719) | Raylla, Sand Sculptor (VAC_424) | `VACFX_RayllaSandSculptor_CustomSummon.prefab` | пыльный элементаль |
-| Deva (49720) | Lyra the Sunshard (UNG_963) | `Aurelia_CustomSummon.prefab` | ангел-посланник |
+| Ankheg (49718) | Gorm the Worldeater (GDB_842) | `GDBFX_GormtheWorldeater_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Dust Mephit (49719) | Time Adm'ral Hooktail (TIME_713) | `TIMEFX_Timecap_nHooktail_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Deva (49720) | Sunsapper Lynessa (VAC_507) | `VACFX_SunsapperLynessa_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### ionia
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Ancient Green Dragon (49800) | Ysera, Unleashed (DRG_320) | `YseraUnleashed_CustomSummon.prefab` | древняя зелёная драконица |
+| Ancient Green Dragon (49800) | Aranna, Thrill Seeker (VAC_501) | `VACFX_ArannatheExtreme_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Oni (49801) | Irida Sinseeker (JAIL_719) | `JAIL_719_IridaSinseeker_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
-| Ancient Black Dragon (49803) | Deathwing, Mad Aspect (DRG_026) | `DeathwingMadAspect_CustomSummon_GroundBurst.prefab` | древний чёрный дракон |
-| Ancient Copper Dragon (49806) | Chromatus (CATA_432) | `CATAFX_Chromatus_CustomSummon.prefab` | древний дракон |
-| Ancient Blue Dragon (49807) | Malygos the Spellweaver (CS3_034) | `EX1FX_Malygos_CustomSummon.prefab` | древний синий дракон |
+| Ancient Black Dragon (49803) | Aya, Lotus Kingpin (JAIL_504) | `JAILFX_AyaLotusKingpin_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Ancient Copper Dragon (49806) | Titanographer Osk (TLC_452t35) | `TLCFX_Titangrapher_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Ancient Blue Dragon (49807) | Endtime Murozond (END_037) | `ENDFX_EndtimeMurozond_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Tarrasque (49811) | Oondasta (TRL_542) | `Oondasta_CustomSummon.prefab` | непобедимое чудище |
-| Ancient Bronze Dragon (49815) | Nozdormu, Bronze Aspect (CATA_473) | `CATAFX_NozdormuBronzeAspect_CustomSummon.prefab` | бронзовый дракон |
-| Adult Gold Dragon (49820) | Rheastrasza (WW_824) | `WWFX_Rheastrasza_CustomSummon.prefab` | золотой дракон |
-| Ancient Silver Dragon (49821) | Kalecgos (DAL_609) | `Kalecgos_CustomSummon.prefab` | древний серебряный дракон |
+| Ancient Bronze Dragon (49815) | Nozdormu, Bronze Aspect (CATA_473) | `CATAFX_NozdormuBronzeAspect_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Adult Gold Dragon (49820) | Elise, Badlands Savior (WW_392) | `WWFX_EliseBadlandsSavior_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Ancient Silver Dragon (49821) | Ultraxion (CATA_497) | `CATAFX_Ultraxion_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Kraken (49822) | Ozumat (TID_711) | `TIDFX_Ozumat_CustomSummon.prefab` | морское чудище |
 
 ### bandle

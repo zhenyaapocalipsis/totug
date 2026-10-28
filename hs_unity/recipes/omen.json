@@ -1,0 +1,26 @@
+{
+  "deps": "../deps_omen.txt",
+  "fps": 60.0,
+  "len": 3.4,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {"prefab": "841b6434b0500914c9eecf9b0bdc5694", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/VFX_Land/FX_Cracks", "Root/Token (Position)"], "under": ["Root"], "controls": [{"node": "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Particles_Trail", "start": 0.017, "end": 2.017},{"node": "Root/VFX_Land", "start": 0.7, "end": 4.7}], "measure": ["Root"]},
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 0.72,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.98,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_49021.png"}
+  ]
+}
