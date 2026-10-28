@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "blackempire", "48325": "benedictus", "48328": "zayle", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "blackempire", "48325": "benedictus", "48328": "zayle", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -258,6 +258,17 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.74, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.35
 		"cues": [[0.0, "Kara_CustomSummon_Sound", 0.35]]},
+	# Endbringer Umbra (TLC_106) — Graz'zt (вместо K'ara — владелец выбрал в HsBrowser
+	# 2026-10-27): TLCFX_EndbringerUmbra_CustomSummon (Timeline): фиолетовые щупальца тьмы
+	# тянутся сверху и сходятся в точке посадки, на 1.0 с удар — вспышка, сфера тёмной
+	# энергии, ударная волна. Жетон HS спрятан, весь эффект под картой; фиолетовое
+	# затемнение доски (CameraOverlay) не берём. Выжигание фиолетовое в цвет щупалец.
+	"umbra": {"frames": "umbra", "sounds": "umbra",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.6 с начала
+		"cues": [[0.0, "EndbringerUmbra_CustomSummon_Sound", 0.6]],
+		# CameraShaker2: дрожь нарастает 0.04 до удара, в ударе 0.2, сила линейно 1 -> 0
+		"shakers": [[0.0, 1.0, 0.04, [[0.0, 0.0], [1.0, 1.0]], 0.075], [1.0, 1.75, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 	# Nythendra (EDR_818) — Vrock (вместо Anetheron, SW — владелец 2026-10-25: только
 	# свежие; врок разносит споры): EDRFX_Nythendra_CustomSummon (Timeline): жёлтая чумная
 	# мошкара вихрем стягивается к точке посадки, на 1.38 с вспышка — рой разлетается и
