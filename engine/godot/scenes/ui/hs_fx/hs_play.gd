@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "blackempire", "48325": "benedictus", "48328": "kaelthas", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "prestor", "48316": "blackempire", "48325": "benedictus", "48328": "zayle", "48329": "azshara", "48339": "samuro", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "kara", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -134,7 +134,8 @@ const SCRIPTS := {
 		"cues": [[0.0, "LadyPrestor_CustomSummon_Sound", 0.4], [1.383, "LadyPrestor_CustomSummon_Impact_Sound", 0.4]],
 		# CameraShakerAction FSM: 0.05 по осям, с 1.5 с, 0.2 с
 		"shakers": [[1.5, 1.7, 0.04, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
-	# Zayle, Shadow Cloak (DAL_800) — Deathblade (вместо Valeera the Hollow: у неё только
+	# Zayle, Shadow Cloak (DAL_800) — Masters of Sorcere (владелец в HsBrowser 2026-10-27; до
+	# HsFx-58 стоял на Deathblade вместо Valeera the Hollow: у неё только
 	# полёт миньона HS на лиане — владелец 2026-10-24): DALFX_ZayleShadowCloak_CustomSummon
 	# (по FSM: все частицы с нажатия): в точке посадки фиолетовый разлом-молния, дым, знак
 	# глаза в треугольнике, на 1.0 с появляется миньон HS. Весь эффект под картой (молния
