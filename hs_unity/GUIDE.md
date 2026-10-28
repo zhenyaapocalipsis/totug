@@ -18,6 +18,11 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-64..68 (сделано):** dragons — Black → Victor Nefarius (выжигание чёрное), Blue → Murozond
+  Unbounded, Green → Y'Shaarj LT23 (`yshaarj_lt`, звуки в соседних папках выгрузки), Severin →
+  Herenn, White → Vyranoth; `onyxia`, `malygos`, `ysera`, `sindragosa` удалены; `chogall` ждёт Chain Devil.
+  Ловушка: `port.sh` правится во время пакетного запуска — bash читает скрипт на ходу и падает;
+  для пачек запускать копию (`cp port.sh /tmp/port_run.sh`).
 - **HsFx-61..63 (сделано):** Council Member → Wilfred Fizzlebang (FSM без Timeline: `noTimeline`,
   `clips`, `stopAt`), Matron Mother → Renferal, Weaponmaster → Exarch Akama (старт сдвинут `move`);
   `prestor`, `azshara`, `samuro` удалены. Колода drow перенесена. Помощник — `tools/port.sh`

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "onyxia", "48403": "malygos", "48419": "ysera", "48433": "sindragosa", "48429": "chogall", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -63,55 +63,64 @@ const SCRIPTS := {
 		"shakers": [[0.0, 1.133, 0.08, [[0.0, 0.5], [0.3, 0.99], [0.51, 0.23], [1.0, 0.0]], 0.075],
 			[1.133, 2.533, 0.12, [[0.0, 0.5], [0.1, 0.99], [0.21, 0.98], [0.67, 0.15], [1.0, 0.0]], 0.075]],
 		"fog": ["worldbreaker_fog", 0.1]},
-	# Onyxia the Broodmother (CS3_032) — Black Dragon: ds1FX_Onyxia_CustomSummon (по FSM
-	# спелла; без полёта миньона HS — владелец 2026-10-24: сгусток дыма и огня с нажатия
-	# формируется в точке посадки, на 0.72 с «крик» — огненное кольцо с лучами, удар 1.5 с
-	# — дым и угли; свечение миньона HS и трещины под ним убраны) и за ударом
-	# Choice_Reveal Deathwing, как у Red Dragon (у Onyxia своего нет), выжигание чёрное
-	# (владелец 2026-10-24: в тоне карты). Эффекта розыгрыша (m_PlayEffectDef) у Onyxia
-	# нет — дымки нет.
-	"onyxia": {"frames": "onyxia", "sounds": "onyxia",
+	# Victor Nefarius (CATA_470) — Black Dragon (вместо Onyxia — владелец выбрал в HsBrowser
+	# 2026-10-27): CATAFX_VictorNefarius_CustomSummon (Timeline): над точкой посадки клубится
+	# зелёная мгла, закручивается зелёно-золотой серп, на 1.2 с вспышка — сфера, угли гаснут.
+	# Весь эффект под картой. Выжигание чёрное (владелец 2026-10-24 для Black Dragon).
+	"nefarius": {"frames": "nefarius", "sounds": "nefarius",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.8 с начала, удар 0.5 с 1.2 с
+		"cues": [[0.0, "CATA_470_VictorNefarius_CustomSummon_Sound", 0.8], [1.2, "CATA_470_VictorNefarius_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2: дрожь нарастает до удара, в ударе 0.07 и спад
+		"shakers": [[0.198, 1.1, 0.05, [[0.0, 0.0], [1.0, 1.0]], 0.075],
+			[1.1, 3.15, 0.07, [[0.0, 0.26], [0.13, 0.67], [0.37, 0.11], [0.68, 0.02], [1.0, 0.0]], 0.075]]},
+	# Murozond, Unbounded (TIME_024) — Blue Dragon (вместо Malygos — владелец выбрал в
+	# HsBrowser 2026-10-27): TIMEFX_MurozondUnbounded_Customsummon (Timeline): синие молнии
+	# бьют через весь экран, сходятся в точке посадки, на 1.5 с удар — вспышка, синий шар,
+	# руна гаснет. Жетон HS спрятан, весь эффект под картой. Выжигание голубое в цвет молний.
+	"murozond": {"frames": "murozond", "sounds": "murozond",
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# громкости — AudioPlayClipAction FSM (AudioSource 1)
-		"cues": [[0.0, "Onyxia_CustomSummon_Cast", 0.8], [1.5, "Onyxia_CustomSummon_Impact", 0.7]],
-		# CameraShakerAction FSM в ударе: 0.2 по осям, случайная точка каждый кадр, 0.56 с
-		"shakers": [[1.5, 2.06, 0.16, [[0.0, 1.0], [0.161, 0.9], [0.393, 0.27], [1.0, 0.0]], 0.0167]]},
-	# Malygos, Aspect of Magic (DRG_270) — Blue Dragon: DRGFX_MalygosAspectOfMagic_CustomSummon
-	# (Timeline спелла): в точке посадки искра раскрывается в синий магический портал со
-	# спиралью и лучами, из него поднимается вспышка с кольцом и на 1.7 с падает вниз —
-	# удар, фиолетовая вспышка газа и искры; свечение миньона HS и трещины убраны. За
-	# ударом Choice_Reveal Deathwing, как у Red Dragon, выжигание синее (тон карты).
-	# Дымки нет (нет m_PlayEffectDef).
-	"malygos": {"frames": "malygos", "sounds": "malygos",
-		"card": {"face": "mini", "reveal": 2.2, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# FSM: звук портала с начала, два звука удара в 1.7 с (второй — pitch 1.1)
-		"cues": [[0.0, "MalygosAspectOfMagic_CustomSummon_Sound", 0.7], [1.7, "FlikSkyshiv_CustomSummon_Impact_Sound", 0.6, 1.1],
-			[1.7, "AngelicaWarden_CustomSummon_Impact_Sound", 0.7]],
-		# MainCameraShakerAction: 0.15 по осям, сила линейно 1 -> 0 за время тряски
-		"shakers": [[0.7, 1.4, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167], [1.7, 2.0, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
-	# Ysera, Emerald Aspect (EDR_000) — Green Dragon: EDRFX_YseraEmeraldAspect_CustomSummon
-	# (Timeline): в точке посадки открывается изумрудный портал с кольцом рун, вокруг
-	# вьётся лента листьев, к 1.3–1.5 с портал схлопывается вспышкой огоньков, на месте
-	# распускаются цветы и листья и медленно тают (под картой, чтобы карта читалась).
-	# Убраны: радуги (владелец), силуэт миньона HS в портале (Token_FX: меши жетона
-	# на столе HS — овальный портрет и рамка элитного дракона), затемнение краёв (Vignette), цветы рамки и лучи героя HS; эффект розыгрыша
-	# Hero_Impact (цветы у героя
-	# и стола HS) не берём. Тряски в HS нет. Выжигание оливково-зелёное (тон карты).
-	"ysera": {"frames": "ysera", "sounds": "ysera",
-		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		"cues": [[0.0, "YseraEmeraldAspect_CustomSummon_Sound", 1.0]]},
-	# Frost Queen Sindragosa (NX2_037) — White Dragon: NX2FX_FrostQueenSindragosa_CustomSummon
-	# (Timeline): в точке посадки раскрываются ледяные крылья, вьются синие ленты, к 1.33 с
-	# вспышка, затем снежные крылья, трещины и морозный туман расходятся по столу и тают
-	# (под картой, чтобы карта читалась). Убраны осколки, собирающиеся в овальный жетон
-	# миньона HS (владелец 2026-10-24). Выжигание бело-ледяное (владелец). Дымки нет.
-	"sindragosa": {"frames": "sindragosa", "sounds": "sindragosa",
-		"card": {"face": "mini", "reveal": 1.8, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# громкости — AudioSource префаба (0.8)
-		"cues": [[0.0, "FrostQueenSindragosa_CustomSummon_Cast_Sound", 0.8], [0.0, "FrostQueenSindragosa_CustomSummon_PeicesForm_Sound", 0.8],
-			[1.183, "FrostQueenSindragosa_CustomSummon_Tail_Sound", 0.8]],
+		# Sound Timeline: AudioSource 0.7 с начала, удар 0.7 с 1.5 с
+		"cues": [[0.0, "TIMEFX_MurozondUnbounded_Customsummon_Sound", 0.7], [1.5, "TIMEFX_MurozondUnbounded_Customsummon_Impact_Sound", 0.7]],
+		# CameraShaker2: молнии нарастают 0.4, спад 0.3, удар 0.2
+		"shakers": [[0.0, 0.683, 0.4, [[0.0, 0.0], [1.0, 1.0]], 0.0433], [0.683, 1.133, 0.3, [[0.0, 1.0], [1.0, 0.0]], 0.0329],
+			[1.5, 2.283, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.0314]]},
+	# Y'Shaarj (LT23_028H_03, эффект DMFFX_Y_ShaarjDefiler) — Green Dragon (вместо Ysera —
+	# владелец выбрал в HsBrowser 2026-10-27): ядовито-зелёная лента порчи прилетает слева
+	# снизу (как в HS) и закручивается в воронку у точки посадки, на 1.07 с белая вспышка,
+	# зелёное облако и жёлтая клякса порчи. Трещины в земле (`mesh_Cracks*`, макет HS)
+	# спрятаны, весь эффект под картой. Выжигание ядовито-зелёное.
+	"yshaarj_lt": {"frames": "yshaarj_lt", "sounds": "yshaarj_lt",
+		"card": {"face": "mini", "reveal": 1.54, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM: 0.8 с начала, удар 0.7 с 1.1 с
+		"cues": [[0.0, "Y_ShaarjTheDefiler_CustomSummon_Sound", 0.8], [1.1, "Y_ShaarjTheDefiler_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShakerAction FSM: 0.06 с 0.3 с, удар 0.1 с 1.07 с
+		"shakers": [[0.3, 1.3, 0.06, [[0.0, 1.0], [0.63, 0.6], [0.75, 0.0], [1.0, 0.0]], 0.075],
+			[1.07, 1.57, 0.1, [[0.0, 1.0], [0.25, 0.0], [1.0, 0.0]], 0.075]]},
+	# High Cultist Herenn (TLC_810) — Severin Silrajin (вместо Cho'gall — владелец выбрал в
+	# HsBrowser 2026-10-27; Cho'gall уходит к Chain Devil): TLCFX_HighCultistHerenn_CustomSummon
+	# (Timeline): в точке посадки разгорается огненное кольцо ритуала, сверху бьёт фиолетовый
+	# луч, на 1.45 с удар — фиолетово-огненная вспышка, круг тлеет. Весь эффект под картой.
+	# Выжигание фиолетовое.
+	"herenn": {"frames": "herenn", "sounds": "herenn",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.5 с начала
+		"cues": [[0.0, "TLCFX_HighCultistHerenn_CustomSummon_Sound", 0.5]],
+		# CameraShaker2: дрожь 0.05 нарастает, удар 0.2 с 1.45 с
+		"shakers": [[0.0, 2.183, 0.05, [[0.0, 0.0], [0.27, 0.58], [0.95, 1.0], [1.0, 1.0]], 0.15],
+			[1.45, 2.367, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Vyranoth (CATA_213) — White Dragon (вместо Frost Queen Sindragosa — владелец выбрал в
+	# HsBrowser 2026-10-27): CATAFX_Vyranoth_CustomSummon (Timeline): из точки посадки
+	# вырастают ледяные кристаллы, морозный туман, к ~1.2 с ледяной взрыв, осколки тают.
+	# Весь эффект под картой. Выжигание ледяное голубое.
+	"vyranoth": {"frames": "vyranoth", "sounds": "vyranoth",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.8 с начала
+		"cues": [[0.0, "Vyranoth_CustomSummon_Sound", 0.8]],
+		# CameraShaker2: 0.08, пик к 1.3 с
 		"shakers": [[0.0, 3.117, 0.08, [[0.0, 0.0], [0.26, 0.3], [0.42, 0.77], [0.54, 0.49], [1.0, 0.0]], 0.075]]},
-	# Cho'gall, Twilight Chieftain (YOG_530) — Severin Silrajin:
+	# Cho'gall, Twilight Chieftain (YOG_530) — пока без карты (владелец 2026-10-27 отдал его Chain
+	# Devil, кадры перепечь с её контуром; до HsFx-64..68 — Severin Silrajin):
 	# YOGFX_Cho'gallTwilightChieftain_CustomSummon (Timeline): две цепи бьют крестом в точку
 	# посадки, сверху падает фиолетовый луч, на 0.95 с удар — кольцо, всплеск сумерек и
 	# осколки цепей. Весь эффект под картой (всплеск закрывал её). Убраны миньон HS, его

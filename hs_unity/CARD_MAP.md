@@ -70,13 +70,13 @@
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Black Dragon (48400) | Onyxia the Broodmother (CS3_032) | `ds1FX_Onyxia_CustomSummon.prefab` | СДЕЛАНО (HsFx-14) |
-| Blue Dragon (48403) | Malygos, Aspect of Magic (DRG_270) | `MalygosAspectOfMagic_CustomSummon.prefab` | СДЕЛАНО (HsFx-16) |
-| Green Dragon (48419) | Ysera, Emerald Aspect (EDR_000) | `EDRFX_YseraEmeraldAspect_CustomSummon.prefab` | СДЕЛАНО (HsFx-18) |
+| Black Dragon (48400) | Victor Nefarius (CATA_470) | `CATAFX_VictorNefarius_CustomSummon.prefab` | СДЕЛАНО (HsFx-64..68; владелец выбрал в HsBrowser 2026-10-27 вместо Onyxia); зелёный серп и сфера; выжигание чёрное (правило владельца для Black Dragon) |
+| Blue Dragon (48403) | Murozond, Unbounded (TIME_024) | `TIMEFX_MurozondUnbounded_Customsummon.prefab` | СДЕЛАНО (HsFx-64..68; владелец выбрал в HsBrowser 2026-10-27 вместо Malygos); синие молнии через экран, шар; выжигание голубое |
+| Green Dragon (48419) | Y'Shaarj (LT23_028H_03) | `DMFFX_Y_ShaarjDefiler_CustomSummon.prefab` | СДЕЛАНО (HsFx-64..68; владелец выбрал в HsBrowser 2026-10-27 вместо Ysera); лента порчи слева, воронка, клякса; трещины спрятаны; выжигание зелёное |
 | Rath Modar (48425) | Rhonin (AT_009) | `Rhonin_CustomSpawn.prefab` | БЕЗ АНИМАЦИИ (владелец 2026-10-27, HsFx-56: кадры и звуки удалены; рецепт оставлен); было — (HsFx-20) |
 | Red Dragon (48426) | Deathwing, Worldbreaker (CATA_190h) | `CATAFX_Deathwing_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-1..12) |
-| Severin Silrajin (48429) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | СДЕЛАНО (HsFx-21) |
-| White Dragon (48433) | Frost Queen Sindragosa (NX2_037) | `NX2FX_FrostQueenSindragosa_CustomSummon.prefab` | СДЕЛАНО (HsFx-19) |
+| Severin Silrajin (48429) | High Cultist Herenn (TLC_810) | `TLCFX_HighCultistHerenn_CustomSummon.prefab` | СДЕЛАНО (HsFx-64..68; владелец выбрал в HsBrowser 2026-10-27 вместо Cho'gall (тот уходит к Chain Devil)); огненное кольцо ритуала, фиолетовый луч; выжигание фиолетовое |
+| White Dragon (48433) | Vyranoth (CATA_213) | `CATAFX_Vyranoth_CustomSummon.prefab` | СДЕЛАНО (HsFx-64..68; владелец выбрал в HsBrowser 2026-10-27 вместо Frost Queen Sindragosa); ледяные кристаллы, морозный взрыв; выжигание голубое |
 
 ### demons
 

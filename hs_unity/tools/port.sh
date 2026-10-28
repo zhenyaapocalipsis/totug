@@ -108,7 +108,8 @@ sounds)
 	d=$3; out="$R/engine/godot/assets/hs_fx/$n"; mkdir -p "$out"
 	tmp="$(cygpath -u "$TEMP")/hsport"; mkdir -p "$tmp"
 	shopt -s nullglob
-	for f in "$d"/audio/*.fsb; do
+	# звуки бывают и в соседних папках выгрузки (<N>_<имя>_Sound): лишние wav удалить после SCRIPTS
+	for f in "$d"/audio/*.fsb "$(dirname "$d")"/*[Ss]ound*/audio/*.fsb "$(dirname "$d")"/*_CustomSummon*/audio/*.fsb; do
 		b=$(basename "$f" .fsb)
 		case $b in VO_*|*Stinger*) continue ;; esac
 		cp "$f" "$tmp/a.fsb"
@@ -116,11 +117,10 @@ sounds)
 		echo "звук $b"
 	done
 	awk '/^ *GO \x27/ { go = $0 } /\[AudioSource\]/ { a = 1 } a && /m_Volume =/ { sub(/^ */, "", go); print "AudioSource " $3 "  " go; a = 0 }' "$d/hierarchy.txt" | sort -u
-	if ls "$d"/timeline_*.txt > /dev/null 2>&1; then
-		grep -hE "^TRACK|CameraShaker2Asset|SoundTimelineAsset" "$d"/timeline_*.txt | grep -B1 -E "CameraShaker2Asset|SoundTimelineAsset" | grep -v "^--" | cut -c1-200
-	else
-		grep -hE "^STATE|Audio|Shake|Wait|Delay" "$d"/fsm_*.txt | cut -c1-200
-	fi
+	ls "$d"/timeline_*.txt > /dev/null 2>&1 && grep -hE "^TRACK|CameraShaker2Asset|SoundTimelineAsset" "$d"/timeline_*.txt | grep -B1 -E "CameraShaker2Asset|SoundTimelineAsset" | grep -v "^--" | cut -c1-200
+	# FSM: состояния, переходы, звуки (m_Sound — SoundDef, имя смотреть в refs.txt), тряска, ожидания
+	ls "$d"/fsm_*.txt > /dev/null 2>&1 && grep -hE "^STATE|^  on |Audio|Shake|Wait " "$d"/fsm_*.txt | grep -v "(disabled)" \
+		| sed -E 's/m_(SpecificCamera|NamedCamera|WhichCamera|ParentObject|SpatialBlend|Category|TemplateSource|IsMinionSummonVO|IsKeywordVO)=[^ ]* *//g' | cut -c1-220
 	;;
 check)
 	cid=$3
