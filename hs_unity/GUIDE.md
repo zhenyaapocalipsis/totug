@@ -446,7 +446,7 @@ FOV 34.87). Мир → экран 960x540: x ≈ 480 + (X+7.8)·44.1, y по z �
   [имя, секунда], при надобности `actions`. Дымка — запись в `FOGS` (loop, fade, end…).
 - Проверка: `tests/ui_shot.gd -- --scenario=hs_play --card=ID --gif=110` (розыгрыш),
   `--scenario=hs_dragon` (Red Dragon целиком с ответами на вопросы — образец для своих
-  сценариев), `--scenario=fx_menu --play=1`; крупно — `--wait=N` снимок; `--strip=x,y,w,h`
+  сценариев), `--scenario=god_fx --play=1` (панель бога, FX); крупно — `--wait=N` снимок; `--strip=x,y,w,h`
   — кусок экрана из каждого кадра (ловить мерцание).
 - Плавность: `tools/hs_smoothness.gd` (не headless): макс ≤ ~15 мс, 0 пропусков.
 - Якорь действия на цель: `tools/bake_centroid.gd -- <папка> from to` (центр огня).

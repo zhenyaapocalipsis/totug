@@ -96,39 +96,6 @@ func add_button(text: String, action: Callable) -> void:
 	_col.move_child(button, 2)
 
 
-## Кнопка, открывающая страницу-список на месте кнопок меню (как SETTINGS): items —
-## [текст, действие]; после действия меню закрывается. BACK — назад к кнопкам.
-func add_list_page(text: String, title: String, items: Array) -> void:
-	var page := VBoxContainer.new()
-	page.add_theme_constant_override("separation", 4)
-	page.visible = false
-	_col.get_parent().add_child(page)
-	var head := Label.new()
-	head.text = title
-	head.add_theme_color_override("font_color", PixelTheme.GOLD)
-	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page.add_child(head)
-	for it: Array in items:
-		var action: Callable = it[1]
-		page.add_child(_button(String(it[0]), func():
-			visible = false
-			action.call()))
-	page.add_child(HSeparator.new())
-	var back := _button("BACK", func():
-		page.visible = false
-		_col.visible = true)
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	page.add_child(back)
-	visibility_changed.connect(func():
-		if not visible:
-			page.visible = false)
-	var open := _button(text, func():
-		page.visible = true
-		_col.visible = false)
-	_col.add_child(open)
-	_col.move_child(open, _col.get_child_count() - 3)
-
-
 func _button(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text

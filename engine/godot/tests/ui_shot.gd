@@ -64,7 +64,8 @@ func _initialize() -> void:
 	DisplayServer.window_set_size(Vector2i(
 		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
 		ProjectSettings.get_setting("display/window/size/viewport_height", 360)) * _scale)
-	_screen = GameScreen.new(game_seed, decks, GameScreen.player_ids_for(players))
+	_screen = GameScreen.new(game_seed, decks, GameScreen.player_ids_for(players), GameSetup.MODE_STANDARD,
+		{}, [], false, _scenario == "god_fx")
 	root.add_child(_screen)
 	# Вопрос карты надо задавать, когда экран уже в дереве: вне дерева окно
 	# вопроса меряет свои варианты нулём и выходит пустым.
@@ -437,15 +438,14 @@ func _run_scenario() -> void:
 				print("hand card: ", (card as Control).get_global_rect())
 				break
 			_shot_at = _frame + 2
-		"fx_menu":
-			# Меню по Esc -> CARD ANIMATIONS (список карт с анимацией розыгрыша);
+		"god_fx":
+			# Панель бога с включённым FX (список карт с анимацией розыгрыша);
 			# --play=1 — нажать первую карту: анимация на доске (--gif=N).
 			_screen._turn_banner.hide()
-			_screen._pause_menu.visible = true
-			_press(_screen._pause_menu, "CARD ANIMATIONS")
+			_screen._god_panel.set_fx(true)
 			if _arg("play", "") == "1":
 				HsPlay.fixed_dt = 1.0 / 60.0
-				_press(_screen._pause_menu, EventLogPanel.card_name(HsPlay.RECIPES.keys()[0]).to_upper())
+				_screen._god_panel.fx_requested.emit(_screen._god_panel.visible_cards()[0])
 				_gif_left = _count_arg("gif", 0)
 			_shot_at = _frame + _count_arg("wait", 30)
 		"feed":

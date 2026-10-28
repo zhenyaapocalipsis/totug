@@ -2779,6 +2779,18 @@ func test_god_mode() -> void:
 	check_eq(screen._timer_label.text, "GOD", "вместо таймера — GOD")
 	var viewer := screen.viewer_id
 	var panel := screen._god_panel
+	var groups := GodPanel.deck_groups()
+	check_eq(String(groups[0][0]), "BASE", "первыми в списке — стартовые и запас")
+	check_eq(String(groups[1][0]), "DROW", "за ними полуколоды по порядку")
+	var sorted := true
+	var listed := 0
+	for g: Array in groups:
+		listed += (g[1] as Array).size()
+		for i in range(1, (g[1] as Array).size()):
+			if GodPanel._cost(g[1][i - 1]) > GodPanel._cost(g[1][i]):
+				sorted = false
+	check(sorted, "внутри колоды карты по возрастанию цены")
+	check_eq(listed, CardLibrary.all_ids().size(), "каждая карта в списке ровно один раз")
 	panel.set_search("red dragon")
 	check(not panel.visible_cards().is_empty() and panel.visible_cards().size() < 10, "поиск сужает список карт")
 	panel.set_count(2)
@@ -2797,6 +2809,16 @@ func test_god_mode() -> void:
 	check_eq(String(srv.state.troops.get(free, "")), "blue", "TROOP: щелчок по месту ставит войско выбранного цвета")
 	screen._on_slot_clicked(free)
 	check_eq(String(srv.state.troops.get(free, "")), "", "повторный щелчок его убирает")
+	panel.set_fx(true)
+	check(not panel.visible_cards().is_empty() and panel.visible_cards().all(func(c: String): return HsPlay.has(c)),
+		"FX: в списке только карты с анимацией")
+	var fx_card := []
+	panel.fx_requested.connect(func(c: String): fx_card.append(c))
+	var hand_before := (srv.state.players[viewer] as PlayerState).deck.hand.size()
+	panel._cards.filter(func(b: Button): return b.visible)[0].pressed.emit()
+	check(fx_card.size() == 1 and (srv.state.players[viewer] as PlayerState).deck.hand.size() == hand_before,
+		"FX: щелчок играет анимацию, карту не выдаёт")
+	panel.set_fx(false)
 	screen.toggle_god_panel()
 	check(not panel.visible and panel.tool == GodPanel.TOOL_OFF, "G прячет панель и выключает инструмент")
 	screen.queue_free()

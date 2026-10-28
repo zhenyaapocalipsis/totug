@@ -7,8 +7,10 @@ extends PanelContainer
 ## GodMode без player_id — его добавляет экран), а инструмент доски (tool,
 ## colour) экран читает в своих обработчиках щелчков по доске.
 ## Клавиша G прячет и показывает панель (GameScreen).
+## FX — вместо выдачи карты щелчок показывает её анимацию розыгрыша (fx_requested).
 
 signal action_requested(action: Dictionary)
+signal fx_requested(card_id: String)
 
 const TOOL_OFF := ""
 const TOOL_TROOP := "troop"
@@ -24,6 +26,8 @@ var colour := ""
 ## Сколько копий выдаёт щелчок по карте и куда.
 var count := 1
 var zone := "hand"
+## Режим просмотра анимаций: в списке только карты с HsPlay, щелчок играет эффект.
+var fx := false
 
 var _ids: Array[String] = []
 var _turn_buttons := {}
@@ -33,6 +37,9 @@ var _count_label: Label
 var _search: LineEdit
 var _list: VBoxContainer
 var _cards: Array[Button] = []
+## Заголовок колоды -> её кнопки в списке (заголовок прячется вместе с ними).
+var _groups := {}
+var _fx_button: Button
 var _hint: Label
 var _preview: TextureRect
 
@@ -120,8 +127,12 @@ func _init(player_ids: Array[String]) -> void:
 	_count_label = Label.new()
 	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_count_label.custom_minimum_size.x = 30
+	_fx_button = _button("FX", func(): set_fx(_fx_button.button_pressed))
+	_fx_button.toggle_mode = true
+	_fx_button.tooltip_text = "Click a card to watch its play animation (only cards with one are listed)"
 	col.add_child(_row([
 		_button("-", func(): set_count(count - 1)), _count_label, _button("+", func(): set_count(count + 1)),
+		_fx_button,
 	]))
 	_search = LineEdit.new()
 	_search.placeholder_text = "search card..."
@@ -151,31 +162,80 @@ func _init(player_ids: Array[String]) -> void:
 	set_tool(TOOL_OFF)
 
 
-## Все карты по алфавиту: имя и цена (у стартовых и запаса цены нет).
+## Карты по колодам (стартовые и запас, потом полуколоды как в half_decks.json,
+## потом прочие), внутри колоды по цене: имя и цена (у стартовых и запаса цены нет).
 func _fill_cards() -> void:
-	var ids := CardLibrary.all_ids()
-	ids.sort_custom(func(a: String, b: String): return card_name(a).naturalnocasecmp_to(card_name(b)) < 0)
-	for cid: String in ids:
-		var cost: Variant = CardLibrary.card_data(cid).get("cost")
-		var b := Button.new()
-		b.text = card_name(cid) + ("" if cost == null else "  %d" % int(cost))
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.clip_text = true
-		b.custom_minimum_size = Vector2(0, ROW_H)
-		b.focus_mode = Control.FOCUS_NONE
-		b.set_meta("card_id", cid)
-		b.set_meta("search", "%s %s %s" % [card_name(cid), CardLibrary.card_aspect(cid), CardLibrary.card_type(cid)])
-		b.add_theme_stylebox_override("normal", PixelTheme.fill(Color(0, 0, 0, 0), 2, 0))
-		b.add_theme_stylebox_override("hover", PixelTheme.fill(PixelTheme.BORDER, 2, 0))
-		b.add_theme_stylebox_override("pressed", PixelTheme.fill(PixelTheme.GOLD, 2, 0))
-		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-		b.add_theme_color_override("font_color", PixelTheme.TEXT)
-		b.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
-		b.pressed.connect(func(): give(cid))
-		b.mouse_entered.connect(func(): _show_preview(cid, b))
-		b.mouse_exited.connect(func(): _preview.visible = false)
-		_list.add_child(b)
-		_cards.append(b)
+	for group: Array in deck_groups():
+		var head := _heading(String(group[0]))
+		head.add_theme_color_override("font_color", PixelTheme.GOLD)
+		_list.add_child(head)
+		var buttons: Array[Button] = []
+		for cid: String in group[1]:
+			var b := _card_button(cid, String(group[0]))
+			_list.add_child(b)
+			_cards.append(b)
+			buttons.append(b)
+		_groups[head] = buttons
+
+
+## [[название колоды, [card_id по возрастанию цены]], ...]; каждая карта — один раз.
+static func deck_groups() -> Array:
+	var data := GameSetup._load_half_decks()
+	var base: Array = (data.get("starting_deck", {}) as Dictionary).get("copies", {}).keys()
+	for s: Dictionary in (data.get("supplies", {}) as Dictionary).values():
+		base.append(String(s["card_id"]))
+	var groups := [["BASE", base]]
+	var decks: Dictionary = data.get("half_decks", {})
+	for key: String in decks:
+		groups.append([SetupScreen.deck_title(key), (decks[key] as Dictionary).get("copies", {}).keys()])
+	groups.append(["OTHER", CardLibrary.all_ids()])
+	var seen := {}
+	var out := []
+	for g: Array in groups:
+		var ids: Array[String] = []
+		for cid: Variant in g[1]:
+			if not seen.has(String(cid)) and not CardLibrary.card_data(String(cid)).is_empty():
+				seen[String(cid)] = true
+				ids.append(String(cid))
+		ids.sort_custom(func(a: String, b: String):
+			var ca := _cost(a)
+			var cb := _cost(b)
+			return ca < cb if ca != cb else card_name(a).naturalnocasecmp_to(card_name(b)) < 0)
+		if not ids.is_empty():
+			out.append([g[0], ids])
+	return out
+
+
+static func _cost(cid: String) -> int:
+	var cost: Variant = CardLibrary.card_data(cid).get("cost")
+	return -1 if cost == null else int(cost)
+
+
+func _card_button(cid: String, deck: String) -> Button:
+	var cost: Variant = CardLibrary.card_data(cid).get("cost")
+	var b := Button.new()
+	b.text = card_name(cid) + ("" if cost == null else "  %d" % int(cost))
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.clip_text = true
+	b.custom_minimum_size = Vector2(0, ROW_H)
+	b.focus_mode = Control.FOCUS_NONE
+	b.set_meta("card_id", cid)
+	b.set_meta("search", "%s %s %s %s" % [card_name(cid), CardLibrary.card_aspect(cid),
+		CardLibrary.card_type(cid), deck])
+	b.add_theme_stylebox_override("normal", PixelTheme.fill(Color(0, 0, 0, 0), 2, 0))
+	b.add_theme_stylebox_override("hover", PixelTheme.fill(PixelTheme.BORDER, 2, 0))
+	b.add_theme_stylebox_override("pressed", PixelTheme.fill(PixelTheme.GOLD, 2, 0))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.add_theme_color_override("font_color", PixelTheme.TEXT)
+	b.add_theme_color_override("font_hover_color", PixelTheme.GOLD)
+	b.pressed.connect(func():
+		if fx:
+			fx_requested.emit(cid)
+		else:
+			give(cid))
+	b.mouse_entered.connect(func(): _show_preview(cid, b))
+	b.mouse_exited.connect(func(): _preview.visible = false)
+	return b
 
 
 static func card_name(cid: String) -> String:
@@ -205,12 +265,21 @@ func _filter() -> void:
 	var words := _search.text.strip_edges().to_lower().split(" ", false)
 	for b: Button in _cards:
 		var hay := String(b.get_meta("search")).to_lower()
-		var ok := true
+		var ok := not fx or HsPlay.has(String(b.get_meta("card_id")))
 		for w: String in words:
 			if not hay.contains(w):
 				ok = false
 				break
 		b.visible = ok
+	for head: Label in _groups:
+		head.visible = (_groups[head] as Array).any(func(b: Button): return b.visible)
+
+
+## FX включён: щелчок по карте показывает анимацию розыгрыша, а не выдаёт карту.
+func set_fx(on: bool) -> void:
+	fx = on
+	_fx_button.set_pressed_no_signal(on)
+	_filter()
 
 
 func set_count(value: int) -> void:
