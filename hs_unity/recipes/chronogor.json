@@ -1,0 +1,26 @@
+{
+  "deps": "../deps_chronogor.txt",
+  "fps": 60.0,
+  "len": 3.4,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {"prefab": "51bbf26c6f751d241bad6d4bae5ed87d", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/Token_Root"], "under": ["Root"], "controls": [], "measure": ["Root"]},
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 0.64,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.50,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_49211.png"}
+  ]
+}

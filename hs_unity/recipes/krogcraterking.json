@@ -1,0 +1,26 @@
+{
+  "deps": "../deps_krogcraterking.txt",
+  "fps": 60.0,
+  "len": 3.9,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {"prefab": "679ee281d4a3c3049a565ee40d510bab", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/CracksRoot/Cracks_Multiply (1)","Root/CracksRoot/Cracks_Highlight", "Root/Token Position/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/TokenHider (Hidden)","Root/Token Position/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Token/Card_InPlay_Ally_EliteDragon_Premium_mesh","Root/Token Position/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Token/Card_InPlay_Ally_Portrait_Premium_mesh","Root/Token Position/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Token_Root","Root/Token Position_Op/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/TokenHider (Hidden)","Root/Token Position_Op/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Token/Card_InPlay_Ally_EliteDragon_Premium_mesh","Root/Token Position_Op/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Token/Card_InPlay_Ally_Portrait_Premium_mesh","Root/Token Position_Op/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Token_Root"], "under": ["Root"], "controls": [{"node": "Root/VFX_Start", "start": 0.5, "end": 1.967},{"node": "Root/VFX_Finish", "start": 1.283, "end": 3.383},{"node": "Root/Token Position/Token Rotation/Token Scale/TokenRoot (DoNotTransform)/Particles_Trail", "start": 0.5, "end": 1.517}], "measure": ["Root"]},
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.30,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.10,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_50101.png"}
+  ]
+}

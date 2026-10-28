@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49021": "omen", "49020": "azurequeensindrago", "49015": "medivhthehallowed", "49121": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "elizagoreblade", "49636": "bonelordfrostwhisp", "49715": "anachronos", "49712": "misterclocksworth", "49718": "gormtheworldeater", "49720": "sunsapperlynessa", "49719": "timeadmralhooktail", "49716": "toycaptaintarim", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "titanographerosk", "49800": "arannathrillseeker", "49821": "ultraxion", "49620": "thelichking", "49613": "kelthuzad", "49901": "princemalchezaar", "49908": "altruistheoutcast", "50005": "bloodqueenlanathel", "49116": "wrathion", "49518": "moroes", "49515": "archvillainrafaam", "49216": "daveberard", "49513": "beaststalkertavish"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "kaelthas", "49115": "chogall", "49714": "razidir", "49801": "irida", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49021": "omen", "49020": "azurequeensindrago", "49015": "medivhthehallowed", "49121": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "elizagoreblade", "49636": "bonelordfrostwhisp", "49715": "anachronos", "49712": "misterclocksworth", "49718": "gormtheworldeater", "49720": "sunsapperlynessa", "49719": "timeadmralhooktail", "49716": "toycaptaintarim", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "titanographerosk", "49800": "arannathrillseeker", "49821": "ultraxion", "49620": "thelichking", "49613": "kelthuzad", "49901": "princemalchezaar", "49908": "altruistheoutcast", "50005": "bloodqueenlanathel", "49116": "wrathion", "49518": "moroes", "49515": "archvillainrafaam", "49216": "daveberard", "49513": "beaststalkertavish", "49119": "ghuun", "49120": "blightfang", "49117": "blooddoctorthalena", "49113": "argustheemeraldsta", "49122": "thejailer", "49212": "garonahalforcen", "49218": "overseerfrigidara", "49219": "mastermindyoggsaro", "49215": "norgannon", "49213": "mathiasshaw", "49214": "logoshbloodfighter", "49211": "chronogor", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49402": "ladydarkvein", "49407": "karovthebroken", "49517": "mugzee", "49521": "siredenathrius", "49514": "amitutkeeperofamit", "49519": "shudderblock", "49522": "captaincrowley", "49004": "velenleaderoftheex", "49016": "fyrakktheblazing", "49022": "ursol", "49019": "tyrande", "49003": "gennworgenking", "49017": "commanderbeatrix", "49906": "eternus", "49905": "soulburnervaria", "49902": "gluggthegulper", "49903": "farseerwo", "49904": "farseernobundo", "49909": "nablyathewatcher", "50008": "the8handsfrombeyon", "50002": "theexodar", "50003": "theeternalhold", "50001": "sargerasthedestroy", "50007": "overlorddrakuru", "50104": "baronessvashj", "50101": "krogcraterking", "50108": "chronikar", "50103": "chronolordepoch", "50102": "timethiefrafaam", "50105": "theunknowableone", "49412": "staffoftrickery", "49520": "neerufireblade", "49614": "bearonglashear", "49616": "rasfrostwhisper", "49618": "thaddiusmonstrosit", "49713": "arisenonyxia", "49811": "maruutstonebinder", "50006": "archwitchwillow"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -794,6 +794,464 @@ const SCRIPTS := {
 		"cues": [[0, "BeaststalkerTavish_CustomSummon_Sound", 0.6], [0.85, "BeaststalkerTavish_CustomSummon_GunShot_Sound", 0.4], [1.28, "BeaststalkerTavish_CustomSummon_Impact_Sound", 0.4]],
 		# CameraShaker2
 		"shakers": [[1, 1.567, 0.1, [[0, 1], [1, 0]], 0.075], [1.317, 1.85, 0.1, [[0, 0.82], [0.36, 0.08], [0.44, 0.89], [0.84, 0.03]], 0.075]]},
+	# G'huun (BE_287) — Bone Devil: в точке посадки пульсирует кровавый шар, на удар — багровый
+	# всплеск, кровавые узоры. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"ghuun": {"frames": "ghuun", "sounds": "ghuun",
+		"card": {"face": "mini", "reveal": 1.94, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BE_287_GhuunTheCataStrophic_CustomSummon_Sound", 0.7], [1.47, "BE_287_GhuunTheCataStrophic_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.1, 2.15, 0.15, [[0, 1], [1, 0]], 0.075], [0.517, 1.1, 0.075, [[0, 1], [1, 0.51]], 0.1]]},
+	# Blightfang (RLK_225) — Drider: белая вспышка, ядовито-зелёные споры расползаются вокруг
+	# точки посадки. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"blightfang": {"frames": "blightfang", "sounds": "blightfang",
+		"card": {"face": "mini", "reveal": 1.09, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "RLKFX_BlightFang_Start_Sound", 0.8], [0.617, "RLKFX_BlightFang_Impact_Sound", 0.8]]},
+	# Blood Doctor Thal'ena (JAIL_446) — Ghast: тёмно-фиолетовая кровавая дымка сгущается, на
+	# удар — тёмный всплеск. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"blooddoctorthalena": {"frames": "blooddoctorthalena", "sounds": "blooddoctorthalena",
+		"card": {"face": "mini", "reveal": 1.94, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "JAILFX_BloodDoctorThalena_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[1.417, 2.3, 0.15, [[0, 1], [1, 0]], 0.0509], [0, 0.983, 0.1, [[0, 0], [1, 1]], 0.0454]]},
+	# Argus, the Emerald Star (TTN_862) — Rakshasa: изумрудный вихрь закручивается в
+	# кольцо-портал, изумрудное сияние вокруг карты. Жетон HS, трещины и виньетки спрятаны, весь
+	# эффект под картой; выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"argustheemeraldsta": {"frames": "argustheemeraldsta", "sounds": "argustheemeraldsta",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TTNFX_ArgusTheEmeraldStar_CustomSummon_Start_Sound", 0.8], [1.45, "TTNFX_ArgusTheEmeraldStar_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.45, 4.233, 0.1, [[0, 1], [1, 0]], 0.075]]},
+	# The Jailer (CORE_MAW_034) — Shadow: тёмная дымка Утробы сгущается в точке посадки, на удар
+	# — тёмный всплеск. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"thejailer": {"frames": "thejailer", "sounds": "thejailer",
+		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TheJailer_CustomSummon_sound", 1], [1.25, "TheJailer_CustomSummon_Impact_sound", 1]],
+		# CameraShaker2
+		"shakers": [[1.783, 3.55, 0.15, [[0, 1], [0.25, 0.8], [0.5, 0.3], [1, 0]], 0.137], [1.333, 1.783, 0.6, [[0, 0], [0.12, 1], [0.44, 0.98], [1, 0.38]], 0.166]]},
+	# Garona Halforcen (TIME_875) — Assassin: из тени слева — золотой росчерк клинка, вспышка в
+	# точке посадки. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"garonahalforcen": {"frames": "garonahalforcen", "sounds": "garonahalforcen",
+		"card": {"face": "mini", "reveal": 1.64, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[1.02, "TIMEFX_GaronaHalforcen_CustomSummon_Impact_Sound", 1], [0, "TIMEFX_GaronaHalforcen_CustomSummon_Sound", 0.88]],
+		# CameraShaker2
+		"shakers": [[0.2, 0.533, 0.3, [[0, 1], [1, 0]], 0.075], [0.55, 0.883, 0.15, [[0, 1], [1, 0]], 0.075], [1.167, 1.35, 0.3, [[0, 1], [1, 0]], 0.075], [1.35, 1.683, 0.3, [[0, 1], [1, 0]], 0.075]]},
+	# Overseer Frigidara (LEG_RLK_224) — Basilisk: ледяные молнии бьют в точку посадки, морозная
+	# вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"overseerfrigidara": {"frames": "overseerfrigidara", "sounds": "overseerfrigidara",
+		"card": {"face": "mini", "reveal": 1.54, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "OverseerFrigidara_CustomSummon_Sound", 0.8], [1.07, "OverseerFrigidara_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0, 1.25, 0.08, [[0, 0], [1, 1]], 0.075], [1.25, 2.25, 0.1, [[0, 1], [0.33, 0.79], [1, 0]], 0.075]]},
+	# Mastermind Yogg-Saron (BE_009) — Behir: из воды выныривает бирюзово-зелёная масса
+	# Йогг-Сарона, всплески и фиолетовые молнии. Жетон HS, трещины и виньетки спрятаны, весь
+	# эффект под картой; выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"mastermindyoggsaro": {"frames": "mastermindyoggsaro", "sounds": "mastermindyoggsaro",
+		"card": {"face": "mini", "reveal": 1.65, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BE_009_MastermindYogg_CustomSummon_Sound", 0.8], [1.18, "BE_009_MastermindYogg_CustomSummon_ImpactSound", 0.8]]},
+	# Norgannon (TTN_075) — Homunculus: лучи титанов сходятся сверху в точку посадки, вспышка и
+	# кольцо рун. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"norgannon": {"frames": "norgannon", "sounds": "norgannon",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Norgannon_CustomSummon_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0.133, 2.583, 0.06, [[0, 0.26], [0.09, 0.62], [0.23, 0.3], [0.5, 0.96], [0.64, 0.16], [1, 0]], 0.075]]},
+	# Mathias Shaw (CAP_005) — Iron Golem: золотая искра и синий дым, на удар — золотые искры.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"mathiasshaw": {"frames": "mathiasshaw", "sounds": "mathiasshaw",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CAPFX_MathiusShaw_CustomSummon_Sound", 0.85], [1.28, "CAPFX_MathiusShaw_CustomSummon_ImpactSound", 0.85]],
+		# CameraShaker2
+		"shakers": [[0.667, 1.567, 0.07, [[0, 0.2], [0.25, 0.73], [0.75, 0.29], [1, 0]], 0.075], [1.567, 2.2, 0.07, [[0, 0.26], [0.25, 0.65], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.129]]},
+	# Lo'Gosh, Blood Fighter (TIME_850) — Manticore: огненный рывок, оранжевая вспышка у точки
+	# посадки. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"logoshbloodfighter": {"frames": "logoshbloodfighter", "sounds": "logoshbloodfighter",
+		"card": {"face": "mini", "reveal": 0.95, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BloodFighter_CustomSummon_Cast_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0.483, 0.85, 0.07, [[0, 1], [1, 0]], 0.075]]},
+	# Chronogor (TIME_032) — Stone Golem: сине-золотой вихрь времени, вспышка, голубое сияние.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"chronogor": {"frames": "chronogor", "sounds": "chronogor",
+		"card": {"face": "mini", "reveal": 1.09, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIMEFX_Chronogor_CustomSummon_Sound", 0.5], [0.617, "TIMEFX_Chronogor_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2
+		"shakers": [[0.617, 1.417, 0.2, [[0, 0.4], [0.5, 0]], 0.0708]]},
+	# Chillin' Vol'jin (VAC_957) — Avatar of Lolth: фиолетовый дым вуду в точке посадки, на удар
+	# — фиолетовая вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"chillinvoljin": {"frames": "chillinvoljin", "sounds": "chillinvoljin",
+		"card": {"face": "mini", "reveal": 1.82, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ChillinVoljin_CustomSummon_Cast_Sound", 0.8], [1.35, "ChillinVoljin_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.35, 2.017, 0.2, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# Morchie (END_036) — Converter: голубой вихрь слева приходит в точку посадки, голубое
+	# сияние. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"morchie": {"frames": "morchie", "sounds": "morchie",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ENDFX_Morchie_CustomSummon_Sound", 0.7], [1, "ENDFX_Morchie_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1, 1.583, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Remornia, Living Blade (CORE_REV_316) — Warlord: алый клинок вспыхивает крестом над точкой
+	# посадки, кровавый всплеск. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"remornialivingblad": {"frames": "remornialivingblad", "sounds": "remornialivingblad",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "RemorniaLivingBlade_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[0.25, 0.95, 0.1, [[0, 0], [1, 1]], 0.075], [0.95, 1.783, 0.1, [[0, 1], [0.99, 0]], 0.075]]},
+	# Lady Darkvein (CORE_REV_373) — Artemis Entreri: тёмно-багровая дымка сгущается, на удар —
+	# алая вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"ladydarkvein": {"frames": "ladydarkvein", "sounds": "ladydarkvein",
+		"card": {"face": "mini", "reveal": 2.00, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "LadyDarkvein_CustomSummon_sound", 1], [1.53, "LadyDarkvein_CustomSummon_Impact_sound", 1]],
+		# CameraShaker2
+		"shakers": [[1.533, 2.783, 0.05, [[0, 1], [1, 0]], 0.075]]},
+	# Karov the Broken (JAIL_448) — Nihiloor: фиолетовая тьма с щупальцами, на удар — фиолетовый
+	# взрыв. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"karovthebroken": {"frames": "karovthebroken", "sounds": "karovthebroken",
+		"card": {"face": "mini", "reveal": 2.09, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "JAIL_448_KarovTheBroken_CustomSummon_Sound", 0.7], [1.62, "JAIL_448_KarovTheBroken_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.817, 1.6, 0.05, [[0, 0], [0.27, 0.77], [0.49, 1], [0.7, 0.79], [0.96, 0.01]], 0.25], [1.617, 2.217, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Mug'Zee (JAIL_800) — Azer Sentinel: огненный выстрел справа, взрыв и голубые искры. Жетон
+	# HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"mugzee": {"frames": "mugzee", "sounds": "mugzee",
+		"card": {"face": "mini", "reveal": 1.24, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "JAILFX_MugZee_CustomSummon_Sound", 0.5], [0.767, "JAILFX_MugZee_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2
+		"shakers": [[0.667, 1.267, 0.12, [[0, 1], [1, 0]], 0.075], [0, 0.317, 0.08, [[0, 1], [1, 0]], 0.075]]},
+	# Sire Denathrius (REV_906t) — Half-Dragon: багровая тень проносится к точке посадки,
+	# кровавый всплеск. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"siredenathrius": {"frames": "siredenathrius", "sounds": "siredenathrius",
+		"card": {"face": "mini", "reveal": 1.39, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "SireDenathrius_Infused_CustomSummon_sound", 1]],
+		# CameraShaker2
+		"shakers": [[0.417, 1.5, 0.04, [[0, 0.19], [0.35, 0.17], [0.62, 0.12], [0.85, 0.02], [1, 0]], 0.01]]},
+	# Amitut, Keeper of Amitus (BE_143) — Lamia: огненный вихрь закручивается и взрывается
+	# широкой волной пламени. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"amitutkeeperofamit": {"frames": "amitutkeeperofamit", "sounds": "amitutkeeperofamit",
+		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BE_143_Amitut_Keeper_CustomSummon_FX_Sound", 0.7], [1.4, "BE_143_Amitut_Keeper_CustomSummon_FX_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.333, 2.2, 0.1, [[0.09, 0.55], [1, 0]], 0.038], [0, 0.133, 0.1, [[0, 0], [1, 1]], 0.038]]},
+	# Shudderblock (TOY_501t) — Troll: синий столб неба бьёт сверху в точку посадки, голубое
+	# сияние. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"shudderblock": {"frames": "shudderblock", "sounds": "shudderblock",
+		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [],
+		# CameraShaker2
+		"shakers": [[1.383, 1.617, 0.2, [[0, 1], [1, 0]], 0.163], [0.917, 1.217, 0.1, [[0, 0], [0.23, 0.55], [0.34, 1.01], [0.43, 1], [0.53, 0.62], [0.6, 0]], 0.177], [0, 0.333, 0.05, [[0, 0], [0.03, 0.55], [0.12, 1.01], [0.16, 1], [0.37, 0.32], [0.6, 0]], 0.177], [0.367, 0.767, 0.05, [[0, 0], [0.03, 0.55], [0.12, 1.01], [0.16, 1], [0.37, 0.32], [0.6, 0]], 0.177]]},
+	# Captain Crowley (CAP_106) — Wyvern: огненный вал слева накатывает на точку посадки, взрыв
+	# пламени. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"captaincrowley": {"frames": "captaincrowley", "sounds": "captaincrowley",
+		"card": {"face": "mini", "reveal": 1.20, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CAPFX_CaptainCrowley_CustomSummon_Sound", 0.7], [0.733, "CAPFX_CaptainCrowley_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.667, 1.117, 0.07, [[0, 1], [1, 0]], 0.075], [0.167, 0.567, 0.07, [[0, 1], [1, 0]], 0.075]]},
+	# Velen, Leader of the Exiled (GDB_131) — Djinni: фиолетовый треугольник света, на удар —
+	# огненный треугольник наару. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"velenleaderoftheex": {"frames": "velenleaderoftheex", "sounds": "velenleaderoftheex",
+		"card": {"face": "mini", "reveal": 1.30, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "VelenLeader_CustomSummon_Cast_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[0.833, 2.367, 0.02, [[0, 0.5], [0.13, 1], [0.28, 0.18], [0.99, 0]], 0.075]]},
+	# Fyrakk the Blazing (FIR_959) — Erinyes: огненный шар летит сверху слева, на удар — алая
+	# вспышка пламени. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"fyrakktheblazing": {"frames": "fyrakktheblazing", "sounds": "fyrakktheblazing",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0.0, "FyrakkTheBlazing_CustomSummon_Friendly_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.283, 1.75, 0.6, [[0, 1], [1, 0]], 0.075], [0, 1.283, 0.1, [[0, 0], [1, 1]], 0.075]]},
+	# Ursol (EDR_259) — Gold Dragon: жёлтая молния бьёт сверху в точку посадки, золотой взрыв.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"ursol": {"frames": "ursol", "sounds": "ursol",
+		"card": {"face": "mini", "reveal": 2.05, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "EDRFX_Ursol_CustomSummon_Start_Sound", 0.7], [1.58, "EDRFX_Ursol_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.667, 2.133, 0.1, [[0, 1], [1, 0]], 0.075], [0.6, 1.317, 0.1, [[0, 0], [1, 1]], 0.075], [0, 0.467, 0.1, [[0, 1], [1, 0]], 0.075]]},
+	# Tyrande (EDR_464) — Scout: синие искры луны кружат в точке посадки, лунная вспышка. Жетон
+	# HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"tyrande": {"frames": "tyrande", "sounds": "tyrande",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "EDRFX_Tyrande_CustomSummon_Cast_Sound", 0.55], [1.3, "FX_MinionSummonLarge_Drop", 0.6]],
+		# CameraShaker2
+		"shakers": [[0.2, 1.05, 0.1, [[0, 1], [1, 0]], 0.075], [1.317, 2.233, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Genn, Worgen King (CATA_615t) — Sphinx of Valor: лунный вихрь и следы когтей проносятся к
+	# точке посадки, огненный отблеск. Жетон HS, трещины и виньетки спрятаны, весь эффект под
+	# картой; выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"gennworgenking": {"frames": "gennworgenking", "sounds": "gennworgenking",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CATAFX_GennWorgenKing_CustomSummon_Sound", 0.7], [1.02, "CATAFX_GennWorgenKing_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.983, 1.433, 0.06, [[0, 1], [1, 0]], 0.075]]},
+	# Commander Beatrix (JAIL_397) — Warrior Veteran: огненный взрыв в точке посадки, клубы
+	# оранжевого дыма. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"commanderbeatrix": {"frames": "commanderbeatrix", "sounds": "commanderbeatrix",
+		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "HighCommanderBeatrix_CustomSummon_Sound", 0.7], [0.717, "HighCommanderBeatrix_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.667, 1.267, 0.12, [[0, 1], [1, 0]], 0.075], [0, 0.317, 0.08, [[0, 1], [1, 0]], 0.075]]},
+	# Eternus (TIME_435) — Faerie Dragon Youth: синий вихрь времени, на удар — золотая вспышка.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"eternus": {"frames": "eternus", "sounds": "eternus",
+		"card": {"face": "mini", "reveal": 1.49, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIME_435_Eternus_CustomSummon_Cast_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[1.017, 1.9, 0.04, [[0, 1], [1, 0]], 0.075]]},
+	# Soulburner Varia (YOG_520) — Faerie Pathlighter: фиолетовое кольцо душ, на удар —
+	# фиолетовая вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"soulburnervaria": {"frames": "soulburnervaria", "sounds": "soulburnervaria",
+		"card": {"face": "mini", "reveal": 1.94, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "SoulburnerVaria_CustomSummon_Cast_Sound", 0.8], [1.47, "SoulburnerVaria_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0, 0.65, 0.05, [[0, 0], [1, 1]], 0.075], [0.65, 2.2, 0.07, [[0, 0.26], [0.25, 0.97], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.075]]},
+	# Glugg the Gulper (TSC_639) — High Fae Noble: к точке посадки летит розовая сфера, на удар
+	# — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"gluggthegulper": {"frames": "gluggthegulper", "sounds": "gluggthegulper",
+		"card": {"face": "mini", "reveal": 1.99, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "GluggtheGulper_CustomSummon_Sound", 1], [1.52, "GluggtheGulper_CustomSummon_TokenSpawn_Sound", 1]]},
+	# Farseer Wo (TIME_013) — Lorehold Apprentice: голубой поток, на удар открывается синий
+	# портал. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"farseerwo": {"frames": "farseerwo", "sounds": "farseerwo",
+		"card": {"face": "mini", "reveal": 1.89, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIME_FarseerWo_CustomSummon_Sound", 0.9], [1.42, "TIME_FarseerWo_CustomSummon_Impact_Sound", 0.9]]},
+	# Farseer Nobundo (GDB_447) — Silverquill Apprentice: голубое кольцо, на удар — вспышка
+	# света. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"farseernobundo": {"frames": "farseernobundo", "sounds": "farseernobundo",
+		"card": {"face": "mini", "reveal": 1.65, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "FarsserNobundo_CustomSummon_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.183, 1.85, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# Nablya, the Watcher (TLC_624) — Witchkite: красно-оранжевая сфера, на удар — алая вспышка.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"nablyathewatcher": {"frames": "nablyathewatcher", "sounds": "nablyathewatcher",
+		"card": {"face": "mini", "reveal": 1.45, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TLCFX_NablyatheWatcher_CustomSummon_Sound", 0.4], [0.983, "TLCFX_NablyatheWatcher_CustomSummon_Impact_Sound", 0.3]],
+		# CameraShaker2
+		"shakers": [[0.967, 2.767, 0.1, [[0, 0.61], [1, 0]], 0.075]]},
+	# The 8 Hands From Beyond (GDB_477) — Eye Monger: багровый глаз бездны, на удар — алая
+	# сфера. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"the8handsfrombeyon": {"frames": "the8handsfrombeyon", "sounds": "the8handsfrombeyon",
+		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "8HandsFromBeyond_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[0, 1.25, 0.1, [[0.11, 1], [0.36, 0.47], [0.74, 0.27], [1, 0]], 0.075], [1.25, 2.183, 0.3, [[0, 0], [0.13, 0.09], [0.2, 0.27], [0.26, 0.69], [0.34, 1], [0.72, 0.23], [0.86, 0.05], [1, 0]], 0.177]]},
+	# The Exodar (GDB_120) — Froghemoth Elder: синий поток, белая звезда и фиолетовая вспышка —
+	# корабль наару (карта стоит 10). Жетон HS, трещины и виньетки спрятаны, весь эффект под
+	# картой; выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"theexodar": {"frames": "theexodar", "sounds": "theexodar",
+		"card": {"face": "mini", "reveal": 1.60, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TheExodar_CustomReveal_Sound", 0.7], [1.13, "TheExodar_CustomSummon_ImpacT_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.1, 1.967, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# The Eternal Hold (TIME_446) — Githzerai Zerth: золотой вихрь закручивается и вспыхивает.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"theeternalhold": {"frames": "theeternalhold", "sounds": "theeternalhold",
+		"card": {"face": "mini", "reveal": 1.60, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [],
+		# CameraShaker2
+		"shakers": [[1.133, 1.9, 0.03, [[0, 1], [1, 0]], 0.075]]},
+	# Sargeras, the Destroyer (TTN_960) — Greater Star Spawn Emissary: зелёная скверна и
+	# фиолетовая тьма закручиваются в точке посадки, на удар — взрыв скверны. Жетон HS, трещины
+	# и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта. Владелец выбрал в
+	# HsBrowser 2026-10-27.
+	"sargerasthedestroy": {"frames": "sargerasthedestroy", "sounds": "sargerasthedestroy",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "SargerasTheDestroyer_CustomSummon_Sound", 0.55], [1.48, "SargerasTheDestroyer_CustomSummon_Impact_Sound", 0.55]],
+		# CameraShaker2
+		"shakers": [[0, 0.083, 0.05, [[0, 1], [1, 1]], 0.075], [0.233, 0.317, 0.05, [[0, 1], [1, 1]], 0.075], [0.583, 0.75, 0.1, [[0, 1], [1, 1]], 0.075], [1.45, 1.783, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Overlord Drakuru (RLK_913) — Groundling Stalker: фиолетовая тьма накрывает поле, на удар —
+	# фиолетовое кольцо. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"overlorddrakuru": {"frames": "overlorddrakuru", "sounds": "overlorddrakuru",
+		"card": {"face": "mini", "reveal": 2.04, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [],
+		# CameraShaker2
+		"shakers": [[1.567, 2.817, 0.5, [[0, 0.4], [1, 0]], 0.129]]},
+	# Baroness Vashj (REV_788) — Chwinga: бирюзовая водяная воронка кольцом вокруг точки
+	# посадки. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"baronessvashj": {"frames": "baronessvashj", "sounds": "baronessvashj",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [],
+		# CameraShaker2
+		"shakers": [[0.233, 1.2, 0.05, [[0, 0.16], [1, 1]], 0.075], [1.2, 1.967, 0.083, [[0, 1], [1, 0]], 0.075]]},
+	# Krog, Crater King (TLC_480) — Galeb Duhr: песчаная волна снизу, на удар — золотое солнце
+	# взрыва, пыль. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"krogcraterking": {"frames": "krogcraterking", "sounds": "krogcraterking",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "KrogCraterKing_CustomSummon_Sound", 0.7], [1.28, "KrogCraterKing_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.5, 0.85, 0.3, [[0, 1], [1, 0]], 0.075], [0, 0.467, 0.07, [[0, 1], [1, 0]], 0.075], [1.333, 1.8, 0.6, [[0, 1], [1, 0]], 0.075]]},
+	# Chronikar (END_006) — Knight of Eldraine: сине-золотая лента времени прилетает справа, на
+	# удар — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"chronikar": {"frames": "chronikar", "sounds": "chronikar",
+		"card": {"face": "mini", "reveal": 1.65, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ENDFX_Chronikar_CustomSummon_Sound", 0.7], [1.18, "ENDFX_Chronikar_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0, 1.15, 0.05, [[0.18, 0.13], [0.53, 1], [0.89, 0.14], [0.99, 0]], 0.075], [1.15, 1.733, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Chrono-Lord Epoch (TIME_714) — Lizardfolk Sovereign: огненная сфера времени разгорается и
+	# взрывается. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"chronolordepoch": {"frames": "chronolordepoch", "sounds": "chronolordepoch",
+		"card": {"face": "mini", "reveal": 1.89, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIMEFX_ChronoLordEpoch_CustomSummon_Sound", 0.7], [1.42, "TIMEFX_ChronoLordEpoch_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.317, 1.983, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# Timethief Rafaam (TIME_005) — Sarrukh Tyrant: огненное кольцо-портал с розовым светом, на
+	# удар — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"timethiefrafaam": {"frames": "timethiefrafaam", "sounds": "timethiefrafaam",
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIMEFX_TimetheifRafaam_CustomSummon_Sound", 0.7], [1.5, "TIMEFX_TimetheifRafaam_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.5, 2.483, 0.3, [[0, 1], [1, 0]], 0.0247], [0, 0.883, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# The Unknowable One (BE_725) — Troglodyte: огненный знак бездны, на удар — оранжевый взрыв.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"theunknowableone": {"frames": "theunknowableone", "sounds": "theunknowableone",
+		"card": {"face": "mini", "reveal": 1.79, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "BEFX_UnknowableOne_CustomSummon_Sound", 0.7], [1.32, "BEFX_UnknowableOne_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0, 3.4, 0.1, [[0, 0], [0.2, 0.23], [0.27, 0.23], [0.36, 0.99], [0.5, 0.23], [1, 0]], 0.075]]},
+	# Staff of Trickery (JAIL_875) — Nar'l Xibrindas: зелёная вспышка обмана, ядовитые искры.
+	# Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
+	# Владелец выбрал в HsBrowser 2026-10-27.
+	"staffoftrickery": {"frames": "staffoftrickery", "sounds": "staffoftrickery",
+		"card": {"face": "mini", "reveal": 0.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "StaffofTrickery_CustomSummon_Sound", 0.7]]},
+	# Neeru Fireblade (LETL_823H) — Fire Giant: огненный шар разгорается в точке посадки, на
+	# удар — пламя гаснет фиолетовым. Жетон HS, трещины и виньетки спрятаны, весь эффект под
+	# картой; выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"neerufireblade": {"frames": "neerufireblade", "sounds": "neerufireblade",
+		"card": {"face": "mini", "reveal": 1.57, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": []},
+	# Bearon Gla'shear (AV_257) — Hill Giant: белая звёздная вспышка с голубым светом. Жетон HS,
+	# трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта. Владелец
+	# выбрал в HsBrowser 2026-10-27.
+	"bearonglashear": {"frames": "bearonglashear", "sounds": "bearonglashear",
+		"card": {"face": "mini", "reveal": 1.32, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0.0, "BearonGla_shear_CustomSummon_Sound", 0.5], [0.633, "BearonGla_shear_CustomSummon_Impact_Sound", 0.5]]},
+	# Ras Frostwhisper (SCH_273) — Remorhaz: голубая морозная лента прилетает сверху слева,
+	# ледяное сияние. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"rasfrostwhisper": {"frames": "rasfrostwhisper", "sounds": "rasfrostwhisper",
+		"card": {"face": "mini", "reveal": 1.30, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": []},
+	# Thaddius, Monstrosity (NX2_033) — Storm Giant: молния через поле, белая вспышка, затем
+	# огненное кольцо. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"thaddiusmonstrosit": {"frames": "thaddiusmonstrosit", "sounds": "thaddiusmonstrosit",
+		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ThaddiusFleshTitan_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[0, 2.683, 0.08, [[0, 0], [0.17, 0.98], [0.29, 0.31], [0.47, 0.02], [0.48, 1.4], [0.54, 1.36], [0.69, 0.27], [1, 0]], 0.075]]},
+	# Arisen Onyxia (CATA_155) — Purple Worm: фиолетовые столбы пламени падают сверху,
+	# фиолетовая сфера. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"arisenonyxia": {"frames": "arisenonyxia", "sounds": "arisenonyxia",
+		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": []},
+	# Maruut Stonebinder (DEEP_037) — Tarrasque: каменные шипы и песок вырастают в точке
+	# посадки. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
+	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"maruutstonebinder": {"frames": "maruutstonebinder", "sounds": "maruutstonebinder",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [],
+		# CameraShaker2
+		"shakers": [[0.05, 0.317, 0.2, [[0, 0], [0.07, 0.64], [0.21, 1.64], [0.39, 0.96], [0.65, 0.6], [1, 0]], 0.195], [0.833, 1.367, 0.1, [[0, 0], [0.71, 0.64], [1, 1]], 0.189], [1.367, 1.633, 0.1, [[0, 0.5], [0.05, 1.31], [0.15, 1.64], [0.27, 1.45], [0.6, 0.67], [1, 0.35]], 0.217], [1.633, 2.317, 0.01, [[0, 1], [0.26, 0.41], [1, 0]], 0.061]]},
+	# Archwitch Willow (CORE_SCH_181) — Inquisitor of the Mind Fire: зелёно-фиолетовые вихри
+	# кружат, на удар — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	"archwitchwillow": {"frames": "archwitchwillow", "sounds": "archwitchwillow",
+		"card": {"face": "mini", "reveal": 1.57, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": []},
 }
 ## Дымка розыгрыша (YoggFogg — эффект розыгрыша карты в HS, m_PlayEffectDef): кадры
 ## запечены с появлением (Intro), долгим средним куском и уходом (End с секунды end).

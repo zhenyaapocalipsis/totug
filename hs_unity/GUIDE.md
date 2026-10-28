@@ -18,6 +18,9 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-79 (сделано, 53 карты):** остальные новые карты всех колод (CARD_MAP «HsFx-79»). Перенос
+  назначений закончен: 125 карт с анимацией HS. Без анимации: 19 карт без назначения, 4 «Без
+  анимации» и Dao / Lizardfolk Geomancer — ждут, пока владелец перевыберет Chrono-Lord Deios.
 - **HsFx-78 (сделано, 10 карт без Timeline):** Frost Giant (Lich King), Owlbear (Kel'Thuzad), High Fae
   Kindguard (Malchezaar), Witherbloom (Altruis), Red Slaad (Lana'thel), Barbed Devil (Wrathion), Ice
   Devil (Moroes), Horned Devil (Rafaam: `evil_glow*` — оранжевый щит, спрятан), Chimera (Dave Berard =

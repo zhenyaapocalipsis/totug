@@ -1,0 +1,26 @@
+{
+  "deps": "../deps_overlorddrakuru.txt",
+  "fps": 60.0,
+  "len": 4.2,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {"prefab": "d7ef97a116cdee84eb4c151e9bb5990b", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/ImapctGlow/fx_Impact_cracks (2)","Root/RootAnim/CracksGlow","Root/RootAnim/CracksShadow", "Root/TokenRoot","Root/ImapctGlow/TokenGlow (2)","Root/ImapctGlow/TokenGlow (3)","Root/ImapctGlow/TokenGlow (5)"], "under": ["Root"], "controls": [], "measure": ["Root"]},
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.59,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.60,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_50007.png"}
+  ]
+}

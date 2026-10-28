@@ -154,9 +154,9 @@ script)
 		file == 1 && /^ *GO \x27/ { go = $0; sub(/^ *GO \x27/, "", go); sub(/\x27 active.*/, "", go) }
 		file == 1 && /\[AudioSource\]/ { a = 1 }
 		file == 1 && a && /m_Volume =/ { vol[go] = num($3); a = 0 }
-		file == 2 && /^TRACK SoundTimelineTrack/ { snd = $0; sub(/.*on GO \x27/, "", snd); sub(/\x27\x27.*/, "", snd) }
-		file == 2 && /^TRACK/ && !/SoundTimelineTrack/ { snd = "" }
-		file == 2 && /SoundTimelineAsset/ && snd != "" {
+		file == 2 && /SoundTimelineAsset/ {
+			# имя звука — имя клипа дорожки (дорожка бывает привязана к null)
+			snd = $0; sub(/^ *\[[^]]*\] \x27/, "", snd); sub(/\x27  SoundTimelineAsset.*/, "", snd)
 			s = $0; sub(/^ *\[/, "", s); sub(/ \.\..*/, "", s)
 			v = (snd in vol) ? vol[snd] : 1.0
 			# имя файла = имя .fsb: апостроф и пробел в нём стали «_» (Timecap_n)

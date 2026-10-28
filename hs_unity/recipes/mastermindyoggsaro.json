@@ -1,0 +1,26 @@
+{
+  "deps": "../deps_mastermindyoggsaro.txt",
+  "fps": 60.0,
+  "len": 3.8,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {"prefab": "74172ed0786050e409a2a2877f0849b4", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["AnimRoot/RevealRoot/Cracks_Core","AnimRoot/YoggSaron_Root/Pool_Meshes/Cracks_Meshes", "AnimRoot/OnToken"], "under": ["AnimRoot"], "controls": [{"node": "AnimRoot/RevealRoot/Cracks_Core", "start": 1.5, "end": 3.5},{"node": "AnimRoot/YoggSaron_Root/Pool_Meshes/PS_WaterSplashes", "start": 0.083, "end": 2.083},{"node": "AnimRoot/RevealRoot/PS_CenterSplash", "start": 0.417, "end": 2.417},{"node": "AnimRoot/YoggSaron_Root/Pool_Meshes/PS_Beginning_Splash", "start": 0.017, "end": 1.017},{"node": "AnimRoot/YoggSaron_Root/SplashesRoot/BigSplashes_Left", "start": 0.183, "end": 1.183},{"node": "AnimRoot/YoggSaron_Root/SplashesRoot/BigSplashes_Right_a", "start": 0.067, "end": 1.067},{"node": "AnimRoot/YoggSaron_Root/SplashesRoot/PS_YoggSaron_Emerges", "start": 0.517, "end": 5.517},{"node": "AnimRoot/YoggSaron_Root/SplashesRoot/DivesDown_Splash", "start": 1.25, "end": 6.25},{"node": "AnimRoot/YoggSaron_Root/BEFX_YoggSaron_MESHES/Translation/Rotation/Scale/PS_MouthGoo", "start": 0.55, "end": 5.55},{"node": "AnimRoot/YoggSaron_Root/LIghtningRoot/PS_PurpleLightning_Center", "start": 0.55, "end": 5.55}], "measure": ["AnimRoot"]},
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.20,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.50,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_49219.png"}
+  ]
+}
