@@ -1,0 +1,26 @@
+{
+  "deps": "../deps_ragnaros_gf.txt",
+  "fps": 60.0,
+  "len": 3.8,
+  "space": "gamma",
+  "ldr": true,
+  "layers": [
+    {"prefab": "0400e9ae90e206047b994c7a088aaff2", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["AnimRoot/OnToken","AnimRoot/Impact_Root/PS_ResidualMotes/PS_TokenGlow"], "under": ["AnimRoot"], "controls": [{"node": "AnimRoot/Impact_Root/PS_ResidualMotes", "start": 1.3, "end": 6.3},{"node": "AnimRoot/Impact_Root/PS_OutroMotes", "start": 1.383, "end": 5.133},{"node": "AnimRoot/Impact_Root/PS_Face_Dissolve", "start": 1.4, "end": 6.4},{"node": "AnimRoot/Impact_Root/PS_Horns_Dissolve", "start": 0.455, "end": 5.455},{"node": "AnimRoot/Buildup_Root/PS_FireBacking_Buildup", "start": 0.183, "end": 6.183}], "measure": ["AnimRoot"]},
+    {
+      "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
+      "at": 1.42,
+      "only": "Root/Bursts_Root/Burst0_New",
+      "place": [-7.616, 3.802, -6.81],
+      "usePlace": true,
+      "scale": 0.3715,
+      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
+      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
+      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "tintHue": 0.04,
+      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+    }
+  ],
+  "textures": [
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48500.png"}
+  ]
+}

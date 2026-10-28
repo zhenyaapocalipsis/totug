@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "magtheridon", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "razidir", "48631": "nespirah", "48632": "azshara_ocean", "48626": "neptulon", "48600": "ohnahra", "48630": "yshaarj", "48715": "isorath", "48701": "irida", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -183,7 +183,8 @@ const SCRIPTS := {
 		# CameraShaker2: три рывка разреза и удара, сила линейно 1 -> 0
 		"shakers": [[0.15, 0.3, 0.02, [[0.0, 1.0], [1.0, 0.0]], 0.036], [0.35, 0.5, 0.07, [[0.0, 1.0], [1.0, 0.0]], 0.036],
 			[0.567, 0.717, 0.09, [[0.0, 1.0], [1.0, 0.0]], 0.036]]},
-	# Kael'thas Sunstrider (BT_255) — Masters of Sorcere: BTFX_KaelthasSunstrider_CustomSummon
+	# Kael'thas Sunstrider (BT_255) — пока без карты (владелец 2026-10-27 отдал его Efreeti —
+	# перепечь; до HsFx-58 — Masters of Sorcere): BTFX_KaelthasSunstrider_CustomSummon
 	# (Timeline): в точке посадки огненная спираль, вокруг кружат три зелёные сферы Скверны
 	# с огненными шлейфами, растёт солнечный шар, на 1.5 с удар — зелёная вспышка и пламя.
 	# Весь эффект под картой; трещины в земле (макет HS) убраны. Выжигание зелёное в цвет
@@ -194,19 +195,18 @@ const SCRIPTS := {
 		"cues": [[0.0, "Kael_thasSunstrider_CustomSummon_Sound", 0.5], [1.5, "Kael_thasSunstrider_CustomSummon_Impact_Sound", 0.6]],
 		# CameraShakerAction FSM: 0.15 по осям через 0.1 с после удара, 0.63 с
 		"shakers": [[1.6, 2.23, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
-	# Magtheridon (BT_850) — Balor: BTFX_Magtheridon_CustomSummon (Timeline, корень Root
-	# включает FSM): в точке посадки зелёные трещины Скверны и печать, три вспышки огня
-	# (0, 0.43, 0.97 с), удар 1.0 с; на 2.6 с кольцо оков сжимается вокруг карты и гаснет к
-	# 4.5 с — перекрашено из фиолетового в огонь (владелец 2026-10-25: огненный хлыст Балора),
-	# карта стоит до конца оков (hold 2.4 вместо 1.0, владелец). Весь эффект под картой.
-	# Выжигание зелёное в цвет Скверны (владелец). Эффект розыгрыша (призыв стражей HS) не берём.
-	"magtheridon": {"frames": "magtheridon", "sounds": "magtheridon",
-		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 2.4, "out": 0.35, "center": Vector2(490, 365)},
-		# AudioPlayClipAction FSM: 0.5, трещина на 0 и 0.5 с
-		"cues": [[0.0, "Magtheridon_CustomSummon_Crack_Impact01_Sound", 0.5], [0.5, "Magtheridon_CustomSummon_Crack_Impact02_Sound", 0.5]],
-		# MainCameraShakerAction 0.03 и 0.08 по 0.1 с; в ударе CameraShakerAction 0.1, кривая 2.5 с
-		"shakers": [[0.0, 0.1, 0.024, [[0.0, 1.0], [1.0, 0.0]], 0.0167], [0.5, 0.6, 0.064, [[0.0, 1.0], [1.0, 0.0]], 0.0167],
-			[1.0, 3.5, 0.08, [[0.0, 0.49], [0.064, 0.43], [0.116, 0.19], [1.0, 0.08]], 0.0167]]},
+	# Ragnaros, the Great Fire (CATA_150) — Balor (вместо Magtheridon — владелец выбрал в
+	# HsBrowser 2026-10-27): CATAFX_Ragnaros_CustomSummon (Timeline + FSM): огненные струи со
+	# всех сторон сходятся в точку посадки, из пламени встаёт рогатый огненный лик, на 1.4 с он
+	# рассыпается огнём. Жетон HS и его свечение спрятаны, весь эффект под картой.
+	# Выжигание огненно-оранжевое.
+	"ragnaros_gf": {"frames": "ragnaros_gf", "sounds": "ragnaros_gf",
+		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM 0.85 с начала
+		"cues": [[0.0, "CATAFX_Ragnaros_CustomSummon_Sound", 0.85]],
+		# CameraShaker2: дрожь 0.05 нарастает до 1.4 с, потом 0.07 рывком и спад
+		"shakers": [[0.0, 1.4, 0.05, [[0.0, 0.0], [1.0, 1.0]], 0.075],
+			[1.4, 3.933, 0.07, [[0.0, 0.26], [0.12, 0.96], [0.21, 0.22], [1.0, 0.0]], 0.075]]},
 	# Kil'jaeden (GDB_145) — Demogorgon (стоимость 8 — большой эффект на весь экран, правило
 	# владельца 2026-10-25): GDBFX_Kiljaeden_CustomSummon (Timeline): ленты Скверны со всего
 	# экрана закручиваются в вихрь с красным кольцом, открывается зелёный портал, на 1.5 с он
@@ -278,7 +278,19 @@ const SCRIPTS := {
 		"cues": [[0.0, "EDRFX_Nythendra_CustomSummon_Cast_Sound", 0.6], [1.383, "EDRFX_Nythendra_CustomSummon_Impact_Sound", 0.5]],
 		# CameraShaker2: 0.05 до удара, в ударе 0.2, сила линейно 1 -> 0
 		"shakers": [[0.0, 1.383, 0.05, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.383, 1.85, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
-	# Razidir (TLC_463) — Glabrezu (вместо Fel Lord Betrug, DAL — владелец 2026-10-25: только
+	# Nightmare Lord Xavius (EDR_856) — Glabrezu (вместо Razidir — владелец выбрал в HsBrowser
+	# 2026-10-27; Razidir уходит к Guardian Naga): EDRFX_Xavius_CustomSummon (Timeline): алые
+	# когти рвут воздух над точкой посадки, на 1.15 с огненный взрыв, багровые разрывы тлеют.
+	# Жетон HS спрятан, весь эффект под картой. Выжигание алое.
+	"xavius": {"frames": "xavius", "sounds": "xavius",
+		"card": {"face": "mini", "reveal": 1.62, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.6 — замах с начала, удар с 1.167 с
+		"cues": [[0.0, "EDRFX_Xavius_CustomSummon_Cast_Sound", 0.6], [1.167, "EDRFX_Xavius_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShaker2: 0.1 в начале и в ударе
+		"shakers": [[0.0, 0.783, 0.1, [[0.0, 0.5], [0.13, 1.0], [0.4, 0.2], [1.0, 0.0]], 0.075],
+			[1.15, 2.333, 0.1, [[0.0, 0.5], [0.13, 1.0], [0.4, 0.2], [1.0, 0.0]], 0.075]]},
+	# Razidir (TLC_463) — пока без карты (владелец 2026-10-27 отдал его Guardian Naga — перепечь;
+	# до HsFx-69..75 — Glabrezu, (вместо Fel Lord Betrug, DAL — владелец 2026-10-25: только
 	# свежие; пробы Zakajz, Talgath, Kronn, G'huun, Vulcanos, Drest'agath, Broxigar,
 	# Magtheridon Unreleased и др.): TLC463_Nazidir_CustomSummon (Timeline). Адаптация
 	# (владелец): в HS разлом-жетон летит из угла экрана — здесь он с нажатия формируется в
@@ -292,20 +304,39 @@ const SCRIPTS := {
 		"cues": [[0.0, "Razidir_CustomSummon_Sound", 0.85]],
 		# CameraShaker2: 0.1 по осям, рывок в ударе
 		"shakers": [[0.95, 1.85, 0.08, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
-	# Nespirah, Enthralled (CATA_527) — Ogrémoch (стоимость 6; вместо Therazane — владелец
-	# 2026-10-26: дарк фэнтези, разноцветные самоцветы не подходят; Огремоч на артах — скала с
-	# изумрудами; пробы Amitut, Vulcanos, Magtheridon Unreleased, изумрудный Therazane):
-	# CATA_527_Nespirah_Enthralled_Ancient_CustomSummon_FX (Timeline): над точкой посадки
-	# клубится изумрудный водоворот, сжимается, на 1.05 с удар — вспышка и брызги изумрудной
-	# жижи вокруг карты. Жетон HS и его свечение спрятаны, весь эффект под картой.
-	# Выжигание изумрудное в цвет водоворота.
-	"nespirah": {"frames": "nespirah", "sounds": "nespirah",
-		"card": {"face": "mini", "reveal": 1.55, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 1.0 с начала
-		"cues": [[0.0, "CATAFX_Nespirah_CustomSummon_Sound", 1.0]],
-		# CameraShaker2: 0.05 спадает, 0.1 нарастает к удару, в ударе 0.2 и спад
-		"shakers": [[0.0, 0.35, 0.05, [[0.0, 1.0], [1.0, 0.0]], 0.075], [0.35, 1.333, 0.1, [[0.0, 0.0], [1.0, 1.0]], 0.075],
-			[1.333, 1.683, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Inara Stormcrash (DMF_708) — Aerisi Kalinoth (вместо Ohn'ahra — владелец выбрал в
+	# HsBrowser 2026-10-27): DMFFX_InaraStormcrash_CustomSummon (Timeline + FSM): синяя молния
+	# прилетает слева (как в HS), бьёт в точку посадки, на 1.35 с вспыхивает и висит сфера бури
+	# с разрядами. Жетон HS и трещины в земле (макет HS) спрятаны, весь эффект под картой.
+	# Выжигание голубое в цвет молний.
+	"inara": {"frames": "inara", "sounds": "inara",
+		"card": {"face": "mini", "reveal": 1.82, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM 0.7 с задержкой 0.8 с
+		"cues": [[0.8, "InaraStormcrash_CustomSummon_Sound", 0.7]],
+		# CameraShakerAction FSM: 0.04 с 0.2 с, 0.03 с 1.0 с, рывок и спад
+		"shakers": [[0.2, 1.2, 0.04, [[0.0, 1.0], [0.25, 0.0], [1.0, 0.0]], 0.075], [1.0, 2.0, 0.03, [[0.0, 1.0], [0.25, 0.0], [1.0, 0.0]], 0.075]]},
+	# Mutanus the Devourer (WC_030) — Gar Shatterkeel (вместо Neptulon — владелец выбрал в
+	# HsBrowser 2026-10-27): BARFX_MutanusTheDevourer_CustomSummon (FSM запускает Timeline):
+	# в точке посадки закручивается тёмный водоворот, пузыри и блики воды, на 1.25 с всплеск
+	# кольцом. Жетон HS (с миньоном) спрятан, весь эффект под картой; затемнение доски
+	# (SetAmbientColor FSM) не берём. Выжигание бирюзовое.
+	"mutanus": {"frames": "mutanus", "sounds": "mutanus",
+		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM 0.7: с начала и удар с 1.25 с
+		"cues": [[0.0, "MutanusTheDevourer_CustomSummon", 0.7], [1.25, "MutanusTheDevourer_CustomSummon_Impact", 0.7]],
+		# MainCameraShakerAction FSM: 0.03, 0.6 с
+		"shakers": [[1.25, 1.85, 0.03, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
+	# Ravitz (BE_230) — Ogrémoch (вместо Nespirah — владелец выбрал в HsBrowser 2026-10-27):
+	# BEFX_Ravitz_CustomSummon (Timeline): из точки посадки прорастают зелёные кристаллы скверны,
+	# на 1.1 с они взрываются зелёной вспышкой, оседает пыль. Жетон HS и трещины в земле
+	# (`GroundCracks_*`) спрятаны, весь эффект под картой. Выжигание ядовито-зелёное.
+	"ravitz": {"frames": "ravitz", "sounds": "ravitz",
+		"card": {"face": "mini", "reveal": 1.57, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.5 с начала, удар 0.6 с 1.1 с
+		"cues": [[0.0, "BE_230_Ravitz_CustomSummon_Sound", 0.5], [1.1, "BE_230_Ravitz_CustomSummon_Impact_Sound", 0.6]],
+		# CameraShaker2: два рывка 0.2 при росте кристаллов, удар 0.3
+		"shakers": [[0.0, 0.296, 0.2, [[0.0, 1.0], [0.64, 0.84], [1.0, 0.0]], 0.075], [0.533, 0.83, 0.2, [[0.0, 1.0], [0.64, 0.84], [1.0, 0.0]], 0.075],
+			[1.133, 1.4, 0.3, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
 	# Azshara, Ocean Lord (CATA_151) — Olhydra (вместо Neptulon the Tidehunter, TID — владелец
 	# 2026-10-25: только свежие; пробы Neptulon BE, King Tide, Lady Azshara TIME):
 	# CATAFX_LadyAzshara_CustomSummon (Timeline): в точке посадки фиолетовая вспышка с
@@ -318,29 +349,6 @@ const SCRIPTS := {
 		"cues": [[0.0, "CATAFX_LadyAzshara_CustomSummon_Sound", 0.7], [1.217, "CATAFX_LadyAzshara_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: (0.2, 0.3, 0.1) — у нас 0.25, рывок в ударе
 		"shakers": [[1.233, 1.9, 0.25, [[0.0, 0.0], [0.04, 0.75], [0.5, 0.0], [1.0, 0.0]], 0.0219]]},
-	# Neptulon, Lord of Tides (BE_209) — Gar Shatterkeel (вместо Lady Naz'jar, TID — владелец
-	# 2026-10-25: только свежие; пробы Azshara Ocean Lord, King Tide, Lady Azshara TIME):
-	# BEFX_NeptulonLordofTides_CustomSummon (Timeline): над точкой посадки собираются тучи,
-	# закручивается синий водяной смерч с молниями, на 1.7 с удар — всплеск, брызги, дождь.
-	# Жетон HS и его контур спрятаны, весь эффект под картой. Выжигание синее в цвет смерча.
-	"neptulon": {"frames": "neptulon", "sounds": "neptulon",
-		"card": {"face": "mini", "reveal": 2.2, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# Sound Timeline: AudioSource 1.0 с начала, удар 1.0 с 1.683 с
-		"cues": [[0.0, "BE_209_NeptulonLordofTides_CustomSummon_Sound", 1.0],
-			[1.683, "BE_209_NeptulonLordofTides_CustomSummon_ImpactSound", 1.0]],
-		# CameraShaker2: дрожь 0.02 перед ударом, в ударе 0.1, сила линейно 1 -> 0
-		"shakers": [[0.9, 1.417, 0.02, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.717, 2.233, 0.1, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
-	# Ohn'ahra (EDR_031) — Aerisi Kalinoth (вместо Ysiel Windsinger, BT — владелец 2026-10-25:
-	# только свежие; пробы Q'onzu, Sasquawk, Sky Mother Aviana): EDRFX_Ohnahra_CustomSummon
-	# (Timeline): с левого края бьёт молния, над полем зреет шар бури, на 1.25 с разряд
-	# приходит в точку посадки — бирюзовая сфера молний вокруг карты. Жетон HS и его свечение
-	# спрятаны, весь эффект под картой. Выжигание бирюзовое в цвет молний.
-	"ohnahra": {"frames": "ohnahra", "sounds": "ohnahra",
-		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
-		# AudioPlayClipAction FSM 0.85
-		"cues": [[0.0, "Ohn_ahra_CustomSummon_Sound", 0.85]],
-		# CameraShaker2: 0.1 с 0.3 с, пик в ударе, спад
-		"shakers": [[0.3, 3.033, 0.1, [[0.0, 0.0], [0.33, 0.16], [0.41, 0.42], [1.0, 0.0]], 0.075]]},
 	# Y'Shaarj, Titan Bane (BE_784) — Marlos Urnrayle, медуза (вместо Mirrex — владелец
 	# 2026-10-26: дарк фэнтези, розовые кристаллы не подходят; пробы Nespirah, Wallow, Renferal,
 	# The Unknowable One, The Black Blood, Herenn, Eliza Goreblade и др.):
@@ -354,7 +362,27 @@ const SCRIPTS := {
 		"cues": [[0.0, "BEFX_YShaarjtheTitanBane_CustomSummon_Sound", 0.7], [0.55, "BEFX_YShaarjtheTitanBane_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2: 0.07 в ударе, сила линейно 1 -> 0
 		"shakers": [[0.583, 2.081, 0.07, [[0.0, 0.99], [1.0, 0.0]], 0.075]]},
-	# Iso'rath (CATA_481) — Beholder, глаз-пожиратель (цена 5 — скромно, у места карты):
+	# Azalina Soulsever (JAIL_430) — Ulitharid (вместо Irida — владелец выбрал в HsBrowser
+	# 2026-10-27; Irida уходит к Oni): JAIL_430_AzalinaSoulsever_FAB_CustomSummon_FX (Timeline):
+	# в точке посадки пульсирует фиолетовая сфера, из неё вырываются щупальца тьмы, на 1.45 с
+	# сфера схлопывается и взрывается. Жетон HS и трещины в земле спрятаны, весь эффект под
+	# картой. Выжигание фиолетовое.
+	"azalina": {"frames": "azalina", "sounds": "azalina",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline: AudioSource 0.7 с начала, удар 0.7 с 1.45 с
+		"cues": [[0.0, "JAIL_430_AzalinaSoulsever_FAB_CustomSummon_FX_Sound", 0.7], [1.45, "JAIL_430_AzalinaSoulsever_FAB_CustomSummon_FX_Impact_Sound", 0.7]],
+		# CameraShaker2: рывок 0.2 в начале, удар 0.1
+		"shakers": [[0.0, 0.35, 0.2, [[0.0, 1.0], [1.0, 0.0]], 0.075], [1.483, 1.95, 0.1, [[0.0, 1.0], [1.0, 0.0]], 0.075]]},
+	# Staff of the Endbringer (TLC_EVENT_402) — Beholder (вместо Iso'rath — владелец выбрал в
+	# HsBrowser 2026-10-27; Iso'rath уходит к Roper): TLCFX_StaffEndbringer_CustomSummon (FSM +
+	# Timeline): зелёные и фиолетовые сгустки закручиваются вихрем в точке посадки, к ~1.2 с
+	# собираются в сияющую сферу-око, она гаснет. Весь эффект под картой. Выжигание синее.
+	"staff_endbringer": {"frames": "staff_endbringer", "sounds": "staff_endbringer",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# AudioPlayClipAction FSM с начала: 0.7 и 0.9
+		"cues": [[0.0, "SphereOfSapience_SocketIn_Sound", 0.7], [0.0, "Aessina_CustomSummon_Cast_Sound", 0.9]]},
+	# Iso'rath (CATA_481) — пока без карты (владелец 2026-10-27 отдал его Roper — перепечь; до
+	# HsFx-69..75 — Beholder), глаз-пожиратель (цена 5 — скромно, у места карты):
 	# CATAFX_Iso'rath_CustomSummon (Timeline): фиолетовая воронка раскрывается, на 0.67 с
 	# удар — пасть-цветок в светящейся сфере, щупальца тьмы кружат и гаснут к 2.5 с. Жетон HS
 	# и его свечение спрятаны, весь эффект под картой. Выжигание фиолетовое в цвет портала.
@@ -362,7 +390,8 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.8 с начала; тряски камеры в Timeline нет
 		"cues": [[0.0, "CATAFX_IsoRath_CustomSummon_Sound", 0.8]]},
-	# Irida Sinseeker (JAIL_719) — Ulitharid, иллитид (выбор владельца 2026-10-26 вместо
+	# Irida Sinseeker (JAIL_719) — пока без карты (владелец 2026-10-27 отдал её Oni — перепечь; до
+	# HsFx-69..75 — Ulitharid), иллитид (выбор владельца 2026-10-26 вместо
 	# Mindflayer Kaahrj; пробы C'Thun Eye of the Empire без глаза, с лиловыми и разведёнными
 	# щупальцами, 8 Hands, G'huun, Zer'Ontu, Herenn — не то): JAIL_719_IridaSinseeker_CustomSummon_FX
 	# (Timeline): тёмный разрез рассекает пространство по диагонали, раскрывается синий портал,

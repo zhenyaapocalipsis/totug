@@ -18,6 +18,9 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
+- **HsFx-69..75 (сделано):** Balor → Ragnaros the Great Fire, Glabrezu → Xavius, Aerisi → Inara,
+  Gar → Mutanus, Ogrémoch → Ravitz, Ulitharid → Azalina, Beholder → Staff of the Endbringer;
+  `magtheridon`, `nespirah`, `neptulon`, `ohnahra` удалены. Все замены у готовых колод сделаны.
 - **HsFx-64..68 (сделано):** dragons — Black → Victor Nefarius (выжигание чёрное), Blue → Murozond
   Unbounded, Green → Y'Shaarj LT23 (`yshaarj_lt`, звуки в соседних папках выгрузки), Severin →
   Herenn, White → Vyranoth; `onyxia`, `malygos`, `ysera`, `sindragosa` удалены; `chogall` ждёт Chain Devil.
