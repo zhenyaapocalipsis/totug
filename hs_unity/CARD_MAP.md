@@ -61,7 +61,7 @@
 |---|---|---|---|
 | Council Member (48315) | Lady Prestor (SW_078) | `SWFX_LadyPrestor_CustomSummon.prefab` | СДЕЛАНО (HsFx-22) |
 | Deathblade (48316) | Blade of The Black Empire (BE_227) | `05_BEFX_BladeoftheBlackEmpire_CustomSummon.prefab` | СДЕЛАНО (HsFx-57; владелец выбрал в HsBrowser 2026-10-27 вместо Zayle); два фиолетовых разреза крестом, вихрь пустоты; выжигание фиолетовое |
-| Inquisitor (48325) | Darkbishop Benedictus (CORE_SW_448) | `SWFX_DarkBishopBenedictus_CustomSummon.prefab` | СДЕЛАНО (HsFx-24); вместо High Inquisitor Whitemane (EX1_190): её огненные ленты и самоцвет владелец счёл странными (2026-10-24) |
+| Inquisitor (48325) | K'ara, the Dark Star (GDB_127) | `GDBFX_Kara_CustomSummon.prefab` | СДЕЛАНО (HsFx-60; владелец выбрал в HsBrowser 2026-10-27 вместо Benedictus, кадры того удалены); K'ara перепечена с контуром этой карты; выжигание фиолетовое |
 | Masters of Sorcere (48328) | Zayle, Shadow Cloak (DAL_800) | `DALFX_ZayleShadowCloak_CustomSummon.prefab` | СДЕЛАНО (HsFx-58; владелец выбрал в HsBrowser 2026-10-27 вместо Kael'thas, тот уходит к Efreeti); кадры Zayle перепечены с контуром этой карты; выжигание фиолетовое |
 | Matron Mother (48329) | Queen Azshara (TSC_641) | `TSCFX_Azshara_CustomSummon.prefab` | СДЕЛАНО (HsFx-27); пробы Lady Deathwhisper, Kerrigan, Priestess Valishj владелец смотрел — оставил Azshara (2026-10-25) |
 | Weaponmaster (48339) | Blademaster Samuro (BAR_078) | `BARFX_Samuro_CustomSummon.prefab` | СДЕЛАНО (HsFx-28); пробы Kargath Bladefist, Blademaster Okani, Remornia, Maiev Shadowsong владелец смотрел — выбрал Samuro (2026-10-25) |

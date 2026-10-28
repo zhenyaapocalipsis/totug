@@ -18,7 +18,8 @@ HsBrowser (память «Unity: edit in copy»).
 
 - **HsFx-56 (сделано):** «Без анимации» — Rath Modar, Imix, Vanifer, Yan-C-Bin: убраны
   из `RECIPES`/`SCRIPTS`, кадры и звуки удалены, рецепты оставлены.
-- **HsFx-57, 58 (сделано):** Deathblade → Blade of The Black Empire (`blackempire`); Masters
+- **HsFx-57..60 (сделано):** Graz'zt → Endbringer Umbra (`umbra`); Inquisitor → K'ara
+  (перепечена с `echo_48325`, `benedictus` удалён); Deathblade → Blade of The Black Empire (`blackempire`); Masters
   of Sorcere → Zayle (кадры `zayle` перепечены с `echo_48328`). Кадры и скрипт `kaelthas`
   без карты — не удалять, перепечь для Efreeti (`echo_49516`). Готовый рецепт для другой
   карты: поменять `echo_<cid>` в рецепте, запечь в `render/<имя>_bake`, скопировать png и
@@ -43,8 +44,8 @@ HsBrowser (память «Unity: edit in copy»).
   Berserker, Treant, Archmage, Harpy, Relentless Siege, Beast Tamer, Siege Beast,
   Jarlaxle, Ahmaergo, Mammoth, Gorgon, Kraken, Satyr Thornbearer, Githyanki Knight,
   Thri-kreen Marauder, Yuan-ti Infiltrator.
-- **Спросить владельца:** Chrono-Lord Deios (TIME_064) назначен двум картам — Dao и
-  Lizardfolk Geomancer.
+- **Chrono-Lord Deios (TIME_064)** назначен двум картам — владелец 2026-10-28: «перевыберу
+  сам» одной из них; Dao и Lizardfolk Geomancer делать по новому `hs_assign.tsv`.
 
 ## Где остановились (2026-10-27)
 

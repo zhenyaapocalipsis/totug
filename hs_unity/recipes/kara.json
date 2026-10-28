@@ -35,6 +35,6 @@
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48514.png"}
+    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48325.png"}
   ]
 }
