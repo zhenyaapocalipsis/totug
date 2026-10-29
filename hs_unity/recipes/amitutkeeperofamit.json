@@ -15,9 +15,7 @@
       ],
       "usePos": true,
       "clip": "timeline",
-      "hide": [
-        "Vignette_Root"
-      ],
+      "hide": [],
       "under": [
         "Root"
       ],

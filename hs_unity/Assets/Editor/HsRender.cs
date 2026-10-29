@@ -73,6 +73,18 @@ public static class HsRender
         // как в HsBrowser: спелл по FSM, у которого все рендереры выключены (их включает код
         // HS), — включить узлы-контейнеры без рендереров и частиц
         public bool wakeContainers;
+        // компонент HS RenderToTexture (Lich King: иней на всю доску) — его кода нет: узел rtt
+        // (без поддерева rttAlpha) снимается отдельно на чёрном — цвет, rttAlpha — маска
+        // (яркость = непрозрачность); иней ложится в дорожку «под картой» под всё остальное
+        public string rtt = "";
+        public string rttAlpha = "";
+        public float rttOpacity = 1f;
+        // растянуть узел rtt (доска HS меньше нашей): множитель localScale x, y, z
+        public float[] rttScale = new float[0];
+        // мягкий край инея у границы сеток HS, пикселей кадра 960x540
+        public int rttFeather = 0;
+        // огибающая непрозрачности инея (EaseColor $RenderPlaneAlpha в FSM): [от, до] — проявление, [от, до] — угасание, секунды слоя
+        public float[] rttFade = new float[0];
         // перекраска в тон карты: у материалов узлов tintNodes (с поддеревом) в цветах
         // tintProps оттенок HSV заменяется на tintHue (0..1), насыщенность и яркость — как в HS
         public float tintHue = -1f;
@@ -89,6 +101,8 @@ public static class HsRender
         public string node;
         public float start;
         public float end;
+        // >= 0: с этой секунды частицы не рождаются, живущие доживают (ParticleStopAction), узел включён до end
+        public float stop = -1f;
     }
 
     [Serializable]
@@ -171,11 +185,14 @@ public static class HsRender
         public (GameObject go, AnimationClip clip, float at)[] clips;
         public ParticleSystem[] loose;
         public Renderer[] under = new Renderer[0];
-        public (GameObject go, ParticleSystem[] ps, float start, float end)[] controls = new (GameObject, ParticleSystem[], float, float)[0];
+        public (GameObject go, ParticleSystem[] ps, float start, float end, float stop)[] controls = new (GameObject, ParticleSystem[], float, float, float)[0];
         // перекрашенные в тон карты: цвета, которые пишет анимация, перекрашиваются каждый кадр
         public Renderer[] tinted = new Renderer[0];
         // спрятанные (hide): анимация HS может включать их снова (m_IsActive) — прячутся каждый кадр
         public GameObject[] hidden = new GameObject[0];
+        // RenderToTexture: цвет и маска (Layer.rtt)
+        public Renderer[] rttRgb = new Renderer[0];
+        public Renderer[] rttMask = new Renderer[0];
     }
 
     static Color Tint(Color c, Layer l)
@@ -436,12 +453,12 @@ public static class HsRender
             if (t == null) { Log("hidePS: not found " + p); continue; }
             foreach (var r in t.GetComponentsInChildren<ParticleSystemRenderer>(true)) r.enabled = false;
         }
-        var ctl = new List<(GameObject, ParticleSystem[], float, float)>();
+        var ctl = new List<(GameObject, ParticleSystem[], float, float, float)>();
         foreach (var c in spec.controls)
         {
             var t = go.transform.Find(c.node);
             if (t == null) { Log("controls: not found " + c.node); continue; }
-            ctl.Add((t.gameObject, t.GetComponentsInChildren<ParticleSystem>(true), c.start, c.end));
+            ctl.Add((t.gameObject, t.GetComponentsInChildren<ParticleSystem>(true), c.start, c.end, c.stop));
         }
         live.controls = ctl.ToArray();
         // частицы своих дорожек идут только по ним
@@ -458,6 +475,21 @@ public static class HsRender
             foreach (var tr in nodes.Where(tr => rx.IsMatch(tr.name)))
                 foreach (var r in tr.GetComponentsInChildren<Renderer>(true))
                     if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
+        }
+        if (spec.rtt != "")
+        {
+            var rr = go.transform.Find(spec.rtt);
+            var ra = spec.rttAlpha != "" ? go.transform.Find(spec.rttAlpha) : null;
+            if (rr == null || spec.rttAlpha != "" && ra == null) Log("rtt: not found " + spec.rtt + " / " + spec.rttAlpha);
+            else
+            {
+                live.rttMask = ra ? ra.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled).ToArray() : new Renderer[0];
+                var mask = new HashSet<Renderer>(live.rttMask);
+                // сетки цвета в префабе выключены (их рисует код HS) — берутся все
+                live.rttRgb = rr.GetComponentsInChildren<Renderer>(true).Where(r => !mask.Contains(r)).ToArray();
+                Log($"rtt {spec.rtt}: rgb {live.rttRgb.Length}, mask {live.rttMask.Length}");
+                if (spec.rttScale.Length == 3) rr.localScale = Vector3.Scale(rr.localScale, V(spec.rttScale));
+            }
         }
         return live;
     }
@@ -549,12 +581,18 @@ public static class HsRender
                 if (any) r.SetPropertyBlock(Mpb);
             }
             // свои дорожки HS: объект включён только на своём отрезке, частицы — с его начала
-            foreach (var (cgo, cps, s0, s1) in l.controls)
+            foreach (var (cgo, cps, s0, s1, sst) in l.controls)
             {
                 bool act = tau >= s0 && tau < s1;
                 if (cgo.activeSelf != act) cgo.SetActive(act);
                 if (!act) continue;
-                foreach (var p in cps) p.Simulate((float)(tau - s0), false, true, true);
+                foreach (var p in cps)
+                {
+                    if (sst < 0f || tau <= sst) { p.Simulate((float)(tau - s0), false, true, true); continue; }
+                    p.Simulate(sst - s0, false, true, true);
+                    p.Stop(false, ParticleSystemStopBehavior.StopEmitting);
+                    p.Simulate((float)tau - sst, false, false, true);
+                }
             }
             foreach (var p in l.loose)
             {
@@ -611,12 +649,83 @@ public static class HsRender
         var pick = only == "" ? null : new HashSet<int>(only.Split(',').Select(int.Parse));
         // -hsr-from N: дозапечь с кадра N (после сбоя)
         int from = int.Parse(Arg("from", "0"));
-        var all = lives.SelectMany(l => l.root.GetComponentsInChildren<Renderer>(true)).ToArray();
+        // RenderToTexture (Layer.rtt): его рендереры рисуются только своими проходами
+        var rttRgb = lives.SelectMany(l => l.rttRgb).ToArray();
+        var rttMask = lives.SelectMany(l => l.rttMask).ToArray();
+        var rttSet = new HashSet<Renderer>(rttRgb.Concat(rttMask));
+        float rttOp = lives.Where(l => l.spec.rtt != "").Select(l => l.spec.rttOpacity).DefaultIfEmpty(1f).First();
+        int rttFeather = lives.Where(l => l.spec.rtt != "").Select(l => l.spec.rttFeather).DefaultIfEmpty(0).First();
+        var rttFade = lives.Where(l => l.spec.rtt != "").Select(l => l.spec.rttFade).DefaultIfEmpty(new float[0]).First();
+        foreach (var r in rttSet) r.enabled = false;
+        var all = lives.SelectMany(l => l.root.GetComponentsInChildren<Renderer>(true)).Where(r => !rttSet.Contains(r)).ToArray();
         var underAll = new HashSet<Renderer>(lives.SelectMany(l => l.under));
         var underFrames = new List<int>();
-        void Save(string file)
+        Color[] Grab(Renderer[] set, Color bg)
+        {
+            foreach (var r in set) r.enabled = true;
+            cam.backgroundColor = bg;
+            cam.Render();
+            RenderTexture.active = rt;
+            black.ReadPixels(new Rect(0, 0, W, H), 0, 0);
+            RenderTexture.active = null;
+            foreach (var r in set) r.enabled = false;
+            return black.GetPixels();
+        }
+        // иней: premultiplied-цвет сеток (на чёрном и белом фоне), умноженный на маску, 2x2 -> 1 пиксель
+        Color32[] Frost(float tsec)
+        {
+            var shown = all.Where(r => r.enabled).ToArray();
+            foreach (var r in shown) r.enabled = false;
+            var pc = Grab(rttRgb, Color.black);
+            var pw = Grab(rttRgb, Color.white);
+            var pm = Grab(rttMask, Color.black);
+            float op = rttOp;
+            if (rttFade.Length == 4)
+                op *= Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(rttFade[0], rttFade[1], tsec)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(rttFade[2], rttFade[3], tsec)));
+            foreach (var r in shown) r.enabled = true;
+            int w2 = W / 2, h2 = H / 2;
+            var po = new Color[w2 * h2];
+            var inside = new float[w2 * h2];
+            for (int y = 0; y < h2; y++)
+                for (int x = 0; x < w2; x++)
+                {
+                    float r = 0, g = 0, b = 0, a = 0, c = 0;
+                    for (int dy = 0; dy < 2; dy++)
+                        for (int dx = 0; dx < 2; dx++)
+                        {
+                            int k = (y * 2 + dy) * W + x * 2 + dx;
+                            float m = Mathf.Clamp01((pm[k].r + pm[k].g + pm[k].b) / 3f) * op;
+                            float cov = Mathf.Clamp01(1f - ((pw[k].r - pc[k].r) + (pw[k].g - pc[k].g) + (pw[k].b - pc[k].b)) / 3f);
+                            r += pc[k].r * m; g += pc[k].g * m; b += pc[k].b * m; a += cov * m;
+                            c = Mathf.Max(c, cov > 0.02f ? 1f : 0f);
+                        }
+                    po[y * w2 + x] = new Color(r / 4, g / 4, b / 4, a / 4);
+                    inside[y * w2 + x] = c;
+                }
+            // мягкий край сеток (rttFeather, пикселей кадра): гаснет к границе сетки, у края экрана — нет
+            if (rttFeather > 0)
+            {
+                var soft = inside;
+                for (int pass = 0; pass < 2; pass++)
+                {
+                    soft = BoxBlur(soft, w2, h2, rttFeather / 2, true);
+                    soft = BoxBlur(soft, w2, h2, rttFeather / 2, false);
+                }
+                for (int k = 0; k < po.Length; k++) po[k] *= Mathf.Clamp01((soft[k] - 0.5f) * 2f) * inside[k];
+            }
+            return po.Select(c => (Color32)new Color(Mathf.Clamp01(c.r), Mathf.Clamp01(c.g), Mathf.Clamp01(c.b), Mathf.Clamp01(c.a))).ToArray();
+        }
+        void Save(string file, Color32[] below = null)
         {
             var px = Shot(cam, rt, black, white, file);
+            // слой ниже (иней доски): остальное поверх него, premultiplied
+            if (below != null)
+                for (int k = 0; k < px.Length; k++)
+                {
+                    float t = 1f - px[k].a / 255f;
+                    px[k] = new Color32((byte)Mathf.Min(255, px[k].r + below[k].r * t), (byte)Mathf.Min(255, px[k].g + below[k].g * t),
+                        (byte)Mathf.Min(255, px[k].b + below[k].b * t), (byte)Mathf.Min(255, px[k].a + below[k].a * t));
+                }
             HueMap(px, recipe);
             png.SetPixels32(px);
             // без Apply: EncodeToPNG читает пиксели из памяти, выгрузка в видеопамять не нужна
@@ -635,12 +744,13 @@ public static class HsRender
             foreach (var r in under) r.enabled = false;
             Save($"f{i:000}.png");
             foreach (var r in under) r.enabled = true;
-            // дорожка «под картой»: только узлы under
-            if (under.Length > 0)
+            // дорожка «под картой»: только узлы under (и иней RenderToTexture под ними)
+            var frost = rttRgb.Length > 0 ? Frost((float)i / recipe.fps) : null;
+            if (under.Length > 0 || frost != null)
             {
                 var rest = shown.Where(r => !underAll.Contains(r)).ToArray();
                 foreach (var r in rest) r.enabled = false;
-                Save($"u{i:000}.png");
+                Save($"u{i:000}.png", frost);
                 foreach (var r in rest) r.enabled = true;
                 underFrames.Add(i);
             }
@@ -655,6 +765,25 @@ public static class HsRender
         Log($"frames {n + 1}");
     }
 
+
+    // скользящее среднее по строкам (horiz) или столбцам; за краем кадра — значение края
+    static float[] BoxBlur(float[] src, int w, int h, int rad, bool horiz)
+    {
+        var dst = new float[src.Length];
+        int len = horiz ? w : h, lines = horiz ? h : w;
+        for (int l = 0; l < lines; l++)
+        {
+            int Idx(int i) { i = Mathf.Clamp(i, 0, len - 1); return horiz ? l * w + i : i * w + l; }
+            float sum = 0;
+            for (int i = -rad; i <= rad; i++) sum += src[Idx(i)];
+            for (int i = 0; i < len; i++)
+            {
+                dst[Idx(i)] = sum / (2 * rad + 1);
+                sum += src[Idx(i + rad + 1)] - src[Idx(i - rad)];
+            }
+        }
+        return dst;
+    }
 
     // кадр на чёрном и белом фоне -> premultiplied-цвет и непрозрачность, 2x2 -> 1 пиксель
     static Color32[] Shot(Camera cam, RenderTexture rt, Texture2D black, Texture2D white, string name)

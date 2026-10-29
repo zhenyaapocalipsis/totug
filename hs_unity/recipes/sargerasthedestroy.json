@@ -15,9 +15,7 @@
       ],
       "usePos": true,
       "clip": "timeline",
-      "hide": [
-        "Root/WorldPosition_Root/Mesh_ShredVignette"
-      ],
+      "hide": [],
       "under": [
         "Root"
       ],

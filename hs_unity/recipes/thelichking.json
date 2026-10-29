@@ -1,7 +1,7 @@
 {
   "deps": "../deps_thelichking.txt",
   "fps": 60.0,
-  "len": 5.0,
+  "len": 7.5,
   "space": "gamma",
   "ldr": true,
   "layers": [
@@ -11,18 +11,27 @@
       "pos": [-7.59, 0.0, -7.01],
       "usePos": true,
       "noTimeline": true,
-      "hide": ["BoardRoot/RenderTexture_Ground", "BoardRoot/Offscreen_Ground", "BoardRoot/PlayArea_Mesh_FullUV_AlphaEdges"],
+      "hide": ["BoardRoot/RenderTexture_Ground", "BoardRoot/PlayArea_Mesh_FullUV_AlphaEdges", "BoardRoot/Offscreen_Ground/FrostGround_mesh_background"],
+      "rtt": "BoardRoot/Offscreen_Ground",
+      "rttAlpha": "BoardRoot/Offscreen_Ground/Alpha",
+      "rttOpacity": 0.6,
+      "rttScale": [1.55, 1.0, 1.85],
+      "rttFeather": 40,
+      "rttFade": [0.0, 0.75, 5.4, 7.4],
       "controls": [
-        {"node": "BoardRoot/fx_snowflakes_small", "start": 0.0, "end": 2.4},
-        {"node": "BoardRoot/fx_snowdrifts", "start": 0.0, "end": 5.0},
-        {"node": "BoardRoot/fx_board_souls", "start": 0.0, "end": 5.0},
-        {"node": "MinionRoot/fx_snow_burst", "start": 1.5, "end": 5.0},
-        {"node": "MinionRoot/fx_fire_trail", "start": 1.8, "end": 5.0},
-        {"node": "MinionRoot/fx_swipe_b", "start": 2.4, "end": 5.0},
-        {"node": "MinionRoot/fx_SubEm_Shockwave", "start": 2.4, "end": 5.0}
+        {"node": "BoardRoot/Offscreen_Ground/Alpha/ParticleInitialReveal", "start": 0.0, "end": 99.0, "stop": 4.4},
+        {"node": "BoardRoot/Offscreen_Ground/Alpha/ParticleInitialWipe", "start": 2.4, "end": 99.0},
+        {"node": "BoardRoot/Offscreen_Ground/Alpha/ParticleFinalWipe", "start": 4.4, "end": 99.0},
+        {"node": "BoardRoot/fx_snowflakes_small", "start": 0.0, "end": 99.0, "stop": 2.4},
+        {"node": "BoardRoot/fx_snowdrifts", "start": 0.0, "end": 99.0, "stop": 4.4},
+        {"node": "BoardRoot/fx_board_souls", "start": 0.0, "end": 99.0, "stop": 4.4},
+        {"node": "MinionRoot/fx_snow_burst", "start": 1.5, "end": 99.0},
+        {"node": "MinionRoot/fx_fire_trail", "start": 1.8, "end": 99.0},
+        {"node": "MinionRoot/fx_swipe_b", "start": 2.4, "end": 99.0},
+        {"node": "MinionRoot/fx_SubEm_Shockwave", "start": 2.4, "end": 99.0}
       ],
       "under": ["BoardRoot", "MinionRoot"],
-      "measure": ["MinionRoot"]
+      "measure": ["MinionRoot", "BoardRoot/Offscreen_Ground/FrostGround_mesh", "BoardRoot/Offscreen_Ground/FrostGround_mesh_add"]
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",

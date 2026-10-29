@@ -3,6 +3,7 @@ extends SceneTree
 ## детали — узел жетона прятался целиком вместе с шлейфами, разрезами и свечениями эффекта).
 ## В слое эффекта (первый слой) из hide остаются только виньетки на весь экран и корни
 ## стороны соперника; сетки жетона и интерфейса карты HS прячет hideMeshRx (частицы остаются).
+## Виньетку потом проверить пробой: в ней бывает главный эффект (космос Exodar, HsFx-81).
 ##   Godot --headless --script res://../../hs_unity/tools/hide_like_browser.gd -- <рецепт.json> ...
 const MESH_RX := "TokenGlow|MinionEdgeGlow|MinionShell|MinionGlow|Mesh_FlashGlow|Top_Nightmare|Card_InPlay|TokenHider|Test_Minion|^Minion|Health|Attack|UberText|Portrait|Gem_|Unique_Ally|Location_InPlay|Wep_|TokenEdge|Token_Edge|EdgeGlow|Token_SoftGlow|Token_GlowBacking|Token_DarkCover|LengendaryToken|LegendaryToken|SpotlightGlow|Token_BackGlow|Minion_BackGlow|Token_Cracks|Token_GlassCracking"
 const KEEP_RX := "[Vv]ignette|Opponent|_OP$|_OP/"

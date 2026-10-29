@@ -16,7 +16,9 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [
-        "Root/DetachRoot/Vignette_Root"
+        "Root/Token_Root/OnToken/Mesh_hyperspeedGlow",
+        "Root/DetachRoot/Impact_FX/HitFlash",
+        "Root/DetachRoot/Impact_FX/HitFlashBacking"
       ],
       "under": [
         "Root"
