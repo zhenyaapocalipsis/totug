@@ -16,7 +16,7 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "under": [
+      "hideRx": "/FX_Glow_Minion$", "under": [
         "Root"
       ],
       "controls": [],

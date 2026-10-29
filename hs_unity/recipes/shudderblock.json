@@ -26,7 +26,7 @@
         "Root_Opponent/Crack_Glow",
         "Root_Opponent/Opponent_Flipper_2/AnimRoot/TokenRoot"
       ],
-      "under": [
+      "hideRx": "/Mesh_Minion_Glow$", "under": [
         "Root"
       ],
       "controls": [],

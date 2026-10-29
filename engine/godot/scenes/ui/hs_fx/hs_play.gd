@@ -146,7 +146,7 @@ const SCRIPTS := {
 	# Renferal, the Malignant (EDR_526) — Matron Mother (вместо Queen Azshara — владелец выбрал
 	# в HsBrowser 2026-10-27): EDRFX_RenferalTheMalignant_CustomSummon (Timeline): над точкой
 	# посадки сгущается тьма, на 0.67 с вспыхивает багровая паутина (паучья матрона Ллос),
-	# паутина тлеет и гаснет. Жетон HS спрятан (и частицы-силуэт жетона «Minion Token» — hidePSRx,
+	# паутина тлеет и гаснет. Жетон HS спрятан (и частицы-силуэт жетона «Minion Token» — hideRx,
 	# HsFx-83), весь эффект под картой. Выжигание багровое.
 	"renferal": {"frames": "renferal", "sounds": "renferal",
 		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
@@ -491,6 +491,7 @@ const SCRIPTS := {
 	# Omen (EDR_421) — Shield Guardian: багровая лента прилетает слева (как в HS) и бьёт в точку
 	# посадки, на 0.7 с алая сфера, искры гаснут. Сетки жетона HS спрятаны, весь эффект под
 	# картой. Выжигание алое. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-84: контур жетона HS в центре (FX_Token_*) спрятан hideRx.
 	"omen": {"frames": "omen", "sounds": "omen",
 		"card": {"face": "mini", "reveal": 1.17, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -907,6 +908,7 @@ const SCRIPTS := {
 	# Chillin' Vol'jin (VAC_957) — Avatar of Lolth: фиолетовый дым вуду в точке посадки, на удар
 	# — фиолетовая вспышка. Сетки жетона HS и виньетки спрятаны, весь эффект под картой;
 	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-84: розовый силуэт жетона HS с «драконом» (Token_Glow) спрятан hideRx.
 	"chillinvoljin": {"frames": "chillinvoljin", "sounds": "chillinvoljin",
 		"card": {"face": "mini", "reveal": 1.82, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -943,6 +945,7 @@ const SCRIPTS := {
 	# Karov the Broken (JAIL_448) — Nihiloor: фиолетовая тьма с щупальцами, на удар — фиолетовый
 	# взрыв. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-84: белый овал-вспышка по форме жетона HS (Flare_Token_*) спрятан hideRx.
 	"karovthebroken": {"frames": "karovthebroken", "sounds": "karovthebroken",
 		"card": {"face": "mini", "reveal": 2.09, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -980,6 +983,7 @@ const SCRIPTS := {
 	# Shudderblock (TOY_501t) — Troll: синий столб неба бьёт сверху в точку посадки, голубое
 	# сияние. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-84: тёмное пятно формы жетона HS (Mesh_Minion_Glow) спрятано hideRx.
 	"shudderblock": {"frames": "shudderblock", "sounds": "shudderblock",
 		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -1242,6 +1246,7 @@ const SCRIPTS := {
 	# Arisen Onyxia (CATA_155) — Purple Worm: фиолетовые столбы пламени падают сверху,
 	# фиолетовая сфера. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание
 	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-84: лиловый овал жетона HS (FX_Glow_Minion), висевший после эффекта, спрятан hideRx.
 	"arisenonyxia": {"frames": "arisenonyxia", "sounds": "arisenonyxia",
 		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)

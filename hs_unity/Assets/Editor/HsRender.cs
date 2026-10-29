@@ -70,9 +70,10 @@ public static class HsRender
         // как в HsBrowser: у узлов с подходящим именем (и их поддерева) не рисовать сетки —
         // частицы, разрезы и шлейфы внутри узла жетона остаются (hide прячет узел целиком)
         public string hideMeshRx = "";
-        // частицы-силуэты жетона HS (Renferal: «Minion Token» с текстурой рамки легендарки):
-        // у узлов с подходящим именем выключить только их собственные частицы
-        public string hidePSRx = "";
+        // силуэты жетона HS, которые hideMeshRx не ловит (частицы «Minion Token» у Renferal, овалы
+        // Mesh_Minion_Glow, Mesh_RevealGlow): у узлов, чей путь от корня (как в probe.txt) подходит,
+        // выключить только их собственный рендерер — сетку или частицы, дети остаются
+        public string hideRx = "";
         // как в HsBrowser: спелл по FSM, у которого все рендереры выключены (их включает код
         // HS), — включить узлы-контейнеры без рендереров и частиц
         public bool wakeContainers;
@@ -482,11 +483,14 @@ public static class HsRender
                 foreach (var r in tr.GetComponentsInChildren<Renderer>(true))
                     if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
         }
-        if (spec.hidePSRx != "")
+        if (spec.hideRx != "")
         {
-            var rx = new System.Text.RegularExpressions.Regex(spec.hidePSRx);
-            foreach (var tr in nodes.Where(tr => rx.IsMatch(tr.name)))
-                if (tr.TryGetComponent<ParticleSystemRenderer>(out var r)) { r.enabled = false; Log("hidePSRx: " + tr.name); }
+            var rx = new System.Text.RegularExpressions.Regex(spec.hideRx);
+            foreach (var tr in nodes)
+            {
+                var path = AnimationUtility.CalculateTransformPath(tr, go.transform);
+                if (rx.IsMatch(path) && tr.TryGetComponent<Renderer>(out var r)) { r.enabled = false; Log("hideRx: " + path); }
+            }
         }
         if (spec.rtt != "")
         {
@@ -842,8 +846,13 @@ public static class HsRender
         foreach (var t in l.root.GetComponentsInChildren<Transform>(true))
         {
             var names = t.GetComponents<Component>().Select(c => c == null ? "<missing>" : c.GetType().Name);
-            sb.AppendLine($"{t.name}  active={t.gameObject.activeInHierarchy}  [{string.Join(", ", names)}]");
+            // путь от корня — его же берут hide/controls; ren=False — рендерер погашен рецептом
+            var path = t == l.root.transform ? t.name : AnimationUtility.CalculateTransformPath(t, l.root.transform);
             var r = t.GetComponent<Renderer>();
+            var extra = r == null ? "" : $"  ren={r.enabled}";
+            if (r is ParticleSystemRenderer pr)
+                extra += $"  mode={pr.renderMode}" + (pr.renderMode == ParticleSystemRenderMode.Mesh && pr.mesh != null ? $" mesh={pr.mesh.name}" : "");
+            sb.AppendLine($"{path}  active={t.gameObject.activeInHierarchy}{extra}  [{string.Join(", ", names)}]");
             if (r != null)
                 foreach (var m in r.sharedMaterials.Where(m => m != null))
                     sb.AppendLine($"    mat {m.name} shader={m.shader.name} supported={m.shader.isSupported} tex=[" +

@@ -21,9 +21,18 @@ HsBrowser (память «Unity: edit in copy»).
 - **HsFx-83 (сделано): Matron Mother (renferal) — без розового шара.** В 0.67 с над точкой
   посадки висел розовый купол с «наростом» справа сверху — частицы `Minion Token` /
   `Minion Token Overlay` (силуэт жетона легендарки HS, текстура Card_Play_Ally_Reborn_Shadow_Legendary).
-  `hideMeshRx` гасит только сетки, поэтому в слое рецепта новое поле `hidePSRx` — регулярка по
-  имени узла, выключает собственные частицы узла (в логе `hidePSRx: <узел>`). Похожий шар в другом
-  эффекте — смотреть в `-hsr-mode probe` частицы с текстурой рамки/жетона и добавить их в `hidePSRx`.
+  `hideMeshRx` гасит только сетки, поэтому в слое рецепта новое поле `hideRx` — регулярка по
+  пути узла от корня (как в probe.txt), выключает собственный рендерер узла (сетку или частицы),
+  дети остаются; в логе `hideRx: <путь>`.
+- **HsFx-84 (сделано): силуэты жетона HS во всех 125 эффектах.** `-hsr-mode probe` теперь пишет
+  путь узла, `ren=` (рендерер включён) и у частиц `mode=`/`mesh=`. Проба всех рецептов, отбор
+  видимых рендереров с текстурами жетона (AllyInPlayGlow*, MinionTokenGlow*, *MinionGlow*,
+  Card_Play_Ally*, …, без узлов из `hide`), у 29 подозрительных — перепечка без них и сравнение
+  «было/стало». Спрятаны (`hideRx`): Arisen Onyxia `FX_Glow_Minion`, Omen `FX_Token_*`, Karov
+  `Flare_Token_*`, Chillin' Vol'jin `Token_Glow/Token_Glow`, Shudderblock `Mesh_Minion_Glow`.
+  Оставлены (настоящие кольца/вспышки или закрыто картой): Akama, Drakuru, Tarim, Sylvanas,
+  Yogg-Saron, Nobundo, Nythendra (без них дыра во вспышке), Fyrakk, Hodir, Vyranoth, Remornia,
+  Staff of Trickery, Cho'gall и др. Новый эффект: после пробы искать такие текстуры с `ren=True`.
 - **HsFx-82 (сделано): кадры 480x270.** Шейдер HsPlay рисует кадр блоком 2x2 пикселя экрана
   960x540 и брал из кадра 960x540 один пиксель на блок — остальные три не видны. Владелец выбрал
   «усреднением»: все кадры ужаты средним 2x2 (`engine/godot/tools/bake_half.gd`, чистый свет
