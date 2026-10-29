@@ -12,7 +12,7 @@
       "usePos": true,
       "noTimeline": true,
       "clips": [{"name": "FX_Wrathion_CIP", "at": 0.6}],
-      "hide": ["SummonMinion_quad"],
+      "hide": [],
       "controls": [{"node": "FX_Lightning", "start": 0.0, "end": 3.6}, {"node": "fx_reveal_smoke_wispy", "start": 0.6, "end": 3.6}],
       "under": ["FX_Lightning", "Root", "fx_reveal_smoke_wispy"],
       "measure": ["FX_Lightning", "Root", "fx_reveal_smoke_wispy"]

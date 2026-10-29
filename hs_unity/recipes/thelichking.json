@@ -11,9 +11,11 @@
       "pos": [-7.59, 0.0, -7.01],
       "usePos": true,
       "noTimeline": true,
-      "hide": ["BoardRoot/RenderTexture_Ground", "BoardRoot/Offscreen_Ground", "BoardRoot/PlayArea_Mesh_FullUV_AlphaEdges", "BoardRoot/fx_board_souls", "BoardRoot/fx_snowdrifts", "MinionRoot/fx_swipe_b/fx_smoke_bright/fx_cracks"],
+      "hide": ["BoardRoot/RenderTexture_Ground", "BoardRoot/Offscreen_Ground", "BoardRoot/PlayArea_Mesh_FullUV_AlphaEdges"],
       "controls": [
         {"node": "BoardRoot/fx_snowflakes_small", "start": 0.0, "end": 2.4},
+        {"node": "BoardRoot/fx_snowdrifts", "start": 0.0, "end": 5.0},
+        {"node": "BoardRoot/fx_board_souls", "start": 0.0, "end": 5.0},
         {"node": "MinionRoot/fx_snow_burst", "start": 1.5, "end": 5.0},
         {"node": "MinionRoot/fx_fire_trail", "start": 1.8, "end": 5.0},
         {"node": "MinionRoot/fx_swipe_b", "start": 2.4, "end": 5.0},

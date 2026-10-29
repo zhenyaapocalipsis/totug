@@ -5,22 +5,67 @@
   "space": "gamma",
   "ldr": true,
   "layers": [
-    {"prefab": "087488ecc6a95d147975f3aae3652e23", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["AnimRoot/OnToken"], "under": ["AnimRoot"], "controls": [{"node": "AnimRoot/BuildUpRoot/ClawRoot/PS_Motes", "start": 0, "end": 3.033},{"node": "AnimRoot/BuildUpRoot/ClawRoot/PS_Motes", "start": 1.067, "end": 5.55}], "measure": ["AnimRoot"]},
+    {
+      "prefab": "087488ecc6a95d147975f3aae3652e23",
+      "at": 0.0,
+      "pos": [
+        -7.59,
+        0.0,
+        -7.01
+      ],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": [],
+      "under": [
+        "AnimRoot"
+      ],
+      "controls": [
+        {
+          "node": "AnimRoot/BuildUpRoot/ClawRoot/PS_Motes",
+          "start": 0.0,
+          "end": 3.033
+        },
+        {
+          "node": "AnimRoot/BuildUpRoot/ClawRoot/PS_Motes",
+          "start": 1.067,
+          "end": 5.55
+        }
+      ],
+      "measure": [
+        "AnimRoot"
+      ],
+      "hideMeshRx": "TokenGlow|MinionEdgeGlow|MinionShell|MinionGlow|Mesh_FlashGlow|Top_Nightmare|Card_InPlay|TokenHider|Test_Minion|^Minion|Health|Attack|UberText|Portrait|Gem_|Unique_Ally|Location_InPlay|Wep_|TokenEdge|Token_Edge|EdgeGlow|Token_SoftGlow|Token_GlowBacking|Token_DarkCover|LengendaryToken|LegendaryToken|SpotlightGlow|Token_BackGlow|Minion_BackGlow|Token_Cracks|Token_GlassCracking"
+    },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.17,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81],
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
       "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"],
-      "tintHue": 0.00,
-      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "measure": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ],
+      "tintHue": 0.0,
+      "tintNodes": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ]
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48513.png"}
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_48513.png"
+    }
   ]
 }

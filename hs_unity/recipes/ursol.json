@@ -5,22 +5,77 @@
   "space": "gamma",
   "ldr": true,
   "layers": [
-    {"prefab": "ba1f4c0b102918e438784ad2e1453fab", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/VFX_Finish/Meshes_Crack", "Root/Token (Position)"], "under": ["Root"], "controls": [{"node": "Root/VFX_Start", "start": 0, "end": 1.467},{"node": "Root/VFX_Finish", "start": 1.583, "end": 3.9},{"node": "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Particles_Trail", "start": 0, "end": 2.633},{"node": "Root/Token (Position)/Token (Rotation)/Root_Charge", "start": 0.75, "end": 2.433}], "measure": ["Root"]},
+    {
+      "prefab": "ba1f4c0b102918e438784ad2e1453fab",
+      "at": 0.0,
+      "pos": [
+        -7.59,
+        0.0,
+        -7.01
+      ],
+      "usePos": true,
+      "clip": "timeline",
+      "hide": [],
+      "under": [
+        "Root"
+      ],
+      "controls": [
+        {
+          "node": "Root/VFX_Start",
+          "start": 0.0,
+          "end": 1.467
+        },
+        {
+          "node": "Root/VFX_Finish",
+          "start": 1.583,
+          "end": 3.9
+        },
+        {
+          "node": "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Particles_Trail",
+          "start": 0.0,
+          "end": 2.633
+        },
+        {
+          "node": "Root/Token (Position)/Token (Rotation)/Root_Charge",
+          "start": 0.75,
+          "end": 2.433
+        }
+      ],
+      "measure": [
+        "Root"
+      ],
+      "hideMeshRx": "TokenGlow|MinionEdgeGlow|MinionShell|MinionGlow|Mesh_FlashGlow|Top_Nightmare|Card_InPlay|TokenHider|Test_Minion|^Minion|Health|Attack|UberText|Portrait|Gem_|Unique_Ally|Location_InPlay|Wep_|TokenEdge|Token_Edge|EdgeGlow|Token_SoftGlow|Token_GlowBacking|Token_DarkCover|LengendaryToken|LegendaryToken|SpotlightGlow|Token_BackGlow|Minion_BackGlow|Token_Cracks|Token_GlassCracking"
+    },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
-      "at": 1.60,
+      "at": 1.6,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81],
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
       "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "measure": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ],
       "tintHue": 0.12,
-      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+      "tintNodes": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ]
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_49022.png"}
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_49022.png"
+    }
   ]
 }

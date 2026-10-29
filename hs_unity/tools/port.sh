@@ -49,18 +49,18 @@ recipe)
 	[ -z "$hue" ] && hue=$(hue_of "$RW/hs_unity/render/cand/$n/f$fr.png")
 	[ -z "$hue" ] && hue=0.75
 	layer=$(tr -d '\n' < "$C/$n.json" | sed -E 's/.*"layers": \[(.*)\]\}[[:space:]]*$/\1/')
-	# трещины в земле и виньетки на весь экран — макет HS (GUIDE §1, §5): спрятать; папки *Root
-	# с трещинами в имени не трогать (в них бывают камни и пыль удара). Выгрузка — render/port_dirs.tsv
+	# виньетки на весь экран — макет HS (GUIDE §1, §5): спрятать. Трещины в земле оставить — как в
+	# HsBrowser, где их выбрал владелец (HsFx-80). Выгрузка — render/port_dirs.tsv
 	dx=$(awk -F'\t' -v n="$n" '$1 == n { print $2 }' "$R/hs_unity/render/port_dirs.tsv" 2> /dev/null)
 	W=${PORT_W:-C:/Users/JEKADI~1/AppData/Local/Temp/claude/C--Users-jekadiscoteka--claude-spares-spare-17Dj3d/aff98ce0-2454-4200-8e94-1e32296e0b4b/scratchpad}
 	if [ -n "$dx" ] && [ -f "$W/$dx/paths.txt" ]; then
 		extra=$(awk '{ k = split($0, p, "/"); last = p[k]
-			if (!(last ~ /[Vv]ignette/ || (last ~ /[Cc]rack/ && last !~ /Root$/))) next
+			if (last !~ /[Vv]ignette/) next
 			for (i in kept) if (index($0, kept[i] "/") == 1) next
 			kept[NR] = $0; print }' "$W/$dx/paths.txt" | sed 's/.*/"&"/' | paste -sd, -)
 		if [ -n "$extra" ]; then
 			layer=$(echo "$layer" | sed -E "s|\"hide\": \[\]|\"hide\": [$extra]|; t; s|\"hide\": \[|\"hide\": [$extra, |")
-			echo "$n: спрятаны трещины и виньетки: $extra" | cut -c1-200
+			echo "$n: спрятаны виньетки: $extra" | cut -c1-200
 		fi
 	fi
 	under=$(echo "$layer" | sed -E 's/.*"under": (\[[^]]*\]).*/\1/')
@@ -93,6 +93,8 @@ recipe)
   ]
 }
 J
+	# жетон HS из пробы — не узлом целиком (с ним пропадают шлейфы и разрезы эффекта), а сетками, как в HsBrowser
+	"$G" --headless --path "$RW/engine/godot" --script res://../../hs_unity/tools/hide_like_browser.gd -- "$RW/hs_unity/recipes/$n.json" 2> /dev/null | grep "hide"
 	[ -f "$R/hs_unity/recipes/textures/echo_$cid.png" ] || echo "нет контура textures/echo_$cid.png — GUIDE §0 п.4 (hs_bake_prep.gd)"
 	echo "$n: recipes/$n.json, Choice_Reveal $at, tintHue $hue (кадр пробы $fr), reveal в SCRIPTS = $(awk -v a="$at" 'BEGIN { printf "%.2f", a + 0.45 }')"
 	;;

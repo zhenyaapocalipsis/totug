@@ -12,7 +12,7 @@
       "usePos": true,
       "noTimeline": true,
       "clips": [{"name": "ArchVillianRafaam_CustomSummon", "at": 0.0}],
-      "hide": ["root offset/root/impact cracks", "root offset/root/evil_glow_rim", "root offset/root/evil_glow"],
+      "hide": ["root offset/root/evil_glow_rim", "root offset/root/evil_glow"],
       "controls": [],
       "under": ["root offset"],
       "measure": ["root offset"]

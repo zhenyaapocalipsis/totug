@@ -11,7 +11,7 @@
       "pos": [-7.59, 0.0, -7.01],
       "usePos": true,
       "noTimeline": true,
-      "hide": ["GlowQuad"],
+      "hide": [],
       "controls": [{"node": "FX_ColdMistLinger", "start": 0.0, "end": 4.0}, {"node": "FX_ColdMistLand", "start": 1.5, "end": 4.0}],
       "under": ["FX_ColdMistLand", "FX_ColdMistLinger"],
       "measure": ["FX_ColdMistLand", "FX_ColdMistLinger"]

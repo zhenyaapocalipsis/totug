@@ -67,6 +67,12 @@ public static class HsRender
         public string[] show = new string[0];
         // не играть Timeline префаба: всё по FSM — clip/clips и controls
         public bool noTimeline;
+        // как в HsBrowser: у узлов с подходящим именем (и их поддерева) не рисовать сетки —
+        // частицы, разрезы и шлейфы внутри узла жетона остаются (hide прячет узел целиком)
+        public string hideMeshRx = "";
+        // как в HsBrowser: спелл по FSM, у которого все рендереры выключены (их включает код
+        // HS), — включить узлы-контейнеры без рендереров и частиц
+        public bool wakeContainers;
         // перекраска в тон карты: у материалов узлов tintNodes (с поддеревом) в цветах
         // tintProps оттенок HSV заменяется на tintHue (0..1), насыщенность и яркость — как в HS
         public float tintHue = -1f;
@@ -441,6 +447,18 @@ public static class HsRender
         // частицы своих дорожек идут только по ним
         var owned = new HashSet<ParticleSystem>(ctl.SelectMany(c => c.Item2));
         live.loose = live.loose.Where(p => !owned.Contains(p)).ToArray();
+        var nodes = go.GetComponentsInChildren<Transform>(true);
+        if (spec.wakeContainers && !nodes.Any(tr => tr.gameObject.activeInHierarchy && tr.GetComponent<Renderer>() != null))
+            foreach (var tr in nodes)
+                if (!tr.gameObject.activeSelf && !hidden.Contains(tr.gameObject) && tr.GetComponent<Renderer>() == null && tr.GetComponent<ParticleSystem>() == null)
+                    tr.gameObject.SetActive(true);
+        if (spec.hideMeshRx != "")
+        {
+            var rx = new System.Text.RegularExpressions.Regex(spec.hideMeshRx);
+            foreach (var tr in nodes.Where(tr => rx.IsMatch(tr.name)))
+                foreach (var r in tr.GetComponentsInChildren<Renderer>(true))
+                    if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
+        }
         return live;
     }
 

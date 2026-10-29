@@ -11,7 +11,7 @@
       "pos": [-7.59, 0.0, -7.01],
       "usePos": true,
       "noTimeline": true,
-      "hide": ["mesh_MinionGlow", "Detach_Root/mesh_ImpactShatter"],
+      "hide": ["mesh_MinionGlow"],
       "controls": [{"node": "Detach_Root/fx_portal_core_rings", "start": 0.0, "end": 4.0}, {"node": "Detach_Root/fx_impact_shadows", "start": 1.5, "end": 4.0}],
       "under": ["Detach_Root"],
       "measure": ["Detach_Root"]

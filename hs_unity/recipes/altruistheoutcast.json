@@ -12,7 +12,7 @@
       "usePos": true,
       "noTimeline": true,
       "clips": [{"name": "Altruis_CustomSummon", "at": 0.0}],
-      "hide": ["AnimRoot/mesh_MinionGlow", "AnimRoot/mesh_Cracks"],
+      "hide": ["AnimRoot/mesh_MinionGlow"],
       "controls": [{"node": "AnimRoot/fx_burst_fire", "start": 0.95, "end": 3.6}],
       "under": ["AnimRoot"],
       "measure": ["AnimRoot"]
