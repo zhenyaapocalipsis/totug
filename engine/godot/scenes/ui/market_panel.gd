@@ -36,6 +36,14 @@ const COLUMNS := 2
 ## Ширина панели: два слота, промежутки между ними и рамка. По ней же
 ## GameScreen задаёт ширину всей правой колонки.
 const WIDTH := SLOT.x * COLUMNS + 2 * (COLUMNS - 1) + PAD * 2
+## Фишки на карте рынка (Blue Slaad, Performer Maestro): ромбик шпиона и
+## фишки войск размером как на схеме доски (фишка 9x9 + пиксель зазора).
+const SPY_SIDE := 10.0
+const TOKEN_PITCH := 10
+const TOKENS_PER_ROW := 5
+
+## Картинки фишек войск по цвету и эмблеме хозяина.
+var _token_cache: Dictionary = {}
 
 var _grid: GridContainer
 var _supply_row: GridContainer
@@ -245,57 +253,85 @@ func _ensure_card(i: int, cid: String) -> CardView:
 
 
 ## FAR REALM (Blue Slaad): шпион игрока owner на карте слота ("" — нет).
-## Надпись SPY цвета хозяина в углу арта; соперник покупает её только за 3 Power.
+## Настоящий ромбик шпиона цвета хозяина, как на доске, в левом верхнем углу
+## арта (в углу карты закрывал бы цену); соперник покупает её только за 3 Power.
 func _mark_spy(i: int, owner: String) -> void:
-	var mark: Label = _boxes[i].get_node_or_null("MarketSpy")
+	var mark: Control = _boxes[i].get_node_or_null("MarketSpy")
 	if owner == "":
 		if mark != null:
 			mark.visible = false
 		return
 	if mark == null:
-		mark = Label.new()
+		mark = Control.new()
 		mark.name = "MarketSpy"
-		mark.text = "SPY"
-		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# В левом верхнем углу арта: в углу карты надпись закрывала цену.
-		mark.position = Vector2(3, 27)
-		mark.add_theme_color_override("font_outline_color", PixelTheme.BG)
-		mark.add_theme_constant_override("outline_size", 2)
+		mark.mouse_filter = Control.MOUSE_FILTER_PASS  # ради подсказки
+		mark.position = Vector2(CardView.MINI_ART.x + 1, CardView.MINI_ART.y + 1)
+		mark.size = Vector2(SPY_SIDE, SPY_SIDE)
+		mark.draw.connect(func(): _draw_spy_token(mark))
 		_boxes[i].add_child(mark)
 	_boxes[i].move_child(mark, -1)
-	mark.add_theme_color_override("font_color", EventLogPanel.player_color(owner))
+	mark.set_meta("owner", owner)
 	mark.tooltip_text = "%s's spy: others pay 3 Power to recruit it, then it costs 6 less" % owner.capitalize()
 	mark.visible = true
+	mark.queue_redraw()
+
+
+## Ромбик шпиона, как рисует доска (BoardPanel._draw_spies): цвет хозяина,
+## тёмный контур.
+static func _draw_spy_token(mark: Control) -> void:
+	var d := SPY_SIDE * 0.5
+	var at := Vector2(d, d)
+	var diamond := PackedVector2Array([
+		at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0)])
+	var inner := PackedVector2Array([
+		at + Vector2(0, -d + 1), at + Vector2(d - 1, 0), at + Vector2(0, d - 1), at + Vector2(-d + 1, 0)])
+	mark.draw_colored_polygon(diamond, Color(0.04, 0.03, 0.06))
+	mark.draw_colored_polygon(inner, BoardPanel.colour(String(mark.get_meta("owner")), Color(0.7, 0.7, 0.7)))
 
 
 ## CHULT (Performer Maestro): войска игроков на карте слота — {игрок: n}.
-## Надпись "T2" цвета хозяина в левом нижнем углу арта; своим дешевле, чужим дороже.
+## Настоящие фишки войск, как на схеме доски (цвет и эмблема хозяина), рядом в
+## левом нижнем углу арта, лишние — рядом выше; своим дешевле, чужим дороже.
 func _mark_troops(i: int, troops: Dictionary) -> void:
-	var mark: RichTextLabel = _boxes[i].get_node_or_null("MarketTroops")
+	var mark: Control = _boxes[i].get_node_or_null("MarketTroops")
 	if troops.is_empty():
 		if mark != null:
 			mark.visible = false
 		return
 	if mark == null:
-		mark = RichTextLabel.new()
+		mark = Control.new()
 		mark.name = "MarketTroops"
-		mark.bbcode_enabled = true
-		mark.fit_content = true
-		mark.scroll_active = false
-		mark.autowrap_mode = TextServer.AUTOWRAP_OFF
-		mark.mouse_filter = Control.MOUSE_FILTER_PASS
-		# В левом нижнем углу арта: в углу карты надпись лезла на название.
-		mark.position = Vector2(3, SLOT.y - 15)
-		mark.add_theme_color_override("font_outline_color", PixelTheme.BG)
-		mark.add_theme_constant_override("outline_size", 2)
+		mark.mouse_filter = Control.MOUSE_FILTER_PASS  # ради подсказки
+		mark.draw.connect(func(): _draw_troop_tokens(mark))
 		_boxes[i].add_child(mark)
 	_boxes[i].move_child(mark, -1)
-	var parts: PackedStringArray = []
+	var owners: Array = []
 	for pid in troops.keys():
-		parts.append("[color=#%s]T%d[/color]" % [EventLogPanel.player_color(String(pid)).to_html(false), int(troops[pid])])
-	mark.text = " ".join(parts)
+		for k in range(int(troops[pid])):
+			owners.append(String(pid))
+	var rows := ceili(float(owners.size()) / TOKENS_PER_ROW)
+	var cols := mini(owners.size(), TOKENS_PER_ROW)
+	mark.size = Vector2(cols * TOKEN_PITCH - 1, rows * TOKEN_PITCH - 1)
+	mark.position = Vector2(CardView.MINI_ART.x + 1, CardView.MINI_ART.w - 1 - mark.size.y)
+	mark.set_meta("owners", owners)
 	mark.tooltip_text = "Troops on this card: each makes it 1 cheaper for its owner and 1 dearer for opponents"
 	mark.visible = true
+	mark.queue_redraw()
+
+
+## Фишки рядами снизу вверх; картинки фишек — те же, что у схемы доски.
+func _draw_troop_tokens(mark: Control) -> void:
+	var owners: Array = mark.get_meta("owners", [])
+	for k in range(owners.size()):
+		var pid := String(owners[k])
+		var colour := BoardPanel.troop_colour(pid)
+		var emblem := "" if pid == GameState.WHITE else PlayerProfile.emblem_of(pid)
+		var key := colour.to_html() + emblem
+		if not _token_cache.has(key):
+			_token_cache[key] = ImageTexture.create_from_image(SchematicPainter.token(colour, emblem))
+		var row := k / TOKENS_PER_ROW
+		var col := k % TOKENS_PER_ROW
+		mark.draw_texture(_token_cache[key], Vector2(col * TOKEN_PITCH, mark.size.y + 1 - (row + 1) * TOKEN_PITCH))
 
 
 ## Пустой слот: подложка с надписью «empty». Карта кладётся поверх неё.

@@ -341,7 +341,6 @@
     "shurima": {
       "name": "Calimshan Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49701": 3,
         "49702": 3,
@@ -368,7 +367,6 @@
     "ionia": {
       "name": "Kara-Tur Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49800": 1,
         "49801": 1,
@@ -395,7 +393,6 @@
     "bandle": {
       "name": "Feywild Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "49900": 1,
         "49901": 1,
@@ -422,7 +419,6 @@
     "void": {
       "name": "Far Realm Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "50000": 1,
         "50001": 1,
@@ -449,7 +445,6 @@
     "ixtal": {
       "name": "Chult Half-Deck",
       "total": 40,
-      "wip": true,
       "copies": {
         "50100": 1,
         "50101": 1,
