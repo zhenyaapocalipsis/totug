@@ -804,7 +804,11 @@ func _match(needed: int) -> void:
 	queues[needed] = line.slice(size)
 	_log("room %s matched: %d players, %s, bans %s" % [room.code, room.needed, room.mode, room.banned])
 	_broadcast_lobby(room)
-	_begin_bans(room)
+	# Лобби банов — только у столов RANDOM 4 (владелец, 2026-10-30).
+	if GameRoom.has_bans(room.mode):
+		_begin_bans(room)
+	else:
+		_start_room(room, _rng.randi())
 
 
 ## Лобби банов (этап Ban-1): сид раздачи и запас доски выбираются сейчас — от

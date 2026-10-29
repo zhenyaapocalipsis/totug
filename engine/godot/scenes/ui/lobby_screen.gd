@@ -435,7 +435,8 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 	if _kind == "find":
 		# Стол собрал сервер, он же и раздаёт — START не нужен.
 		_start_button.visible = false
-		_status.text = "Game found! Opening the ban lobby..."
+		_status.text = "Game found! Opening the ban lobby..." if GameRoom.has_bans(NetSession.match_mode(needed)) \
+			else "Game found! Dealing the cards, a few seconds..."
 		return
 	var i_start := owner_seat == _net.seat
 	_start_button.visible = i_start

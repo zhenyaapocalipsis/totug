@@ -2984,6 +2984,8 @@ func test_game_modes() -> void:
 ## набирает рынок из оставшихся; полуколоды и доска те же, что без банов.
 func test_card_ban_lobby() -> void:
 	section("Лобби банов карт")
+	check(GameRoom.has_bans(NetSession.match_mode(4)) and not GameRoom.has_bans(NetSession.match_mode(2))
+		and not GameRoom.has_bans(NetSession.match_mode(3)), "баны — только у стола RANDOM 4")
 	var room := GameRoom.new("TEST", 2, GameSetup.MODE_STANDARD)
 	room.add(11)
 	room.add(12)

@@ -444,15 +444,7 @@ func _process(delta: float) -> bool:
 					== seated[0].profile["name"], "[match] имя соперника дошло")
 				check(waiting.seat == "", "[match] третий ждёт дальше, за стол не сел")
 				check(room.matched, "[match] стол поиска игры помечен — за него будет награда")
-				check(bans_seen.has(seated[0]) and bans_seen.has(seated[1]), "[match] оба видели лобби банов")
-				check(str(bans_seen[seated[0]]["decks"]) == str(room.server.state.half_decks),
-					"[match] в лобби банов — полуколоды партии (%s)" % [bans_seen[seated[0]].get("decks")])
-				check(room.card_bans.size() == 2 and room.card_bans.has(banned_by.get(seated[0], "x")) \
-					and room.card_bans.has(banned_by.get(seated[1], "x")), "[match] по бану от каждого, вторые пропущены (%s)" % [room.card_bans])
-				var market_all: Array = room.server.state.market.deck + room.server.state.market.display
-				check(not market_all.any(func(c): return room.card_bans.has(String(c))),
-					"[match] забаненных карт нет в рынке")
-				check(room.ban_log.size() == 4, "[match] четыре хода банов (2 на каждого)")
+				check(bans_seen.is_empty() and room.card_bans.is_empty(), "[match] 1 на 1 — без лобби банов (оно только в RANDOM 4)")
 				var bans: Array[String] = []
 				for i in 3:
 					if players[i] != waiting:
@@ -483,6 +475,22 @@ func _process(delta: float) -> bool:
 			if server.queued.size() == 1 and (server.queues[2] as Array).is_empty() and lost.has(_impostor):
 				check(String(lost[_impostor]).contains("is taken"), "[match] занятое имя в очереди — отказ: %s" % lost[_impostor])
 				check(server.queued.has(server.queues[3][0]), "[match] ушедший убран из очереди, ждущий троих остался")
+				_start_match4()
+		"match4_wait":
+			if players.all(func(p): return not views[p].is_empty()):
+				var room4: GameRoom = null
+				for r: GameRoom in server.rooms.values():
+					if r.needed == 4:
+						room4 = r
+				check(room4 != null and room4.mode == GameSetup.MODE_RANDOM_4, "[match4] стол на четверых, RANDOM 4")
+				check(players.all(func(p): return bans_seen.has(p)), "[match4] все четверо видели лобби банов")
+				check(str(bans_seen[players[0]]["decks"]) == str(room4.server.state.half_decks),
+					"[match4] в лобби — четыре полуколоды партии (%s)" % [bans_seen[players[0]].get("decks")])
+				check(room4.ban_log.size() == 8 and room4.card_bans.size() == 4,
+					"[match4] восемь ходов: по бану от каждого, вторые пропущены (%s)" % [room4.card_bans])
+				check(players.all(func(p): return room4.card_bans.has(banned_by.get(p, "x"))), "[match4] бан каждого дошёл")
+				var market4: Array = room4.server.state.market.deck + room4.server.state.market.display
+				check(not market4.any(func(c): return room4.card_bans.has(String(c))), "[match4] забаненных карт нет в рынке")
 				_start_pause()
 		"pause_wait_code":
 			if players[0].room_code != "":
@@ -648,6 +656,25 @@ func _start_match() -> void:
 		players[i].find_match("127.0.0.1", MATCH_PORT, 2, false, MATCH_BANS[i])
 	players[3].find_match("127.0.0.1", MATCH_PORT, 3, false, "no_such_deck")
 	_step = "match_wait"
+
+
+## Поиск на четверых (RANDOM 4): лобби банов — каждый банит одну карту и
+## пропускает второй бан, потом раздача без забаненных карт.
+func _start_match4() -> void:
+	# Все с 127.0.0.1: ещё четыре новых учётных записи — сверх суточного лимита на IP.
+	server.accounts_per_ip = 100
+	for p in players:
+		p.close()
+	if _impostor != null:
+		_impostor.close()
+	var ps: Array[NetSession] = []
+	for i in 4:
+		ps.append(_session())
+	players = ps
+	for p in players:
+		_track(p)
+		p.find_match("127.0.0.1", MATCH_PORT, 4)
+	_step = "match4_wait"
 
 
 ## Пауза (решение владельца, 2026-09-27): первый ставит общую паузу — ход не

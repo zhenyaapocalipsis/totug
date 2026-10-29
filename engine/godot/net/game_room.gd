@@ -35,9 +35,10 @@ var matched := false
 ## Предпочтительные баны игроков поиска игры — полуколоды, которых рынок по
 ## возможности избегает (GameSetup.pick_half_decks).
 var banned: Array[String] = []
-## Лобби банов поиска игры (этап Ban-1, владелец 2026-10-29): после того как
-## стол собран, игроки по очереди банят до BANS_EACH карт выбранных полуколод
-## (все копии уходят из рынка; в RANDOM рынок набирается из оставшихся).
+## Лобби банов поиска игры (этап Ban-1, владелец 2026-10-29; с 2026-10-30 —
+## только RANDOM 4, has_bans): после того как стол собран, игроки по очереди
+## банят до BANS_EACH карт выбранных полуколод (все копии уходят из рынка,
+## рынок набирается из оставшихся).
 ## card_bans — итог, идёт в GameSetup.new_game и в журнал/реплей.
 const BANS_EACH := 2
 const BAN_SECONDS := 60.0
@@ -212,6 +213,11 @@ func remove(peer: int) -> void:
 	wants.erase(peer)
 	if owner_peer == peer:
 		owner_peer = int(seats.keys()[0]) if not seats.is_empty() else 0
+
+
+## Банят только за столами RANDOM 4 (владелец, 2026-10-30).
+static func has_bans(room_mode: String) -> bool:
+	return room_mode == GameSetup.MODE_RANDOM_4
 
 
 ## Начать фазу банов. Полуколоды — те, что выберет раздача этим сидом: баны
