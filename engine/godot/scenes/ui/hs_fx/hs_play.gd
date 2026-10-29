@@ -146,7 +146,8 @@ const SCRIPTS := {
 	# Renferal, the Malignant (EDR_526) — Matron Mother (вместо Queen Azshara — владелец выбрал
 	# в HsBrowser 2026-10-27): EDRFX_RenferalTheMalignant_CustomSummon (Timeline): над точкой
 	# посадки сгущается тьма, на 0.67 с вспыхивает багровая паутина (паучья матрона Ллос),
-	# паутина тлеет и гаснет. Жетон HS спрятан, весь эффект под картой. Выжигание багровое.
+	# паутина тлеет и гаснет. Жетон HS спрятан (и частицы-силуэт жетона «Minion Token» — hidePSRx,
+	# HsFx-83), весь эффект под картой. Выжигание багровое.
 	"renferal": {"frames": "renferal", "sounds": "renferal",
 		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.7 с начала

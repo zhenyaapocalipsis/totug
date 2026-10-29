@@ -39,6 +39,7 @@
       "measure": [
         "Root"
       ],
+      "hidePSRx": "^Minion Token",
       "hideMeshRx": "TokenGlow|MinionEdgeGlow|MinionShell|MinionGlow|Mesh_FlashGlow|Top_Nightmare|Card_InPlay|TokenHider|Test_Minion|^Minion|Health|Attack|UberText|Portrait|Gem_|Unique_Ally|Location_InPlay|Wep_|TokenEdge|Token_Edge|EdgeGlow|Token_SoftGlow|Token_GlowBacking|Token_DarkCover|LengendaryToken|LegendaryToken|SpotlightGlow|Token_BackGlow|Minion_BackGlow|Token_Cracks|Token_GlassCracking"
     },
     {

@@ -70,6 +70,9 @@ public static class HsRender
         // как в HsBrowser: у узлов с подходящим именем (и их поддерева) не рисовать сетки —
         // частицы, разрезы и шлейфы внутри узла жетона остаются (hide прячет узел целиком)
         public string hideMeshRx = "";
+        // частицы-силуэты жетона HS (Renferal: «Minion Token» с текстурой рамки легендарки):
+        // у узлов с подходящим именем выключить только их собственные частицы
+        public string hidePSRx = "";
         // как в HsBrowser: спелл по FSM, у которого все рендереры выключены (их включает код
         // HS), — включить узлы-контейнеры без рендереров и частиц
         public bool wakeContainers;
@@ -478,6 +481,12 @@ public static class HsRender
             foreach (var tr in nodes.Where(tr => rx.IsMatch(tr.name)))
                 foreach (var r in tr.GetComponentsInChildren<Renderer>(true))
                     if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
+        }
+        if (spec.hidePSRx != "")
+        {
+            var rx = new System.Text.RegularExpressions.Regex(spec.hidePSRx);
+            foreach (var tr in nodes.Where(tr => rx.IsMatch(tr.name)))
+                if (tr.TryGetComponent<ParticleSystemRenderer>(out var r)) { r.enabled = false; Log("hidePSRx: " + tr.name); }
         }
         if (spec.rtt != "")
         {
