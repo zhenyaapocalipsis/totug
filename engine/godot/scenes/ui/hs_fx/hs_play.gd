@@ -1892,7 +1892,8 @@ class _Fog:
 ## не рисуется (у настоящих пикселей эффекта альфа не ниже 1/255). alpha — общая
 ## прозрачность кадра (переходы дымки).
 ## Пиксель-арт (владелец, 2026-10-21): кадр рисуется крупным пикселем PIXEL_BLOCK x
-## PIXEL_BLOCK пикселей игры (без сглаживания), яркость — PIXEL_LEVELS ровными ступенями
+## PIXEL_BLOCK пикселей игры (без сглаживания; блок — в пикселях экрана 960x540, кадр 480x270
+## рисуется пиксель в пиксель блока), яркость — PIXEL_LEVELS ровными ступенями
 ## с сохранением оттенка (поканальные ступени давали грязные оливковые тона), прозрачность
 ## — PIXEL_ALPHA ступенями; без дизеринга (решётка Байера по дымке рябила поверх
 ## интерфейса). Ступени — в premultiplied-виде: чистый свет (альфа ~0) остаётся светом.
@@ -1904,8 +1905,9 @@ const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;
 	+ "uniform float block = 1.0;\n" \
 	+ "float step_to(float v, float n, float d) { return clamp(floor(v * n + d) / n, 0.0, 1.0); }\n" \
 	+ "void fragment() {\n" \
-	+ "\tvec2 tsz = vec2(textureSize(TEXTURE, 0));\n\tvec2 px = floor(UV * tsz / block) * block;\n" \
-	+ "\tvec4 c = texture(TEXTURE, (px + 0.5 * block) / tsz);\n" \
+	+ "\tvec2 tsz = vec2(textureSize(TEXTURE, 0));\n\tfloat bk = block * tsz.x / 960.0;\n" \
+	+ "\tvec2 px = floor(UV * tsz / bk) * bk;\n" \
+	+ "\tvec4 c = texture(TEXTURE, (px + 0.5 * bk) / tsz);\n" \
 	+ "\tif (c.a <= 0.0) { COLOR = vec4(0.0); } else {\n" \
 	+ "\t\tfloat d = 0.5;\n" \
 	+ "\t\tfloat v = max(c.r, max(c.g, c.b));\n" \

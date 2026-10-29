@@ -2,8 +2,8 @@
 //
 // Unity рисует оригинальные префабы HS из бандлов игры его же шейдерами, частицами и
 // Timeline — с камеры доски HS. Кадр рисуется дважды, на чёрном и белом фоне: из пары
-// восстанавливаются цвет (premultiplied) и непрозрачность, затем кадр уменьшается вдвое
-// (1920x1080 -> 960x540, сетка игры) и пишется PNG; рядом meta.json.
+// восстанавливаются цвет (premultiplied) и непрозрачность, затем кадр уменьшается вчетверо
+// (1920x1080 -> 480x270, среднее K x K; экран игры 960x540 — блок шейдера 2x2) и пишется PNG; рядом meta.json.
 //
 //   Unity.exe -batchmode -quit -projectPath hs_unity -executeMethod HsRender.Run
 //     -hsr-win <Hearthstone/Data/Win> -hsr-recipe <recipes/имя.json> -hsr-out <папка>
@@ -209,6 +209,9 @@ public static class HsRender
     static readonly Vector3 CamUp = new Vector3(0f, 0.056f, 0.998f);
     const float CamFov = 34.87f;
     const int W = 1920, H = 1080;
+    // кадр = среднее K x K пикселей рендера: 480x270 (HsFx-82, владелец 2026-10-29) — шейдер HsPlay рисует
+    // блоком 2x2 пикселя экрана 960x540, больше деталей на экран не попадает
+    const int K = 4;
 
     internal static readonly List<AssetBundle> Bundles = new List<AssetBundle>();
     static readonly StringBuilder log = new StringBuilder();
@@ -643,7 +646,7 @@ public static class HsRender
         var fmt = recipe.ldr ? TextureFormat.RGBA32 : TextureFormat.RGBAFloat;
         var black = new Texture2D(W, H, fmt, false, true);
         var white = new Texture2D(W, H, fmt, false, true);
-        var png = new Texture2D(W / 2, H / 2, TextureFormat.RGBA32, false, true);
+        var png = new Texture2D(W / K, H / K, TextureFormat.RGBA32, false, true);
         int n = Mathf.CeilToInt(recipe.len * recipe.fps);
         var only = Arg("frames", "");
         var pick = only == "" ? null : new HashSet<int>(only.Split(',').Select(int.Parse));
@@ -671,7 +674,7 @@ public static class HsRender
             foreach (var r in set) r.enabled = false;
             return black.GetPixels();
         }
-        // иней: premultiplied-цвет сеток (на чёрном и белом фоне), умноженный на маску, 2x2 -> 1 пиксель
+        // иней: premultiplied-цвет сеток (на чёрном и белом фоне), умноженный на маску, K x K -> 1 пиксель
         Color32[] Frost(float tsec)
         {
             var shown = all.Where(r => r.enabled).ToArray();
@@ -683,33 +686,33 @@ public static class HsRender
             if (rttFade.Length == 4)
                 op *= Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(rttFade[0], rttFade[1], tsec)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(rttFade[2], rttFade[3], tsec)));
             foreach (var r in shown) r.enabled = true;
-            int w2 = W / 2, h2 = H / 2;
+            int w2 = W / K, h2 = H / K;
             var po = new Color[w2 * h2];
             var inside = new float[w2 * h2];
             for (int y = 0; y < h2; y++)
                 for (int x = 0; x < w2; x++)
                 {
                     float r = 0, g = 0, b = 0, a = 0, c = 0;
-                    for (int dy = 0; dy < 2; dy++)
-                        for (int dx = 0; dx < 2; dx++)
+                    for (int dy = 0; dy < K; dy++)
+                        for (int dx = 0; dx < K; dx++)
                         {
-                            int k = (y * 2 + dy) * W + x * 2 + dx;
+                            int k = (y * K + dy) * W + x * K + dx;
                             float m = Mathf.Clamp01((pm[k].r + pm[k].g + pm[k].b) / 3f) * op;
                             float cov = Mathf.Clamp01(1f - ((pw[k].r - pc[k].r) + (pw[k].g - pc[k].g) + (pw[k].b - pc[k].b)) / 3f);
                             r += pc[k].r * m; g += pc[k].g * m; b += pc[k].b * m; a += cov * m;
                             c = Mathf.Max(c, cov > 0.02f ? 1f : 0f);
                         }
-                    po[y * w2 + x] = new Color(r / 4, g / 4, b / 4, a / 4);
+                    po[y * w2 + x] = new Color(r / (K * K), g / (K * K), b / (K * K), a / (K * K));
                     inside[y * w2 + x] = c;
                 }
-            // мягкий край сеток (rttFeather, пикселей кадра): гаснет к границе сетки, у края экрана — нет
+            // мягкий край сеток (rttFeather, пикселей экрана 960x540): гаснет к границе сетки, у края экрана — нет
             if (rttFeather > 0)
             {
                 var soft = inside;
                 for (int pass = 0; pass < 2; pass++)
                 {
-                    soft = BoxBlur(soft, w2, h2, rttFeather / 2, true);
-                    soft = BoxBlur(soft, w2, h2, rttFeather / 2, false);
+                    soft = BoxBlur(soft, w2, h2, rttFeather / K, true);
+                    soft = BoxBlur(soft, w2, h2, rttFeather / K, false);
                 }
                 for (int k = 0; k < po.Length; k++) po[k] *= Mathf.Clamp01((soft[k] - 0.5f) * 2f) * inside[k];
             }
@@ -785,7 +788,7 @@ public static class HsRender
         return dst;
     }
 
-    // кадр на чёрном и белом фоне -> premultiplied-цвет и непрозрачность, 2x2 -> 1 пиксель
+    // кадр на чёрном и белом фоне -> premultiplied-цвет и непрозрачность, K x K -> 1 пиксель (кадр 480x270)
     static Color32[] Shot(Camera cam, RenderTexture rt, Texture2D black, Texture2D white, string name)
     {
         foreach (var (bg, tx) in new[] { (Color.black, black), (Color.white, white) })
@@ -798,27 +801,27 @@ public static class HsRender
         }
         var pb = black.GetPixels();
         var pw = white.GetPixels();
-        var po = new Color32[W / 2 * (H / 2)];
+        var po = new Color32[W / K * (H / K)];
         int nans = 0;
-        for (int y = 0; y < H / 2; y++)
-            for (int x = 0; x < W / 2; x++)
+        for (int y = 0; y < H / K; y++)
+            for (int x = 0; x < W / K; x++)
             {
                 float r = 0, g = 0, bl = 0, a = 0;
-                for (int dy = 0; dy < 2; dy++)
-                    for (int dx = 0; dx < 2; dx++)
+                for (int dy = 0; dy < K; dy++)
+                    for (int dx = 0; dx < K; dx++)
                     {
-                        int k = (y * 2 + dy) * W + x * 2 + dx;
+                        int k = (y * K + dy) * W + x * K + dx;
                         var cb = pb[k];
                         var cw = pw[k];
                         if (float.IsNaN(cb.r + cb.g + cb.b + cw.r + cw.g + cw.b)) { nans++; continue; }
                         r += cb.r; g += cb.g; bl += cb.b;
                         a += 1f - ((cw.r - cb.r) + (cw.g - cb.g) + (cw.b - cb.b)) / 3f;
                     }
-                Color32 c32 = new Color(Mathf.Clamp01(r / 4), Mathf.Clamp01(g / 4), Mathf.Clamp01(bl / 4), Mathf.Clamp01(a / 4));
+                Color32 c32 = new Color(Mathf.Clamp01(r / (K * K)), Mathf.Clamp01(g / (K * K)), Mathf.Clamp01(bl / (K * K)), Mathf.Clamp01(a / (K * K)));
                 // чисто аддитивный пиксель — альфа 1/255: игра сжимает кадры WebP с потерями
                 // (альфа без потерь) и не рисует пиксели с нулевой альфой — там только шум
                 if (c32.a == 0 && (c32.r | c32.g | c32.b) != 0) c32.a = 1;
-                po[y * (W / 2) + x] = c32;
+                po[y * (W / K) + x] = c32;
             }
         if (nans > 0) Log($"{name}: NaN samples {nans}");
         return po;

@@ -19,14 +19,17 @@ func _initialize() -> void:
 	for i in range(from, to, 4):
 		var img := Image.load_from_file(dir.path_join("f%03d.png" % i))
 		img.convert(Image.FORMAT_RGBA8)
-		for y in range(0, 540, 2):
-			for x in range(0, 960, 2):
+		# кадр 480x270 (HsFx-82) или старый 960x540: координаты — экрана 960x540
+		var k := 960 / img.get_width()
+		var st := maxi(1, 2 / k)
+		for y in range(0, img.get_height(), st):
+			for x in range(0, img.get_width(), st):
 				var c := img.get_pixel(x, y)
 				var w := c.a * (c.r + c.g)
-				sx += x * w
-				sy += y * w
+				sx += x * k * w
+				sy += y * k * w
 				sw += w
-				rows[y] += w
+				rows[y * k] += w
 	var best := 0
 	for y in 540:
 		if rows[y] > rows[best]:

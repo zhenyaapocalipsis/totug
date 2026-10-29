@@ -30,13 +30,13 @@ func _initialize() -> void:
 		mini.resize(mini.get_width() * ms, mini.get_height() * ms, Image.INTERPOLATE_NEAREST)
 	var at := _arg("card-at", "422,163").split(",")
 	for s in _arg("frames", "0").split(","):
-		var f := Image.load_from_file(dir.path_join("f%03d.png" % int(s)))
+		var f := _frame(dir.path_join("f%03d.png" % int(s)))
 		if f == null:
 			continue
 		var out := bg.duplicate() as Image
 		out.resize(f.get_width(), f.get_height(), Image.INTERPOLATE_NEAREST)
 		if FileAccess.file_exists(dir.path_join("u%03d.png" % int(s))):
-			_over(out, Image.load_from_file(dir.path_join("u%03d.png" % int(s))))
+			_over(out, _frame(dir.path_join("u%03d.png" % int(s))))
 		if mini != null and int(s) >= int(_arg("card-from", "43")):
 			out.blend_rect(mini, Rect2i(Vector2i.ZERO, mini.get_size()), Vector2i(int(at[0]), int(at[1])))
 		_over(out, f)
@@ -70,3 +70,12 @@ func _over(out: Image, f: Image) -> void:
 			var b := out.get_pixel(x, y)
 			out.set_pixel(x, y, Color(minf(c.r + b.r * (1.0 - c.a), 1.0), minf(c.g + b.g * (1.0 - c.a), 1.0),
 				minf(c.b + b.b * (1.0 - c.a), 1.0), 1.0))
+
+
+## Кадр на экран 960x540: кадры 480x270 (HsFx-82) — крупным пикселем 2x2, как в HsPlay.
+func _frame(path: String) -> Image:
+	var f := Image.load_from_file(path)
+	if f != null and f.get_width() < 960:
+		f.convert(Image.FORMAT_RGBA8)
+		f.resize(960, 540, Image.INTERPOLATE_NEAREST)
+	return f
