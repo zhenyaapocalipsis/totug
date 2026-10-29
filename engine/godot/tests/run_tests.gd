@@ -95,6 +95,7 @@ func _initialize() -> void:
 	test_half_deck_data()
 	test_game_modes()
 	test_half_deck_ban()
+	test_card_ban_lobby()
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
 	test_god_mode()
@@ -2948,8 +2949,9 @@ func test_game_modes() -> void:
 			var count := {}
 			for cid: String in st.market.deck + st.market.display:
 				count[cid] = int(count.get(cid, 0)) + 1
-			# RANDOM 3 добирает нехватку 3-ми копиями — там предел на 1 больше
-			var cap := GameSetup.RANDOM_MAX_COPIES + (1 if mode == GameSetup.MODE_RANDOM_3 else 0)
+			# Нехватку аспекта рынок добирает 3-ми копиями — предел на 1 больше. С
+			# колодами New Era (у Chult, Kara-Tur мало GUILE) бывает и в RANDOM 4.
+			var cap := GameSetup.RANDOM_MAX_COPIES + 1
 			for cid: String in count.keys():
 				if int(count[cid]) > cap:
 					max_ok = false
@@ -2965,15 +2967,69 @@ func test_game_modes() -> void:
 				if have != mini(GameSetup.RANDOM_SINGLES, all_singles):
 					singles_ok = false
 			var total := st.market.deck.size() + st.market.display.size()
-			# RANDOM 3: в ~0.2% раздач не хватает даже 3-х копий — маркет 78-79
-			if total != 80 and not (mode == GameSetup.MODE_RANDOM_3 and total >= 78):
+			# RANDOM 3: в ~0.2% раздач не хватает даже 3-х копий — маркет 77-79 (с Chult
+			# и Kara-Tur, где мало GUILE, бывает и 77)
+			if total != 80 and not (mode == GameSetup.MODE_RANDOM_3 and total >= 77):
 				size_ok = false
-	check(max_ok, "RANDOM: копий не больше 2 (в RANDOM 3 на добор — 3)")
+	check(max_ok, "RANDOM: копий не больше 2 (на добор аспекта — 3)")
 	check(singles_ok, "RANDOM: от каждой полуколоды ровно 5 уникальных карт")
-	check(size_ok, "RANDOM: маркет набирает 80 карт (RANDOM 3 — не меньше 78)")
+	check(size_ok, "RANDOM: маркет набирает 80 карт (RANDOM 3 — не меньше 77)")
 	check(ReplayBook.same_rules(28, false, GameSetup.MODE_STANDARD) and not ReplayBook.same_rules(28, false, GameSetup.MODE_RANDOM_4)
 		and ReplayBook.same_rules(NetSession.PROTOCOL, false, GameSetup.MODE_RANDOM_4),
 		"реплеи: RANDOM до Market-1 — OLD, STANDARD прежней версии смотрится")
+
+
+## Лобби банов поиска игры (Ban-1): очередь по кругу, по 2 бана на игрока,
+## пропуск по таймеру; все копии забаненных карт уходят из рынка, RANDOM
+## набирает рынок из оставшихся; полуколоды и доска те же, что без банов.
+func test_card_ban_lobby() -> void:
+	section("Лобби банов карт")
+	var room := GameRoom.new("TEST", 2, GameSetup.MODE_STANDARD)
+	room.add(11)
+	room.add(12)
+	room.begin_bans(77)
+	var plain := GameSetup.new_game(["red", "blue"] as Array[String], 77, [], false, true, true)
+	check_eq(room.ban_decks, plain.half_decks, "в лобби — те же полуколоды, что выберет раздача")
+	check_eq(room.ban_order, ["red", "blue", "red", "blue"] as Array[String], "очередь банов по кругу, по 2 на игрока")
+	var pool := room.ban_pool()
+	check(not room.ban("blue", pool[0]), "не в свою очередь банить нельзя")
+	check(not room.ban("red", "48342"), "карту не из этих полуколод банить нельзя")
+	check(room.ban("red", pool[0]), "red банит карту")
+	check(not room.ban("blue", pool[0]), "забаненную второй раз — нельзя")
+	check(room.ban("blue", ""), "blue пропускает")
+	check(not room.tick_bans(GameRoom.BAN_SECONDS - 1.0), "минута ещё не прошла")
+	check(room.tick_bans(1.5), "минута прошла — бан red пропущен")
+	check(room.ban("blue", pool[1]), "blue банит вторую")
+	check(not room.ban_phase and room.ban_seat() == "", "четыре хода — баны кончились")
+	check_eq(room.card_bans, [pool[0], pool[1]] as Array[String], "итог банов")
+	room.deal(77)
+	var market: Array = room.server.state.market.deck + room.server.state.market.display
+	check(not market.has(pool[0]) and not market.has(pool[1]), "все копии забаненных карт ушли из рынка")
+	var removed := 0
+	for deck: String in room.ban_decks:
+		for cid: String in [pool[0], pool[1]]:
+			removed += int(GameSetup.half_deck_copies(deck).get(cid, 0))
+	check_eq(market.size(), 80 - removed, "рынок меньше ровно на копии забаненных")
+	check_eq(room.server.state.layout, plain.layout, "доска та же, что без банов")
+	# RANDOM 4: баны не попадают и в выборку уникальных, рынок из оставшихся.
+	var ids4: Array[String] = ["red", "blue", "green", "purple"]
+	var r4 := GameSetup.new_game(ids4, 31, [], false, true, true, GameSetup.MODE_RANDOM_4)
+	var r4_bans: Array = []
+	for cid in r4.market.deck + r4.market.display:
+		if not r4_bans.has(cid) and r4_bans.size() < 4:
+			r4_bans.append(cid)
+	var r4b := GameSetup.new_game(ids4, 31, [], false, true, true, GameSetup.MODE_RANDOM_4, false, [], r4_bans)
+	check_eq(r4b.half_decks, r4.half_decks, "RANDOM 4: полуколоды те же")
+	var r4_market: Array = r4b.market.deck + r4b.market.display
+	check(not r4_market.any(func(c): return r4_bans.has(c)), "RANDOM 4: забаненных нет в рынке")
+	check(r4_market.size() >= 78, "RANDOM 4: рынок добран из оставшихся (%d)" % r4_market.size())
+	# Реплей и восстановление комнаты знают баны.
+	var replay_server := ReplayBook.start({"header": {"ids": ["red", "blue"], "seed": 77, "mode": GameSetup.MODE_STANDARD,
+		"card_bans": room.card_bans}, "intents": []})
+	check_eq(replay_server.state.market.deck, room.server.state.market.deck, "реплей: тот же рынок с банами")
+	var restored := GameRoom.restore({"code": "TEST", "ids": ["red", "blue"], "seed": 77, "mode": GameSetup.MODE_STANDARD,
+		"card_bans": room.card_bans}, [])
+	check_eq(restored.server.state.market.deck, room.server.state.market.deck, "восстановление комнаты: тот же рынок")
 
 
 ## Предпочтительный бан поиска игры: забаненные полуколоды не попадают в рынок;
@@ -2991,7 +3047,7 @@ func test_half_deck_ban() -> void:
 	var no_ban := GameSetup.new_game(pids, 41, [], false, true, true, GameSetup.MODE_RANDOM_4, false, [])
 	check_eq(no_ban.market.deck, plain.market.deck, "без бана тот же рынок, что и раньше")
 	var pool := GameSetup.available_half_decks()
-	check_eq(GameSetup.without_banned(pool, pool.slice(0, 12), 2), pool, "бан, после которого колод не хватает, не действует")
+	check_eq(GameSetup.without_banned(pool, pool.slice(0, pool.size() - 1), 2), pool, "бан, после которого колод не хватает, не действует")
 	check_eq(GameSetup.without_banned(pool, ["drow"], 2).size(), pool.size() - 1, "одна забаненная выпадает из пула")
 	# Журнал комнаты помнит баны: восстановление после перезапуска сервера раздаёт то же.
 	var room := GameRoom.new("BAN", 2, GameSetup.MODE_STANDARD)
@@ -3005,7 +3061,7 @@ func test_half_deck_ban() -> void:
 
 func test_half_deck_data() -> void:
 	section("Состав полуколод: копии карт из данных мода")
-	check_eq(GameSetup.available_half_decks().size(), 13, "доступно 13 полуколод (6 классических + 7 New Era)")
+	check_eq(GameSetup.available_half_decks().size(), 18, "доступно 18 полуколод (6 классических + 12 New Era)")
 	for name: String in GameSetup.available_half_decks():
 		var cards := GameSetup.expand_half_deck(name)
 		check_eq(cards.size(), 40, "полуколода %s — ровно 40 карт" % name)
@@ -6057,7 +6113,7 @@ func test_calimshan_deck() -> void:
 	for cid: String in deck:
 		uniques[cid] = true
 	check_eq(uniques.size(), 20, "Calimshan: 20 уникальных карт, Roper (Naafiri) вместо Azir")
-	check(not GameSetup.available_half_decks().has("shurima"), "Calimshan пока wip: не в обычном выборе")
+	check(GameSetup.available_half_decks().has("shurima"), "Calimshan в обычном выборе")
 	var mode := GameSetup.new_era_mode(["shurima", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Calimshan принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
@@ -6179,7 +6235,7 @@ func test_karatur_deck() -> void:
 	for cid: String in deck:
 		uniques[cid] = true
 	check_eq(uniques.size(), 20, "Kara-Tur: 20 уникальных карт, Hwei вместо Jhin")
-	check(not GameSetup.available_half_decks().has("ionia"), "Kara-Tur пока wip: не в обычном выборе")
+	check(GameSetup.available_half_decks().has("ionia"), "Kara-Tur в обычном выборе")
 	var mode := GameSetup.new_era_mode(["ionia", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Kara-Tur принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
@@ -6330,7 +6386,7 @@ func test_feywild_deck() -> void:
 		uniques[cid] = true
 	check_eq(uniques.size(), 20, "Feywild: 20 уникальных карт")
 	check(not uniques.has(B.MEGA_GNAR), "Faerie Dragon Adult не в рынке")
-	check(not GameSetup.available_half_decks().has("bandle"), "Feywild пока wip: не в обычном выборе")
+	check(GameSetup.available_half_decks().has("bandle"), "Feywild в обычном выборе")
 	var mode := GameSetup.new_era_mode(["bandle", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Feywild принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
@@ -6470,7 +6526,7 @@ func test_farrealm_deck() -> void:
 	for cid: String in deck:
 		uniques[cid] = true
 	check_eq(uniques.size(), 20, "Far Realm: 20 уникальных карт")
-	check(not GameSetup.available_half_decks().has("void"), "Far Realm пока wip: не в обычном выборе")
+	check(GameSetup.available_half_decks().has("void"), "Far Realm в обычном выборе")
 	var mode := GameSetup.new_era_mode(["void", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Far Realm принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
@@ -6630,7 +6686,7 @@ func test_chult_deck() -> void:
 	for cid: String in deck:
 		uniques[cid] = true
 	check_eq(uniques.size(), 20, "Chult: 20 уникальных карт")
-	check(not GameSetup.available_half_decks().has("ixtal"), "Chult пока wip: не в обычном выборе")
+	check(GameSetup.available_half_decks().has("ixtal"), "Chult в обычном выборе")
 	var mode := GameSetup.new_era_mode(["ixtal", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Chult принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)

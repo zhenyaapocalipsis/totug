@@ -61,6 +61,9 @@ var rejoined: Dictionary = {}
 ## Последнее «в очереди waiting из needed» у каждого (поиск игры).
 var queue_seen: Dictionary = {}
 var dealing_seen: Dictionary = {}   # NetSession -> true: пришёл экран DEALING THE CARDS
+## Лобби банов (Ban-1): последнее состояние у каждого и что он забанил.
+var bans_seen: Dictionary = {}
+var banned_by: Dictionary = {}
 ## Последняя пауза от сервера у каждого (NetSession.pause_changed).
 var pause_seen: Dictionary = {}
 var server: NetSession
@@ -441,6 +444,15 @@ func _process(delta: float) -> bool:
 					== seated[0].profile["name"], "[match] имя соперника дошло")
 				check(waiting.seat == "", "[match] третий ждёт дальше, за стол не сел")
 				check(room.matched, "[match] стол поиска игры помечен — за него будет награда")
+				check(bans_seen.has(seated[0]) and bans_seen.has(seated[1]), "[match] оба видели лобби банов")
+				check(str(bans_seen[seated[0]]["decks"]) == str(room.server.state.half_decks),
+					"[match] в лобби банов — полуколоды партии (%s)" % [bans_seen[seated[0]].get("decks")])
+				check(room.card_bans.size() == 2 and room.card_bans.has(banned_by.get(seated[0], "x")) \
+					and room.card_bans.has(banned_by.get(seated[1], "x")), "[match] по бану от каждого, вторые пропущены (%s)" % [room.card_bans])
+				var market_all: Array = room.server.state.market.deck + room.server.state.market.display
+				check(not market_all.any(func(c): return room.card_bans.has(String(c))),
+					"[match] забаненных карт нет в рынке")
+				check(room.ban_log.size() == 4, "[match] четыре хода банов (2 на каждого)")
 				var bans: Array[String] = []
 				for i in 3:
 					if players[i] != waiting:
@@ -869,6 +881,8 @@ func _reset() -> void:
 	rejoined.clear()
 	queue_seen.clear()
 	dealing_seen.clear()
+	bans_seen.clear()
+	banned_by.clear()
 	pause_seen.clear()
 
 
@@ -894,6 +908,23 @@ func _track(p: NetSession) -> void:
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	p.dealing_started.connect(func(): dealing_seen[p] = true)
+	# Лобби банов: свой первый бан — первая незабаненная карта первой
+	# полуколоды, второй — SKIP.
+	p.bans_changed.connect(func(v: Dictionary):
+		bans_seen[p] = v
+		if String(v.get("turn", "")) != p.seat or p.seat == "":
+			return
+		if banned_by.has(p):
+			p.ban_card("")
+			return
+		var taken: Array = (v["bans"] as Array).map(func(b): return String(b["card"]))
+		var ids: Array = GameSetup.half_deck_copies(String((v["decks"] as Array)[0])).keys()
+		ids.sort()
+		for cid in ids:
+			if not taken.has(cid):
+				banned_by[p] = String(cid)
+				p.ban_card(String(cid))
+				return)
 	views[p] = {}
 	errors[p] = []
 	chats[p] = []

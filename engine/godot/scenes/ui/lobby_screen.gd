@@ -51,6 +51,8 @@ var _in_room := false
 var _dealing: Control
 var _dealing_dots: Label
 var _dealing_time := 0.0
+## Лобби банов (этап Ban-1): висит поверх лобби, пока стол поиска банит карты.
+var _bans: BanPanel
 
 
 ## address — код комнаты (join_code) или IP хоста (join_ip), набранные в
@@ -149,6 +151,8 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	_net.connection_lost.connect(_on_connection_lost)
 	_net.queue_changed.connect(_on_queue_changed)
 	_net.dealing_started.connect(_show_dealing)
+	_net.bans_changed.connect(_on_bans_changed)
+	_net.match_cancelled.connect(_on_match_cancelled)
 	match kind:
 		# CREATE ROOM и SEARCH уже нажаты в главном меню — второй раз не просим;
 		# кнопка здесь — только повтор, если связь не удалась.
@@ -340,6 +344,33 @@ func _show_dealing() -> void:
 	_dealing_time = 0.0
 
 
+## Лобби банов: первое состояние открывает экран, конец банов — DEALING.
+func _on_bans_changed(view: Dictionary) -> void:
+	if _bans == null:
+		_bans = BanPanel.new(_net)
+		add_child(_bans)
+	_bans.show_view(view)
+	if String(view.get("turn", "")) == "":
+		_hide_bans()
+		_show_dealing()
+
+
+func _hide_bans() -> void:
+	if _bans != null:
+		_bans.queue_free()
+		_bans = null
+
+
+## Кто-то ушёл из лобби банов — стол распался, ищем дальше.
+func _on_match_cancelled(gone: String) -> void:
+	_hide_bans()
+	_hide_dealing()
+	for child in _seats.get_children():
+		child.queue_free()
+	_status.text = "%s left the ban lobby. Looking for players again..." % EventLogPanel.player_name(gone)
+	_on_go()
+
+
 func _hide_dealing() -> void:
 	if _dealing != null:
 		_dealing.queue_free()
@@ -404,7 +435,7 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 	if _kind == "find":
 		# Стол собрал сервер, он же и раздаёт — START не нужен.
 		_start_button.visible = false
-		_status.text = "Game found! Dealing the cards, a few seconds..."
+		_status.text = "Game found! Opening the ban lobby..."
 		return
 	var i_start := owner_seat == _net.seat
 	_start_button.visible = i_start
@@ -469,6 +500,7 @@ func _show_search_time() -> void:
 
 
 func _on_connection_lost(reason: String) -> void:
+	_hide_bans()
 	_hide_dealing()
 	_searching_since = -1
 	_status.text = reason + "."

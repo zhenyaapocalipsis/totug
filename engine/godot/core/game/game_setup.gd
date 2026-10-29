@@ -117,6 +117,12 @@ static func expand_half_deck(name: String) -> Array[String]:
 	return cards
 
 
+## Копии карт полуколоды: card_id -> число (пусто — нет такой полуколоды).
+static func half_deck_copies(name: String) -> Dictionary:
+	var decks: Dictionary = _load_half_decks().get("half_decks", {})
+	return ((decks.get(name, {}) as Dictionary).get("copies", {}) as Dictionary).duplicate()
+
+
 static func starting_deck() -> Array[String]:
 	var sd: Dictionary = _load_half_decks().get("starting_deck", {})
 	var copies: Dictionary = sd.get("copies", {})
@@ -143,10 +149,14 @@ static func starting_deck() -> Array[String]:
 ## именно red — реальный экран игры включает этот флаг явно.
 ## banned — полуколоды, которые игроки поиска игры не хотят видеть в рынке
 ## (предпочтительный бан, pick_half_decks); пустой — выбор как раньше.
+## card_bans — карты, забаненные в лобби банов поиска игры (этап Ban-1): все
+## их копии не идут в рынок; в RANDOM-режимах рынок набирается из оставшихся.
+## На выбор полуколод и доску не влияет — выбор тот же, что без банов.
 static func new_game(player_ids: Array[String], seed_value: int = 0,
 		half_decks: Array[String] = [], with_x_hexes: bool = false,
 		interactive_start: bool = false, random_first_player: bool = false,
-		mode: String = MODE_STANDARD, team_game: bool = false, banned: Array = []) -> GameState:
+		mode: String = MODE_STANDARD, team_game: bool = false, banned: Array = [],
+		card_bans: Array = []) -> GameState:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 
@@ -169,7 +179,7 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 	var chosen: Array[String] = half_decks.duplicate()
 	if chosen.size() != mode_deck_count(mode):
 		chosen = pick_half_decks(mode, rng, banned)
-	var market_cards := build_market_cards(mode, chosen, rng)
+	var market_cards := build_market_cards(mode, chosen, rng, card_bans)
 	state.market = Market.build(market_cards, [], state.rng)
 
 	state.half_decks = chosen.duplicate()
@@ -340,11 +350,15 @@ static func new_era_mode(pair: Array) -> String:
 ##      обычном маркете (2 полуколоды × 10 копий на аспект = 20);
 ##   4. не хватило (бывает в RANDOM 3) — добор 3-ми копиями обычных карт
 ##      этого аспекта, уникальных всё равно ровно RANDOM_SINGLES.
-static func build_market_cards(mode: String, decks: Array[String], rng: RandomNumberGenerator) -> Array[String]:
+## card_bans — забаненные карты (лобби банов): их нет ни в одном пуле.
+static func build_market_cards(mode: String, decks: Array[String], rng: RandomNumberGenerator,
+		card_bans: Array = []) -> Array[String]:
 	var cards: Array[String] = []
 	if mode not in [MODE_RANDOM_3, MODE_RANDOM_4, MODE_RANDOM_6]:
 		for deck_name: String in decks:
-			cards.append_array(expand_half_deck(deck_name))
+			for cid: String in expand_half_deck(deck_name):
+				if not card_bans.has(cid):
+					cards.append(cid)
 		return cards
 	var data: Dictionary = _load_half_decks().get("half_decks", {})
 	var sure: Array[String] = []
@@ -355,6 +369,8 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 		ids.sort()  # детерминированный порядок ДО тасовки: одинаковый сид -> одинаковый маркет
 		var singles: Array[String] = []
 		for card_id: String in ids:
+			if card_bans.has(card_id):
+				continue
 			if int(copies[card_id]) == 1:
 				singles.append(card_id)
 			else:

@@ -34,6 +34,11 @@ signal lobby_changed(joined: Array, needed: int, code: String, owner_seat: Strin
 signal game_started(seat: String, board: Dictionary, view: Dictionary)
 ## Сервер начал раздачу и строит доску (этап Stock-2): лобби — экран DEALING THE CARDS.
 signal dealing_started
+## Лобби банов поиска игры (этап Ban-1): GameRoom.ban_view — полуколоды,
+## баны по порядку, чей бан и сколько секунд у него осталось.
+signal bans_changed(view: Dictionary)
+## Стол поиска распался в фазе банов (кто-то ушёл) — лобби снова ищет игру.
+signal match_cancelled(gone: String)
 signal result_received(err: int, events: Array, view: Dictionary)
 signal chat_received(seat: String, text: String)
 ## Пинг игрока (Tab): зона экрана и точка в ней (PING_ZONES).
@@ -81,7 +86,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 40
+const PROTOCOL := 41
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -280,6 +285,9 @@ func _process(delta: float) -> void:
 	for room: GameRoom in rooms.values():
 		# Настоящее время: скорость анимаций (Engine.time_scale) паузу не торопит.
 		var real := delta / Engine.time_scale if Engine.time_scale > 0.0 else 0.0
+		if room.tick_bans(real):
+			_after_ban(room)
+			continue
 		var what := room.tick_pause(real, abandon_seconds, pause_seconds)
 		if what.has("abandon"):
 			_abandon_room(room, String(what["abandon"]))
@@ -796,7 +804,58 @@ func _match(needed: int) -> void:
 	queues[needed] = line.slice(size)
 	_log("room %s matched: %d players, %s, bans %s" % [room.code, room.needed, room.mode, room.banned])
 	_broadcast_lobby(room)
-	_start_room(room, _rng.randi())
+	_begin_bans(room)
+
+
+## Лобби банов (этап Ban-1): сид раздачи и запас доски выбираются сейчас — от
+## сида зависят полуколоды, которые игроки видят и банят.
+func _begin_bans(room: GameRoom) -> void:
+	room.stocked = board_stock.take(room.needed) if board_stock != null else {}
+	room.begin_bans(int(room.stocked["seed"]) if not room.stocked.is_empty() else _rng.randi())
+	_log("room %s bans: %s" % [room.code, room.ban_decks])
+	_broadcast_bans(room)
+
+
+func _broadcast_bans(room: GameRoom) -> void:
+	var view := room.ban_view()
+	for peer: int in room.seats:
+		_send(peer, "_bans", [view])
+
+
+## Бан сделан (или пропущен по таймеру) — всем новое состояние; баны кончились —
+## раздача.
+func _after_ban(room: GameRoom) -> void:
+	_broadcast_bans(room)
+	if not room.ban_phase:
+		_log("room %s banned %s" % [room.code, room.card_bans])
+		_start_room(room, room.ban_seed)
+
+
+## Клиент: забанить карту в лобби банов ("" — пропустить свой бан).
+func ban_card(card: String) -> void:
+	if multiplayer.multiplayer_peer != null and not is_host:
+		_ban_pick.rpc_id(1, card)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _ban_pick(card: String) -> void:
+	if not dedicated:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	var room := _room_of(peer)
+	if room != null and room.ban_phase and room.ban(String(room.seats.get(peer, "")), card):
+		_after_ban(room)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _bans(view: Dictionary) -> void:
+	bans_changed.emit(view)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _match_cancelled(gone: String) -> void:
+	seat = ""
+	match_cancelled.emit(gone)
 
 
 func _broadcast_queue(needed: int) -> void:
@@ -973,6 +1032,14 @@ func _on_peer_disconnected(id: int) -> void:
 			GameJournal.erase(room.code, saves_dir)
 			_log("room %s closed (finished)" % room.code)
 		return
+	if room.ban_phase:
+		# Ушёл из лобби банов: стол без него не раздать — остальные снова ищут.
+		for peer: int in room.seats:
+			peer_room.erase(peer)
+			_send(peer, "_match_cancelled", [gone])
+		rooms.erase(room.code)
+		_log("room %s cancelled in bans (%s left)" % [room.code, gone])
+		return
 	if room.seats.is_empty() or (not dedicated and id == 1):
 		rooms.erase(room.code)
 		GameJournal.erase(room.code, saves_dir)
@@ -1047,6 +1114,8 @@ func _start_request() -> void:
 func _start_room(room: GameRoom, game_seed: int) -> void:
 	if room.started or not room.is_full():
 		return
+	if room.ban_phase:
+		return  # START в фазе банов не раздаёт: сначала баны
 	if not dedicated:
 		var dealt: Dictionary = room.start(game_seed)
 		_deliver(room, dealt["board"], dealt["views"])
@@ -1058,7 +1127,9 @@ func _start_room(room: GameRoom, game_seed: int) -> void:
 	# партии и таблицы, которые читаются, но не пишутся (прогреваем их здесь).
 	# Есть готовый чертёж в запасе (BoardStock) — партия берёт его сид и
 	# стартует сразу.
-	var stocked: Dictionary = board_stock.take(room.needed) if board_stock != null else {}
+	# Стол поиска: запас доски взят ещё к лобби банов — его сид и раздаём.
+	var stocked: Dictionary = room.stocked if not room.ban_order.is_empty() \
+		else (board_stock.take(room.needed) if board_stock != null else {})
 	if not stocked.is_empty():
 		game_seed = int(stocked["seed"])
 	var views := room.deal(game_seed)
@@ -1112,6 +1183,7 @@ func _save_room(room: GameRoom) -> void:
 		"keys": room.keys,
 		"matched": room.matched,
 		"banned": room.banned,
+		"card_bans": room.card_bans,
 		"mulligan": room.server.with_mulligan,
 	}, room.log, saves_dir)
 
@@ -1238,6 +1310,7 @@ func _send_replay(room: GameRoom) -> void:
 	var header := ReplayBook.header_for(state, room.ids, room.game_seed, room.mode,
 		room.server.with_mulligan, room.profiles, "", room.code, room.log)
 	header["banned"] = room.banned
+	header["card_bans"] = room.card_bans
 	if dedicated:
 		var file := ReplayBook.save(header, room.log, records_dir)
 		room.record_file = file
@@ -1352,6 +1425,7 @@ func _check_records(room: GameRoom, players: Dictionary, scores: Dictionary, win
 	var header := ReplayBook.header_for(room.server.state, room.ids, room.game_seed, room.mode,
 		room.server.with_mulligan, room.profiles, "", room.code, room.log)
 	header["banned"] = room.banned
+	header["card_bans"] = room.card_bans
 	var stats := ReplayStats.collect({"header": header, "intents": room.log})
 	for pid: String in winners:
 		# 2 на 2: перевес — над командой соперников (у союзника тот же счёт).

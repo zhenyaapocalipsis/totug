@@ -210,6 +210,36 @@ func _run_scenario() -> void:
 				if _screen.server.resolver.is_waiting():
 					break
 				_screen.send(Intent.play_card(pid2, String(cid)))
+		"ban_lobby":
+			# Лобби банов поиска игры: red забанил карту, второй бан blue.
+			# --decks=a,b — полуколоды (по умолчанию как у партии).
+			var net := NetSession.new()
+			net.seat = _arg("seat", "blue")
+			root.add_child(net)
+			var room := GameRoom.new("SHOT", 2, GameSetup.MODE_STANDARD)
+			room.add(1)
+			room.add(2)
+			room.begin_bans(_count_arg("seed", 7))
+			if _arg("decks", "") != "":
+				room.ban_decks.assign(_arg("decks", "").split(","))
+			var pool := room.ban_pool()
+			room.ban("red", pool[3])
+			room.ban("blue", pool[7])
+			room.ban("red", "")
+			room.ban_left = 37.0
+			root.remove_child(_screen)  # в лобби партии ещё нет
+			var panel := BanPanel.new(net)
+			root.add_child(panel)
+			panel.show_view(room.ban_view())
+			panel.select(pool[12])
+		"market_tokens":
+			# Шпион (Blue Slaad) и войска (Performer Maestro) на картах рынка.
+			var stm := _screen.server.state
+			var order: Array = stm.turn_order
+			stm.market_spies["0"] = {"owner": order[1], "card": String(stm.market.display[0])}
+			stm.market_troops["1"] = {"card": String(stm.market.display[1]), "troops": {order[0]: 2, order[1]: 1}}
+			stm.market_troops["3"] = {"card": String(stm.market.display[3]), "troops": {order[0]: 7}}
+			_screen.refresh(StateView.for_player_with_pending(stm, _screen.viewer_id, _screen.server.resolver.pending))
 		"starting":
 			# Муллиганы пропущены — на экране выбор стартовой локации.
 			while _screen.server.resolver.is_waiting() and _screen.server.resolver.pending.tag != "starting_site":

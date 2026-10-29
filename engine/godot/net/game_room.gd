@@ -35,6 +35,25 @@ var matched := false
 ## Предпочтительные баны игроков поиска игры — полуколоды, которых рынок по
 ## возможности избегает (GameSetup.pick_half_decks).
 var banned: Array[String] = []
+## Лобби банов поиска игры (этап Ban-1, владелец 2026-10-29): после того как
+## стол собран, игроки по очереди банят до BANS_EACH карт выбранных полуколод
+## (все копии уходят из рынка; в RANDOM рынок набирается из оставшихся).
+## card_bans — итог, идёт в GameSetup.new_game и в журнал/реплей.
+const BANS_EACH := 2
+const BAN_SECONDS := 60.0
+var card_bans: Array[String] = []
+## Фаза банов: идёт (ban_phase), сид раздачи выбран заранее (ban_seed — от
+## него зависят полуколоды), запас доски (stocked) уже взят под этот сид.
+var ban_phase := false
+var ban_seed := 0
+var stocked: Dictionary = {}
+var ban_decks: Array[String] = []
+## Очередь банов — цвета по кругу BANS_EACH раз; ban_turn — чей сейчас.
+var ban_order: Array[String] = []
+var ban_turn := 0
+var ban_left := 0.0
+## Кто что забанил по порядку: [{"seat", "card"}], card "" — пропуск.
+var ban_log: Array = []
 var started := false
 var server: GameServer
 ## Задача WorkerThreadPool, что считает снимок доски на выделенном сервере;
@@ -195,6 +214,72 @@ func remove(peer: int) -> void:
 		owner_peer = int(seats.keys()[0]) if not seats.is_empty() else 0
 
 
+## Начать фазу банов. Полуколоды — те, что выберет раздача этим сидом: баны
+## карт на выбор полуколод не влияют (GameSetup.new_game). Очередь — цвета в
+## порядке рассадки, по кругу BANS_EACH раз.
+func begin_bans(seed_value: int) -> void:
+	ban_phase = true
+	ban_seed = seed_value
+	card_bans = []
+	ban_log = []
+	var order: Array[String] = []
+	for pid in joined():
+		order.append(String(pid))
+	var preview := GameSetup.new_game(order, seed_value, [], false, true, true, mode, teams, banned)
+	ban_decks = preview.half_decks.duplicate()
+	ban_order = []
+	for i in BANS_EACH:
+		ban_order.append_array(order)
+	ban_turn = 0
+	ban_left = BAN_SECONDS
+
+
+## Чей сейчас бан ("" — фаза не идёт).
+func ban_seat() -> String:
+	return ban_order[ban_turn] if ban_phase and ban_turn < ban_order.size() else ""
+
+
+## Карты, которые можно банить: уникальные карты выбранных полуколод.
+func ban_pool() -> Array[String]:
+	var pool: Array[String] = []
+	for deck: String in ban_decks:
+		for cid: String in GameSetup.half_deck_copies(deck).keys():
+			if not pool.has(cid):
+				pool.append(cid)
+	return pool
+
+
+## Бан игрока pid; card "" — пропуск. false — не его очередь или карту
+## банить нельзя (уже забанена, не из этих полуколод).
+func ban(pid: String, card: String) -> bool:
+	if pid == "" or pid != ban_seat():
+		return false
+	if card != "" and (card_bans.has(card) or not ban_pool().has(card)):
+		return false
+	if card != "":
+		card_bans.append(card)
+	ban_log.append({"seat": pid, "card": card})
+	ban_turn += 1
+	ban_left = BAN_SECONDS
+	if ban_turn >= ban_order.size():
+		ban_phase = false
+	return true
+
+
+## Таймер бана: время вышло — бан пропущен. true — очередь сдвинулась.
+func tick_bans(delta: float) -> bool:
+	if not ban_phase:
+		return false
+	ban_left -= delta
+	return ban_left <= 0.0 and ban(ban_seat(), "")
+
+
+## Что видят игроки в лобби банов.
+func ban_view() -> Dictionary:
+	return {"decks": ban_decks, "mode": mode, "bans": ban_log.duplicate(true), "turn": ban_seat(),
+		"order": ban_order, "left": maxf(0.0, ban_left), "each": BANS_EACH}
+
+
 ## Партия идёт (раздана и не окончена) — только в ней бывает пауза.
 func in_play() -> bool:
 	return started and server != null and not server.state.game_over
@@ -288,7 +373,7 @@ func deal(seed_value: int) -> Dictionary:
 	ids = []
 	for pid in joined():
 		ids.append(String(pid))
-	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, mode, teams, banned)
+	var state := GameSetup.new_game(ids, game_seed, [], false, true, true, mode, teams, banned, card_bans)
 	server = GameServer.new(state)
 	var views: Dictionary = {}
 	for pid: String in ids:
@@ -354,7 +439,10 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	room.matched = bool(header.get("matched", false))
 	for deck in (header.get("banned", []) as Array):
 		room.banned.append(String(deck))
-	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode, room.teams, room.banned)
+	for cid in (header.get("card_bans", []) as Array):
+		room.card_bans.append(String(cid))
+	var state := GameSetup.new_game(room.ids, room.game_seed, [], false, true, true, room.mode, room.teams, room.banned,
+		room.card_bans)
 	# Партии, начатые до муллигана рынка (в заголовке нет "mulligan"),
 	# переигрываются без него — иначе их ходы лягут не на те вопросы.
 	room.server = GameServer.new(state, bool(header.get("mulligan", false)))
