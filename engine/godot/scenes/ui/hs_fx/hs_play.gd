@@ -1278,6 +1278,9 @@ var _actions: Array[_Clip] = []
 ## Часы HsPlay и время, раньше которого не начинается следующее действие.
 var _clock := 0.0
 var _action_free_at := 0.0
+## Просмотр в режиме бога (GodPanel): часы стоят, step_frames двигает розыгрыш по кадрам.
+var paused := false
+var _steps := 0
 ## Дымка.
 var _fog: _Fog
 var _fog_end_at := -1.0
@@ -1372,6 +1375,25 @@ func is_ready() -> bool:
 	return not _item.is_empty()
 
 
+func set_paused(on: bool) -> void:
+	paused = on
+	_steps = 0
+
+
+## Пауза и шаг розыгрыша на n кадров (n < 0 — назад, без звуков).
+func step_frames(n: int) -> void:
+	paused = true
+	if _main != null:
+		_steps += n
+
+
+## [кадр, всего кадров] идущего розыгрыша; [-1, 0] — розыгрыша нет.
+func frame_info() -> Vector2i:
+	if _main == null:
+		return Vector2i(-1, 0)
+	return Vector2i(_main.frames.index(_main.t), _main.frames.count)
+
+
 func _wake() -> void:
 	visible = true
 	set_process(true)
@@ -1404,6 +1426,18 @@ func _next() -> void:
 
 func _process(delta: float) -> void:
 	var dt := fixed_dt if fixed_dt > 0.0 else delta
+	if paused:
+		# На паузе время стоит; шаг ставит середину нужного кадра (последний кадр
+		# держится, пока пауза не снята).
+		dt = 0.0
+		if _main != null and _steps != 0 and _main._warm == 0:
+			var i := clampi(_main.frames.index(_main.t) + _steps, 0, _main.frames.count - 1)
+			var target := (i + 0.5) / _main.frames.fps
+			_steps = 0
+			if target >= _main.t:
+				dt = target - _main.t
+			else:
+				_main.seek(target)
 	_clock += dt
 	if _main != null:
 		_main.step(dt)

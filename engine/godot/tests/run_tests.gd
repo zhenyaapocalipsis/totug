@@ -2818,6 +2818,27 @@ func test_god_mode() -> void:
 	panel._cards.filter(func(b: Button): return b.visible)[0].pressed.emit()
 	check(fx_card.size() == 1 and (srv.state.players[viewer] as PlayerState).deck.hand.size() == hand_before,
 		"FX: щелчок играет анимацию, карту не выдаёт")
+	var hs := screen._hs_play
+	panel.toggle_pause()
+	check(hs.paused, "PAUSE ставит анимации на паузу")
+	for _i in 200:
+		hs._process(0.1)
+		if hs._main != null and hs._main._warm == 0:
+			break
+		OS.delay_msec(10)
+	var f0 := hs.frame_info().x
+	hs._process(0.5)
+	check_eq(hs.frame_info().x, f0, "на паузе кадр стоит")
+	panel.step(3)
+	hs._process(0.1)
+	check_eq(hs.frame_info().x, f0 + 3, "шаг вперёд на 3 кадра")
+	panel.step(-2)
+	hs._process(0.1)
+	check_eq(hs.frame_info().x, f0 + 1, "шаг назад на 2 кадра")
+	panel._process(0.0)
+	check_eq(panel._frame_label.text, "%d/%d" % [f0 + 2, hs.frame_info().y], "панель показывает номер кадра")
+	panel.toggle_pause()
+	check(not hs.paused, "повторное PAUSE снимает паузу")
 	panel.set_fx(false)
 	screen.toggle_god_panel()
 	check(not panel.visible and panel.tool == GodPanel.TOOL_OFF, "G прячет панель и выключает инструмент")

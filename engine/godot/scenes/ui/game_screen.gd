@@ -619,6 +619,7 @@ func _build_layout() -> void:
 		_god_panel = GodPanel.new(player_ids)
 		_god_panel.z_index = 930
 		_god_panel.action_requested.connect(send_god)
+		_god_panel.hs_play = _hs_play
 		# FX: анимация розыгрыша прямо на доске — только картинка, ход не меняется
 		# (раньше была в меню Esc; владелец, 2026-10-28 — перенести сюда).
 		_god_panel.fx_requested.connect(func(cid: String):
@@ -1050,6 +1051,15 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif key.keycode == KEY_G and key.pressed and not key.echo and _god_panel != null:
 		toggle_god_panel()
+		get_viewport().set_input_as_handled()
+	elif _god_panel != null and _god_panel.visible and key.pressed \
+			and key.keycode in [KEY_P, KEY_LEFT, KEY_RIGHT]:
+		# Анимации розыгрыша: P — пауза, стрелки — кадр назад и вперёд (держать — листать).
+		if key.keycode == KEY_P:
+			if not key.echo:
+				_god_panel.toggle_pause()
+		else:
+			_god_panel.step(-1 if key.keycode == KEY_LEFT else 1)
 		get_viewport().set_input_as_handled()
 	elif key.keycode == KEY_B and key.pressed and not key.echo:
 		# Stage 0 фонового арта гексов (PixelLab) — временная клавиша, пока

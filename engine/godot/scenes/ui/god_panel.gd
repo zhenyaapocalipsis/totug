@@ -40,6 +40,10 @@ var _cards: Array[Button] = []
 ## Заголовок колоды -> её кнопки в списке (заголовок прячется вместе с ними).
 var _groups := {}
 var _fx_button: Button
+var _pause_button: Button
+var _frame_label: Label
+## Анимации розыгрыша экрана: пауза и шаг по кадрам (задаёт GameScreen).
+var hs_play: HsPlay
 var _hint: Label
 var _preview: TextureRect
 
@@ -134,6 +138,16 @@ func _init(player_ids: Array[String]) -> void:
 		_button("-", func(): set_count(count - 1)), _count_label, _button("+", func(): set_count(count + 1)),
 		_fx_button,
 	]))
+	_pause_button = _button("PAUSE", func(): toggle_pause())
+	_pause_button.toggle_mode = true
+	_pause_button.tooltip_text = "P: pause card animations"
+	var back := _button("<", func(): step(-1))
+	back.tooltip_text = "Left: previous frame (pauses)"
+	var fwd := _button(">", func(): step(1))
+	fwd.tooltip_text = "Right: next frame (pauses)"
+	_frame_label = Label.new()
+	_frame_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	col.add_child(_row([_pause_button, back, fwd, _frame_label]))
 	_search = LineEdit.new()
 	_search.placeholder_text = "search card..."
 	_search.clear_button_enabled = true
@@ -280,6 +294,26 @@ func set_fx(on: bool) -> void:
 	fx = on
 	_fx_button.set_pressed_no_signal(on)
 	_filter()
+
+
+## Пауза анимаций розыгрыша (клавиша P).
+func toggle_pause() -> void:
+	if hs_play != null:
+		hs_play.set_paused(not hs_play.paused)
+
+
+## Шаг анимации на n кадров, с паузой (стрелки влево и вправо).
+func step(n: int) -> void:
+	if hs_play != null:
+		hs_play.step_frames(n)
+
+
+func _process(_delta: float) -> void:
+	if hs_play == null:
+		return
+	_pause_button.set_pressed_no_signal(hs_play.paused)
+	var f := hs_play.frame_info()
+	_frame_label.text = "" if f.y == 0 else "%d/%d" % [f.x + 1, f.y]
 
 
 func set_count(value: int) -> void:

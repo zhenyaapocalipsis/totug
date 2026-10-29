@@ -447,6 +447,9 @@ func _run_scenario() -> void:
 				HsPlay.fixed_dt = 1.0 / 60.0
 				_screen._god_panel.fx_requested.emit(_screen._god_panel.visible_cards()[0])
 				_gif_left = _count_arg("gif", 0)
+				# --step=N — пауза и сразу N кадров вперёд (покадровый просмотр).
+				if _arg("step", "") != "":
+					_screen._god_panel.step(int(_arg("step", "0")))
 			_shot_at = _frame + _count_arg("wait", 30)
 		"feed":
 			# Сводка слева с полным ходом: сыгранное, покупка, изгои
