@@ -49,6 +49,13 @@ HsBrowser (память «Unity: edit in copy»).
   перепечены; картинка изменилась у 20 — Amitut, Aranna, Thal'ena, Chronogor, Chronolord Epoch,
   Elise, Nobundo, Jace, Darkvein, Medivh, Nablya, Sargeras, Denathrius, Lynessa, Sylvanas,
   Thaddius, Unknowable One, Tarim, Velen, Xavius (силуэты/рамки жетона, заливка портрета).
+- **HsFx-87 (сделано): Aerisi (inara) без пятна формы жетона.** Пятно в центре — трещины призыва
+  HS `GroundCracks/mesh_Cracks` и `mesh_Cracks_dark` (текстура
+  GenFX_AllyInPlaySummonCracks_Lrg_Sequential_C*): центр залит по форме жетона (светлая — голубым,
+  тёмная — лиловым). Обе спрятаны `hideRx`; остались молния, разряды, дымка. Те же трещины в
+  других эффектах (Kael'thas, Altruis, Jace, Azure Queen, Yogg-Saron, Neeru, Malchezaar,
+  Thunderbringer) — тонкие линии без заливки, оставлены. Воронки по форме жетона
+  (`Cracks_Token_Impact` у Zerontu, трещины Rafaam) — на решение владельца.
 - **HsFx-82 (сделано): кадры 480x270.** Шейдер HsPlay рисует кадр блоком 2x2 пикселя экрана
   960x540 и брал из кадра 960x540 один пиксель на блок — остальные три не видны. Владелец выбрал
   «усреднением»: все кадры ужаты средним 2x2 (`engine/godot/tools/bake_half.gd`, чистый свет

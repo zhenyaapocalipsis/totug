@@ -313,7 +313,8 @@ const SCRIPTS := {
 	# Inara Stormcrash (DMF_708) — Aerisi Kalinoth (вместо Ohn'ahra — владелец выбрал в
 	# HsBrowser 2026-10-27): DMFFX_InaraStormcrash_CustomSummon (Timeline + FSM): синяя молния
 	# прилетает слева (как в HS), бьёт в точку посадки, на 1.35 с вспыхивает и висит сфера бури
-	# с разрядами. Сетки жетона HS спрятаны, весь эффект под картой.
+	# с разрядами. Сетки жетона HS спрятаны, весь эффект под картой. HsFx-87: трещины призыва HS
+	# (GroundCracks/mesh_Cracks*) убраны — их центр залит по форме жетона (пятно у владельца).
 	# Выжигание голубое в цвет молний.
 	"inara": {"frames": "inara", "sounds": "inara",
 		"card": {"face": "mini", "reveal": 1.82, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
