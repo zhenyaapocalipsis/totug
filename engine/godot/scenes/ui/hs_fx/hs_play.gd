@@ -843,7 +843,8 @@ const SCRIPTS := {
 		"shakers": [[1.45, 4.233, 0.1, [[0, 1], [1, 0]], 0.075]]},
 	# The Jailer (CORE_MAW_034) — Shadow: тёмная дымка Утробы сгущается в точке посадки, на удар
 	# — тёмный всплеск. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание
-	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27. HsFx-91: свечение формы жетона HS
+	# (OnToken/Mesh_Token_Glow*, его включает анимация) убрано.
 	"thejailer": {"frames": "thejailer", "sounds": "thejailer",
 		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
