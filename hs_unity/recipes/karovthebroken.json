@@ -20,7 +20,7 @@
         "Root/Detach_Root/Impact_FX/Token_Breaking_Opponent/Token_GlassCracking_Glow",
         "Root/Opponent_Token_Root"
       ],
-      "hideRx": "/Flare_Token_|/Token_GlassBroken$|/Tendie/Tendie_Mesh_|/GrabbingTendies/", "under": [
+      "hideRx": "/Flare_Token_|/Token_GlassBroken$|/PullingTendies/|/GrabbingTendies/", "under": [
         "Root"
       ],
       "controls": [],
