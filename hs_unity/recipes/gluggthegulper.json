@@ -5,7 +5,7 @@
   "space": "gamma",
   "ldr": true,
   "layers": [
-    {"prefab": "39e60952500e1c4439f3ceaa0cbc6253", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/AnimRoot/TokenRoot"], "under": ["Root"], "controls": [], "measure": ["Root"]},
+    {"prefab": "39e60952500e1c4439f3ceaa0cbc6253", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/AnimRoot/TokenRoot"], "hideRx": "/Mesh_Minion_", "under": ["Root"], "controls": [], "measure": ["Root"]},
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.54,

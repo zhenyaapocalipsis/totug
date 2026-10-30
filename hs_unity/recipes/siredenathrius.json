@@ -18,7 +18,7 @@
       "hide": [
         "Root/Vignette_Root"
       ],
-      "under": [
+      "hideRx": "/Mesh_HideGlow$", "under": [
         "Root"
       ],
       "controls": [

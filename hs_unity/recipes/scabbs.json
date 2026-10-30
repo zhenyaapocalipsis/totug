@@ -14,7 +14,7 @@
       "clips": [{"name": "AVFX_ShadowcrafterScabbs_CustomSummon_Anim", "at": 0.0}],
       "hide": ["AnimRoot/HeroRoot/TokenRoot/TokenHide", "AnimRoot/HeroRoot/TokenRoot/Mesh_HeroGlow",
         "AnimRoot/HeroRoot/TokenRoot/Mesh_HeroShadow", "AnimRoot/SocketShadowRoot"],
-      "under": ["AnimRoot"],
+      "hideRx": "/TokenRoot/Mesh_BackGlow$", "under": ["AnimRoot"],
       "controls": [
         {"node": "AnimRoot/HeroRoot/TokenRoot/FX_BlackSmokeWisps", "start": 0, "end": 3},
         {"node": "AnimRoot/SmokeBurstRoot/FX_BlackSmokeBurst", "start": 1.833, "end": 3.748},

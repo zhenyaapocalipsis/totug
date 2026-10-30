@@ -455,6 +455,7 @@ const SCRIPTS := {
 	# алая лента теней влетает сверху в место карты, на 1.8 с взрыв чёрного дыма, ударная волна.
 	# Жетон и тень портрета героя (SocketShadowRoot) спрятаны. На тёмной доске эффект тихий —
 	# владелец берёт всё равно. Выжигание алое.
+	# HsFx-92: свечение формы жетона HS, которое включает анимация, спрятано hideRx.
 	"scabbs": {"frames": "scabbs", "sounds": "scabbs",
 		"card": {"face": "mini", "reveal": 2.3, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM в начале (громкость в FSM не выгружена, AudioSource 1 — берём 0.8);
@@ -567,6 +568,7 @@ const SCRIPTS := {
 	# Hodir, Father of Giants (TTN_752) — Cloud Giant: ледяной вихрь кружит над точкой посадки и
 	# сжимается, на 1.32 с голубая вспышка. Сетки жетона HS спрятаны, весь эффект под картой.
 	# Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-92: свечение формы жетона HS, которое включает анимация, спрятано hideRx.
 	"hodirfatherofgiant": {"frames": "hodirfatherofgiant", "sounds": "hodirfatherofgiant",
 		"card": {"face": "mini", "reveal": 1.79, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -972,6 +974,7 @@ const SCRIPTS := {
 	# Sire Denathrius (REV_906t) — Half-Dragon: багровая тень проносится к точке посадки,
 	# кровавый всплеск. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание
 	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-92: свечение формы жетона HS, которое включает анимация, спрятано hideRx.
 	"siredenathrius": {"frames": "siredenathrius", "sounds": "siredenathrius",
 		"card": {"face": "mini", "reveal": 1.39, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -1083,6 +1086,7 @@ const SCRIPTS := {
 	# Glugg the Gulper (TSC_639) — High Fae Noble: к точке посадки летит розовая сфера, на удар
 	# — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# HsFx-92: свечение формы жетона HS, которое включает анимация, спрятано hideRx.
 	"gluggthegulper": {"frames": "gluggthegulper", "sounds": "gluggthegulper",
 		"card": {"face": "mini", "reveal": 1.99, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
