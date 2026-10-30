@@ -194,6 +194,10 @@ public static class HsRender
         public Renderer[] tinted = new Renderer[0];
         // спрятанные (hide): анимация HS может включать их снова (m_IsActive) — прячутся каждый кадр
         public GameObject[] hidden = new GameObject[0];
+        // погашенные рендереры (hideMeshRx, hideRx, hidePS): анимация HS включает их снова
+        // (m_Enabled — Xavius: свечение формы жетона) — гасятся каждый кадр
+        public List<Renderer> off = new List<Renderer>();
+        public HashSet<Renderer> offWoke = new HashSet<Renderer>();
         // RenderToTexture: цвет и маска (Layer.rtt)
         public Renderer[] rttRgb = new Renderer[0];
         public Renderer[] rttMask = new Renderer[0];
@@ -458,7 +462,7 @@ public static class HsRender
         {
             var t = go.transform.Find(p);
             if (t == null) { Log("hidePS: not found " + p); continue; }
-            foreach (var r in t.GetComponentsInChildren<ParticleSystemRenderer>(true)) r.enabled = false;
+            foreach (var r in t.GetComponentsInChildren<ParticleSystemRenderer>(true)) { r.enabled = false; live.off.Add(r); }
         }
         var ctl = new List<(GameObject, ParticleSystem[], float, float, float)>();
         foreach (var c in spec.controls)
@@ -481,7 +485,12 @@ public static class HsRender
             var rx = new System.Text.RegularExpressions.Regex(spec.hideMeshRx);
             foreach (var tr in nodes.Where(tr => rx.IsMatch(tr.name)))
                 foreach (var r in tr.GetComponentsInChildren<Renderer>(true))
-                    if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
+                    if (r is MeshRenderer || r is SkinnedMeshRenderer)
+                    {
+                        r.enabled = false;
+                        // трещины земли (Minion_CrackedEarth) анимация включает — так было в HsBrowser, остаются
+                        if (!r.name.Contains("CrackedEarth")) live.off.Add(r);
+                    }
         }
         if (spec.hideRx != "")
         {
@@ -489,7 +498,7 @@ public static class HsRender
             foreach (var tr in nodes)
             {
                 var path = AnimationUtility.CalculateTransformPath(tr, go.transform);
-                if (rx.IsMatch(path) && tr.TryGetComponent<Renderer>(out var r)) { r.enabled = false; Log("hideRx: " + path); }
+                if (rx.IsMatch(path) && tr.TryGetComponent<Renderer>(out var r)) { r.enabled = false; live.off.Add(r); Log("hideRx: " + path); }
             }
         }
         if (spec.rtt != "")
@@ -577,6 +586,12 @@ public static class HsRender
             }
             foreach (var h in l.hidden)
                 if (h.activeSelf) h.SetActive(false);
+            foreach (var r in l.off)
+                if (r.enabled)
+                {
+                    r.enabled = false;
+                    if (l.offWoke.Add(r)) Log($"off: анимация включила {AnimationUtility.CalculateTransformPath(r.transform, l.root.transform)} ({tau:0.00} с)");
+                }
             // узел держится в точке посадки (без полёта из-за края экрана HS)
             foreach (var p in l.spec.pin)
             {

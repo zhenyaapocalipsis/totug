@@ -40,6 +40,15 @@ HsBrowser (память «Unity: edit in copy»).
   затемнение, оставлено): спрятаны Vyranoth `Mesh_GlowQuad_*`, Karov `Token_GlassBroken`
   (Chromatus_DarkToken_Shards_Mask — мутный овал стекла жетона). Остальные совпадения — «Token»
   в имени узла при обычных текстурах (шлейфы, дым, лучи, кратеры).
+- **HsFx-86 (сделано): анимация HS включала спрятанное.** Владелец нашёл овал в центре Glabrezu
+  (xavius): `RevealRoot/MinionGlow*` гасились `hideMeshRx`, но клип Timeline пишет `m_Enabled`
+  и включал их снова (в HsBrowser так же). Теперь всё погашенное `hideMeshRx`/`hideRx`/`hidePS`
+  (`Live.off`) гасится в `Pose` каждый кадр, первый случай пишется в лог
+  `off: анимация включила <путь> (<с>)`. Исключение — трещины земли `*CrackedEarth*` (были видны
+  и в браузере, трещины оставляем). Прогон всех 125 (каждый 12-й кадр): включалось в 25,
+  перепечены; картинка изменилась у 20 — Amitut, Aranna, Thal'ena, Chronogor, Chronolord Epoch,
+  Elise, Nobundo, Jace, Darkvein, Medivh, Nablya, Sargeras, Denathrius, Lynessa, Sylvanas,
+  Thaddius, Unknowable One, Tarim, Velen, Xavius (силуэты/рамки жетона, заливка портрета).
 - **HsFx-82 (сделано): кадры 480x270.** Шейдер HsPlay рисует кадр блоком 2x2 пикселя экрана
   960x540 и брал из кадра 960x540 один пиксель на блок — остальные три не видны. Владелец выбрал
   «усреднением»: все кадры ужаты средним 2x2 (`engine/godot/tools/bake_half.gd`, чистый свет

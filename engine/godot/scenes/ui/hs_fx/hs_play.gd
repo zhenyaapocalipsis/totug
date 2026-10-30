@@ -286,7 +286,8 @@ const SCRIPTS := {
 	# Nightmare Lord Xavius (EDR_856) — Glabrezu (вместо Razidir — владелец выбрал в HsBrowser
 	# 2026-10-27; Razidir уходит к Guardian Naga): EDRFX_Xavius_CustomSummon (Timeline): алые
 	# когти рвут воздух над точкой посадки, на 1.15 с огненный взрыв, багровые разрывы тлеют.
-	# Жетон HS спрятан, весь эффект под картой. Выжигание алое.
+	# Жетон HS спрятан, весь эффект под картой. Выжигание алое. HsFx-86: свечение формы жетона
+	# (RevealRoot/MinionGlow*), которое включала анимация HS, гасится каждый кадр.
 	"xavius": {"frames": "xavius", "sounds": "xavius",
 		"card": {"face": "mini", "reveal": 1.62, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.6 — замах с начала, удар с 1.167 с
