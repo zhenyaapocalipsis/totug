@@ -936,7 +936,8 @@ const SCRIPTS := {
 		"shakers": [[1, 1.583, 0.2, [[0, 1], [1, 0]], 0.075]]},
 	# Remornia, Living Blade (CORE_REV_316) — Warlord: алый клинок вспыхивает крестом над точкой
 	# посадки, кровавый всплеск. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
-	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27. HsFx-94: сам меч (sword,
+	# sword_glow) убран по слову владельца — смотрелся инородно; алая энергия и вспышка остались.
 	"remornialivingblad": {"frames": "remornialivingblad", "sounds": "remornialivingblad",
 		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
