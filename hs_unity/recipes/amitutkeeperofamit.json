@@ -16,7 +16,7 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "under": [
+      "hideRx": "/TokenRoot/Shards/", "under": [
         "Root"
       ],
       "controls": [],

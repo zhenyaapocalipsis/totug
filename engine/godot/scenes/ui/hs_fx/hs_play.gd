@@ -980,7 +980,8 @@ const SCRIPTS := {
 	# Amitut, Keeper of Amitus (BE_143) — Lamia: огненный вихрь закручивается и взрывается
 	# широкой волной пламени, по краям экрана — фиолетовые облака (Vignette_Root, HsFx-81). Сетки
 	# жетона HS спрятаны, весь эффект под картой;
-	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27. HsFx-90: осколки и трещины
+	# жетона HS (TokenRoot/Shards: жёлтый овал формы жетона) убраны.
 	"amitutkeeperofamit": {"frames": "amitutkeeperofamit", "sounds": "amitutkeeperofamit",
 		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
