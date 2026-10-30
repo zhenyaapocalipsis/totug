@@ -58,6 +58,9 @@ public static class HsRender
         // узлы, чья позиция анимирована (полёт жетона HS): держать в локальной точке pos
         // каждый кадр — эффект формируется в точке посадки
         public Pin[] pin = new Pin[0];
+        // узлы крупнее в by раз по всем осям от своей опорной точки (лучи Norgannon: край лент
+        // уходит за верх экрана); масштаб из анимации тоже умножается каждый кадр
+        public Grow[] grow = new Grow[0];
         // узлы, частицы которых не рисовать (всё поддерево; сетки остаются)
         public string[] hidePS = new string[0];
         // частицы под своей дорожкой HS (ControlRandomizedTrack — без кода игры Timeline
@@ -128,6 +131,13 @@ public static class HsRender
     {
         public string node;
         public float[] pos = new float[3];
+    }
+
+    [Serializable]
+    public class Grow
+    {
+        public string node;
+        public float by = 1f;
     }
 
     // правка свойства материала узла: value для float, color (rgba) для цвета
@@ -201,6 +211,8 @@ public static class HsRender
         // RenderToTexture: цвет и маска (Layer.rtt)
         public Renderer[] rttRgb = new Renderer[0];
         public Renderer[] rttMask = new Renderer[0];
+        // Layer.grow: узел, множитель, масштаб без него и последний выставленный
+        public List<(Transform t, float by, Vector3 bas, Vector3 last)> grow = new List<(Transform, float, Vector3, Vector3)>();
     }
 
     static Color Tint(Color c, Layer l)
@@ -396,6 +408,12 @@ public static class HsRender
                 }
             }
         var live = new Live { spec = spec, root = go, tinted = tinted.ToArray(), hidden = hidden.ToArray() };
+        foreach (var g in spec.grow)
+        {
+            var t = go.transform.Find(g.node);
+            if (t == null) { Log("grow: not found " + g.node); continue; }
+            live.grow.Add((t, g.by, t.localScale, new Vector3(float.NaN, 0f, 0f)));
+        }
         live.under = spec.under.Select(p => go.transform.Find(p)).Where(t => t != null)
             .SelectMany(t => t.GetComponentsInChildren<Renderer>(true)).ToArray();
         live.dirs = spec.noTimeline ? new PlayableDirector[0] : focus.GetComponentsInChildren<PlayableDirector>(true);
@@ -597,6 +615,14 @@ public static class HsRender
             {
                 var t0 = l.root.transform.Find(p.node);
                 if (t0 != null) t0.localPosition = new Vector3(p.pos[0], p.pos[1], p.pos[2]);
+            }
+            // масштаб не тронут анимацией — остаётся наш, от прежней основы; записан — новая основа
+            for (int gi = 0; gi < l.grow.Count; gi++)
+            {
+                var (gt, by, bas, last) = l.grow[gi];
+                var b = gt.localScale == last ? bas : gt.localScale;
+                gt.localScale = b * by;
+                l.grow[gi] = (gt, by, b, gt.localScale);
             }
             // анимация пишет цвета материала в блок свойств рендерера — перекрасить и их
             foreach (var r in l.tinted)

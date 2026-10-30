@@ -880,7 +880,8 @@ const SCRIPTS := {
 		"cues": [[0, "BE_009_MastermindYogg_CustomSummon_Sound", 0.8], [1.18, "BE_009_MastermindYogg_CustomSummon_ImpactSound", 0.8]]},
 	# Norgannon (TTN_075) — Homunculus: лучи титанов сходятся сверху в точку посадки, вспышка и
 	# кольцо рун. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в
-	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27. HsFx-93: лучи (Beam_Root) крупнее в 1.5
+	# раза от точки посадки (grow) — верхний край лент уходит за экран, без обрыва.
 	"norgannon": {"frames": "norgannon", "sounds": "norgannon",
 		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)

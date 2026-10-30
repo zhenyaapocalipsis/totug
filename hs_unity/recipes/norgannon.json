@@ -16,7 +16,7 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "under": [
+      "grow": [{"node": "AnimRoot/Beam_Root", "by": 1.5}], "under": [
         "AnimRoot"
       ],
       "controls": [
