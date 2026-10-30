@@ -58,6 +58,8 @@ HsBrowser (память «Unity: edit in copy»).
   (`Cracks_Token_Impact` у Zerontu, трещины Rafaam) — на решение владельца.
 - **HsFx-88 (сделано): Rafaam и Zerontu без воронок по форме жетона** (владелец: «убрать»):
   `hideRx` Rafaam `/root/impact cracks$`, Zerontu `/CracksRoot/Cracks_Token_` (трещины и подпалина).
+- **HsFx-89 (сделано): Ghast (blooddoctorthalena) без заливки жетона** — `Intro_SphereScale`
+  (материалы TokenFillBacker/TokenFillLiquid: жидкость заливает форму жетона) спрятаны `hideRx`.
 - **HsFx-82 (сделано): кадры 480x270.** Шейдер HsPlay рисует кадр блоком 2x2 пикселя экрана
   960x540 и брал из кадра 960x540 один пиксель на блок — остальные три не видны. Владелец выбрал
   «усреднением»: все кадры ужаты средним 2x2 (`engine/godot/tools/bake_half.gd`, чистый свет

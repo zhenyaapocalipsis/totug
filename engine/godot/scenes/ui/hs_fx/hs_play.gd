@@ -823,7 +823,8 @@ const SCRIPTS := {
 		"cues": [[0, "RLKFX_BlightFang_Start_Sound", 0.8], [0.617, "RLKFX_BlightFang_Impact_Sound", 0.8]]},
 	# Blood Doctor Thal'ena (JAIL_446) — Ghast: тёмно-фиолетовая кровавая дымка сгущается, на
 	# удар — тёмный всплеск. Сетки жетона HS и виньетки спрятаны, весь эффект под картой;
-	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
+	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27. HsFx-89: заливка формы
+	# жетона HS жидкостью (Intro_SphereScale: TokenFillBacker/TokenFillLiquid) убрана.
 	"blooddoctorthalena": {"frames": "blooddoctorthalena", "sounds": "blooddoctorthalena",
 		"card": {"face": "mini", "reveal": 1.94, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
