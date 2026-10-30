@@ -957,7 +957,8 @@ const SCRIPTS := {
 	# взрыв. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	# HsFx-84/85: белый овал-вспышка по форме жетона HS (Flare_Token_*) и тёмные осколки его
-	# стекла (Token_GlassBroken) спрятаны hideRx.
+	# стекла (Token_GlassBroken) спрятаны hideRx. HsFx-96: щупальца (Tendie_Mesh_*, GrabbingTendies)
+	# убраны по слову владельца — остался фиолетовый вихрь.
 	"karovthebroken": {"frames": "karovthebroken", "sounds": "karovthebroken",
 		"card": {"face": "mini", "reveal": 2.09, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
