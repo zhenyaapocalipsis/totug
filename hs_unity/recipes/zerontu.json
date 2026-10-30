@@ -16,7 +16,7 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "under": [
+      "hideRx": "/CracksRoot/Cracks_Token_", "under": [
         "Root"
       ],
       "controls": [],

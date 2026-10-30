@@ -556,7 +556,8 @@ const SCRIPTS := {
 		"shakers": [[1.567, 2.583, 0.2, [[0, 1], [1, 0]], 0.075], [0.517, 1.1, 0.075, [[0, 1], [0.99, 0.7]], 0.1]]},
 	# Zer'Ontu (BE_790) — Blink Dog: слева мерцает фиолетовый разлом, синий вихрь переносится к
 	# точке посадки, на 1.45 с вспышка, голубой дым. Сетки жетона HS спрятаны, весь эффект
-	# под картой. Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
+	# под картой. Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27. HsFx-88: воронка по
+	# форме жетона (CracksRoot/Cracks_Token_*) убрана по слову владельца.
 	"zerontu": {"frames": "zerontu", "sounds": "zerontu",
 		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
@@ -777,7 +778,8 @@ const SCRIPTS := {
 	# Arch-Villain Rafaam (CORE_DAL_422) — Horned Devil: ArchVillianRafaam_CustomSummon (по FSM,
 	# аниматор): багровые и фиолетовые ленты закручиваются у точки посадки, на 0.5 с молнии и
 	# вспышка. Свечение рамки (evil_glow*, оранжевый щит) спрятано. Выжигание
-	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
+	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27. HsFx-88: воронка-трещина по форме жетона
+	# (impact cracks) убрана по слову владельца.
 	"archvillainrafaam": {"frames": "archvillainrafaam", "sounds": "archvillainrafaam",
 		"card": {"face": "mini", "reveal": 0.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlaythroughAction FSM 0.5
