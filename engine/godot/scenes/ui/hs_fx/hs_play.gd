@@ -115,7 +115,8 @@ const SCRIPTS := {
 	# Vyranoth (CATA_213) — White Dragon (вместо Frost Queen Sindragosa — владелец выбрал в
 	# HsBrowser 2026-10-27): CATAFX_Vyranoth_CustomSummon (Timeline): из точки посадки
 	# вырастают ледяные кристаллы, морозный туман, к ~1.2 с ледяной взрыв, осколки тают.
-	# Весь эффект под картой. Выжигание ледяное голубое.
+	# Весь эффект под картой. Выжигание ледяное голубое. HsFx-85: ледяной контур и свечения
+	# жетона HS (Vyanoth_TokenRoot/Mesh_GlowQuad_*) спрятаны hideRx.
 	"vyranoth": {"frames": "vyranoth", "sounds": "vyranoth",
 		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.8 с начала
@@ -945,7 +946,8 @@ const SCRIPTS := {
 	# Karov the Broken (JAIL_448) — Nihiloor: фиолетовая тьма с щупальцами, на удар — фиолетовый
 	# взрыв. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
-	# HsFx-84: белый овал-вспышка по форме жетона HS (Flare_Token_*) спрятан hideRx.
+	# HsFx-84/85: белый овал-вспышка по форме жетона HS (Flare_Token_*) и тёмные осколки его
+	# стекла (Token_GlassBroken) спрятаны hideRx.
 	"karovthebroken": {"frames": "karovthebroken", "sounds": "karovthebroken",
 		"card": {"face": "mini", "reveal": 2.09, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)

@@ -16,7 +16,7 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "under": [
+      "hideRx": "/Vyanoth_TokenRoot/Mesh_GlowQuad_", "under": [
         "AnimRoot"
       ],
       "controls": [],

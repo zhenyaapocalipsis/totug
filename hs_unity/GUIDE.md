@@ -33,6 +33,13 @@ HsBrowser (память «Unity: edit in copy»).
   Оставлены (настоящие кольца/вспышки или закрыто картой): Akama, Drakuru, Tarim, Sylvanas,
   Yogg-Saron, Nobundo, Nythendra (без них дыра во вспышке), Fyrakk, Hodir, Vyranoth, Remornia,
   Staff of Trickery, Cho'gall и др. Новый эффект: после пробы искать такие текстуры с `ren=True`.
+- **HsFx-85 (сделано): White Dragon (vyranoth) и Karov — ещё силуэты.** Владелец нашёл круг
+  в центре White Dragon: `Vyanoth_TokenRoot/Mesh_GlowQuad_Outline` (текстура
+  T_Vyranthon_Frost_Token) — фильтр HsFx-84 искал «MinionToken», а не любое «Token». Повторный
+  отбор по всем текстурам с «Token» (кроме тёмной подложки DonutBacking_AroundToken — мягкое
+  затемнение, оставлено): спрятаны Vyranoth `Mesh_GlowQuad_*`, Karov `Token_GlassBroken`
+  (Chromatus_DarkToken_Shards_Mask — мутный овал стекла жетона). Остальные совпадения — «Token»
+  в имени узла при обычных текстурах (шлейфы, дым, лучи, кратеры).
 - **HsFx-82 (сделано): кадры 480x270.** Шейдер HsPlay рисует кадр блоком 2x2 пикселя экрана
   960x540 и брал из кадра 960x540 один пиксель на блок — остальные три не видны. Владелец выбрал
   «усреднением»: все кадры ужаты средним 2x2 (`engine/godot/tools/bake_half.gd`, чистый свет
