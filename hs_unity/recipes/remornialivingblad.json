@@ -5,7 +5,7 @@
   "space": "gamma",
   "ldr": true,
   "layers": [
-    {"prefab": "6e4aa1f2746e08643b347918a6bd945a", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/AnimRoot/Token_Root"], "hideRx": "/sword(_glow)?$", "under": ["Root"], "controls": [], "measure": ["Root"]},
+    {"prefab": "6e4aa1f2746e08643b347918a6bd945a", "at": 0.0, "pos": [-7.59, 0.0, -7.01], "usePos": true,  "clip": "timeline", "hide": ["Root/AnimRoot/Token_Root"], "hideRx": "/sword$", "under": ["Root"], "controls": [], "measure": ["Root"]},
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 0.97,
