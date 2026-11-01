@@ -147,7 +147,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Rakshasa (49113) | Argus, the Emerald Star (TTN_862) | `TTNFX_ArgusTheEmeraldStar_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Rakshasa~~ (—, существо убрано из игры NE-37; на 49113/49115/49118 теперь Strahd / Relentless Slasher / Zombie Plague Spreader) | Argus, the Emerald Star (TTN_862) | `TTNFX_ArgusTheEmeraldStar_CustomSummon.prefab` | анимация свободна |
 | Nightmare (49114) | Thunderbringer (WW_440) | `WWFX_Thunderbringer_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Chain Devil (49513) | Cho'gall, Twilight Chieftain (YOG_530) | `YOGFX_Cho'gallTwilightChieftain_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Barbed Devil (49517) | Wrathion (Story_06_Wrathion) | `Wrathion_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
@@ -169,7 +169,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Homunculus (49215) | Norgannon (TTN_075) | `TTNFX_Norgannon_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Chimera (49216) | Dave Berard (CRED_215) | `AVFX_BrukanElements_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Archmage (49217) | Khadgar (DAL_575) | `Khadgar_CustomSummon.prefab` | архимаг |
-| Basilisk (49118) | Overseer Frigidara (LEG_RLK_224) | `RLKFX_Frigidara_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Basilisk~~ (—, существо убрано из игры NE-37; на 49113/49115/49118 теперь Strahd / Relentless Slasher / Zombie Plague Spreader) | Overseer Frigidara (LEG_RLK_224) | `RLKFX_Frigidara_CustomSummon.prefab` | анимация свободна |
 | Behir (49219) | Mastermind Yogg-Saron (BE_009) | `BEFX_YoggSarontheMastermind_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Harpy (49220) | Serena Bloodfeather (BAR_315) | `BARFX_SerenaBloodFeather_CustomSummon.prefab` | гарпия |
 
@@ -200,7 +200,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Weretiger (49115) | Beaststalker Tavish (AV_113) | `AVFX_TavishBeastStalker_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Weretiger~~ (—, существо убрано из игры NE-37; на 49113/49115/49118 теперь Strahd / Relentless Slasher / Zombie Plague Spreader) | Beaststalker Tavish (AV_113) | `AVFX_TavishBeastStalker_CustomSummon_Super.prefab` | анимация свободна |
 | Lamia (49514) | Amitut, Keeper of Amitus (BE_143) | `BE_143_Amitut_Keeper_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Horned Devil (49515) | Arch-Villain Rafaam (CORE_DAL_422) | `ArchVillianRafaam_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Efreeti (49715) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |

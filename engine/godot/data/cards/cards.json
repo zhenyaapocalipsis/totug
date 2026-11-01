@@ -1569,22 +1569,22 @@
   },
   {
     "card_id": 49103,
-    "name": "Werebear",
+    "name": "Graveyard Revenant",
     "cost": 3,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
-    "race": "LYCANTHROPE",
+    "race": "UNDEAD",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "The next card you play this turn is played twice.\nDevour that card at the end of the turn."
   },
   {
     "card_id": 49104,
-    "name": "Wererat",
+    "name": "Vampire Nosferatu",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
-    "race": "LYCANTHROPE",
+    "race": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Insane Outcasts from your top 6 cards into your hand.\n• +3 Influence"
@@ -1679,11 +1679,11 @@
   },
   {
     "card_id": 49113,
-    "name": "Rakshasa",
+    "name": "Strahd von Zarovich",
     "cost": 8,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
-    "race": "RAKSHASA",
+    "race": "UNDEAD",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Costs 1 less per Insane Outcast you played this turn.\n+2 Influence. At end of turn, promote 2 other cards played this turn.\nGain 1 VP per 3 cards in your inner circle."
@@ -1701,22 +1701,22 @@
   },
   {
     "card_id": 49115,
-    "name": "Weretiger",
+    "name": "Relentless Slasher",
     "cost": 7,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
-    "race": "LYCANTHROPE",
+    "race": "FIEND",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Discard any number of cards, then draw that many.\n+3 Power per Insane Outcast in your discard pile.\nInsane Outcasts in your deck are worth 0 VP."
   },
   {
     "card_id": 49116,
-    "name": "Werewolf",
+    "name": "Nightmare Haunt",
     "cost": 6,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
-    "race": "LYCANTHROPE",
+    "race": "ABERRATION",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• An opponent splits your top 5 cards into a face-up and a face-down pile. Keep one pile, discard the other.\n• Supplant a troop anywhere."
@@ -1734,14 +1734,14 @@
   },
   {
     "card_id": 49118,
-    "name": "Basilisk",
+    "name": "Zombie Plague Spreader",
     "cost": 7,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
-    "race": "BASILISK",
+    "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 7,
-    "ability_text": "Gain a Twig Blight. Gain 1 VP per site under your total control.\nAt end of turn, promote another card played this turn."
+    "ability_text": "Gain a Swarm of Zombie Limbs. Gain 1 VP per site under your total control.\nAt end of turn, promote another card played this turn."
   },
   {
     "card_id": 49119,
@@ -1800,11 +1800,11 @@
   },
   {
     "card_id": 49124,
-    "name": "Twig Blight",
+    "name": "Swarm of Zombie Limbs",
     "cost": null,
     "aspect": null,
     "type": "RAVENLOFT",
-    "race": "PLANT",
+    "race": "UNDEAD",
     "deck_vp": 0,
     "inner_circle_vp": 0,
     "ability_text": "Deploy a troop and draw a card.\nIf this card would be promoted or devoured, return it to the supply and draw 2 cards instead."
