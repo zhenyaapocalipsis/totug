@@ -491,6 +491,8 @@ func _process(delta: float) -> bool:
 				check(players.all(func(p): return room4.card_bans.has(banned_by.get(p, "x"))), "[match4] бан каждого дошёл")
 				var market4: Array = room4.server.state.market.deck + room4.server.state.market.display
 				check(not market4.any(func(c): return room4.card_bans.has(String(c))), "[match4] забаненных карт нет в рынке")
+				var offers: Array = (chats[players[0]] as Array).filter(func(c): return String(c[1]).begins_with(BanPanel.SUGGEST_PREFIX))
+				check(offers.size() == 4, "[match4] предложения бана в чате дошли до всех (%d)" % offers.size())
 				_start_pause()
 		"pause_wait_code":
 			if players[0].room_code != "":
@@ -952,6 +954,8 @@ func _track(p: NetSession) -> void:
 		for cid in ids:
 			if not taken.has(cid):
 				banned_by[p] = String(cid)
+				# Сначала — предложение в чат стола (как Tab над картой).
+				p.send_chat(BanPanel.SUGGEST_PREFIX + String(cid))
 				p.ban_card(String(cid))
 				return)
 	views[p] = {}

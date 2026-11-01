@@ -235,6 +235,12 @@ func _run_scenario() -> void:
 			root.add_child(panel)
 			panel.show_view(room.ban_view())
 			panel.select(_arg("pick", "49521"))
+			# Чат стола: предложение бана (как по Tab) и обычные сообщения.
+			panel._on_chat("blue", BanPanel.SUGGEST_PREFIX + "49521")
+			panel._on_chat("green", "Half-Dragon wins too many games, ban it")
+			panel._on_chat("red", "ok, I will take a Chult card next round")
+			for k in 6:
+				panel._on_chat(["blue", "green", "red"][k % 3], "message %d to test scrolling" % (k + 1))
 		"alt_preview":
 			# Alt над картой: полная копия, подсказки шириной в карту справа,
 			# жетоны слева. --card=id (по умолчанию Half-Dragon, два жетона).

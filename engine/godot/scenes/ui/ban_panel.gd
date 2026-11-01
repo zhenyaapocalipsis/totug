@@ -18,14 +18,18 @@ extends Control
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 ## Миниатюра — мелкое лицо карты в половину (58x84 -> 29x42).
 const THUMB := Vector2(29, 42)
-## Лицо забаненной карты в зоне 6 — арт мелкого лица в половину.
-const FACE := Vector2(26, 26)
 const GRID_COLUMNS := 5
 const SIDE_WIDTH := 172
 const TOP_HEIGHT := 56
 const BOTTOM_HEIGHT := 26
 const GAP := 3
 const BAN_COLOUR := Color(0.85, 0.12, 0.18)
+## Высота места под полную карту (подписи жетонов + карта); ниже — чат.
+const INFO_HEIGHT := 284
+## Предложение забанить карту уходит в чат строкой с этим началом и id карты —
+## у всех она рисуется именем карты, по щелчку карта выбирается.
+const SUGGEST_PREFIX := "ban?"
+const GameSettings := preload("res://scenes/game_settings.gd")
 
 var _net: NetSession
 var _view: Dictionary = {}
@@ -34,6 +38,9 @@ var _selected := ""
 var _hovered := ""
 var _deck_zones: Array[Control] = []
 var _info: Control
+var _chat_log: RichTextLabel
+var _chat_scroll: ScrollContainer
+var _chat_edit: LineEdit
 var _info_shown := ""
 var _slots: HBoxContainer
 var _status: Label
@@ -48,6 +55,7 @@ var _decks: Dictionary = {}
 
 func _init(net: NetSession) -> void:
 	_net = net
+	net.chat_received.connect(_on_chat)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	theme = PixelTheme.theme()
@@ -100,7 +108,14 @@ func _init(net: NetSession) -> void:
 	_info.resized.connect(func():
 		_info_shown = "?"
 		_refresh_info())
-	info_zone.add_child(_info)
+	# Сверху карта с жетонами и подсказками, под ней — чат стола (владелец,
+	# 2026-11-01): Tab над картой предлагает её забанить.
+	var info_col := VBoxContainer.new()
+	info_col.add_theme_constant_override("separation", GAP)
+	info_zone.add_child(info_col)
+	_info.custom_minimum_size.y = INFO_HEIGHT
+	info_col.add_child(_info)
+	info_col.add_child(_make_chat())
 	var right := _side_column()
 	middle.add_child(right)
 	for column: VBoxContainer in [left, right]:
@@ -137,6 +152,98 @@ func _init(net: NetSession) -> void:
 	_ban.custom_minimum_size = Vector2(170, 16)
 	_ban.pressed.connect(func(): _send(_selected))
 	bottom_row.add_child(_ban)
+
+
+## Чат стола под картой: лента сообщений и строка ввода (Enter — отправить).
+func _make_chat() -> Control:
+	var box := PanelContainer.new()
+	box.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.PANEL_LO, PixelTheme.BORDER, 1, 4, 3))
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	box.add_child(col)
+	var head_row := HBoxContainer.new()
+	col.add_child(head_row)
+	var head := Label.new()
+	head.text = "CHAT"
+	head.add_theme_color_override("font_color", PixelTheme.GOLD)
+	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head_row.add_child(head)
+	var hint := Label.new()
+	hint.text = "Tab over a card: suggest banning it"
+	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM.darkened(0.25))
+	head_row.add_child(hint)
+	# Сообщения прижаты к строке ввода (критик UI): пустое место — над ними,
+	# длинная лента прокручивается, новое сообщение всегда видно.
+	_chat_scroll = ScrollContainer.new()
+	_chat_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_chat_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(_chat_scroll)
+	var stack := VBoxContainer.new()
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_chat_scroll.add_child(stack)
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(spacer)
+	_chat_log = RichTextLabel.new()
+	_chat_log.bbcode_enabled = true
+	_chat_log.fit_content = true
+	_chat_log.scroll_active = false
+	_chat_log.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_chat_log.meta_clicked.connect(func(meta): select(String(meta)))
+	stack.add_child(_chat_log)
+	_chat_edit = LineEdit.new()
+	_chat_edit.placeholder_text = "Type a message, Enter to send"
+	_chat_edit.max_length = 300
+	_chat_edit.text_submitted.connect(func(text: String):
+		if text.strip_edges() != "":
+			_net.send_chat(text)
+		_chat_edit.clear())
+	col.add_child(_chat_edit)
+	return box
+
+
+## Новое сообщение — ленту в самый низ (когда раскладка уже пересчитана).
+func _scroll_chat_down() -> void:
+	(func():
+		if is_instance_valid(_chat_scroll):
+			_chat_scroll.scroll_vertical = int(_chat_scroll.get_v_scroll_bar().max_value)).call_deferred()
+
+
+## Сообщение стола. Предложение бана (SUGGEST_PREFIX + id) — именем карты и
+## её полуколодой, имя кликается: в свой ход карта выбирается.
+func _on_chat(seat: String, text: String) -> void:
+	var who := "[color=#%s]%s[/color]" % [BoardPanel.colour(seat, PixelTheme.TEXT).to_html(false),
+		EventLogPanel.player_name(seat)]
+	if text.begins_with(SUGGEST_PREFIX):
+		var cid := text.substr(SUGGEST_PREFIX.length())
+		if not _cells.has(cid):
+			return
+		var card_name := String(CardLibrary.card_data(cid).get("name", cid)).to_upper()
+		_chat_log.append_text("%s suggests banning [url=%s][color=#%s]%s[/color][/url] (%s)\n" % [who, cid,
+			PixelTheme.GOLD.to_html(false), card_name, SetupScreen.deck_title(String(_cells[cid]["deck"]))])
+		_scroll_chat_down()
+		return
+	_chat_log.append_text("%s: " % who)
+	_chat_log.add_text(text)
+	_chat_log.newline()
+	_scroll_chat_down()
+
+
+## Tab (клавиша пинга) над миниатюрой — в чат предложение забанить её.
+func _input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo or not GameSettings.is_key(key, "ping"):
+		return
+	if _hovered != "":
+		_net.send_chat(SUGGEST_PREFIX + _hovered)
+	get_viewport().set_input_as_handled()
+
+
+## Для проверок: текст ленты чата.
+func chat_text() -> String:
+	return _chat_log.get_parsed_text()
 
 
 func _zone() -> PanelContainer:
@@ -320,7 +427,7 @@ func _draw_thumb(over: Control, thumb: Control, cid: String) -> void:
 
 
 ## Зона 6: ячейка на каждый ход банов по порядку — рамка цвета того, чей ход;
-## внутри лицо забаненной карты (арт мелкого лица в половину), её имя в две
+## внутри миниатюра забаненной карты целиком (в половину), её имя в две
 ## строки, SKIP или пусто (ход ещё впереди). Над половинами — ROUND 1 / 2.
 func _build_slots() -> void:
 	for child in _slots.get_children():
@@ -337,7 +444,7 @@ func _build_slots() -> void:
 			lap_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_slots.add_child(lap_col)
 			var head := Label.new()
-			head.text = "ROUND %d  %s" % [i / lap + 1, "->" if (i / lap) % 2 == 0 else "<-"]
+			head.text = "ROUND %d" % (i / lap + 1)
 			head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 			head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			lap_col.add_child(head)
@@ -349,25 +456,30 @@ func _build_slots() -> void:
 		var now := i == turn_index and String(_view.get("turn", "")) != ""
 		var slot := PanelContainer.new()
 		slot.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.PANEL_LO if not now else colour.darkened(0.6),
-			colour if i <= turn_index else colour.darkened(0.55), 1, 2, 1))
+			colour if i <= turn_index else colour.darkened(0.55), 1, 3, 2))
 		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lap_box.add_child(slot)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 2)
+		row.add_theme_constant_override("separation", 4)
 		slot.add_child(row)
 		var card := String((bans[i] as Dictionary).get("card", "")) if i < bans.size() else ""
 		var pic := TextureRect.new()
-		pic.custom_minimum_size = FACE
+		pic.custom_minimum_size = THUMB
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_SCALE
 		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		if card != "" and CardView.mini_texture(card) != null:
-			var face := AtlasTexture.new()
-			face.atlas = CardView.mini_texture(card)
-			face.region = Rect2(CardView.MINI_ART.x, CardView.MINI_ART.y,
-				CardView.MINI_ART.z - CardView.MINI_ART.x, CardView.MINI_ART.w - CardView.MINI_ART.y)
-			pic.texture = face
-		row.add_child(pic)
+		# Миниатюра целиком, как в сетках полуколод (владелец, 2026-11-01).
+		pic.texture = CardView.mini_texture(card) if card != "" else null
+		# Пусто (ход впереди или SKIP) — тёмная рамка размером с миниатюру:
+		# все восемь ячеек стоят ровно (критик UI).
+		if card == "":
+			var slot_hole := PanelContainer.new()
+			slot_hole.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.BG, colour.darkened(0.6), 1, 0, 0))
+			slot_hole.custom_minimum_size = THUMB
+			slot_hole.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			row.add_child(slot_hole)
+		else:
+			row.add_child(pic)
 		var text := VBoxContainer.new()
 		text.add_theme_constant_override("separation", 0)
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL

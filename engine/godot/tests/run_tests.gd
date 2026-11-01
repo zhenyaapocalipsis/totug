@@ -3045,6 +3045,28 @@ func test_card_ban_lobby() -> void:
 	var restored := GameRoom.restore({"code": "TEST", "ids": ["red", "blue"], "seed": 77, "mode": GameSetup.MODE_STANDARD,
 		"card_bans": room.card_bans}, [])
 	check_eq(restored.server.state.market.deck, room.server.state.market.deck, "восстановление комнаты: тот же рынок")
+	# Экран лобби: четыре полуколоды по 20 карт, закрытая в круге полуколода
+	# не выбирается, предложение бана в чате — именем карты.
+	var net := NetSession.new()
+	net.seat = "blue"
+	var four_view := four.ban_view()
+	var panel := BanPanel.new(net)
+	root.add_child(panel)
+	panel.show_view(four_view)
+	check_eq(panel.shown_cards().size(), 80, "лобби: 4 полуколоды по 20 карт")
+	var red_card: String = GameSetup.half_deck_copies(four.ban_decks[0]).keys()[0]
+	four.ban("red", red_card)
+	panel.show_view(four.ban_view())
+	panel.select(GameSetup.half_deck_copies(four.ban_decks[0]).keys()[1])
+	check(not panel.can_ban(GameSetup.half_deck_copies(four.ban_decks[0]).keys()[1]), "лобби: в закрытой полуколоде не выбрать")
+	var open_card: String = GameSetup.half_deck_copies(four.ban_decks[1]).keys()[0]
+	panel.select(open_card)
+	check(panel.can_ban(open_card), "лобби: в открытой — можно")
+	panel._on_chat("green", BanPanel.SUGGEST_PREFIX + open_card)
+	check(panel.chat_text().contains("suggests banning " + String(CardLibrary.card_data(open_card)["name"]).to_upper()),
+		"чат лобби: предложение бана показано именем карты")
+	panel.free()
+	net.free()
 
 
 ## Предпочтительный бан поиска игры: забаненные полуколоды не попадают в рынок;
