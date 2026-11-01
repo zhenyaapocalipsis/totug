@@ -6269,7 +6269,7 @@ func test_karatur_deck() -> void:
 	section("Kara-Tur (New Era Ionia): полуколода и Retain")
 	var I := IoniaCards
 	var deck := GameSetup.expand_half_deck("ionia")
-	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Thessalheart Construct, Violet Fungus, Brackish Trudge; Mage и Sprite по 3)")
+	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Thessalheart Construct, Violet Fungus, Treefolk; Mage и Sprite по 3)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
@@ -6317,7 +6317,7 @@ func test_karatur_deck() -> void:
 	check(red.deck.played_pile.has(I.YASUO), "Elemental Cataclysm сыгран")
 	check_eq(red.power, 1, "Elemental Cataclysm: +1 Power за другую сыгранную карту")
 
-	# Brackish Trudge: удержать — сбросить другую карту, жетон Acorn; при розыгрыше +2 и +1 за жетон
+	# Treefolk: удержать — сбросить другую карту, жетон Acorn; при розыгрыше +2 и +1 за жетон
 	state = _build_rich_state(50)
 	red = state.players["red"]
 	blue = state.players["blue"]
@@ -6326,13 +6326,13 @@ func test_karatur_deck() -> void:
 	var rq := EffectResolver.new()
 	rq.apply(I.play_or_retain(I.SQUIRREL), "red", state, I.SQUIRREL)
 	TurnEngine.resume_card(state, 1, rq)
-	check(rq.is_waiting() and rq.pending.legal_options == ["48342"], "Brackish Trudge: сначала сбросить другую карту")
+	check(rq.is_waiting() and rq.pending.legal_options == ["48342"], "Treefolk: сначала сбросить другую карту")
 	TurnEngine.resume_card(state, "48342", rq)
 	check(red.deck.discard_pile.has("48342") and red.deck.retained.has(I.SQUIRREL), "карта сброшена, дракон удержан")
 	check_eq(red.acorns, 1, "жетон Acorn")
 	red.power = 0
 	_play_with(state, I.SQUIRREL)
-	check_eq(red.power, 3, "Brackish Trudge: +2 и +1 за жетон")
+	check_eq(red.power, 3, "Treefolk: +2 и +1 за жетон")
 
 	# Mage: следующая карта ценой <= 5 играется ещё раз
 	red.power = 0
@@ -6392,7 +6392,7 @@ func test_karatur_deck() -> void:
 		check_eq(String(state.troops[target]), "blue", "убийство отменено")
 		check_eq(blue.deck.hand.size(), 2, "Oni сброшен, синий взял 2 карты")
 
-	# Ancient Silver Dragon: удержание + ещё 2 карты
+	# Gulthias Blight: удержание + ещё 2 карты
 	red.deck.hand = [I.KARMA, "48342", "48342", "48302"]
 	red.deck.retained.clear()
 	var rr := EffectResolver.new()
@@ -6400,7 +6400,7 @@ func test_karatur_deck() -> void:
 	TurnEngine.resume_card(state, 1, rr)
 	TurnEngine.resume_card(state, "48342", rr)
 	TurnEngine.resume_card(state, "48302", rr)
-	check_eq(red.deck.retained.size(), 3, "Ancient Silver Dragon: удержаны она и ещё 2 карты")
+	check_eq(red.deck.retained.size(), 3, "Gulthias Blight: удержаны она и ещё 2 карты")
 	check_eq(int(state.turn_flags.get("retains", 0)) >= 3, true, "счётчик удержаний хода")
 
 	# Murder Comet: выбор повторяется за удержанные карты (не больше 2)

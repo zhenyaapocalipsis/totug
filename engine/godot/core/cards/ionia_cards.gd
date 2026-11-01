@@ -18,7 +18,7 @@ extends RefCounted
 ## щелчке по ней вопрос "сыграть или удержать" (GameServer, PLAY_CARD). Удержанная
 ## уходит из руки в Deck.retained, её бонус "Retain: ..." срабатывает сразу, в конце
 ## хода после добора до 5 она возвращается в руку (TurnEngine.finish_end_of_turn).
-## Любое удержание (своё, Ancient Silver Dragon, Tempest Hart, верхняя карта
+## Любое удержание (своё, Gulthias Blight, Tempest Hart, верхняя карта
 ## колоды) считается "Retain a card": бонус карты и счётчики хода срабатывают.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
@@ -45,14 +45,14 @@ const RIVERSHAPER := "49810"  # Merfolk Skirmisher
 const LEE_SIN := "49811"  # Tarrasque
 const HIGHWAYMAN := "49812"  # Bodytaker Podling (Navori Highwayman)
 const GREENGLADE := "49813"  # Gas Spore Fungus (Greenglade Duo)
-const SQUIRREL := "49814"  # Brackish Trudge (Swole Squirrel)
-const IRELIA := "49815"  # Ancient Bronze Dragon
+const SQUIRREL := "49814"  # Treefolk (Swole Squirrel)
+const IRELIA := "49815"  # Brackish Trudge
 const PATHLESS := "49816"  # Bodytaker Plant (Pathless Ancient)
 const LIFEBLADE := "49817"  # Merrow (Kinkou Lifeblade)
 const SCHEMER := "49818"  # Tempest Hart (The Schemer)
 const SHADOWBLADE := "49819"  # Shrieker Fungus (Shadowblade Fanatic)
 const AHRI := "49820"  # Khargra
-const KARMA := "49821"  # Ancient Silver Dragon
+const KARMA := "49821"  # Gulthias Blight
 const MASTER_YI := "49822"  # Kraken
 
 ## Карты со словом Retain: их можно удержать вместо розыгрыша.
@@ -183,7 +183,7 @@ static func can_retain(state: GameState, player_id: String, card_id: String) -> 
 	var hand: Array = state.players[player_id].deck.hand
 	if not hand.has(card_id):
 		return false
-	# Brackish Trudge: "Discard a card to Retain" — нужна ещё карта в руке.
+	# Treefolk: "Discard a card to Retain" — нужна ещё карта в руке.
 	return card_id != SQUIRREL or hand.size() >= 2
 
 
@@ -327,7 +327,7 @@ class _RetainFromHand extends CardEffect:
 		if card != IoniaCards.SQUIRREL:
 			IoniaCards.retain(state, player_id, card, resolver, "hand")
 			return
-		# Brackish Trudge: сначала сбросить другую карту из руки.
+		# Treefolk: сначала сбросить другую карту из руки.
 		var options := _discard_options(state, player_id)
 		if is_answered():
 			var chosen := String(answer()) if answer() != null else ""
@@ -343,7 +343,7 @@ class _RetainFromHand extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Discard a card to Retain Brackish Trudge"
+		pd.prompt = "Discard a card to Retain Treefolk"
 		pd.choice_type = "target_card"
 		pd.tag = "hand"
 		pd.legal_options = options
@@ -365,7 +365,7 @@ class _RetainTop extends CardEffect:
 		IoniaCards.retain(state, player_id, d.draw_pile.pop_back(), resolver, "deck")
 
 
-## Ancient Silver Dragon (Karma), Retain: "You may also Retain 2 other cards".
+## Gulthias Blight (Karma), Retain: "You may also Retain 2 other cards".
 class _RetainOthers extends CardEffect:
 	var left: int
 	func _init(n: int) -> void:
@@ -599,7 +599,7 @@ class _DeployPerAspect extends CardEffect:
 			resolver.push(DeployTroop.new(kinds.size()), player_id)
 
 
-## Ancient Bronze Dragon (Irelia): "Double your Power".
+## Brackish Trudge (Irelia): "Double your Power".
 class _DoublePower extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var n: int = state.players[player_id].power
@@ -608,7 +608,7 @@ class _DoublePower extends CardEffect:
 			resolver.log_event("gain_power", {"player_id": player_id, "amount": n})
 
 
-## Ancient Bronze Dragon (Irelia): "Return all spies from a site" — все шпионы
+## Brackish Trudge (Irelia): "Return all spies from a site" — все шпионы
 ## соперников в одной локации с Присутствием (каждый может ответить Oni).
 class _ReturnAllSpies extends CardEffect:
 	func _sites(state: GameState, player_id: String) -> Array:
@@ -659,7 +659,7 @@ class _RecruitDiscount extends CardEffect:
 		state.turn_discounts["recruit"] = int(state.turn_discounts.get("recruit", 0)) + 1
 
 
-## Ancient Silver Dragon (Karma), в конце хода: "Promote a card you played to
+## Gulthias Blight (Karma), в конце хода: "Promote a card you played to
 ## recruit a card from the market that costs up to 2 more".
 class _KarmaPromote extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:

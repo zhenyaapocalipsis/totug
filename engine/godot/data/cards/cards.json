@@ -3201,7 +3201,7 @@
   },
   {
     "card_id": 49814,
-    "name": "Brackish Trudge",
+    "name": "Treefolk",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
@@ -3211,7 +3211,7 @@
   },
   {
     "card_id": 49815,
-    "name": "Ancient Bronze Dragon",
+    "name": "Brackish Trudge",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
@@ -3271,7 +3271,7 @@
   },
   {
     "card_id": 49821,
-    "name": "Ancient Silver Dragon",
+    "name": "Gulthias Blight",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "KARA-TUR",

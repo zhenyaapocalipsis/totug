@@ -7,7 +7,7 @@
 - Эффекты: `engine/godot/core/cards/ionia_cards.gd`, тест `test_karatur_deck`.
 - Арты D&D Beyond (все с фоном): `cards/ionia/`. Фон партии — сакура (`UnderdarkBg.DECK_COLOURS["ionia"]`). PROTOCOL 32.
 - Название KARA-TUR — восточный край Forgotten Realms (аналог Ионии). Сначала колода была «драконья» (13 драконов из 23).
-- **NE-34 (2026-11-01, владелец: «в игре слишком много драконов»):** 11 драконов заменены существами D&D Beyond со сценой, которых выбрал владелец (эффекты и id не менялись): Biha Babir, Thessalheart Construct, Murder Comet, Nafas, Elemental Cataclysm, Bodytaker Podling, Gas Spore Fungus, Brackish Trudge, Bodytaker Plant, Tempest Hart, Khargra. Драконами остались Ancient Bronze и Ancient Silver. Старые арты драконов удалены из `cards/ionia/`.
+- **NE-34 (2026-11-01, владелец: «в игре слишком много драконов»):** все 13 драконов заменены существами D&D Beyond со сценой, которых выбрал владелец (эффекты и id не менялись): Biha Babir, Thessalheart Construct, Murder Comet, Nafas, Elemental Cataclysm, Bodytaker Podling, Gas Spore Fungus, Bodytaker Plant, Tempest Hart, Khargra, Brackish Trudge (бывший Ancient Bronze), Gulthias Blight (бывший Ancient Silver); 49814 (вне колоды) — Treefolk. Драконов в колоде нет. Старые арты драконов удалены из `cards/ionia/`.
 
 ## Таблица
 
@@ -27,23 +27,23 @@
 | 49811 | Tarrasque | Lee Sin | 6 | Malice (Valor) | 3/6 | 1 |
 | 49812 | Bodytaker Podling | Navori Highwayman | 2 | Conquest | 1/3 | 4 |
 | 49813 | Gas Spore Fungus | Greenglade Duo | 2 | Conquest | 1/3 | 3 |
-| 49814 | Brackish Trudge | Swole Squirrel | 3 | Malice (Valor) | 1/3 | 0 (убран, NE-25) |
-| 49815 | Ancient Bronze Dragon | Irelia | 6 | Conquest | 3/6 | 1 |
+| 49814 | Treefolk | Swole Squirrel | 3 | Malice (Valor) | 1/3 | 0 (убран, NE-25) |
+| 49815 | Brackish Trudge | Irelia | 6 | Conquest | 3/6 | 1 |
 | 49816 | Bodytaker Plant | Pathless Ancient | 3 | Malice (Valor) | 1/3 | 3 |
 | 49817 | Merrow | Kinkou Lifeblade | 3 | Malice (Valor) | 1/3 | 3 |
 | 49818 | Tempest Hart | The Schemer | 4 | Guile | 2/4 | 2 |
 | 49819 | Shrieker Fungus | Shadowblade Fanatic | 4 | Guile | 2/4 | 3 |
 | 49820 | Khargra | Ahri | 6 | Guile | 3/7 | 1 |
-| 49821 | Ancient Silver Dragon | Karma | 6 | Ambition | 3/7 | 1 |
+| 49821 | Gulthias Blight | Karma | 6 | Ambition | 3/7 | 1 |
 | 49822 | Kraken | Master Yi | 6 | Malice (Valor) | 3/6 | 1 |
 
-Итого 30 обычных + 10 чемпионов = 40. NE-24 (2026-10-17): владелец убрал Thessalheart Construct, Sprite, Violet Fungus, Mage и Brackish Trudge по 3. NE-25: Brackish Trudge заменён на Sprite (3 копии). Убранные остались в cards.json. PROTOCOL 33.
+Итого 30 обычных + 10 чемпионов = 40. NE-24 (2026-10-17): владелец убрал Thessalheart Construct, Sprite, Violet Fungus, Mage и Treefolk по 3. NE-25: Treefolk заменён на Sprite (3 копии). Убранные остались в cards.json. PROTOCOL 33.
 
 ## Retain
 Правило мода: карта остаётся в руке после конца хода; новая рука — 5 карт без удержанных, потом удержанные добавляются.
 - Карту со словом **Retain** в свой ход можно не сыграть, а удержать: при щелчке по ней вопрос полосой сверху «Play this card now / Retain it». Удержанная уходит из руки в отдельную стопку (`Deck.retained`), в ряду руки она видна справа с подписью RETAINED. В конце хода после добора до 5 она возвращается в руку.
 - Бонус «Retain: …» срабатывает сразу при удержании (иначе +1 Power у Elemental Cataclysm сгорал бы в конце хода).
-- Любое удержание — своё, через Ancient Silver Dragon (ещё 2 карты), Tempest Hart (сыгранная карта), верхняя карта колоды (Tempest Hart, Shrieker Fungus) — считается «Retain a card»: бонус карты и «whenever you Retain» (Bodytaker Plant, Merfolk Skirmisher, Gas Spore Fungus) срабатывают.
+- Любое удержание — своё, через Gulthias Blight (ещё 2 карты), Tempest Hart (сыгранная карта), верхняя карта колоды (Tempest Hart, Shrieker Fungus) — считается «Retain a card»: бонус карты и «whenever you Retain» (Bodytaker Plant, Merfolk Skirmisher, Gas Spore Fungus) срабатывают.
 - Соперники видят только число удержанных карт; верхняя карта колоды в журнал не пишется.
 
 ## Толкования (можно поменять)
@@ -51,12 +51,12 @@
 - **Shen (Oni):** реакция из руки только на эффекты **карт** соперника (не на базовые действия): убийство, вытеснение, возврат, перемещение войска или шпиона. Ответ — сбросить Oni, отменить удар, взять 2 карты. Порядок вопросов: Shield Guardian, Ankheg, Oni.
 - **Zed (Murder Comet):** «Play a copy for each card you Retain this turn» — повторов столько, сколько карт удержано в этот ход **до** розыгрыша (не больше 2).
 - **Airis / Kinkou Lifeblade (Sprite, Merrow):** карта становится названным Аспектом (для Focus, Hwei, Copper Wyrmling) и даёт +1 за каждую карту этого Аспекта в этот ход, включая себя.
-- **Swole Squirrel (Brackish Trudge):** удержать её саму можно, только сбросив другую карту из руки (Frostbite срабатывает); жетоны Acorn копятся до конца партии. Если её удержали другим путём — жетон даётся без сброса.
+- **Swole Squirrel (Treefolk):** удержать её саму можно, только сбросив другую карту из руки (Frostbite срабатывает); жетоны Acorn копятся до конца партии. Если её удержали другим путём — жетон даётся без сброса.
 - **Lee Sin (Tarrasque):** «you may treat other players' troops as neutral» — до конца хода все чужие войска считаются белыми (флаг Siege `all_white`).
-- **Irelia (Ancient Bronze Dragon):** «Return all spies from a hex» — все шпионы соперников в одной локации с Присутствием. «Double your Power» в паре выполняется вторым.
+- **Irelia (Brackish Trudge):** «Return all spies from a hex» — все шпионы соперников в одной локации с Присутствием. «Double your Power» в паре выполняется вторым.
 - **The Witness (Mage):** следующая сыгранная карта ценой ≤ 5 срабатывает ещё раз (как Echo у Ravenloft).
 - **Ahri (Khargra):** скидка 1 на найм до конца хода (и рынок, и стопки); второй вариант — после каждого найма (покупка, бесплатный найм) вопрос «убить войско» с пропуском.
-- **Karma (Ancient Silver Dragon):** в конце хода — по желанию продвинуть сыгранную карту (можно и её саму) и бесплатно нанять карту рынка ценой до «цена продвинутой + 2».
+- **Karma (Gulthias Blight):** в конце хода — по желанию продвинуть сыгранную карту (можно и её саму) и бесплатно нанять карту рынка ценой до «цена продвинутой + 2».
 - **Master Yi (Kraken):** «+1 Power whenever you Assassinate or Supplant» — с момента розыгрыша до конца хода, любым путём (карта или базовое действие).
 - **Navori Conspirator (Violet Fungus):** «more than 5 cards» — у соседа слева или справа в руке 6+ карт (удержанные карты это делают возможным).
 - **Blossoming Blade (Dryad):** Retain — посмотреть руку соперника (вдвоём — сразу, иначе выбор игрока).

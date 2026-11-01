@@ -676,7 +676,7 @@ const SCRIPTS := {
 		"cues": [[0, "ENDFX_EndtimeMurozond_CustomSummon_Sound", 0.7], [1.25, "ENDFX_EndtimeMurozond_CustomSummon_Impact_Sound", 0.9]],
 		# CameraShaker2
 		"shakers": [[1.25, 1.917, 0.5, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219], [0.317, 0.983, 0.5, [[0, 0], [0.04, 0.75], [0.09, 0], [0.5, 0]], 0.0219]]},
-	# Nozdormu, Bronze Aspect (CATA_473) — Ancient Bronze Dragon: бронзовые кольца времени
+	# Nozdormu, Bronze Aspect (CATA_473) — Brackish Trudge: бронзовые кольца времени
 	# сходятся к точке посадки, на 1.53 с белая вспышка. Сетки жетона HS спрятаны, весь
 	# эффект под картой. Выжигание бронзовое. Владелец выбрал в HsBrowser 2026-10-27.
 	"nozdormubronzeaspe": {"frames": "nozdormubronzeaspe", "sounds": "nozdormubronzeaspe",
@@ -703,7 +703,7 @@ const SCRIPTS := {
 		"cues": [[0, "ArannaTheExtreme_CustomSummon_Cast_Sound", 0.8], [1.25, "ArannaTheExtreme_CustomSummon_Impact_Sound", 0.8]],
 		# CameraShaker2
 		"shakers": [[1.25, 1.917, 0.2, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
-	# Ultraxion (CATA_497) — Ancient Silver Dragon: фиолетовый вихрь сумерек снизу, на 1.28 с
+	# Ultraxion (CATA_497) — Gulthias Blight: фиолетовый вихрь сумерек снизу, на 1.28 с
 	# фиолетовая сфера с молниями. Жетон HS спрятан, весь эффект под картой. Выжигание
 	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
 	"ultraxion": {"frames": "ultraxion", "sounds": "ultraxion",
