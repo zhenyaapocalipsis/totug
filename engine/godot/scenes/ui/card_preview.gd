@@ -18,6 +18,8 @@ extends Control
 const GameSettings := preload("res://scenes/game_settings.gd")
 const MIN_SIZE := Vector2(176, 254)
 const MARGIN := 4.0
+## Поля подсказки (рамка и отступ TooltipPanel) — текст уже ширины карты на столько.
+const TIP_PAD := 8.0
 
 ## Что делает действие (владелец, 2026-10-15: подсказка при наведении на
 ## жирное слово карты; новые слова New Era и базовые).
@@ -54,8 +56,13 @@ var _card: CardView
 ## Карта под курсором и состояние Alt.
 var _hovered: CardView
 var _alt := false
-## Столбик подсказок справа от копии (только с зажатым Alt).
+## Столбик подсказок справа от копии и жетоны карты слева от неё (только с
+## зажатым Alt; владелец, 2026-11-01: подсказки шириной в полную карту).
 var _tips: VBoxContainer
+var _tokens: Array[CardView] = []
+## Тёмная подложка под группой с Alt (карта, подсказки, жетоны): доска не
+## просвечивает между ними (критик UI, 2026-11-01).
+var _backdrop: ColorRect
 
 
 func _init() -> void:
@@ -159,21 +166,36 @@ func _show(card: CardView) -> void:
 	_place()
 
 
-## Столбик подсказок есть, только пока зажат Alt.
+## Столбик подсказок и жетоны есть, только пока зажат Alt.
 func _sync_tips() -> void:
-	if _alt and _tips == null and _source != null:
-		_tips = _build_tips(_source)
+	if _alt and _tips == null and _tokens.is_empty() and _source != null:
+		_tips = tips_column(_source, _card.size.x)
 		if _tips != null:
 			add_child(_tips)
-			_place()
-	elif not _alt and _tips != null:
+		_tokens = token_cards(_source.card_id, _card.size)
+		for t: CardView in _tokens:
+			add_child(t)
+		_place()
+	elif not _alt:
+		_drop_extras()
+
+
+func _drop_extras() -> void:
+	if _backdrop != null:
+		_backdrop.queue_free()
+		_backdrop = null
+	if _tips != null:
 		_tips.queue_free()
 		_tips = null
+	for t: CardView in _tokens:
+		t.queue_free()
+	_tokens.clear()
 
 
 ## Подсказки ко всем жирным действиям карты (KEYWORD_TIPS) по порядку текста,
-## каждая один раз; null — подсказывать нечего.
-func _build_tips(card: CardView) -> VBoxContainer:
+## каждая один раз, столбиком шириной width (ширина полной карты); null —
+## подсказывать нечего. Общий и для лобби банов (BanPanel).
+static func tips_column(card: CardView, width: float) -> VBoxContainer:
 	var tips := tips_for(card)
 	if tips.is_empty():
 		return null
@@ -186,7 +208,10 @@ func _build_tips(card: CardView) -> VBoxContainer:
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var label := Label.new()
 		label.theme_type_variation = "TooltipLabel"
-		label.text = tip
+		# Переносы — по ширине карты, а не заданные в тексте.
+		label.text = tip.replace("\n", " ")
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size.x = width - TIP_PAD
 		panel.add_child(label)
 		col.add_child(panel)
 	return col
@@ -220,9 +245,7 @@ static func keyword_tip(word: String) -> String:
 
 func _hide() -> void:
 	_source = null
-	if _tips != null:
-		_tips.queue_free()
-		_tips = null
+	_drop_extras()
 	if _card != null:
 		_card.queue_free()
 		_card = null
@@ -233,9 +256,75 @@ func _hide() -> void:
 func _place() -> void:
 	var area: Rect2 = get_global_rect()
 	_card.global_position = (area.get_center() - _card.size * 0.5).floor()
+	place_extras(_card, _tokens, _tips, area)
+	_place_backdrop()
+
+
+func _place_backdrop() -> void:
+	if _tips == null and _tokens.is_empty():
+		return
+	if _backdrop == null:
+		_backdrop = ColorRect.new()
+		_backdrop.color = Color(0, 0, 0, 0.5)
+		_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_backdrop)
+	# Жетоны place_extras ставит в начало списка детей — подложка ещё раньше.
+	move_child(_backdrop, 0)
+	var box := _card.get_global_rect()
 	if _tips != null:
-		_tips.size = _tips.get_combined_minimum_size()
-		_tips.global_position = _card.global_position + Vector2(_card.size.x + MARGIN, 0)
+		box = box.merge(_tips.get_global_rect())
+	for t: CardView in _tokens:
+		box = box.merge(t.get_global_rect())
+	# Подписи жетонов стоят над картами — подложка чуть выше.
+	box = box.grow(MARGIN)
+	box.position.y -= 10
+	box.size.y += 10
+	_backdrop.global_position = box.position
+	_backdrop.size = box.size
+
+
+## Полные копии жетонов и вторых сторон карты (CollectionPage.TOKENS) размера
+## size — показываются слева от неё.
+static func token_cards(cid: String, size: Vector2) -> Array[CardView]:
+	var out: Array[CardView] = []
+	for token: String in CollectionPage.card_forms(cid).slice(1):
+		var view := CardView.new(token, int(size.x), int(size.y))
+		view.hover_preview = false
+		CardView._ignore_mouse(view)
+		view.size = size
+		# Подпись над жетоном (критик UI, 2026-11-01): что это за карта.
+		var tag := "TRANSFORMS INTO" if String(CardLibrary.card_data(cid).get("ability_text", "")).to_upper().contains("TRANSFORM") else "TOKEN"
+		view.draw.connect(func():
+			var font := view.get_theme_default_font()
+			view.draw_string(font, Vector2(0, -3), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT_DIM))
+		out.append(view)
+	return out
+
+
+## Подсказки — справа от карты, жетоны — слева, первый вплотную к ней. Не
+## помещаются в area слева — жетоны наезжают друг на друга, но не за край.
+static func place_extras(card: Control, tokens: Array[CardView], tips: Control, area: Rect2) -> void:
+	# Есть жетоны — главная карта в золотой рамке, чтобы не спутать.
+	if not tokens.is_empty() and not card.has_meta("framed"):
+		card.set_meta("framed", true)
+		card.draw.connect(func(): card.draw_rect(Rect2(-Vector2.ONE, card.size + Vector2(2, 2)), PixelTheme.GOLD, false, 1.0))
+		card.queue_redraw()
+	if tips != null:
+		tips.size = tips.get_combined_minimum_size()
+		tips.global_position = card.global_position + Vector2(card.size.x + MARGIN, 0)
+	if tokens.is_empty():
+		return
+	var step := card.size.x + MARGIN
+	var room := card.global_position.x - area.position.x - MARGIN
+	if tokens.size() * step > room:
+		step = maxf(12.0, (room - card.size.x) / maxf(1.0, tokens.size() - 1)) if tokens.size() > 1 else room
+	for i in tokens.size():
+		var t := tokens[i]
+		t.global_position = (card.global_position - Vector2(card.size.x + MARGIN + step * i, 0)).floor()
+		# Дальний жетон — под ближним: раньше в списке детей (z_index ниже нуля
+		# спрятал бы его под фоном экрана).
+		if t.get_parent() != null:
+			t.get_parent().move_child(t, 0)
 
 
 func _process(_delta: float) -> void:

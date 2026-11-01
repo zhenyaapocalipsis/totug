@@ -935,8 +935,8 @@ func _track(p: NetSession) -> void:
 	p.rating_key = "%032d" % p.get_instance_id()
 	p.rating_changed.connect(func(r: Dictionary): ratings[p] = r)
 	p.dealing_started.connect(func(): dealing_seen[p] = true)
-	# Лобби банов: свой первый бан — первая незабаненная карта первой
-	# полуколоды, второй — SKIP.
+	# Лобби банов: свой первый бан — первая незабаненная карта первой открытой
+	# в этом круге полуколоды, второй — SKIP.
 	p.bans_changed.connect(func(v: Dictionary):
 		bans_seen[p] = v
 		if String(v.get("turn", "")) != p.seat or p.seat == "":
@@ -945,7 +945,9 @@ func _track(p: NetSession) -> void:
 			p.ban_card("")
 			return
 		var taken: Array = (v["bans"] as Array).map(func(b): return String(b["card"]))
-		var ids: Array = GameSetup.half_deck_copies(String((v["decks"] as Array)[0])).keys()
+		# Первая полуколода, где в этом круге ещё нет бана.
+		var open: Array = (v["decks"] as Array).filter(func(d): return not (v.get("locked", []) as Array).has(d))
+		var ids: Array = GameSetup.half_deck_copies(String(open[0])).keys()
 		ids.sort()
 		for cid in ids:
 			if not taken.has(cid):

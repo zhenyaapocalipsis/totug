@@ -221,8 +221,10 @@ static func has_bans(room_mode: String) -> bool:
 
 
 ## Начать фазу банов. Полуколоды — те, что выберет раздача этим сидом: баны
-## карт на выбор полуколод не влияют (GameSetup.new_game). Очередь — цвета в
-## порядке рассадки, по кругу BANS_EACH раз.
+## карт на выбор полуколод не влияют (GameSetup.new_game). Очередь «змейкой»
+## (владелец, 2026-11-01): первый круг — от первого цвета рассадки к
+## последнему, второй — обратно; в каждом круге в полуколоде можно забанить
+## только одну карту (locked_decks).
 func begin_bans(seed_value: int) -> void:
 	ban_phase = true
 	ban_seed = seed_value
@@ -235,7 +237,10 @@ func begin_bans(seed_value: int) -> void:
 	ban_decks = preview.half_decks.duplicate()
 	ban_order = []
 	for i in BANS_EACH:
-		ban_order.append_array(order)
+		var lap := order.duplicate()
+		if i % 2 == 1:
+			lap.reverse()
+		ban_order.append_array(lap)
 	ban_turn = 0
 	ban_left = BAN_SECONDS
 
@@ -255,12 +260,35 @@ func ban_pool() -> Array[String]:
 	return pool
 
 
+## Полуколода, к которой относится карта лобби ("" — ни к одной).
+func ban_deck_of(card: String) -> String:
+	for deck: String in ban_decks:
+		if GameSetup.half_deck_copies(deck).has(card):
+			return deck
+	return ""
+
+
+## Полуколоды, в которых в этом круге уже есть бан: до следующего круга в
+## них больше не банят.
+func locked_decks() -> Array[String]:
+	var locked: Array[String] = []
+	if not ban_phase:
+		return locked
+	var lap := ban_order.size() / BANS_EACH
+	for i in range((ban_turn / lap) * lap, ban_turn):
+		var card := String((ban_log[i] as Dictionary)["card"])
+		if card != "":
+			locked.append(ban_deck_of(card))
+	return locked
+
+
 ## Бан игрока pid; card "" — пропуск. false — не его очередь или карту
-## банить нельзя (уже забанена, не из этих полуколод).
+## банить нельзя (уже забанена, не из этих полуколод, в её полуколоде в этом
+## круге уже есть бан).
 func ban(pid: String, card: String) -> bool:
 	if pid == "" or pid != ban_seat():
 		return false
-	if card != "" and (card_bans.has(card) or not ban_pool().has(card)):
+	if card != "" and (card_bans.has(card) or not ban_pool().has(card) or locked_decks().has(ban_deck_of(card))):
 		return false
 	if card != "":
 		card_bans.append(card)
@@ -283,7 +311,7 @@ func tick_bans(delta: float) -> bool:
 ## Что видят игроки в лобби банов.
 func ban_view() -> Dictionary:
 	return {"decks": ban_decks, "mode": mode, "bans": ban_log.duplicate(true), "turn": ban_seat(),
-		"order": ban_order, "left": maxf(0.0, ban_left), "each": BANS_EACH}
+		"order": ban_order, "left": maxf(0.0, ban_left), "each": BANS_EACH, "locked": locked_decks()}
 
 
 ## Партия идёт (раздана и не окончена) — только в ней бывает пауза.

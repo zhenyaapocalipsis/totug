@@ -2992,24 +2992,37 @@ func test_card_ban_lobby() -> void:
 	room.begin_bans(77)
 	var plain := GameSetup.new_game(["red", "blue"] as Array[String], 77, [], false, true, true)
 	check_eq(room.ban_decks, plain.half_decks, "в лобби — те же полуколоды, что выберет раздача")
-	check_eq(room.ban_order, ["red", "blue", "red", "blue"] as Array[String], "очередь банов по кругу, по 2 на игрока")
-	var pool := room.ban_pool()
-	check(not room.ban("blue", pool[0]), "не в свою очередь банить нельзя")
+	check_eq(room.ban_order, ["red", "blue", "blue", "red"] as Array[String], "очередь змейкой: туда и обратно")
+	var a_cards: Array = GameSetup.half_deck_copies(room.ban_decks[0]).keys()
+	var b_cards: Array = GameSetup.half_deck_copies(room.ban_decks[1]).keys().filter(func(c): return not a_cards.has(c))
+	a_cards.sort()
+	b_cards.sort()
+	check(not room.ban("blue", a_cards[0]), "не в свою очередь банить нельзя")
 	check(not room.ban("red", "48342"), "карту не из этих полуколод банить нельзя")
-	check(room.ban("red", pool[0]), "red банит карту")
-	check(not room.ban("blue", pool[0]), "забаненную второй раз — нельзя")
-	check(room.ban("blue", ""), "blue пропускает")
+	check(room.ban("red", a_cards[0]), "red банит карту первой полуколоды")
+	check_eq(room.locked_decks(), [room.ban_decks[0]] as Array[String], "в этом круге первая полуколода закрыта")
+	check(not room.ban("blue", a_cards[1]), "вторую карту той же полуколоды в этом круге — нельзя")
+	check(not room.ban("blue", a_cards[0]), "забаненную второй раз — нельзя")
+	check(room.ban("blue", b_cards[0]), "blue банит во второй полуколоде")
+	check(room.locked_decks().is_empty(), "второй круг — полуколоды снова открыты")
+	check(room.ban("blue", a_cards[1]), "второй круг начинает blue (змейка), в первой полуколоде можно")
 	check(not room.tick_bans(GameRoom.BAN_SECONDS - 1.0), "минута ещё не прошла")
 	check(room.tick_bans(1.5), "минута прошла — бан red пропущен")
-	check(room.ban("blue", pool[1]), "blue банит вторую")
 	check(not room.ban_phase and room.ban_seat() == "", "четыре хода — баны кончились")
-	check_eq(room.card_bans, [pool[0], pool[1]] as Array[String], "итог банов")
+	var pool: Array[String] = [String(a_cards[0]), String(b_cards[0]), String(a_cards[1])]
+	check_eq(room.card_bans, pool, "итог банов")
+	var four := GameRoom.new("FOUR", 4, GameSetup.MODE_RANDOM_4)
+	for peer in [21, 22, 23, 24]:
+		four.add(peer)
+	four.begin_bans(5)
+	check_eq(four.ban_order, ["red", "blue", "green", "purple", "purple", "green", "blue", "red"] as Array[String],
+		"RANDOM 4: от первого к последнему, потом обратно")
 	room.deal(77)
 	var market: Array = room.server.state.market.deck + room.server.state.market.display
-	check(not market.has(pool[0]) and not market.has(pool[1]), "все копии забаненных карт ушли из рынка")
+	check(not pool.any(func(c): return market.has(c)), "все копии забаненных карт ушли из рынка")
 	var removed := 0
 	for deck: String in room.ban_decks:
-		for cid: String in [pool[0], pool[1]]:
+		for cid in pool:
 			removed += int(GameSetup.half_deck_copies(deck).get(cid, 0))
 	check_eq(market.size(), 80 - removed, "рынок меньше ровно на копии забаненных")
 	check_eq(room.server.state.layout, plain.layout, "доска та же, что без банов")

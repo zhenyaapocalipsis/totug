@@ -211,27 +211,39 @@ func _run_scenario() -> void:
 					break
 				_screen.send(Intent.play_card(pid2, String(cid)))
 		"ban_lobby":
-			# Лобби банов поиска игры: red забанил карту, второй бан blue.
-			# --decks=a,b — полуколоды (по умолчанию как у партии).
+			# Лобби банов стола RANDOM 4 (зоны 1-7): red и blue уже забанили,
+			# green пропустил, ходит purple; выбран Half-Dragon (два жетона).
+			# --decks=a,b,c,d — полуколоды, --pick=id — выбранная карта.
 			var net := NetSession.new()
-			net.seat = _arg("seat", "blue")
+			net.seat = _arg("seat", "purple")
 			root.add_child(net)
-			var room := GameRoom.new("SHOT", 2, GameSetup.MODE_STANDARD)
-			room.add(1)
-			room.add(2)
+			var room := GameRoom.new("SHOT", 4, GameSetup.MODE_RANDOM_4)
+			for peer in [1, 2, 3, 4]:
+				room.add(peer)
 			room.begin_bans(_count_arg("seed", 7))
-			if _arg("decks", "") != "":
-				room.ban_decks.assign(_arg("decks", "").split(","))
-			var pool := room.ban_pool()
-			room.ban("red", pool[3])
-			room.ban("blue", pool[7])
-			room.ban("red", "")
+			room.ban_decks.assign(_arg("decks", "noxus,celestial,undead,ixtal").split(","))
+			var first: Array = GameSetup.half_deck_copies(room.ban_decks[1]).keys()
+			var second: Array = GameSetup.half_deck_copies(room.ban_decks[2]).keys()
+			first.sort()
+			second.sort()
+			room.ban("red", String(first[2]))
+			room.ban("blue", String(second[5]))
+			room.ban("green", "")
 			room.ban_left = 37.0
 			root.remove_child(_screen)  # в лобби партии ещё нет
 			var panel := BanPanel.new(net)
 			root.add_child(panel)
 			panel.show_view(room.ban_view())
-			panel.select(pool[12])
+			panel.select(_arg("pick", "49521"))
+		"alt_preview":
+			# Alt над картой: полная копия, подсказки шириной в карту справа,
+			# жетоны слева. --card=id (по умолчанию Half-Dragon, два жетона).
+			var src := CardView.new(_arg("card", "49521"), 58, 84)
+			src.position = Vector2(900, 470)
+			_screen.add_child(src)
+			await process_frame
+			CardPreview.set_hovered(src)
+			CardPreview.active._set_alt(true)
 		"market_tokens":
 			# Шпион (Blue Slaad) и войска (Performer Maestro) на картах рынка.
 			var stm := _screen.server.state
@@ -804,7 +816,9 @@ func _process(_delta: float) -> bool:
 	# hs_play: карта разыгрывается не сразу (рука должна показать её) — ждём сценарий
 	if _scenario in ["hs_play", "layout", "hs_dragon"] and _shot_at < 0:
 		return false
-	_fake_hover()
+	# alt_preview: движение мыши без Alt сняло бы зажатый Alt.
+	if _scenario != "alt_preview":
+		_fake_hover()
 	if _frame < SETTLE_FRAMES + 12:
 		return false
 	# Рука раздаётся с анимацией: карты выезжают снизу друг за другом. Снимок
