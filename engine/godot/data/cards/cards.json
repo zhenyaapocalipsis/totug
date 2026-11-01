@@ -1316,11 +1316,11 @@
   },
   {
     "card_id": 49005,
-    "name": "Brass Dragon Wyrmling",
+    "name": "Curate",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +2 Influence\n• At end of turn, promote another card played this turn."
@@ -1415,11 +1415,11 @@
   },
   {
     "card_id": 49014,
-    "name": "Young White Dragon",
+    "name": "Warrior Commander",
     "cost": 3,
     "aspect": "MALICE",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +2 Power\n• Assassinate a white troop.\n• Return a troop or spy.\n• Put a House Guard into your hand."
@@ -1437,11 +1437,11 @@
   },
   {
     "card_id": 49016,
-    "name": "Ancient Brass Dragon",
+    "name": "Sphinx of Secrets",
     "cost": 8,
     "aspect": "GUILE",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "SPHINX",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Choose one:\n• Place a spy and return up to 2 troops at that site.\n• Return one of your spies ► Return up to 3 troops at that site, then deploy up to 3 troops there."
@@ -1481,22 +1481,22 @@
   },
   {
     "card_id": 49020,
-    "name": "Silver Dragon",
+    "name": "Empyrean Iota",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "CELESTIAL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Put your deck into your discard pile, then promote a card from your discard pile.\n• +3 Power"
   },
   {
     "card_id": 49021,
-    "name": "Adult Brass Dragon",
+    "name": "Archon of Boundaries",
     "cost": 7,
     "aspect": "MALICE",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "CELESTIAL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "+5 Power\nWhen an opponent would assassinate, supplant, move or return your troop or spy, you may discard this card from hand to stop it, deploy 4 troops and draw a card."

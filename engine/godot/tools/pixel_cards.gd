@@ -34,6 +34,7 @@ const MINI_SHORT_NAMES := {
 	"FIRE ELEMENTAL MYRMIDON": "FIRE ELEM. MYRMIDON",
 	"EARTH ELEMENTAL MYRMIDON": "EARTH ELEM. MYRMIDON",
 	"AIR ELEMENTAL MYRMIDON": "AIR ELEM. MYRMIDON",
+	"ARCHON OF BOUNDARIES": "BOUNDARY ARCHON",
 }
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
 const MINI_LINE_H := 8
@@ -218,7 +219,7 @@ const NAME_BREAKS := {
 	"ELEMENTAL": [3, 6], "SOVEREIGN": [3], "HIPPOGRIFF": [5], "BERSERKER": [3],
 	"PSEUDODRAGON": [6], "WERETIGER": [4],
 	# Kara-Tur без драконов (2026-11-01)
-	"BODYTAKER": [4], "THESSALHEART": [7],
+	"BODYTAKER": [4], "THESSALHEART": [7], "COMMANDER": [3, 6],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -239,7 +240,7 @@ const SINGLE_ART := {
 	49002: ["celestial/sphinx_of_wonder.png", Rect2i(250, 200, 520, 317)],
 	49003: ["celestial/sphinx_of_valor.png", Rect2i(220, 140, 560, 341)],
 	49004: ["shurima/deva.png", Rect2i(100, 80, 650, 396)],
-	49005: ["shurima/brass_dragon_wyrmling.png", Rect2i(150, 150, 700, 427)],
+	49005: ["celestial/curate.jpeg", Rect2i(0, 60, 700, 427)],
 	49006: ["celestial/couatl.jpg", Rect2i(200, 170, 460, 280)],
 	49007: ["celestial/hippogriff.png", Rect2i(300, 80, 420, 256)],
 	49008: ["celestial/pegasus.png", Rect2i(180, 60, 520, 317)],
@@ -248,14 +249,14 @@ const SINGLE_ART := {
 	49011: ["celestial/sphinx_of_lore.png", Rect2i(130, 40, 460, 280)],
 	49012: ["celestial/griffon.png", Rect2i(470, 470, 399, 243)],
 	49013: ["celestial/unicorn.png", Rect2i(200, 180, 460, 280)],
-	49014: ["freljord/young_white_dragon.png", Rect2i(300, 60, 560, 341)],
+	49014: ["celestial/warrior_commander.jpeg", Rect2i(50, 120, 700, 427)],
 	49015: ["celestial/solar.png", Rect2i(40, 60, 460, 280)],
-	49016: ["shurima/ancient_brass_dragon.jpeg", Rect2i(50, 120, 600, 366)],
+	49016: ["celestial/sphinx_of_secrets.png", Rect2i(200, 60, 700, 427)],
 	49017: ["celestial/warrior_veteran.jpg", Rect2i(60, 140, 440, 268)],
 	49018: ["avernus/half_dragon.png", Rect2i(0, 60, 700, 427)],
 	49019: ["celestial/scout.jpg", Rect2i(180, 250, 440, 268)],
-	49020: ["celestial/adult_silver_dragon.png", Rect2i(440, 120, 500, 305)],
-	49021: ["shurima/adult_brass_dragon.png", Rect2i(150, 180, 700, 427)],
+	49020: ["celestial/empyrean_iota.jpeg", Rect2i(100, 100, 640, 390)],
+	49021: ["celestial/archon_of_boundaries.jpeg", Rect2i(100, 40, 800, 488)],
 	49022: ["celestial/gold_dragon.png", Rect2i(0, 460, 360, 220)],
 	49023: ["celestial/giant_eagle.jpg", Rect2i(279, 240, 520, 317)],
 	49024: ["celestial/ancient_gold_dragon.jpg", Rect2i(130, 30, 520, 317)],
