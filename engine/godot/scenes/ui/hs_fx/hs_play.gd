@@ -649,7 +649,7 @@ const SCRIPTS := {
 		"cues": [[0, "TOY_813_ToyCaptainTarim_CustomSummon_Sound", 0.4], [1.5, "TOY_813_ToyCaptainTarim_CustomSummon_Impact_Sound", 0.4]],
 		# CameraShaker2
 		"shakers": [[0.367, 1.35, 0.04, [[0, 0.26], [0.12, 0.96], [0.39, 0.52], [0.98, 0.43]], 0.208], [1.467, 2.933, 0.06, [[0, 0.26], [0.12, 0.96], [0.47, 0.15], [1, 0]], 0.075]]},
-	# Elise, Badlands Savior (WW_392) — Adult Gold Dragon: золотые ленты света сходятся в точку
+	# Elise, Badlands Savior (WW_392) — Khargra: золотые ленты света сходятся в точку
 	# посадки, на 1.43 с вспышка. Жетон HS спрятан, весь эффект под картой. Выжигание золотое.
 	# Владелец выбрал в HsBrowser 2026-10-27.
 	"elisebadlandssavio": {"frames": "elisebadlandssavio", "sounds": "elisebadlandssavio",
@@ -658,7 +658,7 @@ const SCRIPTS := {
 		"cues": [[0, "EliseBadlandsSavior_CustomSummon_Sound", 0.6], [1.43, "EliseBadlandsSavior_CustomSummon_Impact_Sound", 0.6]],
 		# CameraShaker2
 		"shakers": [[1.417, 2.417, 0.03, [[0, 1], [1, 0]], 0.075]]},
-	# Aya, Lotus Kingpin (JAIL_504) — Ancient Black Dragon: фиолетовая туча закрывает верх поля,
+	# Aya, Lotus Kingpin (JAIL_504) — Murder Comet: фиолетовая туча закрывает верх поля,
 	# зелёный удар клинка бьёт в точку посадки, на 1.5 с вспышка. Сетки жетона HS спрятаны,
 	# весь эффект под картой. Выжигание фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
 	"ayalotuskingpin": {"frames": "ayalotuskingpin", "sounds": "ayalotuskingpin",
@@ -667,7 +667,7 @@ const SCRIPTS := {
 		"cues": [[0, "AyaLotusKingpin_CustomSummon_Sound", 0.7], [1.5, "AyaLotusKingpin_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2
 		"shakers": [[1.483, 2.133, 0.06, [[0, 1], [1, 0]], 0.075]]},
-	# Endtime Murozond (END_037) — Ancient Blue Dragon: в точке посадки рождается синяя сфера,
+	# Endtime Murozond (END_037) — Elemental Cataclysm: в точке посадки рождается синяя сфера,
 	# молнии бьют во все стороны, на 1.25 с удар. Сетки жетона HS и виньетка-прожектор
 	# спрятаны, весь эффект под картой. Выжигание синее. Владелец выбрал в HsBrowser 2026-10-27.
 	"endtimemurozond": {"frames": "endtimemurozond", "sounds": "endtimemurozond",
@@ -685,7 +685,7 @@ const SCRIPTS := {
 		"cues": [[0, "NozdormuBronzeAspect_CustomSummon_Sound", 0.9]],
 		# CameraShaker2
 		"shakers": [[1.429, 2.267, 0.15, [[0, 1], [1, 0]], 0.0407], [0.483, 1.05, 0.1, [[0, 0], [1, 1]], 0.0124]]},
-	# Titanographer Osk (TLC_452t35) — Ancient Copper Dragon: медно-синяя лента пролетает к
+	# Titanographer Osk (TLC_452t35) — Nafas: медно-синяя лента пролетает к
 	# точке посадки, на 1.48 с огненная вспышка. Сетки жетона HS спрятаны, весь эффект под
 	# картой. Выжигание медное. Владелец выбрал в HsBrowser 2026-10-27.
 	"titanographerosk": {"frames": "titanographerosk", "sounds": "titanographerosk",
@@ -694,7 +694,7 @@ const SCRIPTS := {
 		"cues": [[0, "TLCFX_Titangrapher_CustomSummon_Sound", 0.5], [1.48, "TLCFX_Titangrapher_CustomSummon_Impact_Sound", 0.5]],
 		# CameraShaker2
 		"shakers": [[1.233, 1.9, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
-	# Aranna, Thrill Seeker (VAC_501) — Ancient Green Dragon: ядовито-зелёный рывок слева, на
+	# Aranna, Thrill Seeker (VAC_501) — Biha Babir: ядовито-зелёный рывок слева, на
 	# 1.25 с зелёный взрыв скверны. Сетки жетона HS спрятаны, весь эффект под картой.
 	# Выжигание зелёное. Владелец выбрал в HsBrowser 2026-10-27.
 	"arannathrillseeker": {"frames": "arannathrillseeker", "sounds": "arannathrillseeker",

@@ -3061,7 +3061,7 @@
   },
   {
     "card_id": 49800,
-    "name": "Ancient Green Dragon",
+    "name": "Biha Babir",
     "cost": 6,
     "aspect": "GUILE",
     "type": "KARA-TUR",
@@ -3081,7 +3081,7 @@
   },
   {
     "card_id": 49802,
-    "name": "Adult Bronze Dragon",
+    "name": "Thessalheart Construct",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
@@ -3091,7 +3091,7 @@
   },
   {
     "card_id": 49803,
-    "name": "Ancient Black Dragon",
+    "name": "Murder Comet",
     "cost": 7,
     "aspect": "GUILE",
     "type": "KARA-TUR",
@@ -3121,7 +3121,7 @@
   },
   {
     "card_id": 49806,
-    "name": "Ancient Copper Dragon",
+    "name": "Nafas",
     "cost": 6,
     "aspect": "GUILE",
     "type": "KARA-TUR",
@@ -3131,7 +3131,7 @@
   },
   {
     "card_id": 49807,
-    "name": "Ancient Blue Dragon",
+    "name": "Elemental Cataclysm",
     "cost": 7,
     "aspect": "MALICE",
     "type": "KARA-TUR",
@@ -3181,7 +3181,7 @@
   },
   {
     "card_id": 49812,
-    "name": "Copper Dragon Wyrmling",
+    "name": "Bodytaker Podling",
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
@@ -3191,7 +3191,7 @@
   },
   {
     "card_id": 49813,
-    "name": "Silver Dragon Wyrmling",
+    "name": "Gas Spore Fungus",
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
@@ -3201,7 +3201,7 @@
   },
   {
     "card_id": 49814,
-    "name": "Young Brass Dragon",
+    "name": "Brackish Trudge",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
@@ -3221,7 +3221,7 @@
   },
   {
     "card_id": 49816,
-    "name": "Adult Copper Dragon",
+    "name": "Bodytaker Plant",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
@@ -3241,7 +3241,7 @@
   },
   {
     "card_id": 49818,
-    "name": "Adult Silver Dragon",
+    "name": "Tempest Hart",
     "cost": 4,
     "aspect": "GUILE",
     "type": "KARA-TUR",
@@ -3261,7 +3261,7 @@
   },
   {
     "card_id": 49820,
-    "name": "Adult Gold Dragon",
+    "name": "Khargra",
     "cost": 6,
     "aspect": "GUILE",
     "type": "KARA-TUR",

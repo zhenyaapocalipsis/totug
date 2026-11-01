@@ -18,40 +18,40 @@ extends RefCounted
 ## щелчке по ней вопрос "сыграть или удержать" (GameServer, PLAY_CARD). Удержанная
 ## уходит из руки в Deck.retained, её бонус "Retain: ..." срабатывает сразу, в конце
 ## хода после добора до 5 она возвращается в руку (TurnEngine.finish_end_of_turn).
-## Любое удержание (своё, Ancient Silver Dragon, Adult Silver Dragon, верхняя карта
+## Любое удержание (своё, Ancient Silver Dragon, Tempest Hart, верхняя карта
 ## колоды) считается "Retain a card": бонус карты и счётчики хода срабатывают.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "retains"        — сколько карт удержано в этот ход (Ancient Black Dragon);
+##   "retains"        — сколько карт удержано в этот ход (Murder Comet);
 ##   "retain_power" / "retain_influence" / "retain_deploy" — "Whenever you Retain a
-##                      card this turn" (Adult Copper Dragon, Merfolk Skirmisher,
-##                      Silver Dragon Wyrmling);
+##                      card this turn" (Bodytaker Plant, Merfolk Skirmisher,
+##                      Gas Spore Fungus);
 ##   "witness"        — сколько раз сыграть ещё раз следующую карту ценой <= 5 (Mage);
 ##   "ahri"           — "Whenever you recruit a card, you may Assassinate a troop";
 ##   "yi"             — "Whenever you Assassinate or Supplant a troop, gain 1 Power";
 ##   "all_white"      — Tarrasque: войска других игроков считаются белыми (SiegeCards).
 
-const AKALI := "49800"  # Ancient Green Dragon
+const AKALI := "49800"  # Biha Babir
 const SHEN := "49801"  # Oni: реакция из руки — ShieldGuard.ONI
-const WAYFINDER := "49802"  # Adult Bronze Dragon (Kinkou Wayfinder)
-const ZED := "49803"  # Ancient Black Dragon
+const WAYFINDER := "49802"  # Thessalheart Construct (Kinkou Wayfinder)
+const ZED := "49803"  # Murder Comet
 const AIRIS := "49804"  # Sprite
 const BLADE := "49805"  # Dryad (Blossoming Blade)
-const HWEI := "49806"  # Ancient Copper Dragon
-const YASUO := "49807"  # Ancient Blue Dragon
+const HWEI := "49806"  # Nafas
+const YASUO := "49807"  # Elemental Cataclysm
 const WITNESS := "49808"  # Mage (The Witness)
 const CONSPIRATOR := "49809"  # Violet Fungus (Navori Conspirator)
 const RIVERSHAPER := "49810"  # Merfolk Skirmisher
 const LEE_SIN := "49811"  # Tarrasque
-const HIGHWAYMAN := "49812"  # Copper Dragon Wyrmling (Navori Highwayman)
-const GREENGLADE := "49813"  # Silver Dragon Wyrmling (Greenglade Duo)
-const SQUIRREL := "49814"  # Young Brass Dragon (Swole Squirrel)
+const HIGHWAYMAN := "49812"  # Bodytaker Podling (Navori Highwayman)
+const GREENGLADE := "49813"  # Gas Spore Fungus (Greenglade Duo)
+const SQUIRREL := "49814"  # Brackish Trudge (Swole Squirrel)
 const IRELIA := "49815"  # Ancient Bronze Dragon
-const PATHLESS := "49816"  # Adult Copper Dragon (Pathless Ancient)
+const PATHLESS := "49816"  # Bodytaker Plant (Pathless Ancient)
 const LIFEBLADE := "49817"  # Merrow (Kinkou Lifeblade)
-const SCHEMER := "49818"  # Adult Silver Dragon (The Schemer)
+const SCHEMER := "49818"  # Tempest Hart (The Schemer)
 const SHADOWBLADE := "49819"  # Shrieker Fungus (Shadowblade Fanatic)
-const AHRI := "49820"  # Adult Gold Dragon
+const AHRI := "49820"  # Khargra
 const KARMA := "49821"  # Ancient Silver Dragon
 const MASTER_YI := "49822"  # Kraken
 
@@ -183,7 +183,7 @@ static func can_retain(state: GameState, player_id: String, card_id: String) -> 
 	var hand: Array = state.players[player_id].deck.hand
 	if not hand.has(card_id):
 		return false
-	# Young Brass Dragon: "Discard a card to Retain" — нужна ещё карта в руке.
+	# Brackish Trudge: "Discard a card to Retain" — нужна ещё карта в руке.
 	return card_id != SQUIRREL or hand.size() >= 2
 
 
@@ -238,7 +238,7 @@ static func on_play(state: GameState, _player_id: String, card_id: String, effec
 	return SequenceEffect.new(all)
 
 
-## Adult Gold Dragon (Ahri): "Whenever you recruit a card, you may Assassinate a
+## Khargra (Ahri): "Whenever you recruit a card, you may Assassinate a
 ## troop". immediate — зовёт GameServer вне розыгрыша карты.
 static func on_recruit(state: GameState, player_id: String, resolver: EffectResolver, immediate: bool = false) -> void:
 	var n := int(state.turn_flags.get("ahri", 0))
@@ -327,7 +327,7 @@ class _RetainFromHand extends CardEffect:
 		if card != IoniaCards.SQUIRREL:
 			IoniaCards.retain(state, player_id, card, resolver, "hand")
 			return
-		# Young Brass Dragon: сначала сбросить другую карту из руки.
+		# Brackish Trudge: сначала сбросить другую карту из руки.
 		var options := _discard_options(state, player_id)
 		if is_answered():
 			var chosen := String(answer()) if answer() != null else ""
@@ -343,7 +343,7 @@ class _RetainFromHand extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Discard a card to Retain Young Brass Dragon"
+		pd.prompt = "Discard a card to Retain Brackish Trudge"
 		pd.choice_type = "target_card"
 		pd.tag = "hand"
 		pd.legal_options = options
@@ -352,7 +352,7 @@ class _RetainFromHand extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Удержать верхнюю карту колоды (Adult Silver Dragon, Shrieker Fungus).
+## Удержать верхнюю карту колоды (Tempest Hart, Shrieker Fungus).
 class _RetainTop extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
@@ -403,7 +403,7 @@ class _RetainOthers extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Adult Silver Dragon (The Schemer): "You may return two of your spies to Retain
+## Tempest Hart (The Schemer): "You may return two of your spies to Retain
 ## a card you've played this turn".
 class _ReturnTwoRetain extends CardEffect:
 	func is_available(state: GameState, player_id: String) -> bool:
@@ -493,7 +493,7 @@ class _LookAtHand extends CardEffect:
 
 # --- Карты -------------------------------------------------------------------
 
-## Ancient Green Dragon (Akali): "+1 Power for each spy you have on the board".
+## Biha Babir (Akali): "+1 Power for each spy you have on the board".
 class _PowerPerSpy extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var n := IoniaCards._spy_count(state, player_id)
@@ -502,7 +502,7 @@ class _PowerPerSpy extends CardEffect:
 			resolver.log_event("gain_power", {"player_id": player_id, "amount": n})
 
 
-## Adult Bronze Dragon (Kinkou Wayfinder): deploy 3; рука 5+ — ещё +2 Power; 7+ — карта.
+## Thessalheart Construct (Kinkou Wayfinder): deploy 3; рука 5+ — ещё +2 Power; 7+ — карта.
 class _Wayfinder extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var n: int = state.players[player_id].deck.hand.size()
@@ -514,7 +514,7 @@ class _Wayfinder extends CardEffect:
 		resolver.push(SequenceEffect.new(all), player_id)
 
 
-## Ancient Black Dragon (Zed): выбор повторяется ещё раз за каждую удержанную в
+## Murder Comet (Zed): выбор повторяется ещё раз за каждую удержанную в
 ## этот ход карту (не больше 2 раз).
 class _Zed extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -552,7 +552,7 @@ class _BecomeAspect extends CardEffect:
 			resolver.log_event("gain_influence", {"player_id": player_id, "amount": n})
 
 
-## Ancient Copper Dragon (Hwei): по двум Аспектам, сыгранным перед ней.
+## Nafas (Hwei): по двум Аспектам, сыгранным перед ней.
 class _Hwei extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var played: Array = state.played_aspects_this_turn
@@ -588,7 +588,7 @@ class _NeighbourHand extends CardEffect:
 				return
 
 
-## Copper Dragon Wyrmling (Navori Highwayman): войско за каждый разный Аспект хода.
+## Bodytaker Podling (Navori Highwayman): войско за каждый разный Аспект хода.
 class _DeployPerAspect extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var kinds := {}
@@ -653,7 +653,7 @@ class _ReturnAllSpies extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Adult Gold Dragon (Ahri): "For the rest of your turn, cards in the Market cost 1 less".
+## Khargra (Ahri): "For the rest of your turn, cards in the Market cost 1 less".
 class _RecruitDiscount extends CardEffect:
 	func apply(state: GameState, _player_id: String, _resolver: EffectResolver) -> void:
 		state.turn_discounts["recruit"] = int(state.turn_discounts.get("recruit", 0)) + 1

@@ -38,7 +38,7 @@ var pending_end_of_turn: Array[CardEffect] = []
 ## New Era (Flameskull): Influence, которое игрок получит в начале своего
 ## следующего хода (TurnEngine.start_turn).
 var start_of_turn_influence: int = 0
-## Kara-Tur (Young Brass Dragon): жетоны Acorn — копятся до конца партии.
+## Kara-Tur (Brackish Trudge): жетоны Acorn — копятся до конца партии.
 var acorns: int = 0
 ## FAR REALM (Thri-kreen Marauder): способности, которые карта копит навсегда.
 var evolutions: Array = []

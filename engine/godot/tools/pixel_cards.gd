@@ -217,6 +217,8 @@ const NAME_BREAKS := {
 	# Рядом с колонкой цены и аспекта (2026-10-08) тоже 8 букв.
 	"ELEMENTAL": [3, 6], "SOVEREIGN": [3], "HIPPOGRIFF": [5], "BERSERKER": [3],
 	"PSEUDODRAGON": [6], "WERETIGER": [4],
+	# Kara-Tur без драконов (2026-11-01)
+	"BODYTAKER": [4], "THESSALHEART": [7],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -422,27 +424,27 @@ const SINGLE_ART := {
 	49719: ["shurima/dust_mephit.jpeg", Rect2i(0, 220, 525, 320)],
 	49720: ["shurima/deva.png", Rect2i(100, 80, 650, 396)],
 	# Kara-Tur (New Era Ionia) — арты D&D Beyond, все с фоном
-	49800: ["ionia/ancient_green_dragon.jpeg", Rect2i(0, 150, 500, 305)],
+	49800: ["ionia/biha_babir.png", Rect2i(0, 50, 760, 463)],
 	49801: ["ionia/oni.png", Rect2i(0, 0, 600, 366)],
-	49802: ["ionia/adult_bronze_dragon.png", Rect2i(200, 160, 600, 366)],
-	49803: ["ionia/ancient_black_dragon.jpeg", Rect2i(130, 380, 540, 329)],
+	49802: ["ionia/thessalheart_construct.jpeg", Rect2i(100, 0, 760, 463)],
+	49803: ["ionia/murder_comet.jpeg", Rect2i(380, 120, 600, 366)],
 	49804: ["ionia/sprite.png", Rect2i(0, 0, 452, 276)],
 	49805: ["ionia/dryad.png", Rect2i(0, 120, 500, 305)],
-	49806: ["ionia/ancient_copper_dragon.jpeg", Rect2i(0, 80, 640, 390)],
-	49807: ["ionia/ancient_blue_dragon.jpeg", Rect2i(150, 20, 500, 305)],
+	49806: ["ionia/nafas.jpeg", Rect2i(0, 80, 600, 366)],
+	49807: ["ionia/elemental_cataclysm.png", Rect2i(150, 40, 700, 427)],
 	49808: ["ionia/mage.jpeg", Rect2i(0, 280, 553, 337)],
 	49809: ["ionia/violet_fungus.jpeg", Rect2i(0, 50, 614, 374)],
 	49810: ["ionia/merfolk_skirmisher.jpeg", Rect2i(150, 40, 500, 305)],
 	49811: ["ionia/tarrasque.jpeg", Rect2i(250, 0, 650, 396)],
-	49812: ["ionia/copper_dragon_wyrmling.jpeg", Rect2i(150, 90, 560, 341)],
-	49813: ["ionia/silver_dragon_wyrmling.png", Rect2i(250, 160, 520, 317)],
-	49814: ["ionia/young_brass_dragon.png", Rect2i(150, 260, 560, 341)],
+	49812: ["ionia/bodytaker_podling.jpeg", Rect2i(100, 230, 586, 357)],
+	49813: ["ionia/gas_spore_fungus.jpeg", Rect2i(40, 230, 740, 451)],
+	49814: ["ionia/brackish_trudge.jpeg", Rect2i(150, 60, 700, 427)],
 	49815: ["ionia/ancient_bronze_dragon.jpeg", Rect2i(300, 140, 460, 280)],
-	49816: ["ionia/adult_copper_dragon.png", Rect2i(80, 40, 520, 317)],
+	49816: ["ionia/bodytaker_plant.jpeg", Rect2i(0, 60, 426, 260)],
 	49817: ["ionia/merrow.png", Rect2i(0, 160, 401, 245)],
-	49818: ["ionia/adult_silver_dragon.png", Rect2i(420, 120, 580, 354)],
+	49818: ["ionia/tempest_hart.jpeg", Rect2i(220, 130, 560, 341)],
 	49819: ["ionia/shrieker_fungus.jpeg", Rect2i(0, 40, 536, 327)],
-	49820: ["ionia/adult_gold_dragon.png", Rect2i(80, 100, 500, 305)],
+	49820: ["ionia/khargra.jpeg", Rect2i(60, 120, 700, 427)],
 	49821: ["ionia/ancient_silver_dragon.jpeg", Rect2i(40, 60, 520, 317)],
 	49822: ["ionia/kraken.png", Rect2i(120, 40, 600, 366)],
 	# FEYWILD (Bandle City)
