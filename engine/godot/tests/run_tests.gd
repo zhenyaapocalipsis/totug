@@ -3054,8 +3054,8 @@ func test_card_ban_lobby() -> void:
 	root.add_child(panel)
 	panel.show_view(four_view)
 	check_eq(panel.shown_cards().size(), 80, "лобби: 4 полуколоды по 20 карт")
-	check(panel.deck_shown(four.ban_decks[0]) and not panel.deck_shown(four.ban_decks[1]) and panel.deck_shown(four.ban_decks[2]),
-		"лобби: слева открыта 1-я полуколода, справа 3-я (вкладки)")
+	check(panel.deck_shown(four.ban_decks[0]) and not panel.deck_shown(four.ban_decks[1]) and not panel.deck_shown(four.ban_decks[2]),
+		"лобби: открыта 1-я полуколода из четырёх вкладок")
 	var red_card: String = GameSetup.half_deck_copies(four.ban_decks[0]).keys()[0]
 	four.ban("red", red_card)
 	panel.show_view(four.ban_view())

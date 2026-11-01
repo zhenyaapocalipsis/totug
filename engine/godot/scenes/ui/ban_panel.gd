@@ -2,16 +2,13 @@ class_name BanPanel
 extends Control
 
 ## Лобби банов поиска игры (этап Ban-1, владелец 2026-10-29; только RANDOM 4).
-## Раскладка по макету владельца (2026-11-01):
-##   1-4 — четыре полуколоды, миниатюры в полный размер сеткой 4x5; в
-##         колонку влезает одна сетка, поэтому слева вкладки полуколод 1-2,
-##         справа 3-4 (владелец, 2026-11-01: вариант «одна полуколода на
-##         всю высоту колонки» вместо мелких миниатюр);
-##   5   — посередине полная карта под курсором (или выбранная), подсказки
-##         справа; жетоны тоже справа (слева места нет), при подсказках —
-##         подсказки под картой; ниже — чат стола;
-##   6   — сверху ходы банов по порядку: кто, какую карту (или SKIP);
-##   7   — снизу, кто сейчас банит, таймер, SKIP и BAN.
+## Раскладка (владелец, 2026-11-01, после двух проб):
+##   сверху — ходы банов по порядку (R1, R2): кто, какую карту (миниатюра
+##            целиком в полный размер) или SKIP;
+##   слева  — четыре полуколоды вкладками, сетка 5x4 миниатюр в полный размер;
+##   справа — полная карта под курсором (или выбранная): жетон слева от неё,
+##            подсказки справа, как у Alt; ниже — чат стола;
+##   снизу  — кто сейчас банит, таймер, SKIP и BAN.
 ## Очередь «змейкой», в каждом круге в полуколоде одна карта (GameRoom.ban);
 ## занятая в этом круге полуколода гаснет. Состояние приходит с сервера
 ## (GameRoom.ban_view), экран шлёт только выбор (NetSession.ban_card).
@@ -19,18 +16,17 @@ extends Control
 ## Вёрстка кодом по той же причине, что и в game_screen.gd.
 
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
-## Миниатюра в сетке — мелкое лицо карты в родном размере; в полосе банов
-## сверху — оно же в половину (целиком, не обрезая).
+## Миниатюра — мелкое лицо карты целиком в родном размере, и в сетке, и в
+## полосе банов (владелец, 2026-11-01: не уменьшать).
 const THUMB := CardView.MINI_SIZE
-const STRIP_THUMB := Vector2(29, 42)
-const GRID_COLUMNS := 4
-## Колонка полуколод: 4 миниатюры, 3 зазора по 2, поля зоны.
-const SIDE_WIDTH := 244
+const GRID_COLUMNS := 5
+## Колонка полуколод: 5 миниатюр, 4 зазора по 2, поля зоны.
+const SIDE_WIDTH := 304
 const BOTTOM_HEIGHT := 26
 const GAP := 3
 const BAN_COLOUR := Color(0.85, 0.12, 0.18)
 ## Высота места под полную карту (подписи жетонов + карта); ниже — чат.
-const INFO_HEIGHT := 284
+const INFO_HEIGHT := 268
 ## Предложение забанить карту уходит в чат строкой с этим началом и id карты —
 ## у всех она рисуется именем карты, по щелчку карта выбирается.
 const SUGGEST_PREFIX := "ban?"
@@ -53,6 +49,7 @@ var _info_shown := ""
 ## Жетоны, что сменяют друг друга на одном месте (все рядом не влезли).
 var _token_cycle: Array[CardView] = []
 var _token_time := 0.0
+var _token_hold := false
 const TOKEN_SECONDS := 2.0
 var _slots: HBoxContainer
 var _status: Label
@@ -92,18 +89,14 @@ func _init(net: NetSession) -> void:
 	var top_row := HBoxContainer.new()
 	top_row.add_theme_constant_override("separation", 4)
 	top.add_child(top_row)
-	var title := Label.new()
-	title.text = "BANS"
-	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
-	title.add_theme_color_override("font_color", PixelTheme.GOLD)
-	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top_row.add_child(title)
+	# Крупного заголовка BANS нет: восемь ячеек с миниатюрами в полный размер
+	# занимают всю ширину (владелец, 2026-11-01: миниатюры не уменьшать).
 	_slots = HBoxContainer.new()
 	_slots.add_theme_constant_override("separation", 2)
 	_slots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_row.add_child(_slots)
 
-	# 1-2 | 5 | 3-4.
+	# Слева полуколоды (4 вкладки), справа всё остальное (владелец, 2026-11-01).
 	var middle := HBoxContainer.new()
 	middle.add_theme_constant_override("separation", GAP)
 	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -127,11 +120,9 @@ func _init(net: NetSession) -> void:
 	_info.custom_minimum_size.y = INFO_HEIGHT
 	info_col.add_child(_info)
 	info_col.add_child(_make_chat())
-	var right := _side_column()
-	middle.add_child(right)
-	# В колонке одна зона: вкладки двух полуколод и сетка выбранной. Поля
-	# зоны узкие — сетка 4x5 в полный размер входит по высоте впритык.
-	for column: VBoxContainer in [left, right]:
+	# Одна зона: вкладки четырёх полуколод и сетка выбранной (5x4 в полный
+	# размер — по высоте почти впритык, поля зоны узкие).
+	for column: VBoxContainer in [left]:
 		var zone := PanelContainer.new()
 		zone.add_theme_stylebox_override("panel", GameScreen.zone_style(2))
 		zone.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -305,16 +296,18 @@ func show_view(view: Dictionary) -> void:
 	for deck: String in _decks:
 		var tab: Button = _decks[deck]["tab"]
 		var shut := locked.has(deck)
-		var bg := BAN_COLOUR.darkened(0.6) if shut else PixelTheme.PANEL_LO
-		var text := BAN_COLOUR.lightened(0.35) if shut else PixelTheme.TEXT_DIM
-		tab.add_theme_stylebox_override("normal", PixelTheme.box(bg, PixelTheme.BORDER, 1, 2, 1))
-		tab.add_theme_stylebox_override("hover", PixelTheme.box(bg.lightened(0.08), PixelTheme.BORDER_HI, 1, 2, 1))
+		# Критик UI: закрытая — приглушённая, с крестиком; доступная — яркая.
+		var bg := BAN_COLOUR.darkened(0.75) if shut else PixelTheme.PANEL_HI
+		var text := PixelTheme.TEXT_OFF if shut else PixelTheme.TEXT
+		tab.text = ("x " if shut else "") + SetupScreen.deck_title(deck)
+		tab.add_theme_stylebox_override("normal", PixelTheme.button_box(bg, PixelTheme.BORDER))
+		tab.add_theme_stylebox_override("hover", PixelTheme.button_box(bg.lightened(0.08), PixelTheme.BORDER_HI))
 		for state in ["pressed", "hover_pressed"]:
-			tab.add_theme_stylebox_override(state, PixelTheme.box(bg, PixelTheme.GOLD, 1, 2, 1))
+			tab.add_theme_stylebox_override(state, PixelTheme.button_box(bg, PixelTheme.GOLD))
 		for state in ["font_color", "font_hover_color"]:
 			tab.add_theme_color_override(state, text)
 		for state in ["font_pressed_color", "font_hover_pressed_color"]:
-			tab.add_theme_color_override(state, BAN_COLOUR.lightened(0.35) if shut else PixelTheme.GOLD)
+			tab.add_theme_color_override(state, text if shut else PixelTheme.GOLD)
 		tab.tooltip_text = "Already has a ban this round" if shut else ""
 	# Свой ход, а в колонке открыта закрытая полуколода — открыть соседнюю.
 	if my_turn():
@@ -394,7 +387,7 @@ func _build(decks: Array) -> void:
 	# Полуколоды 1-2 — во вкладках левой колонки, 3-4 — правой.
 	for i in decks.size():
 		var deck := String(decks[i])
-		var column := mini(i / 2, _stacks.size() - 1)
+		var column := 0
 		var tab := Button.new()
 		tab.text = SetupScreen.deck_title(deck)
 		tab.toggle_mode = true
@@ -417,8 +410,8 @@ func _build(decks: Array) -> void:
 		for cid: String in ids:
 			if not _cells.has(cid):
 				grid.add_child(_make_thumb(cid, deck))
-	for i in range(0, decks.size(), 2):
-		show_deck(String(decks[i]))
+	if not decks.is_empty():
+		show_deck(String(decks[0]))
 
 
 ## Показать сетку полуколоды в её колонке (вкладка нажата).
@@ -521,15 +514,15 @@ func _build_slots() -> void:
 		var now := i == turn_index and String(_view.get("turn", "")) != ""
 		var slot := PanelContainer.new()
 		slot.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.PANEL_LO if not now else colour.darkened(0.6),
-			colour if i <= turn_index else colour.darkened(0.55), 1, 3, 2))
+			colour if i <= turn_index else colour.darkened(0.55), 1, 1, 1))
 		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lap_box.add_child(slot)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
+		row.add_theme_constant_override("separation", 2)
 		slot.add_child(row)
 		var card := String((bans[i] as Dictionary).get("card", "")) if i < bans.size() else ""
 		var pic := TextureRect.new()
-		pic.custom_minimum_size = STRIP_THUMB
+		pic.custom_minimum_size = THUMB
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_SCALE
 		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -540,7 +533,7 @@ func _build_slots() -> void:
 		if card == "":
 			var slot_hole := PanelContainer.new()
 			slot_hole.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.BG, colour.darkened(0.6), 1, 0, 0))
-			slot_hole.custom_minimum_size = STRIP_THUMB
+			slot_hole.custom_minimum_size = THUMB
 			slot_hole.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			row.add_child(slot_hole)
 		else:
@@ -548,10 +541,11 @@ func _build_slots() -> void:
 		var text := VBoxContainer.new()
 		text.add_theme_constant_override("separation", 0)
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text.clip_contents = true  # длинное слово не вылезает за ячейку
 		row.add_child(text)
 		# Текущая ячейка залита цветом игрока — текст на ней светлый.
 		var name_label := Label.new()
-		name_label.text = EventLogPanel.player_name(who)
+		name_label.text = "YOU" if who == _net.seat else EventLogPanel.player_name(who)
 		name_label.add_theme_color_override("font_color", PixelTheme.TEXT if now else colour)
 		name_label.clip_text = true
 		name_label.custom_minimum_size.x = 30
@@ -559,9 +553,14 @@ func _build_slots() -> void:
 		var what := Label.new()
 		what.custom_minimum_size.x = 30
 		if i < bans.size():
-			what.text = String(CardLibrary.card_data(card).get("name", "")).to_upper() if card != "" else "SKIP"
+			# Имя карты уже на миниатюре — здесь её полуколода (критик UI).
+			what.text = SetupScreen.deck_title(String(_cells[card]["deck"])) if _cells.has(card) else ("SKIP" if card == "" else "")
 			what.add_theme_color_override("font_color", PixelTheme.TEXT if card != "" else PixelTheme.TEXT_DIM)
-			what.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			# Перенос только по пробелам (ICEWIND DALE); длинное слово обрезается,
+			# целиком — в подсказке.
+			what.autowrap_mode = TextServer.AUTOWRAP_WORD
+			what.tooltip_text = what.text
+			what.mouse_filter = Control.MOUSE_FILTER_PASS
 		else:
 			what.text = "NOW" if now else "-"
 			what.add_theme_color_override("font_color", PixelTheme.GOLD if now else PixelTheme.TEXT_DIM)
@@ -593,9 +592,9 @@ func _refresh_info() -> void:
 	CardView._ignore_mouse(card)
 	_info.add_child(card)
 	card.size = CardView.PIXEL_SIZE
-	# Главная карта стоит на месте у левого края (критик UI); справа от неё —
-	# подсказки и жетоны.
-	card.position = Vector2(0, 24)
+	# Главная карта стоит на одном месте при любом наведении (критик UI): слева
+	# от неё место под жетон, справа — под подсказки.
+	card.position = Vector2(CardView.PIXEL_SIZE.x + CardPreview.MARGIN, 13)
 	# Подпись — только состояние карты: полуколода и копии уже в подвале карты.
 	var deck := String(_cells[cid]["deck"]) if _cells.has(cid) else ""
 	var caption := Label.new()
@@ -623,30 +622,33 @@ func _refresh_info() -> void:
 ## Справа от карты — подсказки или жетоны (внахлёст, если их несколько). Есть
 ## и то и другое — справа жетоны, подсказки под картой поверх чата.
 func _place_extras(card: CardView, tokens: Array[CardView], tips: Control) -> void:
-	var right := card.position.x + card.size.x + CardPreview.MARGIN
+	# Как у Alt (CardPreview): жетон слева от карты, подсказки справа.
 	if tips != null:
 		tips.size = tips.get_combined_minimum_size()
-		tips.position = Vector2(right, card.position.y)
-		if not tokens.is_empty():
-			tips.position = Vector2(card.position.x, card.position.y + card.size.y + CardPreview.MARGIN)
-			tips.z_index = 1
+		tips.position = Vector2(card.position.x + card.size.x + CardPreview.MARGIN, card.position.y)
 	_token_cycle = []
+	_token_hold = false
 	if tokens.is_empty():
 		return
 	card.draw.connect(func(): card.draw_rect(Rect2(-Vector2.ONE, card.size + Vector2(2, 2)), PixelTheme.GOLD, false, 1.0))
-	var step := card.size.x + CardPreview.MARGIN
-	if _info.size.x - right >= step * tokens.size():
-		for i in tokens.size():
-			tokens[i].position = Vector2(right + step * i, card.position.y)
-		return
-	# Все не влезают (критик UI: обрывки карт внахлёст читаются как поломка) —
-	# на одном месте по очереди, подпись «TOKEN 1/2».
+	# Место слева — под один жетон; несколько сменяют друг друга («TOKEN 1/2»).
 	for i in tokens.size():
-		tokens[i].position = Vector2(right, card.position.y)
+		tokens[i].position = Vector2(0, card.position.y)
 		tokens[i].visible = i == 0
-		tokens[i].set_meta("tag", "%s %d/%d" % [String(tokens[i].get_meta("tag")), i + 1, tokens.size()])
-	_token_cycle = tokens
-	_token_time = 0.0
+		if tokens.size() > 1:
+			tokens[i].set_meta("tag", "%s %d/%d" % [String(tokens[i].get_meta("tag")), i + 1, tokens.size()])
+	if tokens.size() > 1:
+		_token_cycle = tokens
+		_token_time = 0.0
+		# Щелчок по жетону — следующий; пока мышь на нём, сам не листается.
+		for t: CardView in tokens:
+			t.mouse_filter = Control.MOUSE_FILTER_STOP
+			t.tooltip_text = "Click to see the next one"
+			t.mouse_entered.connect(func(): _token_hold = true)
+			t.mouse_exited.connect(func(): _token_hold = false)
+			t.gui_input.connect(func(event: InputEvent):
+				if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+					_next_token())
 
 
 func _refresh() -> void:
@@ -658,7 +660,7 @@ func _refresh() -> void:
 	_ban.disabled = not can_ban(_selected)
 	_ban.text = "BAN %s" % String(CardLibrary.card_data(_selected).get("name", "")).to_upper() if _selected != "" else "BAN"
 	# BAN — главная кнопка: залита цветом банящего (критик UI); SKIP — обычная.
-	var fill := PixelTheme.box(colour.darkened(0.45), colour.lightened(0.2), 1, 3, 2)
+	var fill := PixelTheme.button_box(colour.darkened(0.45), colour.lightened(0.2))
 	for state in ["normal", "hover", "pressed"]:
 		_ban.add_theme_stylebox_override(state, fill)
 	var seconds := ceili(_left)
@@ -667,7 +669,7 @@ func _refresh() -> void:
 	if turn == "":
 		_status.text = "Bans are done. Dealing the cards..."
 	elif mine and _selected != "":
-		_status.text = "YOUR BAN - %s (%s)?" % [String(CardLibrary.card_data(_selected).get("name", "")).to_upper(),
+		_status.text = "YOUR BAN - %s (%s)" % [String(CardLibrary.card_data(_selected).get("name", "")).to_upper(),
 			SetupScreen.deck_title(String(_cells[_selected]["deck"]))]
 	elif mine:
 		_status.text = "YOUR BAN: pick a card in a half-deck without a ban this round, then BAN - or SKIP."
@@ -680,9 +682,15 @@ func _refresh() -> void:
 func _cycle_tokens(delta: float) -> void:
 	if _token_cycle.size() < 2 or not is_instance_valid(_token_cycle[0]):
 		return
+	if _token_hold:
+		return
 	_token_time += delta
 	if _token_time < TOKEN_SECONDS:
 		return
+	_next_token()
+
+
+func _next_token() -> void:
 	_token_time = 0.0
 	var shown := 0
 	for i in _token_cycle.size():
