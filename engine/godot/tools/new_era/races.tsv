@@ -1,0 +1,227 @@
+# Creature race of every New Era card (shown on the card instead of the
+# half-deck name). Owner, 2026-11-01: one race = one half-deck.
+Warrior Infantry	HUMAN
+Priest	HUMAN
+Sphinx of Wonder	SPHINX
+Sphinx of Valor	SPHINX
+Sphinx of Lore	SPHINX
+Djinni	GENIE
+Satyr	FEY
+Couatl	COUATL
+Hippogriff	HIPPOGRIFF
+Pegasus	PEGASUS
+Druid	HUMAN
+Planetar	ANGEL
+Griffon	GRIFFON
+Unicorn	UNICORN
+Werebear	LYCANTHROPE
+Solar	ANGEL
+Erinyes	DEVIL
+Warrior Veteran	HUMAN
+Berserker	HUMAN
+Scout	HUMAN
+Silver Dragon	DRAGON
+Shield Guardian	CONSTRUCT
+Gold Dragon	DRAGON
+Giant Eagle	BEAST
+Ancient Gold Dragon	DRAGON
+Specter	UNDEAD
+Vampire Familiar	HUMAN
+Death Dog	DEATH DOG
+Shambling Mound	PLANT
+Awakened Tree	PLANT
+Grick	GRICK
+Bearded Devil	DEVIL
+Sea Hag	HAG
+Gargoyle	GARGOYLE
+Swarm of Crawling Claws	UNDEAD
+Lemure	DEVIL
+Will-o'-Wisp	UNDEAD
+Spirit Naga	NAGA
+Rakshasa	RAKSHASA
+Nightmare	NIGHTMARE
+Chain Devil	DEVIL
+Barbed Devil	DEVIL
+Ghast	UNDEAD
+Treant	PLANT
+Bone Devil	DEVIL
+Drider	DRIDER
+Green Hag	HAG
+Shadow	UNDEAD
+Phase Spider	PHASE SPIDER
+Twig Blight	PLANT
+Tough Boss	HUMAN
+Wererat	LYCANTHROPE
+Bandit Captain	HUMAN
+Rust Monster	RUST MONSTER
+Black Pudding	OOZE
+Spy	HUMAN
+Otyugh	OTYUGH
+Clay Golem	CONSTRUCT
+Gelatinous Cube	OOZE
+Ochre Jelly	OOZE
+Mimic	MIMIC
+Stone Golem	CONSTRUCT
+Assassin	HUMAN
+Iron Golem	CONSTRUCT
+Manticore	MANTICORE
+Homunculus	CONSTRUCT
+Chimera	CHIMERA
+Archmage	HUMAN
+Basilisk	BASILISK
+Behir	BEHIR
+Harpy	HARPY
+Bandit	HUMAN
+Wereboar	LYCANTHROPE
+Goblin Boss	GOBLINOID
+Hell Hound	HELL HOUND
+Pseudodragon	DRAGON
+Medusa	MEDUSA
+Bugbear Stalker	GOBLINOID
+Guard Captain	HUMAN
+Bugbear Warrior	GOBLINOID
+Mummy	UNDEAD
+Ogre	OGRE
+Minotaur of Baphomet	MINOTAUR
+Hobgoblin Captain	GOBLINOID
+Weretiger	LYCANTHROPE
+Lamia	LAMIA
+Horned Devil	DEVIL
+Efreeti	GENIE
+Azer Sentinel	ELEMENTAL
+Ice Devil	DEVIL
+Troll	TROLL
+Fire Giant	GIANT
+Half-Dragon	DRAGON
+Wyvern	WYVERN
+Blade Fragment	WEAPON
+Blade of Exile	WEAPON
+Guard	HUMAN
+Skeleton	UNDEAD
+Werewolf	LYCANTHROPE
+Magmin	ELEMENTAL
+Centaur Trooper	CENTAUR
+Bulette	BULETTE
+Ice Mephit	MEPHIT
+Invisible Stalker	ELEMENTAL
+Ettercap	ETTERCAP
+Xorn	ELEMENTAL
+Giant Owl	BEAST
+Winter Wolf	WINTER WOLF
+Giant Hyena	BEAST
+Owlbear	OWLBEAR
+Hill Giant	GIANT
+Cloud Giant	GIANT
+Remorhaz	REMORHAZ
+Mammoth	BEAST
+Storm Giant	GIANT
+Frost Giant	GIANT
+Pirate Captain	HUMAN
+Blink Dog	BLINK DOG
+Young White Dragon	DRAGON
+Zombie	UNDEAD
+Cockatrice	COCKATRICE
+Brass Dragon Wyrmling	DRAGON
+Steam Mephit	MEPHIT
+Commoner	HUMAN
+Tough	HUMAN
+Incubus	INCUBUS
+Goblin Warrior	GOBLINOID
+Goblin Minion	GOBLINOID
+Dragon Turtle	DRAGON
+Magma Mephit	MEPHIT
+Roper	ROPER
+Ancient Brass Dragon	DRAGON
+Purple Worm	PURPLE WORM
+Guardian Naga	NAGA
+Adult Brass Dragon	DRAGON
+Stone Giant	GIANT
+Gorgon	GORGON
+Ankheg	ANKHEG
+Dust Mephit	MEPHIT
+Deva	ANGEL
+Biha Babir	ELEMENTAL
+Oni	GIANT
+Thessalheart Construct	CONSTRUCT
+Murder Comet	ELEMENTAL
+Sprite	FEY
+Dryad	FEY
+Nafas	GENIE
+Elemental Cataclysm	ELEMENTAL
+Mage	HUMAN
+Violet Fungus	PLANT
+Merfolk Skirmisher	MERFOLK
+Tarrasque	TARRASQUE
+Bodytaker Podling	PLANT
+Gas Spore Fungus	PLANT
+Treefolk	PLANT
+Brackish Trudge	PLANT
+Bodytaker Plant	PLANT
+Merrow	MERFOLK
+Tempest Hart	ELEMENTAL
+Shrieker Fungus	PLANT
+Khargra	ELEMENTAL
+Gulthias Blight	PLANT
+Kraken	KRAKEN
+Satyr Thornbearer	FEY
+High Fae Kindguard	FEY
+High Fae Noble	FEY
+Lorehold Apprentice	HUMAN
+Silverquill Apprentice	HUMAN
+Faerie Pathlighter	FEY
+Faerie Dragon Youth	FAERIE DRAGON
+Witherbloom Apprentice	HUMAN
+Witchkite	FEY
+Modron Monodrone	CONSTRUCT
+High Fae Mage	FEY
+Icewind Kobold	KOBOLD
+Leprechaun	FEY
+Faerie Pest	FEY
+Quandrix Apprentice	HUMAN
+Yeti Tyke	YETI
+Faerie Borrower	FEY
+High Fae Impostor	FEY
+Pixie Wonderbringer	FEY
+Ogre Chitterlord	OGRE
+Goblin Hexer	GOBLINOID
+Faerie Dragon Adult	FAERIE DRAGON
+Githyanki Knight	GITH
+Greater Star Spawn Emissary	STAR SPAWN
+Froghemoth Elder	FROGHEMOTH
+Githzerai Zerth	GITH
+Thri-kreen Marauder	THRI-KREEN
+Red Slaad	SLAAD
+Inquisitor of the Mind Fire	ILLITHID
+Groundling Stalker	GROUNDLING
+Eye Monger	BEHOLDER
+Lesser Star Spawn Emissary	STAR SPAWN
+Githzerai Monk	GITH
+Thri-kreen Psion	THRI-KREEN
+Hook Horror	HOOK HORROR
+Elder Thing	ELDER THING
+Carrion Stalker	CARRION STALKER
+Gray Slaad	SLAAD
+Green Slaad	SLAAD
+Blue Slaad	SLAAD
+Githyanki Dracomancer	GITH
+Githyanki Warrior	GITH
+Yuan-ti Infiltrator	YUAN-TI
+Galeb Duhr	ELEMENTAL
+Sarrukh Tyrant	SARRUKH
+Lizardfolk Sovereign	LIZARDFOLK
+Chwinga	ELEMENTAL
+Troglodyte	TROGLODYTE
+Lizardfolk Geomancer	LIZARDFOLK
+Dao	GENIE
+Knight of Eldraine	HUMAN
+Bandit Deceiver	HUMAN
+Lizardfolk Warden	LIZARDFOLK
+Yuan-ti Abomination	YUAN-TI
+Performer Maestro	HUMAN
+Minotaur Archaeologist	MINOTAUR
+Living Gust of Wind	LIVING SPELL
+Bullywug Bog Sage	BULLYWUG
+Cyclops Oracle	GIANT
+Kenku	KENKU
+Aarakocra Aeromancer	AARAKOCRA
+Bone Naga	NAGA

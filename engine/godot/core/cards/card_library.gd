@@ -75,9 +75,17 @@ static func _aspect_filter(aspect: String) -> Callable:
 		return card_aspect(cid) == aspect
 
 
-static func _type_filter(type_name: String) -> Callable:
+## Раса существа: у карт New Era — поле "race", у классических — "type"
+## (там это и есть раса, а у New Era "type" — полуколода).
+static func card_race(card_id: String) -> String:
+	var c := card_data(card_id)
+	var r = c.get("race", c.get("type"))
+	return String(r) if r != null else ""
+
+
+static func _race_filter(race: String) -> Callable:
 	return func(cid: String) -> bool:
-		return card_type(cid) == type_name
+		return card_race(cid) == race
 
 
 ## "if another player's troop is at that site" — общий предикат для эффектов
@@ -606,7 +614,7 @@ static func _build_effect(card_id: String) -> CardEffect:
 		"48733":  # High Priest of Myrkul
 			return SequenceEffect.new([
 				ReturnTroopOrSpy.new(1),
-				AtEndOfTurn.new(PromoteCard.new("played_other", card_id, CardLibrary._type_filter("UNDEAD"), 99, true)),
+				AtEndOfTurn.new(PromoteCard.new("played_other", card_id, CardLibrary._race_filter("UNDEAD"), 99, true)),
 			])
 		"48732":  # Lich
 			return PlaceSpy.new(1, false, func(site): return _LichEffect.new(site))

@@ -1265,6 +1265,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "Choose one:\n• +3 Power\n• Look at the top 6 cards of your deck. Put every House Guard among them into your hand and the rest back on top."
@@ -1275,6 +1276,7 @@
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "If you have 6 or more cards in your inner circle, +2 Influence.\nAt end of turn, promote another card played this turn."
@@ -1285,6 +1287,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "CELESTIAL",
+    "race": "SPHINX",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Place a spy. +1 Power if another player's troop is at that site, +1 Power if the site is full, +1 Power if another player's spy is there."
@@ -1295,26 +1298,29 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "SPHINX",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Put a House Guard or Priestess of Lolth into your hand and +4 Power.\n• Promote up to 2 Obedience cards from your hand or discard pile."
   },
   {
     "card_id": 49004,
-    "name": "Djinni",
+    "name": "Deva",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
+    "race": "ANGEL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "+5 Influence\nAny number of times: spend 2 Influence ► Draw a card."
   },
   {
     "card_id": 49005,
-    "name": "Satyr",
+    "name": "Brass Dragon Wyrmling",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +2 Influence\n• At end of turn, promote another card played this turn."
@@ -1325,6 +1331,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "CELESTIAL",
+    "race": "COUATL",
     "deck_vp": 0,
     "inner_circle_vp": 2,
     "ability_text": "Place 2 spies.\nThis card is worth 1 VP per spy you have on the board (+2 VP in your inner circle)."
@@ -1335,6 +1342,7 @@
     "cost": 4,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
+    "race": "HIPPOGRIFF",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "At end of turn, promote another card played this turn.\nReturn 2 of your troops ► Return another player's troop or spy, or +2 Influence and House Guards cost 1 less this turn."
@@ -1345,16 +1353,18 @@
     "cost": 5,
     "aspect": "CONQUEST",
     "type": "CELESTIAL",
+    "race": "PEGASUS",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "+1 Power per House Guard played this turn.\nChoose one:\n• Assassinate 2 white troops.\n• Promote a card in your hand.\n• Move one of your troops."
   },
   {
     "card_id": 49009,
-    "name": "Druid",
+    "name": "Dragon Turtle",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Supplant a white troop.\nEnd of game: most cards in deck gains 5 VP, second most 2 VP (3 and 1 with 2 players)."
@@ -1365,6 +1375,7 @@
     "cost": 5,
     "aspect": "CONQUEST",
     "type": "CELESTIAL",
+    "race": "ANGEL",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Choose one:\n• Deploy 2 troops and draw a card.\n• Return 2 of your troops ► Supplant a white troop anywhere on the board.\n• Draw a card per House Guard played this turn."
@@ -1375,6 +1386,7 @@
     "cost": 5,
     "aspect": "GUILE",
     "type": "CELESTIAL",
+    "race": "SPHINX",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, draw a card.\n• Return one of your spies ► Draw a card and +3 Power."
@@ -1385,6 +1397,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CELESTIAL",
+    "race": "GRIFFON",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Promote a card in your hand and deploy troops equal to its inner circle VP.\n• Supplant a white troop.\n• Move one of your troops."
@@ -1395,16 +1408,18 @@
     "cost": 5,
     "aspect": "GUILE",
     "type": "CELESTIAL",
+    "race": "UNICORN",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, draw a card.\n• Return one of your spies ► Supplant a troop at that spy's site.\n• +1 Influence per spy you have on the board."
   },
   {
     "card_id": 49014,
-    "name": "Werebear",
+    "name": "Young White Dragon",
     "cost": 3,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +2 Power\n• Assassinate a white troop.\n• Return a troop or spy.\n• Put a House Guard into your hand."
@@ -1415,16 +1430,18 @@
     "cost": 8,
     "aspect": "CONQUEST",
     "type": "CELESTIAL",
+    "race": "ANGEL",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Deploy 3 troops. If 10+ of your troops have left your barracks, also assassinate a troop; 20+, also draw a card; 30+, also +4 Power."
   },
   {
     "card_id": 49016,
-    "name": "Erinyes",
+    "name": "Ancient Brass Dragon",
     "cost": 8,
     "aspect": "GUILE",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Choose one:\n• Place a spy and return up to 2 troops at that site.\n• Return one of your spies ► Return up to 3 troops at that site, then deploy up to 3 troops there."
@@ -1435,16 +1452,18 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Move up to 2 enemy troops from one site. Return 3 of your troops ► Move 1 more troop from that site.\nPut every House Guard from your discard pile into your hand."
   },
   {
     "card_id": 49018,
-    "name": "Berserker",
+    "name": "Half-Dragon",
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Scry 2, then draw a card.\nReturn any number of your troops ► +1 Power each.\nThis turn, Assassinate costs 1 Power less and returning a spy 2 Power less."
@@ -1455,6 +1474,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "When you gain this card, put Giant Eagle into your discard pile.\nGiant Eagle in your discard pile: place 2 spies and assassinate a troop. In your deck: draw 3, discard 3, +2 Power."
@@ -1465,16 +1485,18 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Put your deck into your discard pile, then promote a card from your discard pile.\n• +3 Power"
   },
   {
     "card_id": 49021,
-    "name": "Shield Guardian",
+    "name": "Adult Brass Dragon",
     "cost": 7,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "+5 Power\nWhen an opponent would assassinate, supplant, move or return your troop or spy, you may discard this card from hand to stop it, deploy 4 troops and draw a card."
@@ -1485,6 +1507,7 @@
     "cost": 8,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Choose 4 times: +2 Power or move a troop.\nTransform into Ancient Gold Dragon."
@@ -1495,6 +1518,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "BEAST",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Draw a card.\nReturn any number of your spies ► Assassinate a troop at each of their sites (supplant instead if you played or reveal Scout)."
@@ -1505,6 +1529,7 @@
     "cost": 8,
     "aspect": "MALICE",
     "type": "CELESTIAL",
+    "race": "DRAGON",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Assassinate up to 4 troops at one site, or return that many of your troops ► Supplant them instead.\nTransform into Gold Dragon."
@@ -1515,6 +1540,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "+3 Power, +1 Power per Insane Outcast you played this turn.\nIf this card is devoured, assassinate a troop."
@@ -1525,6 +1551,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, each opponent recruits an Insane Outcast.\n• Return one of your spies ► Insane Outcasts from your top 5 cards into your hand, draw a card."
@@ -1535,26 +1562,29 @@
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
+    "race": "DEATH DOG",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Put an Insane Outcast into your hand ► Choose one:\n• Supplant a troop.\n• Deploy 3 troops, each opponent recruits an Insane Outcast."
   },
   {
     "card_id": 49103,
-    "name": "Shambling Mound",
+    "name": "Werebear",
     "cost": 3,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
+    "race": "LYCANTHROPE",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "The next card you play this turn is played twice.\nDevour that card at the end of the turn."
   },
   {
     "card_id": 49104,
-    "name": "Awakened Tree",
+    "name": "Wererat",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "LYCANTHROPE",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Insane Outcasts from your top 6 cards into your hand.\n• +3 Influence"
@@ -1565,16 +1595,18 @@
     "cost": 4,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "GRICK",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Devour a card in your hand, then draw a card.\n• Scry 1, then draw a card per Insane Outcast you played this turn."
   },
   {
     "card_id": 49106,
-    "name": "Bearded Devil",
+    "name": "Skeleton",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Deploy 3 troops. Insane Outcasts from your top 6 cards into your hand.\n• Supplant a white troop."
@@ -1585,6 +1617,7 @@
     "cost": 5,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "HAG",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Place a spy per Insane Outcast played this turn.\nChoose one:\n• Place a spy, draw a card.\n• Return any number of your spies ► Assassinate a troop per spy."
@@ -1595,6 +1628,7 @@
     "cost": 2,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "GARGOYLE",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence, +1 Influence per Insane Outcast you played this turn.\nIf this card is devoured, +3 Influence at the start of your next turn."
@@ -1605,6 +1639,7 @@
     "cost": 5,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Supplant a troop. If it was another player's troop, +1 Power.\nWhen you would recruit an Insane Outcast, you may reveal this card from hand to take it into your hand and scry 1."
@@ -1615,6 +1650,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
+    "race": "DEVIL",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Deploy a troop per Insane Outcast played this turn.\nChoose one:\n• Deploy 3 troops. Any next to a player troop: each opponent recruits an Insane Outcast.\n• Move a troop."
@@ -1625,6 +1661,7 @@
     "cost": 2,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence. Each opponent without an Insane Outcast in hand recruits one.\nIf this card is devoured, you may promote a card from your hand or discard pile."
@@ -1635,6 +1672,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "NAGA",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "You may put the Insane Outcasts from your discard pile into your hand.\nChoose one:\n• Place a spy, then scry 3.\n• Return one of your spies ► +3 Power"
@@ -1645,6 +1683,7 @@
     "cost": 8,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "RAKSHASA",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Costs 1 less per Insane Outcast you played this turn.\n+2 Influence. At end of turn, promote 2 other cards played this turn.\nGain 1 VP per 3 cards in your inner circle."
@@ -1655,26 +1694,29 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
+    "race": "NIGHTMARE",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Costs 1 less per Insane Outcast you played this turn.\nDeploy 4 troops. Gain 1 VP per 2 sites you control."
   },
   {
     "card_id": 49115,
-    "name": "Chain Devil",
+    "name": "Weretiger",
     "cost": 7,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "LYCANTHROPE",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Discard any number of cards, then draw that many.\n+3 Power per Insane Outcast in your discard pile.\nInsane Outcasts in your deck are worth 0 VP."
   },
   {
     "card_id": 49116,
-    "name": "Barbed Devil",
+    "name": "Werewolf",
     "cost": 6,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "LYCANTHROPE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• An opponent splits your top 5 cards into a face-up and a face-down pile. Keep one pile, discard the other.\n• Supplant a troop anywhere."
@@ -1685,26 +1727,29 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• +4 Power\n• Look at the top 3 devoured cards. You may recruit one of them for free."
   },
   {
     "card_id": 49118,
-    "name": "Treant",
+    "name": "Basilisk",
     "cost": 7,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
+    "race": "BASILISK",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Gain a Twig Blight. Gain 1 VP per site under your total control.\nAt end of turn, promote another card played this turn."
   },
   {
     "card_id": 49119,
-    "name": "Bone Devil",
+    "name": "Mummy",
     "cost": 8,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Costs 1 less per Insane Outcast you played this turn.\nAssassinate 2 troops anywhere. Gain 1 VP per 3 troops in your trophy hall."
@@ -1715,6 +1760,7 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "DRIDER",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Costs 1 less per Insane Outcast you played this turn; so do market cards this turn.\nPlace 2 spies. +1 Influence per spy you have on the board.\nYou may transform into Phase Spider."
@@ -1725,6 +1771,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
+    "race": "HAG",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+3 Power. You may devour a card from your hand or discard pile: Insane Outcast gives +2 Power, other cards give their deck VP.\nEach opponent may devour a card from hand."
@@ -1735,6 +1782,7 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
+    "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Discard any number of cards, then draw that many.\nInsane Outcasts you play this turn give +2 Power and draw a card.\nInsane Outcasts in your deck are worth 0 VP."
@@ -1745,6 +1793,7 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
+    "race": "PHASE SPIDER",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "+1 Power per spy you have on the board. Each opponent recruits an Insane Outcast.\nReturn any number of your spies ► Supplant a troop at each of those sites.\nYou may transform into Drider."
@@ -1755,6 +1804,7 @@
     "cost": null,
     "aspect": null,
     "type": "RAVENLOFT",
+    "race": "PLANT",
     "deck_vp": 0,
     "inner_circle_vp": 0,
     "ability_text": "Deploy a troop and draw a card.\nIf this card would be promoted or devoured, return it to the supply and draw 2 cards instead."
@@ -1765,16 +1815,18 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Deploy 3 troops.\n• Move a troop.\nIf you moved or deployed a troop next to another player's troop, scry 1.\nConquest Focus ► Draw a card."
   },
   {
     "card_id": 49201,
-    "name": "Wererat",
+    "name": "Modron Monodrone",
     "cost": 3,
     "aspect": "MALICE",
     "type": "WATERDEEP",
+    "race": "CONSTRUCT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• +2 Power\n• +2 Influence\nMalice Focus ► Draw a card, then discard a card."
@@ -1785,6 +1837,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "WATERDEEP",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Assassinate a troop.\n• Supplant a white troop.\nMalice Focus ► +2 Power"
@@ -1795,6 +1848,7 @@
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
+    "race": "RUST MONSTER",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Deploy 2 troops.\n• Move one of your troops.\n• Return 2 of your troops ► Draw a card.\nConquest Focus ► Draw a card."
@@ -1805,6 +1859,7 @@
     "cost": 3,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
+    "race": "OOZE",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "At end of turn, promote another card played this turn.\nAmbition Focus ► +2 Influence"
@@ -1815,6 +1870,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "WATERDEEP",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, deploy 2 troops.\n• Return one of your spies ► +3 Influence\nGuile Focus ► +2 Power"
@@ -1825,6 +1881,7 @@
     "cost": 4,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
+    "race": "OTYUGH",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Assassinate a troop. If it was a white troop, +1 Power.\nAt end of turn, promote an Obedience card played this turn.\nConquest Focus ► Move a troop."
@@ -1835,6 +1892,7 @@
     "cost": 5,
     "aspect": "MALICE",
     "type": "WATERDEEP",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "+2 Power\nAt end of turn, promote an Obedience card played this turn."
@@ -1845,6 +1903,7 @@
     "cost": 2,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
+    "race": "OOZE",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "Choose one:\n• +2 Influence\n• Return a spy.\nAmbition Focus ► Choose both instead."
@@ -1855,6 +1914,7 @@
     "cost": 4,
     "aspect": "GUILE",
     "type": "WATERDEEP",
+    "race": "OOZE",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Place a spy, +1 Power.\nAt end of turn, promote an Obedience card played this turn."
@@ -1865,6 +1925,7 @@
     "cost": 4,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
+    "race": "MIMIC",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "+2 Influence\nAt end of turn, promote an Obedience card played this turn."
@@ -1875,6 +1936,7 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate a troop. If it was another player's troop, +3 Power; otherwise deploy a troop.\nConquest Focus ► Deploy 4 troops or draw a card."
@@ -1885,6 +1947,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "WATERDEEP",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate a troop anywhere.\nLook at the top 2 cards of each player's deck. You may discard 1 of them.\nMalice Focus ► Assassinate a troop anywhere or draw a card."
@@ -1895,6 +1958,7 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• +2 Influence. At end of turn, promote a card you played this turn.\n• Assassinate a troop and return a spy.\nAmbition Focus ► +3 Influence or draw a card."
@@ -1905,6 +1969,7 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "WATERDEEP",
+    "race": "MANTICORE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, whenever you place a spy, you may move a troop.\nPlace 2 spies.\nGuile Focus ► Place 2 spies or draw a card."
@@ -1915,6 +1980,7 @@
     "cost": 7,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Draw a card. Choose one for this turn:\n• You may choose all options instead of one.\n• Focus effects trigger an additional time."
@@ -1925,6 +1991,7 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
+    "race": "CHIMERA",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Deploy 4 troops. If one is next to another player's troop, supplant a troop.\nDouble Conquest Focus ► Move one of your troops, supplant a troop. Deploy 2 troops per Power you spend."
@@ -1935,16 +2002,18 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "WATERDEEP",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Place a spy, assassinate a troop at its site, draw a card.\nDouble Guile Focus ► Gain a spy (up to 10). Place 2 spies, assassinate a troop at each of their sites."
   },
   {
     "card_id": 49218,
-    "name": "Basilisk",
+    "name": "Shield Guardian",
     "cost": 7,
     "aspect": "MALICE",
     "type": "WATERDEEP",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+4 Power\nDouble Malice Focus ► Take another turn, but play at most 3 cards in it."
@@ -1955,6 +2024,7 @@
     "cost": 9,
     "aspect": "MALICE",
     "type": "WATERDEEP",
+    "race": "BEHIR",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Choose one:\n• Look at your top 6 cards: Focus cards into your hand, discard the rest.\n• Recruit a card from the market for free, gain VP equal to its deck VP."
@@ -1965,6 +2035,7 @@
     "cost": 7,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
+    "race": "HARPY",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+5 Influence\nDouble Ambition Focus ► +4 Influence. This turn, whenever you buy a card, you may recruit a cheaper one for free."
@@ -2371,10 +2442,11 @@
   },
   {
     "card_id": 49500,
-    "name": "Bandit",
+    "name": "Goblin Warrior",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "AVERNUS",
+    "race": "GOBLINOID",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nYou may devour a card in the market. Look at the top 3 cards of the market deck: one replaces it, the rest go to the bottom."
@@ -2385,6 +2457,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
+    "race": "LYCANTHROPE",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Deploy 3 troops.\n• Assassinate a troop.\nIf you deployed next to or assassinated another player's troop, you may devour a card in your hand or the market."
@@ -2395,6 +2468,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "AVERNUS",
+    "race": "GOBLINOID",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, you may devour a card in your hand or discard pile.\n• Return one of your spies ► +4 Power."
@@ -2405,6 +2479,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "AVERNUS",
+    "race": "HELL HOUND",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +3 Power\n• +1 Power. Devour a card in the market, your hand or your discard pile."
@@ -2415,16 +2490,18 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "AVERNUS",
+    "race": "DRAGON",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Place a spy. +1 Influence if another player's troop is at that site, +1 if the site is full, +1 if another player's spy is there."
   },
   {
     "card_id": 49505,
-    "name": "Medusa",
+    "name": "Minotaur Archaeologist",
     "cost": 5,
     "aspect": "MALICE",
     "type": "AVERNUS",
+    "race": "MINOTAUR",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "+3 Power\nMight: Supplant a white troop.\nMight: Assassinate a troop."
@@ -2435,16 +2512,18 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "AVERNUS",
+    "race": "GOBLINOID",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy and devour a card in the market. The card that replaces it costs 3 less this turn.\n• Return one of your spies ► +4 Influence."
   },
   {
     "card_id": 49507,
-    "name": "Guard Captain",
+    "name": "Bearded Devil",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "+3 Influence\nMight: Return a troop or spy.\nMight: Draw a card."
@@ -2455,16 +2534,18 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "AVERNUS",
+    "race": "GOBLINOID",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Assassinate a troop.\n+1 Power if you have 4+ player troops in your trophy hall, +1 more at 8+."
   },
   {
     "card_id": 49509,
-    "name": "Mummy",
+    "name": "Goblin Minion",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "AVERNUS",
+    "race": "GOBLINOID",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nThis turn you may recruit the top card of the devoured pile.\nMight: +1 Influence."
@@ -2475,6 +2556,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
+    "race": "OGRE",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "You may devour a card in your hand or discard pile ► Scry 1.\nChoose one:\n• Supplant a white troop.\n• Deploy 3 troops."
@@ -2485,6 +2567,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "AVERNUS",
+    "race": "MINOTAUR",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "+3 Power\nMight: +1 Power.\n+1 Power if you have 4+ player troops in your trophy hall, +1 more at 8+."
@@ -2495,16 +2578,18 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
+    "race": "GOBLINOID",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Move a troop.\n• Deploy 3 troops.\nMight: +2 Influence.\nMight: Draw a card."
   },
   {
     "card_id": 49513,
-    "name": "Weretiger",
+    "name": "Chain Devil",
     "cost": 7,
     "aspect": "GUILE",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Place a spy. You may assassinate up to 3 troops at that site, then you can't deploy there this turn.\n• Move up to 2 of your troops and draw a card."
@@ -2515,6 +2600,7 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "AVERNUS",
+    "race": "LAMIA",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose an opponent. Split the top 5 cards of their deck into a face-up and a face-down pile. They put one pile back on top; you play the other cards for free."
@@ -2525,26 +2611,29 @@
     "cost": 9,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 5,
     "inner_circle_vp": 9,
     "ability_text": "Choose one:\n• Devour half the market deck. Already empty: you win.\n• Play up to 2 devoured cards.\n• This turn, each Might also supplants a troop."
   },
   {
     "card_id": 49516,
-    "name": "Efreeti",
+    "name": "Bone Devil",
     "cost": 7,
     "aspect": "AMBITION",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Assassinate 2 troops.\nThis turn, whenever you devour a card from your hand or discard pile, you may promote it instead.\n+1 Power per 4 cards in your inner circle."
   },
   {
     "card_id": 49517,
-    "name": "Azer Sentinel",
+    "name": "Barbed Devil",
     "cost": 6,
     "aspect": "MALICE",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate a troop anywhere. At the end of your turn, gain 1 VP for each troop you assassinated or supplanted this turn.\nMight: Assassinate a troop.\nMight: +2 Power."
@@ -2555,6 +2644,7 @@
     "cost": 7,
     "aspect": "AMBITION",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Place 2 spies and draw a card.\n• Return any number of your spies ► +1 Influence and supplant a troop at each of those sites."
@@ -2565,26 +2655,29 @@
     "cost": 9,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
+    "race": "TROLL",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Might triggers twice this turn.\nDraw a card and devour a card in your hand, the market or your discard pile.\nMight: Deploy 4 troops.\nMight: Supplant a troop."
   },
   {
     "card_id": 49520,
-    "name": "Fire Giant",
+    "name": "Ogre Chitterlord",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
+    "race": "OGRE",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Devour a card in your hand ► Assassinate a troop and draw a card. 15+ of your troops on the board: repeat any number of times. 30+: devour from your discard pile too and supplant instead."
   },
   {
     "card_id": 49521,
-    "name": "Half-Dragon",
+    "name": "Erinyes",
     "cost": 6,
     "aspect": "MALICE",
     "type": "AVERNUS",
+    "race": "DEVIL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+4 Power. Gain a Blade Fragment.\nIf you played all 3 Blade Fragments and this card this turn, they leave the game and you gain the Blade of Exile."
@@ -2595,6 +2688,7 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "AVERNUS",
+    "race": "WYVERN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• Devour a card in your hand ► Draw cards equal to its inner circle VP.\n• Devour a card in the market ► Gain its deck VP.\n• Assassinate 2 troops at a site."
@@ -2605,9 +2699,10 @@
     "cost": null,
     "aspect": null,
     "type": "AVERNUS",
+    "race": "WEAPON",
     "deck_vp": 0,
     "inner_circle_vp": 0,
-    "ability_text": "Choose one:\n• +3 Power\n• Draw a card.\n• Put Blade Fragments and Half-Dragons from your top 5 cards into your hand, discard the rest."
+    "ability_text": "Choose one:\n• +3 Power\n• Draw a card.\n• Put Blade Fragments and Erinyes from your top 5 cards into your hand, discard the rest."
   },
   {
     "card_id": 49524,
@@ -2615,9 +2710,10 @@
     "cost": null,
     "aspect": null,
     "type": "AVERNUS",
+    "race": "WEAPON",
     "deck_vp": 0,
     "inner_circle_vp": 0,
-    "ability_text": "Put Half-Dragons from your top 5 cards into your hand, the rest back on top.\n+3 Power. Draw 3 cards."
+    "ability_text": "Put Erinyes from your top 5 cards into your hand, the rest back on top.\n+3 Power. Draw 3 cards."
   },
   {
     "card_id": 49600,
@@ -2625,36 +2721,40 @@
     "cost": 2,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence. If this is the first card you play this turn and you have 3 or fewer cards in hand, +1 Influence.\nFrostbite: Recruit a card that costs 3 or less from the market for free."
   },
   {
     "card_id": 49601,
-    "name": "Skeleton",
+    "name": "Bandit Deceiver",
     "cost": 5,
     "aspect": "GUILE",
     "type": "ICEWIND",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "This turn, cards you scry away trigger Frostbite.\nChoose one:\n• Place a spy and scry 2.\n• Return one of your spies ► each opponent discards down to 4 cards. Scry 4."
   },
   {
     "card_id": 49602,
-    "name": "Werewolf",
+    "name": "Cyclops Oracle",
     "cost": 4,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "+2 Power. Each opponent with more than 3 cards in hand discards a card.\nIf anyone triggered Frostbite this turn, +1 Power."
   },
   {
     "card_id": 49603,
-    "name": "Magmin",
+    "name": "Icewind Kobold",
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "KOBOLD",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Deploy 2 troops.\n• Assassinate a white troop.\nFrostbite: Draw a card."
@@ -2665,6 +2765,7 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "CENTAUR",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Assassinate a troop. If it was a player troop, each opponent with 3 or more cards in hand discards a card.\nFrostbite: Gain 1 VP."
@@ -2675,26 +2776,29 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "BULETTE",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "This turn, whenever an opponent triggers Frostbite, you gain that effect too.\nDeploy 3 troops. If one is next to a player troop, each opponent discards a card."
   },
   {
     "card_id": 49606,
-    "name": "Ice Mephit",
+    "name": "Stone Giant",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +3 Influence.\n• Return a troop or spy.\nFrostbite: Return a card that costs 2 or less from your discard pile to your hand."
   },
   {
     "card_id": 49607,
-    "name": "Invisible Stalker",
+    "name": "Berserker",
     "cost": 3,
     "aspect": "GUILE",
     "type": "ICEWIND",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. Each opponent with 3+ cards in hand discards a card. +1 Influence.\n• Return one of your spies ► each opponent with 4+ cards in hand discards a card. +2 Power."
@@ -2705,16 +2809,18 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "ICEWIND",
+    "race": "ETTERCAP",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If another player's troop is there, you may trigger the Frostbite of another card you played this turn.\n• Return one of your spies ► +3 Power."
   },
   {
     "card_id": 49609,
-    "name": "Xorn",
+    "name": "Druid",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "ICEWIND",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "At end of turn, promote another card played this turn.\nFrostbite: Promote another card in your hand or discard pile."
@@ -2725,6 +2831,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "ICEWIND",
+    "race": "BEAST",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Place a spy. Each opponent with a troop there and 3+ cards in hand discards a card. Deploy a troop.\nFrostbite: Place a spy."
@@ -2735,6 +2842,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "WINTER WOLF",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Supplant a white troop.\n• Deploy 2 troops. Draw a card, then discard a card."
@@ -2745,6 +2853,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "BEAST",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Deploy 3 troops. If another player discarded a card this turn, +2 Power.\nFrostbite: Assassinate a troop."
@@ -2755,6 +2864,7 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "ICEWIND",
+    "race": "OWLBEAR",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Draw 4 cards, then discard 4 cards.\nAt end of turn, promote a card from your discard pile or another card played this turn."
@@ -2765,6 +2875,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+5 Power.\nIf an opponent would make you discard or gain an Insane Outcast, you may reveal this card from your hand to prevent it."
@@ -2775,6 +2886,7 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Place 2 spies and draw a card.\n• Return any number of your spies ► +2 Power and draw a card for each."
@@ -2785,6 +2897,7 @@
     "cost": 7,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "REMORHAZ",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Each opponent reveals 4 cards from their hand; you choose one of them they discard.\nAssassinate a troop anywhere."
@@ -2795,6 +2908,7 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "BEAST",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Opponents don't trigger Frostbite this turn.\n• Opponents discard down to 3 cards, or\n• no opponent has 5+ cards: supplant 2 troops.\nFrostbite: Return this to your hand."
@@ -2805,6 +2919,7 @@
     "cost": 8,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 4,
     "inner_circle_vp": 8,
     "ability_text": "Your Frostbite triggers twice this turn.\nDiscard any number of cards, then draw that many. You may repeat, drawing 1 fewer each time.\nSupplant 2 troops."
@@ -2815,16 +2930,18 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Promote the top card of your deck.\nChoose one:\n• +2 Power.\n• Play a card from your inner circle as if from your hand; it stays there."
   },
   {
     "card_id": 49634,
-    "name": "Pirate Captain",
+    "name": "Oni",
     "cost": 6,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+4 Power\nIf you gain no cards this turn, you may put this card on top of your deck at the end of your turn."
@@ -2835,16 +2952,18 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "ICEWIND",
+    "race": "BLINK DOG",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Choose a site with your troop. Move any other troops there to empty spaces next to it.\n• Move up to 3 of your troops. +1 Power per troop moved next to another player's troop."
   },
   {
     "card_id": 49636,
-    "name": "Young White Dragon",
+    "name": "Fire Giant",
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "ICEWIND",
+    "race": "GIANT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, each troop your cards deploy gives +1 Power. You can't deploy with that Power.\nDeploy 3 troops."
@@ -2855,6 +2974,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
+    "race": "UNDEAD",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Devotion: Return a troop or spy.\nDeploy 2 troops.\nReturn a troop or spy."
@@ -2865,16 +2985,18 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
+    "race": "COCKATRICE",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Trigger the Devotion of another card you played this turn.\n• Return a card from your inner circle to your hand, draw a card.\n• +2 Power."
   },
   {
     "card_id": 49702,
-    "name": "Brass Dragon Wyrmling",
+    "name": "Guard Captain",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Devotion: Draw a card.\nDeploy 3 troops. If one is next to another player's troop, you may promote a card from your hand or discard pile."
@@ -2885,6 +3007,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "CALIMSHAN",
+    "race": "MEPHIT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Devotion: Scry 3.\nChoose one:\n• Place a spy, scry 3.\n• Return one of your spies: look at the top 3 cards of your deck, put 1 in your hand, discard the rest."
@@ -2895,6 +3018,7 @@
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Devotion: Draw a card, then discard a card.\nChoose one:\n• +2 Influence.\n• At end of turn, promote another card played this turn."
@@ -2905,6 +3029,7 @@
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+2 Influence\nYou may let the players to your left and right each name a market card: you can't recruit it this turn, +1 Influence per card named."
@@ -2915,36 +3040,40 @@
     "cost": 5,
     "aspect": "GUILE",
     "type": "CALIMSHAN",
+    "race": "INCUBUS",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Devotion: +2 Power.\nChoose one:\n• Place a spy. If that site is full, +3 Power.\n• Return one of your spies: supplant a troop at that site, +2 Power."
   },
   {
     "card_id": 49707,
-    "name": "Goblin Warrior",
+    "name": "Bandit",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Devotion: Deploy 3 troops.\nThis turn, +1 Power each time you trigger Devotion.\nChoose one:\n• Deploy 3 troops.\n• Supplant a white troop."
   },
   {
     "card_id": 49708,
-    "name": "Goblin Minion",
+    "name": "Ice Mephit",
     "cost": 3,
     "aspect": "GUILE",
     "type": "CALIMSHAN",
+    "race": "MEPHIT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Devotion: Place a spy.\nChoose one:\n• Place a spy. Full site: at end of turn, promote another played card.\n• Return one of your spies: supplant a troop there."
   },
   {
     "card_id": 49709,
-    "name": "Dragon Turtle",
+    "name": "Mage",
     "cost": 5,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "Devotion: Supplant a troop.\nChoose one:\n• Devour a card in your hand, draw a card.\n• Supplant a troop."
@@ -2955,6 +3084,7 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
+    "race": "MEPHIT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Devotion: +1 Influence.\nChoose 2 times:\n• +1 Influence.\n• +1 Power.\n• Place a spy.\n• Deploy 2 troops."
@@ -2965,16 +3095,18 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
+    "race": "ROPER",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+3 Power\nThis turn, each time a card deploys your troops, assassinate a troop. Your Deploy actions give 1 Power back, once per card you play."
   },
   {
     "card_id": 49712,
-    "name": "Ancient Brass Dragon",
+    "name": "Nafas",
     "cost": 8,
     "aspect": "GUILE",
     "type": "CALIMSHAN",
+    "race": "GENIE",
     "deck_vp": 4,
     "inner_circle_vp": 8,
     "ability_text": "Devotion: Assassinate a troop anywhere.\nAssassinate 3 troops anywhere. If none was where you had Presence, draw a card."
@@ -2985,36 +3117,40 @@
     "cost": 8,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
+    "race": "PURPLE WORM",
     "deck_vp": 4,
     "inner_circle_vp": 8,
     "ability_text": "Devotion: Supplant a troop.\nSupplant a troop.\nDraw a card for each troop you assassinated or supplanted this turn."
   },
   {
     "card_id": 49714,
-    "name": "Guardian Naga",
+    "name": "Pirate Captain",
     "cost": 8,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
+    "race": "HUMAN",
     "deck_vp": 4,
     "inner_circle_vp": 8,
     "ability_text": "Devotion: Assassinate a troop.\nAssassinate a troop. +3 Power.\n+1 Power per 3 troops in your trophy hall."
   },
   {
     "card_id": 49715,
-    "name": "Adult Brass Dragon",
+    "name": "Efreeti",
     "cost": 7,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
+    "race": "GENIE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Devotion: Scry 2, draw a card.\n+1 Influence and +1 Power for each different cost among cards you played this turn."
   },
   {
     "card_id": 49716,
-    "name": "Stone Giant",
+    "name": "Djinni",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
+    "race": "GENIE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Devotion: Move 2 troops.\nDraw a card. Choose one:\n• Move 3 of your troops.\n• Move an enemy troop."
@@ -3025,6 +3161,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
+    "race": "GORGON",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Devotion: +3 Power.\nMove another player's troop, then supplant it."
@@ -3035,6 +3172,7 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
+    "race": "ANKHEG",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Move a troop, deploy 3 troops.\nIf another player would assassinate or supplant your troop, you may discard this from hand to stop it and supplant one of their troops."
@@ -3045,16 +3183,18 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
+    "race": "MEPHIT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Devotion: Recruit a card that costs 3 or less for free.\nChoose one:\n• Recruit a card that costs 5 or less for free.\n• Recruit 2 cards that cost 3 or less for free."
   },
   {
     "card_id": 49720,
-    "name": "Deva",
+    "name": "Dao",
     "cost": 6,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
+    "race": "GENIE",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Devotion: Put this card on top of your deck.\nSupplant a troop. If it was another player's, you may take a troop from their trophy hall and deploy it; otherwise scry 2."
@@ -3065,16 +3205,18 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Retain: Place 2 spies.\n+1 Power for each spy you have on the board.\nReturn any number of your spies to supplant a troop at each of those sites."
   },
   {
     "card_id": 49801,
-    "name": "Oni",
+    "name": "Azer Sentinel",
     "cost": 6,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+2 Influence, +2 Power\nIf an opponent's card would assassinate, supplant, return or move your unit, you may discard this card to stop it and draw 2 cards."
@@ -3085,6 +3227,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Deploy 3 troops.\n5+ cards in hand: also +2 Power.\n7+ cards in hand: also draw a card."
@@ -3095,36 +3238,40 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Repeat once for each card you Retained this turn (up to 2). Choose one:\n• Place a spy, assassinate a troop at that site.\n• Return one of your spies, supplant a troop at that site."
   },
   {
     "card_id": 49804,
-    "name": "Sprite",
+    "name": "Xorn",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Retain.\nName a non-Obedience Aspect: this card becomes it. +1 Influence for each card of it you played this turn."
   },
   {
     "card_id": 49805,
-    "name": "Dryad",
+    "name": "Invisible Stalker",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Retain: Look at another player's hand.\nAt end of turn, promote another card played this turn."
   },
   {
     "card_id": 49806,
-    "name": "Nafas",
+    "name": "Chwinga",
     "cost": 6,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "For each of the 2 Aspects you played before this card: Malice: assassinate a troop. Guile: place 2 spies, +1 Power. Conquest: supplant a white troop. Ambition: +3 Influence."
@@ -3135,16 +3282,18 @@
     "cost": 7,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Retain: +1 Power.\n+1 Power for each other card you played this turn."
   },
   {
     "card_id": 49808,
-    "name": "Mage",
+    "name": "Awakened Tree",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "The next card you play that costs 5 or less is played one more time."
@@ -3155,26 +3304,29 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+1 Power if a neighbour has more than 5 cards in hand.\nChoose one:\n• Place a spy. Site full: +2 Power.\n• Return one of your spies, supplant a troop at that site."
   },
   {
     "card_id": 49810,
-    "name": "Merfolk Skirmisher",
+    "name": "Magmin",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nThis turn, whenever you Retain a card, +1 Influence."
   },
   {
     "card_id": 49811,
-    "name": "Tarrasque",
+    "name": "Treant",
     "cost": 6,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, other players' troops count as white troops.\nAssassinate 2 white troops.\nIf you have 10+ troops in your trophy hall, draw a card."
@@ -3185,6 +3337,7 @@
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Retain.\nChoose one:\n• Deploy a troop for each different Aspect you played this turn.\n• Move a troop.\n• Assassinate a white troop."
@@ -3195,6 +3348,7 @@
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "This turn, whenever you Retain a card, deploy a troop.\nChoose one:\n• Assassinate a white troop.\n• Deploy 2 troops."
@@ -3205,6 +3359,7 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Discard a card to Retain: gain an Acorn token.\n+2 Power, +1 Power for each Acorn token you have."
@@ -3215,6 +3370,7 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose 2 times:\n• Double your Power.\n• Return all enemy spies from a site.\n• Supplant a white troop.\n• Deploy 3 troops."
@@ -3225,16 +3381,18 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+2 Power\nThis turn, whenever you Retain a card, +1 Power."
   },
   {
     "card_id": 49817,
-    "name": "Merrow",
+    "name": "Shambling Mound",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Retain.\nName a non-Obedience Aspect: this card becomes it. +1 Power for each card of it you played this turn."
@@ -3245,6 +3403,7 @@
     "cost": 4,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, you may Retain the top card of your deck.\n• Return 2 of your spies to Retain a card you played this turn."
@@ -3255,6 +3414,7 @@
     "cost": 4,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. If another player's troop is there, you may Retain the top card of your deck.\n• Return one of your spies, supplant a troop at that site."
@@ -3265,6 +3425,7 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "+4 Influence\nChoose one:\n• This turn, cards cost 1 less to recruit.\n• This turn, whenever you recruit a card, you may assassinate a troop."
@@ -3275,16 +3436,18 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
+    "race": "PLANT",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Retain: You may also Retain 2 other cards.\nAt end of turn, promote a card you played to recruit a market card that costs up to 2 more for free."
   },
   {
     "card_id": 49822,
-    "name": "Kraken",
+    "name": "Galeb Duhr",
     "cost": 6,
     "aspect": "MALICE",
     "type": "KARA-TUR",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Retain.\nReveal the top 5 cards of your deck: cards with the word Assassinate or Supplant go to your hand, discard the rest.\nThis turn, +1 Power whenever you assassinate or supplant a troop."
@@ -3295,6 +3458,7 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Top 6 cards of your deck: cards with the word spy to your hand, discard the rest.\nThis turn: each spy you place, place another and gain 1 VP; each spy you return, supplant a troop at that site."
@@ -3305,6 +3469,7 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Retain: Gain 1 VP.\nChoose one:\n• Place a spy and draw a card.\n• Return one of your spies, assassinate up to 3 troops at that site."
@@ -3315,6 +3480,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+3 Power\nChoose one for this turn:\n• Each troop you assassinate or supplant: 1 VP.\n• You may supplant troops you assassinate."
@@ -3325,6 +3491,7 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "FEYWILD",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate 2 troops.\nGlamour: At end of turn, promote an Obedience card you played this turn.\nAmbition Focus: Draw a card."
@@ -3335,6 +3502,7 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "FEYWILD",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+5 Influence\nChoose one:\n• This turn, you may put cards you recruit on top of your deck.\n• Gain 1 VP for each card you recruit this turn."
@@ -3345,6 +3513,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose another player: they place three 1 VP tokens at sites without one. Only you take them, when you have a troop at that site.\nMove a troop and deploy 2 troops."
@@ -3355,6 +3524,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "FEYWILD",
+    "race": "FAERIE DRAGON",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+2 Power and draw a card.\nIf you gained 6 or more Power this turn, this card leaves the game and Faerie Dragon Adult goes to your discard pile."
@@ -3365,6 +3535,7 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate a troop.\n+1 Power, and +1 Power for every 3 troops in your trophy hall."
@@ -3375,16 +3546,18 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• Place a spy and deploy 4 troops.\n• Return one of your spies, supplant a troop at that site and gain 1 VP."
   },
   {
     "card_id": 49910,
-    "name": "Modron Monodrone",
+    "name": "Satyr",
     "cost": 3,
     "aspect": "MALICE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Draw a card, then discard a card and gain 1 VP.\n• +2 Power\n• +2 Influence"
@@ -3395,16 +3568,18 @@
     "cost": 3,
     "aspect": "AMBITION",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "At end of turn, promote another card played this turn.\nGlamour: +2 Influence\nIf you recruited 3 or more cards this turn, gain 1 VP."
   },
   {
     "card_id": 49912,
-    "name": "Icewind Kobold",
+    "name": "Sprite",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nIf you have no VP tokens, gain 1 VP and place a spy."
@@ -3415,6 +3590,7 @@
     "cost": 2,
     "aspect": "AMBITION",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "You may discard up to 3 cards in the market.\nGain a card that costs 3 or less.\nGlamour: +3 Influence instead.\nGlamour: Gain a card that costs 5 or less instead."
@@ -3425,6 +3601,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, gain 1 VP.\n• Return one of your spies, +2 Influence and draw a card."
@@ -3435,6 +3612,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "FEYWILD",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If another player's troop is there, gain 1 VP.\n• Return one of your spies, take 2 VP from each other player with a troop at that site."
@@ -3445,6 +3623,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
+    "race": "YETI",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Deploy 3 troops.\n• Supplant a white troop.\nIf you gained control of a site this turn, gain 1 VP."
@@ -3455,6 +3634,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. Site full: you may devour a card in hand or discard pile for 1 VP.\n• Return one of your spies, devour 2 market cards. Their replacements cost 2 less."
@@ -3465,6 +3645,7 @@
     "cost": 2,
     "aspect": "MALICE",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Assassinate a troop.\nGlamour: Deploy 3 troops.\nGlamour: Return a troop or spy.\nGlamour: +2 Power"
@@ -3475,16 +3656,18 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Supplant a white troop.\nGlamour: Supplant any troop instead.\nGlamour: Supplant a white troop anywhere on the board instead."
   },
   {
     "card_id": 49920,
-    "name": "Ogre Chitterlord",
+    "name": "Dryad",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "FEYWILD",
+    "race": "FEY",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "+3 Influence\nGlamour: At end of turn, promote another card you played this turn."
@@ -3495,6 +3678,7 @@
     "cost": 3,
     "aspect": "GUILE",
     "type": "FEYWILD",
+    "race": "GOBLINOID",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy, move one of your troops to that site.\n• Return one of your spies, move up to one enemy troop at that site and one of your troops."
@@ -3505,6 +3689,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "FEYWILD",
+    "race": "FAERIE DRAGON",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+6 Power\nEach opponent discards a card.\nThis card leaves the game and Faerie Dragon Youth goes to your discard pile."
@@ -3515,6 +3700,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "FAR REALM",
+    "race": "GITH",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• Supplant a troop anywhere on the board.\n• +1 Power for each card in your hand.\n• Draw 2 cards, then discard a card.\n• Assassinate 2 troops."
@@ -3525,6 +3711,7 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
+    "race": "STAR SPAWN",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Deploy 4 troops.\nGain 1 VP for each site under your total control."
@@ -3535,6 +3722,7 @@
     "cost": 10,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
+    "race": "FROGHEMOTH",
     "deck_vp": 5,
     "inner_circle_vp": 10,
     "ability_text": "Remove a hex where you have presence from the board: every enemy troop on it goes to your trophy hall, and your troops there return to your barracks."
@@ -3545,6 +3733,7 @@
     "cost": 6,
     "aspect": "GUILE",
     "type": "FAR REALM",
+    "race": "GITH",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, you may assassinate troops anywhere on the board.\nAssassinate a troop for every 2 sites you control."
@@ -3555,6 +3744,7 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "FAR REALM",
+    "race": "THRI-KREEN",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "For every 4 troops in your trophy hall, this card keeps one more of these for good. Then use all it has:\n• +2 Power\n• Assassinate a troop\n• Place 2 spies\n• Draw a card"
@@ -3565,6 +3755,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "FAR REALM",
+    "race": "SLAAD",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+4 Power\nThis turn, you may deploy, assassinate and supplant up to 3 spaces away from your troops."
@@ -3575,6 +3766,7 @@
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
+    "race": "ILLITHID",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, whenever another card deploys troops, deploy 2 more troops.\nChoose one:\n• Return up to 2 troops or spies.\n• Supplant 2 white troops."
@@ -3585,6 +3777,7 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
+    "race": "GROUNDLING",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Draw a card for every 2 sites under your total control.\n• Supplant a troop and deploy 2 troops.\n• Move up to 2 troops or spies."
@@ -3595,6 +3788,7 @@
     "cost": 9,
     "aspect": "AMBITION",
     "type": "FAR REALM",
+    "race": "BEHOLDER",
     "deck_vp": 3,
     "inner_circle_vp": 9,
     "ability_text": "You may set aside a card from your hand that costs 5 or less with this card. At the start of each of your turns, play that card. Both still count for deck VP."
@@ -3605,6 +3799,7 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "FAR REALM",
+    "race": "STAR SPAWN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+2 Power\nReveal the top card of your deck: you may devour it.\nIf you deploy no troops this turn, devour this card at end of turn."
@@ -3615,6 +3810,7 @@
     "cost": 3,
     "aspect": "AMBITION",
     "type": "FAR REALM",
+    "race": "GITH",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• +1 Influence for every 2 sites you control.\n• At end of turn, promote another card you played this turn."
@@ -3625,6 +3821,7 @@
     "cost": 2,
     "aspect": "MALICE",
     "type": "FAR REALM",
+    "race": "THRI-KREEN",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "Choose one:\n• Look at the top 5 cards of your deck. Put up to 2 that cost 2 or less into your hand, the rest back on top.\n• Assassinate a white troop."
@@ -3635,6 +3832,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
+    "race": "HOOK HORROR",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +1 Power for every 2 sites you control.\n• Deploy 3 troops.\n• Supplant a white troop."
@@ -3645,6 +3843,7 @@
     "cost": 5,
     "aspect": "MALICE",
     "type": "FAR REALM",
+    "race": "ELDER THING",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "This turn, whenever a card tells you to deploy X troops, you may gain X Power instead.\nDeploy 3 troops."
@@ -3655,6 +3854,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "FAR REALM",
+    "race": "CARRION STALKER",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "This turn, your spy placed by another player's spy returns it.\nChoose one: place a spy (site full: deploy 2 troops), or return your spy to supplant a white troop there."
@@ -3665,6 +3865,7 @@
     "cost": 2,
     "aspect": "AMBITION",
     "type": "FAR REALM",
+    "race": "SLAAD",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• +2 Influence\n• Return a troop."
@@ -3675,6 +3876,7 @@
     "cost": 4,
     "aspect": "GUILE",
     "type": "FAR REALM",
+    "race": "SLAAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Reveal the top 3 cards of the market deck. You may play one that costs 5 or less for free. Put them on the bottom of the market deck."
@@ -3685,6 +3887,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "FAR REALM",
+    "race": "SLAAD",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Place a spy. You may put it on a market card instead: other players must spend 3 Power to return it before recruiting that card, which then costs them 6 less."
@@ -3695,6 +3898,7 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "FAR REALM",
+    "race": "GITH",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +2 Power\n• Gain a market card with the same name as a card you played this turn.\n• Return a troop or spy."
@@ -3705,6 +3909,7 @@
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
+    "race": "GITH",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "Choose one (all of them if you have total control of 4 or more sites):\n• Move one of your troops.\n• Deploy 2 troops.\n• Assassinate a white troop."
@@ -3715,16 +3920,18 @@
     "cost": 7,
     "aspect": "GUILE",
     "type": "CHULT",
+    "race": "YUAN-TI",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Copy the previous card you played.\n• Copy a market card. At end of turn put it on the bottom of the market deck."
   },
   {
     "card_id": 50101,
-    "name": "Galeb Duhr",
+    "name": "Guardian Naga",
     "cost": 8,
     "aspect": "CONQUEST",
     "type": "CHULT",
+    "race": "NAGA",
     "deck_vp": 6,
     "inner_circle_vp": 12,
     "ability_text": "+8 Power"
@@ -3735,6 +3942,7 @@
     "cost": 9,
     "aspect": "AMBITION",
     "type": "CHULT",
+    "race": "SARRUKH",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Draw 5 cards and take another turn after this one.\nAt end of turn, promote this card."
@@ -3745,16 +3953,18 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "CHULT",
+    "race": "LIZARDFOLK",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Supplant a troop.\nThis turn your site control markers count as total control. One of them gives its reward again now."
   },
   {
     "card_id": 50104,
-    "name": "Chwinga",
+    "name": "Tarrasque",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CHULT",
+    "race": "TARRASQUE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+4 Influence\nWhenever you Explore this turn, put all matching cards into your hand."
@@ -3765,6 +3975,7 @@
     "cost": 6,
     "aspect": "MALICE",
     "type": "CHULT",
+    "race": "TROGLODYTE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn the top card of your deck stays revealed: whenever it gives Power, you may put it into your hand.\nExplore for Power.\nAssassinate a troop."
@@ -3775,16 +3986,18 @@
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "CHULT",
+    "race": "LIZARDFOLK",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Return up to 3 troops or spies.\nThis turn you may deploy troops paying 1 Influence each.\nWhen you deploy your 7th troop this turn, draw a card."
   },
   {
     "card_id": 50107,
-    "name": "Dao",
+    "name": "Kraken",
     "cost": 6,
     "aspect": "MALICE",
     "type": "CHULT",
+    "race": "KRAKEN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate a troop for each goal you met this turn: assassinate or supplant a troop; deploy 3 troops; place or return a spy; recruit or promote a card."
@@ -3795,16 +4008,18 @@
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CHULT",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate up to 2 troops at one site.\nWhenever you Explore this turn, look at 4 cards instead of 2.\nName a region. Explore for a card of that region."
   },
   {
     "card_id": 50110,
-    "name": "Bandit Deceiver",
+    "name": "Merfolk Skirmisher",
     "cost": 5,
     "aspect": "AMBITION",
     "type": "CHULT",
+    "race": "MERFOLK",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "+2 Influence\nChoose one:\n• Explore for a card that costs 3 or less.\n• Explore for a card that costs 6 or more."
@@ -3815,6 +4030,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CHULT",
+    "race": "LIZARDFOLK",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Deploy 3 troops. If one is next to another player's troop, Explore for a card with \"Deploy\".\n• Supplant a white troop."
@@ -3825,6 +4041,7 @@
     "cost": 4,
     "aspect": "MALICE",
     "type": "CHULT",
+    "race": "YUAN-TI",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Explore for an odd cost card or an even cost card.\nChoose one:\n• Deploy 2 troops.\n• Assassinate a white troop."
@@ -3835,16 +4052,18 @@
     "cost": 4,
     "aspect": "AMBITION",
     "type": "CHULT",
+    "race": "HUMAN",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "+2 Influence\nPut a troop from your barracks on a market card. Each of your troops on a card: it costs 1 less for you and 1 more for opponents."
   },
   {
     "card_id": 50114,
-    "name": "Minotaur Archaeologist",
+    "name": "Medusa",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "CHULT",
+    "race": "MEDUSA",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "+2 Influence\nReveal the top card of your deck. This turn non-Obedience market cards that share its aspect cost 1 less."
@@ -3855,6 +4074,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CHULT",
+    "race": "LIVING SPELL",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "If a card effect reveals this card on top of your deck, you may put it into your hand.\nMove a troop."
@@ -3865,16 +4085,18 @@
     "cost": 3,
     "aspect": "MALICE",
     "type": "CHULT",
+    "race": "BULLYWUG",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+1 Influence\nLook at the top 2 cards of your deck. You may promote one of them. Put the rest on the top or bottom."
   },
   {
     "card_id": 50117,
-    "name": "Cyclops Oracle",
+    "name": "Merrow",
     "cost": 3,
     "aspect": "MALICE",
     "type": "CHULT",
+    "race": "MERFOLK",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +2 Power\n• Put a hand card on top of your deck: supplant and deploy a troop.\n• You may shuffle your discard into your deck. Scry 3."
@@ -3885,6 +4107,7 @@
     "cost": 2,
     "aspect": "GUILE",
     "type": "CHULT",
+    "race": "KENKU",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, +1 Power and +1 Influence.\n• Return one of your spies and draw 2 cards, then put a card from your hand on top of your deck."
@@ -3895,6 +4118,7 @@
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CHULT",
+    "race": "AARAKOCRA",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Whenever you Explore this turn, deploy a troop.\nChoose one:\n• Deploy 3 troops.\n• Supplant a white troop.\nIf you deployed 4+ troops this turn, Scry 2."
@@ -3905,6 +4129,7 @@
     "cost": 2,
     "aspect": "MALICE",
     "type": "CHULT",
+    "race": "NAGA",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "By the aspect of the previous card you played:\nMalice: +2 Power. Ambition: promote a card in your hand or discard pile. Guile: place 2 spies. Conquest: deploy 3 troops."

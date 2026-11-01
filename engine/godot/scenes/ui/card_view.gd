@@ -531,7 +531,7 @@ func set_card(cid: String) -> void:
 	_cost_label.text = "" if cost == null else str(int(cost))
 
 	var aspect := String(data.get("aspect", "") if data.get("aspect") != null else "")
-	var type_name := String(data.get("type", "") if data.get("type") != null else "")
+	var type_name := String(data.get("race", data.get("type", "")) if data.get("type") != null else "")
 	# Insane Outcast — единственная карта вообще без аспекта (этап 4), поэтому
 	# строку собираем из того, что есть, а не по жёсткому шаблону.
 	if aspect != "" and type_name != "":

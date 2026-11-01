@@ -2,6 +2,12 @@
 
 Как начать новый чат: «Продолжаем New Era, прочитай `Claude outputs/new_era_handoff.md`».
 
+## NE-34…36 (2026-11-01): Kara-Tur без драконов, расы на картах, одна раса = одна полуколода
+- **Владелец: карты одной расы лежат в одной полуколоде New Era** (кроме SIEGE и MERCENARIES; люди — исключение, они есть везде). Существа переехали между картами: имя, арт (`SINGLE_ART`), мини-вырез (`mini_faces.json`) и HS-анимация (`RECIPES`, `hs_unity` таблицы) — вместе с существом, эффект остаётся на карте. Карта переездов — `engine/godot/tools/new_era/race_regroup.tsv` (dest <- src), скрипт `tools/new_era/race_regroup.gd` (запускать один раз; `-- races` — только поле расы).
+- Дома рас: драконы и ангелы — CELESTIAL (Gold Dragon связан с Ancient Gold Dragon); джинны и мефиты — CALIMSHAN; дьяволы, гоблиноиды, минотавры, огры — AVERNUS; нежить, оборотни, ведьмы — RAVENLOFT; конструкты и слизи — WATERDEEP; великаны (и Oni, Cyclops) — ICEWIND DALE; элементали и растения — KARA-TUR; феи — FEYWILD; наги, морской народ, ящеролюды, юань-ти — CHULT.
+- **Поле расы:** у карт New Era новое поле `"race"` в cards.json (`tools/new_era/races.tsv`), на карте справа от аспекта рисуется раса, а не полуколода; `"type"` остался полуколодой (им пользуются Knight of Eldraine «Name a region», тесты, god panel). `CardLibrary.card_race()`; High Priest of Myrkul («promote Undead») теперь смотрит на расу — нежить New Era тоже повышается.
+- Имена в вопросах реакций (Shield Guard / Oni / Ankheg) берутся из cards.json.
+
 ## NE-31…32 (2026-10-18): Ixtal → CHULT — 40/20, wip, задеплоено (сборка 1792269441, PROTOCOL 37)
 - **Владелец: Nidalee не делаем; динозавры можно, но только особенные — а у особенных (Aerosaur, Altisaur, Regisaur, Fastieth, Clawfoot Raptor) на D&D Beyond только вырезанные фигуры, поэтому владелец выбрал «без динозавров».**
 - Ключ `ixtal`, тип `CHULT`, id 50100–50108 (чемпионы) и 50110–50120 (50109 свободен — место Nidalee). Кнопка CHULT в NEW ERA, фон изумрудный. Эффекты `core/cards/ixtal_cards.gd`, тест `test_chult_deck`, справка и толкования — `Claude outputs/new_era_ixtal.md`, лист — `Claude outputs/chult_cards_all.png`, арты — `cards/ixtal/` (папки `cand`, `bg`, `more`, `sky`, `giff` — кандидаты, не в git).

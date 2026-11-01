@@ -117,12 +117,15 @@ func _ask(card: String, resolver: EffectResolver) -> void:
 	_asking = card
 	var pd := PendingDecision.new()
 	pd.player_id = victim
+	# Имя — из cards.json: существо на карте могло смениться (NE-36), эффект тот же.
+	var who := String(CardLibrary.card_data(card).get("name", card))
+	var target := what if what != "" else "it"
 	if card == CARD:
-		pd.prompt = "Discard Shield Guardian to stop %s? (deploy 4 troops, draw a card)" % (what if what != "" else "it")
+		pd.prompt = "Discard %s to stop %s? (deploy 4 troops, draw a card)" % [who, target]
 	elif card == ONI:
-		pd.prompt = "Discard Oni to stop %s? (draw 2 cards)" % (what if what != "" else "it")
+		pd.prompt = "Discard %s to stop %s? (draw 2 cards)" % [who, target]
 	else:
-		pd.prompt = "Discard Ankheg to stop %s? (supplant one of their troops)" % (what if what != "" else "it")
+		pd.prompt = "Discard %s to stop %s? (supplant one of their troops)" % [who, target]
 	pd.choice_type = "confirm"
 	pd.legal_options = [true, false]
 	pd.source_card = card
