@@ -76,6 +76,8 @@ signal watch_started(friend_seat: String, board: Dictionary, view: Dictionary)
 signal player_received(data: Dictionary)
 ## Запись партии с сервера (header пустой — не отдали).
 signal record_received(file: String, header: Dictionary, intents: Array)
+## Сервер принял отчёт об ошибке (saved — сохранил; нет — слишком часто).
+signal bug_report_sent(id: String, saved: bool)
 
 ## Игра по IP (локальная сеть, Radmin VPN).
 const DEFAULT_PORT := 7777
@@ -86,7 +88,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 42
+const PROTOCOL := 43
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
@@ -1009,6 +1011,7 @@ func _refused(reason: String) -> void:
 
 func _on_peer_disconnected(id: int) -> void:
 	_said.erase(id)
+	_bug_peer.erase(id)
 	_dropping.erase(id)
 	peer_account.erase(id)
 	for room: GameRoom in rooms.values():
@@ -1574,7 +1577,10 @@ const LEADERBOARD_SIZE := 100
 ## сервер считает его онлайн, по ней же приходит таблица лидеров. Ни в комнату,
 ## ни в очередь он не встаёт; профиль после входа сервер без комнаты пропускает.
 func watch(address: String, port: int) -> int:
-	return _connect(address, port, request_leaderboard)
+	# Заодно уходят отчёты об ошибках, написанные без связи (хотсит, боты).
+	return _connect(address, port, func():
+		request_leaderboard()
+		send_bug_reports())
 
 
 func is_connected_to_server() -> bool:
@@ -1673,6 +1679,63 @@ func _record_up(version: int, file: String) -> void:
 @rpc("authority", "call_remote", "reliable")
 func _record_down(file: String, header: Dictionary, intents: Array) -> void:
 	record_received.emit(file, header, intents)
+
+
+# --- отчёты об ошибках (BugReport, этап Bug-1) -----------------------------
+
+## Клиент: неотправленные отчёты (тест даёт свою папку). Сервер: куда их
+## складывать.
+var bug_outbox := BugReport.OUTBOX
+var bugs_dir := BugReport.DIR
+## Сервер: когда слали отчёты — peer id -> [мс] и IP -> [мс] (rate_ok).
+var _bug_peer: Dictionary = {}
+var _bug_ip: Dictionary = {}
+
+
+## Клиент: отправить всё, что лежит в bug_outbox. Ответ на каждый —
+## bug_report_sent, после него файл стирается.
+func send_bug_reports() -> void:
+	if not is_connected_to_server():
+		return
+	for report in BugReport.pending(bug_outbox):
+		# Ник — тот, под которым сидим за столом (в меню profile пуст: ник из файла).
+		if profile.has("name"):
+			report["name"] = profile["name"]
+		_bug_up.rpc_id(1, PROTOCOL, _client_key(), report)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _bug_up(version: int, key: String, data: Dictionary) -> void:
+	if not dedicated or version != PROTOCOL:
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	var report := BugReport.clean(data)
+	if _dropping.has(peer) or report.is_empty():
+		return
+	var now := Time.get_ticks_msec()
+	if not rate_ok(_bug_peer.get_or_add(peer, []), now, BugReport.PEER_WINDOW_MS, BugReport.PEER_COUNT) \
+			or not rate_ok(_bug_ip.get_or_add(_ip_of(peer), []), now, BugReport.IP_WINDOW_MS, BugReport.IP_COUNT):
+		_send(peer, "_bug_down", [report["id"], false])
+		return
+	# Онлайн-партия: запись ходов — серверная, полная, а не со слов клиента.
+	var room := _room_of(peer)
+	if room != null and room.started and room.server != null:
+		var header := ReplayBook.header_for(room.server.state, room.ids, room.game_seed, room.mode,
+			room.server.with_mulligan, room.profiles, String(room.seats.get(peer, "")), room.code, room.log)
+		header["card_bans"] = room.card_bans
+		report["record"] = {"header": header, "intents": room.log.duplicate()}
+	var who := "%s [%s]" % [PlayerProfile.clean_name(String(data.get("name", ""))),
+		RatingBook.account_of(key).left(8)]
+	var folder := BugReport.store(report, who, room.code if room != null else "", bugs_dir)
+	_log("bug report %s from %s" % [folder if folder != "" else "NOT SAVED", who])
+	BugReport.prune(bugs_dir)
+	_send(peer, "_bug_down", [report["id"], folder != ""])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _bug_down(id: String, saved: bool) -> void:
+	BugReport.done(id, bug_outbox)
+	bug_report_sent.emit(id, saved)
 
 
 # --- друзья (FriendBook, владелец 2026-10-11) -------------------------------

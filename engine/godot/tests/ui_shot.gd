@@ -652,6 +652,9 @@ func _run_scenario() -> void:
 			menu._join_by_ip = lobby == "ip"
 			menu._lobby_direct = lobby == "direct"
 			root.add_child(menu)
+		"bug_report":
+			# Окно BUG REPORT (этап Bug-1) поверх партии, как из меню по Esc.
+			(func(): _screen.open_bug_report()).call_deferred()
 		"card_back":
 			# Коллекция, раздел рубашек: рубашка, которую можно покрутить.
 			PlayerProfile.path_override = "user://profile_shot.cfg"

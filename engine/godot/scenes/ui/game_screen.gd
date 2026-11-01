@@ -676,6 +676,7 @@ func _build_layout() -> void:
 	# Меню по Esc: главное меню или выход из игры; в сети — ещё и общая пауза.
 	_pause_menu = PauseMenu.new()
 	_pause_menu.main_menu_requested.connect(func(): main_menu_requested.emit())
+	_pause_menu.bug_report_requested.connect(open_bug_report)
 	if net != null:
 		_pause_menu.add_button("PAUSE FOR ALL", func():
 			_pause_menu.visible = false
@@ -1522,6 +1523,32 @@ func _save_bot_game() -> void:
 	if _bot_game_file != "":
 		ReplayBook.erase(_bot_game_file, bot_games_dir)
 	_bot_game_file = ReplayBook.save(header, _replay_log, bot_games_dir)
+
+
+## BUG REPORT из меню по Esc (этап Bug-1). Снимок — без самого меню. Запись
+## прикладывается своя у хотсита и ботов, у реплея — сам реплей; онлайн её
+## прикладывает сервер.
+func open_bug_report() -> BugReportWindow:
+	var where := "hotseat"
+	var record := {}
+	if replay_bar != null:
+		where = "replay"
+		record = replay_bar.replay
+	elif watching:
+		where = "spectator"
+	elif net != null:
+		where = "online"
+	else:
+		where = "bots" if not bots.is_empty() else ("god" if god else "hotseat")
+		if not _replay_ids.is_empty() and server != null:
+			var header := ReplayBook.header_for(server.state, _replay_ids, _replay_seed, _replay_mode,
+				server.with_mulligan, {}, viewer_id, "", _replay_log)
+			header["bots"] = bots.duplicate()
+			record = {"header": header, "intents": _replay_log.duplicate()}
+	var extra := {"seat": viewer_id}
+	if replay_bar != null:
+		extra["replay_step"] = replay_bar.cursor
+	return BugReportWindow.open(self, net, where, record, extra, _pause_menu)
 
 
 func _on_replay_received(replay: Dictionary) -> void:

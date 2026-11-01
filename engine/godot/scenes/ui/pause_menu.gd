@@ -7,6 +7,7 @@ extends Control
 ## хода стоит (GameScreen._process).
 
 signal main_menu_requested
+signal bug_report_requested
 
 const BUTTON_SIZE := Vector2(110, 16)
 const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
@@ -52,6 +53,7 @@ func _init() -> void:
 	# Все настройки — та же панель, что во вкладке SETTINGS главного меню
 	# (владелец, 2026-10-06); громкость теперь там.
 	col.add_child(_button("SETTINGS", func(): show_settings(true)))
+	col.add_child(_button("BUG REPORT", func(): bug_report_requested.emit()))
 	col.add_child(_button("MAIN MENU", func(): main_menu_requested.emit()))
 	col.add_child(_button("QUIT GAME", func(): get_tree().quit()))
 	_col = col

@@ -94,6 +94,11 @@ const SAVES_DIR := "user://saves_nettest/"
 ## И своя папка реплеев (ReplayBook).
 const REPLAYS_DIR := "user://replays_nettest/"
 const RECORDS_DIR := "user://records_nettest/"
+## Отчёты об ошибках: папка сервера и исходящие клиентов (по номеру ветки).
+const BUGS_DIR := "user://bugs_nettest/"
+const BUG_OUTBOX := "user://bug_outbox_nettest/"
+## Ответ сервера на отчёт: NetSession -> принят ли.
+var _bug_sent: Dictionary = {}
 
 ## Переподключение и восстановление после «перезапуска» сервера (этап 7).
 var _reconnect_code := ""
@@ -117,6 +122,8 @@ func _initialize() -> void:
 	# И свой файл запомненной партии (RETURN TO GAME).
 	NetSession.resume_path = "user://online_game_nettest.cfg"
 	NetSession.forget_game()
+	_remove_tree(BUGS_DIR)
+	_remove_tree(BUG_OUTBOX)
 
 
 func _process(delta: float) -> bool:
@@ -236,9 +243,42 @@ func _process(delta: float) -> bool:
 					"[server] после «перезапуска» сервера оба вернулись на свои цвета")
 				check(views[players[0]]["current_player"] == views[players[1]]["current_player"],
 					"[server] восстановленная из журнала партия согласована у обоих")
+				# BUG REPORT из онлайн-партии: запись ходов сервер прикладывает сам.
+				var shot := Image.create(1600, 900, false, Image.FORMAT_RGBA8)
+				shot.fill(Color.DARK_RED)
+				var report := BugReport.make("cannot pick a troop", "online", shot, {}, {"seat": players[0].seat})
+				check(BugReport.queue(report, players[0].bug_outbox), "[bug] отчёт лёг в исходящие")
+				players[0].bug_report_sent.connect(func(id: String, saved: bool):
+					_bug_sent[players[0]] = saved and id == report["id"])
+				players[0].send_bug_reports()
+				_step = "bug_online"
+		"bug_online":
+			if _bug_sent.has(players[0]):
+				check(_bug_sent[players[0]], "[bug] сервер принял отчёт из партии")
+				check(BugReport.pending(players[0].bug_outbox).is_empty(), "[bug] исходящие после ответа пусты")
+				var folders := DirAccess.get_directories_at(BUGS_DIR)
+				check(folders.size() == 1, "[bug] на сервере одна папка отчёта")
+				if folders.size() == 1:
+					var path := BUGS_DIR + folders[0] + "/"
+					var text := FileAccess.get_file_as_string(path + "report.txt")
+					check(text.contains("cannot pick a troop") and text.contains("room: " + players[0].room_code)
+						and text.contains(String(players[0].profile["name"])),
+						"[bug] report.txt: текст, комната, ник")
+					var image := Image.new()
+					check(image.load_jpg_from_buffer(FileAccess.get_file_as_bytes(path + "screen.jpg")) == OK
+						and image.get_width() == BugReport.SHOT_WIDTH, "[bug] снимок JPG ужат до %d" % BugReport.SHOT_WIDTH)
+					var replay := ReplayBook.load_replay("game" + ReplayBook.EXT, path)
+					var room: GameRoom = server.rooms.get(players[0].room_code)
+					check(not replay.is_empty() and room != null and replay["intents"].size() == room.log.size(),
+						"[bug] запись партии — серверная, все ходы")
+				# Отчёт, написанный без связи (хотсит), уходит, когда меню подключится.
+				_watcher = _session()
+				var offline := BugReport.make("hotseat crash", "hotseat", null)
+				BugReport.queue(offline, _watcher.bug_outbox)
+				_watcher.bug_report_sent.connect(func(id: String, saved: bool):
+					_bug_sent[_watcher] = saved and id == offline["id"])
 				# Главное меню третьего игрока: связь без комнаты и таблица лидеров.
 				server.ratings.accounts["zed"] = {"name": "Zed", "rating": 1200, "games": 3, "wins": 2}
-				_watcher = _session()
 				_watcher.rating_key = "%032d" % 7
 				_watcher.profile = {"name": "Watcher Wu", "emblem": ""}
 				_watcher.leaderboard_received.connect(func(d: Dictionary): _board_data = d)
@@ -331,6 +371,9 @@ func _process(delta: float) -> bool:
 		"rated":
 			if ratings.has(players[0]) and ratings.has(players[1]) and _watch_over:
 				check(true, "[watch] конец партии дошёл до зрителя")
+				check(bool(_bug_sent.get(_watcher, false)) and BugReport.pending(_watcher.bug_outbox).is_empty()
+					and DirAccess.get_directories_at(BUGS_DIR).size() == 2,
+					"[bug] отложенный отчёт ушёл при входе в меню")
 				_watcher.close()
 				var r: Dictionary = ratings[players[0]]
 				check(r == ratings[players[1]], "[server] рейтинг пришёл обоим одинаковый")
@@ -925,6 +968,8 @@ func _session() -> NetSession:
 	net.name = "Net"
 	net.replays_dir = REPLAYS_DIR
 	net.records_dir = RECORDS_DIR
+	net.bugs_dir = BUGS_DIR
+	net.bug_outbox = BUG_OUTBOX + "%d/" % _branches
 	branch.add_child(net)
 	return net
 
@@ -1057,6 +1102,8 @@ func _clear_saves_dir() -> void:
 		ReplayBook.erase(name, REPLAYS_DIR)
 	for name in ReplayBook.list(RECORDS_DIR):
 		ReplayBook.erase(name, RECORDS_DIR)
+	_remove_tree(BUGS_DIR)
+	_remove_tree(BUG_OUTBOX)
 	var dir := DirAccess.open(SAVES_DIR)
 	if dir == null:
 		return
@@ -1067,6 +1114,17 @@ func _clear_saves_dir() -> void:
 			dir.remove(name)
 		name = dir.get_next()
 	dir.list_dir_end()
+
+
+## Папка со всем содержимым (отчёты об ошибках — папка на отчёт).
+func _remove_tree(path: String) -> void:
+	if not DirAccess.dir_exists_absolute(path):
+		return
+	for sub in DirAccess.get_directories_at(path):
+		_remove_tree(path + sub + "/")
+	for file in DirAccess.get_files_at(path):
+		DirAccess.remove_absolute(path + file)
+	DirAccess.remove_absolute(path)
 
 
 ## Герб-метка: один пиксель в центре, цвет зависит от номера игрока.

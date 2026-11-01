@@ -231,6 +231,13 @@ func _init(page: String = PAGE_ONLINE) -> void:
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_bar.add_child(title)
+	# BUG REPORT (этап Bug-1) — в правом краю полосы заголовка: вкладкам в ряду
+	# и так тесно, а низ экрана занят кнопками разделов.
+	var bug := _button("BUG REPORT", func(): BugReportWindow.open(self, presence, "menu", {},
+		{"page": current_page()}))
+	bug.size_flags_horizontal = Control.SIZE_SHRINK_END
+	bug.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title_bar.add_child(bug)
 
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", GAP)
