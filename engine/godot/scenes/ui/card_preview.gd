@@ -294,9 +294,10 @@ static func token_cards(cid: String, size: Vector2) -> Array[CardView]:
 		view.size = size
 		# Подпись над жетоном (критик UI, 2026-11-01): что это за карта.
 		var tag := "TRANSFORMS INTO" if String(CardLibrary.card_data(cid).get("ability_text", "")).to_upper().contains("TRANSFORM") else "TOKEN"
+		view.set_meta("tag", tag)
 		view.draw.connect(func():
 			var font := view.get_theme_default_font()
-			view.draw_string(font, Vector2(0, -3), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT_DIM))
+			view.draw_string(font, Vector2(0, -3), String(view.get_meta("tag")), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT_DIM))
 		out.append(view)
 	return out
 

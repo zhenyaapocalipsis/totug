@@ -3,10 +3,13 @@ extends Control
 
 ## Лобби банов поиска игры (этап Ban-1, владелец 2026-10-29; только RANDOM 4).
 ## Раскладка по макету владельца (2026-11-01):
-##   1-4 — четыре полуколоды, миниатюры сеткой 5x4 (мелкое лицо целиком, в
-##         половину: при игре x2 это пиксель в пиксель экрана);
-##   5   — посередине полная карта под курсором (или выбранная) с подсказками
-##         справа и жетонами слева, как у CardPreview с Alt;
+##   1-4 — четыре полуколоды, миниатюры в полный размер сеткой 4x5; в
+##         колонку влезает одна сетка, поэтому слева вкладки полуколод 1-2,
+##         справа 3-4 (владелец, 2026-11-01: вариант «одна полуколода на
+##         всю высоту колонки» вместо мелких миниатюр);
+##   5   — посередине полная карта под курсором (или выбранная), подсказки
+##         справа; жетоны тоже справа (слева места нет), при подсказках —
+##         подсказки под картой; ниже — чат стола;
 ##   6   — сверху ходы банов по порядку: кто, какую карту (или SKIP);
 ##   7   — снизу, кто сейчас банит, таймер, SKIP и BAN.
 ## Очередь «змейкой», в каждом круге в полуколоде одна карта (GameRoom.ban);
@@ -16,11 +19,13 @@ extends Control
 ## Вёрстка кодом по той же причине, что и в game_screen.gd.
 
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
-## Миниатюра — мелкое лицо карты в половину (58x84 -> 29x42).
-const THUMB := Vector2(29, 42)
-const GRID_COLUMNS := 5
-const SIDE_WIDTH := 172
-const TOP_HEIGHT := 56
+## Миниатюра в сетке — мелкое лицо карты в родном размере; в полосе банов
+## сверху — оно же в половину (целиком, не обрезая).
+const THUMB := CardView.MINI_SIZE
+const STRIP_THUMB := Vector2(29, 42)
+const GRID_COLUMNS := 4
+## Колонка полуколод: 4 миниатюры, 3 зазора по 2, поля зоны.
+const SIDE_WIDTH := 244
 const BOTTOM_HEIGHT := 26
 const GAP := 3
 const BAN_COLOUR := Color(0.85, 0.12, 0.18)
@@ -37,11 +42,18 @@ var _left := 0.0
 var _selected := ""
 var _hovered := ""
 var _deck_zones: Array[Control] = []
+## По колонке: ряд вкладок полуколод и место под их сетки.
+var _tab_rows: Array[HBoxContainer] = []
+var _stacks: Array[Control] = []
 var _info: Control
 var _chat_log: RichTextLabel
 var _chat_scroll: ScrollContainer
 var _chat_edit: LineEdit
 var _info_shown := ""
+## Жетоны, что сменяют друг друга на одном месте (все рядом не влезли).
+var _token_cycle: Array[CardView] = []
+var _token_time := 0.0
+const TOKEN_SECONDS := 2.0
 var _slots: HBoxContainer
 var _status: Label
 var _clock: Label
@@ -49,7 +61,7 @@ var _skip: Button
 var _ban: Button
 ## card_id -> {"thumb": Control, "deck": String, "face": TextureRect}
 var _cells: Dictionary = {}
-## Полуколода -> {"title": Label, "note": Label, "grid": GridContainer}
+## Полуколода -> {"tab": Button, "grid": GridContainer, "column": int}
 var _decks: Dictionary = {}
 
 
@@ -76,7 +88,6 @@ func _init(net: NetSession) -> void:
 
 	# 6: ходы банов.
 	var top := _zone()
-	top.custom_minimum_size.y = TOP_HEIGHT
 	rows.add_child(top)
 	var top_row := HBoxContainer.new()
 	top_row.add_theme_constant_override("separation", 4)
@@ -118,12 +129,26 @@ func _init(net: NetSession) -> void:
 	info_col.add_child(_make_chat())
 	var right := _side_column()
 	middle.add_child(right)
+	# В колонке одна зона: вкладки двух полуколод и сетка выбранной. Поля
+	# зоны узкие — сетка 4x5 в полный размер входит по высоте впритык.
 	for column: VBoxContainer in [left, right]:
-		for i in 2:
-			var zone := _zone()
-			zone.size_flags_vertical = Control.SIZE_EXPAND_FILL
-			column.add_child(zone)
-			_deck_zones.append(zone)
+		var zone := PanelContainer.new()
+		zone.add_theme_stylebox_override("panel", GameScreen.zone_style(2))
+		zone.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		column.add_child(zone)
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", 1)
+		zone.add_child(col)
+		var tabs := HBoxContainer.new()
+		tabs.add_theme_constant_override("separation", 2)
+		col.add_child(tabs)
+		var stack := Control.new()
+		stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(stack)
+		_deck_zones.append(col)
+		_tab_rows.append(tabs)
+		_stacks.append(stack)
 
 	# 7: кто банит, таймер, кнопки.
 	var bottom := _zone()
@@ -191,7 +216,11 @@ func _make_chat() -> Control:
 	_chat_log.fit_content = true
 	_chat_log.scroll_active = false
 	_chat_log.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_chat_log.meta_clicked.connect(func(meta): select(String(meta)))
+	# Щелчок по карте в предложении — открыть её полуколоду и выбрать.
+	_chat_log.meta_clicked.connect(func(meta):
+		if _cells.has(String(meta)):
+			show_deck(String(_cells[String(meta)]["deck"]))
+			select(String(meta)))
 	stack.add_child(_chat_log)
 	_chat_edit = LineEdit.new()
 	_chat_edit.placeholder_text = "Type a message, Enter to send"
@@ -270,10 +299,31 @@ func show_view(view: Dictionary) -> void:
 		_selected = ""
 	var banned := banned_cards()
 	var locked: Array = view.get("locked", [])
+	# Закрытая в этом круге полуколода: вкладка залита тёмно-красным; открытая
+	# сейчас вкладка — золотой рамкой, а не заливкой (критик UI: два состояния
+	# не должны путаться).
 	for deck: String in _decks:
-		var parts: Dictionary = _decks[deck]
+		var tab: Button = _decks[deck]["tab"]
 		var shut := locked.has(deck)
-		(parts["note"] as Label).text = "banned this round" if shut else ""
+		var bg := BAN_COLOUR.darkened(0.6) if shut else PixelTheme.PANEL_LO
+		var text := BAN_COLOUR.lightened(0.35) if shut else PixelTheme.TEXT_DIM
+		tab.add_theme_stylebox_override("normal", PixelTheme.box(bg, PixelTheme.BORDER, 1, 2, 1))
+		tab.add_theme_stylebox_override("hover", PixelTheme.box(bg.lightened(0.08), PixelTheme.BORDER_HI, 1, 2, 1))
+		for state in ["pressed", "hover_pressed"]:
+			tab.add_theme_stylebox_override(state, PixelTheme.box(bg, PixelTheme.GOLD, 1, 2, 1))
+		for state in ["font_color", "font_hover_color"]:
+			tab.add_theme_color_override(state, text)
+		for state in ["font_pressed_color", "font_hover_pressed_color"]:
+			tab.add_theme_color_override(state, BAN_COLOUR.lightened(0.35) if shut else PixelTheme.GOLD)
+		tab.tooltip_text = "Already has a ban this round" if shut else ""
+	# Свой ход, а в колонке открыта закрытая полуколода — открыть соседнюю.
+	if my_turn():
+		for deck: String in _decks:
+			if locked.has(deck) and deck_shown(deck):
+				for other: String in _decks:
+					if other != deck and int(_decks[other]["column"]) == int(_decks[deck]["column"]) and not locked.has(other):
+						show_deck(other)
+						break
 	# Гаснут только лица карт закрытой полуколоды: крест бана остаётся ярким.
 	for cid: String in _cells:
 		var thumb: Control = _cells[cid]["thumb"]
@@ -317,6 +367,7 @@ func info_card() -> String:
 func select(cid: String) -> void:
 	if not can_ban(cid):
 		return
+	show_deck(String(_cells[cid]["deck"]))
 	_selected = cid
 	Sfx.play("click")
 	_refresh()
@@ -332,36 +383,31 @@ func _send(card: String) -> void:
 
 
 func _build(decks: Array) -> void:
-	for zone in _deck_zones:
-		for child in zone.get_children():
+	for row in _tab_rows:
+		for child in row.get_children():
+			child.queue_free()
+	for stack in _stacks:
+		for child in stack.get_children():
 			child.queue_free()
 	_cells.clear()
 	_decks.clear()
-	for i in mini(decks.size(), _deck_zones.size()):
+	# Полуколоды 1-2 — во вкладках левой колонки, 3-4 — правой.
+	for i in decks.size():
 		var deck := String(decks[i])
-		var col := VBoxContainer.new()
-		col.add_theme_constant_override("separation", 1)
-		_deck_zones[i].add_child(col)
-		var head := HBoxContainer.new()
-		col.add_child(head)
-		var title := Label.new()
-		title.text = SetupScreen.deck_title(deck)
-		title.add_theme_color_override("font_color", PixelTheme.GOLD)
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		head.add_child(title)
-		var note := Label.new()
-		note.add_theme_color_override("font_color", BAN_COLOUR.lightened(0.15))
-		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		head.add_child(note)
+		var column := mini(i / 2, _stacks.size() - 1)
+		var tab := Button.new()
+		tab.text = SetupScreen.deck_title(deck)
+		tab.toggle_mode = true
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.custom_minimum_size.y = 13
+		tab.pressed.connect(func(): show_deck(deck))
+		_tab_rows[column].add_child(tab)
 		var grid := GridContainer.new()
 		grid.columns = GRID_COLUMNS
 		grid.add_theme_constant_override("h_separation", 2)
-		grid.add_theme_constant_override("v_separation", 2)
-		grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		# Сетка по центру зоны: зона выше четырёх рядов миниатюр.
-		grid.size_flags_vertical = Control.SIZE_EXPAND | Control.SIZE_SHRINK_CENTER
-		col.add_child(grid)
-		_decks[deck] = {"title": title, "note": note, "grid": grid}
+		grid.add_theme_constant_override("v_separation", 1)
+		_stacks[column].add_child(grid)
+		_decks[deck] = {"tab": tab, "grid": grid, "column": column}
 		var copies := GameSetup.half_deck_copies(deck)
 		var ids: Array = copies.keys()
 		ids.sort_custom(func(a, b):
@@ -371,21 +417,36 @@ func _build(decks: Array) -> void:
 		for cid: String in ids:
 			if not _cells.has(cid):
 				grid.add_child(_make_thumb(cid, deck))
+	for i in range(0, decks.size(), 2):
+		show_deck(String(decks[i]))
 
 
-## Миниатюра: мелкое лицо целиком в половину, рамка — выбор (золото) или бан
-## (красный крест и рамка цвета того, кто забанил).
+## Показать сетку полуколоды в её колонке (вкладка нажата).
+func show_deck(deck: String) -> void:
+	if not _decks.has(deck):
+		return
+	var column := int(_decks[deck]["column"])
+	for other: String in _decks:
+		if int(_decks[other]["column"]) == column:
+			(_decks[other]["grid"] as Control).visible = other == deck
+			(_decks[other]["tab"] as Button).set_pressed_no_signal(other == deck)
+
+
+## Для проверок: открыта ли сетка полуколоды.
+func deck_shown(deck: String) -> bool:
+	return _decks.has(deck) and (_decks[deck]["grid"] as Control).visible
+
+
+## Миниатюра: мелкое лицо целиком в родном размере, рамка поверх его края —
+## выбор (золото) или бан (красный крест и рамка цвета того, кто забанил).
 func _make_thumb(cid: String, deck: String) -> Control:
 	var thumb := Control.new()
-	thumb.custom_minimum_size = THUMB + Vector2(2, 2)
+	thumb.custom_minimum_size = THUMB
 	thumb.mouse_filter = Control.MOUSE_FILTER_STOP
 	thumb.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	thumb.set_meta("banned_by", "")
 	var face := TextureRect.new()
 	face.texture = CardView.mini_texture(cid)
-	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	face.stretch_mode = TextureRect.STRETCH_SCALE
-	face.position = Vector2(1, 1)
 	face.size = THUMB
 	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	thumb.add_child(face)
@@ -414,14 +475,14 @@ func _draw_thumb(over: Control, thumb: Control, cid: String) -> void:
 	var r := Rect2(Vector2.ZERO, thumb.size)
 	var by := String(thumb.get_meta("banned_by", ""))
 	if by != "":
-		over.draw_rect(Rect2(Vector2(1, 1), THUMB), Color(PixelTheme.BG, 0.55))
-		var a := Vector2(4, 6)
-		var b := r.size - Vector2(4, 6)
-		over.draw_line(a, b, BAN_COLOUR, 2.0)
-		over.draw_line(Vector2(b.x, a.y), Vector2(a.x, b.y), BAN_COLOUR, 2.0)
-		over.draw_rect(r.grow(-0.5), BoardPanel.colour(by, BAN_COLOUR), false, 1.0)
+		over.draw_rect(r, Color(PixelTheme.BG, 0.55))
+		var a := Vector2(8, 12)
+		var b := r.size - Vector2(8, 12)
+		over.draw_line(a, b, BAN_COLOUR, 3.0)
+		over.draw_line(Vector2(b.x, a.y), Vector2(a.x, b.y), BAN_COLOUR, 3.0)
+		over.draw_rect(r.grow(-1.0), BoardPanel.colour(by, BAN_COLOUR), false, 2.0)
 	elif cid == _selected:
-		over.draw_rect(r.grow(-0.5), PixelTheme.GOLD, false, 1.0)
+		over.draw_rect(r.grow(-1.0), PixelTheme.GOLD, false, 2.0)
 	elif cid == _hovered:
 		over.draw_rect(r.grow(-0.5), PixelTheme.TEXT_DIM, false, 1.0)
 
@@ -439,16 +500,20 @@ func _build_slots() -> void:
 	var lap_box: HBoxContainer
 	for i in order.size():
 		if i % lap == 0:
-			var lap_col := VBoxContainer.new()
-			lap_col.add_theme_constant_override("separation", 1)
+			# Номер круга слева от его ячеек (строка над ними съела бы высоту сетки).
+			var lap_col := HBoxContainer.new()
+			lap_col.add_theme_constant_override("separation", 3)
 			lap_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_slots.add_child(lap_col)
 			var head := Label.new()
-			head.text = "ROUND %d" % (i / lap + 1)
+			head.text = "R%d" % (i / lap + 1)
+			head.tooltip_text = "Round %d" % (i / lap + 1)
+			head.mouse_filter = Control.MOUSE_FILTER_PASS
 			head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-			head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			lap_col.add_child(head)
 			lap_box = HBoxContainer.new()
+			lap_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			lap_box.add_theme_constant_override("separation", 2)
 			lap_col.add_child(lap_box)
 		var who := String(order[i])
@@ -464,7 +529,7 @@ func _build_slots() -> void:
 		slot.add_child(row)
 		var card := String((bans[i] as Dictionary).get("card", "")) if i < bans.size() else ""
 		var pic := TextureRect.new()
-		pic.custom_minimum_size = THUMB
+		pic.custom_minimum_size = STRIP_THUMB
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_SCALE
 		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -475,7 +540,7 @@ func _build_slots() -> void:
 		if card == "":
 			var slot_hole := PanelContainer.new()
 			slot_hole.add_theme_stylebox_override("panel", PixelTheme.box(PixelTheme.BG, colour.darkened(0.6), 1, 0, 0))
-			slot_hole.custom_minimum_size = THUMB
+			slot_hole.custom_minimum_size = STRIP_THUMB
 			slot_hole.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			row.add_child(slot_hole)
 		else:
@@ -528,9 +593,9 @@ func _refresh_info() -> void:
 	CardView._ignore_mouse(card)
 	_info.add_child(card)
 	card.size = CardView.PIXEL_SIZE
-	# Главная карта стоит на месте при любом наведении (критик UI): справа
-	# ровно место под подсказки, слева — под жетоны (их больше одного — внахлёст).
-	card.position = Vector2(maxf(0.0, floorf(_info.size.x - card.size.x * 2 - CardPreview.MARGIN * 2)), 24)
+	# Главная карта стоит на месте у левого края (критик UI); справа от неё —
+	# подсказки и жетоны.
+	card.position = Vector2(0, 24)
 	# Подпись — только состояние карты: полуколода и копии уже в подвале карты.
 	var deck := String(_cells[cid]["deck"]) if _cells.has(cid) else ""
 	var caption := Label.new()
@@ -552,7 +617,36 @@ func _refresh_info() -> void:
 	var tokens := CardPreview.token_cards(cid, card.size)
 	for t: CardView in tokens:
 		_info.add_child(t)
-	CardPreview.place_extras(card, tokens, tips, _info.get_global_rect())
+	_place_extras(card, tokens, tips)
+
+
+## Справа от карты — подсказки или жетоны (внахлёст, если их несколько). Есть
+## и то и другое — справа жетоны, подсказки под картой поверх чата.
+func _place_extras(card: CardView, tokens: Array[CardView], tips: Control) -> void:
+	var right := card.position.x + card.size.x + CardPreview.MARGIN
+	if tips != null:
+		tips.size = tips.get_combined_minimum_size()
+		tips.position = Vector2(right, card.position.y)
+		if not tokens.is_empty():
+			tips.position = Vector2(card.position.x, card.position.y + card.size.y + CardPreview.MARGIN)
+			tips.z_index = 1
+	_token_cycle = []
+	if tokens.is_empty():
+		return
+	card.draw.connect(func(): card.draw_rect(Rect2(-Vector2.ONE, card.size + Vector2(2, 2)), PixelTheme.GOLD, false, 1.0))
+	var step := card.size.x + CardPreview.MARGIN
+	if _info.size.x - right >= step * tokens.size():
+		for i in tokens.size():
+			tokens[i].position = Vector2(right + step * i, card.position.y)
+		return
+	# Все не влезают (критик UI: обрывки карт внахлёст читаются как поломка) —
+	# на одном месте по очереди, подпись «TOKEN 1/2».
+	for i in tokens.size():
+		tokens[i].position = Vector2(right, card.position.y)
+		tokens[i].visible = i == 0
+		tokens[i].set_meta("tag", "%s %d/%d" % [String(tokens[i].get_meta("tag")), i + 1, tokens.size()])
+	_token_cycle = tokens
+	_token_time = 0.0
 
 
 func _refresh() -> void:
@@ -573,7 +667,7 @@ func _refresh() -> void:
 	if turn == "":
 		_status.text = "Bans are done. Dealing the cards..."
 	elif mine and _selected != "":
-		_status.text = "YOUR BAN: ban %s (%s)?" % [String(CardLibrary.card_data(_selected).get("name", "")).to_upper(),
+		_status.text = "YOUR BAN - %s (%s)?" % [String(CardLibrary.card_data(_selected).get("name", "")).to_upper(),
 			SetupScreen.deck_title(String(_cells[_selected]["deck"]))]
 	elif mine:
 		_status.text = "YOUR BAN: pick a card in a half-deck without a ban this round, then BAN - or SKIP."
@@ -582,7 +676,24 @@ func _refresh() -> void:
 	_status.add_theme_color_override("font_color", PixelTheme.GOLD if mine else colour)
 
 
+## Сменить показанный жетон раз в TOKEN_SECONDS.
+func _cycle_tokens(delta: float) -> void:
+	if _token_cycle.size() < 2 or not is_instance_valid(_token_cycle[0]):
+		return
+	_token_time += delta
+	if _token_time < TOKEN_SECONDS:
+		return
+	_token_time = 0.0
+	var shown := 0
+	for i in _token_cycle.size():
+		if _token_cycle[i].visible:
+			shown = i
+	for i in _token_cycle.size():
+		_token_cycle[i].visible = i == (shown + 1) % _token_cycle.size()
+
+
 func _process(delta: float) -> void:
+	_cycle_tokens(delta)
 	if String(_view.get("turn", "")) == "" or _left <= 0.0:
 		return
 	var before := ceili(_left)

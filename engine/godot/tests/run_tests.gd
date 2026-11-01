@@ -3054,6 +3054,8 @@ func test_card_ban_lobby() -> void:
 	root.add_child(panel)
 	panel.show_view(four_view)
 	check_eq(panel.shown_cards().size(), 80, "лобби: 4 полуколоды по 20 карт")
+	check(panel.deck_shown(four.ban_decks[0]) and not panel.deck_shown(four.ban_decks[1]) and panel.deck_shown(four.ban_decks[2]),
+		"лобби: слева открыта 1-я полуколода, справа 3-я (вкладки)")
 	var red_card: String = GameSetup.half_deck_copies(four.ban_decks[0]).keys()[0]
 	four.ban("red", red_card)
 	panel.show_view(four.ban_view())
@@ -3061,7 +3063,7 @@ func test_card_ban_lobby() -> void:
 	check(not panel.can_ban(GameSetup.half_deck_copies(four.ban_decks[0]).keys()[1]), "лобби: в закрытой полуколоде не выбрать")
 	var open_card: String = GameSetup.half_deck_copies(four.ban_decks[1]).keys()[0]
 	panel.select(open_card)
-	check(panel.can_ban(open_card), "лобби: в открытой — можно")
+	check(panel.can_ban(open_card) and panel.deck_shown(four.ban_decks[1]), "лобби: в открытой — можно, вкладка её полуколоды открылась")
 	panel._on_chat("green", BanPanel.SUGGEST_PREFIX + open_card)
 	check(panel.chat_text().contains("suggests banning " + String(CardLibrary.card_data(open_card)["name"]).to_upper()),
 		"чат лобби: предложение бана показано именем карты")
