@@ -1316,7 +1316,7 @@
   },
   {
     "card_id": 49005,
-    "name": "Curate",
+    "name": "Archpriest",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CELESTIAL",
@@ -1360,11 +1360,11 @@
   },
   {
     "card_id": 49009,
-    "name": "Dragon Turtle",
+    "name": "Oracle of Strixhaven",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "HUMAN",
     "deck_vp": 1,
     "inner_circle_vp": 4,
     "ability_text": "Supplant a white troop.\nEnd of game: most cards in deck gains 5 VP, second most 2 VP (3 and 1 with 2 players)."
@@ -1459,11 +1459,11 @@
   },
   {
     "card_id": 49018,
-    "name": "Half-Dragon",
+    "name": "Archaic",
     "cost": 6,
     "aspect": "MALICE",
     "type": "CELESTIAL",
-    "race": "DRAGON",
+    "race": "CELESTIAL",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Scry 2, then draw a card.\nReturn any number of your troops ► +1 Power each.\nThis turn, Assassinate costs 1 Power less and returning a spy 2 Power less."
@@ -1481,7 +1481,7 @@
   },
   {
     "card_id": 49020,
-    "name": "Empyrean Iota",
+    "name": "Empyrean",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CELESTIAL",

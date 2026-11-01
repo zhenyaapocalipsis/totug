@@ -208,7 +208,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Ice Devil (49518) | Moroes (KAR_044) | `Moroes_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Troll (49519) | Shudderblock (TOY_501t) | `TOYFX_Shudderblock_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Fire Giant (49636) | Neeru Fireblade (LETL_823H) | `BARFX_NeeruFireblade_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Half-Dragon (49018) | Sire Denathrius (REV_906t) | `REVFX_SireDenathrius_Infused_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Half-Dragon~~ (—, существо убрано из игры NE-39; на 49018 теперь другое существо) | Sire Denathrius (REV_906t) | `REVFX_SireDenathrius_Infused_CustomSummon.prefab` | анимация свободна |
 | Wyvern (49522) | Captain Crowley (CAP_106) | `CAPFX_CaptainCrowley_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### freljord
