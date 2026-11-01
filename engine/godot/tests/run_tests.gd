@@ -7548,7 +7548,7 @@ func test_owner_fixes_1019() -> void:
 	check(any_sources.has(mine), "Move a troop: своё войско можно")
 	check(theirs == "" or any_sources.has(theirs), "Move a troop: чужое в Присутствии можно")
 	check(not MoveTroop.new(1)._legal_sources(state, "red").has(mine), "Move an enemy troop: своё нельзя")
-	var hc: Array = _collect_choose(CardLibrary.get_effect("49512"))   # Hobgoblin Captain
+	var hc: Array = _collect_choose(CardLibrary.get_effect("49512"))   # Degloth
 	check(not hc.is_empty() and (hc[0] as ChooseEffect).options[0] is MoveTroop
 		and ((hc[0] as ChooseEffect).options[0] as MoveTroop).any_troop, "Hobgoblin Captain: Move a troop — любое войско")
 

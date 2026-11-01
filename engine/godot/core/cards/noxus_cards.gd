@@ -55,13 +55,13 @@ static func build(card_id: String) -> CardEffect:
 			], ["+3 Power", "+1 Power, devour a card in the market, your hand or discard pile"])
 		"49504":  # Pseudodragon (Crimson Aristocrat)
 			return PlaceSpy.new(1, false, func(site): return _AristocratBonus.new(site))
-		"49505":  # Medusa (Lady of Blood)
+		"49505":  # Yochlol (Lady of Blood)
 			return SequenceEffect.new([
 				GainPower.new(3),
 				Might.new(1, func(): return SupplantTroop.new(1, true)),
 				Might.new(2, func(): return AssassinateTroop.new(1)),
 			])
-		"49506":  # Bugbear Stalker (Black Rose Spy)
+		"49506":  # Sweettooth Horror (Black Rose Spy)
 			return ChooseEffect.new([
 				SequenceEffect.new([PlaceSpy.new(1), devour(["market"], false, Callable(), "discount3")]),
 				ReturnOwnSpy.new(GainInfluence.new(4)),
@@ -81,7 +81,7 @@ static func build(card_id: String) -> CardEffect:
 				CardLibrary._GhostDevouredPileEffect.new(),
 				Might.new(1, func(): return GainInfluence.new(1)),
 			])
-		"49510":  # Ogre (Legion General)
+		"49510":  # Felhound (Legion General)
 			return SequenceEffect.new([
 				devour(["hand", "discard"], true, func(_cid): return ScryCards.new(1)),
 				ChooseEffect.new([SupplantTroop.new(1, true), DeployTroop.new(3)],
@@ -93,13 +93,13 @@ static func build(card_id: String) -> CardEffect:
 				Might.new(1, func(): return GainPower.new(1)),
 				_TrophyPower.new(),
 			])
-		"49512":  # Hobgoblin Captain (Incisive Tactician)
+		"49512":  # Degloth (Incisive Tactician)
 			return SequenceEffect.new([
 				ChooseEffect.new([MoveTroop.any(1), DeployTroop.new(3)], ["Move a troop", "Deploy 3 troops"]),
 				Might.new(1, func(): return GainInfluence.new(2)),
 				Might.new(2, func(): return DrawCards.new(1)),
 			])
-		"49513":  # Weretiger (Katarina)
+		"49513":  # Arcanaloth (Katarina)
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return PiltoverCards._AfterTroops.new(
 					AssassinateTroop.new(3, false, true, false, 0, 0, site), func(state, pid, before):
@@ -147,7 +147,7 @@ static func build(card_id: String) -> CardEffect:
 				Might.new(1, func(): return DeployTroop.new(4)),
 				Might.new(2, func(): return SupplantTroop.new(1)),
 			])
-		"49520":  # Fire Giant (Darius)
+		"49520":  # Daemogoth Titan (Darius)
 			return _GiantStrike.new()
 		"49521":  # Half-Dragon (Riven)
 			return SequenceEffect.new([GainPower.new(4), _GainFragment.new(), AtEndOfTurn.new(_Reforge.new())])

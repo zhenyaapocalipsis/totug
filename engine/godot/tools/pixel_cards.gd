@@ -221,6 +221,8 @@ const NAME_BREAKS := {
 	"PSEUDODRAGON": [6], "WERETIGER": [4],
 	# Kara-Tur без драконов (2026-11-01)
 	"BODYTAKER": [4], "THESSALHEART": [7], "COMMANDER": [3, 6], "ARCHPRIEST": [4], "STRIXHAVEN": [5],
+	# Avernus: исчадия вместо гоблиноидов и огров (2026-11-01)
+	"SWEETTOOTH": [5], "ARCANALOTH": [3, 6], "DAEMOGOTH": [5],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -359,22 +361,22 @@ const SINGLE_ART := {
 	49502: ["avernus/goblin_boss.png", Rect2i(0, 40, 600, 366)],
 	49503: ["avernus/hell_hound.png", Rect2i(110, 110, 700, 427)],
 	49504: ["avernus/pseudodragon.png", Rect2i(301, 480, 500, 305)],
-	49505: ["ixtal/minotaur_archaeologist.png", Rect2i(50, 120, 700, 427)],
-	49506: ["avernus/bugbear_stalker.png", Rect2i(140, 100, 600, 366)],
+	49505: ["avernus/yochlol.png", Rect2i(217, 20, 600, 366)],
+	49506: ["avernus/sweettooth_horror.jpeg", Rect2i(100, 90, 900, 549)],
 	49507: ["shadow/bearded_devil.png", Rect2i(210, 140, 600, 366)],
 	49508: ["avernus/bugbear_warrior.png", Rect2i(60, 20, 800, 488)],
 	49509: ["shurima/goblin_minion.jpeg", Rect2i(100, 40, 700, 427)],
-	49510: ["avernus/ogre.png", Rect2i(0, 110, 600, 366)],
+	49510: ["avernus/felhound.jpeg", Rect2i(150, 90, 700, 427)],
 	49511: ["avernus/minotaur.png", Rect2i(500, 150, 500, 305)],
-	49512: ["avernus/hobgoblin_captain.png", Rect2i(197, 170, 400, 244)],
-	49513: ["shadow/chain_devil.png", Rect2i(60, 10, 552, 336)],
+	49512: ["avernus/degloth.png", Rect2i(100, 30, 800, 488)],
+	49513: ["avernus/arcanaloth.jpeg", Rect2i(120, 50, 480, 293)],
 	49514: ["avernus/lamia.png", Rect2i(500, 0, 500, 305)],
 	49515: ["avernus/horned_devil.png", Rect2i(0, 90, 414, 253)],
 	49516: ["shadow/bone_devil.png", Rect2i(100, 200, 640, 390)],
 	49517: ["shadow/barbed_devil.png", Rect2i(0, 0, 700, 427)],
 	49518: ["avernus/ice_devil.jpeg", Rect2i(90, 50, 600, 366)],
 	49519: ["avernus/troll.jpeg", Rect2i(0, 0, 571, 348)],
-	49520: ["bandle/ogre_chitterlord.jpeg", Rect2i(100, 120, 820, 500)],
+	49520: ["avernus/daemogoth_titan.jpeg", Rect2i(0, 0, 666, 406)],
 	49521: ["celestial/erinyes.png", Rect2i(200, 90, 420, 256)],
 	49522: ["avernus/wyvern.png", Rect2i(100, 0, 800, 488)],
 	49523: ["avernus/blade_fragment.jpg", Rect2i(250, 390, 1000, 610)],

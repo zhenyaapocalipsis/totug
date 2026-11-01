@@ -40,7 +40,7 @@ Will-o'-Wisp	UNDEAD
 Spirit Naga	NAGA
 Rakshasa	RAKSHASA
 Nightmare	NIGHTMARE
-Chain Devil	DEVIL
+Arcanaloth	YUGOLOTH
 Barbed Devil	DEVIL
 Ghast	UNDEAD
 Treant	PLANT
@@ -77,13 +77,13 @@ Goblin Boss	GOBLINOID
 Hell Hound	HELL HOUND
 Pseudodragon	DRAGON
 Medusa	MEDUSA
-Bugbear Stalker	GOBLINOID
+Sweettooth Horror	HORROR
 Guard Captain	HUMAN
 Bugbear Warrior	GOBLINOID
 Mummy	UNDEAD
-Ogre	OGRE
+Felhound	DEMON
 Minotaur of Baphomet	MINOTAUR
-Hobgoblin Captain	GOBLINOID
+Degloth	DEMON
 Weretiger	LYCANTHROPE
 Lamia	LAMIA
 Horned Devil	DEVIL
@@ -182,7 +182,7 @@ Yeti Tyke	YETI
 Faerie Borrower	FEY
 High Fae Impostor	FEY
 Pixie Wonderbringer	FEY
-Ogre Chitterlord	OGRE
+Daemogoth Titan	DAEMOGOTH
 Goblin Hexer	GOBLINOID
 Faerie Dragon Adult	FAERIE DRAGON
 Githyanki Knight	GITH
@@ -218,7 +218,7 @@ Bandit Deceiver	HUMAN
 Lizardfolk Warden	LIZARDFOLK
 Yuan-ti Abomination	YUAN-TI
 Performer Maestro	HUMAN
-Minotaur Archaeologist	MINOTAUR
+Yochlol	DEMON
 Living Gust of Wind	LIVING SPELL
 Bullywug Bog Sage	BULLYWUG
 Cyclops Oracle	GIANT

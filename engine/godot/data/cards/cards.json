@@ -2497,22 +2497,22 @@
   },
   {
     "card_id": 49505,
-    "name": "Minotaur Archaeologist",
+    "name": "Yochlol",
     "cost": 5,
     "aspect": "MALICE",
     "type": "AVERNUS",
-    "race": "MINOTAUR",
+    "race": "DEMON",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "+3 Power\nMight: Supplant a white troop.\nMight: Assassinate a troop."
   },
   {
     "card_id": 49506,
-    "name": "Bugbear Stalker",
+    "name": "Sweettooth Horror",
     "cost": 3,
     "aspect": "GUILE",
     "type": "AVERNUS",
-    "race": "GOBLINOID",
+    "race": "HORROR",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy and devour a card in the market. The card that replaces it costs 3 less this turn.\n• Return one of your spies ► +4 Influence."
@@ -2552,11 +2552,11 @@
   },
   {
     "card_id": 49510,
-    "name": "Ogre",
+    "name": "Felhound",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
-    "race": "OGRE",
+    "race": "DEMON",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "You may devour a card in your hand or discard pile ► Scry 1.\nChoose one:\n• Supplant a white troop.\n• Deploy 3 troops."
@@ -2574,22 +2574,22 @@
   },
   {
     "card_id": 49512,
-    "name": "Hobgoblin Captain",
+    "name": "Degloth",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
-    "race": "GOBLINOID",
+    "race": "DEMON",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Move a troop.\n• Deploy 3 troops.\nMight: +2 Influence.\nMight: Draw a card."
   },
   {
     "card_id": 49513,
-    "name": "Chain Devil",
+    "name": "Arcanaloth",
     "cost": 7,
     "aspect": "GUILE",
     "type": "AVERNUS",
-    "race": "DEVIL",
+    "race": "YUGOLOTH",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Place a spy. You may assassinate up to 3 troops at that site, then you can't deploy there this turn.\n• Move up to 2 of your troops and draw a card."
@@ -2662,11 +2662,11 @@
   },
   {
     "card_id": 49520,
-    "name": "Ogre Chitterlord",
+    "name": "Daemogoth Titan",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
-    "race": "OGRE",
+    "race": "DAEMOGOTH",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Devour a card in your hand ► Assassinate a troop and draw a card. 15+ of your troops on the board: repeat any number of times. 30+: devour from your discard pile too and supplant instead."
