@@ -917,7 +917,7 @@
     "type": "ABERRATION",
     "deck_vp": 1,
     "inner_circle_vp": 3,
-    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Draw a card.\nEach opponent with more than 3 cards\nmust discard a card."
+    "ability_text": "Choose one:\n• Place a spy.\n• Return one of your spies ► Draw a card. Each opponent with more than 3 cards\nmust discard a card."
   },
   {
     "card_id": 48706,
@@ -2577,7 +2577,7 @@
     "type": "AVERNUS",
     "deck_vp": 3,
     "inner_circle_vp": 7,
-    "ability_text": "Devour a card in your hand ► Assassinate a troop and draw a card. 15+ troops on the board: repeat any number of times. 30+: devour from your discard pile too and supplant instead."
+    "ability_text": "Devour a card in your hand ► Assassinate a troop and draw a card. 15+ of your troops on the board: repeat any number of times. 30+: devour from your discard pile too and supplant instead."
   },
   {
     "card_id": 49521,

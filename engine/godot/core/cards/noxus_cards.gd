@@ -519,8 +519,10 @@ class _PlayFromDevoured extends CardEffect:
 
 
 ## Fire Giant (Darius): "Devour a card in your hand to assassinate a troop and
-## draw a card. 15+ troops on the board: repeat any number of times. 30+:
+## draw a card. 15+ of your troops on the board: repeat any number of times. 30+:
 ## devour from your discard pile too, supplant instead of assassinate".
+## Владелец (2026-11-01): 15/30 — именно свои войска на доске сейчас; живой
+## счётчик в тексте карты (CardLive) показывает, сколько их.
 class _GiantStrike extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var on_board := 0

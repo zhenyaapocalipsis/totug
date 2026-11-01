@@ -7407,6 +7407,29 @@ func test_avernus_deck() -> void:
 	check(NoxusCards.deploy_blocked(state, "red", site) and not NoxusCards.deploy_blocked(state, "blue", site),
 		"Weretiger: запрет только для того, кто играл карту")
 
+	# Fire Giant: 15/30 — свои войска на доске сейчас (владелец, 2026-11-01), живой счётчик
+	var troops_before := state.troops.duplicate()
+	var placed := 0
+	for slot_id: String in state.graph.slots.keys():
+		if placed < 31 and String(state.troops.get(slot_id, "")) != "blue":
+			state.troops[slot_id] = "red"
+			placed += 1
+	var on_board := 0
+	for owner: String in state.troops.values():
+		if owner == "red":
+			on_board += 1
+	var notes: Array = CardLive.entry(state, "red", "49520")["notes"]
+	check_eq([notes[0]["text"], notes[1]["text"], notes[1]["ok"]], ["(%d/15)" % on_board, "(%d/30)" % on_board, on_board >= 30],
+		"Fire Giant: живой счёт своих войск на доске (15+ и 30+)")
+	red.deck.discard_pile.append("48339")
+	var rfg := _play_with(state, "49520")
+	check(rfg.is_waiting() and rfg.pending.tag == "hand_or_discard" and rfg.pending.legal_options.has("48339"),
+		"Fire Giant: 30+ войск на доске — пожирать можно и из сброса")
+	TurnEngine.resume_card(state, "discard:48339", rfg)
+	check(not red.deck.discard_pile.has("48339"), "Fire Giant: карта из сброса съедена")
+	state.troops = troops_before
+	red.deck.played_pile.clear()
+
 	# Half-Dragon: Blade Fragment из запаса; все 3 осколка + Half-Dragon -> Blade of Exile
 	state.supplies.counts[NoxusCards.BLADE_FRAGMENT] = 3
 	red.deck.played_pile.clear()

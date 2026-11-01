@@ -33,6 +33,7 @@ const RULES := {
 	"48738": [["8 OR MORE TROOPS IN YOUR TROPHY HALL", "need", "trophy_hall", 8]],  # Revenant
 	"49001": [["6 OR MORE CARDS IN YOUR INNER CIRCLE", "need", "inner_circle", 6]],  # Priest
 	"49015": [["LEFT YOUR BARRACKS", "need", "troops_left", 10]],  # Solar
+	"49520": [["TROOPS ON THE BOARD", "need", "troops_on_board", 15], ["30+", "need", "troops_on_board", 30]],  # Fire Giant
 	"49102": [["PUT AN INSANE OUTCAST INTO YOUR HAND", "have", "outcast_supply"]],  # Death Dog
 	"49112": [["INSANE OUTCASTS FROM YOUR DISCARD PILE", "count", "discard_outcasts"]],  # Spirit Naga
 	"49019": [["GIANT EAGLE IN YOUR DISCARD PILE", "have", "eagle_discard"],  # Scout
