@@ -1032,7 +1032,7 @@ const SCRIPTS := {
 		"cues": [[0.0, "FyrakkTheBlazing_CustomSummon_Friendly_Sound", 0.8]],
 		# CameraShaker2
 		"shakers": [[1.283, 1.75, 0.6, [[0, 1], [1, 0]], 0.075], [0, 1.283, 0.1, [[0, 0], [1, 1]], 0.075]]},
-	# Ursol (EDR_259) — Gold Dragon: жёлтая молния бьёт сверху в точку посадки, золотой взрыв.
+	# Ursol (EDR_259) — Adult Gold Dragon: жёлтая молния бьёт сверху в точку посадки, золотой взрыв.
 	# Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
 	# Владелец выбрал в HsBrowser 2026-10-27.
 	"ursol": {"frames": "ursol", "sounds": "ursol",

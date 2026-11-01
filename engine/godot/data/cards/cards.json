@@ -1503,7 +1503,7 @@
   },
   {
     "card_id": 49022,
-    "name": "Gold Dragon",
+    "name": "Adult Gold Dragon",
     "cost": 8,
     "aspect": "MALICE",
     "type": "CELESTIAL",
@@ -1532,7 +1532,7 @@
     "race": "DRAGON",
     "deck_vp": 4,
     "inner_circle_vp": 9,
-    "ability_text": "Assassinate up to 4 troops at one site, or return that many of your troops ► Supplant them instead.\nTransform into Gold Dragon."
+    "ability_text": "Assassinate up to 4 troops at one site, or return that many of your troops ► Supplant them instead.\nTransform into Adult Gold Dragon."
   },
   {
     "card_id": 49100,

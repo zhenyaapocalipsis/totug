@@ -258,9 +258,9 @@ const SINGLE_ART := {
 	49019: ["celestial/scout.jpg", Rect2i(180, 250, 440, 268)],
 	49020: ["celestial/empyrean.webp", Rect2i(470, 110, 500, 305)],
 	49021: ["celestial/archon_of_boundaries.jpeg", Rect2i(100, 40, 800, 488)],
-	49022: ["celestial/gold_dragon.png", Rect2i(180, 340, 360, 220)],
+	49022: ["celestial/adult_gold_dragon.png", Rect2i(150, 40, 700, 427)],
 	49023: ["celestial/giant_eagle.jpg", Rect2i(279, 240, 520, 317)],
-	49024: ["celestial/ancient_gold_dragon.jpg", Rect2i(130, 30, 520, 317)],
+	49024: ["celestial/ancient_gold_dragon.jpg", Rect2i(85, 250, 600, 366)],
 	# Shadow Isles (New Era): арты с фоном с D&D Beyond в cards/shadow/.
 	49100: ["shadow/specter.jpeg", Rect2i(390, 10, 480, 293)],
 	49101: ["shadow/vampire_familiar.jpeg", Rect2i(137, 79, 440, 268)],
