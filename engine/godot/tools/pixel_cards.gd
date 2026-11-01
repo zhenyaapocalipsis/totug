@@ -225,6 +225,8 @@ const NAME_BREAKS := {
 	# Avernus: исчадия вместо гоблиноидов и огров (2026-11-01, 2026-11-02)
 	"ARCANALOTH": [3, 6], "DAEMOGOTH": [5], "RELENTLESS": [2, 6], "JUGGERNAUT": [3, 6],
 	"NIGHTMARE": [5], "VASAVADAN": [4],
+	# Waterdeep: конструкты (2026-11-02)
+	"ARCHIVIST": [5], "CLOCKWORK": [5], "CARRIONETTE": [6],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -293,16 +295,16 @@ const SINGLE_ART := {
 	49124: ["shadow/swarm_of_zombie_limbs.jpeg", Rect2i(60, 220, 800, 488)],
 	# Piltover & Zaun (New Era): арты 2024 года с фоном с D&D Beyond в cards/pz/.
 	49200: ["pz/tough_boss.jpeg", Rect2i(0, 20, 440, 268)],
-	49201: ["bandle/modron_monodrone.jpeg", Rect2i(0, 150, 800, 488)],
-	49202: ["pz/bandit_captain.jpeg", Rect2i(0, 270, 326, 199)],
+	49201: ["pz/cogwork_archivist.jpeg", Rect2i(0, 0, 648, 395)],
+	49202: ["pz/ebonbane.jpeg", Rect2i(160, 160, 620, 378)],
 	49203: ["pz/rust_monster.jpeg", Rect2i(0, 100, 700, 427)],
 	49204: ["pz/black_pudding.png", Rect2i(170, 300, 560, 341)],
 	49205: ["pz/spy.jpeg", Rect2i(0, 90, 446, 272)],
 	49206: ["pz/otyugh.jpeg", Rect2i(250, 60, 700, 427)],
-	49207: ["pz/clay_golem.png", Rect2i(133, 120, 540, 329)],
+	49207: ["pz/clockwork_behir.jpeg", Rect2i(100, 60, 820, 500)],
 	49208: ["pz/gelatinous_cube.jpeg", Rect2i(0, 330, 800, 488)],
 	49209: ["pz/ochre_jelly.png", Rect2i(150, 20, 700, 427)],
-	49210: ["pz/mimic.png", Rect2i(50, 100, 820, 500)],
+	49210: ["pz/carrionette.png", Rect2i(0, 90, 442, 269)],
 	49211: ["pz/stone_golem.jpeg", Rect2i(100, 0, 560, 341)],
 	49212: ["pz/assassin.png", Rect2i(237, 60, 440, 268)],
 	49213: ["pz/iron_golem.png", Rect2i(80, 40, 600, 366)],

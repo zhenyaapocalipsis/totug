@@ -32,12 +32,12 @@ static func build(card_id: String) -> CardEffect:
 					func(s, pid, before): return ScryCards.new(1) if _moved_next_to_other(s, pid, before) else null),
 				FocusEffect.new("CONQUEST", DrawCards.new(1)),
 			])
-		"49201":  # Wererat (Zaun Diva)
+		"49201":  # Cogwork Archivist (Zaun Diva)
 			return SequenceEffect.new([
 				ChooseEffect.new([GainPower.new(2), GainInfluence.new(2)], ["+2 Power", "+2 Influence"]),
 				FocusEffect.new("MALICE", SequenceEffect.new([DrawCards.new(1), DiscardCardEffect.new(1)])),
 			])
-		"49202":  # Bandit Captain (Midenstokke Henchmen)
+		"49202":  # Ebonbane (Midenstokke Henchmen)
 			return SequenceEffect.new([
 				ChooseEffect.new([AssassinateTroop.new(1), SupplantTroop.new(1, true)],
 					["Assassinate a troop", "Supplant a white troop"]),
@@ -73,7 +73,7 @@ static func build(card_id: String) -> CardEffect:
 				_promote_obedience(card_id),
 				FocusEffect.new("CONQUEST", MoveTroop.any(1)),
 			])
-		"49207":  # Clay Golem (Plaza Guardian)
+		"49207":  # Clockwork Behir (Plaza Guardian)
 			return SequenceEffect.new([GainPower.new(2), _promote_obedience(card_id)])
 		"49208":  # Gelatinous Cube (Patrol Wardens)
 			return _BothIfFocus.new("AMBITION",
@@ -82,7 +82,7 @@ static func build(card_id: String) -> CardEffect:
 				SequenceEffect.new([GainInfluence.new(2), ReturnTroopOrSpy.new(1, false, false, true)]))
 		"49209":  # Ochre Jelly (Dropboarder)
 			return SequenceEffect.new([PlaceSpy.new(1), GainPower.new(1), _promote_obedience(card_id)])
-		"49210":  # Mimic (Ferros Elite)
+		"49210":  # Carrionette (Ferros Elite)
 			return SequenceEffect.new([GainInfluence.new(2), _promote_obedience(card_id)])
 		"49211":  # Stone Golem (Vi)
 			return SequenceEffect.new([

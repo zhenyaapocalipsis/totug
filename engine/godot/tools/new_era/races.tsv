@@ -52,15 +52,15 @@ Phase Spider	PHASE SPIDER
 Twig Blight	PLANT
 Tough Boss	HUMAN
 Wererat	LYCANTHROPE
-Bandit Captain	HUMAN
+Ebonbane	CONSTRUCT
 Rust Monster	RUST MONSTER
 Black Pudding	OOZE
 Spy	HUMAN
 Otyugh	OTYUGH
-Clay Golem	CONSTRUCT
+Clockwork Behir	CONSTRUCT
 Gelatinous Cube	OOZE
 Ochre Jelly	OOZE
-Mimic	MIMIC
+Carrionette	CONSTRUCT
 Stone Golem	CONSTRUCT
 Assassin	HUMAN
 Iron Golem	CONSTRUCT
@@ -171,7 +171,7 @@ Faerie Pathlighter	FEY
 Faerie Dragon Youth	FAERIE DRAGON
 Witherbloom Apprentice	HUMAN
 Witchkite	FEY
-Modron Monodrone	CONSTRUCT
+Cogwork Archivist	CONSTRUCT
 High Fae Mage	FEY
 Icewind Kobold	KOBOLD
 Leprechaun	FEY

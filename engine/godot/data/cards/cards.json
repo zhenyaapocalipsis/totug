@@ -1822,7 +1822,7 @@
   },
   {
     "card_id": 49201,
-    "name": "Modron Monodrone",
+    "name": "Cogwork Archivist",
     "cost": 3,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1833,11 +1833,11 @@
   },
   {
     "card_id": 49202,
-    "name": "Bandit Captain",
+    "name": "Ebonbane",
     "cost": 4,
     "aspect": "MALICE",
     "type": "WATERDEEP",
-    "race": "HUMAN",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Assassinate a troop.\n• Supplant a white troop.\nMalice Focus ► +2 Power"
@@ -1888,7 +1888,7 @@
   },
   {
     "card_id": 49207,
-    "name": "Clay Golem",
+    "name": "Clockwork Behir",
     "cost": 5,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1921,11 +1921,11 @@
   },
   {
     "card_id": 49210,
-    "name": "Mimic",
+    "name": "Carrionette",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
-    "race": "MIMIC",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "+2 Influence\nAt end of turn, promote an Obedience card played this turn."
