@@ -82,10 +82,12 @@ const COL := float(MarketPanel.WIDTH) + HALL_EXTRA
 ## сводкой ходов и доской (владелец, 2026-09-28). Зона доски — 598 при самой
 ## широкой 4p-схеме 596, схема 1:1.
 const TRACKER_W := float(DeckTracker.WIDTH)
-## Ширина столбика кнопок стопок под рынком; остальное — End turn.
-const PILES_W := 58.0
-## Высота низа правой колонки (стопки и End turn): ниже ряда руки, чтобы
-## таблице четырёх игроков хватило места над рынком (владелец, 2026-10-03).
+## Кнопки PAUSE и MENU столбиком справа от End turn (владелец, 2026-11-01);
+## стопки INNER и DEVOUR переехали под дектрекер.
+const SIDE_BUTTONS_W := 40.0
+## Высота низа правой колонки (End turn с кнопками) и стопок под дектрекером:
+## ниже ряда руки, чтобы таблице четырёх игроков хватило места над рынком
+## (владелец, 2026-10-03).
 const RIGHT_BOTTOM_H := 48.0
 ## Полоска цвета ходящего на кнопке End turn — вместо ника, который в кнопку
 ## не влезал (владелец, 2026-10-03).
@@ -221,6 +223,11 @@ var _timer_label: Label
 ## End turn она рядом с таймером не помещается.
 var _last_round_label: Label
 var _deploy_vp_button: Button
+## Справа от End turn: пауза (в сети — общая, в хотсите — своя) и меню Esc.
+var _pause_button: Button
+var _menu_button: Button
+## Своя пауза хотсита кнопкой PAUSE: стоят таймеры и боты.
+var _local_pause := false
 var _preview: CardPreview
 var _pause_menu: PauseMenu
 var _game_over_panel: GameOverPanel
@@ -476,7 +483,7 @@ func _build_layout() -> void:
 	_deck_tracker = DeckTracker.new()
 	add_child(_deck_tracker)
 
-	# 3. Стопки кнопками одна под другой под рынком: свой Внутренний круг и
+	# 3. Стопки кнопками одна под другой под дектрекером: свой Внутренний круг и
 	# общая для всех стопка сожранных карт (из неё же берётся «призрак»,
 	# Ghost). По щелчку — весь список карт стопки.
 	_piles_column = VBoxContainer.new()
@@ -533,6 +540,11 @@ func _build_layout() -> void:
 	_last_round_label.visible = false
 	_last_round_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 	_end_turn_area.add_child(_last_round_label)
+	_pause_button = _side_button("PAUSE", _on_pause_pressed)
+	# Реплей ставят на паузу своей полосой, зрителю пауза не положена.
+	_pause_button.visible = replay_bar == null and not watching
+	_menu_button = _side_button("MENU", func(): _pause_menu.visible = true)
+	_menu_button.tooltip_text = "Menu (Esc)"
 
 	# 1. Рука — поверх остальных зон: поднятая, она накрывает зону сыгранных карт.
 	_hand_panel = HandPanel.new()
@@ -819,6 +831,30 @@ func _tick_pause(delta: float) -> void:
 	for i in mini(rows.size(), lefts.size()):
 		var left := int(ceilf(maxf(0.0, lefts[i] - _pause_elapsed)))
 		((rows[i] as HBoxContainer).get_child(1) as Label).text = "%d:%02d" % [left / 60, left % 60]
+
+
+## Мелкая кнопка справа от End turn (PAUSE, MENU); место задаёт _layout.
+func _side_button(text: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.focus_mode = Control.FOCUS_NONE
+	SetupScreen._style_button(button)
+	button.pressed.connect(action)
+	add_child(button)
+	return button
+
+
+## PAUSE: в сети — общая пауза (снимает её RESUME на плашке паузы), в хотсите —
+## своя: таймеры и боты стоят, пока не нажать кнопку ещё раз.
+func _on_pause_pressed() -> void:
+	if net != null:
+		net.request_pause(true)
+		return
+	_local_pause = not _local_pause
+	_pause_button.text = "RESUME" if _local_pause else "PAUSE"
+	_pause_button.add_theme_color_override("font_color",
+		PixelTheme.GOLD if _local_pause else PixelTheme.TEXT)
+	_note("Paused: timers and bots wait." if _local_pause else "Resumed.")
 
 
 func _square_button() -> Button:
@@ -1115,9 +1151,12 @@ func _layout() -> void:
 	_place(_market_panel, market_x, market_y, COL, market_h)
 	var players_y := top_y + TOP_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
-	_place(_piles_column, market_x, right_bottom_y, PILES_W, RIGHT_BOTTOM_H)
-	var ew := COL - PILES_W - GAP
-	_place(_end_turn_area, market_x + PILES_W + GAP, right_bottom_y, ew, RIGHT_BOTTOM_H)
+	var ew := COL - SIDE_BUTTONS_W - GAP
+	_place(_end_turn_area, market_x, right_bottom_y, ew, RIGHT_BOTTOM_H)
+	var side_x := market_x + ew + GAP
+	var side_h := floorf((RIGHT_BOTTOM_H - GAP) * 0.5)
+	_place(_pause_button, side_x, right_bottom_y, SIDE_BUTTONS_W, side_h)
+	_place(_menu_button, side_x, h - MARGIN - side_h, SIDE_BUTTONS_W, side_h)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
 	# 2026-09-27: чат убран, сводка — до низа), за ней дектрекер тоже во всю
@@ -1127,7 +1166,8 @@ func _layout() -> void:
 	var board_h := bottom_y - GAP - top_y
 	_place(_feed, a_x, top_y, TurnFeed.WIDTH, h - MARGIN - top_y)
 	var tracker_x := a_x + TurnFeed.WIDTH + GAP
-	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, h - MARGIN - top_y)
+	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, right_bottom_y - GAP - top_y)
+	_place(_piles_column, tracker_x, right_bottom_y, TRACKER_W, RIGHT_BOTTOM_H)
 	var board_x := tracker_x + TRACKER_W + GAP
 	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
 	if _god_panel != null:
@@ -2202,7 +2242,7 @@ func _tick_decision_timer(pending: Dictionary, delta: float) -> void:
 
 
 func _clock_stopped() -> bool:
-	return _pause_menu.visible or is_paused()
+	return _pause_menu.visible or is_paused() or _local_pause
 
 
 ## Ответ по истечении времени: отказ, если он разрешён ("" / -1 / false),
