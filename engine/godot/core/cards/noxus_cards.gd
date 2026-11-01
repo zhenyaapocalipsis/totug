@@ -30,7 +30,7 @@ const FRAGMENT_SUPPLY := 3
 
 static func build(card_id: String) -> CardEffect:
 	match card_id:
-		"49500":  # Bandit (Armed Acquisitioner)
+		"49500":  # Relentless Juggernaut (Armed Acquisitioner)
 			return SequenceEffect.new([GainInfluence.new(2), devour(["market"], true, Callable(), "pick3")])
 		"49501":  # Wereboar (Legion Marauder)
 			return PiltoverCards._AfterTroops.new(ChooseEffect.new([
@@ -40,7 +40,7 @@ static func build(card_id: String) -> CardEffect:
 				if PiltoverCards._moved_next_to_other(state, pid, before) or _hit_player(state, pid, before):
 					return devour(["hand", "market"], true)
 				return null)
-		"49502":  # Goblin Boss (Crimson Disciple)
+		"49502":  # Relentless Slasher (Crimson Disciple)
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
 					func(state, _pid): return CelestialCards.site_is_full(state, site),
@@ -61,7 +61,7 @@ static func build(card_id: String) -> CardEffect:
 				Might.new(1, func(): return SupplantTroop.new(1, true)),
 				Might.new(2, func(): return AssassinateTroop.new(1)),
 			])
-		"49506":  # Sweettooth Horror (Black Rose Spy)
+		"49506":  # Speaker Devil (Black Rose Spy)
 			return ChooseEffect.new([
 				SequenceEffect.new([PlaceSpy.new(1), devour(["market"], false, Callable(), "discount3")]),
 				ReturnOwnSpy.new(GainInfluence.new(4)),
@@ -75,7 +75,7 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49508":  # Bugbear Warrior (Reckless Trifarian)
 			return SequenceEffect.new([AssassinateTroop.new(1), _TrophyPower.new()])
-		"49509":  # Mummy (Grave Physician)
+		"49509":  # Relentless Nightmare (Grave Physician)
 			return SequenceEffect.new([
 				GainInfluence.new(2),
 				CardLibrary._GhostDevouredPileEffect.new(),

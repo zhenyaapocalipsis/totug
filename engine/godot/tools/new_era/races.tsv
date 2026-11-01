@@ -73,11 +73,10 @@ Behir	BEHIR
 Harpy	HARPY
 Bandit	HUMAN
 Wereboar	LYCANTHROPE
-Goblin Boss	GOBLINOID
+Speaker Devil	DEVIL
 Hell Hound	HELL HOUND
 Pseudodragon	DRAGON
 Medusa	MEDUSA
-Sweettooth Horror	HORROR
 Guard Captain	HUMAN
 Bugbear Warrior	GOBLINOID
 Mummy	UNDEAD
@@ -126,8 +125,8 @@ Steam Mephit	MEPHIT
 Commoner	HUMAN
 Tough	HUMAN
 Incubus	INCUBUS
-Goblin Warrior	GOBLINOID
-Goblin Minion	GOBLINOID
+Relentless Juggernaut	FIEND
+Relentless Nightmare	FIEND
 Dragon Turtle	DRAGON
 Magma Mephit	MEPHIT
 Roper	ROPER
@@ -226,6 +225,7 @@ Kenku	KENKU
 Aarakocra Aeromancer	AARAKOCRA
 Bone Naga	NAGA
 Strahd von Zarovich	UNDEAD
+Ramya Vasavadan	UNDEAD
 Relentless Slasher	FIEND
 Nightmare Haunt	ABERRATION
 Zombie Plague Spreader	UNDEAD

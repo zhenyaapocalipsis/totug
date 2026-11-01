@@ -49,7 +49,7 @@ const RULES := {
 	"49108": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Gargoyle
 	"49107": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Sea Hag
 	"49110": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Lemure
-	"49115": [["PER INSANE OUTCAST IN YOUR DISCARD PILE", "per", "discard_outcasts_x3", 1]],  # Chain Devil
+	"49115": [["PER INSANE OUTCAST IN YOUR DISCARD PILE", "per", "discard_outcasts_x3", 1]],  # Ramya Vasavadan
 	"49113": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Rakshasa
 		["CARDS IN YOUR INNER CIRCLE", "per", "inner_circle", 3]],
 	"49114": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Nightmare

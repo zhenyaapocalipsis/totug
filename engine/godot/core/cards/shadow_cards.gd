@@ -126,7 +126,7 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49114":  # Nightmare (Hecarim)
 			return SequenceEffect.new([DeployTroop.new(4), GainVpPerN.new("vp", "sites_controlled", 2, 1)])
-		"49115":  # Chain Devil (Thresh) — 0 VP за Outcast: Scoring.card_bonus_vp
+		"49115":  # Ramya Vasavadan (Thresh) — 0 VP за Outcast: Scoring.card_bonus_vp
 			return SequenceEffect.new([_CycleHand.new(), _PowerPerDiscardedOutcast.new(3)])
 		"49116":  # Barbed Devil (Vex)
 			return ChooseEffect.new([

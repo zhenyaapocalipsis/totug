@@ -35,6 +35,7 @@ const MINI_SHORT_NAMES := {
 	"EARTH ELEMENTAL MYRMIDON": "EARTH ELEM. MYRMIDON",
 	"AIR ELEMENTAL MYRMIDON": "AIR ELEM. MYRMIDON",
 	"ARCHON OF BOUNDARIES": "BOUNDARY ARCHON",
+	"RELENTLESS JUGGERNAUT": "JUGGERNAUT",
 	"ORACLE OF STRIXHAVEN": "STRIXHAVEN ORACLE",
 }
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
@@ -221,8 +222,9 @@ const NAME_BREAKS := {
 	"PSEUDODRAGON": [6], "WERETIGER": [4],
 	# Kara-Tur без драконов (2026-11-01)
 	"BODYTAKER": [4], "THESSALHEART": [7], "COMMANDER": [3, 6], "ARCHPRIEST": [4], "STRIXHAVEN": [5],
-	# Avernus: исчадия вместо гоблиноидов и огров (2026-11-01)
-	"SWEETTOOTH": [5], "ARCANALOTH": [3, 6], "DAEMOGOTH": [5],
+	# Avernus: исчадия вместо гоблиноидов и огров (2026-11-01, 2026-11-02)
+	"ARCANALOTH": [3, 6], "DAEMOGOTH": [5], "RELENTLESS": [2, 6], "JUGGERNAUT": [3, 6],
+	"NIGHTMARE": [5], "VASAVADAN": [4],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -279,7 +281,7 @@ const SINGLE_ART := {
 	49112: ["shadow/spirit_naga.png", Rect2i(0, 60, 760, 463)],
 	49113: ["shadow/strahd_von_zarovich.jpeg", Rect2i(215, 100, 560, 341)],
 	49114: ["shadow/nightmare.png", Rect2i(50, 40, 900, 549)],
-	49115: ["shadow/relentless_slasher.jpeg", Rect2i(150, 0, 816, 498)],
+	49115: ["shadow/ramya_vasavadan.jpeg", Rect2i(40, 200, 700, 427)],
 	49116: ["shadow/nightmare_haunt.jpeg", Rect2i(150, 20, 700, 427)],
 	49117: ["shadow/ghast.png", Rect2i(60, 30, 520, 317)],
 	49118: ["shadow/zombie_plague_spreader.jpeg", Rect2i(0, 20, 700, 427)],
@@ -356,16 +358,16 @@ const SINGLE_ART := {
 	49418: ["mercenaries/xanathar_zushaxx.jpg", Rect2i(100, 0, 590, 360)],
 	49419: ["mercenaries/xanathar_surveillance.jpg", Rect2i(0, 69, 690, 421)],
 	# Avernus (New Era Noxus): D&D Beyond 2024, жетоны Half-Dragon — из PDF мода
-	49500: ["shurima/goblin_warrior.png", Rect2i(0, 230, 574, 350)],
+	49500: ["avernus/relentless_juggernaut.jpeg", Rect2i(50, 60, 800, 488)],
 	49501: ["avernus/wereboar.jpeg", Rect2i(0, 30, 559, 341)],
-	49502: ["avernus/goblin_boss.png", Rect2i(0, 40, 600, 366)],
+	49502: ["shadow/relentless_slasher.jpeg", Rect2i(150, 0, 816, 498)],
 	49503: ["avernus/hell_hound.png", Rect2i(110, 110, 700, 427)],
 	49504: ["avernus/pseudodragon.png", Rect2i(301, 480, 500, 305)],
 	49505: ["avernus/yochlol.png", Rect2i(217, 20, 600, 366)],
-	49506: ["avernus/sweettooth_horror.jpeg", Rect2i(100, 90, 900, 549)],
+	49506: ["avernus/speaker_devil.jpeg", Rect2i(50, 60, 760, 463)],
 	49507: ["shadow/bearded_devil.png", Rect2i(210, 140, 600, 366)],
 	49508: ["avernus/bugbear_warrior.png", Rect2i(60, 20, 800, 488)],
-	49509: ["shurima/goblin_minion.jpeg", Rect2i(100, 40, 700, 427)],
+	49509: ["avernus/relentless_nightmare.png", Rect2i(100, 0, 800, 488)],
 	49510: ["avernus/felhound.jpeg", Rect2i(150, 90, 700, 427)],
 	49511: ["avernus/minotaur.png", Rect2i(500, 150, 500, 305)],
 	49512: ["avernus/degloth.png", Rect2i(100, 30, 800, 488)],

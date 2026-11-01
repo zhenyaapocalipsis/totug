@@ -1701,11 +1701,11 @@
   },
   {
     "card_id": 49115,
-    "name": "Relentless Slasher",
+    "name": "Ramya Vasavadan",
     "cost": 7,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
-    "race": "FIEND",
+    "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Discard any number of cards, then draw that many.\n+3 Power per Insane Outcast in your discard pile.\nInsane Outcasts in your deck are worth 0 VP."
@@ -2442,11 +2442,11 @@
   },
   {
     "card_id": 49500,
-    "name": "Goblin Warrior",
+    "name": "Relentless Juggernaut",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "AVERNUS",
-    "race": "GOBLINOID",
+    "race": "FIEND",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nYou may devour a card in the market. Look at the top 3 cards of the market deck: one replaces it, the rest go to the bottom."
@@ -2464,11 +2464,11 @@
   },
   {
     "card_id": 49502,
-    "name": "Goblin Boss",
+    "name": "Relentless Slasher",
     "cost": 3,
     "aspect": "GUILE",
     "type": "AVERNUS",
-    "race": "GOBLINOID",
+    "race": "FIEND",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, you may devour a card in your hand or discard pile.\n• Return one of your spies ► +4 Power."
@@ -2508,11 +2508,11 @@
   },
   {
     "card_id": 49506,
-    "name": "Sweettooth Horror",
+    "name": "Speaker Devil",
     "cost": 3,
     "aspect": "GUILE",
     "type": "AVERNUS",
-    "race": "HORROR",
+    "race": "DEVIL",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy and devour a card in the market. The card that replaces it costs 3 less this turn.\n• Return one of your spies ► +4 Influence."
@@ -2541,11 +2541,11 @@
   },
   {
     "card_id": 49509,
-    "name": "Goblin Minion",
+    "name": "Relentless Nightmare",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "AVERNUS",
-    "race": "GOBLINOID",
+    "race": "FIEND",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nThis turn you may recruit the top card of the devoured pile.\nMight: +1 Influence."
