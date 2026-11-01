@@ -423,7 +423,7 @@ static func section_label(text: String) -> Label:
 
 
 ## Заголовок части колонки — светлый текст на полосе цвета рамки: MOVES над
-## сводкой, DECK и DISCARD в дектрекере (владелец, 2026-10-03: серые
+## сводкой (владелец, 2026-10-03: серые
 ## подписи терялись среди карт).
 static func band_label(text: String) -> Label:
 	var label := Label.new()

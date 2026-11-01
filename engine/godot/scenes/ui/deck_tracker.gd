@@ -18,8 +18,15 @@ const PAD := 1
 const MAX_STEP := CARD.y + 2
 ## Тоньше полоска уже ничего не говорит; что не влезло — обрежет край.
 const MIN_STEP := 3
-## Разделитель: пиксель отступа, линия, пиксель отступа.
-const DIVIDER_H := 3
+## Разделитель: два пикселя отступа, линия в два пикселя, два пикселя отступа
+## (владелец, 2026-11-01: части должны отделяться заметно).
+const DIVIDER_H := 6
+const DIVIDER_LINE := 2
+## Заголовки частей — яркие полосы с тёмным текстом, у каждой части свой цвет:
+## колода холодная, сброс тёплый; число карт — справа (владелец, 2026-11-01:
+## фиолетовые подписи сливались с именами карт).
+const DECK_BAND := Color("9cc8f0")
+const DISCARD_BAND := PixelTheme.GOLD
 ## Слева — корешок с надписью DECKTRACKER (владелец, 2026-09-28); всё
 ## остальное начинается за ним и зазором.
 const LEFT := PAD + SpineLabel.WIDTH + PAD
@@ -27,8 +34,11 @@ const LEFT := PAD + SpineLabel.WIDTH + PAD
 const WIDTH := LEFT + CARD.x + PAD
 
 var _style: StyleBoxFlat
+## Полосы заголовков (слово слева) и числа карт на них (справа).
 var _deck_label: Label
 var _discard_label: Label
+var _deck_count: Label
+var _discard_count: Label
 var _divider: ColorRect
 ## Пул лиц: сначала карты колоды, за ними сброса. Лишние скрыты.
 var _cards: Array[CardView] = []
@@ -45,15 +55,40 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_spine = SpineLabel.new("DECKTRACKER")
 	add_child(_spine)
-	_deck_label = GameScreen.band_label("DECK 0")
-	add_child(_deck_label)
+	_deck_label = _band("DECK", DECK_BAND)
+	_deck_count = _band_count(_deck_label)
 	_divider = ColorRect.new()
-	_divider.color = PixelTheme.BORDER
+	_divider.color = PixelTheme.TEXT_DIM
 	_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_divider)
-	_discard_label = GameScreen.band_label("DISCARD 0")
-	add_child(_discard_label)
+	_discard_label = _band("DISCARD", DISCARD_BAND)
+	_discard_count = _band_count(_discard_label)
 	resized.connect(_arrange)
+
+
+## Полоса заголовка части: тёмное слово на полосе цвета части.
+func _band(text: String, colour: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.clip_text = true
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_color", PixelTheme.BG)
+	label.add_theme_stylebox_override("normal", PixelTheme.box(colour, colour, 0, 1, 0))
+	add_child(label)
+	return label
+
+
+## Число карт части — справа на её полосе.
+func _band_count(band: Label) -> Label:
+	var count := Label.new()
+	count.text = "0"
+	count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count.add_theme_color_override("font_color", PixelTheme.BG)
+	count.set_anchors_preset(Control.PRESET_FULL_RECT)
+	count.offset_right = -1
+	band.add_child(count)
+	return count
 
 
 ## Экран задаёт полосе размер ещё до входа в дерево, а тогда resized не
@@ -66,8 +101,8 @@ func _ready() -> void:
 func set_cards(deck: Array, discard: Array, owner: String = "") -> void:
 	_deck = sorted_by_cost(deck)
 	_discard = sorted_by_cost(discard)
-	_deck_label.text = "DECK %d" % _deck.size()
-	_discard_label.text = "DISCARD %d" % _discard.size()
+	_deck_count.text = str(_deck.size())
+	_discard_count.text = str(_discard.size())
 	var ids := _deck + _discard
 	# Новое лицо сразу со своей картой: без id CardView не берёт пиксельную
 	# картинку и собирается текстовой карточкой.
@@ -132,8 +167,8 @@ func _arrange() -> void:
 	y += line
 	y = _lay(0, _deck.size(), x, y, step)
 	_discard_top = y
-	_divider.position = Vector2(LEFT, y + 1)
-	_divider.size = Vector2(inner_w, 1)
+	_divider.position = Vector2(LEFT, y + (DIVIDER_H - DIVIDER_LINE) / 2)
+	_divider.size = Vector2(inner_w, DIVIDER_LINE)
 	y += DIVIDER_H
 	_discard_label.position = Vector2(LEFT, y)
 	_discard_label.size = Vector2(inner_w, line)
