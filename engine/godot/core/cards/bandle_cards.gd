@@ -17,34 +17,34 @@ extends RefCounted
 ## основным эффектом. Без VP-жетонов вопроса нет.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "teemo"            — Satyr Thornbearer: каждый шпион -> ещё шпион и 1 VP; возврат
+##   "teemo"            — Green Hag: каждый шпион -> ещё шпион и 1 VP; возврат
 ##                        своего шпиона -> supplant в той локации;
-##   "teemo_busy"       — ставится дополнительный шпион Satyr Thornbearer (он не цепляет ещё один);
-##   "tristana_vp"      — High Fae Noble: убил или вытеснил войско -> 1 VP;
-##   "tristana_supplant" — High Fae Noble: убил войско -> можно вытеснить его вместо этого;
-##   "yuumi_top"        — Silverquill Apprentice: купленную карту можно положить на верх колоды;
-##   "yuumi_vp"         — Silverquill Apprentice: +1 VP за каждую купленную карту;
-##   "recruits"         — сколько карт куплено в этот ход (Silverquill Apprentice, High Fae Mage);
+##   "teemo_busy"       — ставится дополнительный шпион Green Hag (он не цепляет ещё один);
+##   "tristana_vp"      — Incarnation of Transience: убил или вытеснил войско -> 1 VP;
+##   "tristana_supplant" — Incarnation of Transience: убил войско -> можно вытеснить его вместо этого;
+##   "yuumi_top"        — Swanmay: купленную карту можно положить на верх колоды;
+##   "yuumi_vp"         — Swanmay: +1 VP за каждую купленную карту;
+##   "recruits"         — сколько карт куплено в этот ход (Swanmay, High Fae Mage);
 ##   "power_spent"      — сколько Power потрачено в этот ход (Faerie Dragon Youth:
 ##                        "gained 6 or more Power this turn" = потрачено + осталось);
-##   "control_start"    — локации, которые игрок контролировал в начале хода (Yeti Tyke).
+##   "control_start"    — локации, которые игрок контролировал в начале хода (Alseid).
 
-const TEEMO := "49900"  # Satyr Thornbearer
-const KENNEN := "49901"  # High Fae Kindguard
-const TRISTANA := "49902"  # High Fae Noble
-const ZIGGS := "49903"  # Lorehold Apprentice
-const YUUMI := "49904"  # Silverquill Apprentice
-const NORRA := "49905"  # Faerie Pathlighter
+const TEEMO := "49900"  # Green Hag
+const KENNEN := "49901"  # Yarnspinner
+const TRISTANA := "49902"  # Incarnation of Transience
+const ZIGGS := "49903"  # Trostani
+const YUUMI := "49904"  # Swanmay
+const NORRA := "49905"  # Lampad
 const GNAR := "49906"  # Faerie Dragon Youth
-const VEIGAR := "49908"  # Witherbloom Apprentice
+const VEIGAR := "49908"  # The Gardener
 const CORKI := "49909"  # Witchkite
-const GUNNERS := "49910"  # Modron Monodrone (Bandle Gunners)
+const GUNNERS := "49910"  # Sea Hag (Bandle Gunners)
 const CARETAKER := "49911"  # High Fae Mage (Realm Caretaker)
 const EXPLORER := "49912"  # Icewind Kobold (Yordle Explorer)
 const MAYOR := "49913"  # Leprechaun (Bandle City Mayor)
 const PAINTER := "49914"  # Faerie Pest (Bandle Painter)
-const BANANA := "49915"  # Quandrix Apprentice (Banana Blaster)
-const SWOLE := "49916"  # Yeti Tyke (Swole Scout)
+const BANANA := "49915"  # Sprite Skirmisher (Banana Blaster)
+const SWOLE := "49916"  # Alseid (Swole Scout)
 const KINGPIN := "49917"  # Faerie Borrower (Arena Kingpin)
 const BLADETWIRLER := "49918"  # High Fae Impostor (Carved Bladetwirler)
 const TORNADO := "49919"  # Pixie Wonderbringer (Tornado Warrior)
@@ -168,7 +168,7 @@ static func build(card_id: String) -> CardEffect:
 	return null
 
 
-## Kara-Tur Retain: бонус "Retain: Gain 1 VP" (High Fae Kindguard).
+## Kara-Tur Retain: бонус "Retain: Gain 1 VP" (Yarnspinner).
 static func retain_effect(card_id: String) -> CardEffect:
 	if card_id == KENNEN:
 		return GainVP.new(1)
@@ -230,7 +230,7 @@ static func spend(state: GameState, amount: int) -> void:
 	state.turn_flags["power_spent"] = int(state.turn_flags.get("power_spent", 0)) + amount
 
 
-## Начало хода: какие локации игрок контролирует (Yeti Tyke).
+## Начало хода: какие локации игрок контролирует (Alseid).
 static func on_start_turn(state: GameState, player_id: String) -> void:
 	state.turn_flags["control_start"] = _controlled(state, player_id)
 
@@ -243,7 +243,7 @@ static func _controlled(state: GameState, player_id: String) -> Array:
 	return out
 
 
-## Yeti Tyke: "If you gained control of a site this turn" — сейчас контролирует
+## Alseid: "If you gained control of a site this turn" — сейчас контролирует
 ## локацию, которую не контролировал в начале хода.
 static func gained_control(state: GameState, player_id: String) -> bool:
 	var before: Array = state.turn_flags.get("control_start", [])
@@ -253,7 +253,7 @@ static func gained_control(state: GameState, player_id: String) -> bool:
 	return false
 
 
-## Satyr Thornbearer: "Whenever you place a spy, place an additional spy and gain 1 VP".
+## Green Hag: "Whenever you place a spy, place an additional spy and gain 1 VP".
 static func on_place_spy(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	if not state.turn_flags.get("teemo", false) or state.turn_flags.get("teemo_busy", false) \
 			or player_id != state.current_player():
@@ -266,14 +266,14 @@ static func on_place_spy(state: GameState, player_id: String, resolver: EffectRe
 	]), player_id, TEEMO)
 
 
-## Satyr Thornbearer: "Whenever you return one of your spies, also Supplant a troop at that site".
+## Green Hag: "Whenever you return one of your spies, also Supplant a troop at that site".
 static func on_return_spy(state: GameState, player_id: String, site_id: String, resolver: EffectResolver) -> void:
 	if not state.turn_flags.get("teemo", false) or player_id != state.current_player():
 		return
 	resolver.push(SupplantTroop.new(1, false, false, false, Callable(), site_id), player_id, TEEMO)
 
 
-## Войско убито (supplanted — вытеснено). High Fae Noble (Tristana).
+## Войско убито (supplanted — вытеснено). Incarnation of Transience (Tristana).
 ## immediate — зовёт GameServer вне розыгрыша карты (базовое действие).
 static func after_kill(state: GameState, player_id: String, slot_id: String, resolver: EffectResolver,
 		supplanted: bool, immediate: bool = false) -> void:
@@ -288,7 +288,7 @@ static func after_kill(state: GameState, player_id: String, slot_id: String, res
 		_run(state, player_id, resolver, ask, immediate)
 
 
-## Карта куплена (рынок, запас, бесплатный найм). Silverquill Apprentice (Yuumi).
+## Карта куплена (рынок, запас, бесплатный найм). Swanmay (Yuumi).
 static func on_recruit(state: GameState, player_id: String, card_id: String, resolver: EffectResolver, immediate: bool = false) -> void:
 	if player_id != state.current_player():
 		return
@@ -303,9 +303,9 @@ static func on_recruit(state: GameState, player_id: String, card_id: String, res
 		_run(state, player_id, resolver, ask, immediate)
 
 
-## Faerie Pathlighter (Norra): жетоны 1 VP на доске забирает их хозяин, когда у
+## Lampad (Norra): жетоны 1 VP на доске забирает их хозяин, когда у
 ## него в той локации есть войско. Проверка — в конце его хода
-## (TurnEngine.finish_end_of_turn) и сразу после розыгрыша Faerie Pathlighter.
+## (TurnEngine.finish_end_of_turn) и сразу после розыгрыша Lampad.
 static func claim_board_vp(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	for site_id: String in state.board_vp.keys():
 		if String(state.board_vp[site_id]) != player_id:
@@ -348,7 +348,7 @@ class Glamour extends CardEffect:
 		resolver.push(inner, player_id)
 
 
-## Faerie Pathlighter (Norra): "Choose another player. They place 3 1 VP tokens at
+## Lampad (Norra): "Choose another player. They place 3 1 VP tokens at
 ## any sites that don't have a 1 VP token." Решения задаёт выбранный соперник —
 ## владелец жетонов хранится в самом эффекте (resolver.resume зовёт эффект от
 ## имени ответившего).
@@ -423,7 +423,7 @@ class _Branch extends CardEffect:
 		resolver.push(yes if cond.call(state, player_id) else no, player_id)
 
 
-## Satyr Thornbearer (Teemo): верхние N карт колоды — карты с этими словами в руку, остальные в сброс.
+## Green Hag (Teemo): верхние N карт колоды — карты с этими словами в руку, остальные в сброс.
 class _FromTopWithWord extends CardEffect:
 	var amount: int
 	var words: Array
@@ -451,7 +451,7 @@ class _FromTopWithWord extends CardEffect:
 		resolver.log_event("fetch_from_top", {"player_id": player_id, "looked": taken.size() + dropped.size(), "cards": taken})
 
 
-## Silverquill Apprentice (Yuumi): +1 VP за каждую уже купленную в этот ход карту и за каждую следующую.
+## Swanmay (Yuumi): +1 VP за каждую уже купленную в этот ход карту и за каждую следующую.
 class _YuumiVP extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		state.turn_flags["yuumi_vp"] = int(state.turn_flags.get("yuumi_vp", 0)) + 1
@@ -460,7 +460,7 @@ class _YuumiVP extends CardEffect:
 			resolver.push(GainVP.new(n), player_id)
 
 
-## Witherbloom Apprentice (Veigar): +1 Power за каждые per войск в трофейном зале.
+## The Gardener (Veigar): +1 Power за каждые per войск в трофейном зале.
 class _PowerPerTrophies extends CardEffect:
 	var per: int
 	func _init(n: int) -> void:
@@ -471,7 +471,7 @@ class _PowerPerTrophies extends CardEffect:
 			resolver.push(GainPower.new(n), player_id)
 
 
-## Quandrix Apprentice (Banana Blaster): по 2 VP у каждого другого игрока с войском в этой локации.
+## Sprite Skirmisher (Banana Blaster): по 2 VP у каждого другого игрока с войском в этой локации.
 class _StealAtSite extends CardEffect:
 	var amount: int
 	var site: String
@@ -484,7 +484,7 @@ class _StealAtSite extends CardEffect:
 				MercenaryCards.steal(state, player_id, victim, amount, resolver)
 
 
-## High Fae Noble (Tristana): своё войско в освободившийся слот убитого.
+## Incarnation of Transience (Tristana): своё войско в освободившийся слот убитого.
 class _DeployAt extends CardEffect:
 	var slot: String
 	func _init(s: String) -> void:
@@ -500,7 +500,7 @@ class _DeployAt extends CardEffect:
 		resolver.log_event("deploy", {"player_id": player_id, "slot_id": slot})
 
 
-## Silverquill Apprentice (Yuumi): купленная карта из сброса — на верх колоды.
+## Swanmay (Yuumi): купленная карта из сброса — на верх колоды.
 class _ToTop extends CardEffect:
 	var card: String
 	func _init(c: String) -> void:

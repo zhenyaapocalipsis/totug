@@ -85,7 +85,7 @@ static func build(card_id: String) -> CardEffect:
 				SequenceEffect.new([DeployTroop.new(3), FetchFromTop.new(6, outcast_filter)]),
 				SupplantTroop.new(1, true),
 			], ["Deploy 3 troops, Insane Outcasts from your top 6 cards into your hand", "Supplant a white troop"])
-		"49107":  # Sea Hag (Spectral Matron)
+		"49107":  # Poltergeist (Spectral Matron)
 			return SequenceEffect.new([
 				_PerOutcast.new("spy"),
 				ChooseEffect.new([
@@ -155,7 +155,7 @@ static func build(card_id: String) -> CardEffect:
 				_SetFlag.new("market_affinity"),
 				OptionalEffect.new(CelestialCards._Transform.new(DRIDER, PHASE_SPIDER), "Transform into Phase Spider?"),
 			])
-		"49121":  # Green Hag (Gwen)
+		"49121":  # Azalin Rex (Gwen)
 			return SequenceEffect.new([GainPower.new(3), _HagDevour.new(), _OpponentsMayDevour.new()])
 		"49122":  # Shadow (Kalista) — 0 VP за Outcast: Scoring.card_bonus_vp
 			return SequenceEffect.new([_CycleHand.new(), _AddFlag.new("outcast_bonus")])
@@ -188,7 +188,7 @@ static func on_play(state: GameState, player_id: String, card_id: String, effect
 	return effect
 
 
-## "If this card is devoured" — DevourCard и Green Hag после того, как карта ушла
+## "If this card is devoured" — DevourCard и Azalin Rex после того, как карта ушла
 ## в devoured_pile.
 static func on_devour(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> void:
 	match card_id:
@@ -439,7 +439,7 @@ class _RecruitFromDevoured extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Green Hag: "You may Execute a card in your hand or discard pile. If you
+## Azalin Rex: "You may Execute a card in your hand or discard pile. If you
 ## Executed a Cursed Wanderer, gain 2 Power. Otherwise, gain VP equal to the
 ## Executed card's deck VP."
 class _HagDevour extends CardEffect:
@@ -485,7 +485,7 @@ class _HagDevour extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Green Hag: "Each other player may Execute a card from their hand" — вопрос
+## Azalin Rex: "Each other player may Execute a card from their hand" — вопрос
 ## каждому сопернику по очереди (как реакция Shield Guardian).
 class _OpponentsMayDevour extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -518,7 +518,7 @@ class _OpponentDevour extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = victim
-		pd.prompt = "Green Hag: you may devour a card from your hand"
+		pd.prompt = "%s: you may devour a card from your hand" % String(CardLibrary.card_data("49121").get("name", "49121"))
 		pd.choice_type = "target_card"
 		pd.tag = "hand"  # выбор в своём ряду руки, как сброс карты
 		pd.source_card = "49121"

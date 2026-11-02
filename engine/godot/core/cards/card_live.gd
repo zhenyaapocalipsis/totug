@@ -47,7 +47,7 @@ const RULES := {
 	"49100": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Specter
 	"49105": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Grick
 	"49108": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Gargoyle
-	"49107": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Sea Hag
+	"49107": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Poltergeist
 	"49110": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Lemure
 	"49115": [["PER INSANE OUTCAST IN YOUR DISCARD PILE", "per", "discard_outcasts_x3", 1]],  # Ramya Vasavadan
 	"49113": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Rakshasa

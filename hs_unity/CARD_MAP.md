@@ -155,7 +155,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Treant (49811) | Greybough (DMF_734) | `DMFFX_GreyBough_CustomSummon.prefab` | ожившее дерево |
 | Bone Devil (49516) | G'huun (BE_287) | `BE_287_GhuunTheCataStrophic_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Drider (49120) | Blightfang (RLK_225) | `RLK_225_BlightFang_Spawn.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Green Hag (49121) | Jace Darkweaver (SW_044) | `SWFX_JaceDarkweaver_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Green Hag (49900; до NE-45 — 49121 в Ravenloft) | Jace Darkweaver (SW_044) | `SWFX_JaceDarkweaver_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Shadow (49122) | The Jailer (CORE_MAW_034) | `MAWFX_TheJailer_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### piltover
@@ -260,14 +260,14 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Satyr Thornbearer (49900) | Nightmare Lord Xavius (EDR_856) | `EDRFX_Xavius_CustomSummon.prefab` | сатир |
-| High Fae Kindguard (49901) | Prince Malchezaar (LT24_821H) | `Malchezaar_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
-| High Fae Noble (49902) | Glugg the Gulper (TSC_639) | `TSCFX_GluggTheGulper_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Lorehold Apprentice (49903) | Farseer Wo (TIME_013) | `TIME_FarseerWo_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Silverquill Apprentice (49904) | Farseer Nobundo (GDB_447) | `GDBFX_FarsserNobundo_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Faerie Pathlighter (49905) | Soulburner Varia (YOG_520) | `YOGFX_SoulburnerVaria_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Satyr Thornbearer~~ (—, существо убрано из игры NE-45; на 49900 теперь Green Hag) | Nightmare Lord Xavius (EDR_856) | `EDRFX_Xavius_CustomSummon.prefab` | анимация свободна |
+| ~~High Fae Kindguard~~ (—, существо убрано из игры NE-45; на 49901 теперь Yarnspinner) | Prince Malchezaar (LT24_821H) | `Malchezaar_CustomSummon.prefab` | анимация свободна |
+| ~~High Fae Noble~~ (—, существо убрано из игры NE-45; на 49902 теперь Incarnation of Transience) | Glugg the Gulper (TSC_639) | `TSCFX_GluggTheGulper_CustomSummon.prefab` | анимация свободна |
+| ~~Lorehold Apprentice~~ (—, существо убрано из игры NE-45; на 49903 теперь Trostani) | Farseer Wo (TIME_013) | `TIME_FarseerWo_CustomSummon.prefab` | анимация свободна |
+| ~~Silverquill Apprentice~~ (—, существо убрано из игры NE-45; на 49904 теперь Swanmay) | Farseer Nobundo (GDB_447) | `GDBFX_FarsserNobundo_CustomSummon.prefab` | анимация свободна |
+| ~~Faerie Pathlighter~~ (—, существо убрано из игры NE-45; на 49905 теперь Lampad) | Soulburner Varia (YOG_520) | `YOGFX_SoulburnerVaria_CustomSummon.prefab` | анимация свободна |
 | Faerie Dragon Youth (49906) | Eternus (TIME_435) | `TIME_Eternus_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Witherbloom Apprentice (49908) | Altruis the Outcast (TOY_401t2) | `Altruis_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Witherbloom Apprentice~~ (—, существо убрано из игры NE-45; на 49908 теперь The Gardener) | Altruis the Outcast (TOY_401t2) | `Altruis_CustomSummon.prefab` | анимация свободна |
 | Witchkite (49909) | Nablya, the Watcher (TLC_624) | `TLCFX_NablyatheWatcher_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### void

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "ghuun", "49714": "elizagoreblade", "49801": "mugzee", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49015": "medivhthehallowed", "49121": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "irida", "49636": "neerufireblade", "49715": "kaelthas", "49712": "titanographerosk", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49716": "velenleaderoftheex", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "baronessvashj", "49800": "arannathrillseeker", "49821": "ultraxion", "49620": "thelichking", "49613": "kelthuzad", "49901": "princemalchezaar", "49908": "altruistheoutcast", "50005": "bloodqueenlanathel", "49518": "moroes", "49515": "archvillainrafaam", "49216": "daveberard", "49120": "blightfang", "49117": "blooddoctorthalena", "49122": "thejailer", "49212": "garonahalforcen", "49218": "omen", "49219": "mastermindyoggsaro", "49215": "norgannon", "49213": "mathiasshaw", "49214": "logoshbloodfighter", "49211": "chronogor", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49402": "ladydarkvein", "49407": "karovthebroken", "49517": "wrathion", "49521": "fyrakktheblazing", "49514": "amitutkeeperofamit", "49519": "shudderblock", "49522": "captaincrowley", "49004": "sunsapperlynessa", "49022": "ursol", "49019": "tyrande", "49003": "gennworgenking", "49017": "commanderbeatrix", "49906": "eternus", "49905": "soulburnervaria", "49902": "gluggthegulper", "49903": "farseerwo", "49904": "farseernobundo", "49909": "nablyathewatcher", "50008": "the8handsfrombeyon", "50002": "theexodar", "50003": "theeternalhold", "50001": "sargerasthedestroy", "50007": "overlorddrakuru", "50104": "maruutstonebinder", "50101": "razidir", "50108": "chronikar", "50103": "chronolordepoch", "50102": "timethiefrafaam", "50105": "theunknowableone", "49412": "staffoftrickery", "49614": "bearonglashear", "49616": "rasfrostwhisper", "49618": "thaddiusmonstrosit", "49713": "arisenonyxia", "50006": "archwitchwillow", "49606": "toycaptaintarim", "49822": "krogcraterking"}
+const RECIPES := {"48426": "worldbreaker", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48433": "vyranoth", "48429": "herenn", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48500": "ragnaros_gf", "48501": "kiljaeden", "48535": "archimonde", "48539": "moldara", "48514": "umbra", "48538": "nythendra", "48513": "xavius", "48631": "ravitz", "48632": "azshara_ocean", "48626": "mutanus", "48600": "inara", "48630": "yshaarj", "48715": "staff_endbringer", "48701": "azalina", "48700": "kithix", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "49516": "ghuun", "49714": "elizagoreblade", "49801": "mugzee", "49711": "isorath", "48732": "broxigar", "48738": "sylvanastheaccused", "48728": "tichondrius", "49015": "medivhthehallowed", "49900": "jacedarkweaver", "49114": "thunderbringer", "49416": "drestagath", "49418": "nzothdreamsend", "49635": "zerontu", "49615": "hodirfatherofgiant", "49634": "irida", "49636": "neerufireblade", "49715": "kaelthas", "49712": "titanographerosk", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49716": "velenleaderoftheex", "49820": "elisebadlandssavio", "49803": "ayalotuskingpin", "49807": "endtimemurozond", "49815": "nozdormubronzeaspe", "49806": "baronessvashj", "49800": "arannathrillseeker", "49821": "ultraxion", "49620": "thelichking", "49613": "kelthuzad", "50005": "bloodqueenlanathel", "49518": "moroes", "49515": "archvillainrafaam", "49216": "daveberard", "49120": "blightfang", "49117": "blooddoctorthalena", "49122": "thejailer", "49212": "garonahalforcen", "49218": "omen", "49219": "mastermindyoggsaro", "49215": "norgannon", "49213": "mathiasshaw", "49214": "logoshbloodfighter", "49211": "chronogor", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49402": "ladydarkvein", "49407": "karovthebroken", "49517": "wrathion", "49521": "fyrakktheblazing", "49514": "amitutkeeperofamit", "49519": "shudderblock", "49522": "captaincrowley", "49004": "sunsapperlynessa", "49022": "ursol", "49019": "tyrande", "49003": "gennworgenking", "49017": "commanderbeatrix", "49906": "eternus", "49909": "nablyathewatcher", "50008": "the8handsfrombeyon", "50002": "theexodar", "50003": "theeternalhold", "50001": "sargerasthedestroy", "50007": "overlorddrakuru", "50104": "maruutstonebinder", "50101": "razidir", "50108": "chronikar", "50103": "chronolordepoch", "50102": "timethiefrafaam", "50105": "theunknowableone", "49412": "staffoftrickery", "49614": "bearonglashear", "49616": "rasfrostwhisper", "49618": "thaddiusmonstrosit", "49713": "arisenonyxia", "50006": "archwitchwillow", "49606": "toycaptaintarim", "49822": "krogcraterking"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -521,7 +521,7 @@ const SCRIPTS := {
 		"cues": [[0, "MedivhTheHallowed_CustomSummon_Cast_Sound", 0.8], [1.55, "MedivhTheHallowed_CustomSummon_Impact_Sound", 0.8]],
 		# CameraShaker2
 		"shakers": [[1.45, 1.917, 0.04, [[0, 1], [1, 0]], 0.075]]},
-	# Jace Darkweaver (SW_044) — Green Hag: из точки посадки валит ядовито-зелёный дым скверны,
+	# Jace Darkweaver (SW_044) — Green Hag (переехал в Feywild на 49900, NE-45): из точки посадки валит ядовито-зелёный дым скверны,
 	# на 1.4 с вспышка, дым тает. Трещины в земле спрятаны, весь эффект под картой. Выжигание
 	# зелёное. Владелец выбрал в HsBrowser 2026-10-27.
 	"jacedarkweaver": {"frames": "jacedarkweaver", "sounds": "jacedarkweaver",
@@ -734,7 +734,7 @@ const SCRIPTS := {
 		"cues": [[0.0, "KelThuzad_CustomSummon_Sound_01", 1.0]],
 		# MainCameraShakerAction FSM: 0.12 с 1.5 с, 0.6 с
 		"shakers": [[1.5, 2.1, 0.12, [[0.0, 1.0], [1.0, 0.0]], 0.0167]]},
-	# Prince Malchezaar (LT24_821H) — High Fae Kindguard: Malchezaar_CustomSummon (по FSM): в точке
+	# Prince Malchezaar (LT24_821H) — была у High Fae Kindguard, существо убрано NE-45, анимация свободна: Malchezaar_CustomSummon (по FSM): в точке
 	# посадки открывается синий портал с кольцами и звёздами, на 1.5 с теневой удар. Свечение
 	# миньона и осколки (mesh_ImpactShatter) спрятаны. Выжигание фиолетовое. Владелец выбрал в
 	# HsBrowser 2026-10-27.
@@ -742,7 +742,7 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM: портал 0.9 с начала, удар 0.7 с 1.5 с
 		"cues": [[0.0, "MalchezaarReturns_CustomSummon_Emerge_Sound", 0.9], [1.5, "MalchezaarReturns_CustomSummon_Land_Sound", 0.7]]},
-	# Altruis the Outcast (TOY_401t2) — Witherbloom Apprentice: Altruis_CustomSummon (по FSM,
+	# Altruis the Outcast (TOY_401t2) — была у Witherbloom Apprentice, существо убрано NE-45, анимация свободна: Altruis_CustomSummon (по FSM,
 	# аниматор CustomSummon): фиолетовые и зелёные вихри скверны кружат над точкой посадки, на
 	# 0.95 с огненный выброс. Свечение миньона спрятано. Выжигание фиолетовое. Владелец
 	# выбрал в HsBrowser 2026-10-27.
@@ -1077,7 +1077,7 @@ const SCRIPTS := {
 		"cues": [[0, "TIME_435_Eternus_CustomSummon_Cast_Sound", 0.6]],
 		# CameraShaker2
 		"shakers": [[1.017, 1.9, 0.04, [[0, 1], [1, 0]], 0.075]]},
-	# Soulburner Varia (YOG_520) — Faerie Pathlighter: фиолетовое кольцо душ, на удар —
+	# Soulburner Varia (YOG_520) — была у Faerie Pathlighter, существо убрано NE-45, анимация свободна: фиолетовое кольцо душ, на удар —
 	# фиолетовая вспышка. Сетки жетона HS и виньетки спрятаны, весь эффект под картой;
 	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"soulburnervaria": {"frames": "soulburnervaria", "sounds": "soulburnervaria",
@@ -1086,7 +1086,7 @@ const SCRIPTS := {
 		"cues": [[0, "SoulburnerVaria_CustomSummon_Cast_Sound", 0.8], [1.47, "SoulburnerVaria_CustomSummon_Impact_Sound", 0.8]],
 		# CameraShaker2
 		"shakers": [[0, 0.65, 0.05, [[0, 0], [1, 1]], 0.075], [0.65, 2.2, 0.07, [[0, 0.26], [0.25, 0.97], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.075]]},
-	# Glugg the Gulper (TSC_639) — High Fae Noble: к точке посадки летит розовая сфера, на удар
+	# Glugg the Gulper (TSC_639) — была у High Fae Noble, существо убрано NE-45, анимация свободна: к точке посадки летит розовая сфера, на удар
 	# — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	# HsFx-92: свечение формы жетона HS, которое включает анимация, спрятано hideRx.
@@ -1094,14 +1094,14 @@ const SCRIPTS := {
 		"card": {"face": "mini", "reveal": 1.99, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "GluggtheGulper_CustomSummon_Sound", 1], [1.52, "GluggtheGulper_CustomSummon_TokenSpawn_Sound", 1]]},
-	# Farseer Wo (TIME_013) — Lorehold Apprentice: голубой поток, на удар открывается синий
+	# Farseer Wo (TIME_013) — была у Lorehold Apprentice, существо убрано NE-45, анимация свободна: голубой поток, на удар открывается синий
 	# портал. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"farseerwo": {"frames": "farseerwo", "sounds": "farseerwo",
 		"card": {"face": "mini", "reveal": 1.89, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "TIME_FarseerWo_CustomSummon_Sound", 0.9], [1.42, "TIME_FarseerWo_CustomSummon_Impact_Sound", 0.9]]},
-	# Farseer Nobundo (GDB_447) — Silverquill Apprentice: голубое кольцо, на удар — вспышка
+	# Farseer Nobundo (GDB_447) — была у Silverquill Apprentice, существо убрано NE-45, анимация свободна: голубое кольцо, на удар — вспышка
 	# света. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"farseernobundo": {"frames": "farseernobundo", "sounds": "farseernobundo",

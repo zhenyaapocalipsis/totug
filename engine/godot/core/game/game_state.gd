@@ -78,7 +78,7 @@ var market_troops: Dictionary = {}
 ## (id локации -> вор). Вор держит маркер до начала своего следующего хода
 ## (TurnEngine.start_turn), пока маркер приносит доход только ему.
 var stolen_markers: Dictionary = {}
-## FEYWILD, Faerie Pathlighter (Norra): жетоны 1 VP на локациях (id локации ->
+## FEYWILD, Lampad (Norra): жетоны 1 VP на локациях (id локации ->
 ## игрок, который один может их забрать, когда у него там есть войско).
 var board_vp: Dictionary = {}
 ## FAR REALM (Blue Slaad): шпионы на картах рынка — "индекс" -> {"owner", "card"} (VoidCards).

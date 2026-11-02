@@ -199,7 +199,7 @@ static func run_deferred_end_of_turn(state: GameState, player_id: String, resolv
 static func finish_end_of_turn(state: GameState, player_id: String, resolver: EffectResolver = null) -> void:
 	var p: PlayerState = state.players[player_id]
 
-	# FEYWILD (Faerie Pathlighter): свои жетоны 1 VP на локациях с войском.
+	# FEYWILD (Lampad): свои жетоны 1 VP на локациях с войском.
 	BandleCards.claim_board_vp(state, player_id, resolver)
 
 	# 1. promote

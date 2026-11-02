@@ -36,6 +36,7 @@ const MINI_SHORT_NAMES := {
 	"AIR ELEMENTAL MYRMIDON": "AIR ELEM. MYRMIDON",
 	"ARCHON OF BOUNDARIES": "BOUNDARY ARCHON",
 	"RELENTLESS JUGGERNAUT": "JUGGERNAUT",
+	"INCARNATION OF TRANSIENCE": "TRANSIENCE",
 	"ORACLE OF STRIXHAVEN": "STRIXHAVEN ORACLE",
 }
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
@@ -227,6 +228,8 @@ const NAME_BREAKS := {
 	"NIGHTMARE": [5], "VASAVADAN": [4],
 	# Waterdeep: конструкты (2026-11-02)
 	"ARCHIVIST": [5], "CLOCKWORK": [5], "CARRIONETTE": [6],
+	# Feywild: феи и ведьмы (2026-11-02)
+	"YARNSPINNER": [4], "INCARNATION": [2, 5], "TRANSIENCE": [5], "SKIRMISHER": [4], "POLTERGEIST": [6],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -275,7 +278,7 @@ const SINGLE_ART := {
 	49104: ["shadow/vampire_nosferatu.jpeg", Rect2i(0, 150, 420, 256)],
 	49105: ["shadow/grick.png", Rect2i(50, 160, 560, 341)],
 	49106: ["freljord/skeleton.jpeg", Rect2i(30, 120, 656, 400)],
-	49107: ["shadow/sea_hag.png", Rect2i(0, 0, 520, 317)],
+	49107: ["shadow/poltergeist.jpeg", Rect2i(50, 60, 820, 500)],
 	49108: ["shadow/gargoyle.jpeg", Rect2i(170, 230, 560, 341)],
 	49109: ["shadow/crawling_claws.png", Rect2i(50, 240, 640, 390)],
 	49110: ["shadow/lemure.png", Rect2i(160, 380, 600, 366)],
@@ -289,7 +292,7 @@ const SINGLE_ART := {
 	49118: ["shadow/zombie_plague_spreader.jpeg", Rect2i(0, 20, 700, 427)],
 	49119: ["avernus/mummy.png", Rect2i(150, 180, 600, 366)],
 	49120: ["shadow/drider.png", Rect2i(100, 290, 442, 269)],
-	49121: ["shadow/green_hag.jpeg", Rect2i(20, 60, 600, 366)],
+	49121: ["shadow/azalin_rex.jpeg", Rect2i(80, 140, 700, 427)],
 	49122: ["shadow/shadow.png", Rect2i(0, 0, 700, 427)],
 	49123: ["shadow/phase_spider.png", Rect2i(60, 360, 500, 305)],
 	49124: ["shadow/swarm_of_zombie_limbs.jpeg", Rect2i(60, 220, 800, 488)],
@@ -456,22 +459,22 @@ const SINGLE_ART := {
 	49821: ["ionia/gulthias_blight.jpeg", Rect2i(0, 380, 800, 488)],
 	49822: ["ixtal/galeb_duhr.png", Rect2i(130, 40, 600, 366)],
 	# FEYWILD (Bandle City)
-	49900: ["bandle/satyr_thornbearer.jpeg", Rect2i(0, 0, 800, 488)],
-	49901: ["bandle/high_fae_kindguard.jpeg", Rect2i(150, 0, 850, 518)],
-	49902: ["bandle/high_fae_noble.jpeg", Rect2i(100, 120, 820, 500)],
-	49903: ["bandle/lorehold_apprentice.jpeg", Rect2i(0, 40, 702, 428)],
-	49904: ["bandle/silverquill_apprentice.jpeg", Rect2i(0, 0, 648, 395)],
-	49905: ["bandle/faerie_pathlighter.jpeg", Rect2i(220, 0, 600, 366)],
+	49900: ["shadow/green_hag.jpeg", Rect2i(20, 60, 600, 366)],
+	49901: ["bandle/yarnspinner.jpeg", Rect2i(0, 230, 773, 471)],
+	49902: ["bandle/incarnation_of_transience.png", Rect2i(110, 40, 840, 512)],
+	49903: ["bandle/trostani.png", Rect2i(260, 0, 540, 329)],
+	49904: ["bandle/swanmay.png", Rect2i(40, 120, 560, 341)],
+	49905: ["bandle/lampad.jpeg", Rect2i(0, 60, 701, 427)],
 	49906: ["bandle/faerie_dragon_youth.jpeg", Rect2i(0, 200, 767, 468)],
-	49908: ["bandle/witherbloom_apprentice.jpeg", Rect2i(0, 0, 900, 549)],
+	49908: ["bandle/the_gardener.jpeg", Rect2i(40, 120, 700, 427)],
 	49909: ["bandle/witchkite.jpeg", Rect2i(200, 120, 800, 488)],
-	49910: ["celestial/satyr.jpg", Rect2i(60, 0, 420, 256)],
+	49910: ["shadow/sea_hag.png", Rect2i(0, 0, 520, 317)],
 	49911: ["bandle/high_fae_mage.jpeg", Rect2i(50, 100, 800, 488)],
 	49912: ["ionia/sprite.png", Rect2i(0, 10, 415, 253)],
 	49913: ["bandle/leprechaun.png", Rect2i(40, 350, 337, 205)],
 	49914: ["bandle/faerie_pest.jpeg", Rect2i(150, 0, 850, 518)],
-	49915: ["bandle/quandrix_apprentice.jpeg", Rect2i(100, 40, 800, 488)],
-	49916: ["bandle/yeti_tyke.jpeg", Rect2i(0, 60, 867, 529)],
+	49915: ["bandle/sprite_skirmisher.jpeg", Rect2i(100, 120, 820, 500)],
+	49916: ["bandle/alseid.jpeg", Rect2i(100, 60, 800, 488)],
 	49917: ["bandle/faerie_borrower.jpeg", Rect2i(150, 50, 750, 457)],
 	49918: ["bandle/high_fae_impostor.jpeg", Rect2i(100, 0, 900, 549)],
 	49919: ["bandle/pixie_wonderbringer.png", Rect2i(200, 250, 600, 366)],

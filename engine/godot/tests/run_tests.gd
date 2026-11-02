@@ -6095,10 +6095,10 @@ func test_shadow_isles() -> void:
 	check_eq(blue.deck.discard_pile.count(outcast), blue_discard, "blue показал Outcast — ничего не получил")
 	check_eq(green.deck.discard_pile.count(outcast), green_discard + 1, "green получил Outcast")
 
-	# Green Hag: соперники могут сожрать карту из руки
+	# Azalin Rex: соперники могут сожрать карту из руки
 	var r7 := EffectResolver.new()
 	r7.apply(ShadowCards._OpponentsMayDevour.new(), "red", state)
-	check(r7.is_waiting() and r7.pending.player_id == "blue", "Green Hag: первым спрашивают blue")
+	check(r7.is_waiting() and r7.pending.player_id == "blue", "Azalin Rex: первым спрашивают blue")
 	TurnEngine.resume_card(state, "", r7)
 	check(r7.is_waiting() and r7.pending.player_id == "green", "затем green")
 	TurnEngine.resume_card(state, "", r7)
@@ -6487,7 +6487,7 @@ func test_feywild_deck() -> void:
 	r = _play_with(state, B.EXPLORER)
 	check(red.vp_tokens == 1 and r.is_waiting() and r.pending.choice_type == "target_site", "Icewind Kobold: 1 VP и вопрос о шпионе")
 
-	# Satyr Thornbearer: каждый шпион — ещё шпион и 1 VP
+	# Green Hag: каждый шпион — ещё шпион и 1 VP
 	state = _build_rich_state(65)
 	red = state.players["red"]
 	TurnEngine.start_turn(state, "red")
@@ -6500,14 +6500,14 @@ func test_feywild_deck() -> void:
 	while r.is_waiting() and guard < 10:
 		guard += 1
 		TurnEngine.resume_card(state, r.pending.legal_options[0], r)
-	check_eq([spies_before - red.spies_in_barracks, red.vp_tokens], [2, 1], "Satyr Thornbearer: 2 шпиона и 1 VP")
+	check_eq([spies_before - red.spies_in_barracks, red.vp_tokens], [2, 1], "Green Hag: 2 шпиона и 1 VP")
 
-	# Faerie Pathlighter (Norra): соперник кладёт 3 жетона 1 VP, забрать их может только хозяин
+	# Lampad (Norra): соперник кладёт 3 жетона 1 VP, забрать их может только хозяин
 	state = _build_rich_state(66)
 	red = state.players["red"]
 	TurnEngine.start_turn(state, "red")
 	r = _play_with(state, B.NORRA)
-	check(r.is_waiting() and r.pending.choice_type == "target_player", "Faerie Pathlighter: выбрать игрока")
+	check(r.is_waiting() and r.pending.choice_type == "target_player", "Lampad: выбрать игрока")
 	TurnEngine.resume_card(state, "blue", r)
 	check(r.is_waiting() and r.pending.player_id == "blue" and r.pending.choice_type == "target_site", "жетоны кладёт blue")
 	var placed := 0
@@ -6527,25 +6527,25 @@ func test_feywild_deck() -> void:
 	B.claim_board_vp(state, "red", EffectResolver.new())
 	check(red.vp_tokens == vp_before + 1 and not state.board_vp.has(site), "red забирает жетон, когда у него там войско")
 
-	# High Fae Kindguard: Retain через сервер, бонус +1 VP
+	# Yarnspinner: Retain через сервер, бонус +1 VP
 	state = _build_rich_state(67)
 	var server := GameServer.new(state)
 	red = state.players["red"]
 	red.deck.hand.append(B.KENNEN)
 	red.vp_tokens = 0
 	server.apply_intent(Intent.play_card("red", B.KENNEN))
-	check(server.resolver.is_waiting() and server.resolver.pending.option_labels.has(IoniaCards.RETAIN_LABEL), "High Fae Kindguard: можно удержать")
+	check(server.resolver.is_waiting() and server.resolver.pending.option_labels.has(IoniaCards.RETAIN_LABEL), "Yarnspinner: можно удержать")
 	server.apply_intent(Intent.make_decision("red", 1))
-	check(red.deck.retained.has(B.KENNEN) and red.vp_tokens == 1, "High Fae Kindguard удержан, +1 VP")
+	check(red.deck.retained.has(B.KENNEN) and red.vp_tokens == 1, "Yarnspinner удержан, +1 VP")
 
-	# Silverquill Apprentice: +1 VP за каждую купленную карту
+	# Swanmay: +1 VP за каждую купленную карту
 	state = _build_rich_state(68)
 	red = state.players["red"]
 	TurnEngine.start_turn(state, "red")
 	red.vp_tokens = 0
 	r = _play_with(state, B.YUUMI, [1])
 	B.on_recruit(state, "red", "48342", r, true)
-	check_eq(red.vp_tokens, 1, "Silverquill Apprentice: купил карту — 1 VP")
+	check_eq(red.vp_tokens, 1, "Swanmay: купил карту — 1 VP")
 
 
 func _resolve_first(state: GameState, r: EffectResolver) -> void:
