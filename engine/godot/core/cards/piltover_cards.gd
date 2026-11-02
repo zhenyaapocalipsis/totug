@@ -14,8 +14,8 @@ extends RefCounted
 ## Флаги хода (state.turn_flags, сбрасываются в start_turn):
 ##   "choose_all"  — Homunculus: в "Choose one" есть вариант "All of them";
 ##   "focus_extra" — Homunculus: каждый Focus срабатывает ещё раз;
-##   "spy_move"    — Manticore: после каждого шпиона можно подвинуть войско;
-##   "buy_echo"    — Harpy: после покупки можно бесплатно взять карту дешевле.
+##   "spy_move"    — Elise: после каждого шпиона можно подвинуть войско;
+##   "buy_echo"    — Silverquill Apprentice: после покупки можно бесплатно взять карту дешевле.
 ## Лишний ход Basilisk — state.extra_turn_for / in_extra_turn (GameEnd).
 
 const BASILISK := "49218"
@@ -25,7 +25,7 @@ const MAX_SPIES := 10
 
 static func build(card_id: String) -> CardEffect:
 	match card_id:
-		"49200":  # Tough Boss (Officer Squad)
+		"49200":  # Gold-Forged Sentinel (Officer Squad)
 			return SequenceEffect.new([
 				_AfterTroops.new(ChooseEffect.new([DeployTroop.new(3), MoveTroop.any(1)],
 					["Deploy 3 troops", "Move a troop"]),
@@ -37,7 +37,7 @@ static func build(card_id: String) -> CardEffect:
 				ChooseEffect.new([GainPower.new(2), GainInfluence.new(2)], ["+2 Power", "+2 Influence"]),
 				FocusEffect.new("MALICE", SequenceEffect.new([DrawCards.new(1), DiscardCardEffect.new(1)])),
 			])
-		"49202":  # Ebonbane (Midenstokke Henchmen)
+		"49202":  # Caldron Magen (Midenstokke Henchmen)
 			return SequenceEffect.new([
 				ChooseEffect.new([AssassinateTroop.new(1), SupplantTroop.new(1, true)],
 					["Assassinate a troop", "Supplant a white troop"]),
@@ -52,12 +52,12 @@ static func build(card_id: String) -> CardEffect:
 				], ["Deploy 2 troops", "Move one of your troops", "Return 2 of your troops -> Draw a card"]),
 				FocusEffect.new("CONQUEST", DrawCards.new(1)),
 			])
-		"49204":  # Black Pudding (Augmented Experimenter)
+		"49204":  # Animated Chained Library (Augmented Experimenter)
 			return SequenceEffect.new([
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
 				FocusEffect.new("AMBITION", GainInfluence.new(2)),
 			])
-		"49205":  # Spy (Chembaron)
+		"49205":  # Waxwork (Chembaron)
 			return SequenceEffect.new([
 				ChooseEffect.new([
 					PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
@@ -66,7 +66,7 @@ static func build(card_id: String) -> CardEffect:
 				], ["Place a spy (full site: deploy 2 troops)", "Return one of your spies -> +3 Influence"]),
 				FocusEffect.new("GUILE", GainPower.new(2)),
 			])
-		"49206":  # Otyugh (Chump Whump)
+		"49206":  # Virvos Magen (Chump Whump)
 			return SequenceEffect.new([
 				_AfterTroops.new(AssassinateTroop.new(1),
 					func(s, _pid, before): return GainPower.new(1) if _victims(s, before).has("white") else null),
@@ -75,12 +75,12 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49207":  # Clockwork Behir (Plaza Guardian)
 			return SequenceEffect.new([GainPower.new(2), _promote_obedience(card_id)])
-		"49208":  # Gelatinous Cube (Patrol Wardens)
+		"49208":  # Spirit Statue Mascot (Patrol Wardens)
 			return _BothIfFocus.new("AMBITION",
 				ChooseEffect.new([GainInfluence.new(2), ReturnTroopOrSpy.new(1, false, false, true)],
 					["+2 Influence", "Return a spy"]),
 				SequenceEffect.new([GainInfluence.new(2), ReturnTroopOrSpy.new(1, false, false, true)]))
-		"49209":  # Ochre Jelly (Dropboarder)
+		"49209":  # Terran Magen (Dropboarder)
 			return SequenceEffect.new([PlaceSpy.new(1), GainPower.new(1), _promote_obedience(card_id)])
 		"49210":  # Carrionette (Ferros Elite)
 			return SequenceEffect.new([GainInfluence.new(2), _promote_obedience(card_id)])
@@ -90,7 +90,7 @@ static func build(card_id: String) -> CardEffect:
 				FocusEffect.new("CONQUEST", ChooseEffect.new([DeployTroop.new(4), DrawCards.new(1)],
 					["Deploy 4 troops", "Draw a card"])),
 			])
-		"49212":  # Assassin (Caitlyn)
+		"49212":  # Lorehold Apprentice (Caitlyn)
 			return SequenceEffect.new([
 				_strike_anywhere(),
 				_TopTwoPeek.new(),
@@ -106,7 +106,7 @@ static func build(card_id: String) -> CardEffect:
 				FocusEffect.new("AMBITION", ChooseEffect.new([GainInfluence.new(3), DrawCards.new(1)],
 					["+3 Influence", "Draw a card"])),
 			])
-		"49214":  # Manticore (Jinx) — ход шпиона: PlaceSpy._place_at
+		"49214":  # Elise (Jinx) — ход шпиона: PlaceSpy._place_at
 			return SequenceEffect.new([
 				ShadowCards._SetFlag.new("spy_move"),
 				PlaceSpy.new(2),
@@ -129,7 +129,7 @@ static func build(card_id: String) -> CardEffect:
 					_PowerToTroops.new(),
 				]), 2),
 			])
-		"49217":  # Archmage (Viktor)
+		"49217":  # Conjurer Archmage (Viktor)
 			return SequenceEffect.new([
 				PlaceSpy.new(1, false, func(site): return AssassinateTroop.new(1, false, false, false, 0, 0, site)),
 				DrawCards.new(1),
@@ -144,7 +144,7 @@ static func build(card_id: String) -> CardEffect:
 			return ChooseEffect.new([_FocusFromTop.new(6), _RecruitFreeVp.new("", 999)],
 				["Focus cards from your top 6 into your hand, discard the rest",
 					"Recruit a market card for free, gain VP equal to its deck VP"])
-		"49220":  # Harpy (Seraphine; до 2026-10-13 — Hydra, имя ушло карте Siege) — бесплатная карта после покупки: after_buy
+		"49220":  # Silverquill Apprentice (Seraphine; до 2026-10-13 — Hydra, потом Harpy) — бесплатная карта после покупки: after_buy
 			return SequenceEffect.new([
 				GainInfluence.new(5),
 				FocusEffect.new("AMBITION", SequenceEffect.new([GainInfluence.new(4), ShadowCards._SetFlag.new("buy_echo")]), 2),
@@ -152,7 +152,7 @@ static func build(card_id: String) -> CardEffect:
 	return null
 
 
-## Harpy: после покупки (рынок или запас) — бесплатно карта рынка дешевле купленной.
+## Silverquill Apprentice: после покупки (рынок или запас) — бесплатно карта рынка дешевле купленной.
 static func after_buy(state: GameState, player_id: String, bought: String, resolver: EffectResolver) -> void:
 	if player_id != state.current_player() or not state.turn_flags.get("buy_echo", false):
 		return
@@ -229,7 +229,7 @@ class _AfterTroops extends CardEffect:
 		resolver.push(inner, player_id)
 
 
-## Gelatinous Cube: "Choose one ... Focus: choose both instead".
+## Spirit Statue Mascot: "Choose one ... Focus: choose both instead".
 class _BothIfFocus extends CardEffect:
 	var aspect: String
 	var pick: CardEffect
@@ -263,7 +263,7 @@ class _PayPower extends CardEffect:
 		resolver.push(DeployTroop.new(2), player_id)
 
 
-## Archmage: "Gain a spy to your supply (you can hold up to 10 spies)".
+## Conjurer Archmage: "Gain a spy to your supply (you can hold up to 10 spies)".
 ## 2v2: общий запас команды — до 10 на каждого союзника (шпионы обоих).
 class _GainSpy extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -333,7 +333,7 @@ class _RecruitFreeVp extends RecruitFree:
 				resolver.push(GainVP.new(vp), player_id)
 
 
-## Assassin: "Look at the top 2 cards of each player's deck. You may discard
+## Lorehold Apprentice: "Look at the top 2 cards of each player's deck. You may discard
 ## up to 1 of them" — по очереди от себя по часовой; одна карта на всех.
 class _TopTwoPeek extends CardEffect:
 	var _queue: Array[String] = []

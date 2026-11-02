@@ -37,6 +37,7 @@ const MINI_SHORT_NAMES := {
 	"ARCHON OF BOUNDARIES": "BOUNDARY ARCHON",
 	"RELENTLESS JUGGERNAUT": "JUGGERNAUT",
 	"INCARNATION OF TRANSIENCE": "TRANSIENCE",
+	"SILVERQUILL APPRENTICE": "SILVERQUILL",
 	"ORACLE OF STRIXHAVEN": "STRIXHAVEN ORACLE",
 }
 const MINI_ART_H := MINI_H - MINI_HEAD - 5
@@ -232,6 +233,8 @@ const NAME_BREAKS := {
 	"YARNSPINNER": [4], "INCARNATION": [2, 5], "TRANSIENCE": [5], "SKIRMISHER": [4], "POLTERGEIST": [6], "LIFEDRINKER": [4],
 	# Ravenloft: нежить (2026-11-02)
 	"SAMMASTER": [3], "DRACOLICH": [5], "D'HONAIRE": [5],
+	# Waterdeep: конструкты и их создатели (2026-11-02)
+	"APPRENTICE": [6], "SILVERQUILL": [6],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -299,27 +302,27 @@ const SINGLE_ART := {
 	49123: ["shadow/phase_spider.png", Rect2i(60, 360, 500, 305)],
 	49124: ["shadow/vampire_familiar.jpeg", Rect2i(137, 79, 440, 268)],
 	# Piltover & Zaun (New Era): арты 2024 года с фоном с D&D Beyond в cards/pz/.
-	49200: ["pz/tough_boss.jpeg", Rect2i(0, 20, 440, 268)],
+	49200: ["pz/gold_forged_sentinel.jpeg", Rect2i(150, 100, 800, 488)],
 	49201: ["pz/cogwork_archivist.jpeg", Rect2i(0, 0, 648, 395)],
-	49202: ["pz/ebonbane.jpeg", Rect2i(160, 160, 620, 378)],
+	49202: ["pz/caldron_magen.jpeg", Rect2i(100, 80, 900, 549)],
 	49203: ["pz/rust_monster.jpeg", Rect2i(0, 100, 700, 427)],
-	49204: ["pz/black_pudding.png", Rect2i(170, 300, 560, 341)],
-	49205: ["pz/spy.jpeg", Rect2i(0, 90, 446, 272)],
-	49206: ["pz/otyugh.jpeg", Rect2i(250, 60, 700, 427)],
+	49204: ["pz/animated_chained_library.jpeg", Rect2i(0, 130, 817, 498)],
+	49205: ["pz/waxwork.jpeg", Rect2i(0, 180, 366, 223)],
+	49206: ["pz/virvos_magen.jpeg", Rect2i(150, 20, 700, 427)],
 	49207: ["pz/clockwork_behir.jpeg", Rect2i(100, 60, 820, 500)],
-	49208: ["pz/gelatinous_cube.jpeg", Rect2i(0, 330, 800, 488)],
-	49209: ["pz/ochre_jelly.png", Rect2i(150, 20, 700, 427)],
+	49208: ["pz/spirit_statue_mascot.jpeg", Rect2i(0, 0, 525, 320)],
+	49209: ["pz/terran_magen.jpeg", Rect2i(200, 40, 800, 488)],
 	49210: ["pz/carrionette.png", Rect2i(0, 90, 442, 269)],
 	49211: ["pz/stone_golem.jpeg", Rect2i(100, 0, 560, 341)],
-	49212: ["pz/assassin.png", Rect2i(237, 60, 440, 268)],
+	49212: ["bandle/lorehold_apprentice.jpeg", Rect2i(0, 40, 702, 428)],
 	49213: ["pz/iron_golem.png", Rect2i(80, 40, 600, 366)],
-	49214: ["pz/manticore.jpeg", Rect2i(300, 0, 700, 427)],
+	49214: ["pz/elise.jpeg", Rect2i(0, 60, 541, 330)],
 	49215: ["pz/homunculus.jpeg", Rect2i(0, 430, 495, 302)],
 	49216: ["pz/chimera.png", Rect2i(300, 0, 700, 427)],
-	49217: ["pz/archmage.png", Rect2i(100, 30, 700, 427)],
+	49217: ["pz/conjurer_archmage.jpeg", Rect2i(0, 150, 539, 329)],
 	49218: ["celestial/shield_guardian.png", Rect2i(0, 60, 550, 335)],
 	49219: ["pz/behir.png", Rect2i(20, 90, 470, 287)],
-	49220: ["pz/harpy.png", Rect2i(100, 40, 700, 427)],
+	49220: ["bandle/silverquill_apprentice.jpeg", Rect2i(0, 0, 648, 395)],
 	# Siege и Mercenaries: арты вырезаны из самих карт PDF (cards/siege/,
 	# cards/mercenaries/). В левом верхнем углу кадра — значок аспекта карты,
 	# поэтому кадр либо ниже него (y >= 62), либо правее (x >= 100: при 64-70

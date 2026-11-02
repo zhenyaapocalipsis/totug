@@ -215,7 +215,7 @@ static func _devotion(state: GameState, player_id: String, card_id: String, reso
 	if not immediate:
 		resolver.push(eff, player_id, card_id)
 	elif resolver.pending != null:
-		# Уже есть вопрос (например, Harpy после покупки): Devotion — после него.
+		# Уже есть вопрос (например, Silverquill Apprentice после покупки): Devotion — после него.
 		resolver.pending.stack.push_front({"effect": eff, "player_id": player_id, "card": card_id})
 	else:
 		resolver.apply(eff, player_id, state, card_id)

@@ -4705,7 +4705,7 @@ func test_replay_book() -> void:
 	for count: int in [2, 3, 4]:
 		var ids := GameScreen.player_ids_for(count)
 		# Сиды, где простой автоигрок доводит партию до конца: с колодами New Era
-		# он может зациклиться (Black Pudding повышает всю колоду, покупать нечем).
+		# он может зациклиться (Animated Chained Library повышает всю колоду, покупать нечем).
 		var seed_value: int = {2: 4245, 3: 4245, 4: 4246}[count]
 		var live := GameServer.new(GameSetup.new_game(ids, seed_value, [], false, true, true, modes[count]))
 		var log := _autoplay(live)
@@ -5861,13 +5861,13 @@ func test_piltover_zaun() -> void:
 	red.deck.hand.append("49210")  # Ambition в руке
 	red.influence = 0
 	_play_with(state, "49204")
-	check_eq(red.influence, 4, "Black Pudding с повтором Focus: дважды по +2 Influence")
+	check_eq(red.influence, 4, "Animated Chained Library с повтором Focus: дважды по +2 Influence")
 
-	# Gelatinous Cube: без Focus — выбор, с Focus — оба
+	# Spirit Statue Mascot: без Focus — выбор, с Focus — оба
 	TurnEngine.start_turn(state, "red")
 	red.deck.hand.clear()
 	var rc := _play_with(state, "49208")
-	check(rc.is_waiting() and rc.pending.choice_type == "choose_option", "Gelatinous Cube без Focus: выбор одного")
+	check(rc.is_waiting() and rc.pending.choice_type == "choose_option", "Spirit Statue Mascot без Focus: выбор одного")
 	red.deck.hand.clear()
 	red.deck.hand.append("49210")
 	red.influence = 0
@@ -5894,24 +5894,24 @@ func test_piltover_zaun() -> void:
 	_auto_resolve(state, rv2, false)
 	check_eq(red.troops_in_barracks, barracks - 1, "войско поставлено")
 
-	# Manticore: после каждого шпиона можно подвинуть войско
+	# Elise: после каждого шпиона можно подвинуть войско
 	TurnEngine.start_turn(state, "red")
 	red.deck.hand.clear()
 	red.spies_in_barracks = 3
 	state.spies.clear()
 	var rm := _play_with(state, "49214")
-	check(rm.is_waiting() and rm.pending.choice_type == "target_site", "Manticore: ставит шпиона")
+	check(rm.is_waiting() and rm.pending.choice_type == "target_site", "Elise: ставит шпиона")
 	TurnEngine.resume_card(state, rm.pending.legal_options[0], rm)
 	TurnEngine.resume_card(state, rm.pending.legal_options[0], rm)
 	check(rm.is_waiting() and rm.pending.choice_type == "confirm" and rm.pending.prompt == "Move a troop?",
 		"после шпиона спрашивает, двигать ли войско")
 	_auto_resolve(state, rm, false)
 
-	# Archmage: Double Guile Focus добавляет шпиона, не больше 10
+	# Conjurer Archmage: Double Guile Focus добавляет шпиона, не больше 10
 	red.spies_in_barracks = 9
 	state.spies.clear()
 	EffectResolver.new().apply(PiltoverCards._GainSpy.new(), "red", state)
-	check_eq(red.spies_in_barracks, 10, "Archmage: +1 шпион в запас")
+	check_eq(red.spies_in_barracks, 10, "Conjurer Archmage: +1 шпион в запас")
 	EffectResolver.new().apply(PiltoverCards._GainSpy.new(), "red", state)
 	check_eq(red.spies_in_barracks, 10, "больше 10 шпионов не бывает")
 	red.spies_in_barracks = 3
@@ -5934,13 +5934,13 @@ func test_piltover_zaun() -> void:
 	check(red.deck.discard_pile.has("49207"), "Behir: Clay Golem взят бесплатно")
 	check_eq(red.vp_tokens - vp_before, 2, "и 2 VP (его deck VP)")
 
-	# Assassin: смотрит 2 верхние карты каждого, сбросить можно одну
+	# Lorehold Apprentice: смотрит 2 верхние карты каждого, сбросить можно одну
 	var blue: PlayerState = state.players["blue"]
 	blue.deck.draw_pile = ["48344", "48342", "49201"] as Array[String]
 	red.deck.draw_pile = ["48344", "48342"] as Array[String]
 	var ra := _play_with(state, "49212")
 	_auto_resolve_until(state, ra, "Top 2")
-	check(ra.is_waiting() and ra.pending.prompt.begins_with("Top 2 cards of your"), "Assassin: сначала свои 2 карты")
+	check(ra.is_waiting() and ra.pending.prompt.begins_with("Top 2 cards of your"), "Lorehold Apprentice: сначала свои 2 карты")
 	TurnEngine.resume_card(state, "", ra)
 	check(ra.is_waiting() and ra.pending.prompt.contains("Blue"), "затем карты Blue")
 	check_eq(ra.pending.legal_options, ["49201", "48342", ""], "видны 2 верхние карты Blue")
@@ -5949,17 +5949,17 @@ func test_piltover_zaun() -> void:
 	check(not ra.is_waiting() or not ra.pending.prompt.begins_with("Top 2"), "после сброса green уже не спрашивают")
 	_auto_resolve(state, ra, false)
 
-	# Harpy (бывшая Hydra): после покупки — бесплатная карта дешевле
+	# Silverquill Apprentice (бывшая Hydra, Harpy): после покупки — бесплатная карта дешевле
 	TurnEngine.start_turn(state, "red")
 	EffectResolver.new().apply(ShadowCards._SetFlag.new("buy_echo"), "red", state)
 	state.market.display[0] = "49208"  # цена 2
 	state.market.display[1] = "49219"  # цена 9
 	var rhy := EffectResolver.new()
 	PiltoverCards.after_buy(state, "red", "49207", rhy)  # купил карту за 5
-	check(rhy.is_waiting() and rhy.pending.choice_type == "target_market_index", "Harpy: предлагает карту рынка")
+	check(rhy.is_waiting() and rhy.pending.choice_type == "target_market_index", "Silverquill Apprentice: предлагает карту рынка")
 	check(rhy.pending.legal_options.has(0) and not rhy.pending.legal_options.has(1), "только дешевле купленной")
 
-	# Tough Boss: войско рядом с чужим — scry 1
+	# Gold-Forged Sentinel: войско рядом с чужим — scry 1
 	var slot_ids: Array = state.graph.slots.keys()
 	slot_ids.sort()
 	var empty_next_to_blue := ""
@@ -7022,7 +7022,7 @@ func test_siege_deck() -> void:
 func test_mercenaries_deck() -> void:
 	section("Mercenaries: полуколода")
 	check_eq(GameSetup.expand_half_deck("mercenaries").size(), 40, "Mercenaries: 40 карт")
-	check_eq(CardLibrary.card_data("49220").get("name"), "Harpy", "Waterdeep: Hydra отдала имя карте Siege, теперь Harpy")
+	check_eq(CardLibrary.card_data("49220").get("name"), "Silverquill Apprentice", "Waterdeep: Hydra отдала имя карте Siege, потом Harpy, теперь Silverquill Apprentice")
 	var names: Array = []
 	var repeated: Array = []
 	for cid: String in CardLibrary.all_ids():

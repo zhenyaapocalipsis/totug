@@ -45,27 +45,16 @@ Green Hag	HAG
 Shadow	UNDEAD
 Phase Spider	PHASE SPIDER
 Twig Blight	PLANT
-Tough Boss	HUMAN
 Wererat	LYCANTHROPE
-Ebonbane	CONSTRUCT
 Rust Monster	RUST MONSTER
-Black Pudding	OOZE
-Spy	HUMAN
-Otyugh	OTYUGH
 Clockwork Behir	CONSTRUCT
-Gelatinous Cube	OOZE
-Ochre Jelly	OOZE
 Carrionette	CONSTRUCT
 Stone Golem	CONSTRUCT
-Assassin	HUMAN
 Iron Golem	CONSTRUCT
-Manticore	MANTICORE
 Homunculus	CONSTRUCT
 Chimera	CHIMERA
-Archmage	HUMAN
 Basilisk	BASILISK
 Behir	BEHIR
-Harpy	HARPY
 Bandit	HUMAN
 Wereboar	LYCANTHROPE
 Speaker Devil	DEVIL
@@ -242,3 +231,14 @@ Mist Horror	UNDEAD
 Dracolich	UNDEAD
 Saidra d'Honaire	UNDEAD
 Dullahan	UNDEAD
+Spirit Statue Mascot	CONSTRUCT
+Animated Chained Library	CONSTRUCT
+Waxwork	CONSTRUCT
+Gold-Forged Sentinel	CONSTRUCT
+Caldron Magen	CONSTRUCT
+Terran Magen	CONSTRUCT
+Virvos Magen	CONSTRUCT
+Elise	CONSTRUCT
+Lorehold Apprentice	HUMAN
+Conjurer Archmage	HUMAN
+Silverquill Apprentice	HUMAN

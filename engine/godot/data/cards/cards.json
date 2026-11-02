@@ -1811,11 +1811,11 @@
   },
   {
     "card_id": 49200,
-    "name": "Tough Boss",
+    "name": "Gold-Forged Sentinel",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
-    "race": "HUMAN",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Deploy 3 troops.\n• Move a troop.\nIf you moved or deployed a troop next to another player's troop, scry 1.\nConquest Focus ► Draw a card."
@@ -1833,7 +1833,7 @@
   },
   {
     "card_id": 49202,
-    "name": "Ebonbane",
+    "name": "Caldron Magen",
     "cost": 4,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1855,33 +1855,33 @@
   },
   {
     "card_id": 49204,
-    "name": "Black Pudding",
+    "name": "Animated Chained Library",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
-    "race": "OOZE",
+    "race": "CONSTRUCT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "At end of turn, promote another card played this turn.\nAmbition Focus ► +2 Influence"
   },
   {
     "card_id": 49205,
-    "name": "Spy",
+    "name": "Waxwork",
     "cost": 3,
     "aspect": "GUILE",
     "type": "WATERDEEP",
-    "race": "HUMAN",
+    "race": "CONSTRUCT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, deploy 2 troops.\n• Return one of your spies ► +3 Influence\nGuile Focus ► +2 Power"
   },
   {
     "card_id": 49206,
-    "name": "Otyugh",
+    "name": "Virvos Magen",
     "cost": 4,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
-    "race": "OTYUGH",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Assassinate a troop. If it was a white troop, +1 Power.\nAt end of turn, promote an Obedience card played this turn.\nConquest Focus ► Move a troop."
@@ -1899,22 +1899,22 @@
   },
   {
     "card_id": 49208,
-    "name": "Gelatinous Cube",
+    "name": "Spirit Statue Mascot",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
-    "race": "OOZE",
+    "race": "CONSTRUCT",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "Choose one:\n• +2 Influence\n• Return a spy.\nAmbition Focus ► Choose both instead."
   },
   {
     "card_id": 49209,
-    "name": "Ochre Jelly",
+    "name": "Terran Magen",
     "cost": 4,
     "aspect": "GUILE",
     "type": "WATERDEEP",
-    "race": "OOZE",
+    "race": "CONSTRUCT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Place a spy, +1 Power.\nAt end of turn, promote an Obedience card played this turn."
@@ -1943,7 +1943,7 @@
   },
   {
     "card_id": 49212,
-    "name": "Assassin",
+    "name": "Lorehold Apprentice",
     "cost": 6,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1965,11 +1965,11 @@
   },
   {
     "card_id": 49214,
-    "name": "Manticore",
+    "name": "Elise",
     "cost": 6,
     "aspect": "GUILE",
     "type": "WATERDEEP",
-    "race": "MANTICORE",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, whenever you place a spy, you may move a troop.\nPlace 2 spies.\nGuile Focus ► Place 2 spies or draw a card."
@@ -1998,7 +1998,7 @@
   },
   {
     "card_id": 49217,
-    "name": "Archmage",
+    "name": "Conjurer Archmage",
     "cost": 7,
     "aspect": "GUILE",
     "type": "WATERDEEP",
@@ -2031,11 +2031,11 @@
   },
   {
     "card_id": 49220,
-    "name": "Harpy",
+    "name": "Silverquill Apprentice",
     "cost": 7,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
-    "race": "HARPY",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+5 Influence\nDouble Ambition Focus ► +4 Influence. This turn, whenever you buy a card, you may recruit a cheaper one for free."
