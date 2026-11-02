@@ -108,7 +108,7 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49111":  # Will-o'-Wisp (Soul Shepherd) — при Devour: on_devour
 			return SequenceEffect.new([GainInfluence.new(2), _OutcastUnlessHolding.new()])
-		"49112":  # Spirit Naga (Ethereal Remitter)
+		"49112":  # Wight Lifedrinker (Ethereal Remitter)
 			return SequenceEffect.new([
 				ConditionalEffect.new(func(state, pid): return state.players[pid].deck.discard_pile.has(OUTCAST),
 					OptionalEffect.new(CelestialCards._AllFromDiscardToHand.new(OUTCAST),

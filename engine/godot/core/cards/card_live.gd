@@ -35,7 +35,7 @@ const RULES := {
 	"49015": [["LEFT YOUR BARRACKS", "need", "troops_left", 10]],  # Solar
 	"49520": [["TROOPS ON THE BOARD", "need", "troops_on_board", 15], ["30+", "need", "troops_on_board", 30]],  # Daemogoth Titan
 	"49102": [["PUT AN INSANE OUTCAST INTO YOUR HAND", "have", "outcast_supply"]],  # Death Dog
-	"49112": [["INSANE OUTCASTS FROM YOUR DISCARD PILE", "count", "discard_outcasts"]],  # Spirit Naga
+	"49112": [["INSANE OUTCASTS FROM YOUR DISCARD PILE", "count", "discard_outcasts"]],  # Wight Lifedrinker
 	"49019": [["GIANT EAGLE IN YOUR DISCARD PILE", "have", "eagle_discard"],  # Scout
 		["IN YOUR DECK", "have", "eagle_deck"]],
 	"49008": [["PER HOUSE GUARD PLAYED THIS TURN", "per", "guards_played", 1]],  # Pegasus

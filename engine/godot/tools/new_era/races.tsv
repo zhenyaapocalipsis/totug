@@ -143,8 +143,7 @@ Biha Babir	ELEMENTAL
 Oni	GIANT
 Thessalheart Construct	CONSTRUCT
 Murder Comet	ELEMENTAL
-Sprite	FEY
-Dryad	FEY
+Mother Lorinda	HAG
 Nafas	GENIE
 Elemental Cataclysm	ELEMENTAL
 Mage	HUMAN
@@ -178,9 +177,9 @@ Leprechaun	FEY
 Faerie Pest	FEY
 Alseid	FEY
 Poltergeist	UNDEAD
-Faerie Borrower	FEY
+Arch-hag	HAG
 High Fae Impostor	FEY
-Pixie Wonderbringer	FEY
+Bullywug Warrior	BULLYWUG
 Daemogoth Titan	DAEMOGOTH
 Goblin Hexer	GOBLINOID
 Faerie Dragon Adult	FAERIE DRAGON
@@ -242,3 +241,4 @@ Empyrean	CELESTIAL
 Archaic	CELESTIAL
 Oracle of Strixhaven	HUMAN
 Adult Gold Dragon	DRAGON
+Wight Lifedrinker	UNDEAD

@@ -229,7 +229,7 @@ const NAME_BREAKS := {
 	# Waterdeep: конструкты (2026-11-02)
 	"ARCHIVIST": [5], "CLOCKWORK": [5], "CARRIONETTE": [6],
 	# Feywild: феи и ведьмы (2026-11-02)
-	"YARNSPINNER": [4], "INCARNATION": [2, 5], "TRANSIENCE": [5], "SKIRMISHER": [4], "POLTERGEIST": [6],
+	"YARNSPINNER": [4], "INCARNATION": [2, 5], "TRANSIENCE": [5], "SKIRMISHER": [4], "POLTERGEIST": [6], "LIFEDRINKER": [4],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
@@ -283,7 +283,7 @@ const SINGLE_ART := {
 	49109: ["shadow/crawling_claws.png", Rect2i(50, 240, 640, 390)],
 	49110: ["shadow/lemure.png", Rect2i(160, 380, 600, 366)],
 	49111: ["shadow/will_o_wisp.png", Rect2i(240, 0, 760, 463)],
-	49112: ["shadow/spirit_naga.png", Rect2i(0, 60, 760, 463)],
+	49112: ["shadow/wight_lifedrinker.jpeg", Rect2i(80, 100, 760, 463)],
 	49113: ["shadow/strahd_von_zarovich.jpeg", Rect2i(215, 100, 560, 341)],
 	49114: ["shadow/nightmare.png", Rect2i(50, 40, 900, 549)],
 	49115: ["shadow/ramya_vasavadan.jpeg", Rect2i(40, 200, 700, 427)],
@@ -459,7 +459,7 @@ const SINGLE_ART := {
 	49821: ["ionia/gulthias_blight.jpeg", Rect2i(0, 380, 800, 488)],
 	49822: ["ixtal/galeb_duhr.png", Rect2i(130, 40, 600, 366)],
 	# FEYWILD (Bandle City)
-	49900: ["shadow/green_hag.jpeg", Rect2i(20, 60, 600, 366)],
+	49900: ["bandle/mother_lorinda.jpeg", Rect2i(40, 120, 700, 427)],
 	49901: ["bandle/yarnspinner.jpeg", Rect2i(0, 230, 773, 471)],
 	49902: ["bandle/incarnation_of_transience.png", Rect2i(110, 40, 840, 512)],
 	49903: ["bandle/trostani.png", Rect2i(260, 0, 540, 329)],
@@ -470,15 +470,15 @@ const SINGLE_ART := {
 	49909: ["bandle/witchkite.jpeg", Rect2i(200, 120, 800, 488)],
 	49910: ["shadow/sea_hag.png", Rect2i(0, 0, 520, 317)],
 	49911: ["bandle/high_fae_mage.jpeg", Rect2i(50, 100, 800, 488)],
-	49912: ["ionia/sprite.png", Rect2i(0, 10, 415, 253)],
+	49912: ["bandle/bullywug_warrior.png", Rect2i(0, 200, 360, 219)],
 	49913: ["bandle/leprechaun.png", Rect2i(40, 350, 337, 205)],
 	49914: ["bandle/faerie_pest.jpeg", Rect2i(150, 0, 850, 518)],
 	49915: ["bandle/sprite_skirmisher.jpeg", Rect2i(100, 120, 820, 500)],
 	49916: ["bandle/alseid.jpeg", Rect2i(100, 60, 800, 488)],
-	49917: ["bandle/faerie_borrower.jpeg", Rect2i(150, 50, 750, 457)],
+	49917: ["bandle/arch_hag.png", Rect2i(150, 0, 850, 518)],
 	49918: ["bandle/high_fae_impostor.jpeg", Rect2i(100, 0, 900, 549)],
-	49919: ["bandle/pixie_wonderbringer.png", Rect2i(200, 250, 600, 366)],
-	49920: ["ionia/dryad.png", Rect2i(60, 120, 500, 305)],
+	49919: ["ixtal/bullywug_bog_sage.png", Rect2i(40, 320, 362, 221)],
+	49920: ["shadow/green_hag.jpeg", Rect2i(20, 60, 600, 366)],
 	49921: ["bandle/goblin_hexer.png", Rect2i(0, 150, 578, 352)],
 	49922: ["bandle/faerie_dragon_adult.jpeg", Rect2i(0, 190, 520, 317)],
 	# FAR REALM (Void)
@@ -518,7 +518,7 @@ const SINGLE_ART := {
 	50113: ["ixtal/performer_maestro.png", Rect2i(0, 300, 556, 339)],
 	50114: ["avernus/medusa.jpeg", Rect2i(0, 20, 545, 332)],
 	50115: ["ixtal/living_gust_of_wind.jpeg", Rect2i(150, 0, 850, 518)],
-	50116: ["ixtal/bullywug_bog_sage.png", Rect2i(40, 320, 362, 221)],
+	50116: ["shadow/spirit_naga.png", Rect2i(150, 20, 800, 488)],
 	50117: ["ionia/merrow.png", Rect2i(0, 170, 368, 225)],
 	50118: ["ixtal/kenku.png", Rect2i(30, 420, 427, 261)],
 	50119: ["ixtal/aarakocra_aeromancer.png", Rect2i(250, 0, 750, 457)],

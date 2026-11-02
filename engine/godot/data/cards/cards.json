@@ -1668,11 +1668,11 @@
   },
   {
     "card_id": 49112,
-    "name": "Spirit Naga",
+    "name": "Wight Lifedrinker",
     "cost": 2,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
-    "race": "NAGA",
+    "race": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "You may put the Insane Outcasts from your discard pile into your hand.\nChoose one:\n• Place a spy, then scry 3.\n• Return one of your spies ► +3 Power"
@@ -3454,7 +3454,7 @@
   },
   {
     "card_id": 49900,
-    "name": "Green Hag",
+    "name": "Mother Lorinda",
     "cost": 6,
     "aspect": "GUILE",
     "type": "FEYWILD",
@@ -3575,11 +3575,11 @@
   },
   {
     "card_id": 49912,
-    "name": "Sprite",
+    "name": "Bullywug Warrior",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "FEYWILD",
-    "race": "FEY",
+    "race": "BULLYWUG",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence\nIf you have no VP tokens, gain 1 VP and place a spy."
@@ -3630,11 +3630,11 @@
   },
   {
     "card_id": 49917,
-    "name": "Faerie Borrower",
+    "name": "Arch-hag",
     "cost": 3,
     "aspect": "GUILE",
     "type": "FEYWILD",
-    "race": "FEY",
+    "race": "HAG",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. Site full: you may devour a card in hand or discard pile for 1 VP.\n• Return one of your spies, devour 2 market cards. Their replacements cost 2 less."
@@ -3652,22 +3652,22 @@
   },
   {
     "card_id": 49919,
-    "name": "Pixie Wonderbringer",
+    "name": "Bullywug Bog Sage",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "FEYWILD",
-    "race": "FEY",
+    "race": "BULLYWUG",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Supplant a white troop.\nGlamour: Supplant any troop instead.\nGlamour: Supplant a white troop anywhere on the board instead."
   },
   {
     "card_id": 49920,
-    "name": "Dryad",
+    "name": "Green Hag",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "FEYWILD",
-    "race": "FEY",
+    "race": "HAG",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "+3 Influence\nGlamour: At end of turn, promote another card you played this turn."
@@ -4081,11 +4081,11 @@
   },
   {
     "card_id": 50116,
-    "name": "Bullywug Bog Sage",
+    "name": "Spirit Naga",
     "cost": 3,
     "aspect": "MALICE",
     "type": "CHULT",
-    "race": "BULLYWUG",
+    "race": "NAGA",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+1 Influence\nLook at the top 2 cards of your deck. You may promote one of them. Put the rest on the top or bottom."

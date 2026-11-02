@@ -13,13 +13,13 @@ extends RefCounted
 ## Glamour (правило мода): "spend 1 VP token (return it to the supply) to enable
 ## the ability; only one Glamour per card". Здесь: после основного эффекта карты
 ## вопрос "Glamour?" со списком её Glamour-способностей и вариантом "No Glamour";
-## у карт с "instead" (Leprechaun, Pixie Wonderbringer) Glamour-варианты стоят рядом с
+## у карт с "instead" (Leprechaun, Bullywug Bog Sage) Glamour-варианты стоят рядом с
 ## основным эффектом. Без VP-жетонов вопроса нет.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "teemo"            — Green Hag: каждый шпион -> ещё шпион и 1 VP; возврат
+##   "teemo"            — Mother Lorinda: каждый шпион -> ещё шпион и 1 VP; возврат
 ##                        своего шпиона -> supplant в той локации;
-##   "teemo_busy"       — ставится дополнительный шпион Green Hag (он не цепляет ещё один);
+##   "teemo_busy"       — ставится дополнительный шпион Mother Lorinda (он не цепляет ещё один);
 ##   "tristana_vp"      — Incarnation of Transience: убил или вытеснил войско -> 1 VP;
 ##   "tristana_supplant" — Incarnation of Transience: убил войско -> можно вытеснить его вместо этого;
 ##   "yuumi_top"        — Swanmay: купленную карту можно положить на верх колоды;
@@ -29,7 +29,7 @@ extends RefCounted
 ##                        "gained 6 or more Power this turn" = потрачено + осталось);
 ##   "control_start"    — локации, которые игрок контролировал в начале хода (Alseid).
 
-const TEEMO := "49900"  # Green Hag
+const TEEMO := "49900"  # Mother Lorinda
 const KENNEN := "49901"  # Yarnspinner
 const TRISTANA := "49902"  # Incarnation of Transience
 const ZIGGS := "49903"  # Trostani
@@ -40,15 +40,15 @@ const VEIGAR := "49908"  # The Gardener
 const CORKI := "49909"  # Witchkite
 const GUNNERS := "49910"  # Sea Hag (Bandle Gunners)
 const CARETAKER := "49911"  # High Fae Mage (Realm Caretaker)
-const EXPLORER := "49912"  # Icewind Kobold (Yordle Explorer)
+const EXPLORER := "49912"  # Bullywug Warrior (Yordle Explorer)
 const MAYOR := "49913"  # Leprechaun (Bandle City Mayor)
 const PAINTER := "49914"  # Faerie Pest (Bandle Painter)
 const BANANA := "49915"  # Sprite Skirmisher (Banana Blaster)
 const SWOLE := "49916"  # Alseid (Swole Scout)
-const KINGPIN := "49917"  # Faerie Borrower (Arena Kingpin)
+const KINGPIN := "49917"  # Arch-hag (Arena Kingpin)
 const BLADETWIRLER := "49918"  # High Fae Impostor (Carved Bladetwirler)
-const TORNADO := "49919"  # Pixie Wonderbringer (Tornado Warrior)
-const CAPTAIN := "49920"  # Ogre Chitterlord (Yordle Captain)
+const TORNADO := "49919"  # Bullywug Bog Sage (Tornado Warrior)
+const CAPTAIN := "49920"  # Green Hag (Yordle Captain)
 const PORTAL := "49921"  # Goblin Hexer (Portal Scholar)
 const MEGA_GNAR := "49922"  # Faerie Dragon Adult (Mega Gnar, не в рынке)
 
@@ -253,7 +253,7 @@ static func gained_control(state: GameState, player_id: String) -> bool:
 	return false
 
 
-## Green Hag: "Whenever you place a spy, place an additional spy and gain 1 VP".
+## Mother Lorinda: "Whenever you place a spy, place an additional spy and gain 1 VP".
 static func on_place_spy(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 	if not state.turn_flags.get("teemo", false) or state.turn_flags.get("teemo_busy", false) \
 			or player_id != state.current_player():
@@ -266,7 +266,7 @@ static func on_place_spy(state: GameState, player_id: String, resolver: EffectRe
 	]), player_id, TEEMO)
 
 
-## Green Hag: "Whenever you return one of your spies, also Supplant a troop at that site".
+## Mother Lorinda: "Whenever you return one of your spies, also Supplant a troop at that site".
 static func on_return_spy(state: GameState, player_id: String, site_id: String, resolver: EffectResolver) -> void:
 	if not state.turn_flags.get("teemo", false) or player_id != state.current_player():
 		return
@@ -423,7 +423,7 @@ class _Branch extends CardEffect:
 		resolver.push(yes if cond.call(state, player_id) else no, player_id)
 
 
-## Green Hag (Teemo): верхние N карт колоды — карты с этими словами в руку, остальные в сброс.
+## Mother Lorinda (Teemo): верхние N карт колоды — карты с этими словами в руку, остальные в сброс.
 class _FromTopWithWord extends CardEffect:
 	var amount: int
 	var words: Array

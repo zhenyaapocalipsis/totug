@@ -340,7 +340,7 @@ class _Devour extends CardEffect:
 				if not top.is_empty():
 					resolver.push(_PickReplacement.new(index, top), player_id)
 			"discount3", "discount2":
-				# Faerie Borrower (FEYWILD): замена на 2 дешевле.
+				# Arch-hag (FEYWILD): замена на 2 дешевле.
 				state.market.recruit_at(index)
 				var key := "slot:%d" % index
 				state.turn_discounts[key] = int(state.turn_discounts.get(key, 0)) + market_mode.right(1).to_int()

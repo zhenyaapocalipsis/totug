@@ -43,7 +43,7 @@ const VASTAYA := "50112"  # Yuan-ti Abomination (Avenging Vastaya)
 const TYCOON := "50113"  # Performer Maestro (Big Game Tycoon)
 const ARCHAEOLOGIST := "50114"  # Minotaur Archaeologist (Intrepid Archaeologist)
 const SKY_SQUAD := "50115"  # Living Gust of Wind (Sky Squad)
-const ECOLOGIST := "50116"  # Bullywug Bog Sage (Curious Ecologist)
+const ECOLOGIST := "50116"  # Spirit Naga (Curious Ecologist)
 const MONK := "50117"  # Cyclops Oracle (Axiomata Monk)
 const KEEPER := "50118"  # Kenku (Secret Keeper)
 const LANDING := "50119"  # Aarakocra Aeromancer (Landing Party)
@@ -266,7 +266,7 @@ static func sync_market_troops(state: GameState) -> void:
 
 # --- Классы эффектов -------------------------------------------------------------
 
-## Explore / Bullywug Bog Sage: посмотреть верх колоды, одну карту взять
+## Explore / Spirit Naga: посмотреть верх колоды, одну карту взять
 ## (mode "explore" — подходящую в руку, "promote" — любую во Внутренний круг),
 ## остальные — под низ или наверх в выбранном порядке.
 ## Living Gust of Wind среди просмотренных можно взять в руку сверх того.

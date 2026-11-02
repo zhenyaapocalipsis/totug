@@ -6449,16 +6449,16 @@ func test_feywild_deck() -> void:
 	check_eq([red.vp_tokens, state.vp_bank.ones], [1, ones + 1], "Glamour: 1 VP вернулся в запас")
 	check_eq(red.pending_end_of_turn.size(), 1, "Glamour Ogre Chitterlord: promote в конце хода")
 
-	# Pixie Wonderbringer: без VP сразу обычный supplant, с VP — выбор из трёх
+	# Bullywug Bog Sage: без VP сразу обычный supplant, с VP — выбор из трёх
 	red.vp_tokens = 0
 	r = _play_with(state, B.TORNADO)
-	check(not r.is_waiting() or r.pending.choice_type != "choose_option", "Pixie Wonderbringer без VP: выбора нет")
+	check(not r.is_waiting() or r.pending.choice_type != "choose_option", "Bullywug Bog Sage без VP: выбора нет")
 	state = _build_rich_state(62)
 	red = state.players["red"]
 	TurnEngine.start_turn(state, "red")
 	red.vp_tokens = 1
 	r = _play_with(state, B.TORNADO)
-	check(r.is_waiting() and r.pending.option_labels.size() == 3, "Pixie Wonderbringer с VP: обычный вариант и два Glamour")
+	check(r.is_waiting() and r.pending.option_labels.size() == 3, "Bullywug Bog Sage с VP: обычный вариант и два Glamour")
 
 	# Faerie Dragon Youth: 6+ Power за ход — превращение во взрослого и обратно
 	state = _build_rich_state(63)
@@ -6487,7 +6487,7 @@ func test_feywild_deck() -> void:
 	r = _play_with(state, B.EXPLORER)
 	check(red.vp_tokens == 1 and r.is_waiting() and r.pending.choice_type == "target_site", "Icewind Kobold: 1 VP и вопрос о шпионе")
 
-	# Green Hag: каждый шпион — ещё шпион и 1 VP
+	# Mother Lorinda: каждый шпион — ещё шпион и 1 VP
 	state = _build_rich_state(65)
 	red = state.players["red"]
 	TurnEngine.start_turn(state, "red")
@@ -6500,7 +6500,7 @@ func test_feywild_deck() -> void:
 	while r.is_waiting() and guard < 10:
 		guard += 1
 		TurnEngine.resume_card(state, r.pending.legal_options[0], r)
-	check_eq([spies_before - red.spies_in_barracks, red.vp_tokens], [2, 1], "Green Hag: 2 шпиона и 1 VP")
+	check_eq([spies_before - red.spies_in_barracks, red.vp_tokens], [2, 1], "Mother Lorinda: 2 шпиона и 1 VP")
 
 	# Lampad (Norra): соперник кладёт 3 жетона 1 VP, забрать их может только хозяин
 	state = _build_rich_state(66)
