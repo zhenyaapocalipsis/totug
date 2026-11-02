@@ -31,10 +31,10 @@ const NEW_ERA_FACTIONS: Array[String] = ["celestial", "shadow", "piltover", "nox
 ## листаются кнопкой под ней (решение владельца 2026-10-14).
 const TOKENS := {
 	"49019": ["49023"],  # Scout -> Giant Eagle
-	"49022": ["49024"],  # Gold Dragon -> Ancient Gold Dragon
-	"49118": ["49124"],  # Treant -> Twig Blight
+	"49022": ["49024"],  # Adult Gold Dragon -> Ancient Gold Dragon
+	"49118": ["49124"],  # Strahd von Zarovich -> Vampire Familiar
 	"49120": ["49123"],  # Drider -> Phase Spider
-	"49521": ["49523", "49524"],  # Half-Dragon -> Blade Fragment, Blade of Exile
+	"49521": ["49523", "49524"],  # Erinyes -> Blade Fragment, Blade of Exile
 }
 const COLUMNS := 5
 const ROWS := 4
@@ -240,6 +240,9 @@ func _cards_page() -> Control:
 	body.add_child(side)
 	_preview = CardView.new(faction_cards("drow")[0], int(FULL.x), int(FULL.y))
 	_preview.hover_preview = false
+	# Длинная надпись кнопки жетона ("BACK TO STRAHD VON ZAROVICH >") шире карты:
+	# растянутая карта показывала бы только верх — имя и арт, без текста.
+	_preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	side.add_child(_preview)
 	_token_button = _button("", func(): next_form())
 	_token_button.custom_minimum_size = Vector2(FULL.x, 16)

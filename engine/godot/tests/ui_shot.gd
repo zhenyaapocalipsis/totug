@@ -177,6 +177,16 @@ func _run_scenario() -> void:
 			var bg_profile := _menu_profile()
 			(func(): bg_profile._show_tab.call_deferred("COLLECTION")).call_deferred()
 			bg_profile._collection.show_section("BACKGROUNDS")
+		"collection_token":
+			# Коллекция: большая карта показывает жетон с длинной кнопкой
+			# "BACK TO <карта>" (--card=49118 — Strahd и его Vampire Familiar).
+			PlayerProfile.path_override = "user://profile_shot.cfg"
+			var tk_profile := _menu_profile()
+			(func(): tk_profile._show_tab.call_deferred("COLLECTION")).call_deferred()
+			var tk_card := _arg("card", "49118")
+			tk_profile._collection.show_faction(CollectionPage.faction_of(tk_card))
+			tk_profile._collection.select(tk_card)
+			tk_profile._collection.next_form()
 		"profile_card":
 			# Карточка соперника поверх партии (щелчок по имени в таблице игроков).
 			PlayerProfile.seats = {"blue": {"name": "Zinda", "emblem": "", "rating": 1163, "games": 22, "wins": 12}}
