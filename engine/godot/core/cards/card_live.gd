@@ -34,7 +34,7 @@ const RULES := {
 	"49001": [["6 OR MORE CARDS IN YOUR INNER CIRCLE", "need", "inner_circle", 6]],  # Priest
 	"49015": [["LEFT YOUR BARRACKS", "need", "troops_left", 10]],  # Solar
 	"49520": [["TROOPS ON THE BOARD", "need", "troops_on_board", 15], ["30+", "need", "troops_on_board", 30]],  # Daemogoth Titan
-	"49102": [["PUT AN INSANE OUTCAST INTO YOUR HAND", "have", "outcast_supply"]],  # Death Dog
+	"49102": [["PUT AN INSANE OUTCAST INTO YOUR HAND", "have", "outcast_supply"]],  # Flaming Skeleton
 	"49112": [["INSANE OUTCASTS FROM YOUR DISCARD PILE", "count", "discard_outcasts"]],  # Wight Lifedrinker
 	"49019": [["GIANT EAGLE IN YOUR DISCARD PILE", "have", "eagle_discard"],  # Scout
 		["IN YOUR DECK", "have", "eagle_deck"]],
@@ -44,9 +44,9 @@ const RULES := {
 	"49120": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Drider
 		["PER SPY YOU HAVE ON THE BOARD", "per", "spies_on_board", 1]],
 	"49123": [["PER SPY YOU HAVE ON THE BOARD", "per", "spies_on_board", 1]],  # Phase Spider
-	"49100": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Specter
-	"49105": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Grick
-	"49108": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Gargoyle
+	"49100": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Lord Soth
+	"49105": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Sammaster
+	"49108": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Warhorse Skeleton
 	"49107": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Poltergeist
 	"49110": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Lemure
 	"49115": [["PER INSANE OUTCAST IN YOUR DISCARD PILE", "per", "discard_outcasts_x3", 1]],  # Ramya Vasavadan

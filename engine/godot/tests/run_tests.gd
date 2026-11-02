@@ -6014,7 +6014,7 @@ func test_shadow_isles() -> void:
 	var green: PlayerState = state.players["green"]
 	TurnEngine.start_turn(state, "red")
 
-	# Insane Outcast считается, Specter получает +1 Power за каждый
+	# Insane Outcast считается, Lord Soth получает +1 Power за каждый
 	red.deck.hand.append_array([outcast, outcast, "49100"] as Array[String])
 	for i in range(2):
 		var ro := EffectResolver.new()
@@ -6025,7 +6025,7 @@ func test_shadow_isles() -> void:
 	red.power = 0
 	var r1 := EffectResolver.new()
 	TurnEngine.play_card(state, "red", "49100", r1)
-	check_eq(red.power, 5, "Specter: 3 + 2 за Outcast")
+	check_eq(red.power, 5, "Lord Soth: 3 + 2 за Outcast")
 
 	# Cursed Affinity: Skull Lord дешевле на 2, обычная карта — нет, пока не сыгран Drider
 	state.market.display[0] = "49113"
@@ -6049,18 +6049,18 @@ func test_shadow_isles() -> void:
 	check_eq(red.power, 2, "Outcast под Shadow: +2 Power")
 	check_eq(red.deck.hand.size(), hand_size, "и взята карта (минус сыгранный Outcast)")
 
-	# Shambling Mound: Gargoyle разыгран дважды, в конце хода сожран, +3 Influence в начале следующего
+	# Shambling Mound: Warhorse Skeleton разыгран дважды, в конце хода сожран, +3 Influence в начале следующего
 	TurnEngine.start_turn(state, "red")
 	red.influence = 0
 	red.deck.hand.append_array(["49103", "49108"] as Array[String])
 	TurnEngine.play_card(state, "red", "49103", EffectResolver.new())
 	TurnEngine.play_card(state, "red", "49108", EffectResolver.new())
-	check_eq(red.influence, 4, "Gargoyle под Shambling Mound: дважды по +2 Influence")
+	check_eq(red.influence, 4, "Warhorse Skeleton под Shambling Mound: дважды по +2 Influence")
 	var r3 := EffectResolver.new()
 	TurnEngine.end_turn(state, "red", r3)
 	_auto_resolve(state, r3, false)
-	check(state.devoured_pile.has("49108"), "Gargoyle сожран в конце хода")
-	check_eq(red.start_of_turn_influence, 3, "Gargoyle: +3 Influence отложено на следующий ход")
+	check(state.devoured_pile.has("49108"), "Warhorse Skeleton сожран в конце хода")
+	check_eq(red.start_of_turn_influence, 3, "Warhorse Skeleton: +3 Influence отложено на следующий ход")
 	TurnEngine.start_turn(state, "red")
 	check(red.influence >= 3, "в начале хода пришло 3 Influence (плюс доход маркеров)")
 	check_eq(red.start_of_turn_influence, 0, "и отложенное обнулилось")
@@ -6076,11 +6076,11 @@ func test_shadow_isles() -> void:
 	check_eq(red.deck.hand.size(), 2, "и дал взять 2 карты")
 	check(not state.devoured_pile.has("49124"), "в стопку сожранных не попал")
 
-	# Swarm of Crawling Claws в руке у blue: Outcast можно взять в руку
+	# Mist Horror в руке у blue: Outcast можно взять в руку
 	blue.deck.hand = ["49109"] as Array[String]
 	var r5 := EffectResolver.new()
 	r5.apply(GiveInsaneOutcast.new("self"), "blue", state)
-	check(r5.is_waiting() and r5.pending.player_id == "blue", "Swarm of Crawling Claws: вопрос получателю")
+	check(r5.is_waiting() and r5.pending.player_id == "blue", "Mist Horror: вопрос получателю")
 	TurnEngine.resume_card(state, true, r5)
 	check(blue.deck.hand.has(outcast), "Outcast пришёл в руку")
 	check(r5.is_waiting() and r5.pending.player_id == "blue", "затем Scry 1 у blue")
@@ -7371,7 +7371,7 @@ func test_avernus_deck() -> void:
 	_play_with(state, "49509")
 	check_eq(red.influence, 2, "Mummy без пожирания: только +2 Influence")
 	check_eq(state.ghost_market_player, "red", "Mummy: верхнюю сожранную карту можно купить")
-	var rg := _play_with(state, "49105", [0, "48342"])  # Grick (Ravenloft): devour из руки
+	var rg := _play_with(state, "49105", [0, "48342"])  # Sammaster (Ravenloft): devour из руки
 	_auto_resolve(state, rg, false)
 	check_eq(NoxusCards.devours(state), 1, "пожирание картой Ravenloft считается для Might")
 	red.influence = 0

@@ -25,16 +25,11 @@ Shield Guardian	CONSTRUCT
 Gold Dragon	DRAGON
 Giant Eagle	BEAST
 Ancient Gold Dragon	DRAGON
-Specter	UNDEAD
 Vampire Familiar	HUMAN
-Death Dog	DEATH DOG
 Shambling Mound	PLANT
 Awakened Tree	PLANT
-Grick	GRICK
 Bearded Devil	DEVIL
 Sea Hag	HAG
-Gargoyle	GARGOYLE
-Swarm of Crawling Claws	UNDEAD
 Lemure	DEVIL
 Will-o'-Wisp	UNDEAD
 Spirit Naga	NAGA
@@ -79,7 +74,6 @@ Pseudodragon	DRAGON
 Medusa	MEDUSA
 Guard Captain	HUMAN
 Bugbear Warrior	GOBLINOID
-Mummy	UNDEAD
 Felhound	DEMON
 Minotaur of Baphomet	MINOTAUR
 Degloth	DEMON
@@ -227,8 +221,6 @@ Strahd von Zarovich	UNDEAD
 Ramya Vasavadan	UNDEAD
 Relentless Slasher	FIEND
 Nightmare Haunt	ABERRATION
-Zombie Plague Spreader	UNDEAD
-Swarm of Zombie Limbs	UNDEAD
 Graveyard Revenant	UNDEAD
 Vampire Nosferatu	UNDEAD
 Sphinx of Secrets	SPHINX
@@ -242,3 +234,11 @@ Archaic	CELESTIAL
 Oracle of Strixhaven	HUMAN
 Adult Gold Dragon	DRAGON
 Wight Lifedrinker	UNDEAD
+Lord Soth	UNDEAD
+Flaming Skeleton	UNDEAD
+Sammaster	UNDEAD
+Warhorse Skeleton	UNDEAD
+Mist Horror	UNDEAD
+Dracolich	UNDEAD
+Saidra d'Honaire	UNDEAD
+Dullahan	UNDEAD

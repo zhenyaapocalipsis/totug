@@ -48,9 +48,9 @@ static func is_outcast(card_id: String) -> bool:
 static func build(card_id: String) -> CardEffect:
 	var outcast_filter := func(c): return c == OUTCAST
 	match card_id:
-		"49100":  # Specter (Wraithcaller) — при Devour: on_devour
+		"49100":  # Lord Soth (Wraithcaller) — при Devour: on_devour
 			return SequenceEffect.new([GainPower.new(3), _PerOutcast.new("power")])
-		"49101":  # Vampire Familiar (Soulspinner)
+		"49101":  # Nightmare Haunt (Soulspinner)
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
 					func(state, _pid): return CelestialCards.site_is_full(state, site),
@@ -58,7 +58,7 @@ static func build(card_id: String) -> CardEffect:
 				ReturnOwnSpy.new(SequenceEffect.new([FetchFromTop.new(5, outcast_filter), DrawCards.new(1)])),
 			], ["Place a spy (full site: each opponent recruits an Insane Outcast)",
 				"Return one of your spies -> Insane Outcasts from your top 5 cards into your hand, draw a card"])
-		"49102":  # Death Dog (Duskrider)
+		"49102":  # Flaming Skeleton (Duskrider)
 			return ConditionalEffect.new(func(state, _pid): return state.supplies.is_available(OUTCAST),
 				OptionalEffect.new(SequenceEffect.new([
 					GainSupplyToHand.new([OUTCAST] as Array[String]),
@@ -74,7 +74,7 @@ static func build(card_id: String) -> CardEffect:
 				FetchFromTop.new(6, outcast_filter),
 				GainInfluence.new(3),
 			], ["Insane Outcasts from your top 6 cards into your hand", "+3 Influence"])
-		"49105":  # Grick (The Sunderer)
+		"49105":  # Sammaster (The Sunderer)
 			return ChooseEffect.new([
 				SequenceEffect.new([DevourCard.new("hand"), DrawCards.new(1)]),
 				SequenceEffect.new([ScryCards.new(1), _PerOutcast.new("draw")]),
@@ -93,9 +93,9 @@ static func build(card_id: String) -> CardEffect:
 					ReturnOwnSpy.new(null, Callable(), true, func(sites): return AssassinateTroop.new(sites.size(), false, true)),
 				], ["Place a spy and draw a card", "Return any number of your spies -> assassinate a troop for each"]),
 			])
-		"49108":  # Gargoyle (The Etherfiend) — при Devour: on_devour
+		"49108":  # Warhorse Skeleton (The Etherfiend) — при Devour: on_devour
 			return SequenceEffect.new([GainInfluence.new(2), _PerOutcast.new("influence")])
-		"49109":  # Swarm of Crawling Claws (Corpse Commander) — реакция из руки: ClawsReaction
+		"49109":  # Mist Horror (Corpse Commander) — реакция из руки: ClawsReaction
 			return _SupplantPlayerBonus.new()
 		"49110":  # Lemure (Camavoran Soldier)
 			return SequenceEffect.new([
@@ -118,7 +118,7 @@ static func build(card_id: String) -> CardEffect:
 					ReturnOwnSpy.new(GainPower.new(3)),
 				], ["Place a spy, then scry 3", "Return one of your spies -> +3 Power"]),
 			])
-		"49113":  # Rakshasa (Viego)
+		"49113":  # Dracolich (Viego)
 			return SequenceEffect.new([
 				GainInfluence.new(2),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id, Callable(), 2, true)),
@@ -128,7 +128,7 @@ static func build(card_id: String) -> CardEffect:
 			return SequenceEffect.new([DeployTroop.new(4), GainVpPerN.new("vp", "sites_controlled", 2, 1)])
 		"49115":  # Ramya Vasavadan (Thresh) — 0 VP за Outcast: Scoring.card_bonus_vp
 			return SequenceEffect.new([_CycleHand.new(), _PowerPerDiscardedOutcast.new(3)])
-		"49116":  # Barbed Devil (Vex)
+		"49116":  # Saidra d'Honaire (Vex)
 			return ChooseEffect.new([
 				_ShadowSplit.new(),
 				SupplantTroop.new(1, false, true),
@@ -138,13 +138,13 @@ static func build(card_id: String) -> CardEffect:
 				GainPower.new(4),
 				_RecruitFromDevoured.new(3),
 			], ["+4 Power", "Recruit one of the top 3 devoured cards for free"])
-		"49118":  # Treant (Maokai)
+		"49118":  # Strahd von Zarovich (Maokai)
 			return SequenceEffect.new([
 				_GainTwigBlight.new(),
 				GainVpPerN.new("vp", "sites_controlled_total", 1, 1),
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
 			])
-		"49119":  # Bone Devil (Karthus)
+		"49119":  # Dullahan (Karthus)
 			var strike := AssassinateTroop.new(2, false, true)
 			strike.site_given_by_card = true  # "anywhere": без Присутствия
 			return SequenceEffect.new([strike, GainVpPerN.new("vp", "trophy_hall", 3, 1)])
@@ -166,7 +166,7 @@ static func build(card_id: String) -> CardEffect:
 				ReturnOwnSpy.new(null, Callable(), true, func(sites): return _SupplantAtSites.new(sites)),
 				OptionalEffect.new(CelestialCards._Transform.new(PHASE_SPIDER, DRIDER), "Transform into Drider?"),
 			])
-		"49124":  # Twig Blight (Sapling) — Promote/Devour: Supplies.redirect_outcast
+		"49124":  # Vampire Familiar, token (Sapling) — Promote/Devour: Supplies.redirect_outcast
 			return SequenceEffect.new([DeployTroop.new(1), DrawCards.new(1)])
 	return null
 
@@ -272,7 +272,7 @@ class _PowerPerDiscardedOutcast extends CardEffect:
 			resolver.push(GainPower.new(n * per), player_id)
 
 
-## Swarm of Crawling Claws: "Supplant a troop. If it was a player troop, +1 Power" — чужое
+## Mist Horror: "Supplant a troop. If it was a player troop, +1 Power" — чужое
 ## войско игрока попадает в трофеи как player troop.
 class _SupplantPlayerBonus extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -321,7 +321,7 @@ class _OutcastUnlessHolding extends CardEffect:
 				resolver.push(GiveInsaneOutcast.new("self"), opp)
 
 
-## Swarm of Crawling Claws в руке: "Whenever you would gain an Insane Outcast, you may reveal
+## Mist Horror в руке: "Whenever you would gain an Insane Outcast, you may reveal
 ## this card to gain it to your hand and scry 1". Вопрос задаётся получателю
 ## (как Shield Guardian) из GiveInsaneOutcast.
 class ClawsReaction extends CardEffect:
@@ -334,7 +334,7 @@ class ClawsReaction extends CardEffect:
 		if not is_answered():
 			var pd := PendingDecision.new()
 			pd.player_id = target
-			pd.prompt = "Reveal Swarm of Crawling Claws to take the Insane Outcast into your hand and scry 1?"
+			pd.prompt = "Reveal %s to take the Insane Outcast into your hand and scry 1?" % String(CardLibrary.card_data(ShadowCards.CRAWLING_CLAWS).get("name", ShadowCards.CRAWLING_CLAWS))
 			pd.choice_type = "confirm"
 			pd.source_card = ShadowCards.CRAWLING_CLAWS
 			pd.legal_options = [true, false]

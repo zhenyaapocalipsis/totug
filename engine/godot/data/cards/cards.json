@@ -1536,7 +1536,7 @@
   },
   {
     "card_id": 49100,
-    "name": "Specter",
+    "name": "Lord Soth",
     "cost": 4,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
@@ -1547,22 +1547,22 @@
   },
   {
     "card_id": 49101,
-    "name": "Vampire Familiar",
+    "name": "Nightmare Haunt",
     "cost": 3,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
-    "race": "HUMAN",
+    "race": "ABERRATION",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, each opponent recruits an Insane Outcast.\n• Return one of your spies ► Insane Outcasts from your top 5 cards into your hand, draw a card."
   },
   {
     "card_id": 49102,
-    "name": "Death Dog",
+    "name": "Flaming Skeleton",
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
-    "race": "DEATH DOG",
+    "race": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Put an Insane Outcast into your hand ► Choose one:\n• Supplant a troop.\n• Deploy 3 troops, each opponent recruits an Insane Outcast."
@@ -1591,11 +1591,11 @@
   },
   {
     "card_id": 49105,
-    "name": "Grick",
+    "name": "Sammaster",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
-    "race": "GRICK",
+    "race": "UNDEAD",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Devour a card in your hand, then draw a card.\n• Scry 1, then draw a card per Insane Outcast you played this turn."
@@ -1624,18 +1624,18 @@
   },
   {
     "card_id": 49108,
-    "name": "Gargoyle",
+    "name": "Warhorse Skeleton",
     "cost": 2,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
-    "race": "GARGOYLE",
+    "race": "UNDEAD",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "+2 Influence, +1 Influence per Insane Outcast you played this turn.\nIf this card is devoured, +3 Influence at the start of your next turn."
   },
   {
     "card_id": 49109,
-    "name": "Swarm of Crawling Claws",
+    "name": "Mist Horror",
     "cost": 5,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
@@ -1679,7 +1679,7 @@
   },
   {
     "card_id": 49113,
-    "name": "Strahd von Zarovich",
+    "name": "Dracolich",
     "cost": 8,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
@@ -1712,11 +1712,11 @@
   },
   {
     "card_id": 49116,
-    "name": "Nightmare Haunt",
+    "name": "Saidra d'Honaire",
     "cost": 6,
     "aspect": "GUILE",
     "type": "RAVENLOFT",
-    "race": "ABERRATION",
+    "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• An opponent splits your top 5 cards into a face-up and a face-down pile. Keep one pile, discard the other.\n• Supplant a troop anywhere."
@@ -1734,18 +1734,18 @@
   },
   {
     "card_id": 49118,
-    "name": "Zombie Plague Spreader",
+    "name": "Strahd von Zarovich",
     "cost": 7,
     "aspect": "MALICE",
     "type": "RAVENLOFT",
     "race": "UNDEAD",
     "deck_vp": 3,
     "inner_circle_vp": 7,
-    "ability_text": "Gain a Swarm of Zombie Limbs. Gain 1 VP per site under your total control.\nAt end of turn, promote another card played this turn."
+    "ability_text": "Gain a Vampire Familiar. Gain 1 VP per site under your total control.\nAt end of turn, promote another card played this turn."
   },
   {
     "card_id": 49119,
-    "name": "Mummy",
+    "name": "Dullahan",
     "cost": 8,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
@@ -1800,11 +1800,11 @@
   },
   {
     "card_id": 49124,
-    "name": "Swarm of Zombie Limbs",
+    "name": "Vampire Familiar",
     "cost": null,
     "aspect": null,
     "type": "RAVENLOFT",
-    "race": "UNDEAD",
+    "race": "HUMAN",
     "deck_vp": 0,
     "inner_circle_vp": 0,
     "ability_text": "Deploy a troop and draw a card.\nIf this card would be promoted or devoured, return it to the supply and draw 2 cards instead."
