@@ -344,13 +344,15 @@ func _show_dealing() -> void:
 	_dealing_time = 0.0
 
 
-## Лобби банов: первое состояние открывает экран, конец банов — DEALING.
+## Лобби банов: первое состояние открывает экран, конец банов — DEALING. Отсчёт
+## 10 с после последнего бана ("starting") идёт в самом лобби: игроки смотрят
+## баны и пишут в чат (владелец, 2026-11-04).
 func _on_bans_changed(view: Dictionary) -> void:
 	if _bans == null:
 		_bans = BanPanel.new(_net)
 		add_child(_bans)
 	_bans.show_view(view)
-	if String(view.get("turn", "")) == "":
+	if String(view.get("turn", "")) == "" and not bool(view.get("starting", false)):
 		_hide_bans()
 		_show_dealing()
 

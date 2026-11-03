@@ -113,6 +113,8 @@ const ICE_TIP := "ICE Power (Young White Dragon) cannot be spent to deploy troop
 ## выше TURN_MAX_SECONDS (решение владельца игры, «шахматная» добавка).
 const TURN_SECONDS := 120.0
 const TURN_BONUS_SECONDS := 10.0
+## Столько секунд до конца своего хода — звуковое предупреждение.
+const TIME_LOW_SECONDS := 10.0
 const TURN_MAX_SECONDS := 300.0
 ## Таймер ответа на чужую карту (сбросить карту и т. п.): по нулю ответ
 ## выбирается сам.
@@ -1064,6 +1066,10 @@ func _input(event: InputEvent) -> void:
 	# Отпускание пробела сбрасывает удержание при любом состоянии экрана.
 	if GameSettings.is_key(key, "end_turn") and not key.pressed:
 		_space_held = false
+	# Окно BUG REPORT (открыто из меню Esc, оно остаётся под ним): клавиши — его
+	# полю текста, иначе ветка меню паузы ниже глотала всё и писать было нельзя.
+	if get_viewport().gui_get_focus_owner() is TextEdit:
+		return
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if replay_bar != null and not _pause_menu.visible and not _game_over_panel.visible \
 			and not (stats_panel != null and stats_panel.visible) and replay_bar.handle_key(key):
@@ -2240,7 +2246,11 @@ func _process(delta: float) -> void:
 	_decision_key = ""
 	# Пока открыто меню паузы или сетевая партия на паузе, таймер хода стоит.
 	if not _clock_stopped():
+		var before := _time_left
 		_time_left = maxf(0.0, _time_left - real)
+		# Своему ходу осталось TIME_LOW_SECONDS — звук (владелец, 2026-11-04).
+		if current == viewer_id and before > TIME_LOW_SECONDS and _time_left <= TIME_LOW_SECONDS:
+			Sfx.play("time_low")
 	_show_time(_time_left)
 
 	# Стартовая расстановка: End turn недоступна, по нулю локация выбирается сама.

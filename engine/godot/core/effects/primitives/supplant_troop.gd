@@ -98,7 +98,12 @@ func _supplant(state: GameState, player_id: String, resolver: EffectResolver, sl
 		if stock.troops_in_barracks == 0:
 			GameEnd.trigger(state, "last_troop")
 	else:
+		# Рулбук: supplant = assassinate, затем deploy; deploy без войск в
+		# бараках — «gain 1 VP instead» (как DeployTroop, владелец 2026-09-28).
 		state.troops[slot_id] = ""
+		var granted: int = state.vp_bank.grant(1)
+		p.vp_tokens += granted
+		resolver.log_event("gain_vp", {"player_id": player_id, "amount": granted})
 	resolver.log_event("supplant", {"player_id": player_id, "slot_id": slot_id, "victim": victim})
 	BandleCards.after_kill(state, player_id, slot_id, resolver, true)
 	if lock_after_first:

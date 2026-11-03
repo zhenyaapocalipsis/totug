@@ -100,6 +100,7 @@ func _initialize() -> void:
 	test_hotseat_three_and_four_players()
 	test_god_mode()
 	test_hs_play_always_releases()
+	test_supplant_empty_barracks()
 	test_market_mulligan()
 	test_auto_decision_answer()
 	test_recruit_from_supply()
@@ -2722,6 +2723,26 @@ func test_hs_play_always_releases() -> void:
 	check_eq(got[0], 1, "клип кончился раньше ухода карты — released всё равно пришёл")
 	check(not hs.is_busy(), "и розыгрыш больше не держит ответы")
 	hs.queue_free()
+
+
+## Рулбук: supplant = assassinate + deploy, deploy без войск — «gain 1 VP instead».
+func test_supplant_empty_barracks() -> void:
+	section("Supplant при пустых бараках")
+	var state := GameSetup.new_game(["red", "blue"], 5)
+	var slot := ""
+	for s: String in state.graph.slots.keys():
+		if String(state.troops.get(s, "")) == "":
+			slot = s
+			break
+	state.troops[slot] = "blue"
+	var red: PlayerState = state.players["red"]
+	red.troops_in_barracks = 0
+	var vp := red.vp_tokens
+	var trophies := red.trophy_hall_count
+	SupplantTroop.new(1, false, true)._supplant(state, "red", EffectResolver.new(), slot)
+	check_eq(red.trophy_hall_count, trophies + 1, "войско соперника — в трофеи")
+	check_eq(red.vp_tokens, vp + 1, "войска не осталось — вместо deploy 1 VP")
+	check_eq(String(state.troops[slot]), "", "место осталось пустым")
 
 
 func test_god_mode() -> void:
