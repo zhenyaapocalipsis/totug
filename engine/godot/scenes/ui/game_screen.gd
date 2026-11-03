@@ -209,6 +209,8 @@ var _pile_inner: PileZone
 var _deck_tracker: DeckTracker
 ## Общая для всех стопка сожранных карт — кнопкой рядом со своими стопками.
 var _pile_devour: PileZone
+## Стопка DEVOUR предлагает карту как ответ на вопрос карты о рынке, а не покупку.
+var _ghost_choice := false
 var _pile_dialog: PileDialog
 var _end_turn_area: Control
 var _end_turn_button: Button
@@ -642,6 +644,14 @@ func _build_layout() -> void:
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
 	_pile_dialog = PileDialog.new()
 	add_child(_pile_dialog)
+	# Верхняя сожранная карта, которую можно купить (Ghost, Relentless
+	# Nightmare), — золотая в окне стопки DEVOUR (владелец, 2026-11-03): в
+	# рынке она добавляла ряд и сжимала таблицу игроков.
+	_pile_dialog.offer_pressed.connect(func(_cid: String):
+		if _ghost_choice:
+			_on_decision_answer(Market.DEVOURED_TOP_INDEX)
+		else:
+			_on_market_clicked(Market.DEVOURED_TOP_INDEX))
 
 	# Чата и журнала больше нет (решение владельца, 2026-09-27): ход виден в
 	# сводке слева, а подсказки и отказы («не та цель», «время вышло») —
@@ -1675,7 +1685,7 @@ func _react_to_events(events: Array) -> void:
 				var mine := pid == viewer_id
 				if not mine or PlayerProfile.art_of(pid, bought) != "":
 					_showcase_card(pid, bought, "RECRUITS",
-						_market_panel.card_rect(int(evt.get("market_index", -1))),
+						_market_rect(int(evt.get("market_index", -1))),
 						"discard" if mine else "barracks", false, true)
 			"recruit_supply":
 				var cid := String(evt.get("card_id", ""))
@@ -1685,7 +1695,7 @@ func _react_to_events(events: Array) -> void:
 						"discard" if mine else "barracks", false, true)
 			"recruit_free":
 				_showcase_card(pid, String(evt.get("card_id", "")), "RECRUITS",
-					_market_panel.card_rect(int(evt.get("market_index", -1))), "discard", false, true)
+					_market_rect(int(evt.get("market_index", -1))), "discard", false, true)
 			# «... recruits an Insane Outcast»: изгоя навязали эффектом карты,
 			# получатель сам его не брал — показываем всем, включая его самого.
 			# Выдачи одной карты (идут подряд) собираются в один показ.
@@ -1774,6 +1784,24 @@ func _note_recap(events: Array) -> void:
 		elif type == "jarlaxle":
 			# Карту соперника разыграли за него: она — его сыгранная карта.
 			_feed.add_to_turn(String(evt.get("rival", "")), String(evt.get("card_id", "")), "PLAYED")
+		elif RECAP_PLAYS.has(type):
+			# Сыграна не из руки (Lamia, рынок, съеденные, отложенная) — тоже
+			# сыгранная карта игрока (владелец, 2026-11-03).
+			_feed.add_played(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
+		elif RECAP_CARDS.has(type):
+			var who_c := String(evt.get("player_id", ""))
+			var cards: Array = evt.get("cards", [evt.get("card_id", "")])
+			for c in cards:
+				if String(c) != "":
+					_feed.add_to_turn(who_c, String(c), RECAP_CARDS[type])
+			# Guardian Brute, Sylgar: открытая карта дала VP — строкой VP её хозяина.
+			if type == "brute_reveal" or type == "sylgar":
+				_feed.add_stat(who_c, "vp", int(evt.get("amount", 0)))
+		elif type == "steal_vp":
+			_feed.add_stat(String(evt.get("player_id", "")), "steal", int(evt.get("amount", 0)),
+				String(evt.get("from", "")))
+		elif type == "board_vp_claim":
+			_feed.add_stat(String(evt.get("player_id", "")), "vp", 1, "", ["site:" + String(evt.get("site_id", ""))])
 		elif type == "discard" or type == "force_discard":
 			_feed.add_discard(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
 		elif type == "give_insane_outcast":
@@ -1869,6 +1897,20 @@ const RECAP_STATS := {
 	"take_trophy": ["trophy", "hall"],
 	"gain_vp": ["vp", ""], "gain_per_n": ["vp", ""],
 	"bribe": ["bribe", "to"],
+	# ключевые действия New Era (владелец, 2026-11-03: в MOVES — всё главное)
+	"retain": ["retain", ""], "explore": ["explore", ""],
+	"market_troop": ["market_troop", ""], "market_spy": ["market_spy", ""],
+	"swap_troops": ["swap", ""], "steal_marker": ["steal_marker", ""],
+	"frostbite": ["frostbite", ""], "extra_turn": ["extra_turn", ""],
+}
+
+## Карты, сыгранные не из руки: событие -> строка PLAYED в сводке.
+const RECAP_PLAYS := ["rival_play", "play_free", "set_aside_play", "play_from_market", "play_from_devoured"]
+## Открытые карты, что попали в руку или дали VP: событие -> группа сводки.
+const RECAP_CARDS := {
+	"brute_reveal": "REVEALED", "sylgar": "REVEALED",
+	"explore_take": "TO HAND", "discard_to_hand": "TO HAND", "inner_to_hand": "TO HAND",
+	"gain_card": "GAINED", "copy_card": "COPIED",
 }
 
 
@@ -2559,6 +2601,12 @@ func _refresh_piles(view: Dictionary) -> void:
 	_deck_tracker.set_cards(deck_of.get("deck_cards", []), deck_of.get("discard_pile", []), shown)
 	# Сожранные карты — стопка общая для всех, не своя у зрителя.
 	_pile_devour.set_cards(view.get("devoured_pile", []))
+	# Ghost: верхнюю сожранную можно купить — стопка в золотой рамке, в её окне
+	# карта золотая.
+	var ghost_on := String(view.get("ghost_market_card", "")) != ""
+	_pile_devour.set_hint(ghost_on)
+	_pile_devour.tooltip_text = "Click: the top devoured card (gold) can be recruited this turn" if ghost_on \
+		else "Cards devoured out of the game. Click to see them all"
 
 
 ## Щелчок по стопке — весь её список поверх экрана.
@@ -2570,7 +2618,15 @@ func _open_pile(which: String) -> void:
 		"inner":
 			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []), viewer_id)
 		"devour":
-			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []))
+			# Верхнюю сожранную можно купить (Ghost) — или ею ответить на
+			# вопрос карты о рынке, если она среди вариантов.
+			var pd: Dictionary = view.get("pending_decision", {})
+			var options: Array = pd.get("legal_options", []) if String(pd.get("tag", "")) == "market" else []
+			_ghost_choice = not options.is_empty()
+			var can_buy: bool = options.has(Market.DEVOURED_TOP_INDEX) if _ghost_choice \
+				else ((view.get("legal", {}) as Dictionary).get("recruit_market", []) as Array).has(Market.DEVOURED_TOP_INDEX)
+			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []), "",
+				String(view.get("ghost_market_card", "")), can_buy)
 
 
 func _refresh_actions(view: Dictionary) -> void:
@@ -2604,9 +2660,16 @@ func _on_hand_card_clicked(card_id: String) -> void:
 
 func _on_market_clicked(index: int) -> void:
 	var bought := _market_panel.card_id_at(index)
+	if index == Market.DEVOURED_TOP_INDEX:
+		bought = String(_view.get("ghost_market_card", ""))
 	if PlayerProfile.art_of(viewer_id, bought) == "":
-		_fly_to_discard(_market_panel.card_rect(index), bought)
+		_fly_to_discard(_market_rect(index), bought)
 	send(Intent.recruit(viewer_id, index))
+
+
+## Откуда летит купленная карта: слот рынка или стопка DEVOUR (Ghost).
+func _market_rect(index: int) -> Rect2:
+	return _pile_devour.get_global_rect() if index == Market.DEVOURED_TOP_INDEX else _market_panel.card_rect(index)
 
 
 func _on_supply_clicked(card_id: String) -> void:

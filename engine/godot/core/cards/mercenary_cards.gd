@@ -584,7 +584,9 @@ class _DiscardDrawn extends CardEffect:
 				drawn.remove_at(at)
 				remaining -= 1
 				if not MercenaryCards.sylgar_saves(state, player_id, value, resolver):
-					hand.remove_at(hand.find(value))
+					# Вытянутые лежат в конце руки: уходит последняя копия, а не
+					# старая такая же (её рука и подсвечивает, hand_slots).
+					hand.remove_at(hand.rfind(value))
 					state.players[player_id].deck.discard_pile.append(value)
 					discarded.append(value)
 					resolver.log_event("discard", {"player_id": player_id, "card_id": value})
@@ -594,12 +596,26 @@ class _DiscardDrawn extends CardEffect:
 			if hand.has(cid) and not options.has(cid):
 				options.append(cid)
 		if remaining > 0 and not options.is_empty():
-			MercenaryCards._ask(self, player_id, resolver, "Discard one of the drawn cards", "target_card", options, "hand")
+			MercenaryCards._ask(self, player_id, resolver, "Discard one of the drawn cards (%d left)" % remaining,
+				"target_card", options, "hand")
+			resolver.pending.data["hand_slots"] = _drawn_slots(hand)
 			return
 		if discarded.is_empty():
 			return
 		resolver.push(MercenaryCards.maybe_bribe(MercenaryCards._PromoteDiscarded.new(discarded),
 			"Promote one of the discarded cards"), player_id)
+	## Места вытянутых карт в руке: по копии каждой с конца руки. Рука
+	## подсвечивает только их — подсветка по номеру зажигала и старый Noble
+	## в руке, и игрокам казалось, что сбросить дают не те карты.
+	func _drawn_slots(hand: Array) -> Array:
+		var want := drawn.duplicate()
+		var slots: Array = []
+		for i in range(hand.size() - 1, -1, -1):
+			var at := want.find(hand[i])
+			if at != -1:
+				want.remove_at(at)
+				slots.push_front(i)
+		return slots
 
 
 ## Xanathar Surveillance, Bribe: продвинуть одну из ТОЛЬКО ЧТО сброшенных карт —

@@ -678,5 +678,8 @@ class _Lamia extends CardEffect:
 			d2.draw_pile.append(kept[i])
 		resolver.log_event("shadow_keep", {"player_id": victim, "face_up": keep_up, "kept": kept.size()})
 		d2.discard_pile.append_array(played)
+		# Сыгранные карты соперника — в сводку ходов хозяина Lamia (владелец, 2026-11-03).
+		for cid: String in played:
+			resolver.log_event("rival_play", {"player_id": owner, "rival": victim, "card_id": cid})
 		for i in range(played.size() - 1, -1, -1):
 			resolver.push(CardLibrary.get_effect(played[i]), owner, played[i])

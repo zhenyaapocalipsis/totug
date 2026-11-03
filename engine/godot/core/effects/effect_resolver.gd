@@ -34,6 +34,11 @@ func push(effect: CardEffect, player_id: String, card: String = "") -> void:
 	_stack.append({"effect": effect, "player_id": player_id, "card": card if card != "" else _card})
 
 
+## Что ждёт на стеке (снизу вверх): [{effect, player_id, card}]. Только читать.
+func stacked() -> Array:
+	return _stack
+
+
 ## Точка входа: положить эффект на стек и прогнать резолвер до конца или до
 ## первого запроса решения.
 func apply(effect: CardEffect, player_id: String, state: GameState, card: String = "") -> void:

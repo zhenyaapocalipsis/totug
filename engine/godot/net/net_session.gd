@@ -1191,6 +1191,7 @@ func _save_room(room: GameRoom) -> void:
 		"matched": room.matched,
 		"banned": room.banned,
 		"card_bans": room.card_bans,
+		"turn_order": room.turn_order,
 		"mulligan": room.server.with_mulligan,
 	}, room.log, saves_dir)
 

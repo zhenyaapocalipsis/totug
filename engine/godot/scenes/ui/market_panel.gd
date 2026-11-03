@@ -24,13 +24,15 @@ signal choice_clicked(index: int)
 ## Слот карты маркета — мелкое лицо карты целиком, пиксель в пиксель
 ## (решение владельца, 2026-09-22: карты рынка не обрезаются). Слоты не
 ## тянутся. Рынок в два столбца (решение владельца, 2026-09-24): дисплей —
-## три ряда, под ним общие стопки и ghost.
+## три ряда, под ним общие стопки.
 const SLOT := Vector2i(CardView.MINI_SIZE)
 ## Отступ панели ровно в пиксель.
 const PAD := 1
-## Слотов дисплея столько же, сколько карт в маркете; последний, седьмой —
-## ghost, верхняя сожранная карта. Он стоит после общих стопок и
-## скрыт, пока сожранных карт нет.
+## Слотов дисплея столько же, сколько карт в маркете. Ghost — верхнюю
+## сожранную карту, которую можно купить (Ghost, Relentless Nightmare), —
+## показывает стопка DEVOUR (GameScreen, владелец 2026-11-03): в ряду стопок
+## рынка она растила рынок, и таблица игроков схлопывалась так, что игрока
+## нельзя было выбрать целью.
 const DISPLAY_SLOTS := 6
 const COLUMNS := 2
 ## Ширина панели: два слота, промежутки между ними и рамка. По ней же
@@ -50,7 +52,7 @@ var _supply_row: GridContainer
 var _deck_label: Label
 ## Надпись MARKET: по наведению — из каких полуколод собран рынок партии.
 var _title: Label
-## По слоту на карту дисплея плюс ghost последним; по слоту на общую стопку.
+## По слоту на карту дисплея; по слоту на общую стопку.
 var _cards: Array[CardView] = []
 var _empties: Array[Control] = []
 var _boxes: Array[Control] = []
@@ -83,14 +85,12 @@ func _init() -> void:
 	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER  # колонка шире рынка — по центру
 	col.add_child(_grid)
 
-	for i in range(DISPLAY_SLOTS + 1):
+	for i in range(DISPLAY_SLOTS):
 		var box := _make_slot()
-		if i < DISPLAY_SLOTS:
-			_grid.add_child(box)  # ghost ляжет в ряд общих стопок
+		_grid.add_child(box)
 		_boxes.append(box)
 		_cards.append(null)
 		_empties.append(box.get_child(0))
-	_boxes[DISPLAY_SLOTS].visible = false  # ghost — только когда он есть
 
 	col.add_child(GameScreen.section_label("SUPPLY"))
 
@@ -116,7 +116,6 @@ func _init() -> void:
 		_supply_cards.append(card)
 		_supply_counts.append(_add_count_label(box))
 		_supply_row.add_child(box)
-	_supply_row.add_child(_boxes[DISPLAY_SLOTS])  # ghost — последним в ряду стопок
 
 	# Стопку Insane Outcast в маркете не показываем вовсе (решение владельца,
 	# 2026-09-19): её не вербуют, карты раздают её сами при розыгрыше.
@@ -162,14 +161,6 @@ func update_from_view(view: Dictionary) -> void:
 		_mark_spy(i, String(market_spies.get(i, market_spies.get(str(i), ""))))
 		_mark_troops(i, market_troops.get(i, market_troops.get(str(i), {})))
 
-	# Ghost: верхняя сожранная карта до конца хода считается картой маркета.
-	var ghost_card: String = view.get("ghost_market_card", "")
-	_boxes[DISPLAY_SLOTS].visible = ghost_card != ""
-	if ghost_card != "":
-		_fill_slot(DISPLAY_SLOTS, ghost_card,
-			affordable.has(Market.DEVOURED_TOP_INDEX))
-		_cards[DISPLAY_SLOTS].tooltip_text = "Top devoured card (Ghost)"
-
 	var supplies: Dictionary = view.get("supplies", {})
 	var affordable_supply: Array = legal.get("recruit_supply", [])
 	for k in range(Supplies.PURCHASABLE.size()):
@@ -184,7 +175,7 @@ func update_from_view(view: Dictionary) -> void:
 ## Где на экране лежит карта слота — чтобы от неё запустить полёт в сброс.
 ## Пустой прямоугольник, если слота с таким номером нет или он пуст.
 func card_rect(index: int) -> Rect2:
-	var i := index if index < DISPLAY_SLOTS else DISPLAY_SLOTS
+	var i := index
 	if i < 0 or i >= _cards.size() or _cards[i] == null or not _cards[i].visible:
 		return Rect2()
 	return _cards[i].get_global_rect()
@@ -192,7 +183,7 @@ func card_rect(index: int) -> Rect2:
 
 ## Какая карта лежит в слоте — её копию запускают в полёт.
 func card_id_at(index: int) -> String:
-	var i := index if index < DISPLAY_SLOTS else DISPLAY_SLOTS
+	var i := index
 	if i < 0 or i >= _cards.size() or _cards[i] == null or not _cards[i].visible:
 		return ""
 	return _cards[i].card_id
@@ -240,7 +231,7 @@ func _ensure_card(i: int, cid: String) -> CardView:
 		# Не хватает Influence — карта дёргается и краснеет, вместо того чтобы
 		# молча ничего не сделать.
 		card.refused.connect(func(_cid: String): card.shake_refusal())
-		var index := i if i < DISPLAY_SLOTS else Market.DEVOURED_TOP_INDEX
+		var index := i
 		card.pressed.connect(func(_cid: String):
 			if _choosing:
 				choice_clicked.emit(index)

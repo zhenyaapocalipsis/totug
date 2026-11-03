@@ -332,6 +332,12 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return "%s reveals %s from the top of their deck" % [who, card]
 		"market_reveal":
 			return "%s reveals the top 3 cards of the market deck" % who
+		"rival_play":
+			return "%s plays %s from %s's deck" % [who, card, player_name(String(e.get("rival", "")))]
+		"brute_reveal", "sylgar":
+			return "%s reveals %s and gains %d VP" % [who, card, int(e.get("amount", 0))]
+		"steal_vp":
+			return "%s steals %d VP from %s" % [who, int(e.get("amount", 0)), player_name(String(e.get("from", "")))]
 		"play_free":
 			return "%s plays %s for free" % [who, card]
 		"market_spy":

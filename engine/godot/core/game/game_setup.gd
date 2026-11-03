@@ -152,11 +152,16 @@ static func starting_deck() -> Array[String]:
 ## card_bans — карты, забаненные в лобби банов поиска игры (этап Ban-1): все
 ## их копии не идут в рынок; в RANDOM-режимах рынок набирается из оставшихся.
 ## На выбор полуколод и доску не влияет — выбор тот же, что без банов.
+## turn_order — очередь хода, решённая заранее (лобби банов банит в очереди
+## хода, владелец 2026-11-03): баны меняют число карт рынка, а с ним и
+## случайную очередь, поэтому её берут из пробной раздачи без банов и
+## передают сюда. Пустой — очередь как раньше. Жребий тянется всё равно:
+## остальная раздача от этого не сдвигается.
 static func new_game(player_ids: Array[String], seed_value: int = 0,
 		half_decks: Array[String] = [], with_x_hexes: bool = false,
 		interactive_start: bool = false, random_first_player: bool = false,
 		mode: String = MODE_STANDARD, team_game: bool = false, banned: Array = [],
-		card_bans: Array = []) -> GameState:
+		card_bans: Array = [], turn_order: Array = []) -> GameState:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 
@@ -206,6 +211,8 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 		state.set_teams(team_map(player_ids))
 	elif random_first_player:
 		Deck.shuffle_array(ordered_ids, state.rng)
+	if turn_order.size() == ordered_ids.size() and ordered_ids.all(func(pid: String) -> bool: return turn_order.has(pid)):
+		ordered_ids.assign(turn_order)
 	var base_deck := starting_deck()
 	for player_id: String in ordered_ids:
 		state.add_player(player_id, base_deck.duplicate())
@@ -213,7 +220,6 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 		p.deck.shuffle_draw_pile(state.rng)
 		p.deck.draw_up_to(HAND_SIZE, state.rng)
 	state.pool_stocks()  # 2v2: общие бараки команды (80 войск, 10 шпионов)
-	VoidCards.setup_troops(state)  # FAR REALM: по 50 войск
 
 	# 11. стартовое войско каждому на свободном стартовом сайте
 	var starting_sites := find_starting_sites(graph)

@@ -268,6 +268,28 @@ func _run_scenario() -> void:
 			stm.market_troops["1"] = {"card": String(stm.market.display[1]), "troops": {order[0]: 2, order[1]: 1}}
 			stm.market_troops["3"] = {"card": String(stm.market.display[3]), "troops": {order[0]: 7}}
 			_screen.refresh(StateView.for_player_with_pending(stm, _screen.viewer_id, _screen.server.resolver.pending))
+		"spies":
+			# Шпионы всех игроков (--count=N на локацию) на каждой локации и войска
+			# на всех местах дорожек: видно, не налезают ли ромбики на соседей.
+			var sts := _screen.server.state
+			var per := _count_arg("count", sts.turn_order.size())
+			for site_id: String in sts.graph.sites.keys():
+				sts.spies[site_id] = sts.turn_order.slice(0, per)
+			var k := 0
+			for slot_id in sts.troops.keys():
+				if String(sts.troops[slot_id]) == "":
+					sts.troops[slot_id] = sts.turn_order[k % sts.turn_order.size()]
+					k += 1
+			_screen.refresh(StateView.for_player_with_pending(sts, _screen.viewer_id, _screen.server.resolver.pending))
+		"ghost_market":
+			# Relentless Nightmare / Ghost: верхняя съеденная карта покупается с рынка.
+			var stg := _screen.server.state
+			stg.devoured_pile.append(String(stg.market.deck.back()))
+			stg.devoured_pile.push_front(String(stg.market.deck[0]))
+			stg.ghost_market_player = _screen.viewer_id
+			_screen.refresh(StateView.for_player_with_pending(stg, _screen.viewer_id, _screen.server.resolver.pending))
+			if OS.get_cmdline_user_args().has("--open"):
+				_screen._open_pile.call_deferred("devour")
 		"starting":
 			# Муллиганы пропущены — на экране выбор стартовой локации.
 			while _screen.server.resolver.is_waiting() and _screen.server.resolver.pending.tag != "starting_site":

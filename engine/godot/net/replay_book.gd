@@ -53,6 +53,8 @@ static func header_for(state: GameState, ids: Array[String], game_seed: int, mod
 		"code": code,
 		"seat": seat,
 		"ids": ids,
+		# очередь хода: у партий с лобби банов она решена до раздачи (GameRoom.turn_order)
+		"turn_order": Array(state.turn_order),
 		"mode": mode,
 		"teams": state.is_team_game(),
 		"seed": game_seed,
@@ -193,7 +195,8 @@ static func start(replay: Dictionary) -> GameServer:
 		ids.append(String(pid))
 	var state := GameSetup.new_game(ids, int(header.get("seed", 0)), [], false, true, true,
 		String(header.get("mode", GameSetup.MODE_STANDARD)), bool(header.get("teams", false)),
-		header.get("banned", []) as Array, header.get("card_bans", []) as Array)
+		header.get("banned", []) as Array, header.get("card_bans", []) as Array,
+		header.get("turn_order", []) as Array)
 	var server := GameServer.new(state, bool(header.get("mulligan", true)), true, false)
 	# Срезы собирает тот, кто смотрит (StateView), и только для своего зрителя.
 	server.build_views = false

@@ -7,8 +7,8 @@ extends RefCounted
 ## Claude outputs/new_era_void.md.
 ##
 ## Перевод на правила этой игры: Valor -> MALICE.
-## Правило мода: "40 (50 if you play with void half-deck) cubes" — с этой
-## полуколодой у каждого игрока 50 войск (setup_troops, GameState.starting_troops).
+## Правило мода "40 (50 if you play with void half-deck) cubes" отменено
+## владельцем (2026-11-03): и с этой полуколодой у каждого 40 войск.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "kassadin"    — Githzerai Zerth: убивать войска можно где угодно;
@@ -48,7 +48,6 @@ const BLASTER := "50019"  # Githyanki Dracomancer (Void Blaster)
 const VOIDLING := "50020"  # Githyanki Warrior (Voidling)
 
 const DECK_KEY := "void"
-const TROOPS_WITH_VOID := 50
 const REACH := 3
 const SPY_RETURN_POWER := 3
 const SPY_DISCOUNT := 6
@@ -174,18 +173,6 @@ static func deploys(state: GameState) -> int:
 static func note_deploy(state: GameState) -> void:
 	state.turn_flags["deploys"] = deploys(state) + 1
 	IxtalCards.on_deploy_count(state)  # CHULT, Lizardfolk Geomancer: 7-е войско — карта
-
-
-# --- 50 войск ------------------------------------------------------------------
-
-## Полуколода Void в партии: по 50 войск на игрока (2 на 2 — по 50 на каждого в общий барак).
-static func setup_troops(state: GameState) -> void:
-	if not state.half_decks.has(DECK_KEY):
-		return
-	var extra := TROOPS_WITH_VOID - PlayerState.STARTING_TROOPS
-	state.starting_troops = TROOPS_WITH_VOID
-	for pid: String in state.players.keys():
-		state.stock(pid).troops_in_barracks += extra
 
 
 # --- Дальность (Red Slaad, Githzerai Zerth) --------------------------------------
@@ -371,10 +358,13 @@ static func sync_market_spies(state: GameState) -> void:
 	for key: String in state.market_spies.keys():
 		var entry: Dictionary = state.market_spies[key]
 		var i := key.to_int()
-		if i >= 0 and i < state.market.display.size() and String(state.market.display[i]) == String(entry.get("card", "")):
+		if i >= 0 and i < state.market.display.size() and String(state.market.display[i]) == String(entry.get("card", "")) \
+				and not state.market.vacated.has(i):
 			continue
 		state.stock(String(entry.get("owner", ""))).spies_in_barracks += 1
 		state.market_spies.erase(key)
+	if state.market != null:
+		state.market.vacated.clear()
 
 
 ## Чужой шпион на карте: чужак должен заплатить 3 Power (иначе -1 — не купить), карта на 6 дешевле.

@@ -255,7 +255,8 @@ static func sync_market_troops(state: GameState) -> void:
 	for key: String in state.market_troops.keys():
 		var i := key.to_int()
 		var entry: Dictionary = state.market_troops[key]
-		if i < state.market.display.size() and String(state.market.display[i]) == String(entry.get("card", "")):
+		if i < state.market.display.size() and String(state.market.display[i]) == String(entry.get("card", "")) \
+				and not state.market.vacated.has(i):
 			continue
 		var troops: Dictionary = entry.get("troops", {})
 		for pid: String in troops.keys():
@@ -608,6 +609,8 @@ class _TroopOnMarket extends CardEffect:
 			if index == null or not _options(state).has(int(index)):
 				return
 			var i := int(index)
+			# Жетоны со сменившихся карт — хозяевам, пока на слот не легло новое.
+			VoidCards.sync_market_spies(state)
 			var cid := String(state.market.display[i])
 			var key := str(i)
 			var entry: Dictionary = state.market_troops.get(key, {})

@@ -47,6 +47,13 @@ func set_cards(ids: Array) -> void:
 	_count.text = str(ids.size())
 
 
+## Золотая рамка: в стопке есть карта, которую можно купить (DEVOUR: Ghost,
+## Relentless Nightmare); сама карта золотая в окне стопки (PileDialog).
+func set_hint(on: bool) -> void:
+	for s: StyleBoxFlat in [_style, _hover_style]:
+		s.border_color = PixelTheme.GOLD if on else GameScreen.zone_style(3).border_color
+
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		clicked.emit()

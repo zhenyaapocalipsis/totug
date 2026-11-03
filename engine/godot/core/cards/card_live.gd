@@ -57,6 +57,14 @@ const RULES := {
 	"49118": [["PER SITE UNDER YOUR TOTAL CONTROL", "per", "sites_controlled_total", 1]],  # Treant
 	"49119": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Bone Devil
 		["PER 3 TROOPS IN YOUR TROPHY HALL", "per", "trophy_hall", 3]],
+	# Siege: разные аспекты этого хода вместе с аспектом самой карты — столько
+	# будет, если сыграть её сейчас (владелец, 2026-11-03: живой счётчик Distinct)
+	"49306": [["DISTINCT CARD ASPECT YOU PLAYED THIS TURN", "count", "aspects_with_self"]],  # Spoils of War
+	"49308": [["DISTINCT CARD ASPECT YOU PLAYED THIS TURN", "count", "aspects_with_self"]],  # Scout Leader
+	"49311": [["4 DISTINCT CARD ASPECTS THIS TURN", "need", "aspects_with_self", 4]],  # Chieftain
+	"49312": [["4 DISTINCT CARD ASPECTS THIS TURN", "need", "aspects_with_self", 4]],  # Privateers
+	"49316": [["4 DISTINCT CARD ASPECTS THIS TURN", "need", "aspects_with_self", 4]],  # Ramming Beast
+	"49317": [["4 DISTINCT CARD ASPECTS THIS TURN", "need", "aspects_with_self", 4]],  # Underdark Champion
 }
 
 
@@ -79,7 +87,8 @@ static func entry(state: GameState, pid: String, cid: String) -> Dictionary:
 	var out := {}
 	var notes: Array = []
 	for rule: Array in RULES.get(cid, []):
-		var n := _count(state, pid, String(rule[2]))
+		var n := SiegeCards.distinct_aspects(state, CardLibrary.card_aspect(cid)) \
+			if String(rule[2]) == "aspects_with_self" else _count(state, pid, String(rule[2]))
 		var note := {"phrase": String(rule[0])}
 		match String(rule[1]):
 			"per":

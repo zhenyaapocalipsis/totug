@@ -41,8 +41,8 @@ const INNER := 80
 const WIDTH := INNER + (BLOCK_PAD + PAD) * 2
 ## Порядок групп внутри хода.
 const ORDER: Array[String] = [
-	"PLAYED", "PROMOTED", "BOUGHT", "OUTCAST", "DEVOURED", "TO SUPPLY", "DISCARDED",
-	"REPLACED", "NEW"]
+	"PLAYED", "COPIED", "PROMOTED", "BOUGHT", "GAINED", "OUTCAST", "DEVOURED", "TO SUPPLY",
+	"TO HAND", "DISCARDED", "REVEALED", "REPLACED", "NEW"]
 ## Строки действий хода: ключ -> подпись; порядок строк — порядок ключей.
 const STATS := {
 	"deploy": "DEPLOY", "move": "MOVE", "kill": "KILL", "supplant": "SUPPLANT",
@@ -56,6 +56,11 @@ const STATS := {
 	"a2_power": "A2 POWER", "a2_influence": "A2 INF", "a2_vp": "A2 VP",
 	# муллиган рынка: игрок ничего не поменял
 	"kept": "KEPT MARKET",
+	# New Era (владелец, 2026-11-03): Retain, Explore, кража VP (квадратик —
+	# у кого украли), войска и шпионы на картах рынка, лишний ход
+	"retain": "RETAIN", "explore": "EXPLORE", "steal": "STEAL",
+	"market_troop": "MKT TROOP", "market_spy": "MKT SPY", "swap": "SWAP",
+	"steal_marker": "TAKE MARK", "frostbite": "FROSTBITE", "extra_turn": "EXTRA TURN",
 }
 ## Больше ходов не держим — самые старые уходят (сотни узлов ни к чему).
 const MAX_BLOCKS := 60
@@ -430,6 +435,10 @@ class Block extends PanelContainer:
 		match base:
 			"vp":
 				label.text = "+%d VP" % stats[key]
+			"steal":
+				label.text = "STEAL %d VP" % stats[key]
+			"extra_turn":
+				label.text = TurnFeed.STATS[base]
 			"a2_vp":
 				label.text = "A2 +%d VP" % stats[key]
 			"mark_vp":

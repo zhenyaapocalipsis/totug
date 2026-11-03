@@ -532,6 +532,8 @@ func _process(delta: float) -> bool:
 				check(room4.ban_log.size() == 8 and room4.card_bans.size() == 4,
 					"[match4] восемь ходов: по бану от каждого, вторые пропущены (%s)" % [room4.card_bans])
 				check(players.all(func(p): return room4.card_bans.has(banned_by.get(p, "x"))), "[match4] бан каждого дошёл")
+				check(room4.server.state.turn_order == room4.ban_order.slice(0, 4),
+					"[match4] банили в очереди хода (%s / %s)" % [room4.ban_order, room4.server.state.turn_order])
 				var market4: Array = room4.server.state.market.deck + room4.server.state.market.display
 				check(not market4.any(func(c): return room4.card_bans.has(String(c))), "[match4] забаненных карт нет в рынке")
 				var offers: Array = (chats[players[0]] as Array).filter(func(c): return String(c[1]).begins_with(BanPanel.SUGGEST_PREFIX))

@@ -59,4 +59,35 @@ func apply(state: GameState, player_id: String, resolver: EffectResolver) -> voi
 	pd.option_labels = shown_labels
 	pd.source_card = source_card
 	pd.target_effect = self
+	_number(resolver, player_id)
+	if steps > 1:
+		pd.prompt = "%s (%d/%d):" % [prompt.trim_suffix(":"), step, steps]
 	resolver.request_decision(pd)
+
+
+## Несколько одинаковых "choose one" подряд (Weaponmaster, Spoils of War,
+## Ahmaergo...) — у вопроса номер: "Choose one (2/3):" (владелец, 2026-11-03:
+## игроки не понимали, сколько выборов сделано и сколько осталось). Близнецы —
+## такие же выборы того же игрока, что ждут на стеке резолвера; первый из
+## них раздаёт номера всем.
+var step := 0
+var steps := 0
+
+
+func _number(resolver: EffectResolver, player_id: String) -> void:
+	if steps > 0:
+		return
+	var twins: Array = []   # снизу стека вверх: последний разыграется первым
+	for entry: Dictionary in resolver.stacked():
+		var e: CardEffect = entry["effect"]
+		if e != self and e is ChooseEffect and (e as ChooseEffect).steps == 0 \
+				and (e as ChooseEffect).labels == labels and String(entry["player_id"]) == player_id:
+			twins.append(e)
+	if twins.is_empty():
+		return
+	steps = twins.size() + 1
+	step = 1
+	for i in twins.size():
+		var twin: ChooseEffect = twins[twins.size() - 1 - i]
+		twin.steps = steps
+		twin.step = i + 2

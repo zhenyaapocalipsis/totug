@@ -131,7 +131,7 @@ const DECK_TIPS := {
 	"shurima": "CALIMSHAN: Devotion.\nCards fire when recruited or promoted; recruit and promote a lot.",
 	"ionia": "KARA-TUR: Retain.\nKeep cards in hand for your next turn and build big combos.",
 	"bandle": "FEYWILD: Glamour.\nSpend 1 VP to switch on extra card abilities.",
-	"void": "FAR REALM: the swarm.\nEveryone gets 50 troops; deploy a lot and grow by controlling sites.",
+	"void": "FAR REALM: the swarm.\nDeploy a lot and grow by controlling sites.",
 	"ixtal": "CHULT: Explore.\nLook at the top of your deck and pull the cards you need into your hand.",
 }
 ## Задник, обучение и настройки подключены файлом, а не по глобальному имени класса:

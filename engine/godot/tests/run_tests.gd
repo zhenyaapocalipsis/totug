@@ -2992,32 +2992,57 @@ func test_card_ban_lobby() -> void:
 	room.begin_bans(77)
 	var plain := GameSetup.new_game(["red", "blue"] as Array[String], 77, [], false, true, true)
 	check_eq(room.ban_decks, plain.half_decks, "в лобби — те же полуколоды, что выберет раздача")
-	check_eq(room.ban_order, ["red", "blue", "blue", "red"] as Array[String], "очередь змейкой: туда и обратно")
+	check_eq(room.turn_order, plain.turn_order, "очередь банов — очередь хода раздачи")
+	# Банят в очереди хода (владелец, 2026-11-03): сид 77 — первым ходит blue.
+	check_eq(plain.turn_order, ["blue", "red"] as Array[String], "сид 77: первым ходит blue")
+	check_eq(room.ban_order, ["blue", "red", "red", "blue"] as Array[String], "очередь змейкой: туда и обратно")
 	var a_cards: Array = GameSetup.half_deck_copies(room.ban_decks[0]).keys()
 	var b_cards: Array = GameSetup.half_deck_copies(room.ban_decks[1]).keys().filter(func(c): return not a_cards.has(c))
 	a_cards.sort()
 	b_cards.sort()
-	check(not room.ban("blue", a_cards[0]), "не в свою очередь банить нельзя")
-	check(not room.ban("red", "48342"), "карту не из этих полуколод банить нельзя")
-	check(room.ban("red", a_cards[0]), "red банит карту первой полуколоды")
+	check(not room.ban("red", a_cards[0]), "не в свою очередь банить нельзя")
+	check(not room.ban("blue", "48342"), "карту не из этих полуколод банить нельзя")
+	check(room.ban("blue", a_cards[0]), "blue банит карту первой полуколоды")
 	check_eq(room.locked_decks(), [room.ban_decks[0]] as Array[String], "в этом круге первая полуколода закрыта")
-	check(not room.ban("blue", a_cards[1]), "вторую карту той же полуколоды в этом круге — нельзя")
-	check(not room.ban("blue", a_cards[0]), "забаненную второй раз — нельзя")
-	check(room.ban("blue", b_cards[0]), "blue банит во второй полуколоде")
+	check(not room.ban("red", a_cards[1]), "вторую карту той же полуколоды в этом круге — нельзя")
+	check(not room.ban("red", a_cards[0]), "забаненную второй раз — нельзя")
+	check(room.ban("red", b_cards[0]), "red банит во второй полуколоде")
 	check(room.locked_decks().is_empty(), "второй круг — полуколоды снова открыты")
-	check(room.ban("blue", a_cards[1]), "второй круг начинает blue (змейка), в первой полуколоде можно")
+	check(room.ban("red", a_cards[1]), "второй круг начинает red (змейка), в первой полуколоде можно")
 	check(not room.tick_bans(GameRoom.BAN_SECONDS - 1.0), "минута ещё не прошла")
-	check(room.tick_bans(1.5), "минута прошла — бан red пропущен")
-	check(not room.ban_phase and room.ban_seat() == "", "четыре хода — баны кончились")
+	check(room.tick_bans(1.5), "минута прошла — бан blue пропущен")
+	check(room.ban_phase and room.bans_done() and room.ban_seat() == "", "четыре хода — баны кончились, идёт отсчёт")
+	check(bool(room.ban_view()["starting"]) and is_equal_approx(float(room.ban_view()["left"]), GameRoom.START_DELAY),
+		"до раздачи 10 секунд")
+	check(not room.ban("blue", b_cards[1]), "в отсчёте банить нельзя")
+	check(not room.tick_bans(GameRoom.START_DELAY - 1.0), "10 секунд ещё не прошли")
+	check(room.tick_bans(1.5) and not room.ban_phase, "10 секунд прошли — раздача")
 	var pool: Array[String] = [String(a_cards[0]), String(b_cards[0]), String(a_cards[1])]
 	check_eq(room.card_bans, pool, "итог банов")
 	var four := GameRoom.new("FOUR", 4, GameSetup.MODE_RANDOM_4)
 	for peer in [21, 22, 23, 24]:
 		four.add(peer)
 	four.begin_bans(5)
-	check_eq(four.ban_order, ["red", "blue", "green", "purple", "purple", "green", "blue", "red"] as Array[String],
-		"RANDOM 4: от первого к последнему, потом обратно")
+	var lap4: Array[String] = four.turn_order.duplicate()
+	var back4 := lap4.duplicate()
+	back4.reverse()
+	check_eq(four.ban_order, lap4 + back4, "RANDOM 4: от первого по очереди хода к последнему, потом обратно")
 	room.deal(77)
+	check_eq(room.server.state.turn_order, room.turn_order, "с банами очередь хода та же, по которой банили")
+	# Сид, где баны (меньше карт рынка) сдвинули бы жребий очереди хода.
+	var ids4b: Array[String] = ["red", "blue", "green", "purple"]
+	var shifted := -1
+	for s in range(1, 200):
+		var p0 := GameSetup.new_game(ids4b, s, [], false, true, true, GameSetup.MODE_RANDOM_4)
+		var bans_s: Array = [String(p0.market.display[0]), String(p0.market.display[1])]
+		var p1 := GameSetup.new_game(ids4b, s, [], false, true, true, GameSetup.MODE_RANDOM_4, false, [], bans_s)
+		if p1.turn_order != p0.turn_order:
+			shifted = s
+			var p2 := GameSetup.new_game(ids4b, s, [], false, true, true, GameSetup.MODE_RANDOM_4, false, [], bans_s,
+				p0.turn_order)
+			check_eq(p2.turn_order, p0.turn_order, "очередь из лобби банов не сдвигается банами (сид %d)" % s)
+			break
+	check(shifted > 0, "нашёлся сид, где без передачи очереди баны её сдвигают")
 	var market: Array = room.server.state.market.deck + room.server.state.market.display
 	check(not pool.any(func(c): return market.has(c)), "все копии забаненных карт ушли из рынка")
 	var removed := 0
@@ -3040,15 +3065,17 @@ func test_card_ban_lobby() -> void:
 	check(r4_market.size() >= 78, "RANDOM 4: рынок добран из оставшихся (%d)" % r4_market.size())
 	# Реплей и восстановление комнаты знают баны.
 	var replay_server := ReplayBook.start({"header": {"ids": ["red", "blue"], "seed": 77, "mode": GameSetup.MODE_STANDARD,
-		"card_bans": room.card_bans}, "intents": []})
+		"card_bans": room.card_bans, "turn_order": room.turn_order}, "intents": []})
 	check_eq(replay_server.state.market.deck, room.server.state.market.deck, "реплей: тот же рынок с банами")
+	check_eq(replay_server.state.turn_order, room.server.state.turn_order, "реплей: та же очередь хода")
 	var restored := GameRoom.restore({"code": "TEST", "ids": ["red", "blue"], "seed": 77, "mode": GameSetup.MODE_STANDARD,
-		"card_bans": room.card_bans}, [])
+		"card_bans": room.card_bans, "turn_order": room.turn_order}, [])
 	check_eq(restored.server.state.market.deck, room.server.state.market.deck, "восстановление комнаты: тот же рынок")
+	check_eq(restored.server.state.turn_order, room.server.state.turn_order, "восстановление комнаты: та же очередь")
 	# Экран лобби: четыре полуколоды по 20 карт, закрытая в круге полуколода
 	# не выбирается, предложение бана в чате — именем карты.
 	var net := NetSession.new()
-	net.seat = "blue"
+	net.seat = four.ban_order[1]
 	var four_view := four.ban_view()
 	var panel := BanPanel.new(net)
 	root.add_child(panel)
@@ -3057,7 +3084,7 @@ func test_card_ban_lobby() -> void:
 	check(panel.deck_shown(four.ban_decks[0]) and not panel.deck_shown(four.ban_decks[1]) and not panel.deck_shown(four.ban_decks[2]),
 		"лобби: открыта 1-я полуколода из четырёх вкладок")
 	var red_card: String = GameSetup.half_deck_copies(four.ban_decks[0]).keys()[0]
-	four.ban("red", red_card)
+	four.ban(four.ban_order[0], red_card)
 	panel.show_view(four.ban_view())
 	panel.select(GameSetup.half_deck_copies(four.ban_decks[0]).keys()[1])
 	check(not panel.can_ban(GameSetup.half_deck_copies(four.ban_decks[0]).keys()[1]), "лобби: в закрытой полуколоде не выбрать")
@@ -6557,7 +6584,7 @@ func _resolve_first(state: GameState, r: EffectResolver) -> void:
 
 
 func test_farrealm_deck() -> void:
-	section("Far Realm (New Era Void): полуколода, 50 войск, шпион на рынке")
+	section("Far Realm (New Era Void): полуколода, 40 войск, шпион на рынке")
 	var V := VoidCards
 	var deck := GameSetup.expand_half_deck("void")
 	check_eq(deck.size(), 40, "Far Realm: 40 карт (Githzerai Monk, Hook Horror, Gray Slaad, Githyanki Dracomancer и Warrior по 3)")
@@ -6570,8 +6597,8 @@ func test_farrealm_deck() -> void:
 	check(GameSetup.is_mode(mode), "режим Celestial + Far Realm принимается")
 	var game := GameSetup.new_game(["red", "blue"], 5, [], false, false, false, mode)
 	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Far Realm)")
-	check_eq(game.starting_troops, 50, "с Far Realm по 50 войск")
-	check(game.stock("red").troops_in_barracks >= 49 and game.troops_out("red") <= 1, "в бараке red 50 войск (минус стартовое)")
+	check_eq(game.starting_troops, 40, "с Far Realm тоже по 40 войск (владелец, 2026-11-03)")
+	check(game.stock("red").troops_in_barracks >= 39 and game.stock("red").troops_in_barracks <= 40, "в бараке red 40 войск (минус стартовое)")
 	var plain := GameSetup.new_game(["red", "blue"], 5, ["drow", "demons"])
 	check_eq(plain.starting_troops, 40, "без Far Realm по 40 войск")
 	_sweep_deck_with_vp(50000, 50008)
@@ -6793,6 +6820,14 @@ func test_chult_deck() -> void:
 	VoidCards.sync_market_spies(state)
 	check(state.market_troops.is_empty() and state.stock("red").troops_in_barracks == barracks,
 		"карта ушла из рынка — войско вернулось в барак")
+	# На место купленной вышла её же копия — войско всё равно вернулось.
+	state.current_player_index = state.turn_order.find("red")
+	_play_with(state, X.TYCOON, [idx])
+	state.market.deck.append(String(state.market.display[idx]))
+	state.market.recruit_at(idx)
+	VoidCards.sync_market_spies(state)
+	check(state.market_troops.is_empty() and state.stock("red").troops_in_barracks == barracks,
+		"вышла копия той же карты — войско всё равно вернулось в барак")
 
 	# Sarrukh Tyrant: полный лишний ход
 	state = _build_rich_state(85)
@@ -6963,7 +6998,14 @@ func test_siege_deck() -> void:
 	state.played_aspects_this_turn.append_array(["MALICE", "GUILE", "MALICE"] as Array[String])
 	red.influence = 0
 	red.power = 0
-	var rs := _play_with(state, "49306", [0, 1, 0])
+	check_eq(CardLive.entry(state, "red", "49306").get("notes", [{}])[0].get("text", ""), "(3)",
+		"живой счётчик Distinct: MALICE, GUILE и аспект самой карты — 3")
+	var rs := _play_with(state, "49306")
+	var prompts: Array = []
+	for a in [0, 1, 0]:
+		prompts.append(rs.pending.prompt if rs.is_waiting() else "")
+		TurnEngine.resume_card(state, a, rs)
+	check_eq(prompts, ["Choose one (1/3):", "Choose one (2/3):", "Choose one (3/3):"], "выборы подряд пронумерованы")
 	check(not rs.is_waiting(), "Spoils of War: три выбора при трёх разных аспектах")
 	check_eq([red.influence, red.power], [2, 1], "Spoils of War: +2 Influence, +1 Power")
 
@@ -7136,6 +7178,17 @@ func test_mercenaries_deck() -> void:
 	check(state.stock("red").deck.inner_circle.has("49400"), "сброшенная карта продвинута")
 	check_eq(red.deck.discard_pile.count("48342"), 2, "оба Noble остались в сбросе")
 	check(red.deck.hand.has("49401"), "третья вытянутая карта осталась в руке")
+	# Старый такой же Noble в руке не подсвечивается — только вытянутые (hand_slots).
+	red.deck.hand.clear()
+	red.deck.hand.append("48342")
+	red.deck.draw_pile.clear()
+	red.deck.draw_pile.append_array(["49401", "48342", "49400"] as Array[String])
+	var rx2 := _play_with(state, "49419")
+	check(rx2.is_waiting() and rx2.pending.data.get("hand_slots", []) == [1, 2, 3],
+		"Surveillance: подсвечены три вытянутые, не старый Noble (%s)" % [rx2.pending.data.get("hand_slots")])
+	TurnEngine.resume_card(state, "48342", rx2)
+	check_eq(red.deck.hand[0], "48342", "Surveillance: сброшен вытянутый Noble, старый остался первым")
+	check(rx2.is_waiting() and rx2.pending.data.get("hand_slots", []) == [1, 2], "Surveillance: осталось два места")
 
 
 func test_icewind_deck() -> void:

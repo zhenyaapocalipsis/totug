@@ -83,7 +83,7 @@ var stolen_markers: Dictionary = {}
 var board_vp: Dictionary = {}
 ## FAR REALM (Blue Slaad): шпионы на картах рынка — "индекс" -> {"owner", "card"} (VoidCards).
 var market_spies: Dictionary = {}
-## Войск у игрока в начале партии: 40, с полуколодой Void — 50 (VoidCards.setup_troops).
+## Войск у игрока в начале партии (40; с Far Realm было 50 — отменено владельцем 2026-11-03).
 var starting_troops: int = PlayerState.STARTING_TROOPS
 ## FAR REALM (Froghemoth Elder): гексы раскладки ("c_n1"), убранные с доски.
 ## Их локаций и мест уже нет в graph (VoidCards.remove_hex); интерфейс рисует

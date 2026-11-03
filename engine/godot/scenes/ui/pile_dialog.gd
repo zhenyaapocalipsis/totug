@@ -3,8 +3,11 @@ extends Control
 
 ## Список карт стопки поверх экрана: Внутренний круг или сброс зрителя.
 ## Открывается щелчком по PileZone, закрывается кнопкой, щелчком мимо панели
-## или клавишей Escape. Карты внутри не кликаются — их читают увеличением
-## по зажатому Alt.
+## или клавишей Escape. Карты внутри не кликаются (кроме карты на продажу,
+## offer) — их читают увеличением по зажатому Alt.
+
+## Щелчок по карте, которую можно купить (open_pile offer).
+signal offer_pressed(card_id: String)
 
 const CARD_SIZE := CardView.MINI_SIZE   # мелкое лицо карты, пиксель в пиксель
 const PANEL_MAX := Vector2(600, 330)
@@ -69,8 +72,16 @@ func _init() -> void:
 
 
 ## owner — чья стопка: карты в его образах ("" — стопка ничья, как съеденные).
-func open_pile(title: String, ids: Array, owner: String = "") -> void:
+## offer — карта стопки, которую сейчас можно купить (верхняя съеденная: Ghost,
+## Relentless Nightmare — владелец, 2026-11-03): она первой в окне, золотая, и
+## щелчок по ней — offer_pressed; can_buy=false — подсвечена, но не хватает.
+func open_pile(title: String, ids: Array, owner: String = "", offer: String = "", can_buy: bool = false) -> void:
 	_title.text = "%s — %d card%s" % [title, ids.size(), "" if ids.size() == 1 else "s"]
+	if offer != "" and ids.has(offer):
+		_title.text += "\nGold card: you may recruit it this turn"
+		ids = ids.duplicate()
+		ids.remove_at(ids.rfind(offer))
+		ids.push_front(offer)
 	for child in _grid.get_children():
 		_grid.remove_child(child)
 		child.queue_free()
@@ -87,10 +98,22 @@ func open_pile(title: String, ids: Array, owner: String = "") -> void:
 		float(columns) * (CARD_SIZE.x + 2.0),
 		minf(grid_h, panel.y - 44.0))
 
-	for cid in ids:
-		var card := CardView.new(String(cid), int(CARD_SIZE.x), int(CARD_SIZE.y))
+	for i in ids.size():
+		var cid := String(ids[i])
+		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
 		card.set_card_owner(owner)
-		card.set_clickable(false, false)
+		if i == 0 and offer != "" and cid == offer:
+			card.hover_full = true
+			card.set_live(true)
+			card.set_clickable(true)
+			card.pressed.connect(func(c: String):
+				if can_buy:
+					close_pile()
+					offer_pressed.emit(c)
+				else:
+					card.shake_refusal())
+		else:
+			card.set_clickable(false, false)
 		_grid.add_child(card)
 	if ids.is_empty():
 		var empty := Label.new()

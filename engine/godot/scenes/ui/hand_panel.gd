@@ -144,6 +144,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	var options: Array = pd.get("legal_options", []) if _choosing else []
 	if _choosing:
 		playable = options if tag == "hand" or both else []
+	# Выбрать можно только эти места руки (Xanathar Surveillance: вытянутые
+	# карты, а не старые такие же); пусто — любая карта-вариант.
+	var hand_slots: Array = (pd.get("data", {}) as Dictionary).get("hand_slots", []) if _choosing and tag == "hand" else []
 	# Выбор из Inner Circle или сброса: их карты встают в тот же ряд справа от
 	# руки, за промежутком с подписью. Рука видна, но тусклая и не кликается —
 	# без окна и затемнения видны и она, и доска с рынком (решение владельца,
@@ -212,7 +215,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	var fresh := 0
 	var keys: Array = []   # место карты в ряду: прежний индекс, новые — правее
-	for entry: Array in entries:
+	for e_i in entries.size():
+		var entry: Array = entries[e_i]
 		var cid: String = entry[0]
 		var from_zone: bool = entry[1]
 		var found := -1
@@ -239,7 +243,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		keys.append(found if found >= 0 else old_cards.size() + keys.size())
 		_cards[_cards.size() - 1].set_meta("pile", entry[2])
 		_cards[_cards.size() - 1].set_clickable(
-			(zone_ids.has(cid) and not showing_retained) if from_zone else playable.has(cid))
+			(zone_ids.has(cid) and not showing_retained) if from_zone \
+			else (hand_slots.has(e_i) if not hand_slots.is_empty() else playable.has(cid)))
 
 	# Одинаковые карты сервер не различает: щёлкнули правый Noble — из руки
 	# уходит первый, и рука приходит в другом порядке, а левый Noble уезжал

@@ -664,8 +664,14 @@ func _refresh() -> void:
 	for state in ["normal", "hover", "pressed"]:
 		_ban.add_theme_stylebox_override(state, fill)
 	var seconds := ceili(_left)
-	_clock.text = "%d:%02d" % [seconds / 60, seconds % 60] if turn != "" else ""
-	_clock.add_theme_color_override("font_color", BAN_COLOUR.lightened(0.2) if seconds <= 10 else PixelTheme.TEXT)
+	var starting := bool(_view.get("starting", false))
+	_clock.text = "%d:%02d" % [seconds / 60, seconds % 60] if turn != "" or starting else ""
+	_clock.add_theme_color_override("font_color", BAN_COLOUR.lightened(0.2) if seconds <= 10 and not starting else PixelTheme.TEXT)
+	if starting and seconds > 0:
+		# Баны кончились: 10 секунд посмотреть итог (владелец, 2026-11-03).
+		_status.text = "Bans are done. The game starts in %d..." % seconds
+		_status.add_theme_color_override("font_color", PixelTheme.GOLD)
+		return
 	if turn == "":
 		_status.text = "Bans are done. Dealing the cards..."
 	elif mine and _selected != "":
@@ -702,7 +708,7 @@ func _next_token() -> void:
 
 func _process(delta: float) -> void:
 	_cycle_tokens(delta)
-	if String(_view.get("turn", "")) == "" or _left <= 0.0:
+	if (String(_view.get("turn", "")) == "" and not bool(_view.get("starting", false))) or _left <= 0.0:
 		return
 	var before := ceili(_left)
 	_left = maxf(0.0, _left - delta)

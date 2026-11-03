@@ -16,6 +16,10 @@ const DEVOURED_TOP_INDEX := 99
 
 var deck: Array[String] = []
 var display: Array[String] = []  # ровно DISPLAY_SIZE слотов; "" — слот пуст (колода маркета исчерпана)
+## Слоты, карта которых ушла после последней VoidCards.sync_market_spies: на
+## место купленной могла выйти её же копия, и по номеру карты не видно, что
+## шпион (Blue Slaad) и войска (Performer Maestro) пора вернуть хозяевам.
+var vacated: Array[int] = []
 
 
 static func build(half_a: Array[String], half_b: Array[String], rng: RandomNumberGenerator) -> Market:
@@ -51,6 +55,7 @@ func recruit_at(index: int) -> String:
 	if card_id == "":
 		return ""
 	display[index] = _draw_top()
+	vacated.append(index)
 	return card_id
 
 

@@ -82,12 +82,15 @@ static func build(card_id: String) -> CardEffect:
 	return null
 
 
-## Сколько разных аспектов сыграно в этот ход.
-static func distinct_aspects(state: GameState) -> int:
+## Сколько разных аспектов сыграно в этот ход; plus — ещё один аспект сверху
+## (живой счётчик карты в руке: её аспект засчитается, когда её сыграют).
+static func distinct_aspects(state: GameState, plus: String = "") -> int:
 	var seen: Array[String] = []
 	for aspect: String in state.played_aspects_this_turn:
 		if not seen.has(aspect):
 			seen.append(aspect)
+	if plus != "" and not seen.has(plus):
+		seen.append(plus)
 	return seen.size()
 
 
