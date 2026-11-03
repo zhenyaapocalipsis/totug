@@ -88,7 +88,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 44  # 44: очередь банов = очередь хода, Far Realm 40, окна Explore/Lamia (ответ-план)
+const PROTOCOL := 45  # 45: supplant без войск = +1 VP; 44: очередь банов = очередь хода, Far Realm 40, окна Explore/Lamia (ответ-план)
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:
