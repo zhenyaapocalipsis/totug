@@ -272,6 +272,7 @@ static func sync_market_troops(state: GameState) -> void:
 ## остальные — под низ или наверх в выбранном порядке.
 ## Living Gust of Wind среди просмотренных можно взять в руку сверх того.
 class _Peek extends CardEffect:
+	const PLAN := "plan:"
 	var src: String
 	var mode: String
 	var what: String
@@ -309,7 +310,59 @@ class _Peek extends CardEffect:
 		pd.legal_options = options
 		pd.source_card = src
 		pd.target_effect = self
+		# Окно Explore (владелец, 2026-11-03, вариант B): все просмотренные
+		# карты разом, у каждой HAND / TOP / BOTTOM — и весь расклад одним
+		# ответом-планом (PLAN). Пошаговые ответы тоже принимаются: так
+		# отвечают бот, тесты и старые реплеи.
+		var takeable: Array = []
+		if _stage == 1:
+			for cid: String in _shown:
+				if not takeable.has(cid) and (_matches(cid) or (mode == "explore" and cid == IxtalCards.SKY_SQUAD)):
+					takeable.append(cid)
+		pd.tag = "explore"
+		pd.data = {"cards": _shown.duplicate(), "takeable": takeable,
+			"free": [IxtalCards.SKY_SQUAD] if mode == "explore" and _stage == 1 else [],
+			"take_left": 1 if _stage == 1 and not _taken else 0,
+			"take_label": "PROMOTE" if mode == "promote" else "HAND", "what": what}
 		resolver.request_decision(pd)
+	## Ответ окна целиком: "plan:take=a,b;top=c,d;bottom=e" — взять, наверх
+	## (первая — самая верхняя), под низ. Карты — ровно просмотренные; взять
+	## можно только на первом шаге и по тем же правилам, что пошагово (одна
+	## подходящая, Living Gust of Wind сверх неё). false — план неверен.
+	func _apply_plan(state: GameState, player_id: String, plan: String, resolver: EffectResolver, d: Deck) -> bool:
+		var parts := {"take": [], "top": [], "bottom": []}
+		for chunk in plan.trim_prefix(PLAN).split(";", false):
+			var key := chunk.get_slice("=", 0)
+			if parts.has(key):
+				for cid in chunk.get_slice("=", 1).split(",", false):
+					(parts[key] as Array).append(String(cid))
+		var all: Array = parts["take"] + parts["top"] + parts["bottom"]
+		var left: Array = _shown.duplicate()
+		for cid in all:
+			if not left.has(cid):
+				return false
+			left.erase(cid)
+		if not left.is_empty():
+			return false
+		# Сперва обычные карты, потом Living Gust of Wind: так он не тратит выбор.
+		var takes: Array = (parts["take"] as Array).filter(func(c): return c != IxtalCards.SKY_SQUAD) \
+			+ (parts["take"] as Array).filter(func(c): return c == IxtalCards.SKY_SQUAD)
+		var taken := _taken
+		for cid in takes:
+			var sky: bool = mode == "explore" and cid == IxtalCards.SKY_SQUAD
+			if _stage != 1 or not ((not taken and _matches(cid)) or sky):
+				return false
+			if not (sky and (taken or not _matches(cid))):
+				taken = true
+		for cid in takes:
+			_take(state, player_id, cid, resolver)
+		for cid in parts["bottom"]:
+			_shown.erase(cid)
+			d.draw_pile.insert(0, cid)  # низ колоды — начало массива
+		for cid in parts["top"]:
+			_shown.erase(cid)
+			_top.append(cid)
+		return true
 	func _take(state: GameState, player_id: String, cid: String, resolver: EffectResolver) -> void:
 		_shown.remove_at(_shown.find(cid))
 		# Living Gust of Wind сверх подходящей карты выбор не тратит.
@@ -347,22 +400,27 @@ class _Peek extends CardEffect:
 			var chosen := String(answer()) if answer() != null else ""
 			_answered = false
 			_answer = null
-			match _stage:
-				1:
-					if chosen == "" or not _pickable().has(chosen):
-						_stage = 2
-					else:
-						_take(state, player_id, chosen, resolver)
-				2:
-					if chosen == "" or not _shown.has(chosen):
-						_stage = 3
-					else:
-						_shown.remove_at(_shown.find(chosen))
-						d.draw_pile.insert(0, chosen)  # низ колоды — начало массива
-				3:
-					if _shown.has(chosen):
-						_shown.remove_at(_shown.find(chosen))
-						_top.append(chosen)
+			if chosen.begins_with(PLAN):
+				# Весь расклад сразу; неверный — тот же вопрос ещё раз.
+				if _apply_plan(state, player_id, chosen, resolver, d):
+					_stage = 3
+			else:
+				match _stage:
+					1:
+						if chosen == "" or not _pickable().has(chosen):
+							_stage = 2
+						else:
+							_take(state, player_id, chosen, resolver)
+					2:
+						if chosen == "" or not _shown.has(chosen):
+							_stage = 3
+						else:
+							_shown.remove_at(_shown.find(chosen))
+							d.draw_pile.insert(0, chosen)  # низ колоды — начало массива
+					3:
+						if _shown.has(chosen):
+							_shown.remove_at(_shown.find(chosen))
+							_top.append(chosen)
 		if _stage == 1:
 			var options := _pickable()
 			if not options.is_empty():

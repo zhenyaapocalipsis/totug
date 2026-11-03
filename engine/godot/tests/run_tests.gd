@@ -6774,6 +6774,27 @@ func test_chult_deck() -> void:
 	TurnEngine.resume_card(state, "50101", r)
 	check(not r.is_waiting() and red.deck.draw_pile[0] == "50101", "Explore: Galeb Duhr ушёл под низ колоды")
 
+	# Окно Explore (вариант B): данные окна и весь расклад одним ответом-планом
+	state = _build_rich_state(81)
+	red = state.players["red"]
+	TurnEngine.start_turn(state, "red")
+	red.deck.draw_pile.append_array(["50101", "50120", "50118"])
+	state.turn_flags["ezreal"] = true
+	r = EffectResolver.new()
+	r.apply(X.explore(X.SEEKER, "a card that costs 3 or less", func(cid): return X._cost_in(cid, 0, 3)), "red", state)
+	check(r.is_waiting() and r.pending.tag == "explore" and (r.pending.data["takeable"] as Array).has("50120")
+		and not (r.pending.data["takeable"] as Array).has("50101") and int(r.pending.data["take_left"]) == 1,
+		"окно Explore: карты, что можно взять, и сколько")
+	var seen: Array = r.pending.data["cards"]
+	TurnEngine.resume_card(state, "plan:take=50120,50118;top=50101;bottom=", r)
+	check(r.is_waiting() and r.pending.tag == "explore", "две подходящие в руку нельзя — тот же вопрос")
+	var top_cards: Array = seen.filter(func(c): return c != "50120" and c != "50101" and c != "50118")
+	var tops := PackedStringArray(["50101"] + top_cards)
+	TurnEngine.resume_card(state, "plan:take=50120;top=%s;bottom=50118" % ",".join(tops), r)
+	check(not r.is_waiting(), "верный план — Explore закончен одним ответом")
+	check(red.deck.hand.has("50120") and red.deck.draw_pile[0] == "50118" and red.deck.draw_pile.back() == "50101",
+		"план: Bone Naga в руке, 50118 под низом, Galeb Duhr сверху")
+
 	# Chwinga: все подходящие сразу в руку; Knight of Eldraine: смотрим 4
 	state = _build_rich_state(82)
 	red = state.players["red"]
@@ -7414,6 +7435,22 @@ func test_avernus_deck() -> void:
 	check_eq(game.market.deck_size() + game.market.display.size(), 80, "рынок: 40 (Celestial) + 40 (Avernus) карт")
 	check_eq(game.supplies.remaining(NoxusCards.BLADE_FRAGMENT), 3, "с Avernus у доски 3 Blade Fragment")
 	_sweep_deck_with_vp(49500, 49524)
+
+	# Lamia — окно двух стопок: хозяин видит обе, соперник закрытую только числом
+	var ls := _build_rich_state(42)
+	TurnEngine.start_turn(ls, "red")
+	var rl := _play_with(ls, "49514")
+	if rl.is_waiting() and rl.pending.choice_type == "target_player":
+		TurnEngine.resume_card(ls, "blue", rl)
+	check(rl.is_waiting() and rl.pending.tag == "lamia" and String(rl.pending.data["step"]) == "split"
+		and (rl.pending.data["face_down"] as Array).size() == 5, "Lamia: хозяин делит 5 карт в окне")
+	var lamia_first := String(rl.pending.data["face_down"][0])
+	TurnEngine.resume_card(ls, lamia_first, rl)
+	check(rl.pending.data["face_up"] == [lamia_first], "Lamia: карта ушла в открытую стопку")
+	TurnEngine.resume_card(ls, "", rl)
+	check(rl.is_waiting() and rl.pending.player_id == "blue" and String(rl.pending.data["step"]) == "pick"
+		and int(rl.pending.data["face_down_count"]) == 4 and not rl.pending.data.has("face_down"),
+		"Lamia: соперник видит открытую стопку и число закрытых, но не сами карты")
 
 	var state := _build_rich_state(41)
 	var red: PlayerState = state.players["red"]

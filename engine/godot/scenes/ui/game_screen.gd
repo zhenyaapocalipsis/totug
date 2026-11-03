@@ -212,6 +212,8 @@ var _pile_devour: PileZone
 ## Стопка DEVOUR предлагает карту как ответ на вопрос карты о рынке, а не покупку.
 var _ghost_choice := false
 var _pile_dialog: PileDialog
+## Окно раскладки по стопкам: Explore и Lamia (PilesWindow).
+var _piles_window: PilesWindow
 var _end_turn_area: Control
 var _end_turn_button: Button
 var _end_turn_style: StyleBoxFlat
@@ -642,6 +644,9 @@ func _build_layout() -> void:
 		add_child(_god_panel)
 
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
+	_piles_window = PilesWindow.new()
+	_piles_window.answered.connect(_on_decision_answer)
+	add_child(_piles_window)
 	_pile_dialog = PileDialog.new()
 	add_child(_pile_dialog)
 	# Верхняя сожранная карта, которую можно купить (Ghost, Relentless
@@ -1381,6 +1386,7 @@ func _hs_start(evt: Dictionary, view: Dictionary) -> void:
 			if card.card_id == cid:
 				card.visible = false
 	_decision_dialog.visible = false
+	_piles_window.visible = false
 	_hs_play.play(cid, HsPlay.face_of(cid, PlayerProfile.art_of(pid, cid)), pid != viewer_id)
 
 
@@ -1411,6 +1417,7 @@ func _apply_result(err: int, events: Array, view: Dictionary) -> void:
 	# затемнения складываются в чёрный экран, а карту витрины закрывает окно.
 	if _showcase.is_busy() or _hs_play.is_busy():
 		_decision_dialog.visible = false
+		_piles_window.visible = false
 
 
 ## "Look at the top N cards..." / "Reveal the top card": карты, которые эффект
@@ -1440,7 +1447,8 @@ func _show_looks(events: Array, view: Dictionary) -> void:
 			cards = [String(evt.get("card_id", ""))]
 		if cards.is_empty():
 			continue
-		var covered := cards.all(func(c): return asked.has(c)) \
+		# окно Explore само показывает все просмотренные карты
+		var covered := cards.all(func(c): return asked.has(c)) or (mine and String(pd.get("tag", "")) == "explore") \
 			or (mine and cards.size() == 1 and String(pd.get("source_card", "")) == String(cards[0]))
 		if not covered:
 			shown = cards
@@ -1455,8 +1463,19 @@ func _show_looks(events: Array, view: Dictionary) -> void:
 ## доску, а ответ всё равно придёт следующим шагом.
 func _show_decision(view: Dictionary) -> void:
 	_decision_dialog.update_from_view(view, viewer_id)
-	if _showcase.is_busy() or _hs_play.is_busy() or replay_bar != null or watching:
+	var busy := _showcase.is_busy() or _hs_play.is_busy() or replay_bar != null or watching
+	if busy:
 		_decision_dialog.visible = false
+	# Explore и Lamia — своим окном стопок (владелец, 2026-11-03); у
+	# остальных за столом — обычная строка «ждём такого-то».
+	var pd: Dictionary = view.get("pending_decision", {})
+	if PilesWindow.handles(pd) and String(pd.get("player_id", "")) == viewer_id and not busy:
+		_decision_dialog.visible = false
+		_piles_window.show_decision(pd, viewer_id)
+	elif busy and PilesWindow.handles(pd):
+		_piles_window.visible = false
+	else:
+		_piles_window.close()
 
 
 # --- реплей ------------------------------------------------------------------

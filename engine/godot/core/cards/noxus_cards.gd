@@ -652,6 +652,11 @@ class _Lamia extends CardEffect:
 				pd1.legal_options = cards.duplicate()
 				pd1.legal_options.append("")
 				pd1.target_effect = self
+				# Окно двух стопок (владелец, 2026-11-03, вариант B): хозяин
+				# видит обе стопки целиком и перекладывает карты в открытую.
+				pd1.tag = "lamia"
+				pd1.data = {"step": "split", "face_up": face_up.duplicate(), "face_down": cards.duplicate(),
+					"rival": victim}
 				resolver.request_decision(pd1)
 				return
 			stage = 2
@@ -668,6 +673,11 @@ class _Lamia extends CardEffect:
 			pd2.option_labels = ["Keep the face-up pile: " + (", ".join(names) if not names.is_empty() else "empty"),
 				"Keep the face-down pile (%d cards)" % cards.size()]
 			pd2.target_effect = self
+			# Соперник видит открытую стопку картами и закрытую рубашками
+			# (её карты ему не показываются), щёлкает стопку, что вернётся к нему.
+			pd2.tag = "lamia"
+			pd2.data = {"step": "pick", "face_up": face_up.duplicate(), "face_down_count": cards.size(),
+				"rival": owner}
 			resolver.request_decision(pd2)
 			return
 		var keep_up := int(answer()) == 0
