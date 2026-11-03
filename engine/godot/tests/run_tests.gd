@@ -99,6 +99,7 @@ func _initialize() -> void:
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
 	test_god_mode()
+	test_hs_play_always_releases()
 	test_market_mulligan()
 	test_auto_decision_answer()
 	test_recruit_from_supply()
@@ -2701,6 +2702,28 @@ func test_market_mulligan() -> void:
 ## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный
 ## сетап должны работать не только вдвоём. Раньше экран всегда собирал партию
 ## на red/blue, и эти ветки pick_hexes не проверялись ни одним тестом.
+## Партия 03.11 (Council Member): клип короче появления карты, released не приходил,
+## экран копил ответы сервера и висел до перезахода.
+func test_hs_play_always_releases() -> void:
+	section("HsPlay: розыгрыш всегда отпускает партию")
+	var hs := HsPlay.new()
+	hs.size = HsPlay.DESIGN
+	root.add_child(hs)
+	var got := [0]
+	hs.released.connect(func(): got[0] += 1)
+	hs.play("48315", null)  # Council Member: клип 3.417 с, карта уходит к 3.42 с
+	for _i in 200:
+		hs._process(0.0)
+		if hs._main._warm == 0:
+			break
+		OS.delay_msec(10)
+	hs._main.seek(3.418)
+	hs._process(0.0)
+	check_eq(got[0], 1, "клип кончился раньше ухода карты — released всё равно пришёл")
+	check(not hs.is_busy(), "и розыгрыш больше не держит ответы")
+	hs.queue_free()
+
+
 func test_god_mode() -> void:
 	section("Хотсит: режим бога (проверка карт)")
 	var state := GameSetup.new_game(["red", "blue"], 31, [], false, true, true)

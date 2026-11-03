@@ -1478,6 +1478,12 @@ func _process(delta: float) -> void:
 			_released = true
 			released.emit()
 		if _main.finished():
+			# Клип короче появления карты (Council Member: 205 кадров = 3.417 с, карта
+			# уходит к 3.42 с): без этого released не приходил, ответы сервера копились
+			# в очереди экрана навсегда — партия висела до перезахода (Fix-1104a).
+			if not _released:
+				_released = true
+				released.emit()
 			if bool(_item.get("preview", false)):
 				fog_off()
 			_next()
