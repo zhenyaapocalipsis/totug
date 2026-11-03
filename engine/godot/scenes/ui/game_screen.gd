@@ -646,7 +646,7 @@ func _build_layout() -> void:
 	# Список карт стопки — поверх экрана, но под увеличенной копией карты.
 	_piles_window = PilesWindow.new()
 	_piles_window.answered.connect(_on_decision_answer)
-	add_child(_piles_window)
+	_board_area.add_child(_piles_window)  # в зоне окон вопросов, как DecisionDialog
 	_pile_dialog = PileDialog.new()
 	add_child(_pile_dialog)
 	# Верхняя сожранная карта, которую можно купить (Ghost, Relentless

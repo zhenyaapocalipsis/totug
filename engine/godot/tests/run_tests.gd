@@ -7451,6 +7451,17 @@ func test_avernus_deck() -> void:
 	check(rl.is_waiting() and rl.pending.player_id == "blue" and String(rl.pending.data["step"]) == "pick"
 		and int(rl.pending.data["face_down_count"]) == 4 and not rl.pending.data.has("face_down"),
 		"Lamia: соперник видит открытую стопку и число закрытых, но не сами карты")
+	# Окно шлёт раздел целиком: "plan:up=a,b" (карты перекладывали туда и обратно до DONE)
+	var ls2 := _build_rich_state(43)
+	TurnEngine.start_turn(ls2, "red")
+	var rl2 := _play_with(ls2, "49514")
+	if rl2.is_waiting() and rl2.pending.choice_type == "target_player":
+		TurnEngine.resume_card(ls2, "blue", rl2)
+	var five: Array = rl2.pending.data["face_down"]
+	TurnEngine.resume_card(ls2, "plan:up=%s,%s" % [five[3], five[1]], rl2)
+	check(rl2.is_waiting() and String(rl2.pending.data["step"]) == "pick"
+		and rl2.pending.data["face_up"] == [five[3], five[1]] and int(rl2.pending.data["face_down_count"]) == 3,
+		"Lamia: раздел одним ответом — открытые ровно те, что выбраны")
 
 	var state := _build_rich_state(41)
 	var red: PlayerState = state.players["red"]

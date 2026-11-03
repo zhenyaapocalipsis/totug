@@ -103,7 +103,6 @@ func open_pile(title: String, ids: Array, owner: String = "", offer: String = ""
 		var card := CardView.new(cid, int(CARD_SIZE.x), int(CARD_SIZE.y))
 		card.set_card_owner(owner)
 		if i == 0 and offer != "" and cid == offer:
-			card.hover_full = true
 			card.set_live(true)
 			card.set_clickable(true)
 			card.pressed.connect(func(c: String):

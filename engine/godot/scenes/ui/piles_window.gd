@@ -7,8 +7,8 @@ extends Control
 ##     HAND (или PROMOTE) / TOP / BOTTOM и стрелки порядка; DONE шлёт весь
 ##     расклад одним ответом-планом (IxtalCards._Peek.PLAN).
 ##   Lamia (tag "lamia") — две стопки рядом, открытая и закрытая:
-##     "split" — хозяин Lamia щёлкает карту закрытой стопки, и она уходит в
-##       открытую; DONE — остальные остаются закрытыми;
+##     "split" — хозяин Lamia щёлкает карту, и она переходит в другую стопку
+##       (туда и обратно, пока не нажал DONE — тогда раздел уходит целиком);
 ##     "pick" — соперник видит открытую стопку картами, закрытую рубашками и
 ##       выбирает, какая вернётся ему на колоду; другую сыграет хозяин Lamia.
 ## Состояние приходит с сервера в pending_decision.data; окно шлёт только ответ.
@@ -27,26 +27,30 @@ var _footer: HBoxContainer
 var _cards: Array = []
 var _where: Array = []
 var _data: Dictionary = {}
+## Lamia, раздел: открытая и закрытая стопки, пока игрок не нажал DONE.
+var _up: Array = []
+var _down: Array = []
 ## Ключ показанного вопроса: тот же вопрос пришёл снова — расклад игрока не сбрасываем.
 var _key := ""
 
 
 func _init() -> void:
+	# В зоне доски, где и окна вопросов, без затемнения (владелец, 2026-11-03):
+	# доска видна вокруг, ловит мышь только сама плашка окна.
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
-	var dim := ColorRect.new()
-	dim.color = PixelTheme.DIM
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
+	var frame := PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
+	frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	center.add_child(frame)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", GAP)
-	center.add_child(col)
+	frame.add_child(col)
 	_title = Label.new()
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
@@ -89,6 +93,8 @@ func show_decision(pd: Dictionary, viewer_id: String) -> void:
 			_where.append("top")
 		_build_explore()
 	elif String(_data.get("step", "")) == "split":
+		_up = []
+		_down = []
 		_build_split()
 	else:
 		_build_pick(viewer_id)
@@ -108,7 +114,6 @@ func _clear() -> void:
 
 func _card(cid: String) -> CardView:
 	var card := CardView.new(cid, int(CARD.x), int(CARD.y))
-	card.hover_full = true
 	card.set_clickable(false, false)
 	return card
 
@@ -188,11 +193,13 @@ func _swap(i: int, j: int) -> void:
 
 ## Расклад игрока ответом-планом "plan:take=..;top=..;bottom=..".
 func plan() -> String:
-	var parts := {"take": PackedStringArray(), "top": PackedStringArray(), "bottom": PackedStringArray()}
+	# Обычные массивы: PackedStringArray в словаре при приведении копируется,
+	# и append уходил в копию — план уходил пустым.
+	var parts := {"take": [], "top": [], "bottom": []}
 	for i in _cards.size():
-		(parts[_where[i]] as PackedStringArray).append(String(_cards[i]))
-	return "%stake=%s;top=%s;bottom=%s" % [PLAN, ",".join(parts["take"]), ",".join(parts["top"]),
-		",".join(parts["bottom"])]
+		(parts[_where[i]] as Array).append(String(_cards[i]))
+	return "%stake=%s;top=%s;bottom=%s" % [PLAN, ",".join(PackedStringArray(parts["take"])),
+		",".join(PackedStringArray(parts["top"])), ",".join(PackedStringArray(parts["bottom"]))]
 
 
 func _send_plan() -> void:
@@ -232,17 +239,30 @@ func _pile(caption: String, cards: Array, backs: int, back: String, click: Calla
 	return pile
 
 
+## Lamia, раздел: карта перекладывается щелчком из стопки в стопку туда и
+## обратно (владелец, 2026-11-03); DONE шлёт открытую стопку целиком.
 func _build_split() -> void:
 	_clear()
+	if _up.is_empty() and _down.is_empty():
+		_up = (_data.get("face_up", []) as Array).duplicate()
+		_down = (_data.get("face_down", []) as Array).duplicate()
 	var rival := EventLogPanel.player_name(String(_data.get("rival", ""))).to_upper()
 	_title.text = "LAMIA — split %s's top cards" % rival
-	_hint.text = "Click a card to put it FACE UP. %s puts one pile back on their deck; you play the other." % rival
-	_body.add_child(_pile("FACE UP", _data.get("face_up", []), 0, "", Callable()))
-	_body.add_child(_pile("FACE DOWN", _data.get("face_down", []), 0, "",
-		func(cid: String) -> void: answered.emit(cid)))
-	_footer.add_child(_button("DONE — the rest stay face down", true, func() -> void:
+	_hint.text = "Click a card to move it to the other pile. %s puts one pile back on their deck; you play the other." % rival
+	_body.add_child(_pile("FACE UP", _up, 0, "", _move_card.bind(true)))
+	_body.add_child(_pile("FACE DOWN", _down, 0, "", _move_card.bind(false)))
+	_footer.add_child(_button("DONE", true, func() -> void:
+		var up := ",".join(PackedStringArray(_up))
 		close()
-		answered.emit("")))
+		answered.emit("%sup=%s" % [PLAN, up])))
+
+
+func _move_card(cid: String, from_up: bool) -> void:
+	var from: Array = _up if from_up else _down
+	var to: Array = _down if from_up else _up
+	from.erase(cid)
+	to.append(cid)
+	_build_split()
 
 
 func _build_pick(viewer_id: String) -> void:

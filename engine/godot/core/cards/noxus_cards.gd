@@ -638,7 +638,21 @@ class _Lamia extends CardEffect:
 				_answered = false
 				_answer = null
 				var idx := -1 if chosen == null else cards.find(String(chosen))
-				if idx != -1:
+				# Окно стопок шлёт раздел целиком: "plan:up=a,b" — открытые карты
+				# (до DONE игрок перекладывает их туда и обратно сколько угодно).
+				if typeof(chosen) == TYPE_STRING and String(chosen).begins_with("plan:"):
+					var up := String(chosen).trim_prefix("plan:").trim_prefix("up=").split(",", false)
+					var rest := cards.duplicate()
+					var ok := true
+					for cid in up:
+						ok = ok and rest.has(cid)
+						rest.erase(cid)
+					if ok:
+						for cid in up:
+							face_up.append(cid)
+							cards.erase(cid)
+						stage = 2
+				elif idx != -1:
 					face_up.append(cards[idx])
 					cards.remove_at(idx)
 				else:
