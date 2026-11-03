@@ -1739,8 +1739,11 @@ func _spy_spot(site_id: String, i: int, count: int) -> Variant:
 	var pos: Vector2
 	var rect: Variant = _site_rect(site_id)
 	if rect != null:
-		# above the box, on the tunnel-free strip over its name
-		pos = _to_screen(Vector2((rect as Rect2).get_center().x, (rect as Rect2).position.y)) - Vector2(0, d + 2.0)
+		# standing on the box's top edge, never wider than the box: many spies overlap
+		pos = _to_screen(Vector2((rect as Rect2).get_center().x, (rect as Rect2).position.y)) - Vector2(0, d)
+		var room: float = (rect as Rect2).size.x * _zoom - d * 2.0
+		var step: float = d * 2.4 if count < 2 else minf(d * 2.4, room / (count - 1))
+		return pos + Vector2((i - (count - 1) * 0.5) * step, 0)
 	else:
 		var centre: Variant = _site_centre(site_id)
 		if centre == null:
