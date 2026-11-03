@@ -20,10 +20,10 @@ extends RefCounted
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "devotion_power" — {id игрока: +Power за каждое срабатывание Devotion} (Goblin Warrior);
-##   "naafiri"        — id игрока, у которого действует Roper;
-##   "naafiri_from"   — сколько карт было сыграно до Roper;
+##   "naafiri"        — id игрока, у которого действует Marid;
+##   "naafiri_from"   — сколько карт было сыграно до Marid;
 ##   "naafiri_used"   — сколько раз Deploy уже вернул 1 Power;
-##   "no_recruit"     — карты рынка, которые нельзя нанять в этот ход (Tough).
+##   "no_recruit"     — карты рынка, которые нельзя нанять в этот ход (Mud Mephit).
 
 const ZOMBIE := "49700"  # Voice of the Risen
 const COCKATRICE := "49701"  # Baccai Witherclaw
@@ -221,7 +221,7 @@ static func _devotion(state: GameState, player_id: String, card_id: String, reso
 		resolver.apply(eff, player_id, state, card_id)
 
 
-## Сработать Devotion карты card_id (Cockatrice зовёт напрямую).
+## Сработать Devotion карты card_id (Rakshasa зовёт напрямую).
 static func trigger(state: GameState, player_id: String, card_id: String, resolver: EffectResolver) -> void:
 	var eff := devotion_effect(card_id)
 	if eff == null:
@@ -249,12 +249,12 @@ static func _site_full(state: GameState, site_id: String) -> bool:
 	return true
 
 
-## Tough: эту карту рынка нельзя нанять в этот ход.
+## Mud Mephit: эту карту рынка нельзя нанять в этот ход.
 static func recruit_banned(state: GameState, card_id: String) -> bool:
 	return (state.turn_flags.get("no_recruit", []) as Array).has(card_id)
 
 
-# --- Roper (Naafiri) ---------------------------------------------------------
+# --- Marid (Naafiri) ---------------------------------------------------------
 
 ## Карта поставила войска (первое войско цепочки DeployTroop): "Whenever you
 ## deploy troops from a card effect, Assassinate a troop".
@@ -266,7 +266,7 @@ static func on_card_deploy(state: GameState, player_id: String, resolver: Effect
 
 ## Базовое действие Deploy: "Whenever you deploy troops using Power from a card,
 ## gain up to 1 additional Power per card" — 1 Power назад, раз на каждую карту,
-## сыгранную начиная с Roper.
+## сыгранную начиная с Marid.
 static func on_deploy_action(state: GameState, player_id: String) -> void:
 	if String(state.turn_flags.get("naafiri", "")) != player_id:
 		return
@@ -305,7 +305,7 @@ class _SetNaafiri extends CardEffect:
 		state.turn_flags["naafiri_used"] = 0
 
 
-## Cockatrice: Devotion другой карты, сыгранной в этот ход.
+## Rakshasa: Devotion другой карты, сыгранной в этот ход.
 class _TriggerAnother extends CardEffect:
 	func _options(state: GameState, player_id: String) -> Array:
 		var out: Array = []
@@ -333,7 +333,7 @@ class _TriggerAnother extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Cockatrice: карту из Внутреннего круга — в руку, затем взять карту.
+## Rakshasa: карту из Внутреннего круга — в руку, затем взять карту.
 class _InnerToHand extends CardEffect:
 	func is_available(state: GameState, player_id: String) -> bool:
 		return not state.stock(player_id).deck.inner_circle.is_empty()
@@ -402,7 +402,7 @@ class _TopPick extends CardEffect:
 			FreljordCards.on_discard(state, player_id, cid, resolver, true)
 
 
-## Tough: игрок выбирает, кого из соседей попросить назвать карту рынка.
+## Mud Mephit: игрок выбирает, кого из соседей попросить назвать карту рынка.
 class _Marshal extends CardEffect:
 	func _neighbours(state: GameState, player_id: String) -> Array[String]:
 		var order: Array[String] = state.turn_order
@@ -435,7 +435,7 @@ class _Marshal extends CardEffect:
 		resolver.push(choose, player_id)
 
 
-## Сосед называет карту рынка: её нельзя нанять в этот ход, хозяину Tough +1 Influence.
+## Сосед называет карту рынка: её нельзя нанять в этот ход, хозяину Mud Mephit +1 Influence.
 class _NameCard extends CardEffect:
 	var owner: String
 	var namer: String

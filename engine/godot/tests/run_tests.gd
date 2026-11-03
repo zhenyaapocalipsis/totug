@@ -6178,7 +6178,7 @@ func test_calimshan_deck() -> void:
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
-	check_eq(uniques.size(), 20, "Calimshan: 20 уникальных карт, Roper (Naafiri) вместо Azir")
+	check_eq(uniques.size(), 20, "Calimshan: 20 уникальных карт, Marid (Naafiri) вместо Azir")
 	check(GameSetup.available_half_decks().has("shurima"), "Calimshan в обычном выборе")
 	var mode := GameSetup.new_era_mode(["shurima", "celestial"])
 	check(GameSetup.is_mode(mode), "режим Celestial + Calimshan принимается")
@@ -6204,18 +6204,18 @@ func test_calimshan_deck() -> void:
 	check(state.stock("red").deck.inner_circle.has(S.MAGMA_MEPHIT), "Magma Mephit продвинут")
 	check_eq(red.influence, 1, "Devotion Magma Mephit при promote: +1 Influence")
 
-	# Goblin Warrior: каждый Devotion в этот ход +1 Power; Cockatrice повторяет Devotion сыгранной карты
+	# Goblin Warrior: каждый Devotion в этот ход +1 Power; Rakshasa повторяет Devotion сыгранной карты
 	red.power = 0
 	var rw := _play_with(state, S.GOBLIN_WARRIOR, [0])
 	_auto_resolve(state, rw, false)
 	red.deck.played_pile.append(S.GORGON)
 	red.power = 0
 	var rc := _play_with(state, S.COCKATRICE, [0])
-	check(rc.is_waiting() and rc.pending.legal_options.has(S.GORGON), "Cockatrice: на выбор Devotion сыгранных карт")
+	check(rc.is_waiting() and rc.pending.legal_options.has(S.GORGON), "Rakshasa: на выбор Devotion сыгранных карт")
 	TurnEngine.resume_card(state, S.GORGON, rc)
-	check_eq(red.power, 4, "Devotion Gorgon через Cockatrice: +3 и +1 от Goblin Warrior")
+	check_eq(red.power, 4, "Devotion Gorgon через Rakshasa: +3 и +1 от Goblin Warrior")
 
-	# Tough: оба соседа называют карту — её нельзя нанять, +1 Influence за каждую
+	# Mud Mephit: оба соседа называют карту — её нельзя нанять, +1 Influence за каждую
 	red.influence = 0
 	var rt := _play_with(state, S.TOUGH, [2])
 	var namers: Array = []
@@ -6223,8 +6223,8 @@ func test_calimshan_deck() -> void:
 		namers.append(rt.pending.player_id)
 		TurnEngine.resume_card(state, rt.pending.legal_options[0], rt)
 	namers.sort()
-	check_eq(namers, ["blue", "green"], "Tough: назвали карту оба соседа")
-	check_eq(red.influence, 4, "Tough: +2 и +1 за каждую названную карту")
+	check_eq(namers, ["blue", "green"], "Mud Mephit: назвали карту оба соседа")
+	check_eq(red.influence, 4, "Mud Mephit: +2 и +1 за каждую названную карту")
 	var banned := 0
 	for i in range(state.market.display.size()):
 		if Actions.market_cost(state, i) < 0 and S.recruit_banned(state, String(state.market.display[i])):
@@ -6232,10 +6232,10 @@ func test_calimshan_deck() -> void:
 	check(banned >= 1, "названные карты рынка не нанять (цена -1)")
 	state.turn_flags.erase("no_recruit")
 
-	# Roper: карта ставит войска — убийство; Deploy возвращает 1 Power раз на карту
+	# Marid: карта ставит войска — убийство; Deploy возвращает 1 Power раз на карту
 	red.power = 0
 	var rh := _play_with(state, S.ROPER)
-	check_eq(red.power, 3, "Roper: +3 Power")
+	check_eq(red.power, 3, "Marid: +3 Power")
 	var rg := _play_with(state, S.ZOMBIE)
 	var asked_kill := false
 	var steps := 0
@@ -6244,7 +6244,7 @@ func test_calimshan_deck() -> void:
 		if rg.pending.prompt.begins_with("Assassinate"):
 			asked_kill = true
 		TurnEngine.resume_card(state, rg.pending.legal_options[0], rg)
-	check(asked_kill, "Roper: Zombie поставил войска — вопрос «убить войско»")
+	check(asked_kill, "Marid: Zombie поставил войска — вопрос «убить войско»")
 	red.power = 5
 	var refunds := 0
 	for slot_id: String in state.deployable_slots("red"):
@@ -6255,7 +6255,7 @@ func test_calimshan_deck() -> void:
 			refunds += 1
 		if refunds > 3 or red.power <= 1:
 			break
-	check_eq(int(state.turn_flags.get("naafiri_used", 0)), 2, "Roper: Deploy вернул Power 2 раза (Roper и Zombie)")
+	check_eq(int(state.turn_flags.get("naafiri_used", 0)), 2, "Marid: Deploy вернул Power 2 раза (Marid и Zombie)")
 	state.turn_flags.erase("naafiri")
 
 	# Ankheg в руке жертвы: отменяет убийство и вытесняет войско нападавшего

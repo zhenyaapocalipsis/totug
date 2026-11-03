@@ -55,13 +55,11 @@ Homunculus	CONSTRUCT
 Chimera	CHIMERA
 Basilisk	BASILISK
 Behir	BEHIR
-Bandit	HUMAN
 Wereboar	LYCANTHROPE
 Speaker Devil	DEVIL
 Hell Hound	HELL HOUND
 Pseudodragon	DRAGON
 Medusa	MEDUSA
-Guard Captain	HUMAN
 Bugbear Warrior	GOBLINOID
 Felhound	DEMON
 Minotaur of Baphomet	MINOTAUR
@@ -98,21 +96,16 @@ Remorhaz	REMORHAZ
 Mammoth	BEAST
 Storm Giant	GIANT
 Frost Giant	GIANT
-Pirate Captain	HUMAN
 Blink Dog	BLINK DOG
 Young White Dragon	DRAGON
 Zombie	UNDEAD
-Cockatrice	COCKATRICE
 Brass Dragon Wyrmling	DRAGON
 Steam Mephit	MEPHIT
-Commoner	HUMAN
-Tough	HUMAN
 Incubus	INCUBUS
 Relentless Juggernaut	FIEND
 Relentless Nightmare	FIEND
 Dragon Turtle	DRAGON
 Magma Mephit	MEPHIT
-Roper	ROPER
 Ancient Brass Dragon	DRAGON
 Purple Worm	PURPLE WORM
 Guardian Naga	NAGA
@@ -129,7 +122,6 @@ Murder Comet	ELEMENTAL
 Mother Lorinda	HAG
 Nafas	GENIE
 Elemental Cataclysm	ELEMENTAL
-Mage	HUMAN
 Violet Fungus	PLANT
 Merfolk Skirmisher	MERFOLK
 Tarrasque	TARRASQUE
@@ -242,3 +234,10 @@ Elise	CONSTRUCT
 Lorehold Apprentice	HUMAN
 Conjurer Archmage	HUMAN
 Silverquill Apprentice	HUMAN
+Assassin	HUMAN
+Smoke Mephit	MEPHIT
+Megapede	MEGAPEDE
+Mud Mephit	MEPHIT
+Enchanter Archmage	HUMAN
+Marid	GENIE
+Abveku	ABVEKU

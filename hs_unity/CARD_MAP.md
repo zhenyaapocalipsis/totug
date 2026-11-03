@@ -163,7 +163,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
 | Stone Golem (49211) | Chronogor (TIME_032) | `TIMEFX_Chronogor_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| ~~Assassin~~ (—, существо убрано из игры NE-49; на 49212 теперь Lorehold Apprentice) | Garona Halforcen (TIME_875) | `TIME_875_Garona_CustomSummon.prefab` | анимация свободна |
+| Assassin (49707; NE-49 убран из Waterdeep, NE-50 вернулся в Calimshan) | Garona Halforcen (TIME_875) | `TIME_875_Garona_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Iron Golem (49213) | Mathias Shaw (CAP_005) | `CAP_005_MathiasShaw_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | ~~Manticore~~ (—, существо убрано из игры NE-49; на 49214 теперь Elise) | Lo'Gosh, Blood Fighter (TIME_850) | `TIME_LoGosh_CustomSummon.prefab` | анимация свободна |
 | Homunculus (49215) | Norgannon (TTN_075) | `TTNFX_Norgannon_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
@@ -222,7 +222,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Mammoth (49617) | Icehowl (AT_125) | `IceHowl_CustomSpawn.prefab` | ледяной зверь |
 | Storm Giant (49618) | Thaddius, Monstrosity (NX2_033) | `NX2FX_ThaddiusFleshTitan_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Frost Giant (49620) | The Lich King (CORE_ICC_314) | `LichKing_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
-| Pirate Captain (49714) | Eliza Goreblade (VAC_426) | `VAC_ElizaGoreBlade_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| ~~Pirate Captain~~ (—, существо убрано из игры NE-50; на 49714 теперь Abveku) | Eliza Goreblade (VAC_426) | `VAC_ElizaGoreBlade_CustomSummon.prefab` | анимация свободна |
 | Blink Dog (49635) | Zer'Ontu (BE_790) | `BE_790_ZerOntu_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | ~~Young White Dragon~~ (—, существо убрано из игры NE-38; на 49014 теперь другое существо) | Bonelord Frostwhisper (RLK_591) | `RLKFX_BonelordFrostwhisper_CustomSummon.prefab` | анимация свободна |
 
@@ -230,7 +230,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Roper (49711) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
+| ~~Roper~~ (—, существо убрано из игры NE-50; на 49711 теперь Marid) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | анимация свободна |
 | ~~Ancient Brass Dragon~~ (—, существо убрано из игры NE-38; на 49016 теперь другое существо) | Mister Clocksworth (TIME_038t3) | `TIMEFX_MisterClocksWorth_CustomSummon.prefab` | анимация свободна |
 | Purple Worm (49713) | Arisen Onyxia (CATA_155) | `CATA_155_ArisenOnyxia_Fab_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Guardian Naga (50101) | Razidir (TLC_463) | `TLC463_Nazidir_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |

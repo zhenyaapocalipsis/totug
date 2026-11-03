@@ -2981,22 +2981,22 @@
   },
   {
     "card_id": 49701,
-    "name": "Cockatrice",
+    "name": "Rakshasa",
     "cost": 3,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
-    "race": "COCKATRICE",
+    "race": "RAKSHASA",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Trigger the Devotion of another card you played this turn.\n• Return a card from your inner circle to your hand, draw a card.\n• +2 Power."
   },
   {
     "card_id": 49702,
-    "name": "Guard Captain",
+    "name": "Megapede",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
-    "race": "HUMAN",
+    "race": "MEGAPEDE",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Devotion: Draw a card.\nDeploy 3 troops. If one is next to another player's troop, you may promote a card from your hand or discard pile."
@@ -3014,22 +3014,22 @@
   },
   {
     "card_id": 49704,
-    "name": "Commoner",
+    "name": "Smoke Mephit",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
-    "race": "HUMAN",
+    "race": "MEPHIT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Devotion: Draw a card, then discard a card.\nChoose one:\n• +2 Influence.\n• At end of turn, promote another card played this turn."
   },
   {
     "card_id": 49705,
-    "name": "Tough",
+    "name": "Mud Mephit",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "CALIMSHAN",
-    "race": "HUMAN",
+    "race": "MEPHIT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+2 Influence\nYou may let the players to your left and right each name a market card: you can't recruit it this turn, +1 Influence per card named."
@@ -3047,7 +3047,7 @@
   },
   {
     "card_id": 49707,
-    "name": "Bandit",
+    "name": "Assassin",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
@@ -3069,7 +3069,7 @@
   },
   {
     "card_id": 49709,
-    "name": "Mage",
+    "name": "Enchanter Archmage",
     "cost": 5,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
@@ -3091,11 +3091,11 @@
   },
   {
     "card_id": 49711,
-    "name": "Roper",
+    "name": "Marid",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "CALIMSHAN",
-    "race": "ROPER",
+    "race": "GENIE",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+3 Power\nThis turn, each time a card deploys your troops, assassinate a troop. Your Deploy actions give 1 Power back, once per card you play."
@@ -3124,11 +3124,11 @@
   },
   {
     "card_id": 49714,
-    "name": "Pirate Captain",
+    "name": "Abveku",
     "cost": 8,
     "aspect": "MALICE",
     "type": "CALIMSHAN",
-    "race": "HUMAN",
+    "race": "ABVEKU",
     "deck_vp": 4,
     "inner_circle_vp": 8,
     "ability_text": "Devotion: Assassinate a troop.\nAssassinate a troop. +3 Power.\n+1 Power per 3 troops in your trophy hall."
