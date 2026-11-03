@@ -19,6 +19,7 @@ const CARD := CardView.MINI_SIZE
 const PLAN := "plan:"
 const GAP := 4
 
+var _frame: PanelContainer
 var _title: Label
 var _hint: Label
 var _body: HBoxContainer
@@ -35,19 +36,20 @@ var _key := ""
 
 
 func _init() -> void:
-	# В зоне доски, где и окна вопросов, без затемнения (владелец, 2026-11-03):
-	# доска видна вокруг, ловит мышь только сама плашка окна.
+	# Там же, где окна вопросов, — под доской над счётчиком Power/Influence,
+	# без затемнения (владелец, 2026-11-03): низ окна стоит на полосе вопроса
+	# (set_strip_bottom), окно растёт вверх; ловит мышь только сама плашка.
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
-	var frame := PanelContainer.new()
-	frame.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
-	frame.mouse_filter = Control.MOUSE_FILTER_STOP
-	center.add_child(frame)
+	_frame = PanelContainer.new()
+	_frame.add_theme_stylebox_override("panel", GameScreen.zone_style(6))
+	_frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	_frame.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_frame.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_frame.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(_frame)
+	var frame := _frame
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", GAP)
 	frame.add_child(col)
@@ -71,6 +73,12 @@ func _init() -> void:
 	_footer.alignment = BoxContainer.ALIGNMENT_CENTER
 	_footer.add_theme_constant_override("separation", GAP * 2)
 	col.add_child(_footer)
+
+
+## Низ окна — на столько выше низа зоны доски (как полоса DecisionDialog).
+func set_strip_bottom(value: float) -> void:
+	_frame.offset_top = -value
+	_frame.offset_bottom = -value
 
 
 ## Вопросы, которые показывает это окно, а не DecisionDialog.

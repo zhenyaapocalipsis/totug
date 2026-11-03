@@ -1241,6 +1241,7 @@ func _place_res_frame() -> void:
 	var cards_top := _hand_panel.position.y + _hand_panel.size.y - HandPanel.BOTTOM_MARGIN - HandPanel.CARD_SIZE.y
 	var strip_y := y - (cards_top - _hand_panel.position.y)
 	_decision_dialog.set_strip_bottom(_board_area.position.y + _board_area.size.y - strip_y)
+	_piles_window.set_strip_bottom(_board_area.position.y + _board_area.size.y - strip_y)
 	if replay_bar != null and replay_bar.is_inside_tree():
 		# Полоса реплея — там же, где вопрос (в реплее вопроса нет), во всю ширину доски.
 		var bar_h := replay_bar.get_combined_minimum_size().y
