@@ -17,13 +17,13 @@
     "click a gold player in the players table": "нажмите на золотую строку игрока",
     "click a gold trophy number in the players table": "нажмите на золотое число трофеев",
     "click a gold card in the market": "нажмите на золотую карту рынка",
-    "click a gold site on the board": "нажмите на золотой город на доске",
+    "click a gold site on the board": "нажмите на золотую локацию на доске",
     "click a gold target on the board": "нажмите на золотую цель на доске",
     "Inner Circle": "Внутренний круг",
     "discard pile": "сброс",
     "Assassinate a troop": "Уничтожьте отряд",
     "Assassinate a white troop": "Уничтожьте белый отряд",
-    "Choose your starting site": "Выберите начальный город",
+    "Choose your starting site": "Выберите начальную локацию",
     "Deploy a troop": "Разместите отряд",
     "Devour this card?": "Поглотить эту карту?",
     "You may devour a card in the market": "Вы можете поглотить карту рынка",
@@ -51,9 +51,9 @@
     "Return a spy": "Верните шпиона",
     "Return a troop or spy": "Верните отряд или шпиона",
     "Take a troop from a trophy hall": "Заберите отряд из зала трофеев",
-    "Scry: discard a card from the top of your deck": "Прорицание: сбросьте верхнюю карту колоды",
+    "Scry: discard a card from the top of your deck": "Предвидение: сбросьте верхнюю карту колоды",
     "Supplant a troop": "Замените отряд",
-    "Choose a site: its whole hex is devoured and leaves the board": "Выберите город: весь его гекс поглощается и покидает доску",
+    "Choose a site: its whole hex is devoured and leaves the board": "Выберите локацию: весь его гекс поглощается и покидает доску",
     "Thri-kreen Marauder keeps an ability for good:": "Мародёр три-крин навсегда сохраняет способность:",
     "Play one of the top market cards for free": "Сыграйте бесплатно одну из верхних карт рынка",
     "Place a spy on a market card": "Разместите шпиона на карте рынка",
@@ -81,7 +81,7 @@
     "Remorhaz: keep a card hidden (you reveal 4 cards)": "Реморхаз: оставьте одну карту закрытой (покажите 4 карты)",
     "Choose a revealed card: the opponent discards it": "Выберите открытую карту: соперник сбросит её",
     "Discard any number of cards, then draw that many": "Сбросьте любое число карт, затем возьмите столько же",
-    "Choose a site with your troop": "Выберите город со своим отрядом",
+    "Choose a site with your troop": "Выберите локацию со своим отрядом",
     "Put the revealed top card into your hand?": "Взять открытую верхнюю карту в руку?",
     "Copy a card in the market": "Скопируйте карту рынка",
     "Put a troop on a card in the market": "Поместите отряд на карту рынка",
@@ -91,7 +91,7 @@
     "Discard a card to Retain Treefolk": "Сбросьте карту, чтобы удержать Энта",
     "Retain a card you played this turn": "Удержите карту, сыгранную в этот ход",
     "Look at whose hand?": "Чью руку посмотреть?",
-    "Return all enemy spies from a site": "Верните всех вражеских шпионов из города",
+    "Return all enemy spies from a site": "Верните всех вражеских шпионов из локации",
     "Glamour: spend 1 VP?": "Чары: потратить 1 ПО?",
     "Supplant that troop instead (your troop takes its place)?": "Заменить этот отряд (ваш отряд займёт его место)?",
     "Spend 2 Influence to draw a card?": "Потратить 2 Влияния, чтобы взять карту?",
@@ -158,7 +158,7 @@
     {
       "source": "Reveal %s to take the Insane Outcast into your hand and scry 1?",
       "regex": "^Reveal (.+?) to take the Insane Outcast into your hand and scry 1\\?$",
-      "target": "Показать {v0}, чтобы взять Безумного изгоя в руку и совершить Прорицание 1?"
+      "target": "Показать {v0}, чтобы взять Безумного изгоя в руку и совершить Предвидение 1?"
     },
     {
       "source": "%s: one card that is %s. TOP: the left one ends up on top.",
@@ -173,7 +173,7 @@
     {
       "source": "Place a 1 VP token for %s (%d left) at a site without one",
       "regex": "^Place a 1 VP token for (.+?) \\(([0-9]+) left\\) at a site without one$",
-      "target": "Разместите жетон 1 ПО для {v0} (осталось: {v1}) в городе без такого жетона"
+      "target": "Разместите жетон 1 ПО для {v0} (осталось: {v1}) в локации без такого жетона"
     },
     {
       "source": "No card here is %s. TOP: the left one ends up on top.",
@@ -308,7 +308,7 @@
     {
       "source": "%s: choose your starting site",
       "regex": "^(.+?): choose your starting site$",
-      "target": "{v0}: выберите начальный город"
+      "target": "{v0}: выберите начальную локацию"
     },
     {
       "source": "Put %s on top of your deck?",
@@ -318,7 +318,7 @@
     {
       "source": "Explore the top %d cards:",
       "regex": "^Explore the top ([0-9]+) cards:$",
-      "target": "Исследуйте {v0} верхних карт:"
+      "target": "Исследование (карт: {v0})"
     },
     {
       "source": "Forced by %s: %s decides",
@@ -433,7 +433,7 @@
     {
       "source": "Site %s",
       "regex": "^Site (.+?)$",
-      "target": "Город {v0}"
+      "target": "Локация {v0}"
     },
     {
       "source": "%s (%d/%d):",

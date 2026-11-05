@@ -4,6 +4,7 @@ extends RefCounted
 ## Source prompts, answers and replay/network payloads stay unchanged.
 const L10n := preload("res://scenes/localization.gd")
 const Cards := preload("res://scenes/card_text.gd")
+const Sites := preload("res://scenes/site_text.gd")
 const Players := preload("res://scenes/game_text.gd")
 static var _data: Dictionary = {}
 static var _patterns: Array = []
@@ -33,6 +34,8 @@ static func text(source: String, depth: int = 0) -> String:
 	var option := Cards.option_field(source, "text", source)
 	if option != source:
 		return option
+	if Sites.translations().has(source):
+		return Sites.name_of(source)
 	if _names.has(source):
 		return Cards.field(String(_names[source]), "name")
 	for pid: String in ["red", "blue", "green", "orange", "purple", "yellow", "white"]:

@@ -85,7 +85,7 @@ func _run() -> void:
 	L10n.set_locale("ru")
 	for i in 3: await process_frame
 	check(piles.plan() == plan and ids(piles) == nodes and JSON.stringify(pd) == data, "Explore order, routing and cards preserved")
-	check(piles._title.text == "Исследуйте 3 верхних карт:" and not piles._hint.text.contains("TOP"), "Explore title and rules translated")
+	check(piles._title.text == "Исследование (карт: 3)" and not piles._hint.text.contains("TOP"), "Explore title and rules translated")
 	check(piles._hint.text.contains("карта стоимостью не выше 3"), "nested Explore filter translated")
 	piles.show_decision(pd,"red")
 	check(piles.plan() == plan, "same server decision keeps edited plan")

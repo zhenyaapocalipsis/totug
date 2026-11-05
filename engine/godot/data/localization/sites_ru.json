@@ -1,0 +1,182 @@
+{
+  "Council Chamber": {
+    "name": "Зал совета",
+    "short_name": "СОВЕТ"
+  },
+  "The Great Web": {
+    "name": "Великая паутина",
+    "short_name": "В.ПАУТ"
+  },
+  "Fogtown": {
+    "name": "Туманный город",
+    "short_name": "ТУМГРАД"
+  },
+  "Gallenghast": {
+    "name": "Галленгаст",
+    "short_name": "ГАЛЛЕНГ"
+  },
+  "Darkflame": {
+    "name": "Тёмное пламя",
+    "short_name": "Т.ПЛАМЯ"
+  },
+  "Web (N)": {
+    "name": "Паутина (север)",
+    "short_name": "С"
+  },
+  "Web (NE)": {
+    "name": "Паутина (северо-восток)",
+    "short_name": "СВ"
+  },
+  "Web (NW)": {
+    "name": "Паутина (северо-запад)",
+    "short_name": "СЗ"
+  },
+  "Web (SW)": {
+    "name": "Паутина (юго-запад)",
+    "short_name": "ЮЗ"
+  },
+  "Web (SE)": {
+    "name": "Паутина (юго-восток)",
+    "short_name": "ЮВ"
+  },
+  "Web (S)": {
+    "name": "Паутина (юг)",
+    "short_name": "Ю"
+  },
+  "Great Web": {
+    "name": "Великая паутина",
+    "short_name": "В.ПАУТ"
+  },
+  "Wells of Darkness": {
+    "name": "Колодцы тьмы",
+    "short_name": "К.ТЬМЫ"
+  },
+  "Lolth Shrine": {
+    "name": "Святилище Лолт",
+    "short_name": "ЛОЛТ"
+  },
+  "Vrith": {
+    "name": "Врит",
+    "short_name": "ВРИТ"
+  },
+  "The Twilight": {
+    "name": "Сумерки",
+    "short_name": "СУМЕРКИ"
+  },
+  "Spiral Desert": {
+    "name": "Спиральная пустыня",
+    "short_name": "СПИРАЛ"
+  },
+  "Magma Gate": {
+    "name": "Врата магмы",
+    "short_name": "МАГМА"
+  },
+  "Araumycos": {
+    "name": "Араумикос",
+    "short_name": "АРАУМИК"
+  },
+  "Menzoberranzan": {
+    "name": "Мензоберранзан",
+    "short_name": "МЕНЗОБ"
+  },
+  "Red Forest": {
+    "name": "Красный лес",
+    "short_name": "КР. ЛЕС"
+  },
+  "Xal Veldrin": {
+    "name": "Ксал Велдрин",
+    "short_name": "КСАЛВЛД"
+  },
+  "Iron Wastes": {
+    "name": "Железные пустоши",
+    "short_name": "ЖЕЛПУСТ"
+  },
+  "Red Gate": {
+    "name": "Красные врата",
+    "short_name": "КР.ВРТА"
+  },
+  "Kulggen": {
+    "name": "Кулгген",
+    "short_name": "КУЛГГЕН"
+  },
+  "Iblith": {
+    "name": "Иблит",
+    "short_name": "ИБЛИТ"
+  },
+  "Caer Sidi": {
+    "name": "Каэр Сиди",
+    "short_name": "КАЭРСИД"
+  },
+  "Black Gate": {
+    "name": "Чёрные врата",
+    "short_name": "ЧР.ВРТА"
+  },
+  "Zi'Xzolca": {
+    "name": "Зи'Ксолка",
+    "short_name": "ЗИКСОЛК"
+  },
+  "Erelhei-Cinlu": {
+    "name": "Эрелхей-Кинлу",
+    "short_name": "ЭРЕЛХЕЙ"
+  },
+  "Ath-Qua": {
+    "name": "Ат-Куа",
+    "short_name": "АТ-КУА"
+  },
+  "Spiderhome": {
+    "name": "Паучий дом",
+    "short_name": "ПАУЧДМ"
+  },
+  "Thanatos Gate": {
+    "name": "Врата Танатоса",
+    "short_name": "ТАНАТОС"
+  },
+  "Enzithir": {
+    "name": "Энзитир",
+    "short_name": "ЭНЗИТИР"
+  },
+  "Xelathir": {
+    "name": "Кселатир",
+    "short_name": "КСЕЛАТР"
+  },
+  "Venathir": {
+    "name": "Венатир",
+    "short_name": "ВЕНАТИР"
+  },
+  "Xith Idrana": {
+    "name": "Ксит Идрана",
+    "short_name": "КСИТ"
+  },
+  "Faerholme": {
+    "name": "Фэйрхолм",
+    "short_name": "ФЭЙРХЛМ"
+  },
+  "Darklight Realm": {
+    "name": "Царство тёмного света",
+    "short_name": "ТЁМ.СВТ"
+  },
+  "Shedaklah": {
+    "name": "Шедакла",
+    "short_name": "ШЕДАКЛА"
+  },
+  "The Barrens": {
+    "name": "Пустоши",
+    "short_name": "ПУСТОШИ"
+  },
+  "Rotting Plain": {
+    "name": "Гниющая равнина",
+    "short_name": "ГН.РАВН"
+  },
+  "Heaving Hills": {
+    "name": "Вздымающиеся холмы",
+    "short_name": "ХОЛМЫ"
+  },
+  "Indifference": {
+    "name": "Безразличие",
+    "short_name": "БЕЗРАЗ"
+  },
+  "Fountain of Screams": {
+    "name": "Фонтан криков",
+    "short_name": "КРИКИ"
+  }
+}

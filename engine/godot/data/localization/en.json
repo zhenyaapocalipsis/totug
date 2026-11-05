@@ -525,5 +525,22 @@
   "feed.stat_frostbite": "FROSTBITE {count}",
   "feed.tip_frostbite": "Frostbite triggers: {count}",
   "feed.stat_extra_turn": "EXTRA TURN",
-  "feed.tip_extra_turn": "Extra turn"
+  "feed.tip_extra_turn": "Extra turn",
+  "board.a2_heading": "A2 BONUS: FOGTOWN, GALLENGHAST, DARKFLAME",
+  "board.a2_troops": "Troops in all 3: +1 Influence",
+  "board.a2_control": "Control all 3: +1 Influence, +1 Power, +1 VP",
+  "board.a2_total": "Total control of all 3: +2 Influence, +2 Power, +4 VP",
+  "board.a2_timing": "Paid as soon as reached: Influence and Power at once, VP at the end of the turn",
+  "board.a2_holder_total": "{player} — total control of all 3",
+  "board.a2_holder_control": "{player} — control of all 3",
+  "board.a2_holders_troops": "{players} — troops in all 3",
+  "board.nobody": "nobody",
+  "board.now": "Now: {value}",
+  "board.marker_control": "Control: +1 Influence each turn",
+  "board.marker_total": "Total control: +{vp} VP at the end of your turn",
+  "board.uncontrolled": "Nobody controls it",
+  "board.owner_total": "{player}: total control",
+  "board.owner_control": "{player}: control",
+  "board.site_vp": "{vp} VP at the end of the game",
+  "board.starting": "Starting site"
 }

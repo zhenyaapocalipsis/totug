@@ -54,6 +54,9 @@ const NEUTRAL_TROOP_COLOR := Color(0.55, 0.55, 0.58)
 const EMPTY_SLOT_COLOR := Color(0.0, 0.0, 0.0, 0.45)
 const DEPLOY_COLOR := Color(0.35, 0.95, 0.45)
 const KILL_COLOR := Color(1.0, 0.55, 0.15)
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+const SiteText := preload("res://scenes/site_text.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 ## Подсветка целей текущего pending-решения (assassinate/supplant/move/
 ## return/place spy и т.п.) — выбор цели делается кликом по доске, а не
@@ -203,6 +206,7 @@ var _pulse_active := false
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_locale_changed)
 	var style := StyleBoxFlat.new()
 	# Подложка прозрачная: за доской видно живой фон экрана.
 	style.bg_color = Color(SchematicPainter.BG, 0.0)
@@ -212,6 +216,11 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	set_process(false)
+
+
+func _locale_changed() -> void:
+	_rebuild_schematic_texture()
+	queue_redraw()
 
 
 func update_from_view(view: Dictionary, viewer_id: String, board: Dictionary) -> void:
@@ -1367,8 +1376,10 @@ func _get_tooltip(at_position: Vector2) -> String:
 	var sites: Dictionary = (_board["schematic"] as Dictionary).get("sites", {})
 	for site_id: String in sites:
 		var site: Dictionary = sites[site_id]
-		if bool(site.get("marker", false)) and (_site_rect(site_id) as Rect2).grow(1.0).has_point(world):
-			return _marker_hint(site_id, site)
+		if _removed_hexes.has(MapGraph.hex_of(site_id)):
+			continue
+		if (_site_rect(site_id) as Rect2).grow(1.0).has_point(world):
+			return _marker_hint(site_id, site) if bool(site.get("marker", false)) else _site_hint(site_id, site)
 	var a2 := _a2_rect()
 	if a2.has_area() and a2.has_point(world):
 		return _a2_hint()
@@ -1552,35 +1563,44 @@ func _a2_hint() -> String:
 	var state := _a2_state()
 	var now: Array[String] = []
 	match int(state["tier"]):
-		3: now.append("%s — total control of all 3" % EventLogPanel.player_name(String(state["holder"])))
-		2: now.append("%s — control of all 3" % EventLogPanel.player_name(String(state["holder"])))
+		3: now.append(L10n.text("board.a2_holder_total", {"player": GameText.player_name(String(state["holder"]))}))
+		2: now.append(L10n.text("board.a2_holder_control", {"player": GameText.player_name(String(state["holder"]))}))
 	var names: Array[String] = []
 	for who in (state["troopers"] as Array):
-		names.append(EventLogPanel.player_name(String(who)))
+		names.append(GameText.player_name(String(who)))
 	if not names.is_empty():
-		now.append("%s — troops in all 3" % ", ".join(names))
+		now.append(L10n.text("board.a2_holders_troops", {"players": ", ".join(names)}))
 	if now.is_empty():
-		now.append("nobody")
-	return "\n".join(["A2 BONUS: FOGTOWN, GALLENGHAST, DARKFLAME",
-		"Troops in all 3: +1 Influence",
-		"Control all 3: +1 Influence, +1 Power, +1 VP",
-		"Total control of all 3: +2 Influence, +2 Power, +4 VP",
-		"Paid as soon as reached: Influence and Power at once, VP at the end of the turn",
-		"Now: " + "; ".join(now)])
+		now.append(L10n.text("board.nobody"))
+	var lines: Array[String] = []
+	for key: String in ["board.a2_heading", "board.a2_troops", "board.a2_control", "board.a2_total", "board.a2_timing"]:
+		lines.append(L10n.text(key))
+	lines.append(L10n.text("board.now", {"value": "; ".join(now)}))
+	return "\n".join(lines)
+
+
+func _owner_hint(site_id: String) -> String:
+	var owner := String((_view.get("site_control", {}) as Dictionary).get(site_id, ""))
+	if owner == "":
+		return L10n.text("board.uncontrolled")
+	var key := "board.owner_total" if (_view.get("site_total_control", []) as Array).has(site_id) else "board.owner_control"
+	return L10n.text(key, {"player": GameText.player_name(owner)})
+
+
+func _site_hint(site_id: String, site: Dictionary) -> String:
+	var lines: Array[String] = [SiteText.heading(String(site.get("name", ""))),
+		L10n.text("board.site_vp", {"vp": site.get("vp", 0)})]
+	if bool(site.get("starting", false)):
+		lines.append(L10n.text("board.starting"))
+	lines.append(_owner_hint(site_id))
+	return "\n".join(lines)
 
 
 func _marker_hint(site_id: String, site: Dictionary) -> String:
-	var lines: Array[String] = [String(site.get("name", "")).to_upper(),
-		"Control: +1 Influence each turn",
-		"Total control: +%d VP at the end of your turn" % int(site.get("marker_vp", 0))]
-	var owner := String((_view.get("site_control", {}) as Dictionary).get(site_id, ""))
-	if owner == "":
-		lines.append("Nobody controls it")
-	elif (_view.get("site_total_control", []) as Array).has(site_id):
-		lines.append("%s: total control" % EventLogPanel.player_name(owner))
-	else:
-		lines.append("%s: control" % EventLogPanel.player_name(owner))
-	return "\n".join(lines)
+	return "\n".join([SiteText.heading(String(site.get("name", ""))),
+		L10n.text("board.marker_control"),
+		L10n.text("board.marker_total", {"vp": site.get("marker_vp", 0)}),
+		_owner_hint(site_id)])
 
 
 ## Рисунок из строк "0/1" пикселями схемы размера px.

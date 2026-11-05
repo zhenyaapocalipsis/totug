@@ -6,6 +6,8 @@ extends RefCounted
 ## highlights are drawn on top by BoardPanel, so the image only changes when
 ## the board itself does.
 
+const SiteText := preload("res://scenes/site_text.gd")
+
 const BG := Color(0.05, 0.05, 0.07)
 const TRACE := Color("d9d2ea")
 const BOX_LIGHT := Color("e6e0f0")
@@ -164,8 +166,14 @@ static func _site(img: Image, site: Dictionary) -> void:
 	img.fill_rect(rect.grow(-1), fill)
 	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size(), marker)
 	var name_at: Vector2 = box["name_at"]
+	var caption := SiteText.short_name(String(site["name"]))
+	# Translate inside the existing rectangle; never feed localized text into site_box.
+	name_at.x = floori((rect.size.x - PixelFont.text_width(caption)) * 0.5)
+	# The capital Й breve uses the existing header gap, inside the frame.
+	if caption.contains("Й"):
+		name_at.y += 2
 	PixelFont.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
-		BoardSchematic.short_name(String(site["name"])), ink)
+		caption, ink)
 	var vp_at: Vector2 = box["vp_at"]
 	PixelFont.draw_text(img, rect.position.x + int(vp_at.x), rect.position.y + int(vp_at.y),
 		str(site["vp"]), ink, BoardSchematic.VP_SCALE)

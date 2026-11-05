@@ -525,5 +525,22 @@
   "feed.stat_frostbite": "ОБМОРОЖ. {count}",
   "feed.tip_frostbite": "Срабатываний обморожения: {count}",
   "feed.stat_extra_turn": "ДОП. ХОД",
-  "feed.tip_extra_turn": "Дополнительный ход"
+  "feed.tip_extra_turn": "Дополнительный ход",
+  "board.a2_heading": "БОНУС A2: ТУМАННЫЙ ГОРОД, ГАЛЛЕНГАСТ, ТЁМНОЕ ПЛАМЯ",
+  "board.a2_troops": "Отряды во всех трёх локациях: +1 Влияние",
+  "board.a2_control": "Контроль всех трёх: +1 Влияние, +1 Сила, +1 ПО",
+  "board.a2_total": "Полный контроль всех трёх: +2 Влияния, +2 Силы, +4 ПО",
+  "board.a2_timing": "Награда при достижении: Влияние и Сила сразу, ПО в конце хода",
+  "board.a2_holder_total": "{player} — полный контроль всех трёх",
+  "board.a2_holder_control": "{player} — контроль всех трёх",
+  "board.a2_holders_troops": "{players} — отряды во всех трёх",
+  "board.nobody": "никто",
+  "board.now": "Сейчас: {value}",
+  "board.marker_control": "Контроль: +1 Влияние каждый ход",
+  "board.marker_total": "Полный контроль: +{vp} ПО в конце вашего хода",
+  "board.uncontrolled": "Никто не контролирует",
+  "board.owner_total": "{player}: полный контроль",
+  "board.owner_control": "{player}: контроль",
+  "board.site_vp": "{vp} ПО в конце игры",
+  "board.starting": "Начальная локация"
 }
