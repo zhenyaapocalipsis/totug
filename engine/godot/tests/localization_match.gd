@@ -50,6 +50,15 @@ func _run() -> void:
 	_check(StateSerializer.to_json(state, pid, screen.server.resolver.pending) == before, "same state and legal answers")
 	var after := screen._decision_dialog.find_children("*", "Control", true, false).filter(func(node): return node is OptionCard)
 	_check(after.map(func(node): return node.get_instance_id()) == option_ids, "same option controls")
+	var old_hold: Variant = Settings.value("hold_seconds")
+	Settings.set_value("hold_seconds", 5.0)
+	screen._tick_space_hold(0.0)
+	_check(screen._end_turn_button.tooltip_text.contains("Space 5 с"), "Russian tooltip uses configured hold duration")
+	L10n.set_locale("en")
+	_check(screen._end_turn_button.tooltip_text.contains("5 seconds"), "English tooltip uses configured hold duration")
+	L10n.set_locale("ru")
+	Settings.set_value("hold_seconds", old_hold)
+	screen._tick_space_hold(0.0)
 	screen._pause_menu.visible = false
 	for i in 6:
 		await process_frame
@@ -61,7 +70,7 @@ func _run() -> void:
 	screen.free()
 	for file in [Settings.path_override, PlayerProfile.path_override]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(file))
-	print("language in match: 7 checks, failed %d" % failures)
+	print("language in match: 9 checks, failed %d" % failures)
 	quit(1 if failures else 0)
 
 

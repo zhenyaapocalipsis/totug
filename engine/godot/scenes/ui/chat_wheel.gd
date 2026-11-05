@@ -7,6 +7,8 @@ extends Control
 ## отпустили Tab — выбранная фраза уходит в чат. Мышь у центра — ничего.
 
 ## Расстояние от центра до ближнего края плашки фразы.
+const L10n := preload("res://scenes/localization.gd")
+
 const REACH := 18.0
 ## Мышь ближе к центру — ни одна фраза не выбрана.
 const DEAD := 8.0
@@ -41,10 +43,17 @@ func _init() -> void:
 
 
 ## centre — точка этого слоя; colour — цвет игрока (центр колеса).
-func open(centre: Vector2, phrases: Array[String], colour: Color) -> void:
+func open(centre: Vector2, phrases: Array[String], colour: Color, messages: Array[Dictionary] = []) -> void:
 	_colour = colour
 	for i in _labels.size():
-		_labels[i].text = phrases[i] if i < phrases.size() else ""
+		var message: Dictionary = messages[i] if i < messages.size() else {"l10n_key": "lobby.raw", "parameters": {"value": phrases[i] if i < phrases.size() else ""}}
+		L10n.bind(_labels[i], message.l10n_key, message.get("parameters", {}))
+		_labels[i].custom_minimum_size.x = 0
+		var font := _labels[i].get_theme_font("font")
+		var fs := _labels[i].get_theme_font_size("font_size")
+		for language: String in L10n.SUPPORTED:
+			var text := L10n.text_for(language, message.l10n_key, message.get("parameters", {}))
+			_labels[i].custom_minimum_size.x = maxf(_labels[i].custom_minimum_size.x, ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x))
 		_boxes[i].reset_size()
 	var box_size: Array[Vector2] = []
 	for box in _boxes:

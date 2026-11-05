@@ -28,6 +28,7 @@ const MAX_PLAYERS := 4
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
 const L10n := preload("res://scenes/localization.gd")
+const PhraseText := preload("res://scenes/phrase_text.gd")
 const GameText := preload("res://scenes/game_text.gd")
 const NetworkText := preload("res://scenes/network_text.gd")
 
@@ -192,6 +193,7 @@ var _pulse_time := 0.0
 ## заливает полоса _space_fill.
 var _space_held := false
 var _space_hold := 0.0
+var _hold_hint_seconds := -1.0
 var _space_fill: ColorRect
 var _feed: TurnFeed
 var _market_panel: MarketPanel
@@ -521,7 +523,7 @@ func _build_layout() -> void:
 	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
 	# Без фокуса: иначе после щелчка пробел жал бы кнопку сразу, мимо удержания.
 	_end_turn_button.focus_mode = Control.FOCUS_NONE
-	L10n.bind(_end_turn_button, "game.end_tip", {}, "tooltip_text")
+	L10n.bind(_end_turn_button, "game.end_tip", {"seconds": str(GameSettings.hold_seconds()).trim_suffix(".0")}, "tooltip_text")
 	_end_turn_area.add_child(_end_turn_button)
 	_space_fill = ColorRect.new()
 	_space_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -970,7 +972,8 @@ func _tick_tab(delta: float) -> void:
 		return
 	_tab_time += delta
 	if _tab_time >= WHEEL_HOLD:
-		_wheel.open(_tab_at, PlayerProfile.load_phrases(), _speaker_colour())
+		var messages := PhraseText.messages()
+		_wheel.open(_tab_at, PhraseText.texts(messages), _speaker_colour(), messages)
 
 
 ## Отпустили Tab: из колеса — фраза, после короткого нажатия — пинг.
@@ -2293,6 +2296,8 @@ func _process(delta: float) -> void:
 ## GameSettings.hold_seconds() ход заканчивается, как от щелчка. Чтобы закончить и
 ## следующий ход, пробел надо отпустить и зажать снова.
 func _tick_space_hold(delta: float) -> void:
+	if not is_equal_approx(_hold_hint_seconds, GameSettings.hold_seconds()):
+		_refresh_end_tip(String(_view.get("current_player", "")))
 	if _space_held and not _end_turn_button.disabled and not _pause_menu.visible:
 		_space_hold += delta
 	else:
@@ -2444,7 +2449,7 @@ func _refresh_turn(view: Dictionary) -> void:
 	_turn_label.text = ""
 	_turn_chip.visible = true
 	_turn_chip.color = EventLogPanel.player_color(current)
-	L10n.bind(_end_turn_button, "game.turn_tip", {"name": GameText.player_message(current)}, "tooltip_text")
+	_refresh_end_tip(current)
 	# Сетевая партия, ход чужой: кого ждём — полоской, сама кнопка серая
 	# (решение владельца, 2026-09-27).
 	if replay_bar != null or watching:
@@ -2919,6 +2924,13 @@ func _on_spy_clicked(site_id: String, owner: String) -> void:
 
 func _on_decision_answer(answer: Variant) -> void:
 	send(Intent.make_decision(viewer_id, answer))
+
+
+func _refresh_end_tip(current: String) -> void:
+	_hold_hint_seconds = GameSettings.hold_seconds()
+	var parameters := {"seconds": str(_hold_hint_seconds).trim_suffix(".0")}
+	if current != "": parameters["name"] = GameText.player_message(current)
+	L10n.bind(_end_turn_button, "game.end_tip" if current == "" else "game.turn_tip", parameters, "tooltip_text")
 
 
 func _refresh_resource_language() -> void:

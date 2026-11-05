@@ -12,6 +12,11 @@ extends PanelContainer
 signal action_requested(action: Dictionary)
 signal fx_requested(card_id: String)
 
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+const CardText := preload("res://scenes/card_text.gd")
+const CAPTIONS := {"GOD MODE":"god.title","G: hide or show this panel":"god.title_tip","TURN":"god.turn","RESOURCES":"god.resources","POWER":"god.power","INFL":"god.influence","VP":"god.vp","DRAW 1":"god.draw","HAND > DISC":"god.discard_hand","BOARD":"god.board","OFF":"god.off","TROOP":"god.troop","SPY":"god.spy","ERASE":"god.erase","CARDS":"god.cards","HAND":"god.hand","DECK":"god.deck","DISC":"god.discard","INNER":"god.inner","Cards go to the hand":"god.hand_tip","Cards go on top of the deck":"god.deck_tip","Cards go to the discard pile":"god.discard_tip","Cards go to the Inner Circle":"god.inner_tip","Click a card to watch its play animation (only cards with one are listed)":"god.fx_tip","PAUSE":"god.pause","P: pause card animations":"god.pause_tip","Left: previous frame (pauses)":"god.previous_tip","Right: next frame (pauses)":"god.next_tip","search card...":"god.search","BASE":"god.base","OTHER":"god.other","Board clicks play normally.":"god.hint_off","Click a space: place a troop (again: remove).":"god.hint_troop","Click a site: place a spy (again: remove).":"god.hint_spy","Click a troop or spy to remove it, a site to clear it.":"god.hint_erase"}
+
 const TOOL_OFF := ""
 const TOOL_TROOP := "troop"
 const TOOL_SPY := "spy"
@@ -45,10 +50,13 @@ var _frame_label: Label
 ## Анимации розыгрыша экрана: пауза и шаг по кадрам (задаёт GameScreen).
 var hs_play: HsPlay
 var _hint: Label
+var _preview_card := ""
+var _preview_from: Control
 var _preview: TextureRect
 
 
 func _init(player_ids: Array[String]) -> void:
+	L10n.events.changed.connect(_locale_changed)
 	_ids = player_ids.duplicate()
 	colour = _ids[0] if not _ids.is_empty() else ""
 	theme = PixelTheme.theme()
@@ -59,16 +67,16 @@ func _init(player_ids: Array[String]) -> void:
 	add_child(col)
 
 	var title := Label.new()
-	title.text = "GOD MODE"
+	_caption(title, "GOD MODE", "text")
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
-	title.tooltip_text = "G: hide or show this panel"
+	_caption(title, "G: hide or show this panel", "tooltip_text")
 	col.add_child(title)
 
 	col.add_child(_heading("TURN"))
 	var turns: Array[Control] = []
 	for pid: String in _ids:
 		var b := _chip(pid, func(): action_requested.emit({"op": "set_turn", "player_id": pid}))
-		b.tooltip_text = "Give the turn to %s now (start of turn, hands are kept)" % EventLogPanel.player_name(pid)
+		L10n.bind(b, "god.give_turn", {"player": GameText.player_message(pid)}, "tooltip_text")
 		_turn_buttons[pid] = b
 		turns.append(b)
 	col.add_child(_row(turns))
@@ -76,7 +84,7 @@ func _init(player_ids: Array[String]) -> void:
 	col.add_child(_heading("RESOURCES"))
 	for res: Array in [["POWER", "power"], ["INFL", "influence"], ["VP", "vp"]]:
 		var name_label := Label.new()
-		name_label.text = String(res[0])
+		_caption(name_label, String(res[0]))
 		name_label.custom_minimum_size.x = 34
 		var items: Array[Control] = [name_label]
 		for step: int in [1, 5, -1]:
@@ -107,8 +115,7 @@ func _init(player_ids: Array[String]) -> void:
 		b.toggle_mode = true
 		b.button_group = colour_group
 		b.button_pressed = pid == colour
-		b.tooltip_text = "Troops and spies of %s" % ("neutral white (troops only)" if pid == GameState.WHITE
-			else EventLogPanel.player_name(pid))
+		L10n.bind(b, "god.owner_neutral" if pid == GameState.WHITE else "god.owner", {"player": GameText.player_message(pid)}, "tooltip_text")
 		_colour_buttons[pid] = b
 		chips.append(b)
 	col.add_child(_row(chips))
@@ -124,8 +131,7 @@ func _init(player_ids: Array[String]) -> void:
 	for z: String in GodMode.ZONES:
 		var b := _toggle(String(ZONE_TITLES[z]), zone_group, z == zone)
 		b.pressed.connect(func(): zone = z)
-		b.tooltip_text = {"hand": "Cards go to the hand", "deck": "Cards go on top of the deck",
-			"discard": "Cards go to the discard pile", "inner": "Cards go to the Inner Circle"}[z]
+		L10n.bind(b, "god." + z + "_tip", {}, "tooltip_text")
 		zones.append(b)
 	col.add_child(_row(zones))
 	_count_label = Label.new()
@@ -133,23 +139,23 @@ func _init(player_ids: Array[String]) -> void:
 	_count_label.custom_minimum_size.x = 30
 	_fx_button = _button("FX", func(): set_fx(_fx_button.button_pressed))
 	_fx_button.toggle_mode = true
-	_fx_button.tooltip_text = "Click a card to watch its play animation (only cards with one are listed)"
+	_caption(_fx_button, "Click a card to watch its play animation (only cards with one are listed)", "tooltip_text")
 	col.add_child(_row([
 		_button("-", func(): set_count(count - 1)), _count_label, _button("+", func(): set_count(count + 1)),
 		_fx_button,
 	]))
 	_pause_button = _button("PAUSE", func(): toggle_pause())
 	_pause_button.toggle_mode = true
-	_pause_button.tooltip_text = "P: pause card animations"
+	_caption(_pause_button, "P: pause card animations", "tooltip_text")
 	var back := _button("<", func(): step(-1))
-	back.tooltip_text = "Left: previous frame (pauses)"
+	_caption(back, "Left: previous frame (pauses)", "tooltip_text")
 	var fwd := _button(">", func(): step(1))
-	fwd.tooltip_text = "Right: next frame (pauses)"
+	_caption(fwd, "Right: next frame (pauses)", "tooltip_text")
 	_frame_label = Label.new()
 	_frame_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	col.add_child(_row([_pause_button, back, fwd, _frame_label]))
 	_search = LineEdit.new()
-	_search.placeholder_text = "search card..."
+	_caption(_search, "search card...", "placeholder_text")
 	_search.clear_button_enabled = true
 	_search.text_changed.connect(func(_t: String): _filter())
 	col.add_child(_search)
@@ -228,14 +234,15 @@ static func _cost(cid: String) -> int:
 func _card_button(cid: String, deck: String) -> Button:
 	var cost: Variant = CardLibrary.card_data(cid).get("cost")
 	var b := Button.new()
-	b.text = card_name(cid) + ("" if cost == null else "  %d" % int(cost))
+	b.text = CardText.field(cid, "name") + ("" if cost == null else "  %d" % int(cost))
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.clip_text = true
 	b.custom_minimum_size = Vector2(0, ROW_H)
 	b.focus_mode = Control.FOCUS_NONE
 	b.set_meta("card_id", cid)
-	b.set_meta("search", "%s %s %s %s" % [card_name(cid), CardLibrary.card_aspect(cid),
-		CardLibrary.card_type(cid), deck])
+	b.set_meta("search", "%s %s %s %s %s" % [card_name(cid), String(CardText.translations().get(cid, {}).get("name", "")), CardLibrary.card_aspect(cid), CardLibrary.card_type(cid), _deck_search(deck)])
+	b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	b.tooltip_text = card_name(cid)
 	b.add_theme_stylebox_override("normal", PixelTheme.fill(Color(0, 0, 0, 0), 2, 0))
 	b.add_theme_stylebox_override("hover", PixelTheme.fill(PixelTheme.BORDER, 2, 0))
 	b.add_theme_stylebox_override("pressed", PixelTheme.fill(PixelTheme.GOLD, 2, 0))
@@ -326,12 +333,12 @@ func set_tool(value: String) -> void:
 	(_tool_buttons[value] as Button).set_pressed_no_signal(true)
 	if tool == TOOL_SPY and colour == GameState.WHITE:
 		set_colour(_ids[0])
-	_hint.text = {
+	_caption(_hint, {
 		TOOL_OFF: "Board clicks play normally.",
 		TOOL_TROOP: "Click a space: place a troop (again: remove).",
 		TOOL_SPY: "Click a site: place a spy (again: remove).",
 		TOOL_ERASE: "Click a troop or spy to remove it, a site to clear it.",
-	}[tool]
+	}[tool])
 
 
 func set_colour(pid: String) -> void:
@@ -349,6 +356,8 @@ func show_turn(current: String) -> void:
 
 
 func _show_preview(cid: String, from: Control) -> void:
+	_preview_card = cid
+	_preview_from = from
 	var tex := CardView.pixel_texture(cid)
 	if tex == null:
 		_preview.visible = false
@@ -362,9 +371,49 @@ func _show_preview(cid: String, from: Control) -> void:
 	_preview.visible = true
 
 
+func _caption(control: Control, source: String, property: String = "text") -> void:
+	if CAPTIONS.has(source):
+		L10n.bind(control, String(CAPTIONS[source]), {}, property)
+		return
+	if property == "text" and control is Label:
+		for deck: String in GameSetup._load_half_decks().get("half_decks", {}):
+			var message := SetupScreen.deck_message(deck)
+			for language: String in L10n.SUPPORTED:
+				if source == L10n.text_for(language, message.l10n_key, message.get("parameters", {})):
+					L10n.bind(control, message.l10n_key, message.get("parameters", {}))
+					return
+	control.set(property, source)
+
+
+func _deck_search(source: String) -> String:
+	var texts: Array[String] = [source]
+	if CAPTIONS.has(source):
+		for language: String in L10n.SUPPORTED:
+			texts.append(L10n.text_for(language, String(CAPTIONS[source])))
+	for deck: String in GameSetup._load_half_decks().get("half_decks", {}):
+		var message := SetupScreen.deck_message(deck)
+		var names: Array[String] = []
+		for language: String in L10n.SUPPORTED:
+			names.append(L10n.text_for(language, message.l10n_key, message.get("parameters", {})))
+		if names.has(source):
+			texts.append_array(names)
+			break
+	return " ".join(texts)
+
+
+func _locale_changed() -> void:
+	# Keep search, focus, scroll, selected tools and card controls in place.
+	for button: Button in _cards:
+		var cid := String(button.get_meta("card_id"))
+		var cost: Variant = CardLibrary.card_data(cid).get("cost")
+		button.text = CardText.field(cid, "name") + ("" if cost == null else "  %d" % int(cost))
+	if _preview != null and _preview.visible and is_instance_valid(_preview_from):
+		_show_preview(_preview_card, _preview_from)
+
+
 func _heading(text: String) -> Label:
 	var label := Label.new()
-	label.text = text
+	_caption(label, text)
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	return label
 
@@ -379,7 +428,7 @@ func _row(items: Array) -> HBoxContainer:
 
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	_caption(b, text)
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(0, 14)
 	SetupScreen._style_button(b)
