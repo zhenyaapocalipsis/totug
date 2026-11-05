@@ -320,7 +320,7 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 	var w := img.get_width()
 	if mini_face:
 		img.fill_rect(Rect2i(1, 1, w - 2, PC.MINI_HEAD), PC.C_FRAME)
-		var lines := name_lines(CardText.field(cid, "short_name").to_upper(), PC.MINI_SIDE_X - 3, 3)
+		var lines := PC.wrap_name(CardText.field(cid, "short_name").to_upper(), PC.MINI_SIDE_X - 3, w - 5, PC.MINI_SIDE_LINES, PC.MINI_NAME_LINES)
 		for i in lines.size():
 			_text(img, 2, 3 + i * PC.MINI_LINE_H, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
 		var aspect := String(data.get("aspect", ""))
@@ -333,43 +333,33 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 			_rows(img, MINI_COST_X + 1, 3 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.C_OUTLINE)
 			_rows(img, MINI_COST_X, 2 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.ASPECT_COLOR[aspect])
 	else:
-		img.fill_rect(Rect2i(2, 2, w - 4, 31), PC.C_FRAME)
-		var name := CardText.field(cid, "name").to_upper()
-		var room := w - (35 if data.get("cost") != null else 14)
-		if _width(name, 2) <= room:
-			_text(img, 7, 6, name, PC.C_LIGHT, 2, PC.C_OUTLINE)
-		else:
-			var lines := name_lines(name, room, 2)
-			for i in lines.size():
-				_text(img, 7, 5 + i * 10, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
-		if data.get("cost") != null:
-			var cost := str(int(data.cost))
-			_text(img, w - 7 - _width(cost, 2), 6, cost, PC.C_LIGHT, 2, PC.C_OUTLINE)
-		_text(img, 7, 25, CardText.field(cid, "aspect_name") + " / " + CardText.field(cid, "race_name"), PC.C_GREY, 1)
+		_draw_header(img, CardText.field(cid, "name"), data, CardText.field(cid, "aspect_name"), CardText.field(cid, "race_name"))
 		_draw_text_box(img, CardText.ability(cid, true), [])
 		var badge_width := _width(str(int(data.deck_vp)), 1) + 2
 		var ic_width := _width("-" if data.inner_circle_vp == null else str(int(data.inner_circle_vp)), 1) + 2
 		var left := w - 7 - ic_width - 1 - badge_width
 		img.fill_rect(Rect2i(2, img.get_height() - 19, left - 3, 17), PC.C_FRAME)
-		_text(img, 9, img.get_height() - 15, CardText.field(cid, "footer"), PC.C_GREY, 1)
+		var set_name := CardText.field(cid, "set_name")
+		_text(img, 9, img.get_height() - 15, set_name, PC.C_GREY, 1)
+		var copies := CardText.copy_count(cid)
+		if copies > 0:
+			_text(img, 9 + _width(set_name, 1) + 8, img.get_height() - 15, CardText.copy_label(copies), PC.C_LIGHT, 1, PC.C_OUTLINE)
 	_localized[key] = ImageTexture.create_from_image(img)
 	return _localized[key]
 
 
-static func name_lines(raw: String, width: int, maximum: int) -> Array[String]:
-	var result: Array[String] = []
-	var line := ""
-	for word: String in raw.split(" ", false):
-		if not line.is_empty() and _width(line + " " + word, 1) > width:
-			result.append(line)
-			line = ""
-		while _width(word, 1) > width:
-			var count := maxi(1, (width + 1) / 6 - 1)
-			result.append(word.substr(0, count) + "-")
-			word = word.substr(count)
-		line = word if line.is_empty() else line + " " + word
-	if not line.is_empty():
-		result.append(line)
-	if result.size() > maximum:
-		push_error("Localized card name needs a shorter form: " + raw)
-	return result.slice(0, maximum)
+static func _draw_header(img: Image, name: String, data: Dictionary, aspect_name: String, race_name: String) -> void:
+	var w := img.get_width()
+	img.fill_rect(Rect2i(2, 2, w - 4, 31), PC.C_FRAME)
+	var cost := "" if data.get("cost") == null else str(int(data.cost))
+	if not cost.is_empty():
+		_text(img, w - 7 - _width(cost, 2), 6, cost, PC.C_LIGHT, 2, PC.C_OUTLINE)
+	for placement: Dictionary in PC.header_name_layout(name.to_upper(), cost, w):
+		_text(img, placement.x, placement.y, placement.text, PC.C_LIGHT, placement.scale, PC.C_OUTLINE)
+	var aspect := String(data.get("aspect", ""))
+	if not aspect.is_empty():
+		var colour: Color = PC.ASPECT_COLOR.get(aspect, PC.C_GREY)
+		_rows(img, 7, 24, PC.ICONS[aspect], colour)
+		_text(img, 17, 24, aspect_name.to_upper(), colour, 1)
+	var race := race_name.to_upper()
+	_text(img, w - 7 - _width(race, 1), 24, race, PC.C_GREY, 1)

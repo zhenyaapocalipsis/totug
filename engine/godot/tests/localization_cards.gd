@@ -68,6 +68,10 @@ func _run() -> void:
 		if base.is_compressed():
 			base.decompress()
 		base.convert(Image.FORMAT_RGBA8)
+		var reconstructed := base.duplicate() as Image
+		var source: Dictionary = CardLibrary.card_data(cid)
+		CardLiveFace._draw_header(reconstructed, String(source.name), source, String(source.aspect), String(source.get("race", source.type)))
+		check(reconstructed.get_region(Rect2i(2, 2, 172, 31)).get_data() == base.get_region(Rect2i(2, 2, 172, 31)).get_data(), cid + " header matches original PNG layout")
 		check(full.get_region(Rect2i(10, 35, 150, 15)).get_data() == base.get_region(Rect2i(10, 35, 150, 15)).get_data(), cid + " artwork preserved")
 		check(full.get_region(Rect2i(154, 235, 20, 17)).get_data() == base.get_region(Rect2i(154, 235, 20, 17)).get_data(), cid + " VP preserved")
 		var box := CardLiveFace.text_layout(Text.ability(cid, true), [], 176, 254)

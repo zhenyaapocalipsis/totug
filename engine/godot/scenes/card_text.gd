@@ -72,3 +72,26 @@ static func option_field(source: String, key: String, fallback: String) -> Strin
 		var data: Variant = JSON.parse_string(file.get_as_text()) if file != null else null
 		_options = data if data is Dictionary else {}
 	return String(_options.get(option_id(source), {}).get(key, fallback))
+
+
+static var _copies: Dictionary = {}
+
+
+static func copy_count(cid: String) -> int:
+	if _copies.is_empty():
+		var file := FileAccess.open("res://data/cards/half_decks.json", FileAccess.READ)
+		var data: Dictionary = JSON.parse_string(file.get_as_text())
+		for deck: Dictionary in data.half_decks.values():
+			for id: String in deck.copies:
+				_copies[id] = int(deck.copies[id])
+	return int(_copies.get(cid, 0))
+
+
+static func copy_label(count: int) -> String:
+	var ending := "КОПИЙ"
+	if count % 100 < 11 or count % 100 > 14:
+		if count % 10 == 1:
+			ending = "КОПИЯ"
+		elif count % 10 >= 2 and count % 10 <= 4:
+			ending = "КОПИИ"
+	return "%d %s" % [count, ending]

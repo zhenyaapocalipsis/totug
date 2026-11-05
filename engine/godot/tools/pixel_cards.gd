@@ -719,16 +719,8 @@ func render(c: Dictionary, H: int, text_top: int, text_h: int) -> Image:
 	if cost_str != "":
 		text(W - 7 - cost_w, 6, cost_str, C_LIGHT, 2, C_OUTLINE)
 	var name := clean(sv(c["name"]))
-	var name_room := W - 14 - (cost_w + 10 if cost_str != "" else 0)
-	if text_width(name, 2) <= name_room:
-		text(7, 6, name, C_LIGHT, 2, C_OUTLINE)
-	else:
-		var nl := wrap_plain(name, name_room)
-		if nl.size() == 1:
-			text(7, 10, nl[0], C_LIGHT, 1, C_OUTLINE)
-		else:
-			text(7, 3, nl[0], C_LIGHT, 1, C_OUTLINE)
-			text(7, 13, nl[1], C_LIGHT, 1, C_OUTLINE)
+	for placement: Dictionary in header_name_layout(name, cost_str):
+		text(placement.x, placement.y, placement.text, C_LIGHT, placement.scale, C_OUTLINE)
 
 	# aspect row
 	if aspect != "":
@@ -971,7 +963,7 @@ func draw_word(x: int, y: int, word: String) -> void:
 	text(x + bare.length() * 7, y, word.substr(bare.length()), C_INK, 1)
 
 
-func wrap_plain(s: String, max_px: int) -> Array[String]:
+static func wrap_plain(s: String, max_px: int) -> Array[String]:
 	var out: Array[String] = []
 	var cur := ""
 	for word in s.split(" "):
@@ -985,7 +977,7 @@ func wrap_plain(s: String, max_px: int) -> Array[String]:
 	return out
 
 
-func text_width(s: String, scale: int) -> int:
+static func text_width(s: String, scale: int) -> int:
 	return max(0, s.length() * (6 * scale - (scale - 1)) - 1)
 
 
@@ -1146,7 +1138,7 @@ func mini_vp_badge(right: int, y: int, v: String, bg: Color, fg: Color) -> int:
 ## дефисом — иначе WEAPONMASTER и MELEE-MAGTHERE уезжают за край карты.
 ## Имя всегда начинается с первой строки — длинное слово рвётся переносом
 ## (владелец, 2026-10-06).
-func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) -> Array[String]:
+static func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) -> Array[String]:
 	var lines: Array[String] = []
 	var words: Array = Array(s.split(" ", false))
 	var cur := ""
@@ -1185,7 +1177,7 @@ func wrap_name(s: String, beside: int, free: int, blocked: int, max_lines: int) 
 ## Делит слово, которое само шире строки. Сначала пробуем последний дефис,
 ## который ещё влезает, потом границу слога из NAME_BREAKS, иначе ставим дефис
 ## сами — поближе к середине слова.
-func split_word(word: String, room: int) -> Array[String]:
+static func split_word(word: String, room: int) -> Array[String]:
 	for k in range(word.length() - 1, 0, -1):
 		if word[k] == "-" and text_width(word.substr(0, k + 1), 1) <= room:
 			return [word.substr(0, k + 1), word.substr(k + 1)]
@@ -1318,3 +1310,15 @@ func render_mini_preview(all: Array) -> void:
 				Vector2i(gap + (j % cols) * (MINI_W * s + gap), gap + (j / cols) * (MINI_H * s + gap)))
 		sheet.save_png(dir + "sheet_%d.png" % (page + 1))
 	quit()
+
+
+## Shared with localized faces: original header coordinates and size rules.
+static func header_name_layout(name: String, cost: String, width: int = W) -> Array[Dictionary]:
+	var room := width - 14 - (text_width(cost, 2) + 10 if not cost.is_empty() else 0)
+	if text_width(name, 2) <= room:
+		return [{"text": name, "x": 7, "y": 6, "scale": 2}]
+	var lines := wrap_plain(name, room)
+	if lines.size() == 1:
+		return [{"text": lines[0], "x": 7, "y": 10, "scale": 1}]
+	return [{"text": lines[0], "x": 7, "y": 3, "scale": 1},
+		{"text": lines[1], "x": 7, "y": 13, "scale": 1}]
