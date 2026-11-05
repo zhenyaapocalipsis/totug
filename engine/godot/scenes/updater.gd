@@ -20,11 +20,27 @@ signal finished  # обновлять нечего — запускать игр
 
 const BASE_URL := "http://%s/tyrants/" % NetSession.DEFAULT_SERVER
 const TIMEOUT := 6.0
+const DOWNLOAD_CHUNK_SIZE := 1024 * 1024
 
 var _label: Label
 var _http: HTTPRequest
 var _server_build := 0
 var _server_sha := ""
+var _speed_started_ms := 0
+var _speed_started_bytes := 0
+var _speed_mib := 0.0
+
+
+## Без потока HTTPRequest читает только одну порцию за кадр: 64 КиБ при
+## 10 FPS = около 640 КиБ/с, даже если интернет быстрый. Загрузка не должна
+## зависеть от FPS, VSync или свёрнутого окна.
+static func create_http_request() -> HTTPRequest:
+	var request := HTTPRequest.new()
+	request.use_threads = true
+	request.download_chunk_size = DOWNLOAD_CHUNK_SIZE
+	# PCK уже содержит сжатые ресурсы; нужен точный размер файла в прогрессе.
+	request.accept_gzip = false
+	return request
 
 
 ## Нужна ли проверка: только в собранной игре с .pck рядом (не встроенным).
@@ -61,7 +77,7 @@ func _ready() -> void:
 
 	# Недокачанный файл с прошлого раза.
 	DirAccess.remove_absolute(pck_path() + ".new")
-	_http = HTTPRequest.new()
+	_http = create_http_request()
 	_http.timeout = TIMEOUT
 	add_child(_http)
 	_http.request_completed.connect(_on_version)
@@ -90,8 +106,15 @@ func _resume() -> void:
 func _process(_delta: float) -> void:
 	if _http != null and _server_build > 0 and _http.get_http_client_status() == HTTPClient.STATUS_BODY:
 		var total := _http.get_body_size()
+		var downloaded := _http.get_downloaded_bytes()
+		var now := Time.get_ticks_msec()
+		if now - _speed_started_ms >= 1000:
+			_speed_mib = maxf(0.0, float(downloaded - _speed_started_bytes) * 1000.0 / (now - _speed_started_ms) / 1048576.0)
+			_speed_started_ms = now
+			_speed_started_bytes = downloaded
 		if total > 0:
-			_label.text = "DOWNLOADING UPDATE  %d%%" % int(100.0 * _http.get_downloaded_bytes() / total)
+			_label.text = "DOWNLOADING UPDATE  %d%%\n%.1f / %.1f MiB  |  %.1f MiB/s" % [
+				int(100.0 * downloaded / total), downloaded / 1048576.0, total / 1048576.0, _speed_mib]
 
 
 func _on_version(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -114,6 +137,7 @@ func _on_version(result: int, code: int, _headers: PackedStringArray, body: Pack
 		finished.emit()
 		return
 	_label.text = "DOWNLOADING UPDATE..."
+	_speed_started_ms = Time.get_ticks_msec()
 	_http.timeout = 0.0  # файл большой: ждём, пока идут данные
 	_http.download_file = pck_path() + ".new"
 	_http.request_completed.connect(_on_downloaded)

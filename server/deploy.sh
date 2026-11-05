@@ -7,6 +7,13 @@
 # http://129.101.123.70/tyrants/, см. scenes/updater.gd) и свежий exe с архивом
 # в "GAME online" — для тех, у кого игры ещё нет.
 set -euo pipefail
+# Исправления интерфейса/обновлятора не требуют остановки игровых комнат.
+CLIENT_ONLY=false
+case "${1:-}" in
+  "") ;;
+  --client-only) CLIENT_ONLY=true ;;
+  *) echo "Usage: bash server/deploy.sh [--client-only]" >&2; exit 1 ;;
+esac
 HOST=root@129.101.123.70
 KEY=~/.ssh/tyrants_vps
 GODOT="/c/godot/Godot_v4.7.2-stable_win64_console.exe"
@@ -29,7 +36,9 @@ echo "$BUILD"
 echo "== export"
 mkdir -p "$BUILD_DIR"
 cd "$ROOT/engine/godot"
-"$GODOT" --headless --path . --export-pack "Linux Game" ../build/tyrants_server.pck >/dev/null 2>&1
+if [ "$CLIENT_ONLY" = false ]; then
+  "$GODOT" --headless --path . --export-pack "Linux Game" ../build/tyrants_server.pck >/dev/null 2>&1
+fi
 # Игра для Windows — два файла: exe (движок) и .pck рядом (сама игра). Этот
 # же .pck и скачивают игроки при автообновлении.
 "$GODOT" --headless --path . --export-release "Windows Game" ../build/TyrantsOfTheUnderdark.exe >/dev/null 2>&1
@@ -41,22 +50,39 @@ if [ -z "$SIG" ]; then
   exit 1
 fi
 echo "$BUILD $SHA $SIG" > "$BUILD_DIR/version.txt"
-ls -la "$BUILD_DIR/tyrants_server.pck" "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$BUILD_DIR/TyrantsOfTheUnderdark.exe"
+ls -la "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$BUILD_DIR/TyrantsOfTheUnderdark.exe"
+if [ "$CLIENT_ONLY" = false ]; then
+  ls -la "$BUILD_DIR/tyrants_server.pck"
+fi
 
 echo "== GAME online"
 cp "$BUILD_DIR/TyrantsOfTheUnderdark.exe" "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$OUT/"
 powershell.exe -NoProfile -Command "Compress-Archive -Force -Path '$(cygpath -w "$OUT/TyrantsOfTheUnderdark.exe")','$(cygpath -w "$OUT/TyrantsOfTheUnderdark.pck")','$(cygpath -w "$OUT/README.txt")' -DestinationPath '$(cygpath -w "$OUT/TyrantsOfTheUnderdark.zip")'"
 
 echo "== upload"
-scp -i $KEY -q "$BUILD_DIR/tyrants_server.pck" "$HOST:/opt/tyrants/tyrants_server.pck.new"
+if [ "$CLIENT_ONLY" = false ]; then
+  scp -i $KEY -q "$BUILD_DIR/tyrants_server.pck" "$HOST:/opt/tyrants/tyrants_server.pck.new"
+fi
 scp -i $KEY -q "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$HOST:/opt/tyrants/www/game.pck.new"
 scp -i $KEY -q "$BUILD_DIR/version.txt" "$HOST:/opt/tyrants/www/version.txt.new"
 # Архив целиком — ссылка для новых игроков: http://129.101.123.70/tyrants/TyrantsOfTheUnderdark.zip
 scp -i $KEY -q "$OUT/TyrantsOfTheUnderdark.zip" "$HOST:/opt/tyrants/www/TyrantsOfTheUnderdark.zip.new"
-scp -i $KEY -q "$ROOT/server/tyrants.service" "$HOST:/etc/systemd/system/tyrants.service"
+if [ "$CLIENT_ONLY" = false ]; then
+  scp -i $KEY -q "$ROOT/server/tyrants.service" "$HOST:/etc/systemd/system/tyrants.service"
+fi
 scp -i $KEY -q "$ROOT/server/nginx-tyrants.conf" "$HOST:/etc/nginx/sites-available/tyrants"
 
 echo "== restart"
+if [ "$CLIENT_ONLY" = true ]; then
+  ssh -i $KEY $HOST 'set -e
+cd /opt/tyrants
+mv www/game.pck.new www/game.pck
+mv www/version.txt.new www/version.txt
+mv www/TyrantsOfTheUnderdark.zip.new www/TyrantsOfTheUnderdark.zip
+chown -R tyrants:tyrants /opt/tyrants/www
+nginx -t -q && systemctl reload nginx
+systemctl is-active tyrants'
+else
 ssh -i $KEY $HOST 'set -e
 cd /opt/tyrants
 mv tyrants_server.pck.new tyrants_server.pck
@@ -75,6 +101,7 @@ systemctl restart tyrants
 sleep 3
 systemctl is-active tyrants
 journalctl -u tyrants -n 5 --no-pager -o cat'
+fi
 
 # Тот же архив — на GitHub (постоянная ссылка, см. server/github-release.sh).
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then

@@ -4,6 +4,8 @@
 - Game: `/opt/tyrants/godot` (official Godot 4.7.2 Linux build) + `/opt/tyrants/tyrants_server.pck`, run as user `tyrants`.
 - Service: `tyrants` (systemd, file `server/tyrants.service`), restarts itself and starts on boot. UDP port 7780 open in ufw.
 - Update after any network/rules change: `bash server/deploy.sh` (Git Bash). Bump `NetSession.PROTOCOL` when old clients must not join.
+- UI/updater-only release: `bash server/deploy.sh --client-only`. Publishes the client and download ZIP without replacing the server pack or restarting rooms. Do not use for rules/network changes. The updater downloads on a worker thread with a 1 MiB buffer, independent of the client's FPS, and shows MiB/s. Existing clients acquire this fix through one final update using the old downloader.
+- Local updater speed regression: `node engine/godot/tests/updater_download_test.cjs` (optional second argument: Godot console executable). Downloads and verifies a 4 MiB fixture at 10 FPS using both old defaults and the current updater; no internet required.
 - Logs: `ssh -i ~/.ssh/tyrants_vps root@129.101.123.70 journalctl -u tyrants -f`
 - Ratings (Elo of online games): `/opt/tyrants/.local/share/godot/app_userdata/Tyrants of the Underdark/ratings.json` (appears after the first rated game). `deploy.sh` only replaces the .pck, so ratings survive updates; back the file up now and then.
 - Bug reports (Stage Bug-1, the BUG REPORT button): one folder per report in `.../app_userdata/Tyrants of the Underdark/bug_reports/` (report.txt, screen.jpg, log.txt, game.replay; the newest 300 are kept). `bash server/fetch-bugs.sh` downloads them to `Claude outputs/bug_reports/`.
