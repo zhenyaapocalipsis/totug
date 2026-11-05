@@ -145,6 +145,7 @@ var _replay_seed := 0
 var _replay_ids: Array[String] = []
 var _replay_mode := GameSetup.MODE_STANDARD
 var _replay_log: Array = []
+var _setup_evidence: Dictionary = {}
 
 ## Tab (решение владельца, 2026-09-29): короткое нажатие — пинг под курсором,
 ## зажатие дольше WHEEL_HOLD — колесо чата с фразами из профиля.
@@ -401,6 +402,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
 	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode, teams)
+	_setup_evidence = BugReport.starting_evidence(state)
 	server = GameServer.new(state)
 	# В режиме бога партию по ходам не повторить — ни статистики, ни записи.
 	if half_decks.is_empty() and not god:
@@ -1564,6 +1566,16 @@ func _save_bot_game() -> void:
 ## BUG REPORT из меню по Esc (этап Bug-1). Снимок — без самого меню. Запись
 ## прикладывается своя у хотсита и ботов, у реплея — сам реплей; онлайн её
 ## прикладывает сервер.
+func _bug_extra() -> Dictionary:
+	var extra := {"seat": viewer_id}
+	if not _setup_evidence.is_empty() and server != null:
+		extra["setup"] = _setup_evidence.duplicate(true)
+		extra["current"] = BugReport.deck_summary(server.state)
+	if replay_bar != null:
+		extra["replay_step"] = replay_bar.cursor
+	return extra
+
+
 func open_bug_report() -> BugReportWindow:
 	var where := "hotseat"
 	var record := {}
@@ -1581,10 +1593,7 @@ func open_bug_report() -> BugReportWindow:
 				server.with_mulligan, {}, viewer_id, "", _replay_log)
 			header["bots"] = bots.duplicate()
 			record = {"header": header, "intents": _replay_log.duplicate()}
-	var extra := {"seat": viewer_id}
-	if replay_bar != null:
-		extra["replay_step"] = replay_bar.cursor
-	return BugReportWindow.open(self, net, where, record, extra, _pause_menu)
+	return BugReportWindow.open(self, net, where, record, _bug_extra(), _pause_menu)
 
 
 func _on_replay_received(replay: Dictionary) -> void:

@@ -47,7 +47,37 @@ static func make(text: String, where: String, shot: Image, record: Dictionary = 
 	return report
 
 
-## Конец журнала игры (user://logs/godot.log) — там ошибки скриптов.
+## Freeze the actual deal and its inputs before setup decisions or bot searches.
+static func starting_evidence(state: GameState) -> Dictionary:
+	var raw := FileAccess.get_file_as_string(GameSetup.HALF_DECKS_PATH)
+	var parsed: Variant = JSON.parse_string(raw)
+	var disk: Dictionary = parsed if parsed is Dictionary else {}
+	var script_path := "res://core/game/game_setup.gdc"
+	if not FileAccess.file_exists(script_path):
+		script_path = "res://core/game/game_setup.gd"
+	return {
+		"engine": Engine.get_version_info().get("string", ""),
+		"data_sha": raw.sha256_text(),
+		"setup_sha": FileAccess.get_sha256(script_path),
+		"cached": (GameSetup._load_half_decks().get("starting_deck", {}) as Dictionary).duplicate(true),
+		"disk": (disk.get("starting_deck", {}) as Dictionary).duplicate(true),
+		"initial": deck_summary(state),
+	}
+
+
+## Count all zones, including promoted/retained cards, when checking losses.
+static func deck_summary(state: GameState) -> Dictionary:
+	var out := {}
+	for pid: String in state.turn_order:
+		var deck: Deck = state.players[pid].deck
+		var cards := deck.cards_outside_inner_circle()
+		cards.append_array(deck.inner_circle)
+		out[pid] = {"n": cards.size(), "noble": cards.count("48342"),
+			"soldier": cards.count("48344"), "officer": cards.count("48345")}
+	return out
+
+
+## Tail of the game log, including script errors.
 static func log_tail(path: String = "") -> String:
 	if path == "":
 		path = String(ProjectSettings.get_setting("debug/file_logging/log_path", "user://logs/godot.log"))
