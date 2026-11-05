@@ -5,6 +5,8 @@ extends Control
 ## (BugReport) сперва ложится в исходящие, потом уходит на сервер — сразу,
 ## если связь есть, иначе при возврате в главное меню.
 
+const L10n := preload("res://scenes/localization.gd")
+
 const TEXT_SIZE := Vector2(300, 84)
 const BUTTON_SIZE := Vector2(70, 16)
 ## Сколько показывать «спасибо» перед тем, как окно закроется само.
@@ -58,31 +60,33 @@ func _init() -> void:
 	card.add_child(col)
 
 	var title := Label.new()
-	title.text = "BUG REPORT"
+	L10n.bind(title, "bug.title")
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
 	var ask := Label.new()
-	ask.text = "What went wrong? What did you do just before it?"
+	L10n.bind(ask, "bug.question")
 	col.add_child(ask)
 	_text = TextEdit.new()
 	_text.custom_minimum_size = TEXT_SIZE
 	_text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	_text.placeholder_text = "e.g. I played Drow Negotiator and could not pick a troop"
+	L10n.bind(_text, "bug.example", {}, "placeholder_text")
 	_text.text_changed.connect(func():
 		if _text.text.length() > BugReport.TEXT_MAX:
 			_text.text = _text.text.left(BugReport.TEXT_MAX)
 			_text.set_caret_column(_text.get_line(_text.get_caret_line()).length()))
 	col.add_child(_text)
 	_attach = CheckBox.new()
-	_attach.text = "Attach screenshot"
+	L10n.bind(_attach, "bug.attach")
 	_attach.button_pressed = true
 	col.add_child(_attach)
 	var note := Label.new()
-	note.text = "The game log and the game record are attached too."
+	L10n.bind(note, "bug.note")
 	note.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	col.add_child(note)
 	_status = Label.new()
+	_status.custom_minimum_size.x = TEXT_SIZE.x
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.visible = false
 	col.add_child(_status)
@@ -91,14 +95,14 @@ func _init() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
 	col.add_child(row)
-	_send = _button("SEND", _on_send)
+	_send = _button("bug.send", _on_send)
 	row.add_child(_send)
-	row.add_child(_button("CANCEL", queue_free))
+	row.add_child(_button("bug.cancel", queue_free))
 
 
-func _button(text: String, action: Callable) -> Button:
+func _button(key: String, action: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	L10n.bind(button, key)
 	button.custom_minimum_size = BUTTON_SIZE
 	SetupScreen._style_button(button)
 	button.pressed.connect(action)
@@ -120,7 +124,7 @@ func _capture_then_show(parent: Node, cover: CanvasItem) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key.keycode == KEY_ESCAPE and key.pressed and not key.echo:
+	if key != null and key.keycode == KEY_ESCAPE and key.pressed and not key.echo:
 		queue_free()
 		get_viewport().set_input_as_handled()
 
@@ -128,12 +132,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 ## Пустой текст не шлём — без него отчёт почти бесполезен.
 func _on_send() -> void:
 	if _text.text.strip_edges() == "":
-		_show_status("Please describe the problem first.", PixelTheme.TEXT_DIM)
+		_show_status("bug.describe", PixelTheme.TEXT_DIM)
 		return
 	var report := BugReport.make(_text.text, where, _shot if _attach.button_pressed else null, record, extra)
 	var outbox := net.bug_outbox if net != null else BugReport.OUTBOX
 	if not BugReport.queue(report, outbox):
-		_show_status("Could not save the report.", PixelTheme.TEXT_DIM)
+		_show_status("bug.save_error", PixelTheme.TEXT_DIM)
 		return
 	_send.disabled = true
 	_text.editable = false
@@ -141,9 +145,9 @@ func _on_send() -> void:
 		_sent_id = String(report["id"])
 		net.bug_report_sent.connect(_on_sent)
 		net.send_bug_reports()
-		_show_status("Sending...", PixelTheme.TEXT)
+		_show_status("bug.sending", PixelTheme.TEXT)
 	else:
-		_show_status("Saved. It will be sent when you are back in the main menu.", PixelTheme.GOLD)
+		_show_status("bug.queued", PixelTheme.GOLD)
 		_close_soon(THANKS_SECONDS * 2)
 
 
@@ -151,19 +155,17 @@ func _on_sent(id: String, saved: bool) -> void:
 	if id != _sent_id:
 		return
 	if saved:
-		_show_status("Report sent. Thank you!", PixelTheme.GOLD)
+		_show_status("bug.sent", PixelTheme.GOLD)
 	else:
-		_show_status("Too many reports. Try again later.", PixelTheme.TEXT_DIM)
+		_show_status("bug.limited", PixelTheme.TEXT_DIM)
 	_close_soon(THANKS_SECONDS)
 
 
-func _show_status(text: String, colour: Color) -> void:
-	_status.text = text
+func _show_status(key: String, colour: Color) -> void:
+	L10n.bind(_status, key)
 	_status.add_theme_color_override("font_color", colour)
 	_status.visible = true
 
 
 func _close_soon(seconds: float) -> void:
-	get_tree().create_timer(seconds).timeout.connect(func():
-		if is_instance_valid(self):
-			queue_free())
+	get_tree().create_timer(seconds).timeout.connect(queue_free)

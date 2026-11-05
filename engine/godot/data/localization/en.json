@@ -340,5 +340,18 @@
   "setup.deck_tip_ixtal": "CHULT: Explore.\nLook at the top of your deck and pull the cards you need into your hand.",
   "setup.deck_celestial": "CELESTIAL",
   "setup.mode_pair": "NEW ERA ({first} + {second})",
-  "setup.god_tip": "Card testing: give yourself any cards, place troops and spies,\nadd Power, Influence and VP, switch turns. No turn timer."
+  "setup.god_tip": "Card testing: give yourself any cards, place troops and spies,\nadd Power, Influence and VP, switch turns. No turn timer.",
+  "bug.title": "BUG REPORT",
+  "bug.question": "What went wrong? What did you do just before it?",
+  "bug.example": "e.g. I played Drow Negotiator and could not pick a troop",
+  "bug.attach": "Attach screenshot",
+  "bug.note": "The game log and the game record are attached too.",
+  "bug.send": "SEND",
+  "bug.cancel": "CANCEL",
+  "bug.describe": "Please describe the problem first.",
+  "bug.save_error": "Could not save the report.",
+  "bug.sending": "Sending...",
+  "bug.queued": "Saved. It will be sent when you are back in the main menu.",
+  "bug.sent": "Report sent. Thank you!",
+  "bug.limited": "Too many reports. Try again later."
 }
