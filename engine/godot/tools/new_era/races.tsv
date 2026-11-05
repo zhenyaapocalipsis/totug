@@ -10,7 +10,6 @@ Azalin Rex	UNDEAD
 Couatl	COUATL
 Hippogriff	HIPPOGRIFF
 Pegasus	PEGASUS
-Druid	HUMAN
 Planetar	ANGEL
 Griffon	GRIFFON
 Unicorn	UNICORN
@@ -18,7 +17,6 @@ Werebear	LYCANTHROPE
 Solar	ANGEL
 Erinyes	DEVIL
 Warrior Veteran	HUMAN
-Berserker	HUMAN
 Scout	HUMAN
 Silver Dragon	DRAGON
 Shield Guardian	CONSTRUCT
@@ -80,16 +78,13 @@ Guard	HUMAN
 Skeleton	UNDEAD
 Werewolf	LYCANTHROPE
 Magmin	ELEMENTAL
-Centaur Trooper	CENTAUR
 Bulette	BULETTE
 Ice Mephit	MEPHIT
 Invisible Stalker	ELEMENTAL
 Ettercap	ETTERCAP
 Xorn	ELEMENTAL
 Giant Owl	BEAST
-Winter Wolf	WINTER WOLF
 Giant Hyena	BEAST
-Owlbear	OWLBEAR
 Hill Giant	GIANT
 Cloud Giant	GIANT
 Remorhaz	REMORHAZ
@@ -147,7 +142,6 @@ The Gardener	FEY
 Witchkite	FEY
 Cogwork Archivist	CONSTRUCT
 High Fae Mage	FEY
-Icewind Kobold	KOBOLD
 Leprechaun	FEY
 Faerie Pest	FEY
 Alseid	FEY
@@ -187,7 +181,6 @@ Troglodyte	TROGLODYTE
 Lizardfolk Geomancer	LIZARDFOLK
 Dao	GENIE
 Knight of Eldraine	HUMAN
-Bandit Deceiver	HUMAN
 Lizardfolk Warden	LIZARDFOLK
 Yuan-ti Abomination	YUAN-TI
 Performer Maestro	HUMAN
@@ -241,3 +234,10 @@ Mud Mephit	MEPHIT
 Enchanter Archmage	HUMAN
 Marid	GENIE
 Abveku	ABVEKU
+
+Harpy	HARPY
+Cyclops Sentry	GIANT
+Yeti	YETI
+Berserker Commander	GOLIATH
+Fomorian	GIANT
+Doomwake Giant	GIANT

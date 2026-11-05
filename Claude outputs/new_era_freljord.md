@@ -5,7 +5,23 @@
 тест `test_icewind_deck`. Картинки мода: 121–143 (127 — Troll Scout + Rimetusk Shaman),
 новые чемпионы из Extra Champions: 359 Gragas (правая карта), 372 Aurora, 383 Olaf.
 
-## Карты
+## NE-51 (2026-11-05): актуальные замены существ
+
+Цена, аспекты, копии, VP и эффекты сохранены. Таблица ниже этого раздела описывает исторический импорт.
+
+| ID | Было | Стало | Раса |
+|---|---|---|---|
+| 49601 | Bandit Deceiver | Harpy | HARPY |
+| 49603 | Icewind Kobold | Cyclops Sentry | GIANT |
+| 49604 | Centaur Trooper | Yeti | YETI |
+| 49607 | Berserker | Berserker Commander | GOLIATH |
+| 49609 | Druid | Fomorian | GIANT |
+| 49611 | Winter Wolf | Basilisk | BASILISK |
+| 49613 | Owlbear | Doomwake Giant | GIANT |
+
+Kel'Thuzad освобождён от Owlbear; для Doomwake Giant новое назначение HS пока не выбрано.
+
+## Карты (исторический импорт)
 
 | id | Существо | Карта мода | Цена | Аспект | Копий | VP |
 |---|---|---|---|---|---|---|
