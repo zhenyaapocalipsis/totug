@@ -17,6 +17,9 @@ extends PanelContainer
 
 ## Числовые столбцы: ключ в срезе игрока, заголовок, подсказка к заголовку.
 ## VP — последним, прямо перед залом трофеев (владелец, 2026-10-15).
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+
 const COLUMNS: Array[Array] = [
 	["hand_size", "HD", "Cards in hand"],
 	["deck_size", "DK", "Cards in deck"],
@@ -46,6 +49,7 @@ signal player_chosen(player_id: String)
 ## Карта спросила "возьми войско из трофейного зала": номер варианта.
 signal trophy_chosen(index: int)
 
+var _trophy_order: Array = []
 var _list: VBoxContainer
 var _rows: Dictionary = {}   # player_id -> {"block": PanelContainer, "name": Label, "values": {key: Label}, "trophies": HBoxContainer}
 var _current_style: StyleBoxFlat
@@ -62,6 +66,7 @@ var _trophy_buttons: Array = []
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_refresh_language)
 	add_theme_stylebox_override("panel", GameScreen.zone_style(2))
 	_current_style = PixelTheme.box(PixelTheme.PANEL_HI, PixelTheme.PANEL_HI, 0, 0, 0)
 	_plain_style = StyleBoxEmpty.new()
@@ -73,9 +78,9 @@ func _init() -> void:
 	var head_row := _numbers_row()
 	_list.add_child(head_row)
 	for column: Array in COLUMNS:
-		head_row.add_child(_head(String(column[1]), String(column[2]), NUM_W,
+		head_row.add_child(_head("game.head_" + String(column[0]), "game.tip_" + String(column[0]), NUM_W,
 			HORIZONTAL_ALIGNMENT_RIGHT))
-	var hall_head := _head("HALL", "Trophy hall: killed troops, a number per colour",
+	var hall_head := _head("game.head_hall", "game.tip_hall",
 		0.0, HORIZONTAL_ALIGNMENT_LEFT)
 	hall_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head_row.add_child(_hall_gap())
@@ -101,8 +106,9 @@ static func _cell(text: String, width: float, colour: Color,
 
 
 static func _head(text: String, hint: String, width: float, align: HorizontalAlignment) -> Label:
-	var head := _cell(text, width, PixelTheme.TEXT_DIM, align)
-	head.tooltip_text = hint
+	var head := _cell("", width, PixelTheme.TEXT_DIM, align)
+	L10n.bind(head, text)
+	L10n.bind(head, hint, {}, "tooltip_text")
 	head.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	return head
 
@@ -132,6 +138,7 @@ func _add_row(pid: String) -> void:
 	token.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	name_cell.add_child(token)
 	var name_label := _cell("", 0.0, colour, HORIZONTAL_ALIGNMENT_LEFT)
+	name_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.mouse_filter = Control.MOUSE_FILTER_STOP  # подсказка — полное имя
 	# Щелчок по имени — карточка игрока (звание, рейтинг, партии).
@@ -211,7 +218,6 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 	# Через 3 пикселя: рамки выбора на соседних числах не слипаются.
 	box.add_theme_constant_override("separation", 3)
 	var digits: Dictionary = {}
-	var parts: Array[String] = []
 	var colours: Array = ["white"]
 	colours.append_array(order)
 	for colour_id in colours:
@@ -223,10 +229,9 @@ static func _fill_trophies(box: HBoxContainer, trophies: Dictionary, order: Arra
 			else BoardPanel.colour(String(colour_id), NEUTRAL_COLOR), small)
 		box.add_child(digit)
 		digits[String(colour_id)] = digit
-		parts.append("%s %d" % ["neutral" if white else EventLogPanel.player_name(String(colour_id)), count])
-	if parts.is_empty():
+	if digits.is_empty():
 		box.add_child(_digit("0", PixelTheme.TEXT_OFF, small))
-	box.tooltip_text = "Trophies: " + (", ".join(parts) if not parts.is_empty() else "none")
+	box.tooltip_text = GameText.trophies_text(trophies, order)
 	return digits
 
 
@@ -251,6 +256,7 @@ func row_rect(pid: String) -> Variant:
 
 func update_from_view(view: Dictionary) -> void:
 	var order: Array = view.get("turn_order", [])
+	_trophy_order = order.duplicate()
 	var current := GameScreen.acting_player(view)
 	if _rows.is_empty():
 		for pid in order:
@@ -262,7 +268,7 @@ func update_from_view(view: Dictionary) -> void:
 		var row: Dictionary = _rows[pid]
 		(row["block"] as PanelContainer).add_theme_stylebox_override("panel",
 			_current_style if pid == current else _plain_style)
-		(row["name"] as Label).text = EventLogPanel.player_name(pid).to_upper()
+		(row["name"] as Label).text = GameText.player_name(pid).to_upper()
 		# Эмблема может смениться (игрок по сети прислал профиль) — фишку
 		# перерисовываем только тогда.
 		var emblem := PlayerProfile.emblem_of(pid)
@@ -270,14 +276,15 @@ func update_from_view(view: Dictionary) -> void:
 			row["token_key"] = emblem
 			(row["token"] as TextureRect).texture = ImageTexture.create_from_image(
 				SchematicPainter.token(BoardPanel.troop_colour(pid), emblem))
-		(row["name"] as Label).tooltip_text = EventLogPanel.player_name(pid)
+		(row["name"] as Label).tooltip_text = GameText.player_name(pid)
 		var values: Dictionary = row["values"]
 		for column: Array in COLUMNS:
 			var key := String(column[0])
 			var raw: Variant = p.get(key, 0)
 			var shown: int = (raw as Array).size() if raw is Array else int(raw)
 			(values[key] as Label).text = str(shown)
-		row["digits"] = _fill_trophies(row["trophies"], p.get("trophies", {}), order)
+		row["trophy_counts"] = (p.get("trophies", {}) as Dictionary).duplicate()
+		row["digits"] = _fill_trophies(row["trophies"], row["trophy_counts"], order)
 	# Не влезают числа хотя бы одного зала — все залы мелким шрифтом, чтобы
 	# строки были одинаковыми. Место считаем по постоянным ширинам: строка сама
 	# раздвигается под числа и уходит за край панели (там её обрезает), а
@@ -307,12 +314,13 @@ func update_from_view(view: Dictionary) -> void:
 	for pid: String in _rows:
 		if not _choice_buttons.has(pid):
 			_choice_buttons[pid] = _make_choice_button(pid)
+		L10n.bind(_choice_buttons[pid], "game.choose", {"name": GameText.player_message(pid)}, "tooltip_text")
 		(_choice_buttons[pid] as Button).visible = _choice.has(pid)
 	_place_choice.call_deferred()
 
 
 func _make_choice_button(pid: String) -> Button:
-	var b := _frame_button("Choose %s" % EventLogPanel.player_name(pid))
+	var b := _frame_button("")
 	b.pressed.connect(func(): player_chosen.emit(pid))
 	b.visible = false
 	return b
@@ -354,9 +362,9 @@ func _update_trophy_choice(pd: Dictionary) -> void:
 		var digit: Control = (_rows[parts[0]].get("digits", {}) as Dictionary).get(parts[1])
 		if digit == null:
 			continue
-		var colour_name := "neutral" if parts[1] == "white" else EventLogPanel.player_name(parts[1])
-		var b := _frame_button("Take a %s troop from %s's trophy hall"
-			% [colour_name, EventLogPanel.player_name(parts[0])])
+		var colour_name: Dictionary = {"l10n_key": "game.neutral"} if parts[1] == "white" else GameText.player_message(parts[1])
+		var b := _frame_button("")
+		L10n.bind(b, "game.take_trophy", {"colour": colour_name, "owner": GameText.player_message(parts[0])}, "tooltip_text")
 		var index := i
 		b.pressed.connect(func(): trophy_chosen.emit(index))
 		_trophy_buttons.append([b, digit])
@@ -400,3 +408,11 @@ static func _hall_gap() -> Control:
 	gap.custom_minimum_size = Vector2(HALL_GAP, 0)
 	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return gap
+
+
+func _refresh_language() -> void:
+	for pid: String in _rows:
+		var row: Dictionary = _rows[pid]
+		(row["name"] as Label).text = GameText.player_name(pid).to_upper()
+		(row["name"] as Label).tooltip_text = GameText.player_name(pid)
+		(row["trophies"] as Control).tooltip_text = GameText.trophies_text(row.get("trophy_counts", {}), _trophy_order)

@@ -27,6 +27,9 @@ const MAX_PLAYERS := 4
 ## Задник экрана подключён файлом, а не по глобальному имени класса:
 ## глобальные имена собирает редактор, а проект часто запускается из
 ## командной строки, где нового имени ещё нет в кэше.
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
@@ -443,6 +446,7 @@ static func band_label(text: String) -> Label:
 
 
 func _build_layout() -> void:
+	L10n.events.changed.connect(_refresh_resource_language, CONNECT_DEFERRED)
 	BoardPanel.team_of = board_data.get("teams", {})
 	# Тот же задник, что в меню, но приглушённый: за доской и картами он
 	# должен только слегка дышать, а не спорить с ними за внимание.
@@ -568,7 +572,7 @@ func _build_layout() -> void:
 	# пришлось ужимать. Под поднятой картой руки: та рисуется выше.
 	_res_zone = HBoxContainer.new()
 	_res_zone.add_theme_constant_override("separation", 12)
-	_res_zone.tooltip_text = RES_TIP
+	L10n.bind(_res_zone, "game.resource_tip", {}, "tooltip_text")
 	_res_zone.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	_res_frame = PanelContainer.new()
 	var no_frame := StyleBoxEmpty.new()
@@ -579,7 +583,7 @@ func _build_layout() -> void:
 	add_child(_res_frame)
 	_res_title = Label.new()
 	_res_zone.add_child(_res_title)
-	_res_power = CounterLabel.make("POWER %d", POWER_COLOR)
+	_res_power = CounterLabel.make_localized("game.power", POWER_COLOR)
 	_res_zone.add_child(_res_power)
 	# Young White Dragon: POWER — обычная (на всё), рядом «+3 ICE» — только не на
 	# войска; видна, пока такая Power есть (владелец, 2026-10-24: было непонятно,
@@ -588,7 +592,7 @@ func _build_layout() -> void:
 	_res_ice.add_theme_color_override("font_color", ICE_COLOR)
 	_res_ice.visible = false
 	_res_zone.add_child(_res_ice)
-	_res_influence = CounterLabel.make("INFLUENCE %d", INFLUENCE_COLOR)
+	_res_influence = CounterLabel.make_localized("game.influence", INFLUENCE_COLOR)
 	_res_zone.add_child(_res_influence)
 	# Крупно — вдвое, целым масштабом шрифта; обводка — чтобы читалось на доске.
 	for label: Label in [_res_title, _res_power, _res_ice, _res_influence]:
@@ -598,8 +602,8 @@ func _build_layout() -> void:
 	# Deploy for 1 VP — прямо под счётчиком POWER (решение владельца,
 	# 2026-09-30): у кнопки End turn её не замечали и не получали VP.
 	_deploy_vp_button = Button.new()
-	_deploy_vp_button.text = "Deploy: 1 VP"
-	_deploy_vp_button.tooltip_text = "Your barracks are empty: the Deploy action gives 1 VP instead of a troop"
+	L10n.bind(_deploy_vp_button, "game.deploy_vp")
+	L10n.bind(_deploy_vp_button, "game.deploy_tip", {}, "tooltip_text")
 	_deploy_vp_button.visible = false
 	_deploy_vp_button.pressed.connect(func(): _on_action_requested("deploy_for_vp"))
 	add_child(_deploy_vp_button)
@@ -2523,13 +2527,13 @@ func _refresh_played(view: Dictionary) -> void:
 
 	var current := String(view["current_player"])
 	var p: Dictionary = (view["players"] as Dictionary).get(current, {})
-	_res_title.text = "%s:" % EventLogPanel.player_name(current).to_upper()
+	_res_title.text = "%s:" % GameText.player_name(current).to_upper()
 	_res_title.add_theme_color_override("font_color", EventLogPanel.player_color(current))
 	# Young White Dragon: POWER — то, что можно тратить на всё, ICE — остальное.
 	var ice := int(p.get("power_locked", 0))
 	_res_ice.visible = ice > 0
-	_res_ice.text = "+%d ICE" % ice
-	_res_zone.tooltip_text = ICE_TIP if ice > 0 else RES_TIP
+	L10n.bind(_res_ice, "game.ice", {"amount": ice})
+	L10n.bind(_res_zone, "game.ice_tip" if ice > 0 else "game.resource_tip", {}, "tooltip_text")
 	# Имя другой длины — плашка ужимается или растёт под него.
 	_place_res_frame()
 	var power := int(p.get("power", 0)) - ice
@@ -2912,3 +2916,10 @@ func _on_spy_clicked(site_id: String, owner: String) -> void:
 
 func _on_decision_answer(answer: Variant) -> void:
 	send(Intent.make_decision(viewer_id, answer))
+
+
+func _refresh_resource_language() -> void:
+	if _res_frame == null or _view.is_empty():
+		return
+	_res_title.text = "%s:" % GameText.player_name(String(_view.get("current_player", ""))).to_upper()
+	_place_res_frame()

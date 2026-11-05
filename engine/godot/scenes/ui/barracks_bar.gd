@@ -14,6 +14,9 @@ extends Control
 ## 2 + 1 знака и 5 пикселей черты с зазорами, 23 пикселя: влезают и вчетвером.
 
 ## Высота прямоугольника; ширину задаёт полоса.
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+
 const BOX_H := 20.0
 const GAP := 2.0
 ## Зазор между цифрами и чертой.
@@ -95,9 +98,8 @@ func update_from_view(view: Dictionary) -> void:
 		var spies := int(p["spies_in_barracks"])
 		(box["troops"] as Label).text = str(troops)
 		(box["spies"] as Label).text = str(spies)
-		var who := "%s TEAM" % pid.to_upper() if BoardPanel.team_of.has(pid) else EventLogPanel.player_name(pid)
-		(box["panel"] as PanelContainer).tooltip_text = "%s\nTroops: %d, spies: %d" % [
-			who, troops, spies]
+		var who := GameText.team_message(pid) if BoardPanel.team_of.has(pid) else GameText.player_message(pid)
+		L10n.bind(box["panel"], "game.barracks", {"name": who, "troops": troops, "spies": spies}, "tooltip_text")
 
 
 ## Середина прямоугольника игрока pid в глобальных координатах — отсюда

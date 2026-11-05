@@ -14,10 +14,13 @@ extends Label
 ## Масштаб при вспышке не трогаем: пиксельный шрифт на дробном масштабе
 ## мылится. Пульсирует только цвет.
 
+const L10n := preload("res://scenes/localization.gd")
+
 const ROLL_PER_UNIT := 0.06   # секунд на каждую единицу разницы
 const ROLL_MAX := 0.3
 const FLASH_TIME := 0.32
 
+var _format_key := ""
 var _format := "%d"
 var _base := PixelTheme.TEXT
 var _shown := 0     # что написано сейчас
@@ -87,3 +90,15 @@ func _process(delta: float) -> void:
 ## Для проверок: число сейчас накручивается или вспыхивает.
 func is_animating() -> bool:
 	return _roll_left > 0.0 or _flash_left > 0.0
+
+
+static func make_localized(key: String, colour: Color) -> CounterLabel:
+	var node := make(L10n.text(key), colour)
+	node._format_key = key
+	L10n.events.changed.connect(node._refresh_language)
+	return node
+
+
+func _refresh_language() -> void:
+	_format = L10n.text(_format_key)
+	text = _format % _shown
