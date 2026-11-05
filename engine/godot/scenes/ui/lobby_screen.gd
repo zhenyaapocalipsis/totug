@@ -16,6 +16,8 @@ const L10n := preload("res://scenes/localization.gd")
 
 signal back_requested
 
+const NetworkText := preload("res://scenes/network_text.gd")
+
 const CONFIG_PATH := "user://online.cfg"
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 
@@ -40,7 +42,8 @@ var _internet_note: Label
 ## Поиск игры: с какого момента ждём (Time.get_ticks_msec, -1 — не ждём) и
 ## строка про очередь от сервера.
 var _searching_since := -1
-var _queue_text := ""
+var _queue_waiting := 0
+var _queue_needed := 0
 ## Друзья в лобби (владелец, 2026-10-11): кого позвать сразу, как появится
 ## код (INVITE во вкладке FRIENDS), и строка онлайн-друзей с кнопками.
 var _invite_first := ""
@@ -116,23 +119,27 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	_team_row.add_theme_constant_override("separation", 6)
 	_team_row.visible = false
 	for team: String in ["red", "blue"]:
-		var b := _button("JOIN %s TEAM" % team.to_upper())
+		var b := _button("")
+		L10n.bind(b, "lobby.team_" + team)
 		b.add_theme_color_override("font_color", BoardPanel.PLAYER_COLORS[team])
 		b.pressed.connect(func(): _net.choose_team(team))
 		_team_row.add_child(b)
 	col.add_child(_team_row)
 	_status = _dim("")
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.custom_minimum_size.x = 340
 	col.add_child(_status)
 	_invite_first = invite
 	if kind == "create" or kind == "join_code":
-		var friends_head := GameScreen.section_label("INVITE FRIENDS")
+		var friends_head := _caption("INVITE FRIENDS")
 		col.add_child(friends_head)
 		_invites = HFlowContainer.new()
 		_invites.add_theme_constant_override("h_separation", 2)
 		_invites.add_theme_constant_override("v_separation", 2)
 		_invites.custom_minimum_size.x = 300
 		col.add_child(_invites)
-		_invite_note = _dim("Friends online will show up here.")
+		_invite_note = _dim("")
+		L10n.bind(_invite_note, "lobby.friends_initial")
 		col.add_child(_invite_note)
 		net.friends_received.connect(_on_friends)
 
@@ -162,24 +169,23 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 		"create", "find":
 			_on_go()
 		"join_code":
-			_status.text = "Enter the room code your friend got."
+			L10n.bind(_status, "lobby.code_hint")
 			if address != "":
 				_code_edit.text = address.to_upper()
 				_on_go()
 		"join_ip":
-			_status.text = "Enter the host's address."
+			L10n.bind(_status, "lobby.address_hint")
 			if address != "":
 				_ip_edit.text = address
 				_on_go()
 		"resume":
 			_on_go()
 		"host":
-			_status.text = "Waiting for players..."
+			L10n.bind(_status, "lobby.waiting")
 			var err := _net.host(NetSession.DEFAULT_PORT, player_count, mode, teams)
 			if err != OK:
-				_status.text = "Could not open port %d (error %d). Is another game already hosting?" % [
-					NetSession.DEFAULT_PORT, err]
-				_internet.text = "-"
+				L10n.bind(_status, "lobby.port_error", {"port": NetSession.DEFAULT_PORT, "error": err})
+				L10n.bind(_internet, "lobby.raw", {"value": "-"})
 			else:
 				_net.upnp_finished.connect(_on_upnp_finished)
 				_net.open_upnp(NetSession.DEFAULT_PORT)
@@ -187,17 +193,12 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 
 # --- части экрана ------------------------------------------------------------
 
-func _players_text() -> String:
-	return "2v2, red against blue" if _teams else "%d players" % _count
-
-
 ## Сервер с комнатами: адрес сервера (запоминается), код комнаты.
 func _build_server_part(col: VBoxContainer) -> void:
 	if _kind == "create":
-		col.add_child(_dim("%s, mode %s" % [_players_text(), SetupScreen.mode_title(_mode)]))
+		_description(col, "lobby.description", _mode)
 	elif _kind == "find":
-		col.add_child(_dim("%s, mode %s, random opponents" % [
-			_players_text(), SetupScreen.MODE_TITLES[NetSession.match_mode(_count)]]))
+		_description(col, "lobby.description_find", NetSession.match_mode(_count))
 	var server_row := _row(col)
 	server_row.add_child(_dim("SERVER"))
 	_server_edit = LineEdit.new()
@@ -233,25 +234,27 @@ func _build_server_part(col: VBoxContainer) -> void:
 
 
 func _build_host_part(col: VBoxContainer) -> void:
-	col.add_child(_dim("%s, mode %s, port %d (UDP)" % [
-		_players_text(), SetupScreen.mode_title(_mode), NetSession.DEFAULT_PORT]))
-	col.add_child(GameScreen.section_label("OVER THE INTERNET"))
-	_internet = _centred("Asking your router to open the port (up to 10 s)...")
+	_description(col, "lobby.description_host", _mode)
+	col.add_child(_caption("OVER THE INTERNET"))
+	_internet = _centred("")
+	L10n.bind(_internet, "lobby.router_wait")
 	col.add_child(_internet)
 	_internet_note = _dim("")
+	_internet_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_internet_note.custom_minimum_size.x = 340
 	_internet_note.visible = false
 	col.add_child(_internet_note)
-	col.add_child(GameScreen.section_label("SAME HOME NETWORK OR RADMIN VPN"))
+	col.add_child(_caption("SAME HOME NETWORK OR RADMIN VPN"))
 	for address: String in local_addresses():
 		col.add_child(_centred(address + ("   (Radmin VPN)" if address.begins_with("26.") else "")))
 
 
 func _build_join_ip_part(col: VBoxContainer) -> void:
-	col.add_child(GameScreen.section_label("HOST ADDRESS"))
+	col.add_child(_caption("HOST ADDRESS"))
 	var row := _row(col)
 	_ip_edit = LineEdit.new()
 	_ip_edit.custom_minimum_size = Vector2(120, 16)
-	_ip_edit.placeholder_text = "e.g. 26.12.34.56"
+	L10n.bind(_ip_edit, "lobby.ip_example", {}, "placeholder_text")
 	_ip_edit.text = _load("last_ip", "")
 	_ip_edit.text_submitted.connect(func(_t: String): _on_go())
 	row.add_child(_ip_edit)
@@ -270,7 +273,7 @@ func _on_go() -> void:
 			# Партия могла кончиться, пока нас не было: сервер отказал, и запись
 			# стёрта (NetSession._refused) — возвращаться больше некуда.
 			if NetSession.saved_game().is_empty():
-				_status.text = "That game is over."
+				L10n.bind(_status, "lobby.over")
 				_go_button.visible = false
 				return
 			err = _net.resume_saved()
@@ -278,14 +281,14 @@ func _on_go() -> void:
 		"join_ip":
 			var address := _ip_edit.text.strip_edges()
 			if address == "":
-				_status.text = "Enter the host's address first."
+				L10n.bind(_status, "lobby.need_address")
 				return
 			_save("last_ip", address)
 			err = _net.join(address, NetSession.DEFAULT_PORT)
 		_:
 			var server := _server_edit.text.strip_edges()
 			if server == "":
-				_status.text = "Enter the server address first."
+				L10n.bind(_status, "lobby.need_server")
 				return
 			_save("server", server)
 			if _kind == "create":
@@ -295,21 +298,21 @@ func _on_go() -> void:
 			else:
 				var code := _code_edit.text.strip_edges().to_upper()
 				if code.length() != NetSession.CODE_LENGTH:
-					_status.text = "The room code has %d letters." % NetSession.CODE_LENGTH
+					L10n.bind(_status, "lobby.code_length", {"count": NetSession.CODE_LENGTH})
 					return
 				err = _net.enter_room(server, NetSession.SERVER_PORT, code)
 	if err != OK:
-		_status.text = "Could not connect (error %d)." % err
+		L10n.bind(_status, "lobby.connect_error", {"error": err})
 		return
 	_set_editable(false)
-	_status.text = "Connecting..."
+	L10n.bind(_status, "lobby.connecting")
 
 
 ## Раздача партии занимает несколько секунд (схема доски рисуется долго, на
 ## слабом сервере — дольше) — без надписи кажется, что кнопка не сработала.
 func _on_start() -> void:
 	_start_button.disabled = true
-	_status.text = "Dealing the cards, a few seconds..."
+	L10n.bind(_status, "lobby.dealing")
 	_show_dealing()
 	# хост по IP раздаёт у себя и на это время замирает — экран сначала рисуется
 	await get_tree().process_frame
@@ -336,12 +339,13 @@ func _show_dealing() -> void:
 	centre.add_child(plate)
 	plate.add_child(col)
 	var title := Label.new()
-	title.text = "DEALING THE CARDS"
+	L10n.bind(title, "lobby.dealing_title")
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
-	_dealing_dots = _dim("Building the board")
+	_dealing_dots = _dim("")
+	L10n.bind(_dealing_dots, "lobby.building")
 	_dealing_dots.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_dealing_dots)
 	_dealing_time = 0.0
@@ -372,7 +376,7 @@ func _on_match_cancelled(gone: String) -> void:
 	_hide_dealing()
 	for child in _seats.get_children():
 		child.queue_free()
-	_status.text = "%s left the ban lobby. Looking for players again..." % EventLogPanel.player_name(gone)
+	L10n.bind(_status, "lobby.cancelled", {"name": EventLogPanel.player_name(gone)})
 	_on_go()
 
 
@@ -397,7 +401,7 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 	# Поиск игры: код комнаты никому диктовать не надо.
 	if _code_label != null and _kind != "find":
 		_code_label.visible = true
-		_code_label.text = "ROOM  %s" % code
+		L10n.bind(_code_label, "lobby.room", {"code": code})
 	# В комнате — можно звать друзей (и того, ради кого комнату завели).
 	if _invites != null and not _in_room:
 		_in_room = true
@@ -420,7 +424,11 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		_seats.add_child(ProfileScreen.token_icon(String(BoardPanel.team_of.get(pid, pid)),
 			PlayerProfile.emblem_of(String(pid))))
 		var name_label := Label.new()
-		name_label.text = EventLogPanel.player_name(String(pid)) + (" (you)" if String(pid) == _net.seat else "")
+		if String(pid) == _net.seat:
+			L10n.bind(name_label, "lobby.you", {"name": EventLogPanel.player_name(String(pid))})
+		else:
+			name_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+			name_label.text = EventLogPanel.player_name(String(pid))
 		var seat_profile: Dictionary = _net.profiles.get(pid, {})
 		# Щелчок по имени — карточка игрока (звание, рейтинг, партии).
 		ProfileCard.attach(name_label, String(pid), func(): return seat_profile)
@@ -429,8 +437,7 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		if seat_profile.has("rating"):
 			var rating := int(seat_profile["rating"])
 			var badge := ProfileScreen.rank_badge(rating)
-			badge.tooltip_text += "\n%d games, %d wins" % [int(seat_profile.get("games", 0)),
-				int(seat_profile.get("wins", 0))]
+			L10n.bind(badge, "lobby.rating_tip", {"rank": badge.tooltip_text, "games": int(seat_profile.get("games", 0)), "wins": int(seat_profile.get("wins", 0))}, "tooltip_text")
 			_seats.add_child(badge)
 			var rating_label := Label.new()
 			rating_label.text = str(rating)
@@ -440,23 +447,22 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 	if _kind == "find":
 		# Стол собрал сервер, он же и раздаёт — START не нужен.
 		_start_button.visible = false
-		_status.text = "Game found! Opening the ban lobby..." if GameRoom.has_bans(NetSession.match_mode(needed)) \
-			else "Game found! Dealing the cards, a few seconds..."
+		L10n.bind(_status, "lobby.found_bans" if GameRoom.has_bans(NetSession.match_mode(needed)) else "lobby.found_dealing")
 		return
 	var i_start := owner_seat == _net.seat
 	_start_button.visible = i_start
 	_start_button.disabled = not full
 	if full:
-		_status.text = "Everyone is here — press START." if i_start \
-			else "Everyone is here. Waiting for %s to start." % EventLogPanel.player_name(owner_seat)
+		L10n.bind(_status, "lobby.full_owner" if i_start else "lobby.full_guest", {"name": EventLogPanel.player_name(owner_seat)})
 	else:
-		var share := "Tell your friends the room code. " if _code_label != null and i_start else ""
-		_status.text = "%sWaiting for players: %d of %d." % [share, joined.size(), needed]
+		var share: Variant = {"l10n_key": "lobby.share"} if _code_label != null and i_start else ""
+		L10n.bind(_status, "lobby.room_wait", {"share": share, "joined": joined.size(), "needed": needed})
 
 
 ## Поиск игры: сколько уже ждут. Время ожидания тикает в _process.
 func _on_queue_changed(waiting: int, needed: int) -> void:
-	_queue_text = "Looking for players: %d of %d." % [waiting, needed]
+	_queue_waiting = waiting
+	_queue_needed = needed
 	if _go_button != null:
 		_go_button.visible = false
 	if _searching_since < 0:
@@ -468,7 +474,7 @@ func _process(delta: float) -> void:
 	if _dealing != null:
 		_dealing_time += delta
 		var dots := int(_dealing_time * 2.5) % 4
-		_dealing_dots.text = "Building the board" + ".".repeat(dots) + " ".repeat(3 - dots)
+		L10n.bind(_dealing_dots, "lobby.building_dots", {"dots": ".".repeat(dots) + " ".repeat(3 - dots)})
 	if _searching_since >= 0:
 		_show_search_time()
 	# Кто из друзей в сети — раз в несколько секунд, пока сидим в комнате.
@@ -482,7 +488,7 @@ func _process(delta: float) -> void:
 ## Друзья в сети и в лобби — кнопками; нажал — приглашение ушло.
 func _on_friends(data: Dictionary) -> void:
 	if String(data.get("note", "")) != "":
-		_invite_note.text = String(data["note"])
+		L10n.bind(_invite_note, "lobby.raw", {"value": NetworkText.message(String(data["note"]))})
 	for child in _invites.get_children():
 		child.queue_free()
 	var shown := 0
@@ -491,25 +497,26 @@ func _on_friends(data: Dictionary) -> void:
 			continue
 		var fname := String(f["name"])
 		var b := _button(fname)
+		b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		b.pressed.connect(func():
 			_net.friends_action("invite", [fname])
 			b.disabled = true)
 		_invites.add_child(b)
 		shown += 1
 	if shown == 0 and String(data.get("note", "")) == "":
-		_invite_note.text = "No friends online. Add friends in the FRIENDS tab."
+		L10n.bind(_invite_note, "lobby.no_friends")
 
 
 func _show_search_time() -> void:
 	var seconds := (Time.get_ticks_msec() - _searching_since) / 1000
-	_status.text = "%s  %d:%02d" % [_queue_text, seconds / 60, seconds % 60]
+	L10n.bind(_status, "lobby.queue_time", {"queue": {"l10n_key": "lobby.queue", "parameters": {"waiting": _queue_waiting, "needed": _queue_needed}}, "clock": "%d:%02d" % [seconds / 60, seconds % 60]})
 
 
 func _on_connection_lost(reason: String) -> void:
 	_hide_bans()
 	_hide_dealing()
 	_searching_since = -1
-	_status.text = reason + "."
+	L10n.bind(_status, "lobby.reason", {"reason": NetworkText.message(reason)})
 	_set_editable(true)
 	if _go_button != null:
 		_go_button.visible = true
@@ -518,12 +525,12 @@ func _on_connection_lost(reason: String) -> void:
 func _on_upnp_finished(address: String, note: String) -> void:
 	_internet_note.visible = true
 	if address != "":
-		_internet.text = address
+		L10n.bind(_internet, "lobby.raw", {"value": address})
 		_internet.add_theme_color_override("font_color", PixelTheme.GOLD)
-		_internet_note.text = note + " Friends can join by this address."
+		L10n.bind(_internet_note, "lobby.internet_success", {"note": NetworkText.message(note)})
 	else:
-		_internet.text = "Not available"
-		_internet_note.text = note + " Use Radmin VPN instead."
+		L10n.bind(_internet, "lobby.unavailable")
+		L10n.bind(_internet_note, "lobby.internet_fail", {"note": NetworkText.message(note)})
 
 
 ## Свои IPv4-адреса: локальная сеть и Radmin VPN (26.x.x.x — первым).
@@ -590,3 +597,11 @@ func _caption(text: String) -> Label:
 	var label := GameScreen.section_label(text)
 	L10n.scope(label)
 	return label
+
+
+func _description(col: VBoxContainer, key: String, mode: String) -> void:
+	var label := _dim("")
+	col.add_child(label)
+	var mode_key := "setup." + mode
+	var mode_message: Dictionary = {"l10n_key": mode_key} if L10n.catalog("en").has(mode_key) else NetworkText.message(SetupScreen.mode_title(mode))
+	L10n.bind(label, key, {"players": {"l10n_key": "lobby.teams"} if _teams else {"l10n_key": "lobby.players", "parameters": {"count": _count}}, "mode": mode_message, "port": NetSession.DEFAULT_PORT})

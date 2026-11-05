@@ -45,7 +45,11 @@ static func catalog(language: String) -> Dictionary:
 static func text(key: String, parameters: Dictionary = {}) -> String:
 	var english := catalog("en")
 	var translated := String(catalog(_locale).get(key, english.get(key, key)))
-	return translated.format(parameters) if not parameters.is_empty() else translated
+	var resolved := {}
+	for name: String in parameters:
+		var value: Variant = parameters[name]
+		resolved[name] = text(value.l10n_key, value.get("parameters", {})) if value is Dictionary and value.has("l10n_key") else value
+	return translated.format(resolved) if not resolved.is_empty() else translated
 
 
 static func language_name() -> String:
@@ -64,10 +68,37 @@ static func _register_captions() -> void:
 		translation.locale = language
 		var translated := catalog(language)
 		for key: String in english:
-			if key.begins_with("setup.") or key.begins_with("profile."):
+			if key.begins_with("setup.") or key.begins_with("profile.") or key.begins_with("lobby.caption."):
 				translation.add_message(StringName(english[key]), StringName(translated.get(key, english[key])))
 		TranslationServer.get_or_add_domain(&"ui_captions").add_translation(translation)
 
 
 static func scope(control: Node) -> void:
 	control.set_translation_domain(&"ui_captions")
+
+
+class BoundText extends Node:
+	var key := ""
+	var parameters: Dictionary = {}
+	var property := "text"
+	var render: Callable
+	func refresh() -> void:
+		if get_parent() != null and render.is_valid():
+			get_parent().set(property, render.call())
+
+
+static func bind(control: Control, key: String, parameters: Dictionary = {}, property: String = "text") -> void:
+	var metadata := "_localized_" + property
+	var binding: BoundText = control.get_meta(metadata) if control.has_meta(metadata) else null
+	if binding == null:
+		binding = BoundText.new()
+		control.add_child(binding)
+		events.changed.connect(binding.refresh)
+		control.set_meta(metadata, binding)
+	binding.key = key
+	binding.parameters = parameters.duplicate(true)
+	binding.property = property
+	binding.render = text.bind(key, binding.parameters)
+	if property == "text":
+		control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	binding.refresh()
