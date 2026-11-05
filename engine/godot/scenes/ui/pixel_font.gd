@@ -79,6 +79,12 @@ static func text_width(s: String, scale: int = 1) -> int:
 	return s.length() * ADVANCE * scale - scale
 
 
+## A capital Й has the full seven-row И body, with its breve above the cap.
+## Lowercase й keeps the five-row lowercase body and zero bearing.
+static func y_offset(ch: String) -> int:
+	return -2 if ch == "Й" else 0
+
+
 static func draw_text(img: Image, x: int, y: int, s: String, c: Color, scale: int = 1) -> void:
 	for i in s.length():
 		var rows: Array = glyph(s[i])
@@ -87,7 +93,7 @@ static func draw_text(img: Image, x: int, y: int, s: String, c: Color, scale: in
 			var row: String = rows[ry]
 			for rx in row.length():
 				if row[rx] == "1":
-					img.fill_rect(Rect2i(gx + rx * scale, y + ry * scale, scale, scale), c)
+					img.fill_rect(Rect2i(gx + rx * scale, y + (ry + y_offset(s[i])) * scale, scale, scale), c)
 
 
 ## Строчные буквы и дополнительные знаки. Ячейка 5x9: строки 0-6 — как у
@@ -155,7 +161,7 @@ const CYRILLIC := {
 	"Ж": ["10101","10101","10101","01110","10101","10101","10101","00000","00000"],
 	"З": ["01110","10001","00001","00110","00001","10001","01110","00000","00000"],
 	"И": ["10001","10001","10011","10101","11001","10001","10001","00000","00000"],
-	"Й": ["01010","00100","10001","10011","10101","11001","10001","00000","00000"],
+	"Й": ["01010","00100","10001","10001","10011","10101","11001","10001","10001"],
 	"Л": ["00111","01001","01001","01001","01001","01001","10001","00000","00000"],
 	"П": ["11111","10001","10001","10001","10001","10001","10001","00000","00000"],
 	"У": ["10001","10001","10001","01111","00001","10001","01110","00000","00000"],

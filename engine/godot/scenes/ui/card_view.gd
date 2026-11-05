@@ -1,6 +1,9 @@
 class_name CardView
 extends PanelContainer
 
+const CardText := preload("res://scenes/card_text.gd")
+const L10n := preload("res://scenes/localization.gd")
+
 ## Одна карта в интерфейсе: цветная шапка аспекта с именем и ценой, строка
 ## аспект/тип, текст способности и два значения VP. Данные берёт из
 ## CardLibrary по card_id — своей копии сведений о картах у интерфейса нет.
@@ -99,6 +102,7 @@ var _skin_hover := 0.0
 var _skin_tilt := Vector2.ZERO
 var _mouse_inside := false
 
+var _name_tip := ""
 var _name_label: Label
 var _cost_label: Label
 var _meta_label: Label
@@ -118,6 +122,8 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	# Кадр за кадром карта считается только пока трясётся после отказа.
 	set_process(false)
+	L10n.events.changed.connect(_language_changed)
+	_update_name_tip()
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
@@ -217,20 +223,22 @@ func _init(cid: String = "", card_width: int = 150, card_height: int = 210,
 		set_card(card_id)
 
 
-static func pixel_texture(cid: String, art: String = "") -> Texture2D:
+static func pixel_texture(cid: String, art: String = "", localized: bool = true) -> Texture2D:
 	var alt := AltArts.full_texture(art) if art != "" and AltArts.card_of(art) == cid else null
 	if alt != null:
-		return alt
+		return CardLiveFace.localized_texture(cid, art, alt, false) if localized else alt
 	var path := PIXEL_DIR + cid + ".png"
-	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
+	var base := load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
+	return CardLiveFace.localized_texture(cid, "", base, false) if localized else base
 
 
 static func mini_texture(cid: String, art: String = "") -> Texture2D:
 	var alt := AltArts.mini_texture(art) if art != "" and AltArts.card_of(art) == cid else null
 	if alt != null:
-		return alt
+		return CardLiveFace.localized_texture(cid, art, alt, true)
 	var path := MINI_DIR + cid + ".png"
-	return load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
+	var base := load(path) as Texture2D if cid != "" and ResourceLoader.exists(path) else null
+	return CardLiveFace.localized_texture(cid, "", base, true)
 
 
 ## Размер лица карты в его собственных пикселях — мелкого или полного.
@@ -503,6 +511,7 @@ func set_art(new_art: String) -> void:
 
 func set_card(cid: String) -> void:
 	card_id = cid
+	_update_name_tip()
 	if _pixel != null:
 		if owner_seat != "":
 			art = art_of(owner_seat, cid)
@@ -523,7 +532,7 @@ func set_card(cid: String) -> void:
 		_apply_colors()
 		return
 
-	_name_label.text = String(data.get("name", cid))
+	_name_label.text = CardText.field(cid, "name")
 
 	# Стоимость null — у карты её нет вовсе (Noble, Soldier, Insane Outcast),
 	# это не то же самое, что «стоит 0» (claude/progress.md, этап 4).
@@ -540,7 +549,7 @@ func set_card(cid: String) -> void:
 		_meta_label.text = aspect + type_name
 
 	_aspect_color = ASPECT_COLORS.get(aspect, NO_ASPECT_COLOR)
-	_text_label.text = String(data.get("ability_text", "") if data.get("ability_text") != null else "")
+	_text_label.text = CardText.ability(cid)
 
 	var deck_vp = data.get("deck_vp")
 	var ic_vp = data.get("inner_circle_vp")
@@ -595,3 +604,17 @@ func _gui_input(event: InputEvent) -> void:
 		else:
 			refused.emit(card_id)
 		accept_event()
+
+
+func _language_changed() -> void:
+	set_card(card_id)
+
+
+func _update_name_tip() -> void:
+	if CardText.translated(card_id):
+		_name_tip = CardText.field(card_id, "name") + " / " + String(CardLibrary.card_data(card_id).get("name", ""))
+		tooltip_text = _name_tip
+	else:
+		if tooltip_text == _name_tip:
+			tooltip_text = ""
+		_name_tip = ""

@@ -181,7 +181,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# владельца, 2026-09-27; чья карта заставила — видно в журнале слева).
 	# Так же — выбор стартовой локации: он был строкой под таблицей игроков и
 	# терялся (решение владельца, 2026-09-27).
-	var discard := in_hand and _prompt.text.begins_with("Discard")
+	var discard := in_hand and is_discard_choice(pd)
 	var starting := tag == "starting_site"
 	# Чужая карта заставляет отвечать: вопрос не тускнеет, а вспыхивает ярче
 	# и называет, чья карта (владелец, 2026-10-11).
@@ -812,3 +812,7 @@ class CardStairs extends Control:
 			card.position = Vector2(step * i, 0)
 			card.size = CARD_SIZE
 		custom_minimum_size = Vector2(w + step * maxi(n - 1, 0), CARD_SIZE.y) if n > 0 else Vector2.ZERO
+
+
+static func is_discard_choice(pending: Dictionary) -> bool:
+	return String(pending.get("presentation_action", "")) == "discard"

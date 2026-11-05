@@ -599,6 +599,7 @@ class _Avalanche extends CardEffect:
 		pd.tag = "hand"
 		pd.legal_options = options
 		pd.target_effect = self
+		pd.data["presentation_action"] = "discard"
 		resolver.request_decision(pd)
 
 

@@ -33,8 +33,8 @@ func _init() -> void:
 		var cy := (i / COLUMNS) * CELL_H
 		_blit_glyph(atlas, ch, cx, cy)
 		cell_of[ch] = Vector2i(cx, cy)
-		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=0 xadvance=%d page=0 chnl=15"
-			% [ch.unicode_at(0), cx, cy, CELL_W, CELL_H, CELL_W])
+		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=%d xadvance=%d page=0 chnl=15"
+			% [ch.unicode_at(0), cx, cy, CELL_W, CELL_H, PixelFont.y_offset(ch), CELL_W])
 
 	# Замены из PixelFont.CHAR_MAP (типографское тире, кавычка и прочее) и
 	# кириллица, которая пишется как латиница (CYRILLIC_SAME), — это

@@ -349,6 +349,7 @@ class _RetainFromHand extends CardEffect:
 		pd.legal_options = options
 		pd.source_card = card
 		pd.target_effect = self
+		pd.data["presentation_action"] = "discard"
 		resolver.request_decision(pd)
 
 

@@ -123,6 +123,7 @@ class VictimDiscard extends CardEffect:
 			pd.source_card = chosen_card  # Ambassador: окно показывает саму карту
 		else:
 			pd.tag = "hand"  # выбор прямо в руке внизу экрана
+			pd.data["presentation_action"] = "discard"
 		pd.legal_options = options
 		pd.target_effect = self
 		resolver.request_decision(pd)

@@ -9,6 +9,8 @@ extends RefCounted
 ## мелкой (текста там нет) — ещё плашка с первой пометкой в углу арта.
 ## Готовые лица кэшируются: одна карта с одними числами рисуется один раз.
 
+const CardText := preload("res://scenes/card_text.gd")
+const L10n := preload("res://scenes/localization.gd")
 const PC := preload("res://tools/pixel_cards.gd")
 const TEXT_TOP := 34 + PC.ART_H + 5
 const MINI_COST_X := PC.MINI_SIDE_X + 2
@@ -21,10 +23,11 @@ const MARK_OK := "\u0001"
 const MARK_NO := "\u0002"
 
 static var _cache: Dictionary = {}
+static var _localized: Dictionary = {}
 
 
 static func full(cid: String, art: String, entry: Dictionary) -> Texture2D:
-	var key := "F%s|%s|%s" % [cid, art, JSON.stringify(entry)]
+	var key := "F%s|%s|%s|%s" % [L10n.locale(), cid, art, JSON.stringify(entry)]
 	if not _cache.has(key):
 		var base := CardView.pixel_texture(cid, art)
 		if base == null:
@@ -33,7 +36,7 @@ static func full(cid: String, art: String, entry: Dictionary) -> Texture2D:
 		img.decompress()
 		img.convert(Image.FORMAT_RGBA8)
 		if entry.has("notes"):
-			_draw_text_box(img, String(CardLibrary.card_data(cid).get("ability_text", "")), entry["notes"])
+			_draw_text_box(img, CardText.ability(cid, true), CardText.notes(cid, entry["notes"]))
 		if entry.has("cost"):
 			_draw_cost_full(img, int(entry["cost"]), CardLibrary.card_cost(cid))
 		_cache[key] = ImageTexture.create_from_image(img)
@@ -41,7 +44,7 @@ static func full(cid: String, art: String, entry: Dictionary) -> Texture2D:
 
 
 static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
-	var key := "M%s|%s|%s" % [cid, art, JSON.stringify(entry)]
+	var key := "M%s|%s|%s|%s" % [L10n.locale(), cid, art, JSON.stringify(entry)]
 	if not _cache.has(key):
 		var base := CardView.mini_texture(cid, art)
 		if base == null:
@@ -54,7 +57,7 @@ static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
 			img.fill_rect(Rect2i(PC.MINI_W - 1, 2, 1, 8), PC.C_OUTLINE)
 			var cheaper := int(entry["cost"]) <= CardLibrary.card_cost(cid)  # дороже — красным (Performer Maestro соперника)
 			_text(img, MINI_COST_X, 2, str(int(entry["cost"])), OK_LIGHT if cheaper else NO_LIGHT, 1, PC.C_OUTLINE)
-		var notes: Array = entry.get("notes", [])
+		var notes: Array = CardText.notes(cid, entry.get("notes", []))
 		if not notes.is_empty():
 			var note: Dictionary = notes[-1] if String(notes[0]["text"]).begins_with("(-") \
 				and notes.size() > 1 else notes[0]
@@ -118,13 +121,21 @@ static func text_layout(raw: String, notes: Array, w: int, h: int) -> Dictionary
 ## [[Rect2i в пикселях лица, слово без знаков]].
 static func keyword_spots(cid: String, notes: Array, w: int, h: int) -> Array:
 	var out: Array = []
-	var raw := String(CardLibrary.card_data(cid).get("ability_text", ""))
-	for spot: Array in text_layout(raw, notes, w, h)["words"]:
+	var raw := CardText.ability(cid, true)
+	notes = CardText.notes(cid, notes)
+	var spots: Array = text_layout(raw, notes, w, h)["words"]
+	for index in spots.size():
+		var spot: Array = spots[index]
 		var word := String(spot[2])
 		if word.begins_with(MARK_OK) or word.begins_with(MARK_NO) or not is_keyword(word):
 			continue
 		var bare := word.rstrip(".,:;")
-		out.append([Rect2i(spot[0] - 1, spot[1] - 1, word_width(bare) + 2, 9), bare])
+		var keyword := CardText.keyword(bare)
+		if bare == "РАЗМЕСТИТЕ":
+			for following: Array in spots.slice(index + 1, index + 3):
+				if String(following[2]).begins_with("ШПИОН"):
+					keyword = "PLACE"
+		out.append([Rect2i(spot[0] - 1, spot[1] - 1, word_width(bare) + 2, 9), keyword])
 	return out
 
 
@@ -163,7 +174,17 @@ static func layout(raw: String, notes: Array, w: int = PC.W) -> Array:
 	for p in paras:
 		cleaned.append(clean(p))
 	for note: Dictionary in notes:
-		var phrase := String(note["phrase"])
+		var marker := "{LIVE:%s}" % String(note.get("id", "")).to_upper()
+		var found := false
+		for i in cleaned.size():
+			if cleaned[i].contains(marker):
+				cleaned[i] = cleaned[i].replace(marker, " " + (MARK_OK if note["ok"] else MARK_NO) + String(note["text"]))
+				found = true
+		if found:
+			continue
+		var phrase := String(note.get("phrase", ""))
+		if phrase.is_empty():
+			continue
 		for i in cleaned.size():
 			var at := cleaned[i].find(phrase)
 			if at < 0:
@@ -181,6 +202,7 @@ static func layout(raw: String, notes: Array, w: int = PC.W) -> Array:
 	var out: Array = []
 	var room := w - 22
 	for p in cleaned:
+		p = RegEx.create_from_string("\\{LIVE:[^}]+\\}").sub(p, "", true)
 		var bullet := p.begins_with("•")
 		if bullet:
 			p = p.substr(1).strip_edges()
@@ -225,7 +247,7 @@ static func _bare(word: String) -> String:
 
 
 static func is_keyword(word: String) -> bool:
-	return PC.KEYWORDS.has(word.rstrip(".,:;"))
+	return PC.KEYWORDS.has(CardText.keyword(word))
 
 
 static func word_width(word: String) -> int:
@@ -245,8 +267,8 @@ static func _draw_word(img: Image, x: int, y: int, word: String) -> void:
 	var bare := word.rstrip(".,:;")
 	for i in bare.length():
 		var g: Array = _glyph(bare[i])
-		_rows(img, x + i * 7, y, g, PC.C_INK)
-		_rows(img, x + i * 7 + 1, y, g, PC.C_INK)
+		_rows(img, x + i * 7, y + PixelFont.y_offset(bare[i]), g, PC.C_INK)
+		_rows(img, x + i * 7 + 1, y + PixelFont.y_offset(bare[i]), g, PC.C_INK)
 	_text(img, x + bare.length() * 7, y, word.substr(bare.length()), PC.C_INK, 1)
 
 
@@ -264,7 +286,7 @@ static func _width(s: String, scale: int) -> int:
 
 
 static func _glyph(ch: String) -> Array:
-	return PC.FONT.get(ch, PC.FONT[" "])
+	return PC.FONT[ch] if PC.FONT.has(ch) else PixelFont.glyph(ch)
 
 
 static func _rows(img: Image, x: int, y: int, rows: Array, c: Color, s: int = 1) -> void:
@@ -279,5 +301,75 @@ static func _text(img: Image, x: int, y: int, s: String, c: Color, scale: int, s
 	for i in s.length():
 		var g := _glyph(s[i])
 		if shadow.a > 0:
-			_rows(img, x + i * (6 * scale - (scale - 1)) + scale, y + scale, g, shadow, scale)
-		_rows(img, x + i * (6 * scale - (scale - 1)), y, g, c, scale)
+			_rows(img, x + i * (6 * scale - (scale - 1)) + scale, y + (PixelFont.y_offset(s[i]) + 1) * scale, g, shadow, scale)
+		_rows(img, x + i * (6 * scale - (scale - 1)), y + PixelFont.y_offset(s[i]) * scale, g, c, scale)
+
+
+## Redraw presentation regions only; existing art, borders and VP badges survive.
+static func localized_texture(cid: String, art: String, base: Texture2D, mini_face: bool) -> Texture2D:
+	if base == null or not CardText.translated(cid):
+		return base
+	var key := "%s|%s|%s|%s" % [L10n.locale(), cid, art, mini_face]
+	if _localized.has(key):
+		return _localized[key]
+	var img := base.get_image()
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var data := CardLibrary.card_data(cid)
+	var w := img.get_width()
+	if mini_face:
+		img.fill_rect(Rect2i(1, 1, w - 2, PC.MINI_HEAD), PC.C_FRAME)
+		var lines := name_lines(CardText.field(cid, "short_name").to_upper(), PC.MINI_SIDE_X - 3, 3)
+		for i in lines.size():
+			_text(img, 2, 3 + i * PC.MINI_LINE_H, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
+		var aspect := String(data.get("aspect", ""))
+		var side := data.get("cost") != null or PC.MINI_ICONS.has(aspect)
+		if side:
+			img.fill_rect(Rect2i(PC.MINI_SIDE_X, 2, 1, PC.MINI_SIDE_LINES * PC.MINI_LINE_H), PC.C_FRAME_HI)
+		if data.get("cost") != null:
+			_text(img, MINI_COST_X, 2, str(int(data.cost)), PC.C_LIGHT, 1, PC.C_OUTLINE)
+		if PC.MINI_ICONS.has(aspect):
+			_rows(img, MINI_COST_X + 1, 3 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.C_OUTLINE)
+			_rows(img, MINI_COST_X, 2 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.ASPECT_COLOR[aspect])
+	else:
+		img.fill_rect(Rect2i(2, 2, w - 4, 31), PC.C_FRAME)
+		var name := CardText.field(cid, "name").to_upper()
+		var room := w - (35 if data.get("cost") != null else 14)
+		if _width(name, 2) <= room:
+			_text(img, 7, 6, name, PC.C_LIGHT, 2, PC.C_OUTLINE)
+		else:
+			var lines := name_lines(name, room, 2)
+			for i in lines.size():
+				_text(img, 7, 5 + i * 10, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
+		if data.get("cost") != null:
+			var cost := str(int(data.cost))
+			_text(img, w - 7 - _width(cost, 2), 6, cost, PC.C_LIGHT, 2, PC.C_OUTLINE)
+		_text(img, 7, 25, CardText.field(cid, "aspect_name") + " / " + CardText.field(cid, "race_name"), PC.C_GREY, 1)
+		_draw_text_box(img, CardText.ability(cid, true), [])
+		var badge_width := _width(str(int(data.deck_vp)), 1) + 2
+		var ic_width := _width("-" if data.inner_circle_vp == null else str(int(data.inner_circle_vp)), 1) + 2
+		var left := w - 7 - ic_width - 1 - badge_width
+		img.fill_rect(Rect2i(2, img.get_height() - 19, left - 3, 17), PC.C_FRAME)
+		_text(img, 9, img.get_height() - 15, CardText.field(cid, "footer"), PC.C_GREY, 1)
+	_localized[key] = ImageTexture.create_from_image(img)
+	return _localized[key]
+
+
+static func name_lines(raw: String, width: int, maximum: int) -> Array[String]:
+	var result: Array[String] = []
+	var line := ""
+	for word: String in raw.split(" ", false):
+		if not line.is_empty() and _width(line + " " + word, 1) > width:
+			result.append(line)
+			line = ""
+		while _width(word, 1) > width:
+			var count := maxi(1, (width + 1) / 6 - 1)
+			result.append(word.substr(0, count) + "-")
+			word = word.substr(count)
+		line = word if line.is_empty() else line + " " + word
+	if not line.is_empty():
+		result.append(line)
+	if result.size() > maximum:
+		push_error("Localized card name needs a shorter form: " + raw)
+	return result.slice(0, maximum)

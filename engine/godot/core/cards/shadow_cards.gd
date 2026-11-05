@@ -388,6 +388,7 @@ class _CycleHand extends CardEffect:
 		pd.legal_options = p.deck.hand.duplicate()
 		pd.legal_options.append("")
 		pd.target_effect = self
+		pd.data["presentation_action"] = "discard"
 		resolver.request_decision(pd)
 	func _finish(player_id: String, resolver: EffectResolver) -> void:
 		if discarded > 0:

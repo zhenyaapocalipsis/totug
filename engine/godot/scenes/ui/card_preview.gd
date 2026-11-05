@@ -15,6 +15,8 @@ extends Control
 ## и растянутый масштабом текст получается мыльным. Копия собирается в нужном
 ## размере и остаётся чёткой.
 
+const CardText := preload("res://scenes/card_text.gd")
+const L10n := preload("res://scenes/localization.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 const MIN_SIZE := Vector2(176, 254)
 const MARGIN := 4.0
@@ -67,6 +69,7 @@ var _backdrop: ColorRect
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	L10n.events.changed.connect(_language_changed)
 	z_index = 1100  # над рукой (z до 901), меню и списком стопки (1000)
 
 
@@ -240,7 +243,8 @@ func tips_shown() -> int:
 
 ## Подсказка к ключевому слову карты ("" — нет).
 static func keyword_tip(word: String) -> String:
-	return String(KEYWORD_TIPS.get(word.to_upper(), ""))
+	var key := "keyword." + CardText.keyword(word)
+	return L10n.text(key) if L10n.catalog("en").has(key) else String(KEYWORD_TIPS.get(word.to_upper(), ""))
 
 
 func _hide() -> void:
@@ -336,3 +340,9 @@ func _process(_delta: float) -> void:
 		_hide()
 		return
 	_place()  # карта в руке приподнимается — копия едет следом
+
+
+func _language_changed() -> void:
+	_drop_extras()
+	if _card != null:
+		_sync_tips()

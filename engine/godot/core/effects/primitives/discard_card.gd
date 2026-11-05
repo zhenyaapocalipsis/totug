@@ -44,4 +44,5 @@ func _continue(state: GameState, player_id: String, resolver: EffectResolver) ->
 	pd.tag = "hand"
 	pd.legal_options = hand.duplicate()
 	pd.target_effect = self
+	pd.data["presentation_action"] = "discard"
 	resolver.request_decision(pd)

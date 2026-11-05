@@ -12,6 +12,12 @@ extends Control
 
 signal pressed
 
+const CardText := preload("res://scenes/card_text.gd")
+const L10n := preload("res://scenes/localization.gd")
+var _source_card := ""
+var _source_text := ""
+var _source_art := ""
+
 const W := 176
 const H := 254
 const TEXT_TOP := 139
@@ -295,7 +301,11 @@ func _init(card_id: String, text: String, seat: String = "") -> void:
 	custom_minimum_size = Vector2(W, H)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_tex = ImageTexture.create_from_image(render(card_id, text, CardView.art_of(seat, card_id)))
+	_source_card = card_id
+	_source_text = text
+	_source_art = CardView.art_of(seat, card_id)
+	_refresh_language()
+	L10n.events.changed.connect(_refresh_language)
 	# Образ владельца лежит и на карте с вариантами (решение владельца, 2026-10-06).
 	var skin := CardView.skin_of(seat, card_id)
 	if skin != "":
@@ -305,12 +315,12 @@ func _init(card_id: String, text: String, seat: String = "") -> void:
 
 
 static func option_name(text: String) -> String:
-	return String(NAMES.get(text, ""))
+	return CardText.option_field(text, "name", String(NAMES.get(text, "")))
 
 
 static func render(card_id: String, text: String, art: String = "") -> Image:
 	var img: Image
-	var face: Texture2D = CardView.pixel_texture(card_id, art)
+	var face: Texture2D = CardView.pixel_texture(card_id, art, false)
 	if face != null:
 		img = face.get_image()
 		if img.is_compressed():
@@ -339,7 +349,7 @@ static func render(card_id: String, text: String, art: String = "") -> Image:
 	img.fill_rect(Rect2i(8, TEXT_TOP + 1, W - 16, TEXT_H - 2), C_PARCH)
 	img.fill_rect(Rect2i(8, TEXT_TOP + TEXT_H - 2, W - 16, 1), C_PARCH_LO)
 	img.fill_rect(Rect2i(W - 9, TEXT_TOP + 1, 1, TEXT_H - 2), C_PARCH_LO)
-	var lines := _wrap(text)
+	var lines := _wrap(CardText.option_field(text, "text", text))
 	var y := TEXT_TOP + (TEXT_H - (lines.size() * LINE_H - 2)) / 2
 	for line: Array in lines:
 		var line_w := -5
@@ -405,6 +415,7 @@ static func _text(img: Image, x: int, y: int, s: String, c: Color, scale: int) -
 
 
 static func _glyph(img: Image, x: int, y: int, ch: String, c: Color, scale: int) -> void:
+	y += PixelFont.y_offset(ch) * scale
 	var rows: Array = PixelFont.glyph(ch)
 	for ry in rows.size():
 		var row: String = rows[ry]
@@ -414,7 +425,7 @@ static func _glyph(img: Image, x: int, y: int, ch: String, c: Color, scale: int)
 
 
 static func _is_keyword(word: String) -> bool:
-	return KEYWORDS.has(word.rstrip(".,:;"))
+	return KEYWORDS.has(CardText.keyword(word))
 
 
 ## Ключевое слово — жирное: каждая буква дважды со сдвигом на пиксель.
@@ -442,3 +453,8 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		pressed.emit()
 		accept_event()
+
+
+func _refresh_language() -> void:
+	_tex = ImageTexture.create_from_image(render(_source_card, _source_text, _source_art))
+	queue_redraw()

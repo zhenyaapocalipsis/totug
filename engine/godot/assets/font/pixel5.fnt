@@ -101,7 +101,7 @@ char id=1044 x=90 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 ch
 char id=1046 x=0 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=1047 x=6 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=1048 x=12 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
-char id=1049 x=18 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
+char id=1049 x=18 y=54 width=6 height=9 xoffset=0 yoffset=-2 xadvance=6 page=0 chnl=15
 char id=1051 x=24 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=1055 x=30 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=1059 x=36 y=54 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15

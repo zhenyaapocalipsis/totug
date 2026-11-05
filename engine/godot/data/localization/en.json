@@ -40,5 +40,17 @@
   "menu.play": "PLAY",
   "menu.leaderboard": "LEADERBOARD",
   "menu.friends": "FRIENDS",
-  "menu.exit": "EXIT"
+  "menu.exit": "EXIT",
+  "keyword.DEVOUR": "DEVOUR: remove a card from the game.\nIt goes to the devoured pile.",
+  "keyword.SUPPLANT": "SUPPLANT: assassinate a troop where you have presence,\nthen deploy your own troop in its place.",
+  "keyword.DEPLOY": "DEPLOY: put a troop from your barracks on a free space\nwhere you have presence.",
+  "keyword.ASSASSINATE": "ASSASSINATE: remove a troop where you have presence.\nIt goes to your trophy hall (1 VP each).",
+  "keyword.PLACE": "PLACE A SPY: put a spy on a site.\nIt gives you presence there and counts for control.",
+  "keyword.RETURN": "RETURN: send a troop or spy where you have presence\nback to its owner.",
+  "keyword.PROMOTE": "PROMOTE: move a card into your Inner Circle.\nIt leaves your deck and scores its Inner Circle VP.",
+  "keyword.RECRUIT": "RECRUIT: take a card into your discard pile.",
+  "keyword.FOCUS": "FOCUS: works if you played another card of this aspect\nthis turn or reveal one from your hand.",
+  "keyword.DEVOTION": "DEVOTION: works when you recruit or promote this card.",
+  "keyword.GLAMOUR": "GLAMOUR: spend 1 VP token (back to the supply) to switch this ability on.\nOnly one Glamour per card.",
+  "keyword.TRANSFORM": "TRANSFORM: this card turns into the stronger card it names."
 }

@@ -81,6 +81,11 @@ static func for_view(state: GameState, pid: String, ids: Array) -> Dictionary:
 	return out
 
 
+static func hint_id(cid: String, rule: Array) -> String:
+	var id := "%s:%s:%s" % [cid, rule[1], rule[2]]
+	return id + ":%d" % int(rule[3]) if rule.size() > 3 else id
+
+
 static func entry(state: GameState, pid: String, cid: String) -> Dictionary:
 	if not state.players.has(pid):
 		return {}
@@ -89,7 +94,7 @@ static func entry(state: GameState, pid: String, cid: String) -> Dictionary:
 	for rule: Array in RULES.get(cid, []):
 		var n := SiegeCards.distinct_aspects(state, CardLibrary.card_aspect(cid)) \
 			if String(rule[2]) == "aspects_with_self" else _count(state, pid, String(rule[2]))
-		var note := {"phrase": String(rule[0])}
+		var note := {"phrase": String(rule[0]), "id": hint_id(cid, rule)}
 		match String(rule[1]):
 			"per":
 				var gain := n / int(rule[3])

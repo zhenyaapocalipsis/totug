@@ -385,6 +385,7 @@ static func _decision_dict(pending: PendingDecision, viewer_id: String) -> Dicti
 	return {
 		"player_id": pending.player_id,
 		"prompt": pending.prompt,
+		"presentation_action": String(pending.data.get("presentation_action", "")),
 		"choice_type": pending.choice_type,
 		"tag": pending.tag,
 		"setup": pending.setup,

@@ -599,6 +599,7 @@ class _DiscardDrawn extends CardEffect:
 			MercenaryCards._ask(self, player_id, resolver, "Discard one of the drawn cards (%d left)" % remaining,
 				"target_card", options, "hand")
 			resolver.pending.data["hand_slots"] = _drawn_slots(hand)
+			resolver.pending.data["presentation_action"] = "discard"
 			return
 		if discarded.is_empty():
 			return

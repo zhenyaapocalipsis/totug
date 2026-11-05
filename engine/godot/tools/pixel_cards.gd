@@ -966,8 +966,8 @@ func draw_word(x: int, y: int, word: String) -> void:
 	var bare := word.rstrip(".,:;")
 	for i in bare.length():
 		var g: Array = glyph(bare[i])
-		glyph_rows(x + i * 7, y, g, C_INK)
-		glyph_rows(x + i * 7 + 1, y, g, C_INK)
+		glyph_rows(x + i * 7, y + PixelFont.y_offset(bare[i]), g, C_INK)
+		glyph_rows(x + i * 7 + 1, y + PixelFont.y_offset(bare[i]), g, C_INK)
 	text(x + bare.length() * 7, y, word.substr(bare.length()), C_INK, 1)
 
 
@@ -990,6 +990,8 @@ func text_width(s: String, scale: int) -> int:
 
 
 func glyph(ch: String) -> Array:
+	if PixelFont.CYRILLIC.has(ch) or PixelFont.CYRILLIC_SAME.has(ch):
+		return PixelFont.glyph(ch)
 	if not FONT.has(ch):
 		print("missing glyph: ", ch)
 		return FONT[" "]
@@ -1012,8 +1014,8 @@ func text(x: int, y: int, s: String, c: Color, scale: int, shadow := Color(0, 0,
 	for i in s.length():
 		var g: Array = glyph(s[i])
 		if shadow.a > 0:
-			glyph_rows(x + i * (6 * scale - (scale - 1)) + scale, y + scale, g, shadow, scale)
-		glyph_rows(x + i * (6 * scale - (scale - 1)), y, g, c, scale)
+			glyph_rows(x + i * (6 * scale - (scale - 1)) + scale, y + (PixelFont.y_offset(s[i]) + 1) * scale, g, shadow, scale)
+		glyph_rows(x + i * (6 * scale - (scale - 1)), y + PixelFont.y_offset(s[i]) * scale, g, c, scale)
 
 
 func pixelize(src: Image, tw: int, th: int, k: int) -> Image:
