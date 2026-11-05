@@ -9,6 +9,7 @@ const SUPPORTED: Array[String] = ["en", "ru"]
 static var events := ChangeEvents.new()
 static var _locale := "en"
 static var _catalogs: Dictionary = {}
+static var _native_ready := false
 
 
 static func locale() -> String:
@@ -20,6 +21,7 @@ static func normalize(value: String) -> String:
 
 
 static func set_locale(value: String) -> void:
+	_register_captions()
 	var next := normalize(value)
 	var changed := next != _locale
 	_locale = next
@@ -48,3 +50,24 @@ static func text(key: String, parameters: Dictionary = {}) -> String:
 
 static func language_name() -> String:
 	return "Русский" if _locale == "ru" else "English"
+
+
+## Godot renders these captions without changing Control.text, IDs, callbacks,
+## typed addresses, or selection state. Formatted server messages are handled separately.
+static func _register_captions() -> void:
+	if _native_ready:
+		return
+	_native_ready = true
+	var english := catalog("en")
+	for language: String in SUPPORTED:
+		var translation := Translation.new()
+		translation.locale = language
+		var translated := catalog(language)
+		for key: String in english:
+			if key.begins_with("setup.") or key.begins_with("profile."):
+				translation.add_message(StringName(english[key]), StringName(translated.get(key, english[key])))
+		TranslationServer.get_or_add_domain(&"ui_captions").add_translation(translation)
+
+
+static func scope(control: Node) -> void:
+	control.set_translation_domain(&"ui_captions")

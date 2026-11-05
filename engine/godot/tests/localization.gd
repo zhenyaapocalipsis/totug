@@ -46,7 +46,7 @@ func _run() -> void:
 		check(not russian.is_empty(), "nonempty: " + key)
 		check(placeholders.search_all(english).map(func(m): return m.get_string()) ==
 			placeholders.search_all(russian).map(func(m): return m.get_string()), "parameters: " + key)
-		for ch: String in placeholders.sub(russian, "", true):
+		for ch: String in placeholders.sub(russian, "", true).replace("\n", ""):
 			check(PixelTheme.theme().default_font.has_char(ch.unicode_at(0)), "glyph: " + ch)
 	check(L10n.locale() == "en", "default is English")
 	var first := SettingsPanel.new()

@@ -1,6 +1,8 @@
 class_name ProfileScreen
 extends Control
 
+const L10n := preload("res://scenes/localization.gd")
+
 ## Профиль игрока: имя и герб. Герб рисуется в маленьком пиксельном
 ## редакторе, холст которого — сама фишка войска 9x9 (PlayerProfile): ободок
 ## не красится, пустые пиксели на доске будут цветом места игрока. Целиком
@@ -109,12 +111,14 @@ func _init(first_run: bool = false) -> void:
 		centre.add_child(card)
 		card.add_child(col)
 		var title := Label.new()
+		L10n.scope(title)
 		title.text = "CREATE YOUR PROFILE"
 		title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 		title.add_theme_color_override("font_color", PixelTheme.GOLD)
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(title)
 		var welcome := Label.new()
+		L10n.scope(welcome)
 		welcome.text = "Welcome! Choose a name and draw your emblem."
 		welcome.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		welcome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -166,7 +170,7 @@ func _init(first_run: bool = false) -> void:
 	# Имя при первом запуске — здесь, над гербом; потом оно меняется на
 	# вкладке STATS, где и показано (владелец, 2026-10-06).
 	if _first_run:
-		_look.add_child(GameScreen.section_label("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
+		_look.add_child(_caption("NAME (ONLINE, EVERY NAME IS UNIQUE)"))
 		_name_edit = _new_name_edit(String(local["name"]))
 		_name_edit.text_submitted.connect(func(_t: String): _save())
 		_name_edit.grab_focus.call_deferred()
@@ -317,6 +321,7 @@ func _tools() -> Control:
 
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
+	L10n.scope(b)
 	b.text = text
 	b.custom_minimum_size = BUTTON_SIZE
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -748,6 +753,7 @@ static func average_vp_row(pairs: Array) -> Control:
 
 static func _cell(text: String, colour: Color) -> Label:
 	var label := Label.new()
+	L10n.scope(label)
 	label.text = text
 	label.add_theme_color_override("font_color", colour)
 	return label
@@ -819,3 +825,9 @@ static func token_icon(pid: String, emblem_hex: String) -> TextureRect:
 	icon.custom_minimum_size = Vector2.ONE * PlayerProfile.SIZE
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return icon
+
+
+func _caption(text: String) -> Label:
+	var label := GameScreen.section_label(text)
+	L10n.scope(label)
+	return label

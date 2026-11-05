@@ -381,6 +381,7 @@ func _build_play() -> Control:
 	var group := ButtonGroup.new()
 	for section: String in PLAY_SECTIONS:
 		var b := Button.new()
+		L10n.scope(b)
 		b.text = SECTION_TITLES[section]
 		b.toggle_mode = true
 		b.button_group = group
@@ -449,6 +450,7 @@ func _show_section(section: String) -> void:
 
 ## Большая кнопка в углу: надпись и что делает.
 func _set_action(text: String, action: Callable) -> void:
+	L10n.scope(_action)
 	_action.text = text
 	_action_call = action
 
@@ -775,6 +777,7 @@ func _build_settings() -> Control:
 func _tab_button(text: String) -> Button:
 	var b := Button.new()
 	var key := String(TAB_TEXT_KEYS.get(text, ""))
+	L10n.scope(b)
 	b.text = text if key.is_empty() else L10n.text(key)
 	if not key.is_empty():
 		_menu_captions.append({"control": b, "key": key})
@@ -790,6 +793,7 @@ func _add_dim(text: String) -> Label:
 
 func _add_dim_to(parent: Control, text: String) -> Label:
 	var label := Label.new()
+	L10n.scope(label)
 	label.text = text
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -799,6 +803,7 @@ func _add_dim_to(parent: Control, text: String) -> Label:
 
 func _heading(text: String, colour: Color = PixelTheme.TEXT_DIM) -> Label:
 	var label := GameScreen.section_label(text)
+	L10n.scope(label)
 	label.add_theme_color_override("font_color", colour)
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -807,6 +812,7 @@ func _heading(text: String, colour: Color = PixelTheme.TEXT_DIM) -> Label:
 
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
+	L10n.scope(b)
 	b.text = text
 	b.custom_minimum_size = BUTTON_SIZE
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -818,6 +824,7 @@ func _button(text: String, action: Callable) -> Button:
 ## Кнопка-переключатель: нажатая в своей группе остаётся подсвеченной.
 func _toggle(text: String, group: ButtonGroup, on: bool, width: float) -> Button:
 	var b := Button.new()
+	L10n.scope(b)
 	b.text = text
 	b.toggle_mode = true
 	b.button_group = group

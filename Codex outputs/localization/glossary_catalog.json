@@ -2007,5 +2007,12 @@
     "ru": "Чульт",
     "note": "Название полуколоды. Технический ключ ixtal не переводится.",
     "status": "proposed"
+  },
+  {
+    "key": "insane_outcast",
+    "en": "Insane Outcast",
+    "ru": "Безумный изгой",
+    "note": "Термин утверждён владельцем. Формы: изгоя, изгоев.",
+    "status": "owner_confirmed"
   }
 ]

@@ -1,6 +1,8 @@
 class_name LobbyScreen
 extends Control
 
+const L10n := preload("res://scenes/localization.gd")
+
 ## Лобби сетевой игры (этап 6). Четыре варианта (kind):
 ##   "create"    — завести комнату на сервере, друзьям сказать её код;
 ##   "join_code" — войти в комнату на сервере по коду;
@@ -79,6 +81,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 	card.add_child(col)
 
 	var title := Label.new()
+	L10n.scope(title)
 	title.text = {"create": "CREATE A ROOM", "join_code": "JOIN BY CODE", "find": "FIND A GAME",
 		"host": "HOST A GAME", "join_ip": "JOIN BY ADDRESS", "resume": "RETURN TO GAME"}.get(kind, "ONLINE")
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
@@ -102,7 +105,7 @@ func _init(net: NetSession, kind: String, player_count: int = 2, mode: String = 
 			_build_join_ip_part(col)
 
 	col.add_child(HSeparator.new())
-	col.add_child(GameScreen.section_label("AT THE TABLE"))
+	col.add_child(_caption("AT THE TABLE"))
 	_seats = HBoxContainer.new()
 	_seats.add_theme_constant_override("separation", 6)
 	_seats.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -554,6 +557,7 @@ func _dim(text: String) -> Label:
 
 func _centred(text: String) -> Label:
 	var label := Label.new()
+	L10n.scope(label)
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
@@ -561,6 +565,7 @@ func _centred(text: String) -> Label:
 
 func _button(text: String) -> Button:
 	var button := Button.new()
+	L10n.scope(button)
 	button.text = text
 	button.custom_minimum_size = Vector2(70, 16)
 	SetupScreen._style_button(button)
@@ -579,3 +584,9 @@ static func _save(key: String, value: String) -> void:
 	cfg.load(CONFIG_PATH)
 	cfg.set_value("online", key, value)
 	cfg.save(CONFIG_PATH)
+
+
+func _caption(text: String) -> Label:
+	var label := GameScreen.section_label(text)
+	L10n.scope(label)
+	return label
