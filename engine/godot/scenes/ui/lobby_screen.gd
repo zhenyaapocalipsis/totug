@@ -437,7 +437,7 @@ func _on_lobby_changed(joined: Array, needed: int, code: String, owner_seat: Str
 		if seat_profile.has("rating"):
 			var rating := int(seat_profile["rating"])
 			var badge := ProfileScreen.rank_badge(rating)
-			L10n.bind(badge, "lobby.rating_tip", {"rank": badge.tooltip_text, "games": int(seat_profile.get("games", 0)), "wins": int(seat_profile.get("wins", 0))}, "tooltip_text")
+			L10n.bind(badge, "lobby.rating_tip", {"rank": {"l10n_key": ProfileScreen.rank_key(rating)}, "games": int(seat_profile.get("games", 0)), "wins": int(seat_profile.get("wins", 0))}, "tooltip_text")
 			_seats.add_child(badge)
 			var rating_label := Label.new()
 			rating_label.text = str(rating)

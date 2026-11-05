@@ -11,6 +11,8 @@ extends Control
 signal replay_requested(file: String)
 signal closed
 
+const L10n := preload("res://scenes/localization.gd")
+
 const PANEL_SIZE := Vector2(720, 430)
 ## Цвет чужого многоугольника (свой — ProfileScreen.MINE_COLOUR).
 const THEIR_COLOUR := Color("6ab8ff")
@@ -52,11 +54,12 @@ func _init(net: NetSession, name_text: String) -> void:
 	var top := HBoxContainer.new()
 	col.add_child(top)
 	var title := Label.new()
-	title.text = "PROFILE: %s" % name_text
+	L10n.bind(title, "profile.title", {"name": name_text})
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	var close_button := Button.new()
+	L10n.scope(close_button)
 	close_button.text = "CLOSE"
 	close_button.custom_minimum_size = Vector2(50, 14)
 	close_button.focus_mode = Control.FOCUS_NONE
@@ -64,7 +67,8 @@ func _init(net: NetSession, name_text: String) -> void:
 	close_button.pressed.connect(close)
 	top.add_child(close_button)
 	col.add_child(HSeparator.new())
-	_status = ProfileScreen._cell("Loading the profile...", PixelTheme.TEXT_DIM)
+	_status = ProfileScreen._cell("", PixelTheme.TEXT_DIM)
+	L10n.bind(_status, "profile.loading")
 	col.add_child(_status)
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 4)
@@ -75,7 +79,7 @@ func _init(net: NetSession, name_text: String) -> void:
 		net.record_received.connect(_on_record)
 		net.request_player(name_text)
 	if net == null or not net.is_connected_to_server():
-		_status.text = "No connection to the server."
+		L10n.bind(_status, "profile.no_connection")
 
 
 func _exit_tree() -> void:
@@ -107,7 +111,8 @@ func show_data(data: Dictionary) -> void:
 	for child in _body.get_children():
 		child.queue_free()
 	if data.get("missing", false):
-		_status.text = "No player named %s." % player_name
+		L10n.bind(_status, "profile.missing", {"name": player_name})
+		_status.visible = true
 		return
 	_status.visible = false
 	var row := HBoxContainer.new()
@@ -120,7 +125,9 @@ func show_data(data: Dictionary) -> void:
 	row.add_child(left)
 	ProfileCard.fill(left, "", data)
 	left.add_child(HSeparator.new())
-	left.add_child(GameScreen.section_label("AVERAGE PER GAME"))
+	var average_title := GameScreen.section_label("AVERAGE PER GAME")
+	L10n.scope(average_title)
+	left.add_child(average_title)
 	var theirs := PlayerProfile.clean_totals(data.get("totals", {}))
 	var mine := PlayerProfile.totals()
 	if int(theirs["games"]) == 0:
@@ -143,8 +150,9 @@ func show_data(data: Dictionary) -> void:
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(right)
 	var history: Array = data.get("history", [])
-	right.add_child(GameScreen.section_label("ONLINE GAMES: %d" % history.size() if not history.is_empty()
-		else "ONLINE GAMES"))
+	var history_title := GameScreen.section_label("")
+	L10n.bind(history_title, "profile.online_games" if not history.is_empty() else "profile.online", {"count": history.size()})
+	right.add_child(history_title)
 	if history.is_empty():
 		right.add_child(ProfileScreen._cell("No games recorded yet.", PixelTheme.TEXT_DIM))
 		return
@@ -194,7 +202,12 @@ func _legend(their_name: String, with_mine: bool) -> Control:
 		dot.custom_minimum_size = Vector2(5, 5)
 		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(dot)
-		row.add_child(ProfileScreen._cell(String(item[0]), item[1]))
+		var name_label := ProfileScreen._cell(String(item[0]), item[1])
+		if row.get_child_count() == 1:
+			name_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		else:
+			L10n.bind(name_label, "ban.you")
+		row.add_child(name_label)
 	return row
 
 
@@ -207,6 +220,7 @@ func _replay_cell(game: Dictionary) -> Control:
 			String(game.get("mode", ""))):
 		return ProfileScreen._cell("OLD", PixelTheme.TEXT_OFF)
 	var watch := Button.new()
+	L10n.scope(watch)
 	watch.text = "WATCH"
 	watch.custom_minimum_size = Vector2(40, 12)
 	watch.focus_mode = Control.FOCUS_NONE
@@ -228,7 +242,7 @@ func _on_record(file: String, header: Dictionary, intents: Array) -> void:
 	own["seat"] = String(_waiting[1])
 	_waiting = []
 	if header.is_empty():
-		_status.text = "This replay is not available."
+		L10n.bind(_status, "profile.replay_unavailable")
 		_status.visible = true
 		return
 	var local := ReplayBook.save(own, intents, ReplayBook.DIR, NET_PREFIX + file)

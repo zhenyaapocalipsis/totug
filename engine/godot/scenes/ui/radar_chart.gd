@@ -11,6 +11,8 @@ extends Control
 ## берутся очки. Если чьё-то среднее больше SCALE, шкала всех осей растёт до
 ## него — многоугольник не вылезает за сетку.
 
+const L10n := preload("res://scenes/localization.gd")
+
 const AXES := PlayerProfile.VP_PARTS
 const LABELS := {"sites": "SITES", "total_control": "CONTROL", "trophies": "TROPHIES",
 	"deck": "DECK", "inner_circle": "INNER", "tokens": "TOKENS"}
@@ -28,6 +30,7 @@ var _series: Array = []
 
 
 func _init() -> void:
+	L10n.events.changed.connect(queue_redraw)
 	custom_minimum_size = (Vector2.ONE * RADIUS + MARGIN) * 2
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -95,7 +98,7 @@ func _draw_labels(centre: Vector2) -> void:
 		var key: String = AXES[i]
 		var dir := _dir(i)
 		var anchor := centre + dir * (RADIUS + LABEL_GAP)
-		var parts: Array = [[String(LABELS[key]), PixelTheme.TEXT_DIM]]
+		var parts: Array = [[L10n.text("profile.axis_" + key), PixelTheme.TEXT_DIM]]
 		var numbers: Array = []
 		for s: Dictionary in _series:
 			numbers.append(["%.1f" % float((s["values"] as Dictionary).get(key, 0.0)), s["colour"]])

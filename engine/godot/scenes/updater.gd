@@ -21,6 +21,8 @@ extends Control
 
 signal finished  # обновлять нечего — запускать игру
 
+const L10n := preload("res://scenes/localization.gd")
+
 const BASE_URL := "http://%s/tyrants/" % NetSession.DEFAULT_SERVER
 const TIMEOUT := 6.0
 const STALL_TIMEOUT_MS := 30000
@@ -106,7 +108,7 @@ func _ready() -> void:
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
-	_label.text = "CHECKING FOR UPDATES..."
+	L10n.bind(_label, "update.checking")
 	add_child(_label)
 
 	# Недокачанный файл с прошлого раза.
@@ -189,8 +191,13 @@ func _process(_delta: float) -> void:
 			_speed_started_ms = now
 			_speed_started_bytes = downloaded
 		if total > 0:
-			_label.text = "DOWNLOADING %s  %d%%\n%.1f / %.1f MiB  |  %.1f MiB/s" % [
-				"PATCH" if _stage == Stage.PATCH else "UPDATE", int(100.0 * downloaded / total), downloaded / 1048576.0, total / 1048576.0, _speed_mib]
+			_show_progress(downloaded, total, _speed_mib)
+
+
+func _show_progress(downloaded: int, total: int, speed: float) -> void:
+	L10n.bind(_label, "update.progress", {"kind": {"l10n_key": "update.patch" if _stage == Stage.PATCH else "update.update"},
+		"percent": int(100.0 * downloaded / total), "downloaded": "%.1f" % (downloaded / 1048576.0),
+		"total": "%.1f" % (total / 1048576.0), "speed": "%.1f" % speed})
 
 
 func _on_response(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -252,7 +259,7 @@ func _on_index(body: PackedByteArray) -> void:
 		_start_full()
 		return
 	_target_size = int(index.target_size)
-	_label.text = "CHECKING LOCAL FILES..."
+	L10n.bind(_label, "update.local")
 	var base_hash: Variant = await _work(func(): return FileAccess.get_sha256(_pack_path()))
 	_base_sha = base_hash if base_hash is String else ""
 	for entry: Variant in index.patches:
@@ -266,7 +273,7 @@ func _on_index(body: PackedByteArray) -> void:
 		_patch_size = int(entry.size)
 		_patch_attempts = 1
 		_stage = Stage.PATCH
-		_label.text = "DOWNLOADING PATCH..."
+		L10n.bind(_label, "update.patch_start")
 		_reset_speed()
 		_request("patches/%d/%s.tdpatch" % [_server_build, _base_sha])
 		return
@@ -287,7 +294,7 @@ func _start_full() -> void:
 	_stage = Stage.FULL
 	DirAccess.remove_absolute(_pack_path() + ".tdpatch")
 	DirAccess.remove_absolute(_pack_path() + ".new")
-	_label.text = "DOWNLOADING UPDATE..."
+	L10n.bind(_label, "update.full_start")
 	_reset_speed()
 	_request("game.pck")
 
@@ -302,7 +309,7 @@ func _on_patch(result: int, code: int) -> void:
 			return
 		_start_full()
 		return
-	_label.text = "APPLYING PATCH..."
+	L10n.bind(_label, "update.applying")
 	var valid: Variant = await _work(func():
 		return FileAccess.get_sha256(patch) == _patch_sha and PatchFile.apply(
 			_pack_path(), patch, _pack_path() + ".new", _base_sha, _server_sha, _server_build))
@@ -319,7 +326,7 @@ func _on_full(result: int, code: int) -> void:
 		printerr("Tyrants update: download failed (result %d, code %d)" % [result, code])
 		_finish()
 		return
-	_label.text = "VERIFYING UPDATE..."
+	L10n.bind(_label, "update.verifying")
 	var sha: Variant = await _work(func(): return FileAccess.get_sha256(_pack_path() + ".new"))
 	if sha != _server_sha:
 		printerr("Tyrants update: full package checksum failed")
@@ -330,7 +337,7 @@ func _on_full(result: int, code: int) -> void:
 
 func _install() -> void:
 	_stage = Stage.DONE
-	_label.text = "RESTARTING..."
+	L10n.bind(_label, "update.restart")
 	if not _restart_with(_pack_path() + ".new"):
 		_finish()
 

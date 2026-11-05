@@ -176,7 +176,7 @@ func _init(first_run: bool = false) -> void:
 		_name_edit.grab_focus.call_deferred()
 		_look.add_child(_name_edit)
 		_look.add_child(HSeparator.new())
-	_look.add_child(GameScreen.section_label("EMBLEM: YOUR TROOP ON THE BOARD"))
+	_look.add_child(_caption("EMBLEM: YOUR TROOP ON THE BOARD"))
 	var editor := HBoxContainer.new()
 	editor.add_theme_constant_override("separation", 10)
 	editor.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -194,7 +194,7 @@ func _init(first_run: bool = false) -> void:
 
 	# Ряд фишек всех цветов — он же выбор любимого цвета (рамка у выбранного;
 	# ANY — без предпочтения).
-	_look.add_child(GameScreen.section_label("YOUR COLOUR (CLICK TO CHOOSE)"))
+	_look.add_child(_caption("YOUR COLOUR (CLICK TO CHOOSE)"))
 	var previews := HBoxContainer.new()
 	previews.add_theme_constant_override("separation", 8)
 	previews.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -227,6 +227,7 @@ func _init(first_run: bool = false) -> void:
 	previews.add_child(_any_button)
 
 	var hint := Label.new()
+	L10n.scope(hint)
 	hint.text = "Left mouse: paint. Right mouse: erase.\nOnline you get your colour if nobody chose it first."
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -294,6 +295,7 @@ func _tools() -> Control:
 	row.add_theme_constant_override("separation", 4)
 	box.add_child(row)
 	var label := Label.new()
+	L10n.scope(label)
 	label.text = "BRUSH"
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	row.add_child(label)
@@ -306,6 +308,7 @@ func _tools() -> Control:
 	_custom.color_changed.connect(_set_brush)
 	row.add_child(_custom)
 	var any := Label.new()
+	L10n.scope(any)
 	any.text = "< any colour"
 	any.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	row.add_child(any)
@@ -361,14 +364,14 @@ func paint(x: int, y: int, colour: Color) -> void:
 	# Новый закрашенный пиксель — только пока цвета места остаётся достаточно.
 	if colour.a > 0.0 and _pixels[i].a == 0.0 \
 			and PlayerProfile.painted_count(_pixels) >= PlayerProfile.max_painted():
-		_saved_note.text = "Keep at least %d pixels in your seat colour." % PlayerProfile.MIN_SEAT_PIXELS
+		L10n.bind(_saved_note, "profile.keep_pixels", {"count": PlayerProfile.MIN_SEAT_PIXELS})
 		return
 	_pixels[i] = colour
 	_changed()
 
 
 func _changed() -> void:
-	_saved_note.text = ""
+	L10n.bind(_saved_note, "lobby.raw", {"value": ""})
 	_canvas.queue_redraw()
 	_refresh_previews()
 	_refresh_counter()
@@ -376,7 +379,7 @@ func _changed() -> void:
 
 func _refresh_counter() -> void:
 	var left := PlayerProfile.max_painted() - PlayerProfile.painted_count(_pixels)
-	_counter.text = "Pixels left to paint: %d" % left
+	L10n.bind(_counter, "profile.pixels_left", {"count": left})
 	_counter.add_theme_color_override("font_color", PixelTheme.GOLD if left == 0 else PixelTheme.TEXT_DIM)
 
 
@@ -419,26 +422,25 @@ func _save() -> void:
 	if _first_run:
 		_name_edit.text = name_text
 	if _first_run and name_text == "":
-		_saved_note.text = "Enter a name (letters and digits)."
+		L10n.bind(_saved_note, "profile.enter")
 		if _name_edit.is_inside_tree():
 			_name_edit.grab_focus()
 		return
 	var err := PlayerProfile.save_local({"name": name_text, "emblem": emblem(), "colour": _colour})
 	if err == OK and not _phrase_edits.is_empty():
-		err = PlayerProfile.save_phrases(phrases())
+		err = PlayerProfile.save_phrases(_phrase_overrides())
 	if err == OK:
-		_saved_note.text = "Saved."
+		L10n.bind(_saved_note, "profile.saved")
 		closed.emit()
 	else:
 		# путь к папке — чтобы игрок мог прислать его (антивирус, запрет записи)
-		_saved_note.text = "Could not save the profile (error %d).\n%s" % [err,
-			ProjectSettings.globalize_path(PlayerProfile.path()).get_base_dir()]
+		L10n.bind(_saved_note, "profile.save_error", {"error": err, "path": ProjectSettings.globalize_path(PlayerProfile.path()).get_base_dir()})
 
 
 func _new_name_edit(text: String) -> LineEdit:
 	var edit := LineEdit.new()
 	edit.max_length = PlayerProfile.NAME_MAX
-	edit.placeholder_text = "Your name"
+	L10n.bind(edit, "profile.yourname", {}, "placeholder_text")
 	edit.text = text
 	edit.custom_minimum_size = Vector2(160, 0)
 	edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -468,10 +470,10 @@ func _save_name() -> void:
 	_edit_name(false)
 	_name_note.visible = true
 	if err == OK:
-		_stats_name.text = _display_name(name_text)
-		_name_note.text = "Saved."
+		_set_display_name(_stats_name, name_text)
+		L10n.bind(_name_note, "profile.saved")
 	else:
-		_name_note.text = "Could not save the name (error %d)." % err
+		L10n.bind(_name_note, "profile.name_error", {"error": err})
 
 
 ## page — STATS, EMBLEM, CHAT или COLLECTION.
@@ -483,7 +485,7 @@ func _show_tab(page: String) -> void:
 	for key: String in pages:
 		(pages[key] as Control).visible = key == page
 	_buttons.visible = page == "EMBLEM" or page == "CHAT"
-	_saved_note.text = ""
+	L10n.bind(_saved_note, "lobby.raw", {"value": ""})
 	# Ушли со STATS посреди правки имени — правка отменяется.
 	_edit_name(false)
 	if _collection.visible:
@@ -498,42 +500,51 @@ func _chat_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 4)
 	var key := GameSettings.key_name("ping")
-	page.add_child(GameScreen.section_label("CHAT WHEEL: HOLD %s IN A GAME, MOVE THE MOUSE, RELEASE" % key))
+	var heading := _caption("")
+	L10n.bind(heading, "profile.chat_heading", {"key": key})
+	page.add_child(heading)
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 6)
 	grid.add_theme_constant_override("v_separation", 4)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	page.add_child(grid)
-	var phrases := PlayerProfile.load_phrases()
+	var phrases := PlayerProfile.load_phrase_overrides()
 	for i in PlayerProfile.PHRASE_COUNT:
 		var side := Label.new()
+		L10n.scope(side)
 		side.text = ["UP", "RIGHT", "DOWN", "LEFT"][i]
 		side.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		grid.add_child(side)
 		var edit := LineEdit.new()
 		edit.max_length = PlayerProfile.PHRASE_MAX
-		edit.placeholder_text = PlayerProfile.DEFAULT_PHRASES[i]
+		L10n.bind(edit, "profile.phrase_" + str(i), {}, "placeholder_text")
 		edit.text = phrases[i]
 		edit.custom_minimum_size = Vector2(6 * PlayerProfile.PHRASE_MAX + 8, 0)
 		edit.text_submitted.connect(func(_t: String): _save())
 		grid.add_child(edit)
 		_phrase_edits.append(edit)
 	var hint := Label.new()
-	hint.text = "Up to %d characters. An empty line gets the default phrase.\nTap %s in a game to ping the spot under the mouse." \
-		% [PlayerProfile.PHRASE_MAX, key]
+	L10n.bind(hint, "profile.chat_hint", {"count": PlayerProfile.PHRASE_MAX, "key": key})
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)
 	return page
 
 
-func phrases() -> Array[String]:
+func _phrase_overrides() -> Array[String]:
 	var out: Array[String] = []
 	for edit in _phrase_edits:
 		out.append(PlayerProfile.clean_phrase(edit.text))
 	return out
 
+
+func phrases() -> Array[String]:
+	var out := _phrase_overrides()
+	for i in out.size():
+		if out[i] == "":
+			out[i] = PlayerProfile.DEFAULT_PHRASES[i]
+	return out
 
 ## Вкладка STATS: звание, рейтинг, партии/победы и последние онлайн-партии.
 ## Всё — как сервер сообщил в последний раз (PlayerProfile.cached_stats/history).
@@ -561,7 +572,7 @@ func _stats_page() -> Control:
 	name_row.add_theme_constant_override("separation", 4)
 	words.add_child(name_row)
 	_stats_name = Label.new()
-	_stats_name.text = _display_name(String(local["name"]))
+	_set_display_name(_stats_name, String(local["name"]))
 	_stats_name.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	_stats_name.add_theme_color_override("font_color", PixelTheme.TEXT)
 	name_row.add_child(_stats_name)
@@ -587,7 +598,7 @@ func _stats_page() -> Control:
 	_name_note.visible = false
 	words.add_child(_name_note)
 	var title := Label.new()
-	title.text = PlayerProfile.rank_title(rating)
+	L10n.bind(title, rank_key(rating))
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PlayerProfile.rank_colour(rating))
 	words.add_child(title)
@@ -595,12 +606,13 @@ func _stats_page() -> Control:
 	sub.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	words.add_child(sub)
 	if rating < 0:
-		sub.text = "Play an online game to get a rating."
+		L10n.bind(sub, "profile.unrated")
 		return page
 	var i := PlayerProfile.rank_index(rating)
-	sub.text = "RATING %d" % rating
 	if i + 1 < PlayerProfile.RANKS.size():
-		sub.text += "   NEXT: %s AT %d" % [PlayerProfile.RANKS[i + 1][1], PlayerProfile.RANKS[i + 1][0]]
+		L10n.bind(sub, "profile.rating_next", {"rating": rating, "rank": {"l10n_key": "profile.rank_" + str(i + 1)}, "threshold": PlayerProfile.RANKS[i + 1][0]})
+	else:
+		L10n.bind(sub, "profile.rating_value", {"rating": rating})
 
 	var games := int(stats["games"])
 	var wins := int(stats["wins"])
@@ -620,6 +632,7 @@ func _stats_page() -> Control:
 		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		box.add_child(value)
 		var caption := Label.new()
+		L10n.scope(caption)
 		caption.text = pair[0]
 		caption.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -640,8 +653,9 @@ func _stats_page() -> Control:
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", 8)
 	right.add_child(title_row)
-	title_row.add_child(GameScreen.section_label("LAST ONLINE GAMES" if list.is_empty()
-		else "LAST %d ONLINE GAMES" % list.size()))
+	var history_title := _caption("")
+	L10n.bind(history_title, "profile.last" if list.is_empty() else "profile.last_games", {"count": list.size()})
+	title_row.add_child(history_title)
 	if list.is_empty():
 		right.add_child(_cell("No games recorded yet.", PixelTheme.TEXT_DIM))
 		return page
@@ -709,6 +723,7 @@ func _replay_cell(game: Dictionary) -> Control:
 	if not ReplayBook.same_rules(version, teams, mode):
 		return _cell("OLD", PixelTheme.TEXT_OFF)
 	var watch := Button.new()
+	L10n.scope(watch)
 	watch.text = "WATCH"
 	watch.custom_minimum_size = Vector2(40, 12)
 	watch.focus_mode = Control.FOCUS_NONE
@@ -723,7 +738,7 @@ func _replay_cell(game: Dictionary) -> Control:
 func _game_stats() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
-	col.add_child(GameScreen.section_label("AVERAGE PER GAME"))
+	col.add_child(_caption("AVERAGE PER GAME"))
 	var t := PlayerProfile.totals()
 	if int(t["games"]) == 0:
 		col.add_child(_cell("Play an online game\nto collect statistics.", PixelTheme.TEXT_DIM))
@@ -777,10 +792,9 @@ static func history_players(game: Dictionary, mine: bool = true) -> Control:
 	row.add_theme_constant_override("separation", 2)
 	for p: Dictionary in game.get("players", []):
 		var icon := token_icon(String(p.get("seat", "")), String(p.get("emblem", "")))
-		var who := String(p.get("name", ""))
-		if mine and String(p.get("seat", "")) == String(game.get("seat", "")):
-			who += " (you)"
-		icon.tooltip_text = "%s: %d VP%s" % [who, int(p.get("vp", 0)), ", winner" if p.get("won", false) else ""]
+		L10n.bind(icon, "profile.history_tip", {"name": String(p.get("name", "")), "vp": int(p.get("vp", 0)),
+			"you": {"l10n_key": "profile.you_suffix"} if mine and String(p.get("seat", "")) == String(game.get("seat", "")) else "",
+			"winner": {"l10n_key": "profile.winner_suffix"} if p.get("won", false) else ""}, "tooltip_text")
 		row.add_child(icon)
 	return row
 
@@ -798,6 +812,7 @@ static func favourite_view(cid: String, shader: String, arts: String = "") -> Co
 	card.set_art(String(AltArts.list_to_map(arts).get(cid, "")))
 	box.add_child(card)
 	var caption := Label.new()
+	L10n.scope(caption)
 	caption.text = "FAVOURITE"
 	caption.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -812,7 +827,7 @@ static func rank_badge(rating: int, zoom: int = 1) -> TextureRect:
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.custom_minimum_size = Vector2.ONE * PlayerProfile.RANK_ICON * zoom
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.tooltip_text = PlayerProfile.rank_title(rating)
+	L10n.bind(icon, rank_key(rating), {}, "tooltip_text")
 	return icon
 
 
@@ -831,3 +846,14 @@ func _caption(text: String) -> Label:
 	var label := GameScreen.section_label(text)
 	L10n.scope(label)
 	return label
+
+
+static func rank_key(rating: int) -> String:
+	return "profile.rank_" + str(PlayerProfile.rank_index(rating))
+
+
+static func _set_display_name(label: Label, name_text: String) -> void:
+	if name_text == "":
+		L10n.bind(label, "profile.no_name")
+	else:
+		L10n.bind(label, "lobby.raw", {"value": name_text})

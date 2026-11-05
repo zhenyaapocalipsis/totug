@@ -10,8 +10,11 @@ extends Control
 ##
 ## Карточка лежит поверх всего экрана; щелчок куда угодно или Esc закрывает.
 
+const L10n := preload("res://scenes/localization.gd")
+
 const GAP := Vector2(6, 6)
 
+var _last_anchor := Vector2.ZERO
 var _panel: PanelContainer
 var _col: VBoxContainer
 
@@ -47,10 +50,12 @@ func _init(pid: String = "", profile: Dictionary = {}) -> void:
 	_col.add_theme_constant_override("separation", 4)
 	_panel.add_child(_col)
 	fill(_col, pid, profile)
+	L10n.events.changed.connect(_locale_changed)
 
 
 func _add_profile_button(on_profile: Callable, player_name: String) -> void:
 	var b := Button.new()
+	L10n.scope(b)
 	b.text = "PROFILE"
 	b.custom_minimum_size = Vector2(90, 16)
 	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -74,8 +79,8 @@ func _add_friend_button(net: NetSession, player_name: String) -> void:
 		if not is_instance_valid(add):
 			return
 		var status := net.friend_status(player_name)
-		add.text = {"friend": "FRIEND", "outgoing": "REQUEST SENT",
-			"incoming": "ACCEPT FRIEND"}.get(status, "ADD FRIEND")
+		L10n.bind(add, {"friend": "profile.friend", "outgoing": "profile.outgoing",
+			"incoming": "profile.incoming"}.get(status, "profile.add_friend"))
 		add.disabled = status == "friend" or status == "outgoing"
 	show_status.call()
 	net.friends_received.connect(show_status)
@@ -86,7 +91,7 @@ func _add_friend_button(net: NetSession, player_name: String) -> void:
 			net.friends_action("answer", [player_name, true])
 		else:
 			net.friends_action("add", [player_name])
-		add.text = "REQUEST SENT"
+		L10n.bind(add, "profile.outgoing")
 		add.disabled = true)
 	_col.add_child(add)
 
@@ -104,6 +109,7 @@ static func fill(col: VBoxContainer, pid: String, profile: Dictionary) -> void:
 	head.add_child(token)
 	var name_label := Label.new()
 	var player_name := String(profile.get("name", ""))
+	name_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	name_label.text = player_name if player_name != "" else pid.capitalize()
 	name_label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	name_label.add_theme_color_override("font_color", BoardPanel.colour(pid, PixelTheme.TEXT))
@@ -125,16 +131,22 @@ static func fill(col: VBoxContainer, pid: String, profile: Dictionary) -> void:
 	rank.add_theme_constant_override("separation", 6)
 	col.add_child(rank)
 	rank.add_child(ProfileScreen.rank_badge(rating, 2))
-	rank.add_child(_line(PlayerProfile.rank_title(rating), PlayerProfile.rank_colour(rating)))
-	rank.add_child(_line("RATING %d" % rating, PixelTheme.TEXT))
+	var rank_title := _line("", PlayerProfile.rank_colour(rating))
+	L10n.bind(rank_title, ProfileScreen.rank_key(rating))
+	rank.add_child(rank_title)
+	var rating_label := _line("", PixelTheme.TEXT)
+	L10n.bind(rating_label, "profile.rating_value", {"rating": rating})
+	rank.add_child(rating_label)
 	var games := int(profile.get("games", 0))
 	var wins := int(profile.get("wins", 0))
-	col.add_child(_line("GAMES %d   WINS %d   WIN RATE %s" % [games, wins,
-		("%d%%" % roundi(100.0 * wins / games)) if games > 0 else "-"], PixelTheme.TEXT_DIM))
+	var numbers := _line("", PixelTheme.TEXT_DIM)
+	L10n.bind(numbers, "profile.card_stats", {"games": games, "wins": wins, "rate": ("%d%%" % roundi(100.0 * wins / games)) if games > 0 else "-"})
+	col.add_child(numbers)
 
 
 static func _line(text: String, colour: Color) -> Label:
 	var label := Label.new()
+	L10n.scope(label)
 	label.text = text
 	label.add_theme_color_override("font_color", colour)
 	return label
@@ -142,6 +154,7 @@ static func _line(text: String, colour: Color) -> Label:
 
 ## Рядом с мышью, но целиком на экране.
 func _place(at: Vector2) -> void:
+	_last_anchor = at
 	var box := _panel.get_combined_minimum_size()
 	_panel.size = box
 	var screen := get_viewport_rect().size
@@ -175,3 +188,8 @@ static func attach(label: Control, pid: String, profile_of: Callable, on_profile
 		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
 			ProfileCard.open(label, pid, profile_of.call(), on_profile)
 			label.accept_event())
+
+
+func _locale_changed() -> void:
+	if is_inside_tree():
+		_place.call_deferred(_last_anchor)

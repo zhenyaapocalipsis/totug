@@ -287,6 +287,15 @@ static func clean_phrase(text: String) -> String:
 
 ## Свои фразы колеса; пустая — фраза по умолчанию на её месте.
 static func load_phrases() -> Array[String]:
+	var out := load_phrase_overrides()
+	for i in PHRASE_COUNT:
+		if out[i] == "":
+			out[i] = DEFAULT_PHRASES[i]
+	return out
+
+
+## Empty entries remain defaults; presentation may show a translated placeholder.
+static func load_phrase_overrides() -> Array[String]:
 	var cfg := ConfigFile.new()
 	cfg.load(path())
 	var saved: Variant = cfg.get_value("chat", "phrases", [])
@@ -295,7 +304,7 @@ static func load_phrases() -> Array[String]:
 		var text := ""
 		if saved is Array and i < (saved as Array).size():
 			text = clean_phrase(str((saved as Array)[i]))
-		out.append(text if text != "" else DEFAULT_PHRASES[i])
+		out.append(text)
 	return out
 
 
