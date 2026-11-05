@@ -9,11 +9,19 @@
 set -euo pipefail
 # Исправления интерфейса/обновлятора не требуют остановки игровых комнат.
 CLIENT_ONLY=false
-case "${1:-}" in
-  "") ;;
-  --client-only) CLIENT_ONLY=true ;;
-  *) echo "Usage: bash server/deploy.sh [--client-only]" >&2; exit 1 ;;
-esac
+BUILD_ONLY=false
+PUBLISH_ONLY=false
+for arg in "$@"; do
+  case "$arg" in
+    --client-only) CLIENT_ONLY=true ;;
+    --build-only) BUILD_ONLY=true ;;
+    --publish-only) PUBLISH_ONLY=true ;;
+    *) echo "Usage: bash server/deploy.sh [--client-only] [--build-only | --publish-only]" >&2; exit 1 ;;
+  esac
+done
+if [ "$PUBLISH_ONLY" = true ] && { [ "$BUILD_ONLY" = true ] || [ "$CLIENT_ONLY" = false ]; }; then
+  echo "--publish-only requires --client-only and cannot be combined with --build-only" >&2; exit 1
+fi
 HOST=root@129.101.123.70
 KEY=~/.ssh/tyrants_vps
 GODOT="/c/godot/Godot_v4.7.2-stable_win64_console.exe"
@@ -23,10 +31,14 @@ OUT="$ROOT/GAME online"
 # Закрытый ключ подписи обновлений — только на этом ПК, не в git (этап Sec-1).
 # Без него не выкладываем: игра не примет неподписанную версию.
 UPDATE_KEY=~/.ssh/tyrants_update.key
-if [ ! -f "$UPDATE_KEY" ]; then
+if [ "$PUBLISH_ONLY" = false ] && [ ! -f "$UPDATE_KEY" ]; then
   echo "No update signing key $UPDATE_KEY (see server/README.md, 'Update signing key')." >&2
   exit 1
 fi
+command -v node >/dev/null || { echo "Node.js is required to build update patches." >&2; exit 1; }
+if [ "$PUBLISH_ONLY" = false ]; then
+# Keep exact exported bytes: patches also work for players who skipped releases.
+node "$ROOT/server/update_patches.cjs" archive "$(cygpath -m "$BUILD_DIR")"
 
 echo "== build number"
 BUILD=$(date +%s)
@@ -50,6 +62,7 @@ if [ -z "$SIG" ]; then
   exit 1
 fi
 echo "$BUILD $SHA $SIG" > "$BUILD_DIR/version.txt"
+node "$ROOT/server/update_patches.cjs" generate "$(cygpath -m "$BUILD_DIR")" "$(cygpath -m "$UPDATE_KEY")"
 ls -la "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$BUILD_DIR/TyrantsOfTheUnderdark.exe"
 if [ "$CLIENT_ONLY" = false ]; then
   ls -la "$BUILD_DIR/tyrants_server.pck"
@@ -58,8 +71,19 @@ fi
 echo "== GAME online"
 cp "$BUILD_DIR/TyrantsOfTheUnderdark.exe" "$BUILD_DIR/TyrantsOfTheUnderdark.pck" "$OUT/"
 powershell.exe -NoProfile -Command "Compress-Archive -Force -Path '$(cygpath -w "$OUT/TyrantsOfTheUnderdark.exe")','$(cygpath -w "$OUT/TyrantsOfTheUnderdark.pck")','$(cygpath -w "$OUT/README.txt")' -DestinationPath '$(cygpath -w "$OUT/TyrantsOfTheUnderdark.zip")'"
+else
+  read -r BUILD SHA REST < "$BUILD_DIR/version.txt"
+fi
+node "$ROOT/server/update_patches.cjs" validate "$(cygpath -m "$BUILD_DIR")"
+if [ "$BUILD_ONLY" = true ]; then
+  echo "== local build ready: $BUILD (no server changes)"
+  exit 0
+fi
 
 echo "== upload"
+# Versioned patch files must be present before version.txt advertises them.
+ssh -i $KEY $HOST 'mkdir -p /opt/tyrants/www/patches'
+scp -i $KEY -q -r "$BUILD_DIR/patches/$BUILD" "$HOST:/opt/tyrants/www/patches/"
 if [ "$CLIENT_ONLY" = false ]; then
   scp -i $KEY -q "$BUILD_DIR/tyrants_server.pck" "$HOST:/opt/tyrants/tyrants_server.pck.new"
 fi
@@ -74,16 +98,29 @@ scp -i $KEY -q "$ROOT/server/nginx-tyrants.conf" "$HOST:/etc/nginx/sites-availab
 
 echo "== restart"
 if [ "$CLIENT_ONLY" = true ]; then
-  ssh -i $KEY $HOST 'set -e
+  ssh -i $KEY $HOST bash -s <<'REMOTE_CLIENT'
+set -e
 cd /opt/tyrants
+OLD_BUILD=$(cut -d' ' -f1 www/version.txt)
+NEW_BUILD=$(cut -d' ' -f1 www/version.txt.new)
+test "$OLD_BUILD" -le "$NEW_BUILD" || { echo "Refusing to replace a newer client" >&2; exit 1; }
+test "$(sha256sum www/game.pck.new | cut -d' ' -f1)" = "$(cut -d' ' -f2 www/version.txt.new)"
+PID_BEFORE=$(systemctl show tyrants -p MainPID --value)
+cp -p www/game.pck www/game.pck.previous
+cp -p www/version.txt www/version.txt.previous
+cp -p www/TyrantsOfTheUnderdark.zip www/TyrantsOfTheUnderdark.zip.previous
 mv www/game.pck.new www/game.pck
-mv www/version.txt.new www/version.txt
 mv www/TyrantsOfTheUnderdark.zip.new www/TyrantsOfTheUnderdark.zip
+mv www/version.txt.new www/version.txt
 chown -R tyrants:tyrants /opt/tyrants/www
 nginx -t -q && systemctl reload nginx
-systemctl is-active tyrants'
+systemctl is-active tyrants
+test "$(systemctl show tyrants -p MainPID --value)" = "$PID_BEFORE"
+echo "Game server PID unchanged: $PID_BEFORE"
+REMOTE_CLIENT
 else
-ssh -i $KEY $HOST 'set -e
+ssh -i $KEY $HOST bash -s <<'REMOTE_SERVER'
+set -e
 cd /opt/tyrants
 mv tyrants_server.pck.new tyrants_server.pck
 # Сначала игра, потом номер версии: клиент не должен увидеть новый номер
@@ -100,7 +137,8 @@ systemctl enable tyrants >/dev/null 2>&1
 systemctl restart tyrants
 sleep 3
 systemctl is-active tyrants
-journalctl -u tyrants -n 5 --no-pager -o cat'
+journalctl -u tyrants -n 5 --no-pager -o cat
+REMOTE_SERVER
 fi
 
 # Тот же архив — на GitHub (постоянная ссылка, см. server/github-release.sh).

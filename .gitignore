@@ -19,6 +19,9 @@ GAME online/*.zip
 engine/godot/build_info.gd
 engine/godot/build_info.gd.uid
 engine/build/version.txt
+engine/build/patches/
+engine/build/releases/
+*.tdpatch
 
 # Update signing private key (lives in ~/.ssh, never in git)
 *.key

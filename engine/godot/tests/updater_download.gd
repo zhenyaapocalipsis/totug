@@ -10,7 +10,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 
-func _download(request: HTTPRequest, url: String) -> float:
+func _download(request: Node, url: String) -> float:
 	root.add_child(request)
 	var path := "user://updater_download_test.tmp"
 	request.download_file = path
