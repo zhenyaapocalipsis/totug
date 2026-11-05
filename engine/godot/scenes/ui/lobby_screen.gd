@@ -602,6 +602,5 @@ func _caption(text: String) -> Label:
 func _description(col: VBoxContainer, key: String, mode: String) -> void:
 	var label := _dim("")
 	col.add_child(label)
-	var mode_key := "setup." + mode
-	var mode_message: Dictionary = {"l10n_key": mode_key} if L10n.catalog("en").has(mode_key) else NetworkText.message(SetupScreen.mode_title(mode))
+	var mode_message := SetupScreen.mode_message(mode)
 	L10n.bind(label, key, {"players": {"l10n_key": "lobby.teams"} if _teams else {"l10n_key": "lobby.players", "parameters": {"count": _count}}, "mode": mode_message, "port": NetSession.DEFAULT_PORT})

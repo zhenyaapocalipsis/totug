@@ -111,8 +111,8 @@ const BUTTON_SIZE := Vector2(90, 16)
 const MENU_WIDTH := 400.0
 const DOT := 7.0
 ## Кнопки бана полуколоды в поиске игры: ширина и сколько в ряду.
-const BAN_BUTTON := 70.0
-const BAN_PER_ROW := 5
+const BAN_BUTTON := 160.0
+const BAN_PER_ROW := 3
 ## В чём фишка полуколоды — подсказка в таблице банов (владелец, 2026-10-15).
 const DECK_TIPS := {
 	"drow": "DROW: the classic toolkit.\nSpies, supplants and promotions, steady and even.",
@@ -146,7 +146,7 @@ const FriendsPage := preload("res://scenes/ui/friends_page.gd")
 var _mode: String = GameSetup.MODE_STANDARD
 ## NEW ERA: какие две колоды New Era в рынке (переключатель под режимами).
 var _new_era_pair: Array[String] = GameSetup.NEW_ERA_DEFAULT.duplicate()
-var _new_era_row: HBoxContainer
+var _new_era_row: Control
 var _new_era_buttons := {}
 var _count: int = GameScreen.MIN_PLAYERS
 ## HOTSEAT: соперники — боты (иначе люди за этим же компьютером).
@@ -505,11 +505,12 @@ func _add_ban_choice() -> void:
 	var boxes: Array[CheckBox] = []
 	for deck: String in ban_choices():
 		var box := CheckBox.new()
-		box.text = deck_title(deck)
+		bind_deck_title(box, deck)
+		box.clip_text = true
 		box.button_pressed = deck == current
 		box.focus_mode = Control.FOCUS_NONE
 		box.custom_minimum_size.x = BAN_BUTTON
-		box.tooltip_text = String(DECK_TIPS.get(deck, ""))
+		L10n.bind(box, "setup.deck_tip_" + deck, {}, "tooltip_text")
 		box.toggled.connect(func(on: bool):
 			if on:
 				for other in boxes:
@@ -603,7 +604,7 @@ func _build_lobby_join() -> void:
 	edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _join_by_ip:
 		_col.add_child(_heading("HOST IP"))
-		edit.placeholder_text = "e.g. 26.12.34.56"
+		L10n.bind(edit, "lobby.ip_example", {}, "placeholder_text")
 		edit.text = LobbyScreen._load("last_ip", "")
 		_col.add_child(edit)
 		_add_dim("The friend who pressed HOST sees their IP.")
@@ -630,8 +631,7 @@ func _build_hotseat() -> void:
 	_hotseat_note = _add_dim("")
 	_select_bots(_bots)
 	var god := _toggle("GOD MODE", null, _god, 80)
-	god.tooltip_text = "Card testing: give yourself any cards, place troops and spies,\n" \
-		+ "add Power, Influence and VP, switch turns. No turn timer."
+	L10n.bind(god, "setup.god_tip", {}, "tooltip_text")
 	god.toggled.connect(func(on: bool): _god = on)
 	_col.add_child(_row([god]))
 	_col.add_child(HSeparator.new())
@@ -668,11 +668,21 @@ func _add_game_options(with_teams: bool = false) -> void:
 	var decks: Array[Button] = []
 	_new_era_buttons.clear()
 	for deck: String in GameSetup.NEW_ERA_DECKS:
-		var d := _toggle(NEW_ERA_TITLES[deck], null, _new_era_pair.has(deck), 70)
+		var d := _toggle("", null, _new_era_pair.has(deck), BAN_BUTTON)
+		bind_deck_title(d, deck)
+		d.clip_text = true
+		L10n.bind(d, "setup.deck_tip_" + deck, {}, "tooltip_text")
 		d.pressed.connect(func(): _toggle_new_era_deck(deck))
 		_new_era_buttons[deck] = d
 		decks.append(d)
-	_new_era_row = _row(decks)
+	_new_era_row = CenterContainer.new()
+	var deck_grid := GridContainer.new()
+	deck_grid.columns = BAN_PER_ROW
+	deck_grid.add_theme_constant_override("h_separation", 2)
+	deck_grid.add_theme_constant_override("v_separation", 2)
+	for deck_button: Button in decks:
+		deck_grid.add_child(deck_button)
+	_new_era_row.add_child(deck_grid)
 	_new_era_row.visible = _mode == GameSetup.MODE_NEW_ERA
 	_col.add_child(_new_era_row)
 	_mode_note = _add_dim(MODE_NOTES[_mode])
@@ -873,3 +883,22 @@ func _refresh_menu_language() -> void:
 		entry.control.text = L10n.text(entry.key)
 	if _friend_badge > 0:
 		(_tab_buttons[PAGE_FRIENDS] as Button).text += " %d" % _friend_badge
+
+
+## Presentation only: mode and half-deck IDs stay unchanged in signals and saves.
+static func deck_message(deck: String) -> Dictionary:
+	var key := "setup.deck_celestial" if deck == "celestial" else "ban.deck." + deck
+	return {"l10n_key": key} if L10n.catalog("en").has(key) else {"l10n_key": "lobby.raw", "parameters": {"value": deck_title(deck)}}
+
+
+static func bind_deck_title(control: Control, deck: String) -> void:
+	var message := deck_message(deck)
+	L10n.bind(control, message.l10n_key, message.get("parameters", {}))
+
+
+static func mode_message(mode: String) -> Dictionary:
+	if GameSetup.is_new_era(mode):
+		var pair := GameSetup.new_era_pair(mode)
+		return {"l10n_key": "setup.mode_pair", "parameters": {"first": deck_message(pair[0]), "second": deck_message(pair[1])}}
+	var key := "setup." + mode
+	return {"l10n_key": key} if L10n.catalog("en").has(key) else {"l10n_key": "lobby.raw", "parameters": {"value": mode_title(mode)}}
