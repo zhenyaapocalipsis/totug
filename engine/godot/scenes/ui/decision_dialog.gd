@@ -18,6 +18,9 @@ extends PanelContainer
 
 signal option_chosen(answer: Variant)
 
+const DecisionText := preload("res://scenes/decision_text.gd")
+const L10n := preload("res://scenes/localization.gd")
+
 const BOARD_CHOICES := ["target_slot", "target_site", "target_return"]
 const OPTION_HEIGHT := 15
 const MAX_LIST_HEIGHT := 150
@@ -92,6 +95,7 @@ func _market_card_id(index: int) -> String:
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_locale_changed)
 	visible = false
 	custom_minimum_size = Vector2(WIDTH, 0)
 
@@ -284,7 +288,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		if options.has(""):
 			_add_strip_buttons([["Skip", ""]])
 	elif _can_show_option_cards(pd):
-		var key := "%s|%s|%s" % [pd.get("source_card", ""), _prompt.text, str(options)]
+		var key := "%s|%s|%s" % [pd.get("source_card", ""), pd.get("prompt", ""), str(options)]
 		if key != _cards_key:
 			_cards_key = key
 			_cards_hidden = false
@@ -295,7 +299,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		else:
 			_add_option_cards(pd)
 			var hide := Button.new()
-			hide.text = "Hide"
+			DecisionText.bind(hide, "Hide")
 			hide.pressed.connect(toggle_cards)
 			make_plain(hide)
 			_options_box.add_child(hide)
@@ -317,6 +321,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 
 	# Пустой список вариантов не должен занимать место: на доске вопрос — это
 	# одна строка, и лишние пиксели полосы закрывают схему.
+	DecisionText.bind(_who, _who.text)
+	DecisionText.bind(_prompt, _prompt.text)
 	_set_cards_look(cards_mode or on_board or waiting or strip, decider)
 	_fit_strip()
 	# Полоса вопроса над доской прозрачна, но клики ловила сама: шпион или
@@ -415,6 +421,61 @@ func _prompt_width(cap: float) -> float:
 	return minf(ceilf(text_w) + 2.0, cap)
 
 
+func _locale_changed() -> void:
+	# Text bindings update first; keep the same cards, answers and blink phase.
+	_relayout_locale.call_deferred()
+
+
+func _relayout_locale() -> void:
+	if not visible:
+		return
+	_reflow_button_rows()
+	_fit_strip()
+	if _options_box.get_child_count() > 0 and _options_box.get_child(0).has_meta("decision_wrapped"):
+		var cap := maxf(BoardSchematic.PROMPT_STRIP - _style.get_minimum_size().y - 4.0 - _who.get_combined_minimum_size().y - _prompt_height(), OPTION_HEIGHT)
+		_scroll.custom_minimum_size.y = minf(_options_box.get_combined_minimum_size().y, cap)
+	_place(at_top)
+
+
+func _reflow_button_rows() -> void:
+	var buttons: Array[Button] = []
+	var rows: Array[Control] = []
+	for row: Control in _options_box.get_children():
+		if row.has_meta("decision_wrapped"):
+			rows.append(row)
+			for button: Button in row.get_children():
+				buttons.append(button)
+	if buttons.is_empty():
+		return
+	var focused := get_viewport().gui_get_focus_owner()
+	var scroll := _scroll.scroll_vertical
+	for button: Button in buttons:
+		button.get_parent().remove_child(button)
+	for row: Control in rows:
+		_options_box.remove_child(row)
+		row.queue_free()
+	var room := _board_width() - 4.0 - _style.get_minimum_size().x
+	if _asker_slot.visible:
+		room -= CARD_SIZE.x + HEAD_GAP
+	var row: HBoxContainer
+	var used := 0.0
+	for button: Button in buttons:
+		var width := button.get_combined_minimum_size().x
+		if row == null or used + 6.0 + width > room:
+			row = HBoxContainer.new()
+			row.set_meta("decision_wrapped", true)
+			row.alignment = BoxContainer.ALIGNMENT_BEGIN if _asker_slot.visible else BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override("separation", 6)
+			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_options_box.add_child(row)
+			used = 0.0
+		row.add_child(button)
+		used += width + (6.0 if used > 0.0 else 0.0)
+	if is_instance_valid(focused) and buttons.has(focused):
+		focused.grab_focus()
+	_scroll.set_deferred("scroll_vertical", scroll)
+
+
 func _pass_clicks(through: bool) -> void:
 	var mode := Control.MOUSE_FILTER_IGNORE if through else Control.MOUSE_FILTER_STOP
 	mouse_filter = mode
@@ -482,7 +543,7 @@ func _place(top: bool) -> void:
 
 func _add_note(text: String) -> void:
 	var label := Label.new()
-	label.text = text
+	DecisionText.bind(label, text)
 	# Без переноса: подпись короткая ("Waiting for X."), а с переносом она при
 	# первом замере (ширина 0) ложилась по слову в строку, и полоса "Waiting"
 	# вырастала вверх на пол-доски (владелец, 2026-10-27).
@@ -505,7 +566,7 @@ func _add_stairs(options: Array, answers: Array = [], seat: String = "") -> void
 			card.set_card_owner(seat)
 		card.highlight = false
 		card.set_clickable(true)
-		card.tooltip_text = _card_label(value)
+		DecisionText.bind(card, _card_label(value), "tooltip_text")
 		var reply: Variant = answers[i] if i < answers.size() else value
 		card.pressed.connect(func(_id): option_chosen.emit(reply))
 		_cards_slot.add_child(card)
@@ -539,15 +600,17 @@ func toggle_cards() -> void:
 ## не уходит серверу, а вызывается (Show). Обычные кнопки
 ## темы, с подложкой: надпись без фона терялась на белых табличках локаций
 ## у верхнего края доски.
-func _add_strip_buttons(pairs: Array) -> void:
+func _add_strip_buttons(pairs: Array, wrapped: bool = false) -> void:
 	var row := HBoxContainer.new()
+	if wrapped:
+		row.set_meta("decision_wrapped", true)
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN if _asker_slot.visible or _cards_slot.visible \
 		else BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for pair: Array in pairs:
 		var b := Button.new()
-		b.text = String(pair[0])
+		DecisionText.bind(b, String(pair[0]))
 		var value: Variant = pair[1]
 		if value is Callable:
 			b.pressed.connect(value)
@@ -570,15 +633,15 @@ func _add_button_rows(pairs: Array) -> void:
 	var row: Array = []
 	var row_w := 0.0
 	for pair: Array in pairs:
-		var w := maxf(40.0, ceilf(font.get_string_size(String(pair[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x) + pad)
+		var w := maxf(40.0, ceilf(font.get_string_size(DecisionText.text(String(pair[0])), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x) + pad)
 		if not row.is_empty() and row_w + 6.0 + w > room:
-			_add_strip_buttons(row)
+			_add_strip_buttons(row, true)
 			row = []
 			row_w = 0.0
 		row_w += w if row.is_empty() else 6.0 + w
 		row.append(pair)
 	if not row.is_empty():
-		_add_strip_buttons(row)
+		_add_strip_buttons(row, true)
 
 
 ## Кнопка — одна надпись по центру: без фона и рамки, с тенью; под курсором
@@ -681,7 +744,7 @@ func _add_option_cards(pd: Dictionary) -> void:
 	for i in range(options.size()):
 		if i > 0:
 			var or_label := Label.new()
-			or_label.text = "or"
+			DecisionText.bind(or_label, "or")
 			or_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 			or_label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 			or_label.add_theme_color_override("font_shadow_color", PixelTheme.PANEL_LO)
@@ -698,7 +761,7 @@ func _add_option_cards(pd: Dictionary) -> void:
 
 func _add_button(text: String, value: Variant) -> void:
 	var button := Button.new()
-	button.text = text
+	DecisionText.bind(button, text)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.custom_minimum_size = Vector2(0, OPTION_HEIGHT - 1)
 	button.pressed.connect(func(): option_chosen.emit(value))

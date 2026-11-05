@@ -1,0 +1,454 @@
+{
+  "exact": {
+    "Skip": "Пропустить",
+    "Yes": "Да",
+    "No": "Нет",
+    "Hide": "Скрыть",
+    "Show": "Показать",
+    "or": "или",
+    "No options.": "Нет вариантов.",
+    "Choose an option": "Выберите вариант",
+    "Choose one": "Выберите одно",
+    "Choose one:": "Выберите одно:",
+    "Choose 2 times": "Выберите дважды",
+    "Choose (Glamour costs 1 VP):": "Выберите (Чары стоят 1 ПО):",
+    "click a gold card in your hand": "нажмите на золотую карту в руке",
+    "click a gold card in your hand or right of it": "нажмите на золотую карту в руке или справа от неё",
+    "click a gold player in the players table": "нажмите на золотую строку игрока",
+    "click a gold trophy number in the players table": "нажмите на золотое число трофеев",
+    "click a gold card in the market": "нажмите на золотую карту рынка",
+    "click a gold site on the board": "нажмите на золотой город на доске",
+    "click a gold target on the board": "нажмите на золотую цель на доске",
+    "Inner Circle": "Внутренний круг",
+    "discard pile": "сброс",
+    "Assassinate a troop": "Уничтожьте отряд",
+    "Assassinate a white troop": "Уничтожьте белый отряд",
+    "Choose your starting site": "Выберите начальный город",
+    "Deploy a troop": "Разместите отряд",
+    "Devour this card?": "Поглотить эту карту?",
+    "You may devour a card in the market": "Вы можете поглотить карту рынка",
+    "Devour a card in the market": "Поглотите карту рынка",
+    "Devour a card (or skip)": "Поглотите карту (или пропустите)",
+    "Devour a card": "Поглотите карту",
+    "Discard a card": "Сбросьте карту",
+    "Choose an opponent to discard a card": "Выберите соперника, который сбросит карту",
+    "Put a card into your hand": "Возьмите карту в руку",
+    "Choose an opponent": "Выберите соперника",
+    "Move one of your troops": "Переместите свой отряд",
+    "Move a troop": "Переместите отряд",
+    "Move an enemy troop": "Переместите вражеский отряд",
+    "Move troop to": "Куда переместить отряд",
+    "You may replace one market card": "Вы можете заменить одну карту рынка",
+    "Place a spy": "Разместите шпиона",
+    "Play a card from the market": "Сыграйте карту рынка",
+    "Play a card from your inner circle": "Сыграйте карту Внутреннего круга",
+    "Promote a card": "Возвысьте карту",
+    "Recruit a card without paying its cost": "Наймите карту бесплатно",
+    "Discard a card to return Insane Outcast to the supply?": "Сбросить карту, чтобы вернуть Безумного изгоя в запас?",
+    "Return one of your troops": "Верните свой отряд",
+    "Return one of your spies": "Верните своего шпиона",
+    "Return a troop": "Верните отряд",
+    "Return a spy": "Верните шпиона",
+    "Return a troop or spy": "Верните отряд или шпиона",
+    "Take a troop from a trophy hall": "Заберите отряд из зала трофеев",
+    "Scry: discard a card from the top of your deck": "Прорицание: сбросьте верхнюю карту колоды",
+    "Supplant a troop": "Замените отряд",
+    "Choose a site: its whole hex is devoured and leaves the board": "Выберите город: весь его гекс поглощается и покидает доску",
+    "Thri-kreen Marauder keeps an ability for good:": "Мародёр три-крин навсегда сохраняет способность:",
+    "Play one of the top market cards for free": "Сыграйте бесплатно одну из верхних карт рынка",
+    "Place a spy on a market card": "Разместите шпиона на карте рынка",
+    "Put a card on top of your deck": "Положите карту на верх колоды",
+    "You may promote a market card for its cost": "Вы можете возвысить карту рынка, оплатив её стоимость",
+    "Copy a played card (cost 4 or less)": "Скопируйте сыгранную карту стоимостью не выше 4",
+    "Move an enemy spy": "Переместите вражеского шпиона",
+    "Move a spy": "Переместите шпиона",
+    "Move one of your spies": "Переместите своего шпиона",
+    "Move the spy to": "Куда переместить шпиона",
+    "Trigger the Devotion of a card you played this turn": "Активируйте Рвение карты, сыгранной в этот ход",
+    "Trigger the Devotion of another card you played this turn": "Активируйте Рвение другой карты, сыгранной в этот ход",
+    "Return a card from your inner circle to your hand": "Верните карту Внутреннего круга в руку",
+    "Put one card into your hand (the rest are discarded)": "Возьмите одну карту в руку, остальные сбросьте",
+    "Recruit one of the top devoured cards for free": "Наймите бесплатно одну из верхних поглощённых карт",
+    "You may devour a card from your hand or discard pile": "Вы можете поглотить карту руки или сброса",
+    "Choose an opponent to split your top 5 cards": "Выберите соперника, который разделит 5 верхних карт вашей колоды",
+    "Pick cards for the face-up pile (the rest stay face down), then stop": "Выберите карты для открытой стопки (остальные останутся закрытыми), затем остановитесь",
+    "Keep one pile in your hand, discard the other": "Возьмите одну стопку в руку, другую сбросьте",
+    "Choose the card that replaces the devoured one (the rest go to the bottom of the market deck)": "Выберите замену поглощённой карте; остальные положите под низ колоды рынка",
+    "Play a card from the devoured pile (it stays out of the game)": "Сыграйте поглощённую карту (она остаётся вне игры)",
+    "Choose an opponent: you look at the top 5 cards of their deck": "Выберите соперника: посмотрите 5 верхних карт его колоды",
+    "Lamia: put one pile back on top of your deck, the opponent plays the other": "Ламия: верните одну стопку на верх колоды; другую сыграет соперник",
+    "You may trigger the Frostbite of a card you played this turn": "Вы можете активировать Обморожение карты, сыгранной в этот ход",
+    "Remorhaz: keep a card hidden (you reveal 4 cards)": "Реморхаз: оставьте одну карту закрытой (покажите 4 карты)",
+    "Choose a revealed card: the opponent discards it": "Выберите открытую карту: соперник сбросит её",
+    "Discard any number of cards, then draw that many": "Сбросьте любое число карт, затем возьмите столько же",
+    "Choose a site with your troop": "Выберите город со своим отрядом",
+    "Put the revealed top card into your hand?": "Взять открытую верхнюю карту в руку?",
+    "Copy a card in the market": "Скопируйте карту рынка",
+    "Put a troop on a card in the market": "Поместите отряд на карту рынка",
+    "Put the revealed Living Gust of Wind into your hand?": "Взять открытый Живой порыв ветра в руку?",
+    "Put a card from your hand on top of your deck": "Положите карту руки на верх колоды",
+    "Promote a card in your hand": "Возвысьте карту руки",
+    "Discard a card to Retain Treefolk": "Сбросьте карту, чтобы удержать Энта",
+    "Retain a card you played this turn": "Удержите карту, сыгранную в этот ход",
+    "Look at whose hand?": "Чью руку посмотреть?",
+    "Return all enemy spies from a site": "Верните всех вражеских шпионов из города",
+    "Glamour: spend 1 VP?": "Чары: потратить 1 ПО?",
+    "Supplant that troop instead (your troop takes its place)?": "Заменить этот отряд (ваш отряд займёт его место)?",
+    "Spend 2 Influence to draw a card?": "Потратить 2 Влияния, чтобы взять карту?",
+    "Shuffle your discard pile into your deck?": "Замешать сброс в колоду?",
+    "Name a region": "Назовите регион",
+    "Retain the top card of your deck?": "Удержать верхнюю карту колоды?",
+    "Play this card, or Retain it?": "Сыграть эту карту или удержать её?",
+    "Name an Aspect:": "Назовите аспект:",
+    "Transform into Phase Spider?": "Превратиться в Фазового паука?",
+    "Transform into Drider?": "Превратиться в Драйдера?",
+    "Spend 1 Power to deploy 2 troops?": "Потратить 1 Силу, чтобы разместить 2 отряда?",
+    "Devotion: put Deva on top of your deck?": "Рвение: положить Дэву на верх колоды?",
+    "Convert Influence to Power?": "Преобразовать Влияние в Силу?",
+    "Move a troop?": "Переместить отряд?",
+    "Whose trophy hall?": "Чей зал трофеев?",
+    "Whose discard pile?": "Чей сброс?",
+    "Which card goes on top of your deck now?": "Какую карту положить на верх колоды сейчас?",
+    "Stop": "Остановиться",
+    "Done": "Готово",
+    "Keep": "Оставить",
+    "Play": "Сыграть",
+    "Retain": "Удержать",
+    "HAND": "В РУКУ",
+    "PROMOTE": "ВОЗВЫС.",
+    "TOP": "НАВЕРХ",
+    "BOTTOM": "ВНИЗ",
+    "DONE": "ГОТОВО",
+    "TOP: the left one ends up on top.": "НАВЕРХ: левая карта будет верхней.",
+    "Which pile goes back on your deck?": "Какую стопку вернуть на вашу колоду?",
+    "a card with \"Deploy\"": "карта со словом «Разместите»",
+    "a card that costs 3 or less": "карта стоимостью не выше 3",
+    "a card that costs 6 or more": "карта стоимостью не ниже 6",
+    "an even cost card": "карта с чётной стоимостью",
+    "an odd cost card": "карта с нечётной стоимостью",
+    "BACK ON\nMY DECK": "НА МОЮ\nКОЛОДУ",
+    "Glamour?": "Чары?",
+    "Promote Ambassador instead of discarding it?": "Возвысить Посла вместо сброса?",
+    "Put Pirate Captain on top of your deck?": "Положить Капитана пиратов на верх колоды?",
+    "Put an Insane Outcast into your hand to choose an effect?": "Взять Безумного изгоя в руку, чтобы выбрать эффект?",
+    "Put it on top of whose deck?": "На чью колоду положить карту?",
+    "Put the Insane Outcasts from your discard pile into your hand?": "Взять Безумных изгоев из сброса в руку?",
+    "Set aside a card that costs 5 or less: it is played at the start of each of your turns": "Отложите карту стоимостью не выше 5: она будет разыгрываться в начале каждого вашего хода",
+    "You may devour a card": "Вы можете поглотить карту",
+    "Promote one of these cards": "Возвысьте одну из этих карт",
+    "Bribe: give 1 VP to": "Подкуп: кому передать 1 ПО",
+    "Give a played card to an opponent": "Передайте сыгранную карту сопернику",
+    "Swap it with": "Поменяйте местами с",
+    "Swap 2 troops: pick the first": "Поменяйте местами 2 отряда: выберите первый",
+    "Promote one of the discarded cards": "Возвысьте одну из сброшенных карт",
+    "Choose a player: they place three 1 VP tokens for you": "Выберите игрока: он разместит для вас три жетона по 1 ПО",
+    "Put a card on the bottom of your deck (or keep the rest on top)": "Положите карту под низ колоды (или оставьте остальные наверху)"
+  },
+  "patterns": [
+    {
+      "source": "Click a card to move it to the other pile. %s returns one pile to their deck, you play the other.",
+      "regex": "^Click a card to move it to the other pile\\. (.+?) returns one pile to their deck, you play the other\\.$",
+      "target": "Нажмите на карту, чтобы перенести её в другую стопку. {v0} вернёт одну стопку в колоду, вы сыграете другую."
+    },
+    {
+      "source": "Return a card that costs %d or less from your discard pile to your hand",
+      "regex": "^Return a card that costs ([0-9]+) or less from your discard pile to your hand$",
+      "target": "Верните из сброса в руку карту стоимостью не выше {v0}"
+    },
+    {
+      "source": "Reveal %s to take the Insane Outcast into your hand and scry 1?",
+      "regex": "^Reveal (.+?) to take the Insane Outcast into your hand and scry 1\\?$",
+      "target": "Показать {v0}, чтобы взять Безумного изгоя в руку и совершить Прорицание 1?"
+    },
+    {
+      "source": "%s: one card that is %s. TOP: the left one ends up on top.",
+      "regex": "^(.+?): one card that is (.+?)\\. TOP: the left one ends up on top\\.$",
+      "target": "{v0}: одна карта ({v1}). НАВЕРХ: левая карта будет верхней."
+    },
+    {
+      "source": "Put a card that costs %d or less into your hand (%d left)",
+      "regex": "^Put a card that costs ([0-9]+) or less into your hand \\(([0-9]+) left\\)$",
+      "target": "Возьмите в руку карту стоимостью не выше {v0} (осталось: {v1})"
+    },
+    {
+      "source": "Place a 1 VP token for %s (%d left) at a site without one",
+      "regex": "^Place a 1 VP token for (.+?) \\(([0-9]+) left\\) at a site without one$",
+      "target": "Разместите жетон 1 ПО для {v0} (осталось: {v1}) в городе без такого жетона"
+    },
+    {
+      "source": "No card here is %s. TOP: the left one ends up on top.",
+      "regex": "^No card here is (.+?)\\. TOP: the left one ends up on top\\.$",
+      "target": "Нет подходящей карты ({v0}). НАВЕРХ: левая карта будет верхней."
+    },
+    {
+      "source": "Discard %s to stop %s? (deploy 4 troops, draw a card)",
+      "regex": "^Discard (.+?) to stop (.+?)\\? \\(deploy 4 troops, draw a card\\)$",
+      "target": "Сбросить {v0}, чтобы остановить {v1}? (разместите 4 отряда, возьмите карту)"
+    },
+    {
+      "source": "Discard %s to stop %s? (supplant one of their troops)",
+      "regex": "^Discard (.+?) to stop (.+?)\\? \\(supplant one of their troops\\)$",
+      "target": "Сбросить {v0}, чтобы остановить {v1}? (замените его отряд)"
+    },
+    {
+      "source": "Discard a card to draw a card (%d so far), or stop",
+      "regex": "^Discard a card to draw a card \\(([0-9]+) so far\\), or stop$",
+      "target": "Сбросьте карту, чтобы взять карту (уже: {v0}), или остановитесь"
+    },
+    {
+      "source": "Name a market card: %s can't recruit it this turn",
+      "regex": "^Name a market card: (.+?) can't recruit it this turn$",
+      "target": "Назовите карту рынка: {v0} не сможет нанять её в этот ход"
+    },
+    {
+      "source": "click a gold card in your %s, right of the hand",
+      "regex": "^click a gold card in your (.+?), right of the hand$",
+      "target": "нажмите на золотую карту ({v0}) справа от руки"
+    },
+    {
+      "source": "Move one of your troops to %s: choose the troop",
+      "regex": "^Move one of your troops to (.+?): choose the troop$",
+      "target": "Переместите свой отряд в {v0}: выберите отряд"
+    },
+    {
+      "source": "%s: one card. TOP: the left one ends up on top.",
+      "regex": "^(.+?): one card\\. TOP: the left one ends up on top\\.$",
+      "target": "{v0}: одна карта. НАВЕРХ: левая карта будет верхней."
+    },
+    {
+      "source": "You may discard a card in the market (%d left)",
+      "regex": "^You may discard a card in the market \\(([0-9]+) left\\)$",
+      "target": "Вы можете сбросить карту рынка (осталось: {v0})"
+    },
+    {
+      "source": "Discard a card to draw one later (up to %d)",
+      "regex": "^Discard a card to draw one later \\(up to ([0-9]+)\\)$",
+      "target": "Сбросьте карту, чтобы позже взять карту (не более {v0})"
+    },
+    {
+      "source": "Explore for %s: put a card into your hand",
+      "regex": "^Explore for (.+?): put a card into your hand$",
+      "target": "Исследуйте: возьмите подходящую карту ({v0}) в руку"
+    },
+    {
+      "source": "Discard another card, or stop to draw %d",
+      "regex": "^Discard another card, or stop to draw ([0-9]+)$",
+      "target": "Сбросьте ещё карту или остановитесь и возьмите {v0}"
+    },
+    {
+      "source": "%s: you may devour a card from your hand",
+      "regex": "^(.+?): you may devour a card from your hand$",
+      "target": "{v0}: вы можете поглотить карту руки"
+    },
+    {
+      "source": "Discard one of the drawn cards (%d left)",
+      "regex": "^Discard one of the drawn cards \\(([0-9]+) left\\)$",
+      "target": "Сбросьте одну из взятых карт (осталось: {v0})"
+    },
+    {
+      "source": "%s: you may devour a card in your hand",
+      "regex": "^(.+?): you may devour a card in your hand$",
+      "target": "{v0}: вы можете поглотить карту руки"
+    },
+    {
+      "source": "You may Retain another card (%d left)",
+      "regex": "^You may Retain another card \\(([0-9]+) left\\)$",
+      "target": "Вы можете удержать ещё карту (осталось: {v0})"
+    },
+    {
+      "source": "Bribe (give 1 VP to an opponent): %s?",
+      "regex": "^Bribe \\(give 1 VP to an opponent\\): (.+?)\\?$",
+      "target": "Подкуп (передайте сопернику 1 ПО): {v0}?"
+    },
+    {
+      "source": "Top 2 cards of %s deck: discard one?",
+      "regex": "^Top 2 cards of (.+?) deck: discard one\\?$",
+      "target": "Две верхние карты колоды ({v0}): сбросить одну?"
+    },
+    {
+      "source": "Devour %s from the top of your deck?",
+      "regex": "^Devour (.+?) from the top of your deck\\?$",
+      "target": "Поглотить {v0} с верха колоды?"
+    },
+    {
+      "source": "Discard %s to stop %s? (draw 2 cards)",
+      "regex": "^Discard (.+?) to stop (.+?)\\? \\(draw 2 cards\\)$",
+      "target": "Сбросить {v0}, чтобы остановить {v1}? (возьмите 2 карты)"
+    },
+    {
+      "source": "Promote %s instead of devouring it?",
+      "regex": "^Promote (.+?) instead of devouring it\\?$",
+      "target": "Возвысить {v0} вместо поглощения?"
+    },
+    {
+      "source": "Take a card from %s's discard pile",
+      "regex": "^Take a card from (.+?)'s discard pile$",
+      "target": "Возьмите карту из сброса ({v0})"
+    },
+    {
+      "source": "%s plays the other pile for free.",
+      "regex": "^(.+?) plays the other pile for free\\.$",
+      "target": "{v0} бесплатно сыграет другую стопку."
+    },
+    {
+      "source": "Reveal Hill Giant to prevent %s?",
+      "regex": "^Reveal Hill Giant to prevent (.+?)\\?$",
+      "target": "Показать Холмового великана, чтобы предотвратить {v0}?"
+    },
+    {
+      "source": "Promote one of the top %d cards:",
+      "regex": "^Promote one of the top ([0-9]+) cards:$",
+      "target": "Возвысьте одну из {v0} верхних карт:"
+    },
+    {
+      "source": "%s plays a card of your choice",
+      "regex": "^(.+?) plays a card of your choice$",
+      "target": "{v0} сыграет карту по вашему выбору"
+    },
+    {
+      "source": "%s: choose your starting site",
+      "regex": "^(.+?): choose your starting site$",
+      "target": "{v0}: выберите начальный город"
+    },
+    {
+      "source": "Put %s on top of your deck?",
+      "regex": "^Put (.+?) on top of your deck\\?$",
+      "target": "Положить {v0} на верх колоды?"
+    },
+    {
+      "source": "Explore the top %d cards:",
+      "regex": "^Explore the top ([0-9]+) cards:$",
+      "target": "Исследуйте {v0} верхних карт:"
+    },
+    {
+      "source": "Forced by %s: %s decides",
+      "regex": "^Forced by (.+?): (.+?) decides$",
+      "target": "По действию {v0}: {v1} выбирает"
+    },
+    {
+      "source": "%s (from Inner Circle)",
+      "regex": "^(.+?) \\(from Inner Circle\\)$",
+      "target": "{v0} (из Внутреннего круга)"
+    },
+    {
+      "source": "Split %s's top cards:",
+      "regex": "^Split (.+?)'s top cards:$",
+      "target": "Разделите верхние карты колоды ({v0}):"
+    },
+    {
+      "source": "Deploy the %s troop",
+      "regex": "^Deploy the (.+?) troop$",
+      "target": "Разместите отряд: {v0}"
+    },
+    {
+      "source": "%s: discard a card",
+      "regex": "^(.+?): discard a card$",
+      "target": "{v0}: сбросьте карту"
+    },
+    {
+      "source": "%s's hand (%d cards)",
+      "regex": "^(.+?)'s hand \\(([0-9]+) cards\\)$",
+      "target": "Рука {v0} (карт: {v1})"
+    },
+    {
+      "source": "Choose where at %s",
+      "regex": "^Choose where at (.+?)$",
+      "target": "Выберите место в {v0}"
+    },
+    {
+      "source": "Steal %d VP from",
+      "regex": "^Steal ([0-9]+) VP from$",
+      "target": "Украдите {v0} ПО у игрока"
+    },
+    {
+      "source": "Waiting for %s.",
+      "regex": "^Waiting for (.+?)\\.$",
+      "target": "Ожидание: {v0}."
+    },
+    {
+      "source": "Market slot %d",
+      "regex": "^Market slot ([0-9]+)$",
+      "target": "Место рынка {v0}"
+    },
+    {
+      "source": "FACE DOWN %d",
+      "regex": "^FACE DOWN ([0-9]+)$",
+      "target": "ЗАКРЫТО {v0}"
+    },
+    {
+      "source": "Tunnel (%s)",
+      "regex": "^Tunnel \\((.+?)\\)$",
+      "target": "Туннель ({v0})"
+    },
+    {
+      "source": "%s · space %d",
+      "regex": "^(.+?) · space ([0-9]+)$",
+      "target": "{v0} · место {v1}"
+    },
+    {
+      "source": "%s decides",
+      "regex": "^(.+?) decides$",
+      "target": "{v0} выбирает"
+    },
+    {
+      "source": "%s (%d left)",
+      "regex": "^(.+?) \\(([0-9]+) left\\)$",
+      "target": "{v0} (осталось: {v1})"
+    },
+    {
+      "source": "FACE UP %d",
+      "regex": "^FACE UP ([0-9]+)$",
+      "target": "ОТКРЫТО {v0}"
+    },
+    {
+      "source": "Option %d",
+      "regex": "^Option ([0-9]+)$",
+      "target": "Вариант {v0}"
+    },
+    {
+      "source": "Troop: %s",
+      "regex": "^Troop: (.+?)$",
+      "target": "Отряд: {v0}"
+    },
+    {
+      "source": "%s (%d of %d)",
+      "regex": "^(.+?) \\(([0-9]+) of ([0-9]+)\\)$",
+      "target": "{v0} ({v1} из {v2})"
+    },
+    {
+      "source": "Space %s",
+      "regex": "^Space (.+?)$",
+      "target": "Место {v0}"
+    },
+    {
+      "source": "%s spy: %s",
+      "regex": "^(.+?) spy: (.+?)$",
+      "target": "Шпион {v0}: {v1}"
+    },
+    {
+      "source": "%s (%d VP)",
+      "regex": "^(.+?) \\(([0-9]+) VP\\)$",
+      "target": "{v0} ({v1} ПО)"
+    },
+    {
+      "source": "Site %s",
+      "regex": "^Site (.+?)$",
+      "target": "Город {v0}"
+    },
+    {
+      "source": "%s (%d/%d):",
+      "regex": "^(.+?) \\(([0-9]+)/([0-9]+)\\):$",
+      "target": "{v0} ({v1}/{v2}):"
+    },
+    {
+      "source": "%s (%d/%d)",
+      "regex": "^(.+?) \\(([0-9]+)/([0-9]+)\\)$",
+      "target": "{v0} ({v1}/{v2})"
+    },
+    {
+      "source": "%s (%d)",
+      "regex": "^(.+?) \\(([0-9]+)\\)$",
+      "target": "{v0} ({v1})"
+    }
+  ]
+}

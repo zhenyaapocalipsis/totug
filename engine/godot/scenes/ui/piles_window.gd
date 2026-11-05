@@ -21,6 +21,9 @@ extends Control
 
 signal answered(answer: Variant)
 
+const DecisionText := preload("res://scenes/decision_text.gd")
+const L10n := preload("res://scenes/localization.gd")
+
 const CARD := CardView.MINI_SIZE
 const PLAN := "plan:"
 const GAP := 4
@@ -50,6 +53,7 @@ var _key := ""
 
 
 func _init() -> void:
+	L10n.events.changed.connect(func(): _fit_text.call_deferred())
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
@@ -105,7 +109,7 @@ func show_decision(pd: Dictionary, viewer_id: String) -> void:
 		return
 	_key = key
 	var decider := String(pd.get("player_id", viewer_id))
-	_who.text = "%s decides" % EventLogPanel.player_name(decider)
+	DecisionText.bind(_who, "%s decides" % EventLogPanel.player_name(decider))
 	_who.modulate = EventLogPanel.player_color(decider)
 	for child in _asker.get_children():
 		_asker.remove_child(child)
@@ -151,7 +155,7 @@ func _card(cid: String) -> CardView:
 ## Кнопка темы, как Show у полосы вопроса; on — выбранная (нажатая, золотая надпись).
 func _button(text: String, on: bool, action: Callable, width: float = BUTTON_W) -> Button:
 	var b := Button.new()
-	b.text = text
+	DecisionText.bind(b, text)
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size.x = width
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -167,8 +171,12 @@ func _button(text: String, on: bool, action: Callable, width: float = BUTTON_W) 
 ## Вопрос и подсказка в столбце шириной во всё, что не заняли карты (но
 ## TEXT_MIN..TEXT_MAX); не влезают в высоту карты — вопрос обычным шрифтом.
 func _set_text(title: String, hint: String) -> void:
-	_title.text = title
-	_hint.text = hint
+	DecisionText.bind(_title, title)
+	DecisionText.bind(_hint, hint)
+	_fit_text()
+
+
+func _fit_text() -> void:
 	var used := _body.get_combined_minimum_size().x + CARD.x * float(_asker.get_child_count()) \
 		+ DecisionDialog.HEAD_GAP * 2.0
 	var width := clampf(size.x - 4.0 - used, TEXT_MIN, TEXT_MAX) if size.x > 0.0 else TEXT_MAX
@@ -279,7 +287,9 @@ func _send_plan() -> void:
 func _pile(caption: String, cards: Array, backs: int, click: Callable) -> HBoxContainer:
 	var pile := HBoxContainer.new()
 	pile.add_theme_constant_override("separation", 2)
-	pile.add_child(VerticalLabel.new("%s %d" % [caption, cards.size() + backs]))
+	var label := VerticalLabel.new("%s %d" % [caption, cards.size() + backs])
+	pile.add_child(label)
+	DecisionText.bind(label, label.text)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 2 if cards.size() + backs < 3 else -int(CARD.x * 0.45))
 	row.custom_minimum_size = Vector2(CARD.x, CARD.y)
@@ -347,7 +357,10 @@ func _pick(i: int) -> void:
 
 ## Подпись стопки снизу вверх (повёрнута на 90°): узкая, не тратит ширину полосы.
 class VerticalLabel extends Control:
-	var text := ""
+	var text := "":
+		set(value):
+			text = value
+			queue_redraw()
 
 	func _init(value: String) -> void:
 		text = value
