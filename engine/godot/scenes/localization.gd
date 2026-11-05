@@ -68,7 +68,7 @@ static func _register_captions() -> void:
 		translation.locale = language
 		var translated := catalog(language)
 		for key: String in english:
-			if key.begins_with("setup.") or key.begins_with("profile.") or key.begins_with("lobby.caption."):
+			if key.begins_with("setup.") or key.begins_with("profile.") or key.begins_with("lobby.caption.") or key.begins_with("game.caption."):
 				translation.add_message(StringName(english[key]), StringName(translated.get(key, english[key])))
 		TranslationServer.get_or_add_domain(&"ui_captions").add_translation(translation)
 

@@ -29,6 +29,7 @@ const MAX_PLAYERS := 4
 ## командной строки, где нового имени ещё нет в кэше.
 const L10n := preload("res://scenes/localization.gd")
 const GameText := preload("res://scenes/game_text.gd")
+const NetworkText := preload("res://scenes/network_text.gd")
 
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
@@ -386,9 +387,9 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		net.player_rejoined.connect(func(who: String):
 			_note("%s is back." % EventLogPanel.player_name(who)))
 		net.connection_lost.connect(func(reason: String):
-			_note(reason + ".")
+			_note_toast.show_message({"l10n_key": "lobby.reason", "parameters": {"reason": NetworkText.message(reason)}})
 			_reconnect_banner.visible = true
-			_reconnect_status.text = reason + ".")
+			L10n.bind(_reconnect_status, "lobby.reason", {"reason": NetworkText.message(reason)}))
 		net.rating_changed.connect(func(result: Dictionary): _game_over_panel.set_ratings(result))
 		net.replay_received.connect(_on_replay_received)
 		net.pause_changed.connect(_on_pause_changed)
@@ -506,7 +507,7 @@ func _build_layout() -> void:
 	_pile_inner.clicked.connect(func(): _open_pile("inner"))
 	_piles_column.add_child(_pile_inner)
 	_pile_devour = PileZone.new("DEVOUR")
-	_pile_devour.tooltip_text = "Cards devoured out of the game. Click to see them all"
+	L10n.bind(_pile_devour, "game.pile_devoured_tip", {}, "tooltip_text")
 	_pile_devour.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_pile_devour.clicked.connect(func(): _open_pile("devour"))
 	_piles_column.add_child(_pile_devour)
@@ -520,7 +521,7 @@ func _build_layout() -> void:
 	_end_turn_button.pressed.connect(func(): _on_action_requested("end_turn"))
 	# Без фокуса: иначе после щелчка пробел жал бы кнопку сразу, мимо удержания.
 	_end_turn_button.focus_mode = Control.FOCUS_NONE
-	_end_turn_button.tooltip_text = "Click, or hold Space for 3 seconds, to end the turn"
+	L10n.bind(_end_turn_button, "game.end_tip", {}, "tooltip_text")
 	_end_turn_area.add_child(_end_turn_button)
 	_space_fill = ColorRect.new()
 	_space_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -530,6 +531,7 @@ func _build_layout() -> void:
 	# Подписи лежат ПОВЕРХ кнопки и не ловят мышь, поэтому щелчок по любой из
 	# них — это щелчок по кнопке.
 	_turn_label = Label.new()
+	L10n.scope(_turn_label)
 	_turn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_turn_label.clip_text = true
@@ -538,15 +540,18 @@ func _build_layout() -> void:
 	_turn_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_end_turn_area.add_child(_turn_chip)
 	_end_label = Label.new()
+	L10n.scope(_end_label)
 	_end_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.text = "END TURN"
 	_end_turn_area.add_child(_end_label)
 	_timer_label = Label.new()
+	L10n.scope(_timer_label)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_timer_label.tooltip_text = "Turn timer: when it runs out the turn ends by itself"
+	L10n.bind(_timer_label, "game.timer_tip", {}, "tooltip_text")
 	_end_turn_area.add_child(_timer_label)
 	_last_round_label = Label.new()
+	L10n.scope(_last_round_label)
 	_last_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_last_round_label.text = "LAST ROUND"
 	_last_round_label.visible = false
@@ -556,7 +561,7 @@ func _build_layout() -> void:
 	# Реплей ставят на паузу своей полосой, зрителю пауза не положена.
 	_pause_button.visible = replay_bar == null and not watching
 	_menu_button = _side_button("MENU", func(): _pause_menu.visible = true)
-	_menu_button.tooltip_text = "Menu (Esc)"
+	L10n.bind(_menu_button, "game.menu_tip", {}, "tooltip_text")
 
 	# 1. Рука — поверх остальных зон: поднятая, она накрывает зону сыгранных карт.
 	_hand_panel = HandPanel.new()
@@ -711,6 +716,7 @@ func _build_layout() -> void:
 	_reconnect_banner = PanelContainer.new()
 	_reconnect_banner.add_theme_stylebox_override("panel", zone_style(4))
 	_reconnect_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_reconnect_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_reconnect_banner.position.y = 30
 	_reconnect_banner.z_index = 1200
 	_reconnect_banner.visible = false
@@ -718,16 +724,18 @@ func _build_layout() -> void:
 	reconnect_row.add_theme_constant_override("separation", 6)
 	_reconnect_banner.add_child(reconnect_row)
 	_reconnect_status = Label.new()
+	_reconnect_status.custom_minimum_size.x = 300
+	_reconnect_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_reconnect_status.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	reconnect_row.add_child(_reconnect_status)
 	var reconnect_button := Button.new()
-	reconnect_button.text = "RECONNECT"
+	L10n.bind(reconnect_button, "game.reconnect")
 	reconnect_button.custom_minimum_size = Vector2(90, 16)
 	SetupScreen._style_button(reconnect_button)
 	reconnect_button.pressed.connect(func():
-		_reconnect_status.text = "Reconnecting..."
+		L10n.bind(_reconnect_status, "game.reconnecting")
 		if net.reconnect() != OK:
-			_reconnect_status.text = "Could not reconnect.")
+			L10n.bind(_reconnect_status, "game.reconnect_error"))
 	reconnect_row.add_child(reconnect_button)
 	add_child(_reconnect_banner)
 
@@ -762,7 +770,7 @@ func _build_pause_overlay() -> void:
 	col.add_theme_constant_override("separation", 4)
 	card.add_child(col)
 	var title := Label.new()
-	title.text = "GAME PAUSED"
+	L10n.bind(title, "game.paused")
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -775,7 +783,7 @@ func _build_pause_overlay() -> void:
 	_pause_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_pause_hint)
 	_pause_resume = Button.new()
-	_pause_resume.text = "RESUME"
+	L10n.bind(_pause_resume, "game.resume")
 	_pause_resume.custom_minimum_size = Vector2(90, 16)
 	_pause_resume.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	SetupScreen._style_button(_pause_resume)
@@ -794,7 +802,7 @@ func _on_pause_changed(status: Dictionary) -> void:
 	if paused and not was_paused and is_inside_tree():
 		_request_attention()
 	elif was_paused and not paused and not bool(_view.get("game_over", false)):
-		_note("The game goes on.")
+		_note_toast.show_message({"l10n_key": "game.goes_on"})
 	_rebuild_pause_lines()
 	_tick_pause(0.0)
 
@@ -814,22 +822,21 @@ func _rebuild_pause_lines() -> void:
 		child.queue_free()
 	var absent: Dictionary = _pause.get("absent", {})
 	for pid: String in absent:
-		_pause_lines.add_child(_pause_line(pid, "%s DISCONNECTED" % EventLogPanel.player_name(pid).to_upper()))
+		_pause_lines.add_child(_pause_line(pid, {"l10n_key": "game.disconnected", "parameters": {"name": GameText.player_message(pid, true)}}))
 	var by := String(_pause.get("by", ""))
 	if by != "":
-		var who := "YOU" if by == viewer_id and not watching else EventLogPanel.player_name(by).to_upper()
-		_pause_lines.add_child(_pause_line(by, "PAUSED BY %s" % who))
-	_pause_hint.text = "If they do not return in time, the game ends with the current score.\nRating does not change." \
-		if not absent.is_empty() else "The game goes on by itself when the time is up."
+		var who: Dictionary = {"l10n_key": "game.you_upper"} if by == viewer_id and not watching else GameText.player_message(by, true)
+		_pause_lines.add_child(_pause_line(by, {"l10n_key": "game.paused_by", "parameters": {"name": who}}))
+	L10n.bind(_pause_hint, "game.absent_hint" if not absent.is_empty() else "game.pause_hint")
 	_pause_resume.visible = by == viewer_id and absent.is_empty() and not watching
 
 
-func _pause_line(pid: String, text: String) -> HBoxContainer:
+func _pause_line(pid: String, message: Dictionary) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
 	var name_label := Label.new()
-	name_label.text = text
+	L10n.bind(name_label, message.l10n_key, message.get("parameters", {}))
 	name_label.add_theme_color_override("font_color", EventLogPanel.player_color(pid))
 	row.add_child(name_label)
 	var time_label := Label.new()
@@ -860,6 +867,7 @@ func _tick_pause(delta: float) -> void:
 ## Мелкая кнопка справа от End turn (PAUSE, MENU); место задаёт _layout.
 func _side_button(text: String, action: Callable) -> Button:
 	var button := Button.new()
+	L10n.scope(button)
 	button.text = text
 	button.focus_mode = Control.FOCUS_NONE
 	SetupScreen._style_button(button)
@@ -878,7 +886,7 @@ func _on_pause_pressed() -> void:
 	_pause_button.text = "RESUME" if _local_pause else "PAUSE"
 	_pause_button.add_theme_color_override("font_color",
 		PixelTheme.GOLD if _local_pause else PixelTheme.TEXT)
-	_note("Paused: timers and bots wait." if _local_pause else "Resumed.")
+	_note_toast.show_message({"l10n_key": "game.pause_note" if _local_pause else "game.resume_note"})
 
 
 func _square_button() -> Button:
@@ -2436,8 +2444,7 @@ func _refresh_turn(view: Dictionary) -> void:
 	_turn_label.text = ""
 	_turn_chip.visible = true
 	_turn_chip.color = EventLogPanel.player_color(current)
-	_end_turn_button.tooltip_text = "%s's turn. Click, or hold Space for 3 seconds, to end the turn" \
-		% EventLogPanel.player_name(current)
+	L10n.bind(_end_turn_button, "game.turn_tip", {"name": GameText.player_message(current)}, "tooltip_text")
 	# Сетевая партия, ход чужой: кого ждём — полоской, сама кнопка серая
 	# (решение владельца, 2026-09-27).
 	if replay_bar != null or watching:
@@ -2465,11 +2472,10 @@ func _announce_turn(view: Dictionary) -> void:
 		_banner_player = current
 		Sfx.reset_combo()
 		if net == null or watching or current == viewer_id:
-			var text := "YOUR TURN" if net != null and not watching \
-				else "%s'S TURN" % EventLogPanel.player_name(current).to_upper()
+			var message: Dictionary = {"l10n_key": "game.your_turn"} if net != null and not watching else {"l10n_key": "game.other_turn", "parameters": {"name": GameText.player_message(current, true)}}
 			# Отложенно: в самом первом срезе экран ещё не разложен, и центра
 			# доски пока нет.
-			_show_banner.call_deferred(text, EventLogPanel.player_color(current))
+			_show_banner_message.call_deferred(message, EventLogPanel.player_color(current))
 			Sfx.play("turn")
 			if not watching:
 				_request_attention()
@@ -2488,10 +2494,8 @@ func _announce_turn(view: Dictionary) -> void:
 	var forced := is_forced(view) and (net == null or watching or decider == viewer_id)
 	if forced and key != _attention_key:
 		Sfx.play("forced")
-		var by := EventLogPanel.player_name(current).to_upper()
-		var text := "FORCED BY %s" % by if net != null and not watching \
-			else "%s: FORCED BY %s" % [EventLogPanel.player_name(decider).to_upper(), by]
-		_show_banner.call_deferred(text, EventLogPanel.player_color(decider))
+		var message := {"l10n_key": "game.forced_by" if net != null and not watching else "game.forced_who", "parameters": {"by": GameText.player_message(current, true), "name": GameText.player_message(decider, true)}}
+		_show_banner_message.call_deferred(message, EventLogPanel.player_color(decider))
 	_forced_glow.set_active(forced, EventLogPanel.player_color(decider))
 	_attention_key = key
 
@@ -2648,8 +2652,7 @@ func _refresh_piles(view: Dictionary) -> void:
 	# карта золотая.
 	var ghost_on := String(view.get("ghost_market_card", "")) != ""
 	_pile_devour.set_hint(ghost_on)
-	_pile_devour.tooltip_text = "Click: the top devoured card (gold) can be recruited this turn" if ghost_on \
-		else "Cards devoured out of the game. Click to see them all"
+	L10n.bind(_pile_devour, "game.pile_offer_tip" if ghost_on else "game.pile_devoured_tip", {}, "tooltip_text")
 
 
 ## Щелчок по стопке — весь её список поверх экрана.
@@ -2659,7 +2662,7 @@ func _open_pile(which: String) -> void:
 	var who := EventLogPanel.player_name(viewer_id)
 	match which:
 		"inner":
-			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []), viewer_id)
+			_pile_dialog.open_pile("%s — Inner Circle" % who, me.get("inner_circle", []), viewer_id, "", false, {"l10n_key": "game.pile_inner_title", "parameters": {"name": GameText.player_message(viewer_id)}})
 		"devour":
 			# Верхнюю сожранную можно купить (Ghost) — или ею ответить на
 			# вопрос карты о рынке, если она среди вариантов.
@@ -2669,7 +2672,7 @@ func _open_pile(which: String) -> void:
 			var can_buy: bool = options.has(Market.DEVOURED_TOP_INDEX) if _ghost_choice \
 				else ((view.get("legal", {}) as Dictionary).get("recruit_market", []) as Array).has(Market.DEVOURED_TOP_INDEX)
 			_pile_dialog.open_pile("Devoured cards", view.get("devoured_pile", []), "",
-				String(view.get("ghost_market_card", "")), can_buy)
+				String(view.get("ghost_market_card", "")), can_buy, {"l10n_key": "game.pile_devoured_title"})
 
 
 func _refresh_actions(view: Dictionary) -> void:
@@ -2923,3 +2926,7 @@ func _refresh_resource_language() -> void:
 		return
 	_res_title.text = "%s:" % GameText.player_name(String(_view.get("current_player", ""))).to_upper()
 	_place_res_frame()
+
+
+func _show_banner_message(message: Dictionary, colour: Color) -> void:
+	_turn_banner.show_message(message, colour, Rect2(_board_area.position, _board_area.size))

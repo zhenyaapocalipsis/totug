@@ -6,6 +6,10 @@ extends PanelContainer
 ## и Devoured просто кнопками одна под другой). По щелчку открывается весь
 ## список карт стопки (PileDialog).
 
+const L10n := preload("res://scenes/localization.gd")
+
+const CAPTION_KEYS := {"INNER": "game.pile_inner_short", "DEVOUR": "game.pile_devour_short"}
+
 signal clicked
 
 var _caption: Label
@@ -21,7 +25,7 @@ func _init(caption: String = "") -> void:
 	add_theme_stylebox_override("panel", _style)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	tooltip_text = "Click to see every card in this pile"
+	L10n.bind(self, "game.pile_inner_tip" if caption == "INNER" else "game.pile_click", {}, "tooltip_text")
 	mouse_entered.connect(func(): add_theme_stylebox_override("panel", _hover_style))
 	mouse_exited.connect(func(): add_theme_stylebox_override("panel", _style))
 
@@ -30,7 +34,10 @@ func _init(caption: String = "") -> void:
 	row.add_theme_constant_override("separation", 2)
 	add_child(row)
 	_caption = Label.new()
-	_caption.text = caption
+	if CAPTION_KEYS.has(caption):
+		L10n.bind(_caption, CAPTION_KEYS[caption])
+	else:
+		_caption.text = caption
 	_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

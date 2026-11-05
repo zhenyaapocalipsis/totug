@@ -7,6 +7,8 @@ extends PanelContainer
 ## 2026-09-27) — теперь строка всплывает на пару секунд и гаснет. Новая
 ## подсказка сразу заменяет старую. Мышь не ловит.
 
+const L10n := preload("res://scenes/localization.gd")
+
 const HOLD_TIME := 2.6
 const OUT_TIME := 0.4
 ## Зазор до плашки счётчиков.
@@ -18,12 +20,14 @@ var above: Control
 ## Полоса вопроса над счётчиками: когда она видна, подсказка встаёт над ней.
 var dialog: DecisionDialog
 
+var _message: Dictionary = {}
 var _label: Label
 var _tween: Tween
 var _text := ""
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_refresh_language)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Над баннером хода (960), под диалогами (999+).
@@ -36,6 +40,16 @@ func _init() -> void:
 
 
 func show_note(text: String) -> void:
+	_message = {}
+	_show_text(text)
+
+
+func show_message(message: Dictionary) -> void:
+	_message = message.duplicate(true)
+	_show_text(L10n.text(message.l10n_key, message.get("parameters", {})))
+
+
+func _show_text(text: String) -> void:
 	_text = text
 	_label.text = text
 	if _tween != null:
@@ -52,7 +66,7 @@ func show_note(text: String) -> void:
 ## Одна строка, если влезает в ширину доски; длинная переносится.
 ## Переносим сами, по словам: автоперенос Label в скрытой плашке считал строки
 ## по старой узкой ширине — по слову на строку, и плашка вырастала на весь экран.
-func _place() -> void:
+func _place(reset_visibility: bool = true) -> void:
 	if area == null:
 		return
 	var rect := Rect2(area.position, area.size)
@@ -65,8 +79,9 @@ func _place() -> void:
 	if dialog != null and dialog.visible and dialog.at_top:
 		bottom = minf(bottom, rect.position.y + dialog.position.y)
 	position = Vector2(rect.position.x + (rect.size.x - box.x) * 0.5, bottom - GAP - box.y).round()
-	modulate.a = 1.0
-	visible = true
+	if reset_visibility:
+		modulate.a = 1.0
+		visible = true
 
 
 ## Разбивает текст на строки не шире room (слово длиннее строки — отдельной строкой).
@@ -90,3 +105,11 @@ func _wrap(text: String, room: float) -> String:
 ## Для проверок: текст последней подсказки (без переносов строк).
 func last_text() -> String:
 	return _text
+
+
+func _refresh_language() -> void:
+	if _message.is_empty():
+		return
+	_text = L10n.text(_message.l10n_key, _message.get("parameters", {}))
+	if visible:
+		_place.call_deferred(false)

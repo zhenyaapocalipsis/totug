@@ -12,6 +12,8 @@ extends Control
 ## — полоски тоньше. Разделитель «DISCARD» плавает: стоит сразу под колодой.
 ## Каждая копия карты — своя ступенька (решение владельца).
 
+const L10n := preload("res://scenes/localization.gd")
+
 const CARD := Vector2i(CardView.MINI_SIZE)
 const PAD := 1
 ## Шаг, когда место есть: карты целиком и промежуток как на рынке.
@@ -55,13 +57,15 @@ func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_spine = SpineLabel.new("DECKTRACKER")
 	add_child(_spine)
-	_deck_label = _band("DECK", DECK_BAND)
+	L10n.bind(_spine, "game.decktracker")
+	L10n.events.changed.connect(_spine.queue_redraw)
+	_deck_label = _band("game.deck", DECK_BAND)
 	_deck_count = _band_count(_deck_label)
 	_divider = ColorRect.new()
 	_divider.color = PixelTheme.TEXT_DIM
 	_divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_divider)
-	_discard_label = _band("DISCARD", DISCARD_BAND)
+	_discard_label = _band("game.discard", DISCARD_BAND)
 	_discard_count = _band_count(_discard_label)
 	resized.connect(_arrange)
 
@@ -69,7 +73,7 @@ func _init() -> void:
 ## Полоса заголовка части: тёмное слово на полосе цвета части.
 func _band(text: String, colour: Color) -> Label:
 	var label := Label.new()
-	label.text = text
+	L10n.bind(label, text)
 	label.clip_text = true
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_color_override("font_color", PixelTheme.BG)

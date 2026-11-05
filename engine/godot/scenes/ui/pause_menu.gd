@@ -11,7 +11,7 @@ signal bug_report_requested
 
 const L10n := preload("res://scenes/localization.gd")
 const TEXT_KEYS := {"MENU": "menu.title", "RESUME": "menu.resume", "SETTINGS": "menu.settings",
-	"BUG REPORT": "menu.bug_report", "MAIN MENU": "menu.main_menu", "QUIT GAME": "menu.quit_game", "BACK": "menu.back"}
+	"BUG REPORT": "menu.bug_report", "MAIN MENU": "menu.main_menu", "QUIT GAME": "menu.quit_game", "BACK": "menu.back", "PAUSE FOR ALL": "game.pause_all"}
 
 const BUTTON_SIZE := Vector2(110, 16)
 const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")

@@ -9,6 +9,9 @@ extends Control
 ## Щелчок по карте, которую можно купить (open_pile offer).
 signal offer_pressed(card_id: String)
 
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+
 const CARD_SIZE := CardView.MINI_SIZE   # мелкое лицо карты, пиксель в пиксель
 const PANEL_MAX := Vector2(600, 330)
 
@@ -65,7 +68,7 @@ func _init() -> void:
 	_scroll.add_child(_grid)
 
 	var close := Button.new()
-	close.text = "Close"
+	L10n.bind(close, "game.close_pile")
 	close.pressed.connect(close_pile)
 	DecisionDialog.make_plain(close)
 	col.add_child(close)
@@ -75,10 +78,11 @@ func _init() -> void:
 ## offer — карта стопки, которую сейчас можно купить (верхняя съеденная: Ghost,
 ## Relentless Nightmare — владелец, 2026-11-03): она первой в окне, золотая, и
 ## щелчок по ней — offer_pressed; can_buy=false — подсвечена, но не хватает.
-func open_pile(title: String, ids: Array, owner: String = "", offer: String = "", can_buy: bool = false) -> void:
-	_title.text = "%s — %d card%s" % [title, ids.size(), "" if ids.size() == 1 else "s"]
+func open_pile(title: String, ids: Array, owner: String = "", offer: String = "", can_buy: bool = false, title_message: Dictionary = {}) -> void:
+	var caption: Dictionary = title_message if not title_message.is_empty() else {"l10n_key": "lobby.raw", "parameters": {"value": title}}
+	var offered := offer != "" and ids.has(offer)
+	L10n.bind(_title, "game.pile_title", {"title": caption, "cards": GameText.card_count_message(ids.size()), "offer": {"l10n_key": "game.pile_offer"} if offered else ""})
 	if offer != "" and ids.has(offer):
-		_title.text += "\nGold card: you may recruit it this turn"
 		ids = ids.duplicate()
 		ids.remove_at(ids.rfind(offer))
 		ids.push_front(offer)
@@ -116,7 +120,7 @@ func open_pile(title: String, ids: Array, owner: String = "", offer: String = ""
 		_grid.add_child(card)
 	if ids.is_empty():
 		var empty := Label.new()
-		empty.text = "This pile is empty."
+		L10n.bind(empty, "game.pile_empty")
 		empty.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		_grid.add_child(empty)
 	visible = true
