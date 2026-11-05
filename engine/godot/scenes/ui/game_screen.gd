@@ -1365,7 +1365,7 @@ func _god_board_click(slot_id: String, site_id: String, spy_owner: String = "") 
 
 ## Подсказка или отказ — всплывающей строкой над счётчиками Power/Influence.
 func _note(text: String) -> void:
-	_note_toast.show_note(text)
+	_note_toast.show_source(text)
 
 
 ## Отказ: та же строка, но с глухим «бзз».

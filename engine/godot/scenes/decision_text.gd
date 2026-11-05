@@ -15,6 +15,12 @@ static func _load() -> void:
 		return
 	var file := FileAccess.open("res://data/localization/decisions_ru.json", FileAccess.READ)
 	_data = JSON.parse_string(file.get_as_text())
+	# Prefer a known literal prefix over a generic leading placeholder.
+	_data.patterns.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var ap := not String(a.source).begins_with("%")
+		var bp := not String(b.source).begins_with("%")
+		if ap != bp: return ap
+		return String(a.source).replace("%s", "").replace("%d", "").length() > String(b.source).replace("%s", "").replace("%d", "").length())
 	for entry: Dictionary in _data.patterns:
 		_patterns.append([RegEx.create_from_string(entry.regex), entry.target])
 	for cid: String in CardLibrary.all_ids():
@@ -44,11 +50,6 @@ static func text(source: String, depth: int = 0) -> String:
 		if source == EventLogPanel.player_name(pid).to_upper():
 			var message := Players.player_message(pid, true)
 			return L10n.text(message.l10n_key, message.get("parameters", {}))
-	if source.contains(" — "):
-		var parts := source.split(" — ")
-		for i in parts.size():
-			parts[i] = text(parts[i], depth + 1)
-		return " — ".join(parts)
 	for entry: Array in _patterns:
 		var found: RegExMatch = entry[0].search(source)
 		if found == null:
@@ -57,6 +58,11 @@ static func text(source: String, depth: int = 0) -> String:
 		for i in range(1, found.get_group_count() + 1):
 			values["v%d" % (i - 1)] = text(found.get_string(i), depth + 1)
 		return String(entry[1]).format(values)
+	if source.contains(" — "):
+		var parts := source.split(" — ")
+		for i in parts.size():
+			parts[i] = text(parts[i], depth + 1)
+		return " — ".join(parts)
 	return source
 
 class BoundText extends Node:

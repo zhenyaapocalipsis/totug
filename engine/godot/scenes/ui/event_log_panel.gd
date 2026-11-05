@@ -5,9 +5,13 @@ extends PanelContainer
 ## Перевод типов событий в текст живёт здесь, а не в движке: движок пишет
 ## машинные события ({"type": "assassinate", ...}), интерфейс их переводит.
 ##
-## Этап 3: строки на английском, имя игрока окрашено в его цвет, вместо id
+## Строки на выбранном языке, имя игрока окрашено в его цвет, вместо id
 ## слотов ("c_n1:C4_3_1") — названия локаций, начало каждого хода отделено
 ## заметной строкой.
+
+const L10n := preload("res://scenes/localization.gd")
+const EventText := preload("res://scenes/event_text.gd")
+const GameText := preload("res://scenes/game_text.gd")
 
 const MAX_LINES := 300
 
@@ -25,8 +29,8 @@ const FRESH_BG := "#2a1e4d"
 var board: Dictionary = {}
 
 var _text: RichTextLabel
-var _lines: Array[String] = []
-var _queue: Array[String] = []   # строки, ждущие своей очереди
+var _lines: Array[Dictionary] = []
+var _queue: Array[Dictionary] = []   # строки, ждущие своей очереди
 var _next_in := 0.0
 var _fresh_left := 0.0
 var _fresh_index := -1
@@ -35,6 +39,7 @@ var _fresh_index := -1
 ## Журнал живёт вкладкой в зоне чата (chat_panel.gd), поэтому своей рамки и
 ## заголовка у него нет.
 func _init() -> void:
+	L10n.events.changed.connect(_locale_changed)
 	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
 	_text = RichTextLabel.new()
@@ -47,29 +52,45 @@ func _init() -> void:
 
 
 func add_events(events: Array) -> void:
-	for e in events:
-		var evt: Dictionary = e
-		var who := String(evt.get("player_id", ""))
-		var line := describe(evt, board)
-		# Имя игрока в начале строки красим в его цвет — так видно, чьё это
-		# действие, не вчитываясь.
-		var pname := player_name(who)
-		if who != "" and line.begins_with(pname):
-			line = "[b][color=%s]%s[/color][/b]%s" % [
-				player_color(who).to_html(false), pname, _escape(line.substr(pname.length()))]
-		else:
-			line = _escape(line)
-		_queue.append(line)
-		if String(evt.get("type", "")) == "turn_ended" and not bool(evt.get("game_over", false)):
-			# Только дефисы: рамочных символов (─) в пиксельном шрифте нет,
-			# вместо них рисовались пустые квадратики.
-			_queue.append("[color=#8a8a95]------------[/color]")
+	for e: Dictionary in events:
+		_queue.append({"event": e.duplicate(true)})
+		if String(e.get("type", "")) == "turn_ended" and not bool(e.get("game_over", false)):
+			_queue.append({"separator": true})
 	_start_queue()
 
 
 func add_note(text: String) -> void:
-	_queue.append("[i][color=#c8b98a]%s[/color][/i]" % _escape(text))
+	_queue.append({"note": text})
 	_start_queue()
+
+
+func _render(entry: Dictionary) -> String:
+	if entry.has("separator"):
+		return "[color=#8a8a95]------------[/color]"
+	if entry.has("note"):
+		return "[i][color=#c8b98a]%s[/color][/i]" % _escape(String(entry.note))
+	var event: Dictionary = entry.event
+	var who := String(event.get("player_id", ""))
+	var line := EventText.describe(event, board)
+	var pname := GameText.player_name(who)
+	if who != "" and line.begins_with(pname):
+		return "[b][color=%s]%s[/color][/b]%s" % [
+			player_color(who).to_html(false), _escape(pname), _escape(line.substr(pname.length()))]
+	return _escape(line)
+
+
+func _locale_changed() -> void:
+	var scroll := _text.get_v_scroll_bar()
+	var value := scroll.value
+	var following := _text.scroll_following
+	_text.scroll_following = false
+	_trim_and_show()
+	_restore_scroll.call_deferred(value, following)
+
+
+func _restore_scroll(value: float, following: bool) -> void:
+	_text.get_v_scroll_bar().value = value
+	_text.scroll_following = following
 
 
 ## Очередь длиннее разумного выводится сразу до остатка в QUEUE_LIMIT строк.
@@ -113,7 +134,9 @@ func _trim_and_show() -> void:
 		_lines = _lines.slice(cut)
 		if _fresh_index >= 0:
 			_fresh_index -= cut
-	var shown := _lines.duplicate()
+	var shown: Array[String] = []
+	for entry: Dictionary in _lines:
+		shown.append(_render(entry))
 	if _fresh_index >= 0 and _fresh_index < shown.size():
 		shown[_fresh_index] = "[bgcolor=%s]%s[/bgcolor]" % [FRESH_BG, shown[_fresh_index]]
 	_text.text = "\n".join(shown)

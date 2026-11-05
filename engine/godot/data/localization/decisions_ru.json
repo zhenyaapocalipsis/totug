@@ -121,7 +121,7 @@
     "DONE": "ГОТОВО",
     "TOP: the left one ends up on top.": "НАВЕРХ: левая карта будет верхней.",
     "Which pile goes back on your deck?": "Какую стопку вернуть на вашу колоду?",
-    "a card with \"Deploy\"": "карта со словом «Разместите»",
+    "a card with \"Deploy\"": "карта со словом \"Разместите\"",
     "a card that costs 3 or less": "карта стоимостью не выше 3",
     "a card that costs 6 or more": "карта стоимостью не ниже 6",
     "an even cost card": "карта с чётной стоимостью",
@@ -142,13 +142,44 @@
     "Swap 2 troops: pick the first": "Поменяйте местами 2 отряда: выберите первый",
     "Promote one of the discarded cards": "Возвысьте одну из сброшенных карт",
     "Choose a player: they place three 1 VP tokens for you": "Выберите игрока: он разместит для вас три жетона по 1 ПО",
-    "Put a card on the bottom of your deck (or keep the rest on top)": "Положите карту под низ колоды (или оставьте остальные наверху)"
+    "Put a card on the bottom of your deck (or keep the rest on top)": "Положите карту под низ колоды (или оставьте остальные наверху)",
+    "Replay. Space: play or pause, arrows: step, Shift+arrows: turn.": "Повтор. Пробел: запуск или пауза; стрелки: шаг; Shift+стрелки: ход.",
+    "God mode: no turn timer. G hides the god panel.": "Режим бога: без таймера хода. G скрывает панель.",
+    "Click a troop space": "Нажмите на место для отряда",
+    "Click a site": "Нажмите на локацию",
+    "Nothing to remove here": "Здесь нечего убрать",
+    "it is not your turn": "сейчас не ваш ход",
+    "answer the card's question first": "сначала ответьте на вопрос карты",
+    "there is no question to answer": "нет вопроса для ответа",
+    "this action is not legal right now": "сейчас это действие недоступно",
+    "the game is over": "игра окончена",
+    "the game is paused": "игра на паузе",
+    "Time is up — the market is kept.": "Время вышло — рынок остаётся прежним.",
+    "Time is up — a starting site was chosen automatically.": "Время вышло — начальная локация выбрана автоматически.",
+    "Time is up — the turn ends automatically.": "Время вышло — ход завершается автоматически.",
+    "Time is up — an answer was chosen automatically.": "Время вышло — ответ выбран автоматически.",
+    "That is not a valid target — valid targets have gold rings.": "Недопустимая цель — доступные цели обведены золотым.",
+    "Click the spy itself to return it": "Чтобы вернуть шпиона, нажмите на самого шпиона",
+    "Tunnel": "Туннель",
+    "a card": "карта",
+    "the assassination": "уничтожение",
+    "the supplant": "замену",
+    "the move": "перемещение",
+    "the return": "возвращение",
+    "the spy's return": "возвращение шпиона",
+    "it": "эффект",
+    "discarding": "сброс"
   },
   "patterns": [
     {
       "source": "Click a card to move it to the other pile. %s returns one pile to their deck, you play the other.",
       "regex": "^Click a card to move it to the other pile\\. (.+?) returns one pile to their deck, you play the other\\.$",
       "target": "Нажмите на карту, чтобы перенести её в другую стопку. {v0} вернёт одну стопку в колоду, вы сыграете другую."
+    },
+    {
+      "source": "%s: no Presence. You can only deploy next to your troops or at a site with your spy",
+      "regex": "^(.+?): no Presence\\. You can only deploy next to your troops or at a site with your spy$",
+      "target": "{v0}: нет Присутствия. Размещайте рядом со своими отрядами или в локации со своим шпионом"
     },
     {
       "source": "Return a card that costs %d or less from your discard pile to your hand",
@@ -159,6 +190,11 @@
       "source": "Reveal %s to take the Insane Outcast into your hand and scry 1?",
       "regex": "^Reveal (.+?) to take the Insane Outcast into your hand and scry 1\\?$",
       "target": "Показать {v0}, чтобы взять Безумного изгоя в руку и совершить Предвидение 1?"
+    },
+    {
+      "source": "%s: your barracks are empty — use the \"Deploy for 1 VP\" button",
+      "regex": "^(.+?): your barracks are empty — use the \"Deploy for 1 VP\" button$",
+      "target": "{v0}: казармы пусты — используйте кнопку \"Разместить за 1 ПО\""
     },
     {
       "source": "%s: one card that is %s. TOP: the left one ends up on top.",
@@ -176,9 +212,19 @@
       "target": "Разместите жетон 1 ПО для {v0} (осталось: {v1}) в локации без такого жетона"
     },
     {
+      "source": "Watching %s. One turn behind, hands hidden. Esc: leave.",
+      "regex": "^Watching (.+?)\\. One turn behind, hands hidden\\. Esc: leave\\.$",
+      "target": "Наблюдение за {v0}. Отставание на ход, руки скрыты. Esc: выйти."
+    },
+    {
       "source": "No card here is %s. TOP: the left one ends up on top.",
       "regex": "^No card here is (.+?)\\. TOP: the left one ends up on top\\.$",
       "target": "Нет подходящей карты ({v0}). НАВЕРХ: левая карта будет верхней."
+    },
+    {
+      "source": "%s: not enough Power (Assassinate costs 3, you have %d)",
+      "regex": "^(.+?): not enough Power \\(Assassinate costs 3, you have ([0-9]+)\\)$",
+      "target": "{v0}: не хватает Силы (уничтожение стоит 3, у вас {v1})"
     },
     {
       "source": "Discard %s to stop %s? (deploy 4 troops, draw a card)",
@@ -251,6 +297,11 @@
       "target": "{v0}: вы можете поглотить карту руки"
     },
     {
+      "source": "%s: you have no Presence at this troop",
+      "regex": "^(.+?): you have no Presence at this troop$",
+      "target": "{v0}: у вас нет Присутствия рядом с этим отрядом"
+    },
+    {
       "source": "You may Retain another card (%d left)",
       "regex": "^You may Retain another card \\(([0-9]+) left\\)$",
       "target": "Вы можете удержать ещё карту (осталось: {v0})"
@@ -259,6 +310,11 @@
       "source": "Bribe (give 1 VP to an opponent): %s?",
       "regex": "^Bribe \\(give 1 VP to an opponent\\): (.+?)\\?$",
       "target": "Подкуп (передайте сопернику 1 ПО): {v0}?"
+    },
+    {
+      "source": "%s: not enough Power (Deploy costs 1)",
+      "regex": "^(.+?): not enough Power \\(Deploy costs 1\\)$",
+      "target": "{v0}: не хватает Силы (размещение стоит 1)"
     },
     {
       "source": "Top 2 cards of %s deck: discard one?",
@@ -291,6 +347,11 @@
       "target": "{v0} бесплатно сыграет другую стопку."
     },
     {
+      "source": "Online game started. You play %s.",
+      "regex": "^Online game started\\. You play (.+?)\\.$",
+      "target": "Сетевая игра началась. Ваш игрок: {v0}."
+    },
+    {
       "source": "Reveal Hill Giant to prevent %s?",
       "regex": "^Reveal Hill Giant to prevent (.+?)\\?$",
       "target": "Показать Холмового великана, чтобы предотвратить {v0}?"
@@ -306,6 +367,11 @@
       "target": "{v0} сыграет карту по вашему выбору"
     },
     {
+      "source": "%s: your troop is already here",
+      "regex": "^(.+?): your troop is already here$",
+      "target": "{v0}: здесь уже стоит ваш отряд"
+    },
+    {
       "source": "%s: choose your starting site",
       "regex": "^(.+?): choose your starting site$",
       "target": "{v0}: выберите начальную локацию"
@@ -316,9 +382,24 @@
       "target": "Положить {v0} на верх колоды?"
     },
     {
+      "source": "discarding down to %d cards",
+      "regex": "^discarding down to ([0-9]+) cards$",
+      "target": "сброс до {v0} карт"
+    },
+    {
       "source": "Explore the top %d cards:",
       "regex": "^Explore the top ([0-9]+) cards:$",
       "target": "Исследование (карт: {v0})"
+    },
+    {
+      "source": "%s's hand. %s: your hand.",
+      "regex": "^(.+?)'s hand\\. (.+?): your hand\\.$",
+      "target": "Рука игрока {v0}. {v1}: ваша рука."
+    },
+    {
+      "source": "%s: it is not your turn",
+      "regex": "^(.+?): it is not your turn$",
+      "target": "{v0}: сейчас не ваш ход"
     },
     {
       "source": "Forced by %s: %s decides",
@@ -331,9 +412,19 @@
       "target": "{v0} (из Внутреннего круга)"
     },
     {
+      "source": "%s: nothing to do here",
+      "regex": "^(.+?): nothing to do here$",
+      "target": "{v0}: здесь нет доступных действий"
+    },
+    {
       "source": "Split %s's top cards:",
       "regex": "^Split (.+?)'s top cards:$",
       "target": "Разделите верхние карты колоды ({v0}):"
+    },
+    {
+      "source": "%s has disconnected.",
+      "regex": "^(.+?) has disconnected\\.$",
+      "target": "{v0} отключился."
     },
     {
       "source": "Deploy the %s troop",
@@ -366,6 +457,11 @@
       "target": "Ожидание: {v0}."
     },
     {
+      "source": "Not allowed: %s",
+      "regex": "^Not allowed: (.+?)$",
+      "target": "Действие недоступно: {v0}"
+    },
+    {
       "source": "Market slot %d",
       "regex": "^Market slot ([0-9]+)$",
       "target": "Место рынка {v0}"
@@ -386,6 +482,11 @@
       "target": "{v0} · место {v1}"
     },
     {
+      "source": "%s is back.",
+      "regex": "^(.+?) is back\\.$",
+      "target": "{v0} вернулся."
+    },
+    {
       "source": "%s decides",
       "regex": "^(.+?) decides$",
       "target": "{v0} выбирает"
@@ -399,6 +500,11 @@
       "source": "FACE UP %d",
       "regex": "^FACE UP ([0-9]+)$",
       "target": "ОТКРЫТО {v0}"
+    },
+    {
+      "source": "%s, space %d",
+      "regex": "^(.+?), space ([0-9]+)$",
+      "target": "{v0}, место {v1}"
     },
     {
       "source": "Option %d",
@@ -429,6 +535,11 @@
       "source": "%s (%d VP)",
       "regex": "^(.+?) \\(([0-9]+) VP\\)$",
       "target": "{v0} ({v1} ПО)"
+    },
+    {
+      "source": "error %d",
+      "regex": "^error ([0-9]+)$",
+      "target": "ошибка {v0}"
     },
     {
       "source": "Site %s",

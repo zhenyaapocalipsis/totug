@@ -7,6 +7,7 @@ extends PanelContainer
 ## 2026-09-27) — теперь строка всплывает на пару секунд и гаснет. Новая
 ## подсказка сразу заменяет старую. Мышь не ловит.
 
+const DecisionText := preload("res://scenes/decision_text.gd")
 const L10n := preload("res://scenes/localization.gd")
 
 const HOLD_TIME := 2.6
@@ -20,6 +21,7 @@ var above: Control
 ## Полоса вопроса над счётчиками: когда она видна, подсказка встаёт над ней.
 var dialog: DecisionDialog
 
+var _source := ""
 var _message: Dictionary = {}
 var _label: Label
 var _tween: Tween
@@ -40,13 +42,21 @@ func _init() -> void:
 
 
 func show_note(text: String) -> void:
+	_source = ""
 	_message = {}
 	_show_text(text)
 
 
 func show_message(message: Dictionary) -> void:
+	_source = ""
 	_message = message.duplicate(true)
 	_show_text(L10n.text(message.l10n_key, message.get("parameters", {})))
+
+
+func show_source(source: String) -> void:
+	_message = {}
+	_source = source
+	_show_text(DecisionText.text(source))
 
 
 func _show_text(text: String) -> void:
@@ -108,8 +118,11 @@ func last_text() -> String:
 
 
 func _refresh_language() -> void:
-	if _message.is_empty():
+	if _source != "":
+		_text = DecisionText.text(_source)
+	elif not _message.is_empty():
+		_text = L10n.text(_message.l10n_key, _message.get("parameters", {}))
+	else:
 		return
-	_text = L10n.text(_message.l10n_key, _message.get("parameters", {}))
 	if visible:
 		_place.call_deferred(false)
