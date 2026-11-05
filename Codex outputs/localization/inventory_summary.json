@@ -1,0 +1,849 @@
+{
+  "schema_version": 1,
+  "source_files": 177,
+  "input_files": [
+    {
+      "file": "engine/godot/build_info.gd",
+      "sha256": "5199535a27f65219c30179b3709020479a7667e225a3206add1721979a314abe"
+    },
+    {
+      "file": "engine/godot/core/cards/bandle_cards.gd",
+      "sha256": "a0c4c0da8582ea9108ffe2e88fc59fd54d635f1e2d15d84c3cd7d48f9095385e"
+    },
+    {
+      "file": "engine/godot/core/cards/card_library.gd",
+      "sha256": "82c13208c60209263804e16529927db61f13ab74d062b0f475455f84f02e9551"
+    },
+    {
+      "file": "engine/godot/core/cards/card_live.gd",
+      "sha256": "8b9ba858930ed167afe2b665204cbe306600ed961e3317ba1543a95d8e8430ba"
+    },
+    {
+      "file": "engine/godot/core/cards/celestial_cards.gd",
+      "sha256": "58e46eec8593714a37f3bb215c14135acaff87191861a21b9d6323da723e58e8"
+    },
+    {
+      "file": "engine/godot/core/cards/freljord_cards.gd",
+      "sha256": "04d6ee6419b56a1bae9fe274af6057d839093ccc06d6e66d77f25287b3ffcc1e"
+    },
+    {
+      "file": "engine/godot/core/cards/ionia_cards.gd",
+      "sha256": "f71e15e8ed68fb8f67a02de555b46e2787da7919470a551eac8407f3e1994e2e"
+    },
+    {
+      "file": "engine/godot/core/cards/ixtal_cards.gd",
+      "sha256": "d061686853c2598affd8dac1436b2d4e3ec807bfedcf437dc072c2669629ad11"
+    },
+    {
+      "file": "engine/godot/core/cards/mercenary_cards.gd",
+      "sha256": "331867412d1d45ee89d83cb31df49f2c98f184ee4a4335fa3d8e69360df4eca8"
+    },
+    {
+      "file": "engine/godot/core/cards/noxus_cards.gd",
+      "sha256": "5ab55c79638a307d481c933debfb592bde709f41d163dd56500ea58bfad3b910"
+    },
+    {
+      "file": "engine/godot/core/cards/piltover_cards.gd",
+      "sha256": "7f026ba048dbf06fa7beb1632715f5b3b94375f00fe1de3d05b9c1219fb3c2ef"
+    },
+    {
+      "file": "engine/godot/core/cards/shadow_cards.gd",
+      "sha256": "6b0ae6f0d37ffdccb2c3ee1e425fd0cf03139ce1b74fc8f4c9cedfaccdf6a34d"
+    },
+    {
+      "file": "engine/godot/core/cards/shurima_cards.gd",
+      "sha256": "96d2340713b5909560ed7780b532a5bdee350b1d3b18c04fb589fc95519767a6"
+    },
+    {
+      "file": "engine/godot/core/cards/siege_cards.gd",
+      "sha256": "55c0ba1e61ef6544741b139bfc142dfbfc7d9ab6bb12b9f9cfaf33080733dbfa"
+    },
+    {
+      "file": "engine/godot/core/cards/void_cards.gd",
+      "sha256": "8ee1ff1d3dd61194b0574ba2e5ec0298eefcc3299ea6dad7db4e4496d0938dd6"
+    },
+    {
+      "file": "engine/godot/core/effects/card_effect.gd",
+      "sha256": "ff686f8ba2db6a4830e7bbf0d7977a23fb28b4031c92034d316b9faafad2b199"
+    },
+    {
+      "file": "engine/godot/core/effects/effect_resolver.gd",
+      "sha256": "79edf34a94eddb51ea95002a6cb3a546ef3773927f5bc03cdcc4604f62bf9ed2"
+    },
+    {
+      "file": "engine/godot/core/effects/pending_decision.gd",
+      "sha256": "f1e9a46ba4d12a936eaa54470c233004ed07a4783e675c8f0cf7bb21bf9f6bf9"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/assassinate_troop.gd",
+      "sha256": "e950f49564b6ec8f10938d622ff7b6c19b42975d6c3c1b278eee8ac1a4e6314e"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/callback_effect.gd",
+      "sha256": "16ab5b0752b165976b33573630c2c2352773bb9c06b785ef40c936220e513fee"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/choose_starting_site.gd",
+      "sha256": "0a832d73ba6e49be065f8fbabbf2757a1e25562cc561462329b7939f5f9c646b"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/conditional_effect.gd",
+      "sha256": "b674b5419a6c18a81464b6c2ddd6b46e353b1785f7642f3d5fe10e91bcc7e622"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/deploy_troop.gd",
+      "sha256": "7f1154ee7962aa67d13e1bb4385efde35e9359d8463893e78a462044be62daf5"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/devour_card.gd",
+      "sha256": "6badbc85250bc096133bc7e6efbe1a8b6ad08f5f8a58eda78e58fb1c6eb7e32b"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/discard_card.gd",
+      "sha256": "c6968f3679f025c8935a4e34597f117517b29f060dbbb3b6185329efbd59a165"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/draw_cards.gd",
+      "sha256": "d22a894490eabe2ad5f8e5a82d660aab6e7a3726fff95e219793fcd2254bfa4d"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/fetch_from_top.gd",
+      "sha256": "f289e677f23e619c3089774e828b991a4147fb3b89b71f7097db728aa3fd9bdd"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/force_discard.gd",
+      "sha256": "366f885edc122d3a5e149dedaa0606b6042f8ce9afd99df7a294c50ad31eb8ad"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/gain_influence.gd",
+      "sha256": "2e5972c6a94febb1c8665d1feb91f53ef0065378a8795559b4cb2dd5b207cfd6"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/gain_power.gd",
+      "sha256": "a2e600e60e46e4ff6c99ef17be2c606d0703a40b7a95bcbb842ef43f931c84d9"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/gain_supply_to_hand.gd",
+      "sha256": "e3ad800ca21c2e74d5827e7d66756fae855cbd479d12b0dddcaede14a30ca0d7"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/gain_vp_per_n.gd",
+      "sha256": "7c46a59a2bfa092419da52268e28141b46a99630bedc7dd72088244a4fc8123e"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/gain_vp.gd",
+      "sha256": "ea1fe904a01c3d9c05cc489baad3dc4d62ed139244e2196de5709f44eb8b77f5"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/give_insane_outcast.gd",
+      "sha256": "defb4d19e40c70ae3dfcbcaf5d3d72e8bf82018b76ed13467c82702eb0961e79"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/move_troop.gd",
+      "sha256": "c86bc8b6e7276f2795cdf177d24e579cb6fc4281f70f55154c795597118a05e2"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/mulligan_market.gd",
+      "sha256": "12ef0b11c737e20ab1e8a8054a4b14f9ab8f4c94c3250bff5d986b86241391ce"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/place_spy.gd",
+      "sha256": "2a9cc34cdf51a8b53422234c9162edf96d09d7b7e716fe985265079f918ab4ae"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/play_card_from_zone.gd",
+      "sha256": "11a382ed90e5d1a298528c4c756470a59dbaf7defe455b32ab93ed9893264800"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/promote_card.gd",
+      "sha256": "65650c04fd290c3918c6a11beb5c5678f138ab32097893873e5adad7c8008c01"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/put_deck_into_discard.gd",
+      "sha256": "728a88d155b2479eba0560f3bb1dc44260dbba868f62dcab271a20188db30506"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/recruit_free.gd",
+      "sha256": "9cc141c3907eb8f990e008c776347c28f55e5ddd37024c61fcf7cba925db2e4c"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/remove_self_from_play.gd",
+      "sha256": "94ce6ab6d9622513d1d99c05551f3e609c17609a2bfc171b8dbf2c3765cff1e7"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/return_own_spy.gd",
+      "sha256": "03dda14b3e700ac0ad763bb4931f5fccff1b1c78909dab4512798199ddd77d7e"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/return_own_troops.gd",
+      "sha256": "477ff8c9ef6e1b32933f54265f68d79d4d502e68ae056a8c83ef6b7f8ebc8452"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/return_troop_or_spy.gd",
+      "sha256": "962f5af93d244bee891296943f260c02d8516acdc5dd56ed6e80fe4b758d66ef"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/scry.gd",
+      "sha256": "28dd15ec4e256f0940b253f5bbbda8466af22627f6b189e2fc91819c2633d27c"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/shield_guard.gd",
+      "sha256": "24c0ef6aadcd0c8a874b6d7781de0dd6f17dd85f09be70127fbd1315d9a741a2"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/supplant_troop.gd",
+      "sha256": "fed7d76037b48c3b7cba269766544b0c3efccd779243382456237335d0b1445a"
+    },
+    {
+      "file": "engine/godot/core/effects/primitives/take_from_trophy_hall.gd",
+      "sha256": "c184c2cb810d92c747bd7337622e28f1d24a930e10b7a3712e5d6b279b7485b6"
+    },
+    {
+      "file": "engine/godot/core/effects/wrappers/at_end_of_turn.gd",
+      "sha256": "436b3f86b3566e02341e06403f6450c7563800208a84f865d86b2f41de98a6f6"
+    },
+    {
+      "file": "engine/godot/core/effects/wrappers/choose.gd",
+      "sha256": "9c5bc5be1a907eee5587080567616ab87a458fdb258aad8816efeae2a0eaabdc"
+    },
+    {
+      "file": "engine/godot/core/effects/wrappers/focus.gd",
+      "sha256": "64b6ec76c3f302d5daa12806e9437594c76452ca0b202e322e77106c36658c24"
+    },
+    {
+      "file": "engine/godot/core/effects/wrappers/optional.gd",
+      "sha256": "24efaf0e4a82fe1a434d71df9b0ceb1ddbfef642de8cd721f3eaadc55934ce36"
+    },
+    {
+      "file": "engine/godot/core/effects/wrappers/sequence.gd",
+      "sha256": "ca5c4d9eeb18ca3ff4296e321c4f7f98aa9a2a29c29f310a163dd08c05808ef2"
+    },
+    {
+      "file": "engine/godot/core/game/deck.gd",
+      "sha256": "6895d598772e70aca56210d498209aa08fbaf9b630403cdec7d9201ccd7eb9bf"
+    },
+    {
+      "file": "engine/godot/core/game/game_setup.gd",
+      "sha256": "9276efa780d05599d023326d5f1d71f3411ea900aaf5e79c49d031b6b7abe85f"
+    },
+    {
+      "file": "engine/godot/core/game/game_state.gd",
+      "sha256": "64b1539d08d2b537a298c0b7e3597b850501bc215ce4aacaca1410777dbbc3ee"
+    },
+    {
+      "file": "engine/godot/core/game/god_mode.gd",
+      "sha256": "6fbbd9698d2e2badf651fe66274ce0cb62445ab8bd1a1e9212676fef71e1a319"
+    },
+    {
+      "file": "engine/godot/core/game/market.gd",
+      "sha256": "2502439654e869483d95c13a5217e08b140f36966024a4053bd64c777b9d9604"
+    },
+    {
+      "file": "engine/godot/core/game/player_state.gd",
+      "sha256": "0ee3120d9a4f2f6bbb152a4e575e3759b4f6b738666bd9cc6d9a0c4b7004e3cd"
+    },
+    {
+      "file": "engine/godot/core/game/state_copy.gd",
+      "sha256": "1820b809acac85b36ce2caa1d481bc066e7a761aedb89219deb8029f0d5c0d6b"
+    },
+    {
+      "file": "engine/godot/core/game/supplies.gd",
+      "sha256": "ac3d757732352786107d5e74689e6adda1c9df7b640935914d737789f1003e28"
+    },
+    {
+      "file": "engine/godot/core/game/vp_bank.gd",
+      "sha256": "d85324c2d844fe21772b86607872943928f0aac383f57188c6e9a732ba81e793"
+    },
+    {
+      "file": "engine/godot/core/map/board_builder.gd",
+      "sha256": "72f037c7c6cce016bdc7b11c7b3a921df172c655789d562679ded243e01da179"
+    },
+    {
+      "file": "engine/godot/core/map/board_data.gd",
+      "sha256": "279116eb2e83c0df634301b88813f947afcf10f67ac2bbee087e2d6384e3688b"
+    },
+    {
+      "file": "engine/godot/core/map/board_geometry.gd",
+      "sha256": "651fb70051454564399fa4b76756ea789880e45cec782be46cd6e68a28e1762a"
+    },
+    {
+      "file": "engine/godot/core/map/board_schematic.gd",
+      "sha256": "fabb41a586e03553ad41b14b521ba5d413293ae974a0a3cc6f43ccceeec0faee"
+    },
+    {
+      "file": "engine/godot/core/map/map_graph.gd",
+      "sha256": "a2f0e4f937791d63fd19a5c52b4435b069aeb1e0d638b570018b66c367181d3b"
+    },
+    {
+      "file": "engine/godot/core/map/rotation_optimizer.gd",
+      "sha256": "22283398f2a4ab8b09a052152f53fa2094cd416560f64e0c6a2f698c8631eb19"
+    },
+    {
+      "file": "engine/godot/core/rules/actions.gd",
+      "sha256": "26c73b7fd85886976891289e9492b9b37a5e23b291c06c1c616bf036c4e41952"
+    },
+    {
+      "file": "engine/godot/core/rules/cluster_bonus.gd",
+      "sha256": "6c42037fa557f323267a23148d457a78bf53315abffab0eb081eb32b02cb23d3"
+    },
+    {
+      "file": "engine/godot/core/rules/control_markers.gd",
+      "sha256": "a1f816df2bc24786025e238c904133659a1c899ef35540d8ff5bcf94df1b1dc9"
+    },
+    {
+      "file": "engine/godot/core/rules/game_end.gd",
+      "sha256": "7e9b0788a40eb632515cfe46991d43b9e827f55d031eeb644f132c65aa183c58"
+    },
+    {
+      "file": "engine/godot/core/rules/presence.gd",
+      "sha256": "31f7c3b67a2e1086feb09c8d76e6b5241ae66c6fc58640e30ce27729e4b7023a"
+    },
+    {
+      "file": "engine/godot/core/rules/scoring.gd",
+      "sha256": "826dddc7eda74efc305d25da4b53ab6e6ad15dfca4033e3c2df4f4b1654c3baf"
+    },
+    {
+      "file": "engine/godot/core/rules/site_control.gd",
+      "sha256": "9a799b75f4dea4453b95be71528531a8fa59fe7a5b3afe649d6b9d97bc0387da"
+    },
+    {
+      "file": "engine/godot/core/rules/turn.gd",
+      "sha256": "c2221f64a1949a7964ba570201be045247e0b28920a97d02fd014c07192e891d"
+    },
+    {
+      "file": "engine/godot/net/alt_arts.gd",
+      "sha256": "3f815713d6ea92de929e012c83e68dedf36ffdaf1b5c2f6f56b8084fb26ca60c"
+    },
+    {
+      "file": "engine/godot/net/board_stock.gd",
+      "sha256": "8a808508106ace36a7fc3197057293cc321f883497a1be495c1afa1a1874d58c"
+    },
+    {
+      "file": "engine/godot/net/bot_names.gd",
+      "sha256": "45719cd864a7a31cefe872f3ac95e605b3930d040fee6fbc5fdda98c65fa8b57"
+    },
+    {
+      "file": "engine/godot/net/bot_plan.gd",
+      "sha256": "9c880dc0ab173877dfb0a5a3aaac186ad1c7c2474156020f2fc6217dca0a01f6"
+    },
+    {
+      "file": "engine/godot/net/bot_player.gd",
+      "sha256": "c81987cf36d6c1f984050d279960a031630ba2e70f6c54de5d888fed45dc1190"
+    },
+    {
+      "file": "engine/godot/net/bot_search.gd",
+      "sha256": "a8e8ff4f6a7902da4d0265877ac93bee1f79c4d57c09b9c10749e262b97d9e28"
+    },
+    {
+      "file": "engine/godot/net/bot_sim.gd",
+      "sha256": "773adebecf5fc63d300fa3e59a7cef4de5d2fa25294cacc54f95f5cc4caf4371"
+    },
+    {
+      "file": "engine/godot/net/bug_report.gd",
+      "sha256": "6fc18561dea1bc909d99ff4b1601475df73b4fbf4d6c7e53e4fb9620a2670c84"
+    },
+    {
+      "file": "engine/godot/net/friend_book.gd",
+      "sha256": "3cd6dc66b1c5d2213f13dd95f1e49a53465a79a234fc48508dd1daffec2c3426"
+    },
+    {
+      "file": "engine/godot/net/game_journal.gd",
+      "sha256": "da2b369b04ca3fe3dfac7c5803f5730fa57d7f623a09e33854ba14f22f9875c6"
+    },
+    {
+      "file": "engine/godot/net/game_room.gd",
+      "sha256": "2dc458b3b4bba069d97691cf54b78af1e9f22bcb33421c2fe624b11bf88f4002"
+    },
+    {
+      "file": "engine/godot/net/game_server.gd",
+      "sha256": "682c05c11f28bc004415b8abc4d8355bd4eacbb3cba9a13dc0f7427e0599a564"
+    },
+    {
+      "file": "engine/godot/net/intent.gd",
+      "sha256": "816a54ef216609fb8fd7312033cfc46c92e14c2ea07fe161ba8abb669ee35d59"
+    },
+    {
+      "file": "engine/godot/net/net_session.gd",
+      "sha256": "7500c5dac36ab6c362bc7654088fa0e4dc4542e49e908c1a4839d8581e42498b"
+    },
+    {
+      "file": "engine/godot/net/player_profile.gd",
+      "sha256": "c1f2dd46df190bef2f9c17e4f5fe59b1b6b49b5105700cd1bf9703589f429352"
+    },
+    {
+      "file": "engine/godot/net/profile_book.gd",
+      "sha256": "b8ca5d7855b5245b6d3895cb7973c8654ab0368a718536a95527dc7b3ef47617"
+    },
+    {
+      "file": "engine/godot/net/rating_book.gd",
+      "sha256": "5840259a587834723256e31f29b14be6fc8ba81d21ab0d81d7c0985f1276afe1"
+    },
+    {
+      "file": "engine/godot/net/record_book.gd",
+      "sha256": "8779faf34a76857c0f611c46a60f01acae2d02e2a7ce1ae68c37edf4095bf7c4"
+    },
+    {
+      "file": "engine/godot/net/replay_book.gd",
+      "sha256": "15791ba98968a4f209cb0693d63cdf2e8684b37e578e181b4d4de24af1ec047b"
+    },
+    {
+      "file": "engine/godot/net/replay_stats.gd",
+      "sha256": "6a00e2cf191c21dfab09804c3354ae03e755972de0252818c3b2caac1a2d08cb"
+    },
+    {
+      "file": "engine/godot/net/skin_collection.gd",
+      "sha256": "fba552dd119d15053616429f7d372e9a77b6b0edd323311db5a735dc9401fd50"
+    },
+    {
+      "file": "engine/godot/net/state_serializer.gd",
+      "sha256": "273e02d48f616106b8fb1a5de7cd2ab4fad39ff9c9306149fe7f63338dfb9b5a"
+    },
+    {
+      "file": "engine/godot/net/state_view.gd",
+      "sha256": "85a6610e6fd83a745b15b27a6476a22fade06f273339056e359a27f3201fb56c"
+    },
+    {
+      "file": "engine/godot/project.godot",
+      "sha256": "1efa6f376e291172383b653126d2ab693efe603c895856f22fc01857ad086694"
+    },
+    {
+      "file": "engine/godot/scenes/board_view.gd",
+      "sha256": "ffb2f1367704cf7b510fc1f3fa57179da10f132099aaf9d6ebb659ab76155bc8"
+    },
+    {
+      "file": "engine/godot/scenes/board_view.tscn",
+      "sha256": "d4d26fc2fad99b7252a8ef2811edc662eefc53e1e2025956250a2766a99ebdb8"
+    },
+    {
+      "file": "engine/godot/scenes/game_settings.gd",
+      "sha256": "036966c2f15ddaf79aae4f66470a7a31143ee32d1e16d9965b47f32fb96dcc6a"
+    },
+    {
+      "file": "engine/godot/scenes/launcher.gd",
+      "sha256": "ebd41400e592fadffb568c45c13049e4e8147c17e4b4b46d39aac173a9c3cfc6"
+    },
+    {
+      "file": "engine/godot/scenes/launcher.tscn",
+      "sha256": "7870211eb44d07c100933f8bfaddebe24b47ef3d20306797ea0f25f3c64b4d47"
+    },
+    {
+      "file": "engine/godot/scenes/music.gd",
+      "sha256": "7686dbb1f5ccd405d8426e8c0131949865b6c2d5fd0febe98d85a844fd407616"
+    },
+    {
+      "file": "engine/godot/scenes/sfx.gd",
+      "sha256": "ef1b607f7b24411507988ef8eb08e758069592cb2fc80b95c2b42479cea26877"
+    },
+    {
+      "file": "engine/godot/scenes/sharp_scale.gd",
+      "sha256": "19b8c54b24e5eaaa591897d6bf413b22dd717eeb97572b3f7fc842d4b01d26d7"
+    },
+    {
+      "file": "engine/godot/scenes/ui/ban_panel.gd",
+      "sha256": "cf83419c66149334d508e07571bcc0441a9502dc6a9b1e9e17233522068fefda"
+    },
+    {
+      "file": "engine/godot/scenes/ui/barracks_bar.gd",
+      "sha256": "ae4bf0066acdb4fd86bc9d6fff8081a25239b97088152dc14df24a0571d87692"
+    },
+    {
+      "file": "engine/godot/scenes/ui/board_panel.gd",
+      "sha256": "771d51486836c1dba660a29692835e65bc02bb46fb31735591b79b13912f2fa1"
+    },
+    {
+      "file": "engine/godot/scenes/ui/bug_report_window.gd",
+      "sha256": "ec856f66fb0ac2dcbe80cb0e0b61a96d3cead27ae8c08f81438597d3fdab2706"
+    },
+    {
+      "file": "engine/godot/scenes/ui/card_back.gd",
+      "sha256": "f4ccc93f52796965758e4c685fd607fd2733de19b4295e2104dfb7233aff582b"
+    },
+    {
+      "file": "engine/godot/scenes/ui/card_flip.gd",
+      "sha256": "1e20b484648eeac1afc8a9f937805ef263dab0d7bc4438e9a05af3472716129f"
+    },
+    {
+      "file": "engine/godot/scenes/ui/card_live_face.gd",
+      "sha256": "63598b5020424982cec89158a7371075626121a7edd9f12daf89ca600f152f0c"
+    },
+    {
+      "file": "engine/godot/scenes/ui/card_preview.gd",
+      "sha256": "69aece0f6cae46e4c9771255a5ce50e8bad972f18759afac325988d380b551de"
+    },
+    {
+      "file": "engine/godot/scenes/ui/card_showcase.gd",
+      "sha256": "f7874942e724f6199ee77d132a87313cc58325e295c3d115c48bce494d411423"
+    },
+    {
+      "file": "engine/godot/scenes/ui/card_view.gd",
+      "sha256": "55e966d13223c3d5691baf244c55d9e4f0caadf85f93ae53a86a884ed8b7f61b"
+    },
+    {
+      "file": "engine/godot/scenes/ui/chat_bubbles.gd",
+      "sha256": "e525c9ccab34b5f161c992edb28d24bccabd83eddf96afc8ed27ecb107082946"
+    },
+    {
+      "file": "engine/godot/scenes/ui/chat_wheel.gd",
+      "sha256": "f8b5b9a22c47d2f019c26222591745c9a17055148d7183ccf30f1cccfb22bd80"
+    },
+    {
+      "file": "engine/godot/scenes/ui/collection_page.gd",
+      "sha256": "a43fe4749525b75f4150a11abab36a2f1fc6f3d042e84ef4c5fd4165040d1b5e"
+    },
+    {
+      "file": "engine/godot/scenes/ui/counter_label.gd",
+      "sha256": "8671299e04a0285e1bc49fa92983c2ae8a0e5b9ea5cdb667f0845fc833671695"
+    },
+    {
+      "file": "engine/godot/scenes/ui/decision_dialog.gd",
+      "sha256": "3c0c30cd751df9e39e78da6ad9b6c34312df4ce6748705366fc8a7ee7cf05f2a"
+    },
+    {
+      "file": "engine/godot/scenes/ui/deck_tracker.gd",
+      "sha256": "2409268439cab4a27b7eb89d2467bcc65b12deefd53670ae952c6980b0bdfb7d"
+    },
+    {
+      "file": "engine/godot/scenes/ui/event_log_panel.gd",
+      "sha256": "b15effa01e06bc7abe0ebac04050ce8b740fa490fcfb268b371ef60e37494d52"
+    },
+    {
+      "file": "engine/godot/scenes/ui/floating_text.gd",
+      "sha256": "0092aaec313454b6bb6ca4e8421778ff42ab19c240e8fcf1fba78bbcc890d26a"
+    },
+    {
+      "file": "engine/godot/scenes/ui/flying_token.gd",
+      "sha256": "6a96c55193665f90eff7feae4fd78715e46821dbbeb1d07d6eaf422132cf1c60"
+    },
+    {
+      "file": "engine/godot/scenes/ui/forced_glow.gd",
+      "sha256": "bb4c06111cd201e241806052bc08a73204f643e448e112bfe47e3ad0aae97911"
+    },
+    {
+      "file": "engine/godot/scenes/ui/friends_page.gd",
+      "sha256": "53376d5baf441828c3bad1cc5c0c82dfeff3bc09ec16c0699fdf326be395ab15"
+    },
+    {
+      "file": "engine/godot/scenes/ui/game_over_panel.gd",
+      "sha256": "e7eff263ed4f63953fb270006f854864a7fd344089b9d1eade9f877bad12d9a0"
+    },
+    {
+      "file": "engine/godot/scenes/ui/game_scene.gd",
+      "sha256": "cc0bc7307bd1bdac721bf687c374f689be86c887f7d5b80ef7db01d0c56160f9"
+    },
+    {
+      "file": "engine/godot/scenes/ui/game_scene.tscn",
+      "sha256": "56d53bc14848e2a8e97e1e84a283bf3550334ab9759b10a654ccd22c6e4c4222"
+    },
+    {
+      "file": "engine/godot/scenes/ui/game_screen.gd",
+      "sha256": "d1b270366f1d0756baa5baf1205deae2390d4e3e760d9352d2158de8ff8ba3a2"
+    },
+    {
+      "file": "engine/godot/scenes/ui/games_analysis_panel.gd",
+      "sha256": "206e402395212d23e2a939fc1c6db1be45ed96c2d9a45dc48b831f3f1f705765"
+    },
+    {
+      "file": "engine/godot/scenes/ui/god_panel.gd",
+      "sha256": "370b096671ba856245e1e99155061674ef4b4dd032b602aa8a23105199e8c888"
+    },
+    {
+      "file": "engine/godot/scenes/ui/hand_panel.gd",
+      "sha256": "98a399786dbd3818267d97cebeb912cf0c81e6c045f9e642aa1a72d16cafd8d1"
+    },
+    {
+      "file": "engine/godot/scenes/ui/how_to_play_screen.gd",
+      "sha256": "d95558b5a15c221e8bd7aca14b77f8bcef2680fb25ca4c058beb763d1be6ace4"
+    },
+    {
+      "file": "engine/godot/scenes/ui/hs_fx/hs_play.gd",
+      "sha256": "05a2ad5c467b8842cbde1ee9a3a905bb93d2d81ef4ff65699befad76a1c0e0e7"
+    },
+    {
+      "file": "engine/godot/scenes/ui/leaderboard_page.gd",
+      "sha256": "e5bcc8d28b645a99992b36edd3a800cff99d5928c3c24c216a196603c1cb56ff"
+    },
+    {
+      "file": "engine/godot/scenes/ui/lobby_screen.gd",
+      "sha256": "6889d76559dd014a221a839e27055712de388e37054bebb3574c7336a19a95db"
+    },
+    {
+      "file": "engine/godot/scenes/ui/loot_box_reveal.gd",
+      "sha256": "6bc569dc63222a3417b35943d944cd654f337ecd0315858374e0f06a9a22d80e"
+    },
+    {
+      "file": "engine/godot/scenes/ui/market_panel.gd",
+      "sha256": "25fbfa514d21710599b7ff1cd8d5153d05c49db00f1bf64b69e0d85c4a8be35d"
+    },
+    {
+      "file": "engine/godot/scenes/ui/note_toast.gd",
+      "sha256": "990361d92cb2b3e716c438e0666b45d9f51f4ef618d755d0ae0fad5a6759e6d8"
+    },
+    {
+      "file": "engine/godot/scenes/ui/option_card.gd",
+      "sha256": "4dde5616a8f53f504c5465784a503a1eea5065b932cc99c00bbea45740ab28f4"
+    },
+    {
+      "file": "engine/godot/scenes/ui/pause_menu.gd",
+      "sha256": "febf558471b053187b23e5ee90f4b714117ae2269f14f02d42e192880d046d42"
+    },
+    {
+      "file": "engine/godot/scenes/ui/pile_dialog.gd",
+      "sha256": "3433cdff27ef7f88591f316351388f9e30cba73487d4151bd057f209e99b50d5"
+    },
+    {
+      "file": "engine/godot/scenes/ui/pile_zone.gd",
+      "sha256": "0d528a637a6491d37c9318b2d338ebaf68c81d93fb209c352fb8b1a0c79e5823"
+    },
+    {
+      "file": "engine/godot/scenes/ui/piles_window.gd",
+      "sha256": "464cc8aa4fe2efc40de9716488bbddb354d35ab2b32499fce7796a5faf9ef33d"
+    },
+    {
+      "file": "engine/godot/scenes/ui/ping_layer.gd",
+      "sha256": "0a5ffa97a92d83054a1f2f49da4d1e91eac23c46a0bef422f8f8508acf910954"
+    },
+    {
+      "file": "engine/godot/scenes/ui/pixel_font_small.gd",
+      "sha256": "d7d759b289c30e64a14047f35c33cffd730e98e8ff2ec3eb0896c30b51b03658"
+    },
+    {
+      "file": "engine/godot/scenes/ui/pixel_font.gd",
+      "sha256": "e00e50c7070ecbd0ea20c0d32b343276b30801768b7a24ce5a451f8b1abdff7d"
+    },
+    {
+      "file": "engine/godot/scenes/ui/pixel_theme.gd",
+      "sha256": "260a885b0e697ed666b43b8b178d4663f9d229bf14107930ad61ae1da2167567"
+    },
+    {
+      "file": "engine/godot/scenes/ui/player_profile_panel.gd",
+      "sha256": "0117d926baaffc1cc0af58fce48928426c223e80d368d35cb85085f3bb802e76"
+    },
+    {
+      "file": "engine/godot/scenes/ui/players_panel.gd",
+      "sha256": "f30ba8501b93ea9cce3fee2ddb3d7a6789af63112f67a0a079cb61b9301b847a"
+    },
+    {
+      "file": "engine/godot/scenes/ui/profile_card.gd",
+      "sha256": "8bab494791429de6ceadb8f30ee034dce98107fec963f72adc1a51c04b153a3a"
+    },
+    {
+      "file": "engine/godot/scenes/ui/profile_screen.gd",
+      "sha256": "521ae1f7d62f2ed19f0e5095bdeec80a3b840282e6dd94bfea0c48cb366f89e3"
+    },
+    {
+      "file": "engine/godot/scenes/ui/radar_chart.gd",
+      "sha256": "8abf196ebae117afcd3f6df69749e7a8111d9fe62e035b01b2e1beba96dbd178"
+    },
+    {
+      "file": "engine/godot/scenes/ui/replay_bar.gd",
+      "sha256": "72d23a155e4e6c6c55e2b578fb9fa2358bd57099655725b2be6b980dd2a4a799"
+    },
+    {
+      "file": "engine/godot/scenes/ui/replay_stats_panel.gd",
+      "sha256": "9006cbce0a72d7ccf0ba0e2f9fe3ecf9ad92ea742b0d754513ecfae1b9c3573f"
+    },
+    {
+      "file": "engine/godot/scenes/ui/schematic_painter.gd",
+      "sha256": "480b780ec35c36d2f6ab52959e888769b7584ee722aa136773a1e69baff3dbdd"
+    },
+    {
+      "file": "engine/godot/scenes/ui/settings_panel.gd",
+      "sha256": "64bed6687196d2f351201ed0bc73cdd957ce5e20f34861d6378a69538289ab64"
+    },
+    {
+      "file": "engine/godot/scenes/ui/setup_screen.gd",
+      "sha256": "c64b2d51d8f8a37f7b7abb78a9ddd383c88a838c84e9fac8dee324ddc6d0fc90"
+    },
+    {
+      "file": "engine/godot/scenes/ui/spine_label.gd",
+      "sha256": "96255fffd09a9f7b62927cf488a1b8b50e1390a8024404706ee75d2b331fcba5"
+    },
+    {
+      "file": "engine/godot/scenes/ui/turn_banner.gd",
+      "sha256": "1336a25b8927b511ac992fdebeb64d2901d2ef8349d7d810aaf400dc0855952c"
+    },
+    {
+      "file": "engine/godot/scenes/ui/turn_feed.gd",
+      "sha256": "571f51ada67fe4a87887ac447cd4dbe6681bc3c73ed52e829a412e4594d53148"
+    },
+    {
+      "file": "engine/godot/scenes/ui/tutorial_offer_screen.gd",
+      "sha256": "7820559e5f0c2539839405d9af545156a891b4a0afd9e126d9393dae6ba0550e"
+    },
+    {
+      "file": "engine/godot/scenes/ui/underdark_bg.gd",
+      "sha256": "f86ea558cd6dc230c0ba73d9769e0de92b6b60294ae22f9c4d84ea00221f7795"
+    },
+    {
+      "file": "engine/godot/scenes/update_http.gd",
+      "sha256": "e748886d302ae33bfe28f29cf498032a9c3aedfc8d070292f1527916c0c2c2da"
+    },
+    {
+      "file": "engine/godot/scenes/update_key.gd",
+      "sha256": "476162703c642b66fc4bcb043b80fb429a833542c8e1b2e5a6f0a1813cf90961"
+    },
+    {
+      "file": "engine/godot/scenes/update_patch.gd",
+      "sha256": "e2f987f4b9f897595f88133b7d95d8dfa350200875be046ae0ad7112c8697b46"
+    },
+    {
+      "file": "engine/godot/scenes/update_sign.gd",
+      "sha256": "155eb11392eea2760eb4e55f129fa1d556aff3d55856c1afe043ca2c5dedfadf"
+    },
+    {
+      "file": "engine/godot/scenes/updater.gd",
+      "sha256": "ee6ca721fe44c420f5be50df30a03bb03310af3e95df3e5e84b9d49320f843f4"
+    },
+    {
+      "file": "engine/godot/scenes/window_keys.gd",
+      "sha256": "edf125a4e6bff3022c634dd46d9c08e6a47d2469bc942311c4f189fd6acac9cf"
+    },
+    {
+      "file": "engine/godot/tools/alt_arts.gd",
+      "sha256": "c15db354312278a224647524e6a601301220915bebc4a1d5ed8ea3e1156e1c75"
+    },
+    {
+      "file": "engine/godot/tools/build_pixel_font.gd",
+      "sha256": "e601832b9876ab486f6f58be68d194d41262541a0a3af5618de9b2e68f056ea9"
+    },
+    {
+      "file": "engine/godot/tools/pixel_cards.gd",
+      "sha256": "33fdf965f9efdd58fc70e4566740f7ae469d8825002af42d7c0cacfe222e6d7f"
+    },
+    {
+      "file": "engine/godot/data/board/art_adjacency.json",
+      "sha256": "dc3f985915ffe89a71c63335bc0171a36b58c1949ca983319bc944e5377b45e2"
+    },
+    {
+      "file": "engine/godot/data/board/board_layout.json",
+      "sha256": "c68c34246b246677c5a0c36ff3dcbb4914ad1678745280acc54281721cda884e"
+    },
+    {
+      "file": "engine/godot/data/board/calibration.json",
+      "sha256": "5ff5477acc9061e1f3857ba815def73071ba4dc24d0cbed98c00e92c190afb25"
+    },
+    {
+      "file": "engine/godot/data/board/control_markers.json",
+      "sha256": "b64b75c889b9ca7423565a9672450b01d997dcc0734d30f7aa4792d3eced7e92"
+    },
+    {
+      "file": "engine/godot/data/board/hex_edges.json",
+      "sha256": "2dfd55f3d905eed6467b614da9c6646e1d63be55449d89d7874fa5fde791d4a2"
+    },
+    {
+      "file": "engine/godot/data/board/layouts.json",
+      "sha256": "a9617356b45dfd030b204ce667c444b7f18a5d325b8aee3473e331f17314920f"
+    },
+    {
+      "file": "engine/godot/data/board/manual_adjacency.json",
+      "sha256": "3bea0ad913c54e5cadc82b6f2b28e57736cc695adc67ca46bbb0b3ca5d9eddd0"
+    },
+    {
+      "file": "engine/godot/data/board/markers.json",
+      "sha256": "ebd9a1f65f21c2b1d11307e9082c71bac4d231eac098e0e445fbdc432e32eb6c"
+    },
+    {
+      "file": "engine/godot/data/board/meta.json",
+      "sha256": "9a160b6e78be838f520b3eb41506861c9d8736273d0968f38bbccba30d481fc4"
+    },
+    {
+      "file": "engine/godot/data/board/route_slots.json",
+      "sha256": "a70d2e01e83a1f4ce471d02055ee768a793822aa8b586c4c4a925b88d8ce7eb2"
+    },
+    {
+      "file": "engine/godot/data/board/schematic_tiles.json",
+      "sha256": "d313e590a72dc51a05dc8ea3adca6f0e430b566a916fe5254641d0c1e0e452df"
+    },
+    {
+      "file": "engine/godot/data/board/site_data.json",
+      "sha256": "eadb7a4d78619bab8cf0714d79c802caebbdf262b4490207ae09e9e7b5fc6d49"
+    },
+    {
+      "file": "engine/godot/data/board/snap_report.json",
+      "sha256": "742d0a5e957f648304fd598767d7397cfd389ad364615820efe809390005e5e7"
+    },
+    {
+      "file": "engine/godot/data/board/view_meta.json",
+      "sha256": "d97c2fcc36e26912e3fdd89399e299652b98a20564c4b6b5bcdd9aff3e54c53a"
+    },
+    {
+      "file": "engine/godot/data/bot/card_strength.json",
+      "sha256": "56fb06974000f3a65f691282311a2e80d385e089e7c7aa3d3b8a8d7db96c602b"
+    },
+    {
+      "file": "engine/godot/data/cards/cards.json",
+      "sha256": "d8a2caad70e94e5f1ddddbc09f27154df59fff11f001fccb4b21ac780277bc04"
+    },
+    {
+      "file": "engine/godot/data/cards/half_decks.json",
+      "sha256": "73641f70dd83589f820d8d52ff2b029b6e89ce5c2e1a2dea0526c7f5bfad54df"
+    },
+    {
+      "file": "engine/godot/data/cards/mini_faces.json",
+      "sha256": "03ddeb4a4275913072f9678322e98ee0638e6d4d36af235f56a06d79069fb606"
+    },
+    {
+      "file": "engine/godot/data/fx_sounds.json",
+      "sha256": "0fd161cd6848279d9095c50efa904838ba18e9a8bc30b0727758b5a16bba75a4"
+    },
+    {
+      "file": "engine/godot/data/voice_lines.json",
+      "sha256": "b7154c5679e67ea131b2a2376d66a13c77fc9fe56084826e7d4e3136ba8384a2"
+    }
+  ],
+  "source_literals": 18148,
+  "source_categories": {
+    "symbol_or_format": 4694,
+    "text_candidate": 3232,
+    "identifier_or_short_text": 8974,
+    "enum_or_caption": 954,
+    "path_or_reference": 294
+  },
+  "data_string_values": 3199,
+  "data_categories": {
+    "text_candidate": 564,
+    "enum_or_caption": 474,
+    "path_or_reference": 3,
+    "identifier_or_short_text": 129,
+    "display_field": 1023,
+    "mechanical_enum_needs_display_mapping": 1003,
+    "symbol_or_format": 3
+  },
+  "cards": 391,
+  "half_decks": 18,
+  "unassigned_cards": [
+    "48342",
+    "48344",
+    "48345",
+    "48341",
+    "48343",
+    "48340",
+    "49001",
+    "49008",
+    "49011",
+    "49023",
+    "49024",
+    "49110",
+    "49111",
+    "49112",
+    "49123",
+    "49124",
+    "49203",
+    "49501",
+    "49504",
+    "49508",
+    "49523",
+    "49524",
+    "49600",
+    "49610",
+    "49612",
+    "49700",
+    "49802",
+    "49809",
+    "49814",
+    "49921",
+    "49922"
+  ],
+  "dependencies": 10,
+  "note": "Mechanical inventory, not a validated translation catalog. Review all categories. Comments and tests excluded; tools excluded except pixel_cards.gd/build_pixel_font.gd/alt_arts.gd. Source escapes retained. TSCN/Godot extraction covers quoted values. Runtime keys require manual semantic assignment; card keys are proposed stable IDs."
+}

@@ -1,0 +1,12 @@
+[
+{"file":"engine/godot/core/game/game_setup.gd","line":418,"source":"if STARTING_SITE_NAMES.has(graph.sites[site_id][\"name\"]):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/core/map/board_schematic.gd","line":354,"source":"if SHORT_NAMES.has(full):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/core/map/board_schematic.gd","line":357,"source":"if s.begins_with(\"THE \"):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/core/map/board_schematic.gd","line":464,"source":"if ClusterBonus.SITE_NAMES.has(String(graph.sites[site_id][\"name\"])):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/core/rules/cluster_bonus.gd","line":61,"source":"if SITE_NAMES.has(String(site[\"name\"])):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/scenes/ui/board_panel.gd","line":1391,"source":"if ClusterBonus.SITE_NAMES.has(String((sites[site_id] as Dictionary).get(\"name\", \"\"))):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/scenes/ui/card_live_face.gd","line":168,"source":"var at := cleaned[i].find(phrase)","status":"needs_semantic_id_review"},
+{"file":"engine/godot/scenes/ui/decision_dialog.gd","line":184,"source":"var discard := in_hand and _prompt.text.begins_with(\"Discard\")","status":"needs_semantic_id_review"},
+{"file":"engine/godot/scenes/ui/game_screen.gd","line":1891,"source":"if ClusterBonus.SITE_NAMES.has(String((sites[site_id] as Dictionary).get(\"name\", \"\"))):","status":"needs_semantic_id_review"},
+{"file":"engine/godot/scenes/ui/option_card.gd","line":308,"source":"return String(NAMES.get(text, \"\"))","status":"needs_semantic_id_review"}
+]
