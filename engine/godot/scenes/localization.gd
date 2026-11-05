@@ -43,12 +43,16 @@ static func catalog(language: String) -> Dictionary:
 
 
 static func text(key: String, parameters: Dictionary = {}) -> String:
+	return text_for(_locale, key, parameters)
+
+
+static func text_for(language: String, key: String, parameters: Dictionary = {}) -> String:
 	var english := catalog("en")
-	var translated := String(catalog(_locale).get(key, english.get(key, key)))
+	var translated := String(catalog(language).get(key, english.get(key, key)))
 	var resolved := {}
 	for name: String in parameters:
 		var value: Variant = parameters[name]
-		resolved[name] = text(value.l10n_key, value.get("parameters", {})) if value is Dictionary and value.has("l10n_key") else value
+		resolved[name] = text_for(language, value.l10n_key, value.get("parameters", {})) if value is Dictionary and value.has("l10n_key") else value
 	return translated.format(resolved) if not resolved.is_empty() else translated
 
 

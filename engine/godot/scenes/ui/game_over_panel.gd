@@ -7,6 +7,10 @@ extends Control
 
 signal main_menu_requested
 
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+const RecordText := preload("res://scenes/record_text.gd")
+
 const BUTTON_SIZE := Vector2(90, 16)
 ## Столбец счёта не уже трёх цифр, а шире — только по своей подписи: иначе
 ## таблица с ником в 12 знаков и рейтингом не влезает в CENTRE_W и уходит
@@ -50,6 +54,7 @@ var _centre_w := CENTRE_W
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_refresh_result_text)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	# Над экраном партии и меню по Tab, но под меню паузы (1100).
 	z_index = 1050
@@ -80,7 +85,7 @@ func _init() -> void:
 	add_child(_decks)
 
 	_head = Label.new()
-	_head.text = "GAME OVER"
+	L10n.bind(_head, "gameover.head")
 	_head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	_head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_head)
@@ -118,9 +123,6 @@ func update_from_view(view: Dictionary) -> void:
 		return
 	_view = view
 	# Сетевая партия кончилась досрочно: кто-то отключился и не вернулся.
-	var gone := String(view.get("abandoned_by", ""))
-	_head.text = "GAME OVER" if gone == "" else \
-		"GAME OVER: %s DID NOT COME BACK. RATING DOES NOT CHANGE" % EventLogPanel.player_name(gone).to_upper()
 	var scores: Dictionary = view["final_scores"]
 	var winners: Array = view.get("winners", [])
 
@@ -131,18 +133,7 @@ func update_from_view(view: Dictionary) -> void:
 		rows = rows.filter(func(pid): return String(teams.get(pid, pid)) == String(pid))
 		winners = winners.filter(func(pid): return rows.has(pid))
 
-	var names: Array[String] = []
-	for pid in winners:
-		names.append(_row_name(String(pid), teams))
-	if not teams.is_empty() and winners.size() == 1:
-		_title.text = "%s WINS" % names[0]
-		_title.add_theme_color_override("font_color", EventLogPanel.player_color(String(winners[0])))
-	elif winners.size() == 1:
-		_title.text = "%s WINS" % names[0]
-		_title.add_theme_color_override("font_color", EventLogPanel.player_color(String(winners[0])))
-	else:
-		_title.text = "TIE: %s" % ", ".join(names)
-		_title.add_theme_color_override("font_color", PixelTheme.GOLD)
+	_title.add_theme_color_override("font_color", EventLogPanel.player_color(String(winners[0])) if winners.size() == 1 else PixelTheme.GOLD)
 
 	for child in _grid.get_children():
 		_grid.remove_child(child)
@@ -150,9 +141,11 @@ func update_from_view(view: Dictionary) -> void:
 	_grid.add_child(_cell("", PixelTheme.TEXT_DIM, 0))
 	_grid.add_theme_constant_override("v_separation", 3 if _ratings.is_empty() else 5)
 	for c in COLUMNS:
-		_grid.add_child(_cell(c[1], PixelTheme.TEXT_DIM, COL_W))
-	_grid.add_child(_cell("SUM", PixelTheme.GOLD, COL_W))
-	_grid.add_child(_cell("RATING" if not _ratings.is_empty() else "", PixelTheme.TEXT_DIM, 0))
+		var label := _localized_cell("gameover.column_" + String(c[0]), {}, PixelTheme.TEXT_DIM, COL_W)
+		L10n.bind(label, "gameover.tip_" + String(c[0]), {}, "tooltip_text")
+		_grid.add_child(label)
+	_grid.add_child(_localized_cell("gameover.column_sum", {}, PixelTheme.GOLD, COL_W))
+	_grid.add_child(_localized_cell("gameover.column_rating", {}, PixelTheme.TEXT_DIM, 0) if not _ratings.is_empty() else _cell("", PixelTheme.TEXT_DIM, 0))
 
 	# Строки — по убыванию счёта, при равенстве в порядке хода.
 	var order: Array = rows
@@ -161,7 +154,7 @@ func update_from_view(view: Dictionary) -> void:
 	for pid in order:
 		var s: Dictionary = scores[pid]
 		var colour := EventLogPanel.player_color(String(pid))
-		_grid.add_child(_cell(_row_name(String(pid), teams), colour, 0,
+		_grid.add_child(_message_cell(_row_message(String(pid), teams), colour, 0,
 				HORIZONTAL_ALIGNMENT_LEFT))
 		for c in COLUMNS:
 			_grid.add_child(_cell(str(int(s[c[0]])), PixelTheme.TEXT, COL_W))
@@ -175,6 +168,7 @@ func update_from_view(view: Dictionary) -> void:
 
 	# Отложенно: сразу после добавления ячеек таблица меряет себя шире, чем
 	# выйдет (497 вместо 422 на четверых с рекордами) — колоды сжимались зря.
+	_refresh_result_text()
 	_layout_sides.call_deferred(view)
 
 	if not _shown_once:
@@ -221,9 +215,7 @@ func _build_corner(pid: String, cards: Dictionary, area: Rect2) -> void:
 	deck.sort_custom(by_name)
 	inner.sort_custom(by_name)
 
-	var head := _cell("%s  DECK %d  INNER %d" % [
-			EventLogPanel.player_name(pid).to_upper(), deck.size(), inner.size()],
-			EventLogPanel.player_color(pid), 0, HORIZONTAL_ALIGNMENT_LEFT)
+	var head := _localized_cell("gameover.deck_head", {"player": GameText.player_message(pid, true), "deck": deck.size(), "inner": inner.size()}, EventLogPanel.player_color(pid), 0, HORIZONTAL_ALIGNMENT_LEFT)
 	head.position = area.position
 	_decks.add_child(head)
 
@@ -255,7 +247,7 @@ func _build_corner(pid: String, cards: Dictionary, area: Rect2) -> void:
 		var per_col := maxi(1, ceili(float(ids.size()) / float(n_cols)))
 		var y0 := top
 		if String(g[2]) != "":
-			var tag := _cell(String(g[2]), PixelTheme.GOLD, 0, HORIZONTAL_ALIGNMENT_LEFT)
+			var tag := _localized_cell("gameover.inner", {}, PixelTheme.GOLD, 0, HORIZONTAL_ALIGNMENT_LEFT)
 			tag.position = Vector2(col_x, top)
 			_decks.add_child(tag)
 			y0 += PixelTheme.LINE_H
@@ -278,6 +270,42 @@ static func _row_name(pid: String, teams: Dictionary) -> String:
 	return "%s TEAM" % String(teams.get(pid, pid)).to_upper()
 
 
+func _refresh_result_text() -> void:
+	if _view.is_empty():
+		return
+	var gone := String(_view.get("abandoned_by", ""))
+	L10n.bind(_head, "gameover.head" if gone == "" else "gameover.abandoned", {"player": GameText.player_message(gone, true)})
+	var teams: Dictionary = _view.get("teams", {})
+	var winners: Array = _view.get("winners", []).duplicate()
+	if not teams.is_empty():
+		winners = winners.filter(func(pid): return String(teams.get(pid, pid)) == String(pid))
+	var names: Array[String] = []
+	for pid in winners:
+		var message := _row_message(String(pid), teams)
+		names.append(L10n.text(message.l10n_key, message.get("parameters", {})))
+	L10n.bind(_title, "gameover.winner" if winners.size() == 1 else "gameover.tie", {"names": ", ".join(names)})
+
+
+static func _row_message(pid: String, teams: Dictionary) -> Dictionary:
+	return GameText.player_message(pid, true) if teams.is_empty() else GameText.team_message(String(teams.get(pid, pid)))
+
+
+func _localized_cell(key: String, parameters: Dictionary, colour: Color, width: int, align := HORIZONTAL_ALIGNMENT_CENTER) -> Label:
+	return _message_cell({"l10n_key": key, "parameters": parameters}, colour, width, align)
+
+
+func _message_cell(message: Dictionary, colour: Color, width: int, align := HORIZONTAL_ALIGNMENT_CENTER) -> Label:
+	var label := _cell("", colour, width, align)
+	L10n.bind(label, message.l10n_key, message.get("parameters", {}))
+	# Reserve both languages once, so switching never rebuilds the final decks.
+	var font := PixelTheme.theme().default_font
+	var font_size := PixelTheme.theme().default_font_size
+	for language: String in L10n.SUPPORTED:
+		var text := L10n.text_for(language, message.l10n_key, message.get("parameters", {}))
+		label.custom_minimum_size.x = maxf(label.custom_minimum_size.x, ceilf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x))
+	return label
+
+
 func _cell(text: String, colour: Color, width: int,
 		align := HORIZONTAL_ALIGNMENT_CENTER) -> Label:
 	var label := Label.new()
@@ -290,7 +318,9 @@ func _cell(text: String, colour: Color, width: int,
 
 func _button(text: String, action: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	var key: String = {"VIEW BOARD": "gameover.view_board", "MAIN MENU": "gameover.main_menu", "GRAPHS": "gameover.graphs"}.get(text, "")
+	if key != "": L10n.bind(button, key)
+	else: button.text = text
 	button.custom_minimum_size = BUTTON_SIZE
 	SetupScreen._style_button(button)
 	button.pressed.connect(action)
@@ -322,21 +352,20 @@ func _rating_cell(pid: String) -> Control:
 		HORIZONTAL_ALIGNMENT_LEFT))
 	var colour := Color("5fd36a") if delta > 0 else (PixelTheme.DANGER if delta < 0 else PixelTheme.TEXT_DIM)
 	# Партия из лобби рейтинг не меняет — вместо "+0" пишем LOBBY.
-	row.add_child(_cell("LOBBY" if r.get("unrated", false) else "%+d" % delta, colour, 0,
-		HORIZONTAL_ALIGNMENT_LEFT))
+	row.add_child(_localized_cell("gameover.lobby", {}, colour, 0, HORIZONTAL_ALIGNMENT_LEFT) if r.get("unrated", false) else _cell("%+d" % delta, colour, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	# Награда за место (только партии поиска игры): лутбокс за 1-е, пыль за остальные.
 	var reward: Dictionary = r.get("reward", {})
 	if int(reward.get("boxes", 0)) > 0:
-		col.add_child(_cell("+%d BOX" % int(reward["boxes"]), PixelTheme.GOLD, 0, HORIZONTAL_ALIGNMENT_LEFT))
+		col.add_child(_localized_cell("gameover.box_reward", {"count": int(reward["boxes"])}, PixelTheme.GOLD, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	if int(reward.get("dust", 0)) > 0:
-		col.add_child(_cell("+%d DUST" % int(reward["dust"]), PixelTheme.TEXT_DIM, 0, HORIZONTAL_ALIGNMENT_LEFT))
+		col.add_child(_localized_cell("gameover.dust_reward", {"count": int(reward["dust"])}, PixelTheme.TEXT_DIM, 0, HORIZONTAL_ALIGNMENT_LEFT))
 	# Побитые мировые рекорды (RecordBook) — по строке на каждый.
 	var records: Array = (r.get("records", []) as Array).duplicate()
 	for other in _ratings:
 		if other != pid and not teams.is_empty() and teams.get(other) == teams.get(pid):
 			records.append_array(_ratings[other].get("records", []))
 	for id in records:
-		col.add_child(_cell("RECORD: " + RecordBook.label_of(String(id)), PixelTheme.GOLD, 0,
+		col.add_child(_localized_cell("gameover.record", {"label": RecordText.message(String(id))}, PixelTheme.GOLD, 0,
 			HORIZONTAL_ALIGNMENT_LEFT))
 	return col
 
