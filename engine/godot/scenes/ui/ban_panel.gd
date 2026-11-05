@@ -15,6 +15,9 @@ extends Control
 ##
 ## Вёрстка кодом по той же причине, что и в game_screen.gd.
 
+const L10n := preload("res://scenes/localization.gd")
+const CardText := preload("res://scenes/card_text.gd")
+
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 ## Миниатюра — мелкое лицо карты целиком в родном размере, и в сетке, и в
 ## полосе банов (владелец, 2026-11-01: не уменьшать).
@@ -32,6 +35,7 @@ const INFO_HEIGHT := 268
 const SUGGEST_PREFIX := "ban?"
 const GameSettings := preload("res://scenes/game_settings.gd")
 
+var _messages: Array[Dictionary] = []
 var _net: NetSession
 var _view: Dictionary = {}
 var _left := 0.0
@@ -64,6 +68,7 @@ var _decks: Dictionary = {}
 
 func _init(net: NetSession) -> void:
 	_net = net
+	L10n.events.changed.connect(_locale_changed)
 	net.chat_received.connect(_on_chat)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -159,12 +164,12 @@ func _init(net: NetSession) -> void:
 	_status.clip_text = true
 	bottom_row.add_child(_status)
 	_skip = Button.new()
-	_skip.text = "SKIP"
+	L10n.bind(_skip, "ban.skip")
 	_skip.custom_minimum_size = Vector2(60, 16)
 	_skip.pressed.connect(func(): _send(""))
 	bottom_row.add_child(_skip)
 	_ban = Button.new()
-	_ban.text = "BAN"
+	_ban.text = L10n.text("ban.ban")
 	_ban.custom_minimum_size = Vector2(170, 16)
 	_ban.pressed.connect(func(): _send(_selected))
 	bottom_row.add_child(_ban)
@@ -181,12 +186,12 @@ func _make_chat() -> Control:
 	var head_row := HBoxContainer.new()
 	col.add_child(head_row)
 	var head := Label.new()
-	head.text = "CHAT"
+	L10n.bind(head, "ban.chat")
 	head.add_theme_color_override("font_color", PixelTheme.GOLD)
 	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head_row.add_child(head)
 	var hint := Label.new()
-	hint.text = "Tab over a card: suggest banning it"
+	L10n.bind(hint, "ban.suggest_hint")
 	hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM.darkened(0.25))
 	head_row.add_child(hint)
 	# Сообщения прижаты к строке ввода (критик UI): пустое место — над ними,
@@ -214,7 +219,7 @@ func _make_chat() -> Control:
 			select(String(meta)))
 	stack.add_child(_chat_log)
 	_chat_edit = LineEdit.new()
-	_chat_edit.placeholder_text = "Type a message, Enter to send"
+	L10n.bind(_chat_edit, "ban.placeholder", {}, "placeholder_text")
 	_chat_edit.max_length = 300
 	_chat_edit.text_submitted.connect(func(text: String):
 		if text.strip_edges() != "":
@@ -226,29 +231,38 @@ func _make_chat() -> Control:
 
 ## Новое сообщение — ленту в самый низ (когда раскладка уже пересчитана).
 func _scroll_chat_down() -> void:
-	(func():
-		if is_instance_valid(_chat_scroll):
-			_chat_scroll.scroll_vertical = int(_chat_scroll.get_v_scroll_bar().max_value)).call_deferred()
+	_apply_chat_scroll.call_deferred()
+
+
+func _apply_chat_scroll() -> void:
+	if is_instance_valid(_chat_scroll):
+		_chat_scroll.scroll_vertical = int(_chat_scroll.get_v_scroll_bar().max_value)
 
 
 ## Сообщение стола. Предложение бана (SUGGEST_PREFIX + id) — именем карты и
 ## её полуколодой, имя кликается: в свой ход карта выбирается.
 func _on_chat(seat: String, text: String) -> void:
-	var who := "[color=#%s]%s[/color]" % [BoardPanel.colour(seat, PixelTheme.TEXT).to_html(false),
-		EventLogPanel.player_name(seat)]
+	if text.begins_with(SUGGEST_PREFIX) and not _cells.has(text.substr(SUGGEST_PREFIX.length())):
+		return
+	var deck := String(_cells[text.substr(SUGGEST_PREFIX.length())]["deck"]) if text.begins_with(SUGGEST_PREFIX) else ""
+	_messages.append({"seat": seat, "text": text, "deck": deck})
+	_append_chat(seat, text, deck)
+	_scroll_chat_down()
+
+
+func _append_chat(seat: String, text: String, deck: String) -> void:
+	# User text is literal, including BBCode-like names and messages.
+	_chat_log.push_color(BoardPanel.colour(seat, PixelTheme.TEXT))
+	_chat_log.add_text(EventLogPanel.player_name(seat))
+	_chat_log.pop()
 	if text.begins_with(SUGGEST_PREFIX):
 		var cid := text.substr(SUGGEST_PREFIX.length())
-		if not _cells.has(cid):
-			return
-		var card_name := String(CardLibrary.card_data(cid).get("name", cid)).to_upper()
-		_chat_log.append_text("%s suggests banning [url=%s][color=#%s]%s[/color][/url] (%s)\n" % [who, cid,
-			PixelTheme.GOLD.to_html(false), card_name, SetupScreen.deck_title(String(_cells[cid]["deck"]))])
-		_scroll_chat_down()
-		return
-	_chat_log.append_text("%s: " % who)
-	_chat_log.add_text(text)
+		var link := "[url=%s][color=#%s]%s[/color][/url]" % [cid, PixelTheme.GOLD.to_html(false), CardText.field(cid, "name").to_upper()]
+		# Name was rendered literally above; only our own template contains markup.
+		_chat_log.append_text(L10n.text("ban.suggest", {"who": "", "card": link, "deck": _deck_title(deck)}))
+	else:
+		_chat_log.add_text(": " + text)
 	_chat_log.newline()
-	_scroll_chat_down()
 
 
 ## Tab (клавиша пинга) над миниатюрой — в чат предложение забанить её.
@@ -299,7 +313,7 @@ func show_view(view: Dictionary) -> void:
 		# Критик UI: закрытая — приглушённая, с крестиком; доступная — яркая.
 		var bg := BAN_COLOUR.darkened(0.75) if shut else PixelTheme.PANEL_HI
 		var text := PixelTheme.TEXT_OFF if shut else PixelTheme.TEXT
-		tab.text = ("x " if shut else "") + SetupScreen.deck_title(deck)
+		tab.text = ("x " if shut else "") + _deck_title(deck)
 		tab.add_theme_stylebox_override("normal", PixelTheme.button_box(bg, PixelTheme.BORDER))
 		tab.add_theme_stylebox_override("hover", PixelTheme.button_box(bg.lightened(0.08), PixelTheme.BORDER_HI))
 		for state in ["pressed", "hover_pressed"]:
@@ -308,7 +322,7 @@ func show_view(view: Dictionary) -> void:
 			tab.add_theme_color_override(state, text)
 		for state in ["font_pressed_color", "font_hover_pressed_color"]:
 			tab.add_theme_color_override(state, text if shut else PixelTheme.GOLD)
-		tab.tooltip_text = "Already has a ban this round" if shut else ""
+		tab.tooltip_text = _deck_tip(deck, shut)
 	# Свой ход, а в колонке открыта закрытая полуколода — открыть соседнюю.
 	if my_turn():
 		for deck: String in _decks:
@@ -389,7 +403,8 @@ func _build(decks: Array) -> void:
 		var deck := String(decks[i])
 		var column := 0
 		var tab := Button.new()
-		tab.text = SetupScreen.deck_title(deck)
+		tab.text = _deck_title(deck)
+		tab.clip_text = true
 		tab.toggle_mode = true
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.custom_minimum_size.y = 13
@@ -499,8 +514,8 @@ func _build_slots() -> void:
 			lap_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_slots.add_child(lap_col)
 			var head := Label.new()
-			head.text = "R%d" % (i / lap + 1)
-			head.tooltip_text = "Round %d" % (i / lap + 1)
+			L10n.bind(head, "ban.round_short", {"round": i / lap + 1})
+			L10n.bind(head, "ban.round", {"round": i / lap + 1}, "tooltip_text")
 			head.mouse_filter = Control.MOUSE_FILTER_PASS
 			head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 			head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -521,13 +536,6 @@ func _build_slots() -> void:
 		row.add_theme_constant_override("separation", 2)
 		slot.add_child(row)
 		var card := String((bans[i] as Dictionary).get("card", "")) if i < bans.size() else ""
-		var pic := TextureRect.new()
-		pic.custom_minimum_size = THUMB
-		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		pic.stretch_mode = TextureRect.STRETCH_SCALE
-		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		# Миниатюра целиком, как в сетках полуколод (владелец, 2026-11-01).
-		pic.texture = CardView.mini_texture(card) if card != "" else null
 		# Пусто (ход впереди или SKIP) — тёмная рамка размером с миниатюру:
 		# все восемь ячеек стоят ровно (критик UI).
 		if card == "":
@@ -537,6 +545,13 @@ func _build_slots() -> void:
 			slot_hole.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			row.add_child(slot_hole)
 		else:
+			var pic := TextureRect.new()
+			pic.custom_minimum_size = THUMB
+			pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			pic.stretch_mode = TextureRect.STRETCH_SCALE
+			pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			# Миниатюра целиком, как в сетках полуколод (владелец, 2026-11-01).
+			pic.texture = CardView.mini_texture(card)
 			row.add_child(pic)
 		var text := VBoxContainer.new()
 		text.add_theme_constant_override("separation", 0)
@@ -545,7 +560,7 @@ func _build_slots() -> void:
 		row.add_child(text)
 		# Текущая ячейка залита цветом игрока — текст на ней светлый.
 		var name_label := Label.new()
-		name_label.text = "YOU" if who == _net.seat else EventLogPanel.player_name(who)
+		name_label.text = L10n.text("ban.you") if who == _net.seat else EventLogPanel.player_name(who)
 		name_label.add_theme_color_override("font_color", PixelTheme.TEXT if now else colour)
 		name_label.clip_text = true
 		name_label.custom_minimum_size.x = 30
@@ -554,7 +569,7 @@ func _build_slots() -> void:
 		what.custom_minimum_size.x = 30
 		if i < bans.size():
 			# Имя карты уже на миниатюре — здесь её полуколода (критик UI).
-			what.text = SetupScreen.deck_title(String(_cells[card]["deck"])) if _cells.has(card) else ("SKIP" if card == "" else "")
+			what.text = _deck_title(String(_cells[card]["deck"])) if _cells.has(card) else (L10n.text("ban.skipped") if card == "" else "")
 			what.add_theme_color_override("font_color", PixelTheme.TEXT if card != "" else PixelTheme.TEXT_DIM)
 			# Перенос только по пробелам (ICEWIND DALE); длинное слово обрезается,
 			# целиком — в подсказке.
@@ -562,7 +577,7 @@ func _build_slots() -> void:
 			what.tooltip_text = what.text
 			what.mouse_filter = Control.MOUSE_FILTER_PASS
 		else:
-			what.text = "NOW" if now else "-"
+			what.text = L10n.text("ban.now") if now else "-"
 			what.add_theme_color_override("font_color", PixelTheme.GOLD if now else PixelTheme.TEXT_DIM)
 		text.add_child(what)
 
@@ -580,7 +595,7 @@ func _refresh_info() -> void:
 		child.queue_free()
 	if cid == "":
 		var hint := Label.new()
-		hint.text = "Hover a card to see it in full.\nAlt over any card also shows its notes."
+		L10n.bind(hint, "ban.hover")
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		hint.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		hint.position = Vector2(0, 120)
@@ -601,10 +616,10 @@ func _refresh_info() -> void:
 	var by := String(banned_cards().get(cid, ""))
 	var colour := PixelTheme.TEXT_DIM
 	if by != "":
-		caption.text = "BANNED by %s" % EventLogPanel.player_name(by)
+		L10n.bind(caption, "ban.banned", {"name": EventLogPanel.player_name(by)})
 		colour = BAN_COLOUR
 	elif (_view.get("locked", []) as Array).has(deck):
-		caption.text = "%s already has a ban this round" % SetupScreen.deck_title(deck)
+		caption.text = L10n.text("ban.deck_locked", {"deck": _deck_title(deck)})
 	caption.add_theme_color_override("font_color", colour)
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caption.position = Vector2(0, 0)
@@ -643,7 +658,7 @@ func _place_extras(card: CardView, tokens: Array[CardView], tips: Control) -> vo
 		# Щелчок по жетону — следующий; пока мышь на нём, сам не листается.
 		for t: CardView in tokens:
 			t.mouse_filter = Control.MOUSE_FILTER_STOP
-			t.tooltip_text = "Click to see the next one"
+			L10n.bind(t, "ban.next_token", {}, "tooltip_text")
 			t.mouse_entered.connect(func(): _token_hold = true)
 			t.mouse_exited.connect(func(): _token_hold = false)
 			t.gui_input.connect(func(event: InputEvent):
@@ -658,7 +673,8 @@ func _refresh() -> void:
 	var colour := BoardPanel.colour(turn, PixelTheme.TEXT)
 	_skip.disabled = not mine
 	_ban.disabled = not can_ban(_selected)
-	_ban.text = "BAN %s" % String(CardLibrary.card_data(_selected).get("name", "")).to_upper() if _selected != "" else "BAN"
+	_ban.tooltip_text = String(CardLibrary.card_data(_selected).get("name", ""))
+	_ban.text = L10n.text("ban.ban_card", {"card": CardText.field(_selected, "name").to_upper()}) if _selected != "" else L10n.text("ban.ban")
 	# BAN — главная кнопка: залита цветом банящего (критик UI); SKIP — обычная.
 	var fill := PixelTheme.button_box(colour.darkened(0.45), colour.lightened(0.2))
 	for state in ["normal", "hover", "pressed"]:
@@ -669,18 +685,17 @@ func _refresh() -> void:
 	_clock.add_theme_color_override("font_color", BAN_COLOUR.lightened(0.2) if seconds <= 10 and not starting else PixelTheme.TEXT)
 	if starting and seconds > 0:
 		# Баны кончились: 10 секунд посмотреть итог (владелец, 2026-11-03).
-		_status.text = "Bans are done. The game starts in %d..." % seconds
+		_status.text = L10n.text("ban.starting", {"seconds": seconds})
 		_status.add_theme_color_override("font_color", PixelTheme.GOLD)
 		return
 	if turn == "":
-		_status.text = "Bans are done. Dealing the cards..."
+		_status.text = L10n.text("ban.done")
 	elif mine and _selected != "":
-		_status.text = "YOUR BAN - %s (%s)" % [String(CardLibrary.card_data(_selected).get("name", "")).to_upper(),
-			SetupScreen.deck_title(String(_cells[_selected]["deck"]))]
+		_status.text = L10n.text("ban.selected", {"card": CardText.field(_selected, "name").to_upper(), "deck": _deck_title(String(_cells[_selected]["deck"]))})
 	elif mine:
-		_status.text = "YOUR BAN: pick a card in a half-deck without a ban this round, then BAN - or SKIP."
+		_status.text = L10n.text("ban.pick")
 	else:
-		_status.text = "%s is banning..." % EventLogPanel.player_name(turn).to_upper()
+		_status.text = L10n.text("ban.other", {"name": EventLogPanel.player_name(turn).to_upper()})
 	_status.add_theme_color_override("font_color", PixelTheme.GOLD if mine else colour)
 
 
@@ -714,3 +729,39 @@ func _process(delta: float) -> void:
 	_left = maxf(0.0, _left - delta)
 	if ceili(_left) != before:
 		_refresh()
+
+
+func _deck_title(deck: String) -> String:
+	var key := "ban.deck." + deck
+	return L10n.text(key) if L10n.catalog("en").has(key) else SetupScreen.deck_title(deck)
+
+
+func _deck_tip(deck: String, shut: bool) -> String:
+	var title := _deck_title(deck)
+	var original := SetupScreen.deck_title(deck)
+	return title + ("\n" + original if title != original else "") + ("\n" + L10n.text("ban.locked") if shut else "")
+
+
+func _locale_changed() -> void:
+	if _status == null:
+		return
+	var skip_disabled := _skip.disabled
+	var ban_disabled := _ban.disabled
+	for deck: String in _decks:
+		var tab: Button = _decks[deck]["tab"]
+		var shut := (_view.get("locked", []) as Array).has(deck)
+		tab.text = ("x " if shut else "") + _deck_title(deck)
+		tab.tooltip_text = _deck_tip(deck, shut)
+	for cid: String in _cells:
+		(_cells[cid]["face"] as TextureRect).texture = CardView.mini_texture(cid)
+	_build_slots()
+	_info_shown = "?"
+	_refresh()
+	# Changing language must not submit or re-enable an action awaiting the server.
+	_skip.disabled = skip_disabled
+	_ban.disabled = ban_disabled
+	var scroll := _chat_scroll.scroll_vertical
+	_chat_log.clear()
+	for message: Dictionary in _messages:
+		_append_chat(message.seat, message.text, message.deck)
+	_chat_scroll.scroll_vertical = scroll
