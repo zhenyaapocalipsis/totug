@@ -25,6 +25,9 @@ signal choice_clicked(index: int)
 ## (решение владельца, 2026-09-22: карты рынка не обрезаются). Слоты не
 ## тянутся. Рынок в два столбца (решение владельца, 2026-09-24): дисплей —
 ## три ряда, под ним общие стопки.
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+
 const SLOT := Vector2i(CardView.MINI_SIZE)
 ## Отступ панели ровно в пиксель.
 const PAD := 1
@@ -45,6 +48,7 @@ const TOKEN_PITCH := 10
 const TOKENS_PER_ROW := 5
 
 ## Картинки фишек войск по цвету и эмблеме хозяина.
+var _half_decks: Array = []
 var _token_cache: Dictionary = {}
 
 var _grid: GridContainer
@@ -63,6 +67,7 @@ var _choosing := false
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_refresh_half_decks)
 	add_theme_stylebox_override("panel", GameScreen.zone_style(PAD))
 
 	var col := VBoxContainer.new()
@@ -72,6 +77,7 @@ func _init() -> void:
 	var title_row := HBoxContainer.new()
 	col.add_child(title_row)
 	var title := GameScreen.section_label("MARKET")
+	L10n.bind(title, "market.title")
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title = title
 	title_row.add_child(title)
@@ -92,7 +98,9 @@ func _init() -> void:
 		_cards.append(null)
 		_empties.append(box.get_child(0))
 
-	col.add_child(GameScreen.section_label("SUPPLY"))
+	var supply_title := GameScreen.section_label("")
+	L10n.bind(supply_title, "market.supply")
+	col.add_child(supply_title)
 
 	# Сетка, а не ряд: слоты те же, что у дисплея, и их может стать больше.
 	_supply_row = GridContainer.new()
@@ -124,6 +132,12 @@ func _init() -> void:
 ## Полуколоды рынка этой партии (board_snapshot "half_decks") — подсказкой при
 ## наведении на MARKET (владелец, 2026-10-19). Одна полуколода дважды — "×2".
 func set_half_decks(decks: Array) -> void:
+	_half_decks = decks.duplicate()
+	_refresh_half_decks()
+
+
+func _refresh_half_decks() -> void:
+	var decks := _half_decks
 	var lines := PackedStringArray()
 	var seen: Array = []
 	for deck in decks:
@@ -131,8 +145,9 @@ func set_half_decks(decks: Array) -> void:
 			continue
 		seen.append(deck)
 		var n := decks.count(deck)
-		lines.append(SetupScreen.deck_title(String(deck)) + (" ×%d" % n if n > 1 else ""))
-	_title.tooltip_text = "Market half-decks:\n" + "\n".join(lines) if not lines.is_empty() else ""
+		var message := SetupScreen.deck_message(String(deck))
+		lines.append(L10n.text(message.l10n_key, message.get("parameters", {})) + (" ×%d" % n if n > 1 else ""))
+	_title.tooltip_text = L10n.text("market.halves", {"decks": "\n".join(lines)}) if not lines.is_empty() else ""
 	_title.mouse_filter = Control.MOUSE_FILTER_PASS if not lines.is_empty() else Control.MOUSE_FILTER_IGNORE
 
 
@@ -148,7 +163,7 @@ func update_from_view(view: Dictionary) -> void:
 	_choosing = String(pd.get("tag", "")) == "market" and not (pd.get("legal_options", []) as Array).is_empty()
 	if _choosing:
 		affordable = pd["legal_options"]
-	_deck_label.text = "DECK %d" % int(market["deck_size"])
+	L10n.bind(_deck_label, "market.deck", {"count": int(market["deck_size"])})
 
 	var market_spies: Dictionary = view.get("market_spies", {})
 	var market_troops: Dictionary = view.get("market_troops", {})
@@ -262,7 +277,7 @@ func _mark_spy(i: int, owner: String) -> void:
 		_boxes[i].add_child(mark)
 	_boxes[i].move_child(mark, -1)
 	mark.set_meta("owner", owner)
-	mark.tooltip_text = "%s's spy: others pay 3 Power to recruit it, then it costs 6 less" % owner.capitalize()
+	L10n.bind(mark, "market.spy", {"name": GameText.player_message(owner)}, "tooltip_text")
 	mark.visible = true
 	mark.queue_redraw()
 
@@ -305,7 +320,7 @@ func _mark_troops(i: int, troops: Dictionary) -> void:
 	mark.size = Vector2(cols * TOKEN_PITCH - 1, rows * TOKEN_PITCH - 1)
 	mark.position = Vector2(CardView.MINI_ART.x + 1, CardView.MINI_ART.w - 1 - mark.size.y)
 	mark.set_meta("owners", owners)
-	mark.tooltip_text = "Troops on this card: each makes it 1 cheaper for its owner and 1 dearer for opponents"
+	L10n.bind(mark, "market.troops", {}, "tooltip_text")
 	mark.visible = true
 	mark.queue_redraw()
 
@@ -337,7 +352,7 @@ static func _make_slot() -> Control:
 	empty.add_theme_stylebox_override("panel",
 		PixelTheme.box(PixelTheme.PANEL_LO, PixelTheme.BORDER, 1, 1, 1))
 	var label := Label.new()
-	label.text = "empty"
+	L10n.bind(label, "market.empty")
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)

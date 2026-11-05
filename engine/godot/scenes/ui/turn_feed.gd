@@ -29,6 +29,9 @@ extends PanelContainer
 ## Карты — обычные CardView: по наведению полная карта по центру экрана,
 ## с Alt — крупнее (CardPreview).
 
+const L10n := preload("res://scenes/localization.gd")
+const GameText := preload("res://scenes/game_text.gd")
+
 const CARD := CardView.MINI_SIZE
 ## Поле колонки и поле блока внутри рамки (рамка — 1 пиксель из него).
 const PAD := 1
@@ -86,6 +89,7 @@ var _hovered: Array = []   # [Block, key] строки под мышью или 
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_refresh_language)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	# Подложка и рамка зоны, как у дектрекера (владелец, 2026-09-28); сверху
 	# заголовок MOVES — вместо корешка (владелец, 2026-10-03). Всё, что шире
@@ -96,7 +100,9 @@ func _init() -> void:
 	row.add_theme_constant_override("separation", PAD)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
-	row.add_child(GameScreen.band_label("MOVES"))
+	var heading := GameScreen.band_label("")
+	L10n.bind(heading, "feed.title")
+	row.add_child(heading)
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -150,7 +156,8 @@ func add_mulligan(pid: String, removed: String, added: String) -> void:
 	var follow := _at_bottom()
 	end_turn()
 	var block := _current_block(pid)
-	block.title.text = _header_text(block.title, pid, "MULLIGAN")
+	block.header_what = "MULLIGAN"
+	block.title.text = _header_text(block.title, pid, block.header_what)
 	if removed == "":
 		block.add_stat("kept", 1, "")
 	else:
@@ -299,18 +306,20 @@ func _open_block(pid: String) -> Block:
 ## Длинное имя из профиля не влезает в блок вместе с "'S TURN" — тогда
 ## пишем одно имя: цвет и так говорит, чей ход (как на кнопке End turn).
 ## Мерить можно только в дереве: шрифт приходит из темы экрана.
-func _fit_header(title: Label, pid: String) -> void:
-	title.text = _header_text(title, pid, "")
+func _fit_header(title: Label, pid: String, what: String = "") -> void:
+	title.text = _header_text(title, pid, what)
 
 
 ## "RED'S TURN" (what пусто) или "RED MULLIGAN"; не влезает — короче.
 func _header_text(title: Label, pid: String, what: String) -> String:
-	var who := EventLogPanel.player_name(pid).to_upper()
-	var text := "%s'S TURN" % who if what == "" else "%s %s" % [who, what]
+	var who := GameText.player_name(pid).to_upper()
+	var special := L10n.text("feed.mulligan") if what == "MULLIGAN" else what
+	var text := L10n.text("feed.header_turn", {"name": who}) if what == "" else L10n.text("feed.header_special", {"name": who, "what": special})
+	title.tooltip_text = text
 	var font := title.get_theme_font("font")
 	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			title.get_theme_font_size("font_size")).x > INNER:
-		text = who if what == "" else what
+		text = who if what == "" else special
 	return text
 
 
@@ -351,6 +360,7 @@ func _card(cid: String, pid: String, tag: String) -> CardView:
 
 ## Один ход в сводке: заголовок и группы карт в порядке order.
 class Block extends PanelContainer:
+	var header_what := ""
 	var pid := ""
 	var title: Label
 	## tag -> Ladder
@@ -372,6 +382,7 @@ class Block extends PanelContainer:
 	var _stats_box: VBoxContainer
 
 	func _init(player_id: String, order: Array[String]) -> void:
+		TurnFeed.L10n.events.changed.connect(_refresh_language)
 		pid = player_id
 		_order = order
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -380,6 +391,7 @@ class Block extends PanelContainer:
 		_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_col)
 		title = Label.new()
+		title.mouse_filter = Control.MOUSE_FILTER_PASS
 		title.clip_text = true
 		_col.add_child(title)
 
@@ -389,7 +401,7 @@ class Block extends PanelContainer:
 		var ladder: Ladder = groups[tag]
 		ladder.add_card(card)
 		# Подпись с числом карт группы: "PLAYED 5" (владелец, 2026-10-11).
-		(_labels[tag] as Label).text = "%s %d" % [tag.get_slice(":", 0), ladder.get_child_count()]
+		(_labels[tag] as Label).text = TurnFeed.group_text(tag, ladder.get_child_count())
 
 	func card_count() -> int:
 		var n := 0
@@ -429,33 +441,15 @@ class Block extends PanelContainer:
 			places[key] = []
 		(places[key] as Array).append_array(where)
 		var row: Array = _rows[key]
-		var label: Label = row[0]
-		# "vp:blue" — строка другого игрока: подпись та же, что у "vp".
-		var base := key.get_slice(":", 0)
-		match base:
-			"vp":
-				label.text = "+%d VP" % stats[key]
-			"steal":
-				label.text = "STEAL %d VP" % stats[key]
-			"extra_turn":
-				label.text = TurnFeed.STATS[base]
-			"a2_vp":
-				label.text = "A2 +%d VP" % stats[key]
-			"mark_vp":
-				label.text = "MARK +%d VP" % stats[key]
-			"kept":
-				label.text = TurnFeed.STATS[base]
-			"a2_power", "a2_influence", "mark_influence":
-				label.text = "%s +%d" % [TurnFeed.STATS[base], stats[key]]
-			_:
-				label.text = "%s %d" % [TurnFeed.STATS[base], stats[key]]
+		_refresh_stat(key)
 		var marks: HBoxContainer = row[1]
 		# Квадратики — пока влезают в ширину карты рядом с подписью: иначе
 		# строка раздвинула бы колонку.
 		# Шрифт моноширинный, 6 пикселей на знак. Мерить шрифтом темы нельзя:
 		# в момент добавления строки тема до неё ещё не дошла, и мерился
 		# крупный шрифт по умолчанию — квадратиков влезало меньше, чем есть места.
-		var text_w := label.text.length() * 6 - 1
+		# Keep colour-mark capacity identical in both languages; full text is in the tooltip.
+		var text_w := TurnFeed.stat_text(key, stats[key], "en").length() * 6 - 1
 		var room := int((TurnFeed.INNER - text_w - 2) / (MARK + 1))
 		while marks.get_child_count() > maxi(room, 0):
 			var extra := marks.get_child(marks.get_child_count() - 1)
@@ -549,6 +543,17 @@ class Block extends PanelContainer:
 		_labels[tag] = label
 
 
+	func _refresh_stat(key: String) -> void:
+		(_rows[key][0] as Label).text = TurnFeed.stat_text(key, int(stats[key]))
+		TurnFeed.L10n.bind(row(key), "feed.tip_" + key.get_slice(":", 0), {"count": int(stats[key])}, "tooltip_text")
+
+	func _refresh_language() -> void:
+		for tag: String in groups:
+			(_labels[tag] as Label).text = TurnFeed.group_text(tag, (groups[tag] as Ladder).get_child_count())
+		for key: String in stats:
+			_refresh_stat(key)
+
+
 ## Карты одной группы — лесенкой сверху вниз, как стопка на столе: каждая
 ## следующая лежит ниже предыдущей и поверх неё, у предыдущих видна шапка с
 ## названием, последняя — целиком. Наведение на шапку показывает крупно
@@ -567,3 +572,18 @@ class Ladder extends Control:
 		add_child(card)
 		card.size = SIZE
 		custom_minimum_size = Vector2(SIZE.x, STEP * (get_child_count() - 1) + SIZE.y)
+
+
+static func group_text(tag: String, count: int) -> String:
+	return L10n.text("feed.group_" + tag.get_slice(":", 0).to_lower().replace(" ", "_"), {"count": count})
+
+
+static func stat_text(key: String, count: int, language: String = "") -> String:
+	var base := key.get_slice(":", 0)
+	var catalog := L10n.catalog(language if language != "" else L10n.locale())
+	return String(catalog.get("feed.stat_" + base, STATS.get(base, base))).format({"count": count})
+
+
+func _refresh_language() -> void:
+	for block: Block in _blocks:
+		_fit_header(block.title, block.pid, block.header_what)

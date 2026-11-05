@@ -29,6 +29,8 @@ signal choice_clicked(card_id: String)
 ## Мелкое лицо карты пиксель в пиксель. Зона руки ужата (решение владельца,
 ## 2026-09-20): карты лежат внахлёст, а освободившаяся ширина отдана чату —
 ## в прежнюю его колонку в 62 пикселя строка просто не помещалась.
+const L10n := preload("res://scenes/localization.gd")
+
 const CARD_SIZE := CardView.MINI_SIZE   # = CardView.MINI_SIZE, пиксель в пиксель
 ## Подъём заметный: на шести пикселях движение видно ступеньками (положение
 ## округляется до целого пикселя), на двенадцати оно читается как рывок вверх.
@@ -113,6 +115,7 @@ func _init() -> void:
 
 	# Подпись над картами Inner Circle, когда они стоят в ряду справа от руки.
 	_label = Label.new()
+	L10n.scope(_label)
 	_label.text = "INNER CIRCLE"
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.add_theme_color_override("font_color", PixelTheme.GOLD)
@@ -122,6 +125,7 @@ func _init() -> void:
 	_label.visible = false
 	add_child(_label)
 	_aside_label = _label.duplicate()
+	L10n.scope(_aside_label)
 	_aside_label.text = "SET ASIDE"
 	_aside_label.add_theme_color_override("font_color", PixelTheme.TEXT_OFF)
 	add_child(_aside_label)
@@ -300,7 +304,7 @@ func _sync_aside(ids: Array) -> void:
 		card.set_card_owner(_viewer)
 		card.set_live(true)
 		card.set_clickable(false)
-		card.tooltip_text = "Set aside with Eye Monger: played at the start of each of your turns"
+		L10n.bind(card, "hand.aside_tip", {}, "tooltip_text")
 		add_child(card)
 		_aside.append(card)
 	_aside_label.visible = not _aside.is_empty()
