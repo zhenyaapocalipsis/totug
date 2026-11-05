@@ -182,6 +182,11 @@ var _first_page := PAGE_ONLINE
 ## Окно под кнопками и его содержимое по вкладкам (строится при первом показе).
 var _window: PanelContainer
 var _tabs: Dictionary = {}
+const L10n := preload("res://scenes/localization.gd")
+const TAB_TEXT_KEYS := {"PROFILE": "menu.profile", "PLAY": "menu.play", "LEADERBOARD": "menu.leaderboard",
+	"FRIENDS": "menu.friends", "SETTINGS": "menu.settings", "EXIT": "menu.exit"}
+var _menu_captions: Array[Dictionary] = []
+var _friend_badge := 0
 var _tab_buttons: Dictionary = {}
 var _section_buttons: Dictionary = {}
 ## Содержимое раздела PLAY — пересобирается при смене раздела.
@@ -260,6 +265,7 @@ func _init(page: String = PAGE_ONLINE) -> void:
 
 	_first_page = page
 	show_page(page)
+	L10n.events.changed.connect(_refresh_menu_language)
 
 
 ## Окно — по самому большому содержимому из всех вкладок и разделов, чтобы
@@ -341,7 +347,8 @@ func _show_tab(tab: String) -> void:
 					friend_invite_requested.emit(fname, _count, _chosen_mode()))
 				friends.watch_requested.connect(func(fname: String): friend_watch_requested.emit(fname))
 				friends.badge_changed.connect(func(n: int):
-					(_tab_buttons[PAGE_FRIENDS] as Button).text = "FRIENDS" + (" %d" % n if n > 0 else ""))
+					_friend_badge = n
+					_refresh_menu_language())
 				content = friends
 			_:
 				content = _build_play()
@@ -767,7 +774,10 @@ func _build_settings() -> Control:
 ## Кнопка под названием: все четыре одной ширины, вместе — во всю ширину меню.
 func _tab_button(text: String) -> Button:
 	var b := Button.new()
-	b.text = text
+	var key := String(TAB_TEXT_KEYS.get(text, ""))
+	b.text = text if key.is_empty() else L10n.text(key)
+	if not key.is_empty():
+		_menu_captions.append({"control": b, "key": key})
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.custom_minimum_size.y = TAB_HEIGHT
 	_style_button(b)
@@ -849,3 +859,10 @@ func _search_duo(group: ButtonGroup, market: Label) -> Button:
 		_match_teams = true
 		market.text = _match_market_text())
 	return duo
+
+
+func _refresh_menu_language() -> void:
+	for entry: Dictionary in _menu_captions:
+		entry.control.text = L10n.text(entry.key)
+	if _friend_badge > 0:
+		(_tab_buttons[PAGE_FRIENDS] as Button).text += " %d" % _friend_badge

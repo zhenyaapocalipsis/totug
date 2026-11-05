@@ -9,9 +9,14 @@ extends Control
 signal main_menu_requested
 signal bug_report_requested
 
+const L10n := preload("res://scenes/localization.gd")
+const TEXT_KEYS := {"MENU": "menu.title", "RESUME": "menu.resume", "SETTINGS": "menu.settings",
+	"BUG REPORT": "menu.bug_report", "MAIN MENU": "menu.main_menu", "QUIT GAME": "menu.quit_game", "BACK": "menu.back"}
+
 const BUTTON_SIZE := Vector2(110, 16)
 const SettingsPanel := preload("res://scenes/ui/settings_panel.gd")
 
+var _captions: Array[Dictionary] = []
 var _col: VBoxContainer
 ## Настройки (SettingsPanel) с заголовком и BACK — на месте кнопок меню.
 var _settings: VBoxContainer
@@ -44,7 +49,7 @@ func _init() -> void:
 	card.add_child(col)
 
 	var title := Label.new()
-	title.text = "MENU"
+	_caption(title, "MENU")
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
@@ -63,7 +68,7 @@ func _init() -> void:
 	_settings.visible = false
 	card.add_child(_settings)
 	var head := Label.new()
-	head.text = "SETTINGS"
+	_caption(head, "SETTINGS")
 	head.add_theme_color_override("font_color", PixelTheme.GOLD)
 	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_settings.add_child(head)
@@ -79,6 +84,7 @@ func _init() -> void:
 		Music.set_muffled(is_visible_in_tree())
 		if not visible:
 			show_settings(false))
+	L10n.events.changed.connect(_refresh_language)
 
 
 ## Настройки вместо кнопок меню (и обратно).
@@ -100,8 +106,20 @@ func add_button(text: String, action: Callable) -> void:
 
 func _button(text: String, action: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	_caption(button, text)
 	button.custom_minimum_size = BUTTON_SIZE
 	SetupScreen._style_button(button)
 	button.pressed.connect(action)
 	return button
+
+
+func _caption(control: Control, source: String) -> void:
+	var key := String(TEXT_KEYS.get(source, ""))
+	control.set("text", source if key.is_empty() else L10n.text(key))
+	if not key.is_empty():
+		_captions.append({"control": control, "key": key})
+
+
+func _refresh_language() -> void:
+	for entry: Dictionary in _captions:
+		entry.control.set("text", L10n.text(entry.key))

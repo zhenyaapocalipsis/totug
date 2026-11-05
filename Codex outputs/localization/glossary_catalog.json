@@ -205,15 +205,15 @@
   {
     "key": "assassinate",
     "en": "Assassinate",
-    "ru": "Устраните",
+    "ru": "Уничтожьте",
     "note": "Отряд жертвы становится трофеем; не возвращается в казармы.",
-    "status": "proposed"
+    "status": "owner_confirmed"
   },
   {
     "key": "supplant",
     "en": "Supplant",
     "ru": "Заменить",
-    "note": "Заменить отряд: устранить целевой отряд и разместить свой на том же месте по действующим правилам. Термин утверждён владельцем.",
+    "note": "Заменить отряд: уничтожить целевой отряд и разместить свой на том же месте по действующим правилам. Термин утверждён владельцем.",
     "status": "owner_confirmed"
   },
   {
@@ -317,9 +317,9 @@
   {
     "key": "ambition",
     "en": "Ambition",
-    "ru": "Амбиция",
+    "ru": "Тщеславие",
     "note": "Аспект AMBITION.",
-    "status": "proposed"
+    "status": "owner_confirmed"
   },
   {
     "key": "guile",
@@ -338,16 +338,16 @@
   {
     "key": "obedience",
     "en": "Obedience",
-    "ru": "Повиновение",
+    "ru": "Покорность",
     "note": "Аспект OBEDIENCE.",
-    "status": "proposed"
+    "status": "owner_confirmed"
   },
   {
     "key": "focus",
     "en": "Focus",
-    "ru": "Сосредоточение",
+    "ru": "Концентрация",
     "note": "Именованная механика Focus; условие не заменять обычным наличием аспекта.",
-    "status": "proposed"
+    "status": "owner_confirmed"
   },
   {
     "key": "scry",
@@ -387,9 +387,9 @@
   {
     "key": "devotion",
     "en": "Devotion",
-    "ru": "Преданность",
+    "ru": "Рвение",
     "note": "Способность, связанная с наймом или продвижением карты.",
-    "status": "proposed"
+    "status": "owner_confirmed"
   },
   {
     "key": "retain",
@@ -408,9 +408,9 @@
   {
     "key": "glamour",
     "en": "Glamour",
-    "ru": "Морок",
+    "ru": "Чары",
     "note": "Способность с оплатой жетоном ПО; не менять условия и число активаций.",
-    "status": "proposed"
+    "status": "owner_confirmed"
   },
   {
     "key": "explore",

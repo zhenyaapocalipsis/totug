@@ -8,6 +8,7 @@ extends RefCounted
 ## редактор, а проект часто запускается из командной строки.
 
 const PATH := "user://settings.cfg"
+const L10n := preload("res://scenes/localization.gd")
 
 ## Клавиши, которые можно переназначить (владелец, 2026-10-06). Esc — всегда
 ## меню, его не трогаем.
@@ -36,6 +37,7 @@ const SPEED_STEPS: Array[float] = [1.0, 1.5, 2.0]
 
 ## Что лежит в файле по умолчанию: [раздел, ключ, значение].
 const DEFAULTS := {
+	"language": ["interface", "en"],
 	"master_volume": ["audio", 1.0],
 	"window_mode": ["video", "full"],
 	"vsync": ["video", true],
@@ -68,6 +70,8 @@ static func value(name: String) -> Variant:
 
 
 static func set_value(name: String, v: Variant) -> void:
+	if name == "language":
+		v = L10n.normalize(String(v))
 	var d: Array = DEFAULTS[name]
 	# Sfx и Music пишут в тот же файл — сперва перечитать, чтобы не затереть.
 	_file().load(path())
@@ -152,6 +156,8 @@ static func apply_all() -> void:
 
 static func _apply(name: String) -> void:
 	match name:
+		"language":
+			L10n.set_locale(String(value(name)))
 		"master_volume":
 			var v := float(value(name))
 			AudioServer.set_bus_mute(0, v <= 0.0)
