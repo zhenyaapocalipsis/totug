@@ -236,6 +236,9 @@ const NAME_BREAKS := {
 	"SAMMASTER": [3], "DRACOLICH": [5], "D'HONAIRE": [5],
 	# Waterdeep: конструкты и их создатели (2026-11-02)
 	"APPRENTICE": [6], "SILVERQUILL": [6],
+	# Russian mini-card names keep syllable boundaries with the same wrapping rules.
+	"АРИСТОКРАТ": [1, 3, 6], "ВЕРБОВЩИК": [3, 6],
+	"ПЕРЕГОВОРЩИК": [2, 4, 6, 9], "ЗАКЛИНАТЕЛЬ": [2, 5, 7],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]

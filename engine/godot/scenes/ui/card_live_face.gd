@@ -36,7 +36,7 @@ static func full(cid: String, art: String, entry: Dictionary) -> Texture2D:
 		img.decompress()
 		img.convert(Image.FORMAT_RGBA8)
 		if entry.has("notes"):
-			_draw_text_box(img, CardText.ability(cid, true), CardText.notes(cid, entry["notes"]))
+			_draw_text_box(img, cid, entry["notes"])
 		if entry.has("cost"):
 			_draw_cost_full(img, int(entry["cost"]), CardLibrary.card_cost(cid))
 		_cache[key] = ImageTexture.create_from_image(img)
@@ -74,9 +74,9 @@ static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
 ## Текст карты с пометками: поле перерисовывается целиком, как в pixel_cards.gd.
 ## Пометка удлиняет текст: не влез — абзацы плотнее (промежуток 1 вместо 3), а
 ## если и так нет — поле поднимается на низ арта (fit_box). Возвращает высоту.
-static func _draw_text_box(img: Image, raw: String, notes: Array) -> int:
+static func _draw_text_box(img: Image, cid: String, notes: Array) -> int:
 	var w := img.get_width()
-	var box := text_layout(raw, notes, w, img.get_height())
+	var box := layout_for_card(cid, notes, w, img.get_height())
 	var top: int = box["top"]
 	var box_h: int = box["box_h"]
 	img.fill_rect(Rect2i(7, top, w - 14, box_h), PC.C_OUTLINE)
@@ -93,13 +93,17 @@ static func _draw_text_box(img: Image, raw: String, notes: Array) -> int:
 ## Где что лежит в поле текста карты размера w x h (так же рисует и
 ## tools/pixel_cards.gd без пометок): {top, box_h, content_h, bullets:
 ## [Vector2i], words: [[x, y, слово]]}.
-static func text_layout(raw: String, notes: Array, w: int, h: int) -> Dictionary:
+static func text_layout(raw: String, notes: Array, w: int, h: int, fixed_box: Dictionary = {}) -> Dictionary:
 	var text_h := h - 22 - TEXT_TOP
 	var paras := layout(raw, notes, w)
 	var fit := fit_box(paras, text_h)
 	var gap: int = fit[0]
 	var top: int = TEXT_TOP - int(fit[1])
 	var box_h: int = text_h + int(fit[1])
+	if not fixed_box.is_empty():
+		top = int(fixed_box.top)
+		box_h = int(fixed_box.box_h)
+		gap = PC.PARA_GAP if block_height(paras, PC.PARA_GAP) <= box_h - 8 else 1
 	var content_h := block_height(paras, gap)
 	var bullets: Array[Vector2i] = []
 	var words: Array = []
@@ -114,16 +118,24 @@ static func text_layout(raw: String, notes: Array, w: int, h: int) -> Dictionary
 				x += word_width(word) + 5
 			y += PC.LINE_H
 		y += gap
-	return {"top": top, "box_h": box_h, "content_h": content_h, "bullets": bullets, "words": words}
+	return {"top": top, "box_h": box_h, "content_h": content_h, "bullets": bullets, "words": words, "overflow": content_h > box_h - 8}
+
+
+## Russian uses the English card's existing text field, including live-note geometry.
+## Catalog validation rejects overflow instead of covering more of the illustration.
+static func layout_for_card(cid: String, notes: Array, w: int, h: int) -> Dictionary:
+	var source_notes := CardText.source_notes(cid, notes)
+	var fixed_box := {}
+	if CardText.translated(cid):
+		fixed_box = text_layout(String(CardLibrary.card_data(cid).get("ability_text", "")), source_notes, w, h)
+	return text_layout(CardText.ability(cid, true), CardText.notes(cid, source_notes), w, h, fixed_box)
 
 
 ## Ключевые слова на большой карте (для подсказок при наведении):
 ## [[Rect2i в пикселях лица, слово без знаков]].
 static func keyword_spots(cid: String, notes: Array, w: int, h: int) -> Array:
 	var out: Array = []
-	var raw := CardText.ability(cid, true)
-	notes = CardText.notes(cid, notes)
-	var spots: Array = text_layout(raw, notes, w, h)["words"]
+	var spots: Array = layout_for_card(cid, notes, w, h)["words"]
 	for index in spots.size():
 		var spot: Array = spots[index]
 		var word := String(spot[2])
@@ -132,9 +144,12 @@ static func keyword_spots(cid: String, notes: Array, w: int, h: int) -> Array:
 		var bare := word.rstrip(".,:;")
 		var keyword := CardText.keyword(bare)
 		if bare == "РАЗМЕСТИТЕ":
-			for following: Array in spots.slice(index + 1, index + 3):
+			for following: Array in spots.slice(index + 1, index + 5):
 				if String(following[2]).begins_with("ШПИОН"):
 					keyword = "PLACE"
+					break
+				if String(following[2]).ends_with(".") or is_keyword(String(following[2])):
+					break
 		out.append([Rect2i(spot[0] - 1, spot[1] - 1, word_width(bare) + 2, 9), keyword])
 	return out
 
@@ -323,7 +338,7 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 		var lines := PC.wrap_name(CardText.field(cid, "short_name").to_upper(), PC.MINI_SIDE_X - 3, w - 5, PC.MINI_SIDE_LINES, PC.MINI_NAME_LINES)
 		for i in lines.size():
 			_text(img, 2, 3 + i * PC.MINI_LINE_H, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
-		var aspect := String(data.get("aspect", ""))
+		var aspect := String(data.aspect) if data.get("aspect") != null else ""
 		var side := data.get("cost") != null or PC.MINI_ICONS.has(aspect)
 		if side:
 			img.fill_rect(Rect2i(PC.MINI_SIDE_X, 2, 1, PC.MINI_SIDE_LINES * PC.MINI_LINE_H), PC.C_FRAME_HI)
@@ -334,7 +349,7 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 			_rows(img, MINI_COST_X, 2 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.ASPECT_COLOR[aspect])
 	else:
 		_draw_header(img, CardText.field(cid, "name"), data, CardText.field(cid, "aspect_name"), CardText.field(cid, "race_name"))
-		_draw_text_box(img, CardText.ability(cid, true), [])
+		_draw_text_box(img, cid, [])
 		var badge_width := _width(str(int(data.deck_vp)), 1) + 2
 		var ic_width := _width("-" if data.inner_circle_vp == null else str(int(data.inner_circle_vp)), 1) + 2
 		var left := w - 7 - ic_width - 1 - badge_width
@@ -356,7 +371,7 @@ static func _draw_header(img: Image, name: String, data: Dictionary, aspect_name
 		_text(img, w - 7 - _width(cost, 2), 6, cost, PC.C_LIGHT, 2, PC.C_OUTLINE)
 	for placement: Dictionary in PC.header_name_layout(name.to_upper(), cost, w):
 		_text(img, placement.x, placement.y, placement.text, PC.C_LIGHT, placement.scale, PC.C_OUTLINE)
-	var aspect := String(data.get("aspect", ""))
+	var aspect := String(data.aspect) if data.get("aspect") != null else ""
 	if not aspect.is_empty():
 		var colour: Color = PC.ASPECT_COLOR.get(aspect, PC.C_GREY)
 		_rows(img, 7, 24, PC.ICONS[aspect], colour)

@@ -6,8 +6,12 @@ static var _ru: Dictionary = {}
 static var _loaded := false
 const KEYWORDS := {"ПОГЛОТИТЕ":"DEVOUR", "ЗАМЕНИТЕ":"SUPPLANT", "РАЗМЕСТИТЕ":"DEPLOY",
 	"УНИЧТОЖЬТЕ":"ASSASSINATE", "ВЕРНИТЕ":"RETURN", "ВОЗВЫСЬТЕ":"PROMOTE",
-	"НАЙМИТЕ":"RECRUIT", "КОНЦЕНТРАЦИЯ":"FOCUS", "РВЕНИЕ":"DEVOTION", "ЧАРЫ":"GLAMOUR",
-	"ПРЕВРАЩЕНИЕ":"TRANSFORM"}
+	"НАЙМИТЕ":"RECRUIT", "НАНИМАЕТ":"RECRUITS", "НАНИМАЮТ":"RECRUITS", "КОНЦЕНТРАЦИЯ":"FOCUS", "РВЕНИЕ":"DEVOTION", "ЧАРЫ":"GLAMOUR",
+	"ПРЕВРАЩЕНИЕ":"TRANSFORM", "ПРЕВРАТИТЕ":"TRANSFORM", "ПРЕВРАТИТЬ":"TRANSFORM",
+	"ПЕРЕМЕСТИТЕ":"MOVE", "ПОДКУП":"BRIBE", "УКРАДИТЕ":"STEAL",
+	"ПРЕДВИДЕНИЕ":"SCRY", "МОЩЬ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE",
+	"РАЗЛИЧНЫЙ":"DISTINCT", "РАЗЛИЧНЫЕ":"DISTINCT", "РАЗЛИЧНЫХ":"DISTINCT", "УДЕРЖИТЕ":"RETAIN", "УДЕРЖАТЬ":"RETAIN",
+	"УДЕРЖАНО":"RETAINED", "ИССЛЕДОВАНИЕ":"EXPLORE", "ИССЛЕДУЙТЕ":"EXPLORE"}
 
 
 static func translations() -> Dictionary:
@@ -34,15 +38,22 @@ static func ability(cid: String, markers: bool = false) -> String:
 	return raw if markers else RegEx.create_from_string("\\{LIVE:[^}]+\\}").sub(raw, "", true)
 
 
-static func notes(cid: String, original: Array) -> Array:
+static func source_notes(cid: String, original: Array) -> Array:
 	var result := original.duplicate(true)
 	for note: Dictionary in result:
-		# Older peers/replays supply phrase only. Upgrade at the presentation edge.
-		if not note.has("id"):
-			for rule: Array in CardLive.RULES.get(cid, []):
-				if note.get("phrase", "") == rule[0]:
-					note["id"] = CardLive.hint_id(cid, rule)
-					break
+		# Older peers use a phrase; newer records may contain only the stable ID.
+		for rule: Array in CardLive.RULES.get(cid, []):
+			var id := CardLive.hint_id(cid, rule)
+			if not note.has("id") and note.get("phrase", "") == rule[0]:
+				note["id"] = id
+			if not note.has("phrase") and note.get("id", "") == id:
+				note["phrase"] = rule[0]
+	return result
+
+
+static func notes(cid: String, original: Array) -> Array:
+	var result := source_notes(cid, original)
+	for note: Dictionary in result:
 		if translated(cid) and ["(YES)", "(NO)"].has(note.get("text", "")):
 			note["text"] = "(ДА)" if note["ok"] else "(НЕТ)"
 	return result
@@ -53,7 +64,8 @@ static func keyword(word: String) -> String:
 	return String(KEYWORDS.get(bare, bare))
 
 
-const OPTION_IDS := {"+2 Influence": "gain_influence_2",
+const OPTION_IDS := {"+1 Influence": "gain_influence_1", "Promote another card in your hand": "promote_other_in_hand",
+	"+2 Influence": "gain_influence_2",
 	"At end of turn, promote another card played this turn": "promote_other_at_end",
 	"Place a spy": "place_spy",
 	"Return one of your spies -> Recruit up to 2 cards that cost 3 or less": "return_spy_recruit_2_max3"}
@@ -61,7 +73,7 @@ static var _options: Dictionary = {}
 
 
 static func option_id(source: String) -> String:
-	return String(OPTION_IDS.get(source, source))
+	return String(OPTION_IDS.get(source, "option_" + source.sha256_text().substr(0, 12)))
 
 
 static func option_field(source: String, key: String, fallback: String) -> String:

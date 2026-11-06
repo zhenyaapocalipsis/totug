@@ -738,5 +738,18 @@
   "god.hint_erase": "Click a troop or spy to remove it, a site to clear it.",
   "god.give_turn": "Give the turn to {player} now (start of turn, hands are kept)",
   "god.owner": "Troops and spies of {player}",
-  "god.owner_neutral": "Troops and spies of neutral white (troops only)"
+  "god.owner_neutral": "Troops and spies of neutral white (troops only)",
+  "keyword.BRIBE": "BRIBE: give 1 VP token to an opponent of your choice\nto get the effect after the arrow.",
+  "keyword.STEAL": "STEAL: take VP tokens from another player.",
+  "keyword.MOVE": "MOVE: take a troop where you have presence\nand put it on any free space.",
+  "keyword.SCRY": "SCRY N: look at the top N cards of your deck\nand discard any of them.",
+  "keyword.MIGHT": "MIGHT: works if you devoured a card this turn.\nThe second Might on a card needs 2 devours, and so on.",
+  "keyword.FROSTBITE": "FROSTBITE: works when this card is discarded from your hand\n(not by the end-of-turn discard).",
+  "keyword.RECRUITS": "RECRUIT: take a card into your discard pile.",
+  "keyword.RETAIN": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
+  "keyword.RETAINED": "RETAIN: in your turn, keep this card instead of playing it.\nIt comes back into your next hand on top of the usual 5 cards.",
+  "keyword.EXPLORE": "EXPLORE: look at the top 2 cards of your deck. Put up to one that matches into your hand,\nthe rest on the top or bottom of your deck in any order.",
+  "keyword.DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
+  "card.token": "TOKEN",
+  "card.transforms_into": "TRANSFORMS INTO"
 }

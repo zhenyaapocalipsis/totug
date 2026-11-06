@@ -301,7 +301,8 @@ static func token_cards(cid: String, size: Vector2) -> Array[CardView]:
 		view.set_meta("tag", tag)
 		view.draw.connect(func():
 			var font := view.get_theme_default_font()
-			view.draw_string(font, Vector2(0, -3), String(view.get_meta("tag")), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT_DIM))
+			view.draw_string(font, Vector2(0, -3), L10n.text("card.token" if view.get_meta("tag") == "TOKEN" else "card.transforms_into"), HORIZONTAL_ALIGNMENT_LEFT, -1, PixelTheme.SIZE, PixelTheme.TEXT_DIM))
+		L10n.events.changed.connect(view.queue_redraw)
 		out.append(view)
 	return out
 
