@@ -12,6 +12,7 @@ extends Control
 
 signal pressed
 
+const Decisions := preload("res://scenes/decision_text.gd")
 const KeywordStyle := preload("res://scenes/ui/keyword_style.gd")
 const PC := preload("res://tools/pixel_cards.gd")
 const CardText := preload("res://scenes/card_text.gd")
@@ -350,7 +351,7 @@ static func render(card_id: String, text: String, art: String = "") -> Image:
 	img.fill_rect(Rect2i(8, TEXT_TOP + 1, W - 16, TEXT_H - 2), C_PARCH)
 	img.fill_rect(Rect2i(8, TEXT_TOP + TEXT_H - 2, W - 16, 1), C_PARCH_LO)
 	img.fill_rect(Rect2i(W - 9, TEXT_TOP + 1, 1, TEXT_H - 2), C_PARCH_LO)
-	var lines := _wrap(CardText.option_field(text, "text", text))
+	var lines := _wrap(CardText.option_field(text, "text", Decisions.text(text)))
 	var y := TEXT_TOP + (TEXT_H - (lines.size() * LINE_H - 2)) / 2
 	var all_words: Array = []
 	for line: Array in lines:

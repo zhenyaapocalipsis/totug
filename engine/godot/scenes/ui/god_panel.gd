@@ -13,6 +13,7 @@ signal action_requested(action: Dictionary)
 signal fx_requested(card_id: String)
 
 const L10n := preload("res://scenes/localization.gd")
+const Terms := preload("res://scenes/term_text.gd")
 const GameText := preload("res://scenes/game_text.gd")
 const CardText := preload("res://scenes/card_text.gd")
 const CAPTIONS := {"GOD MODE":"god.title","G: hide or show this panel":"god.title_tip","TURN":"god.turn","RESOURCES":"god.resources","POWER":"god.power","INFL":"god.influence","VP":"god.vp","DRAW 1":"god.draw","HAND > DISC":"god.discard_hand","BOARD":"god.board","OFF":"god.off","TROOP":"god.troop","SPY":"god.spy","ERASE":"god.erase","CARDS":"god.cards","HAND":"god.hand","DECK":"god.deck","DISC":"god.discard","INNER":"god.inner","Cards go to the hand":"god.hand_tip","Cards go on top of the deck":"god.deck_tip","Cards go to the discard pile":"god.discard_tip","Cards go to the Inner Circle":"god.inner_tip","Click a card to watch its play animation (only cards with one are listed)":"god.fx_tip","PAUSE":"god.pause","P: pause card animations":"god.pause_tip","Left: previous frame (pauses)":"god.previous_tip","Right: next frame (pauses)":"god.next_tip","search card...":"god.search","BASE":"god.base","OTHER":"god.other","Board clicks play normally.":"god.hint_off","Click a space: place a troop (again: remove).":"god.hint_troop","Click a site: place a spy (again: remove).":"god.hint_spy","Click a troop or spy to remove it, a site to clear it.":"god.hint_erase"}
@@ -240,7 +241,9 @@ func _card_button(cid: String, deck: String) -> Button:
 	b.custom_minimum_size = Vector2(0, ROW_H)
 	b.focus_mode = Control.FOCUS_NONE
 	b.set_meta("card_id", cid)
-	b.set_meta("search", "%s %s %s %s %s" % [card_name(cid), String(CardText.translations().get(cid, {}).get("name", "")), CardLibrary.card_aspect(cid), CardLibrary.card_type(cid), _deck_search(deck)])
+	var data := CardLibrary.card_data(cid)
+	var translated: Dictionary = CardText.translations().get(cid, {})
+	b.set_meta("search", " ".join([card_name(cid), String(translated.get("name", "")), Terms.search_text(CardLibrary.card_aspect(cid)), Terms.search_text(CardLibrary.card_type(cid)), Terms.search_text(String(data.get("race", data.type)), "race"), String(translated.get("race_name", "")), _deck_search(deck)]))
 	b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	b.tooltip_text = card_name(cid)
 	b.add_theme_stylebox_override("normal", PixelTheme.fill(Color(0, 0, 0, 0), 2, 0))
