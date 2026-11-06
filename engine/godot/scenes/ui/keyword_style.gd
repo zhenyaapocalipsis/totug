@@ -19,7 +19,7 @@ const COLORS := {
 
 static func resolve(word: String, following: Array = []) -> String:
  var keyword := Text.keyword(word)
- if word.to_upper().rstrip(".,:;") == "РАЗМЕСТИТЕ":
+ if word.to_upper().rstrip(".,:;") in ["РАЗМЕСТИТЕ", "РАЗМЕСТИТЬ"]:
   for next: String in following.slice(0, 4):
    if next.begins_with("ШПИОН"):
     return "PLACE"

@@ -128,6 +128,10 @@ func _run() -> void:
 		check(JSON.stringify(CardLibrary.card_data(cid))==mechanics[cid],"rules data unchanged: "+cid)
 	if make_sheet: check(sheet.save_png("res://.godot/localization_catalog_%s_ru.png"%selected)==OK,"saved contact sheet")
 	var option_rows: Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://data/localization/options_ru.json"))
+	if OS.get_cmdline_user_args().has("--complete"):
+		check(option_rows.size()==OptionCard.NAMES.size(), "complete action catalog has every canonical label")
+		for source: String in OptionCard.NAMES:
+			check(option_rows.has(Text.option_id(source)), "complete action: "+source)
 	for id: String in option_rows:
 		var source:=String(option_rows[id].get("source", ""))
 		check(Text.option_id(source)==id and (OptionCard.NAMES.has(source) or Text.OPTION_IDS.has(source)),"stable option ID matches known source: "+id)

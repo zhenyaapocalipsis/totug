@@ -1158,5 +1158,65 @@
     "source": "Gain a market card with the same name as a card you played this turn",
     "name": "Эхо Бездны",
     "text": "Получите карту рынка с тем же именем, что карта, сыгранная вами в этот ход"
+  },
+  "option_5e503d64e0c9": {
+    "source": "Supplant a troop",
+    "name": "Узурпатор",
+    "text": "Замените отряд"
+  },
+  "option_61c68c636ae5": {
+    "source": "Copy the previous card you played",
+    "name": "Подражание",
+    "text": "Скопируйте предыдущую сыгранную вами карту"
+  },
+  "option_461483465d21": {
+    "source": "Copy a market card",
+    "name": "Украденный облик",
+    "text": "Скопируйте карту рынка. В конце хода положите её вниз колоды рынка"
+  },
+  "option_b6fbba5a581b": {
+    "source": "Explore for a card that costs 3 or less",
+    "name": "Малые находки",
+    "text": "Исследуйте карту ценой до 3"
+  },
+  "option_f1696afd8450": {
+    "source": "Explore for a card that costs 6 or more",
+    "name": "Главный приз",
+    "text": "Исследуйте карту ценой от 6"
+  },
+  "option_569b89963d96": {
+    "source": "Deploy 3 troops (next to another player's troop: Explore for \"Deploy\")",
+    "name": "Первопроходец",
+    "text": "Разместите 3 отряда. Один рядом с чужим: Исследуйте карту с Разместите (отряд)"
+  },
+  "option_7f2241f33cd0": {
+    "source": "Explore for an odd cost card",
+    "name": "Нечётный путь",
+    "text": "Исследуйте карту нечётной цены"
+  },
+  "option_8f529e7ade9a": {
+    "source": "Explore for an even cost card",
+    "name": "Чётный путь",
+    "text": "Исследуйте карту чётной цены"
+  },
+  "option_28d98bb5cacd": {
+    "source": "Put a card from your hand on top of your deck: supplant a troop and deploy a troop",
+    "name": "Удар аксиомы",
+    "text": "Положите карту руки наверх колоды ► Замените отряд и разместите отряд"
+  },
+  "option_2ee46344220c": {
+    "source": "You may shuffle your discard pile into your deck, then Scry 3",
+    "name": "Внутренний взор",
+    "text": "Можете замешать свой сброс в колоду, затем Предвидение 3"
+  },
+  "option_2441fb706091": {
+    "source": "Place a spy (site full: +1 Power and +1 Influence)",
+    "name": "Шёпот тайны",
+    "text": "Разместите шпиона. Полная локация: +1 Сила и +1 Влияние"
+  },
+  "option_abc10aee17b9": {
+    "source": "Return one of your spies, draw 2 cards, put a card from your hand on top of your deck",
+    "name": "Хранилище хранителя",
+    "text": "Верните своего шпиона, возьмите 2 карты, затем положите карту руки наверх своей колоды"
   }
 }
