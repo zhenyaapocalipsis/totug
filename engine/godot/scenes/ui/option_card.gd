@@ -323,7 +323,7 @@ static func render(card_id: String, text: String, art: String = "") -> Image:
 	var img: Image
 	var face: Texture2D = CardView.pixel_texture(card_id, art, false)
 	if face != null:
-		img = face.get_image()
+		img = face.get_image().duplicate() as Image
 		if img.is_compressed():
 			img.decompress()
 		img.convert(Image.FORMAT_RGBA8)

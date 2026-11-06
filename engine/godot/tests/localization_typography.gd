@@ -79,6 +79,10 @@ func _run() -> void:
   sheet.blit_rect(line, Rect2i(Vector2i.ZERO,line.get_size()),Vector2i(x,y))
   row += 1
  L10n.set_locale("ru")
+ var normal := CardView.pixel_texture("48426")
+ var before := normal.get_image().get_data()
+ CardLiveFace.full("48426", "", {"cost": 0, "notes": [{"id":"48426:per:sites_controlled_total:1","text":"(+999)","ok":true}]})
+ check(normal.get_image().get_data() == before, "live face does not mutate normal cached image")
  var examples := ["48306", "48419", "48519", "48524"]
  for i in examples.size():
   var card := CardView.pixel_texture(examples[i]).get_image()

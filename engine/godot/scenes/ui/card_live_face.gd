@@ -33,7 +33,7 @@ static func full(cid: String, art: String, entry: Dictionary) -> Texture2D:
 		var base := CardView.pixel_texture(cid, art)
 		if base == null:
 			return null
-		var img := base.get_image()
+		var img := base.get_image().duplicate() as Image
 		img.decompress()
 		img.convert(Image.FORMAT_RGBA8)
 		if entry.has("notes"):
@@ -50,7 +50,7 @@ static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
 		var base := CardView.mini_texture(cid, art)
 		if base == null:
 			return null
-		var img := base.get_image()
+		var img := base.get_image().duplicate() as Image
 		img.decompress()
 		img.convert(Image.FORMAT_RGBA8)
 		if entry.has("cost"):
@@ -321,7 +321,7 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 	var key := "%s|%s|%s|%s" % [L10n.locale(), cid, art, mini_face]
 	if _localized.has(key):
 		return _localized[key]
-	var img := base.get_image()
+	var img := base.get_image().duplicate() as Image
 	if img.is_compressed():
 		img.decompress()
 	img.convert(Image.FORMAT_RGBA8)

@@ -3,18 +3,18 @@ extends RefCounted
 ## Semantic colours shared by full cards, live values, options and export.
 const Text := preload("res://scenes/card_text.gd")
 const COLORS := {
- "DEVOUR": Color("#6a2d58"), "SUPPLANT": Color("#7a420b"),
- "DEPLOY": Color("#245529"), "ASSASSINATE": Color("#9b2636"),
- "PLACE": Color("#283a85"), "RETURN": Color("#17616a"),
- "PROMOTE": Color("#643d86"), "BRIBE": Color("#70580b"),
- "STEAL": Color("#87345f"), "RECRUIT": Color("#3c5b21"),
- "RECRUITS": Color("#44591b"), "MOVE": Color("#1c536f"),
- "FOCUS": Color("#3f438f"), "SCRY": Color("#22627f"),
- "MIGHT": Color("#7b3e2b"), "FROSTBITE": Color("#246380"),
- "TRANSFORM": Color("#654d20"), "DISTINCT": Color("#6d3a6b"),
- "DEVOTION": Color("#8a4721"), "RETAIN": Color("#385e57"),
- "RETAINED": Color("#4b5a39"), "GLAMOUR": Color("#843b65"),
- "EXPLORE": Color("#425d15"),
+ "DEVOUR": Color("#95106f"), "SUPPLANT": Color("#9a4300"),
+ "DEPLOY": Color("#006b20"), "ASSASSINATE": Color("#b00020"),
+ "PLACE": Color("#123bc4"), "RETURN": Color("#006a71"),
+ "PROMOTE": Color("#7620b4"), "BRIBE": Color("#775b00"),
+ "STEAL": Color("#ab006c"), "RECRUIT": Color("#3a6900"),
+ "RECRUITS": Color("#2b6100"), "MOVE": Color("#005c93"),
+ "FOCUS": Color("#3633bd"), "SCRY": Color("#00668f"),
+ "MIGHT": Color("#a23b18"), "FROSTBITE": Color("#006692"),
+ "TRANSFORM": Color("#865300"), "DISTINCT": Color("#812a96"),
+ "DEVOTION": Color("#9b4000"), "RETAIN": Color("#006955"),
+ "RETAINED": Color("#506300"), "GLAMOUR": Color("#a31679"),
+ "EXPLORE": Color("#466600"),
 }
 
 static func resolve(word: String, following: Array = []) -> String:
