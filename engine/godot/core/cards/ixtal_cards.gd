@@ -511,6 +511,8 @@ class _CopyPrevious extends CardEffect:
 		if prev == "":
 			return
 		resolver.log_event("copy_card", {"player_id": player_id, "card_id": prev})
+		# The copied card's aspect supports Focus, including later cards this turn.
+		state.played_aspects_this_turn.append(CardLibrary.card_aspect(prev))
 		resolver.push(CardLibrary.get_effect(prev), player_id, prev)
 
 
@@ -532,6 +534,7 @@ class _CopyMarket extends CardEffect:
 				return
 			var cid := String(state.market.display[int(index)])
 			resolver.log_event("copy_card", {"player_id": player_id, "card_id": cid})
+			state.played_aspects_this_turn.append(CardLibrary.card_aspect(cid))
 			resolver.push(AtEndOfTurn.new(IxtalCards._MarketToBottom.new(cid)), player_id)
 			resolver.push(CardLibrary.get_effect(cid), player_id, cid)
 			return

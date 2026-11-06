@@ -1120,8 +1120,9 @@ func render_mini(c: Dictionary) -> Image:
 	var room := MINI_W - 5
 	var aspect := sv(c["aspect"])
 	var has_side := c["cost"] != null or MINI_ICONS.has(aspect)
+	var side_x := mini_side_x("" if c["cost"] == null else str(int(c["cost"])))
 	var name := clean(sv(c["name"]))
-	var name_lines := wrap_name(MINI_SHORT_NAMES.get(name, name), MINI_SIDE_X - 3 if has_side else room, room,
+	var name_lines := wrap_name(MINI_SHORT_NAMES.get(name, name), side_x - 3 if has_side else room, room,
 		MINI_SIDE_LINES, MINI_NAME_LINES)
 	for i in name_lines.size():
 		text(2, 2 + i * MINI_LINE_H, name_lines[i], C_LIGHT, 1, C_OUTLINE)
@@ -1129,8 +1130,8 @@ func render_mini(c: Dictionary) -> Image:
 	# отделяет вертикальная черта (владелец, 2026-10-08). Цифра — тем же цветом
 	# и с той же тенью, что имя. У стартовых карт цены нет.
 	if has_side:
-		rect(MINI_SIDE_X, 2, 1, MINI_SIDE_LINES * MINI_LINE_H, C_FRAME_HI)
-		var x := MINI_SIDE_X + 2  # цифра и значок по 5 пикселей, до x=56
+		rect(side_x, 2, 1, MINI_SIDE_LINES * MINI_LINE_H, C_FRAME_HI)
+		var x := side_x + 2
 		if c["cost"] != null:
 			text(x, 2, str(int(c["cost"])), C_LIGHT, 1, C_OUTLINE)
 		if MINI_ICONS.has(aspect):
@@ -1153,6 +1154,11 @@ func render_mini(c: Dictionary) -> Image:
 	rect(2, art_y - 1, aw + 2, MINI_ART_H + 2, C_OUTLINE)
 	img.blit_rect(full, Rect2i(FULL_ART_POS + face, Vector2i(aw, MINI_ART_H)), Vector2i(3, art_y))
 	return img
+
+
+## Widen the price column for two digits without clipping the name or price.
+static func mini_side_x(cost: String) -> int:
+	return MINI_SIDE_X - maxi(0, text_width(cost, 1) - 5)
 
 
 ## Плашка VP высотой 9, правым краем на right: светлая — VP в колоде,

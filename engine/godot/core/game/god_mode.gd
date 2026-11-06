@@ -46,6 +46,10 @@ static func apply(state: GameState, action: Dictionary, resolver: EffectResolver
 static func give_card(state: GameState, pid: String, card_id: String, count: int, zone: String) -> bool:
 	if not state.players.has(pid) or CardLibrary.card_data(card_id).is_empty() or not ZONES.has(zone):
 		return false
+	# A test card may come from a half-deck absent from this match. Create
+	# Strahd's token supply once; an exhausted existing supply stays exhausted.
+	if card_id == "49118" and not state.supplies.counts.has(ShadowCards.TWIG_BLIGHT):
+		state.supplies.counts[ShadowCards.TWIG_BLIGHT] = ShadowCards.TWIG_SUPPLY
 	var deck: Deck = (state.players[pid] as PlayerState).deck
 	var pile: Array[String]
 	match zone:

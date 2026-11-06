@@ -39,9 +39,25 @@ func _fill_display() -> void:
 
 
 func _draw_top() -> String:
-	if deck.is_empty():
-		return ""
-	return deck.pop_back()
+	while not deck.is_empty():
+		var cid: String = deck.pop_back()
+		if not cid.is_empty():
+			return cid
+	return ""
+
+
+## Recover vacancies left by blank IDs in older matches. Call only outside
+## pending decisions: some effects temporarily leave a slot empty on purpose.
+func repair_empty_slots() -> bool:
+	var changed := false
+	while deck.has(""):
+		deck.erase("")
+		changed = true
+	for i in display.size():
+		if display[i].is_empty() and not deck.is_empty():
+			display[i] = _draw_top()
+			changed = true
+	return changed
 
 
 ## Recruit по индексу дисплея (рулбук стр. 13): убрать карту с доски и вернуть

@@ -1586,6 +1586,10 @@ func _bug_extra() -> Dictionary:
 	if not _setup_evidence.is_empty() and server != null:
 		extra["setup"] = _setup_evidence.duplicate(true)
 		extra["current"] = BugReport.deck_summary(server.state)
+	if server != null:
+		extra["market"] = {"display": server.state.market.display.duplicate(),
+			"deck": server.state.market.deck_size()}
+		extra["supplies"] = server.state.supplies.counts.duplicate()
 	if replay_bar != null:
 		extra["replay_step"] = replay_bar.cursor
 	return extra

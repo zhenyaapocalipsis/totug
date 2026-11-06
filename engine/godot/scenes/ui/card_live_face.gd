@@ -54,10 +54,7 @@ static func mini(cid: String, art: String, entry: Dictionary) -> Texture2D:
 		img.decompress()
 		img.convert(Image.FORMAT_RGBA8)
 		if entry.has("cost"):
-			img.fill_rect(Rect2i(MINI_COST_X, 2, PC.MINI_W - MINI_COST_X, 8), PC.C_FRAME)
-			img.fill_rect(Rect2i(PC.MINI_W - 1, 2, 1, 8), PC.C_OUTLINE)
-			var cheaper := int(entry["cost"]) <= CardLibrary.card_cost(cid)  # дороже — красным (Performer Maestro соперника)
-			_text(img, MINI_COST_X, 2, str(int(entry["cost"])), OK_LIGHT if cheaper else NO_LIGHT, 1, PC.C_OUTLINE)
+			_draw_mini_header(img, cid, int(entry["cost"]))
 		var notes: Array = CardText.notes(cid, entry.get("notes", []))
 		if not notes.is_empty():
 			var note: Dictionary = notes[-1] if String(notes[0]["text"]).begins_with("(-") \
@@ -332,19 +329,7 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 	var data := CardLibrary.card_data(cid)
 	var w := img.get_width()
 	if mini_face:
-		img.fill_rect(Rect2i(1, 1, w - 2, PC.MINI_HEAD), PC.C_FRAME)
-		var lines := PC.wrap_name(CardText.field(cid, "short_name").to_upper(), PC.MINI_SIDE_X - 3, w - 5, PC.MINI_SIDE_LINES, PC.MINI_NAME_LINES)
-		for i in lines.size():
-			_text(img, 2, 3 + i * PC.MINI_LINE_H, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
-		var aspect := String(data.aspect) if data.get("aspect") != null else ""
-		var side := data.get("cost") != null or PC.MINI_ICONS.has(aspect)
-		if side:
-			img.fill_rect(Rect2i(PC.MINI_SIDE_X, 2, 1, PC.MINI_SIDE_LINES * PC.MINI_LINE_H), PC.C_FRAME_HI)
-		if data.get("cost") != null:
-			_text(img, MINI_COST_X, 2, str(int(data.cost)), PC.C_LIGHT, 1, PC.C_OUTLINE)
-		if PC.MINI_ICONS.has(aspect):
-			_rows(img, MINI_COST_X + 1, 3 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.C_OUTLINE)
-			_rows(img, MINI_COST_X, 2 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.ASPECT_COLOR[aspect])
+		_draw_mini_header(img, cid, int(data.cost) if data.get("cost") != null else -1)
 	else:
 		_draw_header(img, CardText.field(cid, "name"), data, CardText.field(cid, "aspect_name"), CardText.field(cid, "race_name"))
 		_draw_text_box(img, cid, [])
@@ -376,3 +361,24 @@ static func _draw_header(img: Image, name: String, data: Dictionary, aspect_name
 		_text(img, 17, 24, aspect_name.to_upper(), colour, 1)
 	var race := race_name.to_upper()
 	_text(img, w - 7 - _width(race, 1), 24, race, PC.C_GREY, 1)
+
+
+static func _draw_mini_header(img: Image, cid: String, cost: int) -> void:
+	var data := CardLibrary.card_data(cid)
+	var price := str(cost) if cost >= 0 else ""
+	var side_x := PC.mini_side_x(price)
+	var x := side_x + 2
+	img.fill_rect(Rect2i(1, 1, img.get_width() - 2, PC.MINI_HEAD), PC.C_FRAME)
+	var name: String = CardText.field(cid, "short_name").to_upper() if CardText.translated(cid) else PC.MINI_SHORT_NAMES.get(clean(String(data.name)), clean(String(data.name)))
+	var lines := PC.wrap_name(name, side_x - 3, img.get_width() - 5, PC.MINI_SIDE_LINES, PC.MINI_NAME_LINES)
+	for i in lines.size():
+		_text(img, 2, (3 if CardText.translated(cid) else 2) + i * PC.MINI_LINE_H, lines[i], PC.C_LIGHT, 1, PC.C_OUTLINE)
+	var aspect := String(data.aspect) if data.get("aspect") != null else ""
+	if cost >= 0 or PC.MINI_ICONS.has(aspect):
+		img.fill_rect(Rect2i(side_x, 2, 1, PC.MINI_SIDE_LINES * PC.MINI_LINE_H), PC.C_FRAME_HI)
+	if cost >= 0:
+		var ink := PC.C_LIGHT if cost == CardLibrary.card_cost(cid) else (OK_LIGHT if cost < CardLibrary.card_cost(cid) else NO_LIGHT)
+		_text(img, x, 2, price, ink, 1, PC.C_OUTLINE)
+	if PC.MINI_ICONS.has(aspect):
+		_rows(img, x + 1, 3 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.C_OUTLINE)
+		_rows(img, x, 2 + PC.MINI_LINE_H, PC.MINI_ICONS[aspect], PC.ASPECT_COLOR[aspect])

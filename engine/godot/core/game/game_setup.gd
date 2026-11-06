@@ -112,6 +112,8 @@ static func expand_half_deck(name: String) -> Array[String]:
 	var ids: Array = copies.keys()
 	ids.sort()  # детерминированный порядок ДО тасовки: одинаковый сид -> одинаковая партия
 	for card_id: String in ids:
+		if card_id.is_empty() or CardLibrary.card_data(card_id).is_empty():
+			continue
 		for i in range(int(copies[card_id])):
 			cards.append(card_id)
 	return cards
@@ -162,6 +164,12 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 		interactive_start: bool = false, random_first_player: bool = false,
 		mode: String = MODE_STANDARD, team_game: bool = false, banned: Array = [],
 		card_bans: Array = [], turn_order: Array = []) -> GameState:
+	# A malformed cached ID must not turn into physical blank market cards.
+	# Reload the source before dealing, also restoring the missing real copies.
+	if _has_invalid_card_ids(_load_half_decks()):
+		push_warning("Invalid card ID in half-deck cache; reloading source data")
+		_half_deck_data = {}
+		_load_half_decks()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 
@@ -231,6 +239,16 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 				state.setup_deploy_starting_troop(player_ids[i], starting_sites[i])
 
 	return state
+
+
+static func _has_invalid_card_ids(data: Dictionary) -> bool:
+	var decks: Array = (data.get("half_decks", {}) as Dictionary).values()
+	decks.append(data.get("starting_deck", {}))
+	for deck: Dictionary in decks:
+		for cid: String in (deck.get("copies", {}) as Dictionary):
+			if cid.is_empty() or CardLibrary.card_data(cid).is_empty():
+				return true
+	return false
 
 
 ## Команды 2 на 2 (этап Team-1): игроки 1 и 3 — команда первого (id
@@ -375,6 +393,8 @@ static func build_market_cards(mode: String, decks: Array[String], rng: RandomNu
 		ids.sort()  # детерминированный порядок ДО тасовки: одинаковый сид -> одинаковый маркет
 		var singles: Array[String] = []
 		for card_id: String in ids:
+			if card_id.is_empty() or CardLibrary.card_data(card_id).is_empty():
+				continue
 			if card_bans.has(card_id):
 				continue
 			if int(copies[card_id]) == 1:

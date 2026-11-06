@@ -169,6 +169,9 @@ func apply_intent(intent: Intent) -> Dictionary:
 	# Контроль над локацией с маркером или ярус A2 мог появиться только что —
 	# Influence/Power сразу.
 	if err == Error.OK and _first_turn_started and not state.game_over:
+		if not resolver.is_waiting():
+			if state.market.repair_empty_slots() and state.market.is_deck_empty():
+				GameEnd.trigger(state, "market_empty")
 		TurnEngine.grant_control_income(state, state.current_player(), resolver)
 	return {
 		"error": err,

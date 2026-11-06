@@ -18,6 +18,7 @@ extends RefCounted
 ##   ["have", источник]     — "(YES)"/"(NO)".
 ## Источники — GainVpPerN._count_source и свои (_count).
 const RULES := {
+	"50107": [["FOR EACH GOAL YOU MET THIS TURN", "need", "kraken_goals", 4]],
 	"48711": [["FOR EACH SITE YOU CONTROL", "count", "sites_controlled"]],  # Quaggoth
 	"48705": [["FOR EACH SPY YOU HAVE ON THE BOARD", "count", "spies_on_board"]],  # Aboleth
 	"48715": [["FOR EVERY 3 TROOPS IN YOUR TROPHY HALL", "per", "trophy_hall", 3]],  # Beholder
@@ -130,6 +131,8 @@ static func entry(state: GameState, pid: String, cid: String) -> Dictionary:
 static func _count(state: GameState, pid: String, source: String) -> int:
 	var p: PlayerState = state.players[pid]
 	match source:
+		"kraken_goals":
+			return IxtalCards.objectives(state, pid) if pid == state.current_player() else 0
 		"troops_left":
 			return state.troops_out(pid)
 		"outcast_supply":
