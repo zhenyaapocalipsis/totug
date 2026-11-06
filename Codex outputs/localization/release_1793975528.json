@@ -1,0 +1,62 @@
+{
+  "build": 1793975528,
+  "source_commit": "9ead6f06e462832c337d6c7546f7d555293b287b",
+  "files": [
+    {
+      "file": "engine/build/TyrantsOfTheUnderdark.pck",
+      "bytes": 512193452,
+      "sha256": "6cc6c3449294f27f29a27b680d91d3568135e8bd396d9bf781420b319756a0ff"
+    },
+    {
+      "file": "engine/build/tyrants_server.pck",
+      "bytes": 512193452,
+      "sha256": "6cc6c3449294f27f29a27b680d91d3568135e8bd396d9bf781420b319756a0ff"
+    },
+    {
+      "file": "GAME online/TyrantsOfTheUnderdark.zip",
+      "bytes": 506979787,
+      "sha256": "ac921e38be415ca8397a226a63505e4119178b0e0e515568cbd1f693e195ef52"
+    }
+  ],
+  "protocol": 45,
+  "patches": [
+    {
+      "from_build": 1793884488,
+      "bytes": 14467836,
+      "reconstruction_verified": true
+    },
+    {
+      "from_build": 1793882499,
+      "bytes": 14539447
+    }
+  ],
+  "checks": {
+    "signed_release_valid": true,
+    "client_pack": {
+      "passed": 8,
+      "failed": 0
+    },
+    "server_pack": {
+      "passed": 8,
+      "failed": 0
+    },
+    "uploaded_hashes_match": true,
+    "public_manifest_matches": true,
+    "download_http": 200,
+    "github_digest_matches": true
+  },
+  "server": {
+    "host": "129.101.123.70",
+    "service": "tyrants",
+    "state": "active/running",
+    "pid": 1263748,
+    "previous_pid": 1225522,
+    "previous_release_backed_up": true,
+    "restored_rooms": 3
+  },
+  "github": {
+    "branch": "main",
+    "download_url": "https://github.com/zhenyaapocalipsis/totug/releases/download/client/TyrantsOfTheUnderdark.zip",
+    "asset_updated_at": "2026-11-06T14:46:49Z"
+  }
+}
