@@ -11,7 +11,7 @@ const KEYWORDS := {"ПОГЛОТИТЬ":"DEVOUR", "ЗАМЕНИТЬ":"SUPPLANT",
 	"НАЙМИТЕ":"RECRUIT", "НАНИМАЕТ":"RECRUITS", "НАНИМАЮТ":"RECRUITS", "КОНЦЕНТРАЦИЯ":"FOCUS", "КОНЦЕНТРАЦИИ":"FOCUS", "КОНЦЕНТРАЦИЕЙ":"FOCUS", "РВЕНИЕ":"DEVOTION", "ЧАРЫ":"GLAMOUR",
 	"ПРЕВРАЩЕНИЕ":"TRANSFORM", "ПРЕВРАТИТЕ":"TRANSFORM", "ПРЕВРАТИТЬ":"TRANSFORM",
 	"ПЕРЕМЕСТИТЕ":"MOVE", "ПОДКУП":"BRIBE", "УКРАДИТЕ":"STEAL",
-	"ПРЕДВИДЕНИЕ":"SCRY", "МОЩЬ":"MIGHT", "МОЩИ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE",
+	"ПРЕДВИДЕНИЕ":"SCRY", "ПРЕДВИДЕНИЕМ":"SCRY", "МОЩЬ":"MIGHT", "МОЩИ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE", "ОБМОРОЖЕНИЯ":"FROSTBITE", "ОБМОРОЖЕНИИ":"FROSTBITE",
 	"РАЗЛИЧНЫЙ":"DISTINCT", "РАЗЛИЧНЫЕ":"DISTINCT", "РАЗЛИЧНЫХ":"DISTINCT", "УДЕРЖИТЕ":"RETAIN", "УДЕРЖАТЬ":"RETAIN",
 	"УДЕРЖАНО":"RETAINED", "ИССЛЕДОВАНИЕ":"EXPLORE", "ИССЛЕДУЙТЕ":"EXPLORE"}
 

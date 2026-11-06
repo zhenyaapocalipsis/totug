@@ -83,7 +83,7 @@ func _run() -> void:
 		var plain:=CardLiveFace.layout_for_card(cid,[],w,h)
 		var source:=CardLiveFace.text_layout(String(row.ability_text),[],w,h)
 		check(plain.top==source.top and plain.box_h==source.box_h,"original text-box geometry: "+cid)
-		check(not plain.overflow,"Russian body fits source box: "+cid)
+		check(not plain.overflow,"Russian body fits source box: "+cid+" content="+str(plain.content_h)+" room="+str(plain.box_h-8))
 		var stress: Array=[]
 		for rule: Array in CardLive.RULES.get(cid,[]):
 			var id:=CardLive.hint_id(cid,rule)
