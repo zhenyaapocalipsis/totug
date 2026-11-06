@@ -1,0 +1,266 @@
+{
+  "exact": {
+    "FIND GAME: 1st place - a loot box, other places - dust.": "Поиск игры: за 1-е место — лутбокс, за остальные — пыль.",
+    "OPEN BOX": "ОТКРЫТЬ",
+    "OPEN ALL": "ОТКРЫТЬ ВСЁ",
+    "CARDS": "КАРТЫ",
+    "SHADERS": "ОБРАЗЫ",
+    "CARD BACKS": "РУБАШКИ",
+    "BACKGROUNDS": "ФОНЫ",
+    "STARTING": "БАЗОВЫЕ",
+    "ART": "ИЛЛЮСТРАЦИИ",
+    "No alternative\narts for this card.": "У этой карты нет\nдругих иллюстраций.",
+    "The shader covers your whole\ndeck in a game, starting cards\ntoo. Market cards stay plain.": "Образ применяется ко всей\nвашей колоде в партии, включая\nбазовые карты. Рынок без образа.",
+    "Drag the card to turn it over.\nOpponents see the back when you\ntake a card unseen.": "Перетащите карту, чтобы повернуть.\nСоперники видят рубашку, когда вы\nберёте карту закрытой.",
+    "The background of the menus and of the game. Free for everyone.": "Фон меню и партии. Бесплатно для всех.",
+    "YOUR FAVOURITE CARD": "ВАША ЛЮБИМАЯ КАРТА",
+    "MAKE FAVOURITE": "СДЕЛАТЬ ЛЮБИМОЙ",
+    "ORIGINAL": "ОРИГИНАЛ",
+    "PLAIN": "ОБЫЧНЫЙ",
+    "IN USE": "ВКЛЮЧЕНО",
+    "USE": "ВЫБРАТЬ",
+    "EPIC": "ЭПИЧЕСКИЙ",
+    "LEGENDARY": "ЛЕГЕНДАРНЫЙ",
+    "ULTRA": "УЛЬТРА",
+    "FAERIE FIRE": "ОГОНЬ ФЕЙ",
+    "GILDED": "ПОЗОЛОТА",
+    "PRISM": "ПРИЗМА",
+    "CLASSIC": "КЛАССИЧЕСКИЙ",
+    "BLACK": "ЧЁРНЫЙ",
+    "ORANGE IS NEW BLACK": "ОРАНЖЕВЫЙ ФОН",
+    "WINDOWS XP": "WINDOWS XP",
+    "ON": "ВКЛ",
+    "SKIP": "ПРОПУСТИТЬ",
+    "OK": "ОК",
+    "OPEN NEXT": "СЛЕДУЮЩИЙ",
+    "ULTRA - applies to your whole deck": "УЛЬТРА — для всей вашей колоды",
+    "OPENING BOX...": "ОТКРЫВАЕМ ЛУТБОКС...",
+    "NEW": "НОВОЕ",
+    "DUST": "ПЫЛЬ"
+  },
+  "patterns": [
+    {
+      "source": "BOX: ART EPIC %d%% / LEGENDARY %d%%, SHADER ULTRA %d%%; REPEAT = DUST",
+      "regex": "^BOX: ART EPIC ([0-9]+)% / LEGENDARY ([0-9]+)%, SHADER ULTRA ([0-9]+)%; REPEAT = DUST$",
+      "target": "ШАНСЫ: ЭПИЧ. {v0}% / ЛЕГ. {v1}% / УЛЬТРА {v2}%; ПОВТОР = ПЫЛЬ",
+      "translate": []
+    },
+    {
+      "source": "Not enough dust: this %s art costs %d.",
+      "regex": "^Not enough dust: this (.+?) art costs ([0-9]+)\\.$",
+      "target": "Недостаточно пыли: арт ({v0}) стоит {v1}.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "Craft this %s art for %d dust? Click again.",
+      "regex": "^Craft this (.+?) art for ([0-9]+) dust\\? Click again\\.$",
+      "target": "Создать арт ({v0}) за {v1} пыли? Нажмите ещё раз.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "Crafted: %s art.",
+      "regex": "^Crafted: (.+?) art\\.$",
+      "target": "Создан арт ({v0}).",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "Not enough dust: %s costs %d.",
+      "regex": "^Not enough dust: (.+?) costs ([0-9]+)\\.$",
+      "target": "Недостаточно пыли: {v0} стоит {v1}.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "Craft %s for %d dust? Click again.",
+      "regex": "^Craft (.+?) for ([0-9]+) dust\\? Click again\\.$",
+      "target": "Создать {v0} за {v1} пыли? Нажмите ещё раз.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "Crafted: %s.",
+      "regex": "^Crafted: (.+?)\\.$",
+      "target": "Создано: {v0}.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "DUST %d",
+      "regex": "^DUST ([0-9]+)$",
+      "target": "ПЫЛЬ {v0}",
+      "translate": []
+    },
+    {
+      "source": "LOOT BOXES %d",
+      "regex": "^LOOT BOXES ([0-9]+)$",
+      "target": "ЛУТБОКСЫ {v0}",
+      "translate": []
+    },
+    {
+      "source": "BACK TO %s >",
+      "regex": "^BACK TO (.+?) >$",
+      "target": "НАЗАД: {v0} >",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "SHOW %s >",
+      "regex": "^SHOW (.+?) >$",
+      "target": "ПОКАЗАТЬ: {v0} >",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "CRAFT %d",
+      "regex": "^CRAFT ([0-9]+)$",
+      "target": "СОЗДАТЬ {v0}",
+      "translate": []
+    },
+    {
+      "source": "CRAFT ULTRA %d",
+      "regex": "^CRAFT ULTRA ([0-9]+)$",
+      "target": "СОЗДАТЬ УЛЬТРА {v0}",
+      "translate": []
+    },
+    {
+      "source": "EPIC %d",
+      "regex": "^EPIC ([0-9]+)$",
+      "target": "ЭПИЧЕСКИЙ {v0}",
+      "translate": []
+    },
+    {
+      "source": "LEGENDARY %d",
+      "regex": "^LEGENDARY ([0-9]+)$",
+      "target": "ЛЕГЕНДАРНЫЙ {v0}",
+      "translate": []
+    },
+    {
+      "source": "ULTRA %d",
+      "regex": "^ULTRA ([0-9]+)$",
+      "target": "УЛЬТРА {v0}",
+      "translate": []
+    },
+    {
+      "source": "Opened %d boxes: %d new, +%d dust.",
+      "regex": "^Opened ([0-9]+) boxes: ([0-9]+) new, \\+([0-9]+) dust\\.$",
+      "target": "Открыто лутбоксов: {v0}; новых: {v1}; +{v2} пыли.",
+      "translate": []
+    },
+    {
+      "source": "New %s art: %s!",
+      "regex": "^New (.+?) art: (.+?)!$",
+      "target": "Новый арт ({v0}): {v1}!",
+      "translate": [
+        0,
+        1
+      ]
+    },
+    {
+      "source": "%s: +%d dust.",
+      "regex": "^(.+?): \\+([0-9]+) dust\\.$",
+      "target": "{v0}: +{v1} пыли.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "Already had the %s shader: +%d dust.",
+      "regex": "^Already had the (.+?) shader: \\+([0-9]+) dust\\.$",
+      "target": "Образ {v0} уже есть: +{v1} пыли.",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "New shader: %s!",
+      "regex": "^New shader: (.+?)!$",
+      "target": "Новый образ: {v0}!",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "NEW SHADER: %s",
+      "regex": "^NEW SHADER: (.+?)$",
+      "target": "НОВЫЙ ОБРАЗ: {v0}",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "SHADER: %s",
+      "regex": "^SHADER: (.+?)$",
+      "target": "ОБРАЗ: {v0}",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "NEW %s ART!",
+      "regex": "^NEW (.+?) ART!$",
+      "target": "НОВЫЙ АРТ ({v0})!",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "%s ART",
+      "regex": "^(.+?) ART$",
+      "target": "АРТ ({v0})",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "%s: DUST",
+      "regex": "^(.+?): DUST$",
+      "target": "{v0}: ПЫЛЬ",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "%s - already owned: +%d DUST",
+      "regex": "^(.+?) - already owned: \\+([0-9]+) DUST$",
+      "target": "{v0} уже есть: +{v1} ПЫЛИ",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "+%d DUST",
+      "regex": "^\\+([0-9]+) DUST$",
+      "target": "+{v0} ПЫЛИ",
+      "translate": []
+    },
+    {
+      "source": "BOX %d / %d",
+      "regex": "^BOX ([0-9]+) / ([0-9]+)$",
+      "target": "ЛУТБОКС {v0} / {v1}",
+      "translate": []
+    },
+    {
+      "source": "OPENED %d BOXES",
+      "regex": "^OPENED ([0-9]+) BOXES$",
+      "target": "ОТКРЫТО ЛУТБОКСОВ: {v0}",
+      "translate": []
+    },
+    {
+      "source": "%d NEW, +%d DUST",
+      "regex": "^([0-9]+) NEW, \\+([0-9]+) DUST$",
+      "target": "НОВЫХ: {v0}, +{v1} ПЫЛИ",
+      "translate": []
+    }
+  ]
+}

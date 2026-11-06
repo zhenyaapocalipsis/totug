@@ -1,6 +1,8 @@
 class_name LootBoxReveal
 extends Control
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Раскрытие лутбокса (Loot-1, решение владельца, 2026-10-06): экран затемняется,
 ## сундук трясётся, три плашки EPIC / LEGENDARY / ULTRA перебираются всё
 ## медленнее и замирают на выпавшей ступени, вспышка цвета ступени, сундук
@@ -56,6 +58,7 @@ var _burst := 0.0
 var _tick := 0
 var _particles: Array[Dictionary] = []
 var _warm: Array[Texture2D] = []
+var _summary_pics: Dictionary = {}
 var _title: Label
 var _sub: Label
 var _slots: Array[Label] = []
@@ -81,6 +84,7 @@ class CardLayer extends Control:
 
 
 func _init() -> void:
+	PageText.L10n.events.changed.connect(_locale_changed)
 	top_level = true
 	position = Vector2.ZERO
 	size = SCREEN
@@ -93,7 +97,7 @@ func _init() -> void:
 	_sub = _label(PixelTheme.TEXT_DIM)
 	for i in SkinCollection.TIERS.size():
 		var slot := _label(PixelTheme.TEXT_DIM)
-		slot.text = String(SkinCollection.TIER_TITLES[SkinCollection.TIERS[i]])
+		PageText.bind(slot, String(SkinCollection.TIER_TITLES[SkinCollection.TIERS[i]]))
 		slot.size = SLOT_SIZE
 		slot.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_slots.append(slot)
@@ -122,7 +126,7 @@ func _label(colour: Color, font_size: int = 0) -> Label:
 
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = BUTTON_SIZE
 	b.size = BUTTON_SIZE
 	SetupScreen._style_button(b)
@@ -304,7 +308,7 @@ static func item_name(r: Dictionary) -> String:
 
 func _face(r: Dictionary) -> Texture2D:
 	if String(r["art"]) != "":
-		return AltArts.full_texture(String(r["art"]))
+		return CardView.pixel_texture(AltArts.card_of(String(r["art"])), String(r["art"]))
 	if String(r["shader"]) != "":
 		return CardView.pixel_texture(_card)
 	return null
@@ -312,7 +316,7 @@ func _face(r: Dictionary) -> Texture2D:
 
 func _mini(r: Dictionary) -> Texture2D:
 	if String(r["art"]) != "":
-		return AltArts.mini_texture(String(r["art"]))
+		return CardView.mini_texture(AltArts.card_of(String(r["art"])), String(r["art"]))
 	if String(r["shader"]) != "":
 		return CardView.mini_texture(_card)
 	return null
@@ -361,23 +365,23 @@ func _refresh() -> void:
 	var in_box := _phase == "shake" or _phase == "roll" or _phase == "flash"
 	match _phase:
 		"shake", "roll", "flash":
-			_title.text = ("BOX %d / %d" % [_index + 1, _results.size()]) if batch() else "OPENING BOX..."
+			PageText.bind(_title, ("BOX %d / %d" % [_index + 1, _results.size()]) if batch() else "OPENING BOX...")
 			_title.add_theme_color_override("font_color", PixelTheme.TEXT)
-			_sub.text = ""
+			PageText.bind(_sub, "")
 		"show":
-			_title.text = reveal_title()
+			PageText.bind(_title, reveal_title())
 			_title.add_theme_color_override("font_color", _colour())
-			_sub.text = reveal_sub()
+			PageText.bind(_sub, reveal_sub())
 			_sub.add_theme_color_override("font_color", PixelTheme.TEXT)
 		"summary":
-			_title.text = "OPENED %d BOXES" % _results.size()
+			PageText.bind(_title, "OPENED %d BOXES" % _results.size())
 			_title.add_theme_color_override("font_color", PixelTheme.GOLD)
 			var new := 0
 			var dust := 0
 			for r in _results:
 				new += 1 if is_new(r) else 0
 				dust += int(r["dust"])
-			_sub.text = "%d NEW, +%d DUST" % [new, dust]
+			PageText.bind(_sub, "%d NEW, +%d DUST" % [new, dust])
 			_sub.add_theme_color_override("font_color", PixelTheme.TEXT)
 	_title.size = Vector2(v.x, 20)
 	_title.position = Vector2(0, 52)
@@ -414,6 +418,7 @@ func _view() -> Vector2:
 ## Итоговая сетка наград: цветная рамка ступени, мелкая карта (если наград не
 ## много), название и «NEW» или «+N DUST».
 func _build_summary() -> void:
+	_summary_pics.clear()
 	if _scroll != null:
 		_scroll.queue_free()
 	var thumbs := _results.size() <= SUMMARY_THUMBS
@@ -449,6 +454,7 @@ func _cell(r: Dictionary, thumbs: bool) -> Control:
 	if thumbs and _mini(r) != null:
 		var pic := TextureRect.new()
 		pic.texture = _mini(r)
+		_summary_pics[pic] = r
 		pic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 		pic.custom_minimum_size = CardView.MINI_SIZE
 		pic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -463,7 +469,7 @@ func _cell(r: Dictionary, thumbs: bool) -> Control:
 
 func _cell_text(text: String, colour: Color) -> Label:
 	var l := Label.new()
-	l.text = text
+	PageText.bind(l, text)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(CELL_WIDTH - 10.0, 0)
@@ -573,3 +579,11 @@ func _draw_card(c: CardLayer) -> void:
 		a = 0.55 + 0.45 * sin(_t * 9.0)
 	if is_new(r) and a > 0.0:
 		c.draw_rect(rect.grow(2.0), Color(_colour(), a * p), false, 2.0)
+
+
+func _locale_changed() -> void:
+	# Text bindings update themselves; timing, loot and scroll stay intact.
+	for pic: TextureRect in _summary_pics:
+		if is_instance_valid(pic): pic.texture = _mini(_summary_pics[pic])
+	if is_instance_valid(_layer): _layer.queue_redraw()
+	queue_redraw()

@@ -1,6 +1,8 @@
 class_name CollectionPage
 extends VBoxContainer
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Вкладка COLLECTION профиля (решение владельца, 2026-09-30).
 ##
 ## Общая строка сверху — пыль, лутбоксы, OPEN BOX и шансы лутбокса. Под ней
@@ -35,6 +37,7 @@ const TOKENS := {
 	"49118": ["49124"],  # Strahd von Zarovich -> Vampire Familiar
 	"49120": ["49123"],  # Drider -> Phase Spider
 	"49521": ["49523", "49524"],  # Erinyes -> Blade Fragment, Blade of Exile
+	"49906": ["49922"],  # Faerie Dragon Youth -> Adult
 }
 const COLUMNS := 5
 const ROWS := 4
@@ -93,6 +96,7 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _init() -> void:
+	PageText.L10n.events.changed.connect(_locale_changed)
 	_rng.randomize()
 	add_theme_constant_override("separation", 4)
 
@@ -100,7 +104,7 @@ func _init() -> void:
 	var top := HBoxContainer.new()
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
 	top.add_theme_constant_override("separation", 10)
-	top.tooltip_text = "FIND GAME: 1st place - a loot box, other places - dust."
+	PageText.bind(top, "FIND GAME: 1st place - a loot box, other places - dust.", "tooltip_text")
 	add_child(top)
 	_dust_label = _label("", PixelTheme.TEXT)
 	top.add_child(_dust_label)
@@ -149,14 +153,14 @@ func _init() -> void:
 
 func _label(text: String, colour: Color) -> Label:
 	var l := Label.new()
-	l.text = text
+	PageText.bind(l, text)
 	l.add_theme_color_override("font_color", colour)
 	return l
 
 
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = TAB_SIZE
 	SetupScreen._style_button(b)
 	b.pressed.connect(action)
@@ -191,7 +195,7 @@ func section() -> String:
 
 
 func _set_note(text: String, colour: Color = PixelTheme.GOLD) -> void:
-	_note.text = text
+	PageText.bind(_note, text)
 	_note.add_theme_color_override("font_color", colour)
 
 
@@ -207,11 +211,12 @@ func _cards_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 4)
 	var group := ButtonGroup.new()
-	var rows: Array[HBoxContainer] = []
+	var rows: Array[HFlowContainer] = []
 	for i in 2:
-		var tabs := HBoxContainer.new()
-		tabs.alignment = BoxContainer.ALIGNMENT_CENTER
-		tabs.add_theme_constant_override("separation", 3)
+		var tabs := HFlowContainer.new()
+		tabs.alignment = FlowContainer.ALIGNMENT_CENTER
+		tabs.add_theme_constant_override("h_separation", 3)
+		tabs.add_theme_constant_override("v_separation", 3)
 		page.add_child(tabs)
 		rows.append(tabs)
 	for faction in FACTIONS:
@@ -284,7 +289,7 @@ func _fill_art_list(cid: String) -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		_art_list.add_child(b)
 		_art_buttons[art] = b
-	_art_hint.text = "" if choices.size() > 1 else "No alternative\narts for this card."
+	PageText.bind(_art_hint, "" if choices.size() > 1 else "No alternative\narts for this card.")
 	_art_selected = SkinCollection.art_of(cid)
 	_pending_art = ""
 
@@ -581,8 +586,8 @@ func _backgrounds_page() -> Control:
 ## Пыль, лутбоксы и надписи кнопок — по файлу профиля.
 func refresh() -> void:
 	var data := SkinCollection.load_data()
-	_dust_label.text = "DUST %d" % int(data["dust"])
-	_boxes_label.text = "LOOT BOXES %d" % int(data["boxes"])
+	PageText.bind(_dust_label, "DUST %d" % int(data["dust"]))
+	PageText.bind(_boxes_label, "LOOT BOXES %d" % int(data["boxes"]))
 	_open_button.disabled = int(data["boxes"]) <= 0 or _reveal != null
 	_open_all_button.disabled = int(data["boxes"]) <= 1 or _reveal != null
 	var worn := String(data["shader"])
@@ -592,7 +597,7 @@ func refresh() -> void:
 		card.highlight = cid == _selected
 		card.queue_redraw()
 	var is_favourite := PlayerProfile.favourite() == _selected
-	_favourite_button.text = "YOUR FAVOURITE CARD" if is_favourite else "MAKE FAVOURITE"
+	PageText.bind(_favourite_button, "YOUR FAVOURITE CARD" if is_favourite else "MAKE FAVOURITE")
 	_tint(_favourite_button, PixelTheme.GOLD if is_favourite else PixelTheme.TEXT)
 
 	# Арты выбранной карты: большая карта показывает просматриваемый, мини в
@@ -605,7 +610,7 @@ func refresh() -> void:
 	_token_button.visible = forms.size() > 1
 	if forms.size() > 1:
 		var next: String = forms[(_form_index + 1) % forms.size()]
-		_token_button.text = ("BACK TO %s >" if next == _selected else "SHOW %s >") % EventLogPanel.card_name(next).to_upper()
+		PageText.bind(_token_button, ("BACK TO %s >" if next == _selected else "SHOW %s >") % EventLogPanel.card_name(next).to_upper())
 	for cid: String in _tiles:
 		(_tiles[cid]["card"] as CardView).set_art(SkinCollection.art_of(cid))
 	for art: String in _art_buttons:
@@ -614,17 +619,17 @@ func refresh() -> void:
 		var tier := AltArts.tier_of(art)
 		var title := "ORIGINAL" if art == "" else "%s %s" % [SkinCollection.TIER_TITLES[tier], art.get_slice("_", 1)]
 		var state := "  ON" if art == worn_art else ("" if has else "  %d" % SkinCollection.art_cost(art))
-		b.text = " %s%s" % [title, state]
+		PageText.bind(b, " %s%s" % [title, state])
 		var tint := PixelTheme.TEXT if art == "" else Color(SkinCollection.TIER_COLOURS[tier])
 		_tint(b, PixelTheme.GOLD if art == worn_art else (tint if has else tint.darkened(0.45)))
 		b.set_pressed_no_signal(art == _art_selected)
 	_art_action.visible = _art_buttons.size() > 1
 	if _art_selected == worn_art:
-		_art_action.text = "IN USE"
+		PageText.bind(_art_action, "IN USE")
 	elif _art_selected == "" or SkinCollection.owns_art(_art_selected):
-		_art_action.text = "USE"
+		PageText.bind(_art_action, "USE")
 	else:
-		_art_action.text = "CRAFT %d" % SkinCollection.art_cost(_art_selected)
+		PageText.bind(_art_action, "CRAFT %d" % SkinCollection.art_cost(_art_selected))
 	_art_action.disabled = _art_selected == worn_art
 
 	var ultra := Color(SkinCollection.TIER_COLOURS[SkinCollection.SHADER_TIER])
@@ -634,25 +639,25 @@ func refresh() -> void:
 		var has := shader == "" or SkinCollection.owns_shader(shader)
 		var title := "PLAIN" if shader == "" else String(SkinCollection.SHADER_TITLES[shader])
 		var state := "  ON" if shader == worn else ("" if has else "  %d" % cost)
-		b.text = " %s%s" % [title, state]
+		PageText.bind(b, " %s%s" % [title, state])
 		var colour := PixelTheme.TEXT if shader == "" else Color(SkinCollection.SHADER_COLOURS[shader])
 		_tint(b, PixelTheme.GOLD if shader == worn else (colour if has else ultra.darkened(0.45)))
 		b.set_pressed_no_signal(shader == _shader_selected)
 	_shader_views[0].set_card(_showcase_card())
 	_try_on(_shader_shown())
 	if _shader_selected == worn:
-		_shader_action.text = "IN USE"
+		PageText.bind(_shader_action, "IN USE")
 	elif _shader_selected == "" or SkinCollection.owns_shader(_shader_selected):
-		_shader_action.text = "USE"
+		PageText.bind(_shader_action, "USE")
 	else:
-		_shader_action.text = "CRAFT ULTRA %d" % cost
+		PageText.bind(_shader_action, "CRAFT ULTRA %d" % cost)
 	_shader_action.disabled = _shader_selected == worn
 
 	_back_preview.set_face(_showcase_card(), worn)
 
 	for style: String in _bg_buttons:
 		var b: Button = _bg_buttons[style]
-		b.text = String(UnderdarkBg.STYLE_NAMES[style]) + ("  ON" if style == UnderdarkBg.style() else "")
+		PageText.bind(b, String(UnderdarkBg.STYLE_NAMES[style]) + ("  ON" if style == UnderdarkBg.style() else ""))
 		_tint(b, PixelTheme.GOLD if style == UnderdarkBg.style() else PixelTheme.TEXT)
 
 
@@ -758,3 +763,9 @@ func _show_result(got: Dictionary, silent: bool) -> void:
 static func _play(sound: String, silent: bool) -> void:
 	if not silent:
 		Sfx.play(sound)
+
+
+func _locale_changed() -> void:
+	# Preserve selection, pending crafting, flip angle and open reward phase.
+	if is_instance_valid(_back_preview):
+		_back_preview.set_face(_showcase_card(), SkinCollection.active_shader())
