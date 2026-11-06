@@ -28,13 +28,16 @@ func check(ok: bool, why: String) -> void:
 		failed += 1
 		printerr("FAIL: ", why)
 func shot(file: String) -> void:
-	if DisplayServer.get_name() == "headless":
-		return
+	# Containers settle over deferred frames even when no screenshot is taken.
 	for i in 8:
 		await process_frame
+	if DisplayServer.get_name() == "headless":
+		return
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://.godot/" + file)
 func _run() -> void:
+	if DisplayServer.get_name() == "headless":
+		root.size = Vector2i(960, 540)
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 		DisplayServer.window_set_size(Vector2i(960, 540))
@@ -142,7 +145,7 @@ func _run() -> void:
 	check(remote._reconnect_status.text == "Не удалось подключиться." and remote._note_toast.last_text() == "Не удалось подключиться.", "connection status and toast translated")
 	net.connection_lost.emit("Different game version (yours 3, server 4): update the game")
 	await shot("localization_reconnect_ru.png")
-	check(remote._reconnect_banner.get_global_rect().position.x >= 0 and remote._reconnect_banner.get_global_rect().end.x <= root.size.x and remote._reconnect_status.size.y > PixelTheme.LINE_H, "long reconnect reason wraps inside viewport")
+	check(remote._reconnect_banner.get_global_rect().position.x >= 0 and remote._reconnect_banner.get_global_rect().end.x <= root.size.x and remote._reconnect_status.size.y > PixelTheme.LINE_H, "long reconnect reason wraps inside viewport: " + str(remote._reconnect_banner.get_global_rect()) + " root=" + str(root.size) + " label=" + str(remote._reconnect_status.size))
 	var reconnect_button: Button = remote._reconnect_banner.find_children("*", "Button", true, false)[0]
 	reconnect_button.pressed.emit()
 	L10n.set_locale("en")

@@ -1615,7 +1615,7 @@ func test_skin_collection() -> void:
 	var face_in_hold: Texture2D = null
 	show.show_card("48310", "RED RECRUITS", Color.RED, null, Vector2(10, 10), false, "", "48310_1", true)
 	var plain_face := CardView.pixel_texture("48310")
-	var alt_face := AltArts.full_texture("48310_1")
+	var alt_face := CardView.pixel_texture("48310", "48310_1")
 	for i in 600:
 		if seen.is_empty() or seen.back() != show._phase:
 			seen.append(show._phase)

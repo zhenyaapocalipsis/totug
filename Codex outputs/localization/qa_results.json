@@ -1,0 +1,149 @@
+{
+  "localization_suites": [
+    [
+      "localization",
+      19428
+    ],
+    [
+      "localization_bans",
+      20
+    ],
+    [
+      "localization_board",
+      169
+    ],
+    [
+      "localization_bug_report",
+      17
+    ],
+    [
+      "localization_cards",
+      284
+    ],
+    [
+      "localization_catalog",
+      23984
+    ],
+    [
+      "localization_collection",
+      4170
+    ],
+    [
+      "localization_decisions",
+      267
+    ],
+    [
+      "localization_events",
+      424
+    ],
+    [
+      "localization_game_over",
+      46
+    ],
+    [
+      "localization_game_panels",
+      21
+    ],
+    [
+      "localization_god_phrases",
+      20
+    ],
+    [
+      "localization_lobby",
+      30
+    ],
+    [
+      "localization_market_feed",
+      42
+    ],
+    [
+      "localization_menu",
+      7
+    ],
+    [
+      "localization_profile",
+      24
+    ],
+    [
+      "localization_replay",
+      11
+    ],
+    [
+      "localization_secondary",
+      10
+    ],
+    [
+      "localization_setup",
+      22
+    ],
+    [
+      "localization_social",
+      12
+    ],
+    [
+      "localization_terms",
+      2868
+    ],
+    [
+      "localization_turn_piles",
+      33
+    ],
+    [
+      "localization_tutorial",
+      4205
+    ],
+    [
+      "localization_typography",
+      861
+    ]
+  ],
+  "localization_assertions": 56975,
+  "windowed": {
+    "turn_piles": 33,
+    "match": 9,
+    "preview": 3
+  },
+  "startup": 1,
+  "core": 2269,
+  "network": 168,
+  "mixed_processes": {
+    "host_locale": "en",
+    "client_locale": "ru",
+    "updates": 24,
+    "errors": 0,
+    "same_public_state": true
+  },
+  "catalog": {
+    "cards": 391,
+    "options": 244
+  },
+  "export": {
+    "preset": "Windows Game",
+    "path": "engine/build/localization/",
+    "pack_headless": {
+      "checks": 8,
+      "failed": 0
+    },
+    "pack_opengl": {
+      "checks": 8,
+      "failed": 0
+    },
+    "exe_hotseat_launch": {
+      "players": 2,
+      "seed": 77,
+      "exit_code": 0
+    },
+    "files": [
+      {
+        "file": "TyrantsOfTheUnderdark.exe",
+        "bytes": 109268480,
+        "sha256": "d34d36f3be1a6c49c56525ae86469b92e4f417ddf0b43cf00dd80c385c4b0562"
+      },
+      {
+        "file": "TyrantsOfTheUnderdark.pck",
+        "bytes": 512193452,
+        "sha256": "e0c5f4b7022001c649e3523e6ef9a7f0f3140976dde9fbc660e2266cd1ff72f3"
+      }
+    ]
+  }
+}
