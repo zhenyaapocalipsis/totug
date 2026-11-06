@@ -51,6 +51,9 @@ func _run() -> void:
 		english_faces[cid]=CardView.pixel_texture(cid).get_image().get_data()
 	L10n.set_locale("ru")
 	check(CardLiveFace.keyword_spots("48722",[],176,254).any(func(spot):return spot[1]=="PLACE"),"Russian spy instruction resolves PLACE rather than DEPLOY")
+	if all.has("49312"):
+		var privateer_paras := CardLiveFace.layout(Text.ability("49312"), [])
+		check(privateer_paras.any(func(p): return not p.bullet and JSON.stringify(p.lines).contains("ЕСЛИ")), "Privateers condition is outside both resource choices")
 	for i in ids.size():
 		var cid:=String(ids[i])
 		if not all.has(cid): continue

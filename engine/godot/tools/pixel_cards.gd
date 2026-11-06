@@ -244,6 +244,7 @@ const NAME_BREAKS := {
 	"СВЕДЕНИЯМИ": [3, 5, 7, 8], "ИНКВИЗИТОР": [2, 5, 7],
 	"НАЁМНИКОВ": [2, 4, 6], "ЗАКЛИНАНИЙ": [2, 5, 7],
 	"ДРАКОНЧИК": [3, 6], "ЗАЧАРОВАТЕЛЬ": [2, 4, 6, 8], "НАБЛЮДАТЕЛЬ": [2, 5, 7],
+	"ОБРАЩАТЕЛЬ": [2, 4, 6], "НЕУМОЛИМАЯ": [2, 3, 5, 7, 9], "УКРОТИТЕЛЬ": [1, 4, 6], "ЗАТАИВШАЯСЯ": [2, 4, 6, 8, 9],
 	"АРХИВАРИУС": [2, 4, 6, 7], "БИБЛИОТЕКА": [3, 5, 6, 8], "КАРРИОНЕТКА": [3, 5, 8],
 	"РЖАВИЛЬЩИК": [3, 7], "СИЛЬВЕРКВИЛЛА": [4, 7, 11],
 	"БЛУЖДАЮЩИЙ": [4, 6, 7], "ВАМПИРСКИЙ": [3, 6], "КРОВОПИЙЦА": [3, 5, 8],
@@ -908,7 +909,7 @@ func layout_text(raw: String) -> Array:
 			continue
 		var prev := paras[-1]
 		# "• +1 Power" и "+1 Power, +1 Influence" (Siege) — тоже строки ресурсов.
-		var resource_line := RegEx.create_from_string("^(• )?(\\+\\d+ (Power|Influence),? ?)+$")
+		var resource_line := RegEx.create_from_string("^(• )?(\\+\\d+ (Power|Influence|Сила|Силы|Сил|Влияние|Влияния),? ?)+$")
 		var brk := prev.ends_with(".") or prev.ends_with(":") or line.begins_with("•") \
 			or resource_line.search(prev) != null or line.begins_with("+") or line.contains("Focus ►")
 		if prev.ends_with("►"):

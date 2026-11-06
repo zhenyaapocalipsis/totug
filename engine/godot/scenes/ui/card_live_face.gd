@@ -164,7 +164,7 @@ static func fit_box(paras: Array, text_h: int) -> Array:
 static func layout(raw: String, notes: Array, w: int = PC.W) -> Array:
 	var paras: Array[String] = []
 	# Та же строка ресурсов, что в PC.layout_text ("• +1 Power", "+1 Power, +1 Influence").
-	var resource_line := RegEx.create_from_string("^(• )?(\\+\\d+ (Power|Influence),? ?)+$")
+	var resource_line := RegEx.create_from_string("^(• )?(\\+\\d+ (Power|Influence|Сила|Силы|Сил|Влияние|Влияния),? ?)+$")
 	for line in raw.split("\n"):
 		line = line.strip_edges()
 		if line == "":

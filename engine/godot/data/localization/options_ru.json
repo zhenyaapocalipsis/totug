@@ -463,5 +463,60 @@
     "source": "All of them",
     "name": "Всё сразу",
     "text": "Все варианты"
+  },
+  "option_14993c1fff9d": {
+    "source": "Place a spy, then draw a card",
+    "name": "Взгляд Лолт",
+    "text": "Разместите шпиона, затем возьмите карту"
+  },
+  "option_13aa52a1e890": {
+    "source": "Return one of your spies -> Put a played card or a card from your discard pile on top of your deck",
+    "name": "Шаг вперёд",
+    "text": "Верните своего шпиона ► Положите другую сыгранную карту или карту своего сброса наверх колоды"
+  },
+  "option_13766ab6424a": {
+    "source": "Return one of your spies -> +2 Influence, you may promote a market card for its cost",
+    "name": "Красный трон",
+    "text": "Верните своего шпиона ► +2 Влияния. Можете возвысить карту рынка, заплатив её цену"
+  },
+  "option_2a39bec27f15": {
+    "source": "+1 Power, +2 Influence",
+    "name": "Корм для осады",
+    "text": "+1 Сила, +2 Влияния"
+  },
+  "option_167951571c97": {
+    "source": "Gain 1 VP",
+    "name": "Пролом",
+    "text": "Получите 1 ПО"
+  },
+  "option_aaa4a26430b9": {
+    "source": "+1 Power",
+    "name": "Заточка стали",
+    "text": "+1 Сила"
+  },
+  "option_a4eab9c40e71": {
+    "source": "Move an enemy spy to another site",
+    "name": "Ложный след",
+    "text": "Переместите вражеского шпиона в другую локацию"
+  },
+  "option_e9b61addefb7": {
+    "source": "Keep your Influence",
+    "name": "Не стрелять",
+    "text": "Сохраните Влияние"
+  },
+  "option_54a7f3596187": {
+    "source": "Convert 1 Influence to Power",
+    "name": "Один болт",
+    "text": "Обменяйте 1 Влияние на 1 Силу"
+  },
+  "option_4b0a82bbb05d": {
+    "source": "Convert 2 Influence to Power",
+    "name": "Два болта",
+    "text": "Обменяйте 2 Влияния на 2 Силы"
+  },
+  "option_37255079c416": {
+    "source": "Convert 3 Influence to Power",
+    "name": "Полный залп",
+    "text": "Обменяйте 3 Влияния на 3 Силы"
   }
 }
