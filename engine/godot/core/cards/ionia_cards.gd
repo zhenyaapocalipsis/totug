@@ -2,8 +2,7 @@ class_name IoniaCards
 extends RefCounted
 
 ## Полуколода Ionia (New Era) — способности карт Ionia из фан-мода Runeterra
-## Reforged на существах KARA-TUR: металлические и древние драконы, Oni, Kraken,
-## Tarrasque, феи и грибы (без зверей — правило владельца). Таблица id -> существо
+## Reforged на элементалях KARA-TUR (NE-53). Таблица id -> существо
 ## -> карта мода — Claude outputs/new_era_ionia.md.
 ##
 ## Перевод на правила этой игры: Valor -> MALICE.
@@ -18,14 +17,14 @@ extends RefCounted
 ## щелчке по ней вопрос "сыграть или удержать" (GameServer, PLAY_CARD). Удержанная
 ## уходит из руки в Deck.retained, её бонус "Retain: ..." срабатывает сразу, в конце
 ## хода после добора до 5 она возвращается в руку (TurnEngine.finish_end_of_turn).
-## Любое удержание (своё, Gulthias Blight, Tempest Hart, верхняя карта
+## Любое удержание (своё, Auril, Lightning Hulk, верхняя карта
 ## колоды) считается "Retain a card": бонус карты и счётчики хода срабатывают.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "retains"        — сколько карт удержано в этот ход (Murder Comet);
+##   "retains"        — сколько карт удержано в этот ход (Elder Tempest);
 ##   "retain_power" / "retain_influence" / "retain_deploy" — "Whenever you Retain a
-##                      card this turn" (Bodytaker Plant, Merfolk Skirmisher,
-##                      Gas Spore Fungus);
+##                      card this turn" (Blistercoil Weird, Merfolk Skirmisher,
+##                      Water Weird);
 ##   "witness"        — сколько раз сыграть ещё раз следующую карту ценой <= 5 (Mage);
 ##   "ahri"           — "Whenever you recruit a card, you may Assassinate a troop";
 ##   "yi"             — "Whenever you Assassinate or Supplant a troop, gain 1 Power";
@@ -34,25 +33,25 @@ extends RefCounted
 const AKALI := "49800"  # Biha Babir
 const SHEN := "49801"  # Oni: реакция из руки — ShieldGuard.ONI
 const WAYFINDER := "49802"  # Thessalheart Construct (Kinkou Wayfinder)
-const ZED := "49803"  # Murder Comet
+const ZED := "49803"  # Elder Tempest
 const AIRIS := "49804"  # Sprite
 const BLADE := "49805"  # Dryad (Blossoming Blade)
 const HWEI := "49806"  # Nafas
 const YASUO := "49807"  # Elemental Cataclysm
-const WITNESS := "49808"  # Mage (The Witness)
+const WITNESS := "49808"  # Phoenix
 const CONSPIRATOR := "49809"  # Violet Fungus (Navori Conspirator)
 const RIVERSHAPER := "49810"  # Merfolk Skirmisher
-const LEE_SIN := "49811"  # Tarrasque
-const HIGHWAYMAN := "49812"  # Bodytaker Podling (Navori Highwayman)
-const GREENGLADE := "49813"  # Gas Spore Fungus (Greenglade Duo)
+const LEE_SIN := "49811"  # Zaratan
+const HIGHWAYMAN := "49812"  # Dust Hulk
+const GREENGLADE := "49813"  # Water Weird
 const SQUIRREL := "49814"  # Treefolk (Swole Squirrel)
-const IRELIA := "49815"  # Brackish Trudge
-const PATHLESS := "49816"  # Bodytaker Plant (Pathless Ancient)
-const LIFEBLADE := "49817"  # Merrow (Kinkou Lifeblade)
-const SCHEMER := "49818"  # Tempest Hart (The Schemer)
-const SHADOWBLADE := "49819"  # Shrieker Fungus (Shadowblade Fanatic)
+const IRELIA := "49815"  # Leviathan
+const PATHLESS := "49816"  # Blistercoil Weird
+const LIFEBLADE := "49817"  # Cinder Hulk
+const SCHEMER := "49818"  # Lightning Hulk
+const SHADOWBLADE := "49819"  # Mist Hulk
 const AHRI := "49820"  # Khargra
-const KARMA := "49821"  # Gulthias Blight
+const KARMA := "49821"  # Auril
 const MASTER_YI := "49822"  # Kraken
 
 ## Карты со словом Retain: их можно удержать вместо розыгрыша.
@@ -353,7 +352,7 @@ class _RetainFromHand extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Удержать верхнюю карту колоды (Tempest Hart, Shrieker Fungus).
+## Удержать верхнюю карту колоды (Lightning Hulk, Mist Hulk).
 class _RetainTop extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
@@ -366,7 +365,7 @@ class _RetainTop extends CardEffect:
 		IoniaCards.retain(state, player_id, d.draw_pile.pop_back(), resolver, "deck")
 
 
-## Gulthias Blight (Karma), Retain: "You may also Retain 2 other cards".
+## Auril (Karma), Retain: "You may also Retain 2 other cards".
 class _RetainOthers extends CardEffect:
 	var left: int
 	func _init(n: int) -> void:
@@ -404,7 +403,7 @@ class _RetainOthers extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Tempest Hart (The Schemer): "You may return two of your spies to Retain
+## Lightning Hulk (The Schemer): "You may return two of your spies to Retain
 ## a card you've played this turn".
 class _ReturnTwoRetain extends CardEffect:
 	func is_available(state: GameState, player_id: String) -> bool:
@@ -515,7 +514,7 @@ class _Wayfinder extends CardEffect:
 		resolver.push(SequenceEffect.new(all), player_id)
 
 
-## Murder Comet (Zed): выбор повторяется ещё раз за каждую удержанную в
+## Elder Tempest (Zed): выбор повторяется ещё раз за каждую удержанную в
 ## этот ход карту (не больше 2 раз).
 class _Zed extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -589,7 +588,7 @@ class _NeighbourHand extends CardEffect:
 				return
 
 
-## Bodytaker Podling (Navori Highwayman): войско за каждый разный Аспект хода.
+## Dust Hulk (Navori Highwayman): войско за каждый разный Аспект хода.
 class _DeployPerAspect extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var kinds := {}
@@ -600,7 +599,7 @@ class _DeployPerAspect extends CardEffect:
 			resolver.push(DeployTroop.new(kinds.size()), player_id)
 
 
-## Brackish Trudge (Irelia): "Double your Power".
+## Leviathan (Irelia): "Double your Power".
 class _DoublePower extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var n: int = state.players[player_id].power
@@ -609,7 +608,7 @@ class _DoublePower extends CardEffect:
 			resolver.log_event("gain_power", {"player_id": player_id, "amount": n})
 
 
-## Brackish Trudge (Irelia): "Return all spies from a site" — все шпионы
+## Leviathan (Irelia): "Return all spies from a site" — все шпионы
 ## соперников в одной локации с Присутствием (каждый может ответить Oni).
 class _ReturnAllSpies extends CardEffect:
 	func _sites(state: GameState, player_id: String) -> Array:
@@ -660,7 +659,7 @@ class _RecruitDiscount extends CardEffect:
 		state.turn_discounts["recruit"] = int(state.turn_discounts.get("recruit", 0)) + 1
 
 
-## Gulthias Blight (Karma), в конце хода: "Promote a card you played to
+## Auril (Karma), в конце хода: "Promote a card you played to
 ## recruit a card from the market that costs up to 2 more".
 class _KarmaPromote extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:

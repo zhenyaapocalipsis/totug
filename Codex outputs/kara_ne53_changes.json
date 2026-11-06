@@ -1,0 +1,222 @@
+[
+  {
+    "id": 49803,
+    "name": "Elder Tempest",
+    "ru": "Древняя буря",
+    "short": "ДРЕВНЯЯ БУРЯ",
+    "key": "elder_tempest",
+    "face": [
+      40,
+      0
+    ],
+    "old": "Murder Comet",
+    "path": "ionia/elder_tempest_bg.png",
+    "crop": [
+      440,
+      60,
+      740,
+      451
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/elder_tempest_bg.png"
+  },
+  {
+    "id": 49808,
+    "name": "Phoenix",
+    "ru": "Феникс",
+    "short": "ФЕНИКС",
+    "key": "phoenix",
+    "face": [
+      10,
+      0
+    ],
+    "old": "Awakened Tree",
+    "path": "ionia/phoenix_bg.png",
+    "crop": [
+      430,
+      230,
+      680,
+      415
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/phoenix_bg.png"
+  },
+  {
+    "id": 49811,
+    "name": "Zaratan",
+    "ru": "Заратан",
+    "short": "ЗАРАТАН",
+    "key": "zaratan",
+    "face": [
+      40,
+      0
+    ],
+    "old": "Treant",
+    "path": "ionia/zaratan_bg.png",
+    "crop": [
+      300,
+      250,
+      900,
+      549
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/zaratan_bg.png"
+  },
+  {
+    "id": 49812,
+    "name": "Dust Hulk",
+    "ru": "Пылевой исполин",
+    "short": "ПЫЛЕВОЙ ИСПОЛИН",
+    "key": "dust_hulk",
+    "face": [
+      52,
+      0
+    ],
+    "old": "Bodytaker Podling",
+    "path": "ionia/dust_hulk_bg.png",
+    "crop": [
+      620,
+      110,
+      420,
+      256
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/dust_hulk_bg.png"
+  },
+  {
+    "id": 49813,
+    "name": "Water Weird",
+    "ru": "Водяной аномал",
+    "short": "ВОДЯНОЙ АНОМАЛ",
+    "file": "5195262-water-weird.png",
+    "crop": [
+      70,
+      120,
+      340,
+      207
+    ],
+    "face": [
+      80,
+      43
+    ],
+    "old": "Gas Spore Fungus",
+    "path": "ionia/water_weird.png",
+    "source": "C:/tyrants of the underdark godot/cards/ionia/search_20261107/5195262-water-weird.png"
+  },
+  {
+    "id": 49815,
+    "name": "Leviathan",
+    "ru": "Левиафан",
+    "short": "ЛЕВИАФАН",
+    "file": "2560861-leviathan.jpeg",
+    "crop": [
+      170,
+      230,
+      620,
+      378
+    ],
+    "face": [
+      26,
+      30
+    ],
+    "old": "Brackish Trudge",
+    "path": "ionia/leviathan.jpeg",
+    "source": "C:/tyrants of the underdark godot/cards/ionia/search_20261107/2560861-leviathan.jpeg"
+  },
+  {
+    "id": 49816,
+    "name": "Blistercoil Weird",
+    "ru": "Паровой аномал",
+    "short": "ПАРОВОЙ АНОМАЛ",
+    "file": "175603-blistercoil-weird.png",
+    "crop": [
+      135,
+      165,
+      570,
+      350
+    ],
+    "face": [
+      83,
+      0
+    ],
+    "old": "Bodytaker Plant",
+    "path": "ionia/blistercoil_weird.png",
+    "source": "C:/tyrants of the underdark godot/cards/ionia/search_20261107/175603-blistercoil-weird.png"
+  },
+  {
+    "id": 49817,
+    "name": "Cinder Hulk",
+    "ru": "Пепельный исполин",
+    "short": "ПЕПЕЛЬНЫЙ ИСПОЛИН",
+    "key": "cinder_hulk",
+    "face": [
+      9,
+      0
+    ],
+    "old": "Shambling Mound",
+    "path": "ionia/cinder_hulk_bg.png",
+    "crop": [
+      560,
+      110,
+      520,
+      317
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/cinder_hulk_bg.png"
+  },
+  {
+    "id": 49818,
+    "name": "Lightning Hulk",
+    "ru": "Грозовой исполин",
+    "short": "ГРОЗОВОЙ ИСПОЛИН",
+    "key": "lightning_hulk",
+    "face": [
+      40,
+      0
+    ],
+    "old": "Tempest Hart",
+    "path": "ionia/lightning_hulk_bg.png",
+    "crop": [
+      560,
+      210,
+      540,
+      329
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/lightning_hulk_bg.png"
+  },
+  {
+    "id": 49819,
+    "name": "Mist Hulk",
+    "ru": "Туманный исполин",
+    "short": "ТУМАННЫЙ ИСПОЛИН",
+    "key": "mist_hulk",
+    "face": [
+      48,
+      0
+    ],
+    "old": "Shrieker Fungus",
+    "path": "ionia/mist_hulk_bg.png",
+    "crop": [
+      570,
+      85,
+      430,
+      262
+    ],
+    "source": "C:/tyrants of the underdark godot/cards/ionia/elemental_backgrounds_20261107/mist_hulk_bg.png"
+  },
+  {
+    "id": 49821,
+    "name": "Auril",
+    "ru": "Ауриль",
+    "short": "АУРИЛЬ",
+    "file": "1123063-auril-second-form.jpeg",
+    "crop": [
+      0,
+      40,
+      571,
+      348
+    ],
+    "face": [
+      76,
+      0
+    ],
+    "old": "Gulthias Blight",
+    "path": "ionia/auril_second_form.jpeg",
+    "source": "C:/tyrants of the underdark godot/cards/ionia/search_20261107/1123063-auril-second-form.jpeg"
+  }
+]

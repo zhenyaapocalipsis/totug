@@ -24,8 +24,8 @@ Gold Dragon	DRAGON
 Giant Eagle	BEAST
 Ancient Gold Dragon	DRAGON
 Vampire Familiar	HUMAN
-Shambling Mound	PLANT
-Awakened Tree	PLANT
+Cinder Hulk	ELEMENTAL
+Phoenix	ELEMENTAL
 Bearded Devil	DEVIL
 Sea Hag	HAG
 Lemure	DEVIL
@@ -36,7 +36,7 @@ Nightmare	NIGHTMARE
 Arcanaloth	YUGOLOTH
 Barbed Devil	DEVIL
 Ghast	UNDEAD
-Treant	PLANT
+Zaratan	ELEMENTAL
 Bone Devil	DEVIL
 Drider	DRIDER
 Green Hag	HAG
@@ -113,23 +113,23 @@ Deva	ANGEL
 Biha Babir	ELEMENTAL
 Oni	GIANT
 Thessalheart Construct	CONSTRUCT
-Murder Comet	ELEMENTAL
+Elder Tempest	ELEMENTAL
 Mother Lorinda	HAG
 Nafas	GENIE
 Elemental Cataclysm	ELEMENTAL
 Violet Fungus	PLANT
 Merfolk Skirmisher	MERFOLK
 Tarrasque	TARRASQUE
-Bodytaker Podling	PLANT
-Gas Spore Fungus	PLANT
+Dust Hulk	ELEMENTAL
+Water Weird	ELEMENTAL
 Treefolk	PLANT
-Brackish Trudge	PLANT
-Bodytaker Plant	PLANT
+Leviathan	ELEMENTAL
+Blistercoil Weird	ELEMENTAL
 Merrow	MERFOLK
-Tempest Hart	ELEMENTAL
-Shrieker Fungus	PLANT
+Lightning Hulk	ELEMENTAL
+Mist Hulk	ELEMENTAL
 Khargra	ELEMENTAL
-Gulthias Blight	PLANT
+Auril	ELEMENTAL
 Kraken	KRAKEN
 Lampad	FEY
 Yarnspinner	FEY
