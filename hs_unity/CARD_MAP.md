@@ -233,7 +233,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | ~~Roper~~ (—, существо убрано из игры NE-50; на 49711 теперь Marid) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | анимация свободна |
 | ~~Ancient Brass Dragon~~ (—, существо убрано из игры NE-38; на 49016 теперь другое существо) | Mister Clocksworth (TIME_038t3) | `TIMEFX_MisterClocksWorth_CustomSummon.prefab` | анимация свободна |
 | Purple Worm (49713) | Arisen Onyxia (CATA_155) | `CATA_155_ArisenOnyxia_Fab_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Guardian Naga (50101) | Razidir (TLC_463) | `TLC463_Nazidir_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
+| Ras Nsi (50101) | — | — | NE-52: новое существо; анимация пока не назначена. Guardian Naga перенесена на обычную карту 50115; прежний Razidir освобождён |
 | ~~Adult Brass Dragon~~ (—, существо убрано из игры NE-38; на 49021 теперь другое существо) | Anachronos (CORE_RLK_919) | `RLKFX_Anachronos_CustomSummon.prefab` | анимация свободна |
 | Stone Giant (49606) | Toy Captain Tarim (TOY_813t) | `TOYFX_ToyCaptainTarim_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Gorgon (49717) | Gorgonzormu (VAC_955) | `VACFX_Gorgonzormu_CustomSummon.prefab` | горгона (по имени; при желании — заменить) |
@@ -288,12 +288,12 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Почему |
 |---|---|---|---|
-| Yuan-ti Infiltrator (50100) | Infiltrator Lilian (SCH_426) | `InfiltratorLillian_CustomSummon.prefab` | змеелюд-лазутчик |
+| Hythonia (50100) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Yuan-ti Infiltrator освобождено |
 | Galeb Duhr (49822) | Krog, Crater King (TLC_480) | `TLCFX_KrogCraterKing_Custom_Summon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Sarrukh Tyrant (50102) | Timethief Rafaam (TIME_005) | `TIMEFX_TimetheifRafaam_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Lizardfolk Sovereign (50103) | Chrono-Lord Epoch (TIME_714) | `TIMEFX_ChronoLordEpoch_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| Ironscale Hydra (50103) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Lizardfolk Sovereign освобождено |
 | Chwinga (49806) | Baroness Vashj (REV_788) | `REVFX_BaronessVashj_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Troglodyte (50105) | The Unknowable One (BE_725) | `BEFX_UnknowableOne_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Lizardfolk Geomancer (50106) | Niri of the Crater (TLC_836) | `TLCFX_NirioftheCrater_CustomSummon.prefab` | геомант-ящер |
+| Snapping Hydra (50106) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Lizardfolk Geomancer освобождено |
 | Dao (49720) | Dreamplanner Zephrys (WORK_027) | `WORKFX_ZephrysOverworked_CustomSummon.prefab` | земляной джинн |
-| Knight of Eldraine (50108) | Chronikar (END_006) | `ENDFX_Chronikar_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| Euryale (50108) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Knight of Eldraine освобождено |

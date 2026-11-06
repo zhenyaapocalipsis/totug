@@ -3916,22 +3916,22 @@
   },
   {
     "card_id": 50100,
-    "name": "Yuan-ti Infiltrator",
+    "name": "Hythonia",
     "cost": 7,
     "aspect": "GUILE",
     "type": "CHULT",
-    "race": "YUAN-TI",
+    "race": "MEDUSA",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Copy the previous card you played.\n• Copy a market card. At end of turn put it on the bottom of the market deck."
   },
   {
     "card_id": 50101,
-    "name": "Guardian Naga",
+    "name": "Ras Nsi",
     "cost": 8,
     "aspect": "CONQUEST",
     "type": "CHULT",
-    "race": "NAGA",
+    "race": "YUAN-TI",
     "deck_vp": 6,
     "inner_circle_vp": 12,
     "ability_text": "+8 Power"
@@ -3949,11 +3949,11 @@
   },
   {
     "card_id": 50103,
-    "name": "Lizardfolk Sovereign",
+    "name": "Ironscale Hydra",
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "CHULT",
-    "race": "LIZARDFOLK",
+    "race": "HYDRA",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Supplant a troop.\nThis turn your site control markers count as total control. One of them gives its reward again now."
@@ -3982,11 +3982,11 @@
   },
   {
     "card_id": 50106,
-    "name": "Lizardfolk Geomancer",
+    "name": "Snapping Hydra",
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "CHULT",
-    "race": "LIZARDFOLK",
+    "race": "HYDRA",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Return up to 3 troops or spies.\nThis turn you may deploy troops paying 1 Influence each.\nWhen you deploy your 7th troop this turn, draw a card."
@@ -4004,11 +4004,11 @@
   },
   {
     "card_id": 50108,
-    "name": "Knight of Eldraine",
+    "name": "Euryale",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CHULT",
-    "race": "HUMAN",
+    "race": "MEDUSA",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate up to 2 troops at one site.\nWhenever you Explore this turn, look at 4 cards instead of 2.\nName a region. Explore for a card of that region."
@@ -4048,11 +4048,11 @@
   },
   {
     "card_id": 50113,
-    "name": "Performer Maestro",
+    "name": "Yuan-ti Infiltrator",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "CHULT",
-    "race": "HUMAN",
+    "race": "YUAN-TI",
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "+2 Influence\nPut a troop from your barracks on a market card. Each of your troops on a card: it costs 1 less for you and 1 more for opponents."
@@ -4070,11 +4070,11 @@
   },
   {
     "card_id": 50115,
-    "name": "Living Gust of Wind",
+    "name": "Guardian Naga",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CHULT",
-    "race": "LIVING SPELL",
+    "race": "NAGA",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "If a card effect reveals this card on top of your deck, you may put it into your hand.\nMove a troop."
@@ -4103,22 +4103,22 @@
   },
   {
     "card_id": 50118,
-    "name": "Kenku",
+    "name": "Ssurran Defiler",
     "cost": 2,
     "aspect": "GUILE",
     "type": "CHULT",
-    "race": "KENKU",
+    "race": "SSURRAN",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Place a spy. If the site is full, +1 Power and +1 Influence.\n• Return one of your spies and draw 2 cards, then put a card from your hand on top of your deck."
   },
   {
     "card_id": 50119,
-    "name": "Aarakocra Aeromancer",
+    "name": "Yuan-ti Malison",
     "cost": 3,
     "aspect": "CONQUEST",
     "type": "CHULT",
-    "race": "AARAKOCRA",
+    "race": "YUAN-TI",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Whenever you Explore this turn, deploy a troop.\nChoose one:\n• Deploy 3 troops.\n• Supplant a white troop.\nIf you deployed 4+ troops this turn, Scry 2."

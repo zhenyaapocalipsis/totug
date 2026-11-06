@@ -16,37 +16,37 @@ extends RefCounted
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "milio"     — Chwinga: Explore берёт в руку все подходящие карты;
-##   "ezreal"    — Knight of Eldraine: Explore смотрит 4 карты;
-##   "landing"   — Aarakocra Aeromancer: после каждого Explore — столько войск;
+##   "ezreal"    — Euryale: Explore смотрит 4 карты;
+##   "landing"   — Yuan-ti Malison: после каждого Explore — столько войск;
 ##   "rengar"    — Troglodyte: верхняя карта колоды открыта, с Power — можно в руку;
-##   "skarner"   — Lizardfolk Sovereign: маркеры контроля считаются тотальным контролем;
-##   "zyra"      — Lizardfolk Geomancer: войска можно ставить за Influence, 7-е войско — карта;
+##   "skarner"   — Ironscale Hydra: маркеры контроля считаются тотальным контролем;
+##   "zyra"      — Snapping Hydra: войска можно ставить за Influence, 7-е войско — карта;
 ##   "aspect_discount" — Minotaur Archaeologist: {аспект: скидка} карт рынка;
 ##   "spy_done", "promoted" — цели Dao (шпион поставлен/возвращён, карта продвинута).
 ##
-## Войска на картах рынка (Performer Maestro): state.market_troops —
+## Войска на картах рынка (Yuan-ti Infiltrator): state.market_troops —
 ## "индекс" -> {"card": id, "troops": {игрок: число}}. Карта ушла из слота —
 ## войска возвращаются в бараки (sync_market_troops).
 
-const NEEKO := "50100"  # Yuan-ti Infiltrator
-const MALPHITE := "50101"  # Galeb Duhr
+const NEEKO := "50100"  # Hythonia
+const MALPHITE := "50101"  # Ras Nsi
 const ZILEAN := "50102"  # Sarrukh Tyrant
-const SKARNER := "50103"  # Lizardfolk Sovereign
+const SKARNER := "50103"  # Ironscale Hydra
 const MILIO := "50104"  # Chwinga
 const RENGAR := "50105"  # Troglodyte
-const ZYRA := "50106"  # Lizardfolk Geomancer
+const ZYRA := "50106"  # Snapping Hydra
 const QIYANA := "50107"  # Dao
-const EZREAL := "50108"  # Knight of Eldraine
+const EZREAL := "50108"  # Euryale
 const SEEKER := "50110"  # Bandit Deceiver (Treasure Seeker)
 const TROOPER := "50111"  # Lizardfolk Warden (All Terrain Trooper)
 const VASTAYA := "50112"  # Yuan-ti Abomination (Avenging Vastaya)
-const TYCOON := "50113"  # Performer Maestro (Big Game Tycoon)
+const TYCOON := "50113"  # Yuan-ti Infiltrator (Big Game Tycoon)
 const ARCHAEOLOGIST := "50114"  # Minotaur Archaeologist (Intrepid Archaeologist)
-const SKY_SQUAD := "50115"  # Living Gust of Wind (Sky Squad)
+const SKY_SQUAD := "50115"  # Guardian Naga (Sky Squad)
 const ECOLOGIST := "50116"  # Spirit Naga (Curious Ecologist)
 const MONK := "50117"  # Cyclops Oracle (Axiomata Monk)
-const KEEPER := "50118"  # Kenku (Secret Keeper)
-const LANDING := "50119"  # Aarakocra Aeromancer (Landing Party)
+const KEEPER := "50118"  # Ssurran Defiler (Secret Keeper)
+const LANDING := "50119"  # Yuan-ti Malison (Landing Party)
 const INITIATE := "50120"  # Bone Naga (Yun Tal Initiate)
 
 const EXPLORE_LOOK := 2
@@ -199,14 +199,14 @@ static func note_promote(state: GameState) -> void:
 	state.turn_flags["promoted"] = true
 
 
-# --- Lizardfolk Sovereign (Skarner): маркеры контроля --------------------------------
+# --- Ironscale Hydra (Skarner): маркеры контроля --------------------------------
 
 ## Маркеры игрока в этот ход считаются тотальным контролем (ControlMarkers.evaluate).
 static func markers_total(state: GameState, player_id: String) -> bool:
 	return player_id == state.current_player() and state.turn_flags.get("skarner", false)
 
 
-# --- Lizardfolk Geomancer (Zyra): войска за Influence ------------------------------
+# --- Snapping Hydra (Zyra): войска за Influence ------------------------------
 
 ## Базовое действие Deploy можно оплатить 1 Influence (Actions.deploy, StateView).
 static func deploy_by_influence(state: GameState, player_id: String) -> bool:
@@ -224,7 +224,7 @@ static func on_deploy_count(state: GameState) -> void:
 	state.players[state.current_player()].deck.draw_one(state.rng)
 
 
-# --- Performer Maestro (Big Game Tycoon): войска на картах рынка ----------------------
+# --- Yuan-ti Infiltrator (Big Game Tycoon): войска на картах рынка ----------------------
 
 static func market_troops_at(state: GameState, index: int) -> Dictionary:
 	var entry: Dictionary = state.market_troops.get(str(index), {})
@@ -270,7 +270,7 @@ static func sync_market_troops(state: GameState) -> void:
 ## Explore / Spirit Naga: посмотреть верх колоды, одну карту взять
 ## (mode "explore" — подходящую в руку, "promote" — любую во Внутренний круг),
 ## остальные — под низ или наверх в выбранном порядке.
-## Living Gust of Wind среди просмотренных можно взять в руку сверх того.
+## Guardian Naga среди просмотренных можно взять в руку сверх того.
 class _Peek extends CardEffect:
 	const PLAN := "plan:"
 	var src: String
@@ -328,7 +328,7 @@ class _Peek extends CardEffect:
 	## Ответ окна целиком: "plan:take=a,b;top=c,d;bottom=e" — взять, наверх
 	## (первая — самая верхняя), под низ. Карты — ровно просмотренные; взять
 	## можно только на первом шаге и по тем же правилам, что пошагово (одна
-	## подходящая, Living Gust of Wind сверх неё). false — план неверен.
+	## подходящая, Guardian Naga сверх неё). false — план неверен.
 	func _apply_plan(state: GameState, player_id: String, plan: String, resolver: EffectResolver, d: Deck) -> bool:
 		var parts := {"take": [], "top": [], "bottom": []}
 		for chunk in plan.trim_prefix(PLAN).split(";", false):
@@ -344,7 +344,7 @@ class _Peek extends CardEffect:
 			left.erase(cid)
 		if not left.is_empty():
 			return false
-		# Сперва обычные карты, потом Living Gust of Wind: так он не тратит выбор.
+		# Сперва обычные карты, потом Guardian Naga: так он не тратит выбор.
 		var takes: Array = (parts["take"] as Array).filter(func(c): return c != IxtalCards.SKY_SQUAD) \
 			+ (parts["take"] as Array).filter(func(c): return c == IxtalCards.SKY_SQUAD)
 		var taken := _taken
@@ -365,7 +365,7 @@ class _Peek extends CardEffect:
 		return true
 	func _take(state: GameState, player_id: String, cid: String, resolver: EffectResolver) -> void:
 		_shown.remove_at(_shown.find(cid))
-		# Living Gust of Wind сверх подходящей карты выбор не тратит.
+		# Guardian Naga сверх подходящей карты выбор не тратит.
 		var sky_extra := mode == "explore" and cid == IxtalCards.SKY_SQUAD and (_taken or not _matches(cid))
 		if not sky_extra:
 			_taken = true
@@ -456,7 +456,7 @@ class _Peek extends CardEffect:
 
 
 ## Troglodyte (Rengar): верхняя карта колоды открыта весь ход; если она даёт Power
-## (или это Living Gust of Wind) — можно взять её в руку. Проверка — после
+## (или это Guardian Naga) — можно взять её в руку. Проверка — после
 ## розыгрыша Troglodyte, после каждого Explore и каждой следующей карты (on_play).
 class _RengarTop extends CardEffect:
 	var _top := ""
@@ -499,7 +499,7 @@ static func on_play(state: GameState, _player_id: String, _card_id: String, effe
 	return SequenceEffect.new(all)
 
 
-## Yuan-ti Infiltrator (Neeko), вариант 1: копия предыдущей сыгранной карты.
+## Hythonia (Neeko), вариант 1: копия предыдущей сыгранной карты.
 class _CopyPrevious extends CardEffect:
 	var self_id: String
 	func _init(cid: String) -> void:
@@ -516,7 +516,7 @@ class _CopyPrevious extends CardEffect:
 		resolver.push(CardLibrary.get_effect(prev), player_id, prev)
 
 
-## Yuan-ti Infiltrator (Neeko), вариант 2: копия карты рынка; в конце хода эта
+## Hythonia (Neeko), вариант 2: копия карты рынка; в конце хода эта
 ## карта уходит под низ колоды рынка (если ещё лежит в рынке).
 class _CopyMarket extends CardEffect:
 	func _options(state: GameState) -> Array:
@@ -576,7 +576,7 @@ class _FullExtraTurn extends CardEffect:
 		resolver.log_event("extra_turn", {"player_id": player_id, "cards": 0})
 
 
-## Lizardfolk Sovereign (Skarner): "activate 1 of them an additional time" —
+## Ironscale Hydra (Skarner): "activate 1 of them an additional time" —
 ## лучший свой маркер (уже как тотальный контроль) даёт награду ещё раз сейчас.
 class _MarkerAgain extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -600,13 +600,13 @@ class _MarkerAgain extends CardEffect:
 			"influence": int(best.get("control_influence", 0)), "vp": vp})
 
 
-## Lizardfolk Geomancer: уже поставлено 7+ войск в этот ход — карта сразу.
+## Snapping Hydra: уже поставлено 7+ войск в этот ход — карта сразу.
 class _ZyraCheck extends CardEffect:
 	func apply(state: GameState, _player_id: String, _resolver: EffectResolver) -> void:
 		IxtalCards.on_deploy_count(state)
 
 
-## Knight of Eldraine (Ezreal): "Name a region. Explore for a card from that region".
+## Euryale (Ezreal): "Name a region. Explore for a card from that region".
 ## Регионы — типы карт рынка и своей колоды (CHULT, FAR REALM, DROW...).
 class _NameRegion extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -652,7 +652,7 @@ class _DeployNearPlayer extends CardEffect:
 		resolver.push(DeployTroop.new(3), player_id)
 
 
-## Performer Maestro (Big Game Tycoon): войско из барака на карту рынка.
+## Yuan-ti Infiltrator (Big Game Tycoon): войско из барака на карту рынка.
 class _TroopOnMarket extends CardEffect:
 	func _options(state: GameState) -> Array:
 		var out: Array = []
@@ -695,7 +695,7 @@ class _TroopOnMarket extends CardEffect:
 
 
 ## Minotaur Archaeologist: открыть верхнюю карту колоды; в этот ход карты рынка
-## (не Obedience) с тем же аспектом на 1 дешевле. Living Gust of Wind — можно в руку.
+## (не Obedience) с тем же аспектом на 1 дешевле. Guardian Naga — можно в руку.
 class _RevealDiscount extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
@@ -713,7 +713,7 @@ class _RevealDiscount extends CardEffect:
 			resolver.push(IxtalCards._SkySquadToHand.new(), player_id)
 
 
-## Living Gust of Wind открыт сверху колоды эффектом карты — можно взять в руку.
+## Guardian Naga открыт сверху колоды эффектом карты — можно взять в руку.
 class _SkySquadToHand extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
@@ -727,7 +727,7 @@ class _SkySquadToHand extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Put the revealed Living Gust of Wind into your hand?"
+		pd.prompt = "Put the revealed Guardian Naga into your hand?"
 		pd.choice_type = "target_card"
 		pd.legal_options = [IxtalCards.SKY_SQUAD, ""]
 		pd.source_card = IxtalCards.SKY_SQUAD
@@ -735,7 +735,7 @@ class _SkySquadToHand extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Cyclops Oracle / Kenku: карта из руки наверх колоды (then — эффект после этого).
+## Cyclops Oracle / Ssurran Defiler: карта из руки наверх колоды (then — эффект после этого).
 class _TopFromHand extends CardEffect:
 	var src: String
 	var then_effect: CardEffect
