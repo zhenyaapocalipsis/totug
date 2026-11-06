@@ -718,5 +718,95 @@
     "source": "Move up to 3 of your troops: +1 Power for each one moved next to another player's troop",
     "name": "Фазовый прыжок",
     "text": "Переместите до 3 своих отрядов. +1 Сила за каждый, оказавшийся рядом с чужим отрядом"
+  },
+  "option_d504944f3da5": {
+    "source": "Trigger the Devotion of another card you played this turn",
+    "name": "Каменный взгляд",
+    "text": "Вызовите Рвение другой карты, сыгранной вами в этот ход"
+  },
+  "option_c45164372769": {
+    "source": "Return a card from your inner circle to your hand, draw a card",
+    "name": "Память камня",
+    "text": "Возьмите карту Внутреннего круга в руку, затем возьмите карту"
+  },
+  "option_2a4bb33cd07f": {
+    "source": "Place a spy, scry 3",
+    "name": "Песчаная завеса",
+    "text": "Разместите шпиона. Предвидение 3"
+  },
+  "option_bda17385846e": {
+    "source": "Return one of your spies -> look at the top 3 cards of your deck, put 1 in your hand, discard the rest",
+    "name": "Знамения пустыни",
+    "text": "Верните своего шпиона ► Из 3 верхних карт своей колоды возьмите одну в руку, остальные сбросьте"
+  },
+  "option_89bcf7705dac": {
+    "source": "Place a spy (site full: +3 Power)",
+    "name": "Удар из кольца",
+    "text": "Разместите шпиона. Полная локация: +3 Силы"
+  },
+  "option_f4f2e6541c88": {
+    "source": "Return one of your spies -> supplant a troop at that site, +2 Power",
+    "name": "Укус яда",
+    "text": "Верните своего шпиона ► Замените отряд в его локации, +2 Силы"
+  },
+  "option_51bd0275ef5b": {
+    "source": "Place a spy (site full: at end of turn, promote another card played this turn)",
+    "name": "Тихая охота",
+    "text": "Разместите шпиона. Полная локация: в конце хода возвысьте другую карту, сыгранную в этот ход"
+  },
+  "option_34f3ac01d99d": {
+    "source": "Return one of your spies -> supplant a troop at that site",
+    "name": "Бросок из засады",
+    "text": "Верните своего шпиона ► Замените отряд в его локации"
+  },
+  "option_18ec3652f83e": {
+    "source": "Devour a card in your hand -> draw a card",
+    "name": "Проглотить целиком",
+    "text": "Поглотите карту руки ► Возьмите карту"
+  },
+  "option_9d233436d702": {
+    "source": "Move up to 3 of your troops",
+    "name": "Зыбучие пески",
+    "text": "Переместите до 3 своих отрядов"
+  },
+  "option_45082b258c06": {
+    "source": "Move an enemy troop",
+    "name": "Камнепад",
+    "text": "Переместите вражеский отряд"
+  },
+  "option_c51aba3bb73f": {
+    "source": "Recruit a card that costs 5 or less for free",
+    "name": "Пыльная сделка",
+    "text": "Бесплатно наймите карту ценой до 5"
+  },
+  "option_52fc720c623a": {
+    "source": "Recruit 2 cards that cost 3 or less for free",
+    "name": "Потерянные друзья",
+    "text": "Бесплатно наймите 2 карты ценой до 3"
+  },
+  "option_ab4bdb8ccc7c": {
+    "source": "Your opponent names a card",
+    "name": "Открытый вызов",
+    "text": "Соперник называет карту рынка"
+  },
+  "option_3ea821caf88a": {
+    "source": "Nobody names a card",
+    "name": "В одиночку",
+    "text": "Никто не называет карту"
+  },
+  "option_97cefd4efe25": {
+    "source": "The player to your left names a card",
+    "name": "Левый фланг",
+    "text": "Игрок слева называет карту рынка"
+  },
+  "option_7758a5756bf3": {
+    "source": "The player to your right names a card",
+    "name": "Правый фланг",
+    "text": "Игрок справа называет карту рынка"
+  },
+  "option_2aa8084dc736": {
+    "source": "Both of them name a card",
+    "name": "Боевой клич",
+    "text": "Оба игрока называют по карте рынка"
   }
 }
