@@ -13,8 +13,10 @@ func check(ok: bool, why: String) -> void:
 		printerr("FAIL: ",why)
 func _run() -> void:
 	var selected := "translated"
+	var explicit_ids := ""
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--deck="): selected=arg.trim_prefix("--deck=")
+		if arg.begins_with("--ids="): explicit_ids=arg.trim_prefix("--ids=")
 	for keyword: String in CardPreview.KEYWORD_TIPS:
 		check(L10n.catalog("en").has("keyword."+keyword) and L10n.catalog("ru").has("keyword."+keyword),"both languages cover keyword tooltip: "+keyword)
 		if keyword!="PLACE": check(Text.KEYWORDS.values().has(keyword),"Russian surface word resolves keyword ID: "+keyword)
@@ -32,6 +34,7 @@ func _run() -> void:
 	elif selected!="translated":
 		var decks: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/cards/half_decks.json")).half_decks
 		ids=(decks.get(selected,{}) as Dictionary).get("copies",{}).keys()
+	if not explicit_ids.is_empty(): ids=Array(explicit_ids.split(",",false))
 	check(not ids.is_empty(),"nonempty requested catalog portion")
 	var make_sheet:=ids.size()<=24
 	var sheet:=Image.create(3*244 if make_sheet else 1,ceili(ids.size()/3.0)*278 if make_sheet else 1,false,Image.FORMAT_RGBA8)

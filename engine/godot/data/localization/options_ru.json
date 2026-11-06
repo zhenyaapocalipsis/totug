@@ -198,5 +198,120 @@
     "source": "Promote a card from your discard pile, then gain VP per inner circle card",
     "name": "Величие",
     "text": "Возвысьте карту своего сброса, затем получите по 1 ПО за каждые 3 карты Внутреннего круга"
+  },
+  "option_894e9fc0827a": {
+    "source": "+3 Power",
+    "name": "Натиск",
+    "text": "+3 Силы"
+  },
+  "option_3e98f9ee485d": {
+    "source": "Look at the top 6 cards: House Guards into your hand",
+    "name": "Сбор стражи",
+    "text": "Просмотрите 6 верхних карт своей колоды. Стражей дома возьмите в руку, остальные положите наверх"
+  },
+  "option_5e674131d6a5": {
+    "source": "House Guard or Priestess into your hand, +4 Power",
+    "name": "Сбор верных",
+    "text": "Возьмите Стража дома или Жрицу Лолт в руку. +4 Силы"
+  },
+  "option_75d2c9e46c5f": {
+    "source": "Promote up to 2 Obedience cards from hand or discard",
+    "name": "Посвящение",
+    "text": "Возвысьте до 2 карт Покорности из своей руки или сброса"
+  },
+  "option_379df49d3872": {
+    "source": "Promote a card in your hand",
+    "name": "Помазание",
+    "text": "Возвысьте карту руки"
+  },
+  "option_4fbec06e88f8": {
+    "source": "Move one of your troops",
+    "name": "Переброска",
+    "text": "Переместите свой отряд"
+  },
+  "option_f774f10735b2": {
+    "source": "Deploy 2 troops and draw a card",
+    "name": "Авангард",
+    "text": "Разместите 2 отряда и возьмите карту"
+  },
+  "option_a742c55dc0d2": {
+    "source": "Return 2 of your troops -> Supplant a white troop anywhere",
+    "name": "Священный удар",
+    "text": "Верните 2 своих отряда ► Замените белый отряд в любом месте поля"
+  },
+  "option_d106e680ae47": {
+    "source": "Draw a card per House Guard played this turn",
+    "name": "Перекличка",
+    "text": "Возьмите карту за каждого Стража дома, сыгранного в этот ход"
+  },
+  "option_78ae325da790": {
+    "source": "Place a spy (full site: draw a card)",
+    "name": "Зоркий глаз",
+    "text": "Разместите шпиона. Если локация заполнена, возьмите карту"
+  },
+  "option_9023d0940ab4": {
+    "source": "Return one of your spies -> Draw a card, +3 Power",
+    "name": "Откровение",
+    "text": "Верните своего шпиона ► Возьмите карту, +3 Силы"
+  },
+  "option_797641179cbd": {
+    "source": "Promote a card in your hand, deploy troops equal to its inner circle VP",
+    "name": "Подкрепление",
+    "text": "Возвысьте карту руки и разместите столько отрядов, сколько она стоит ПО во Внутреннем круге"
+  },
+  "option_b40d125d8f17": {
+    "source": "Supplant a white troop",
+    "name": "Захват земель",
+    "text": "Замените белый отряд"
+  },
+  "option_71566d7b68ce": {
+    "source": "+1 Influence per spy you have on the board",
+    "name": "Сеть",
+    "text": "+1 Влияние за каждого своего шпиона на поле"
+  },
+  "option_3f8e888a3de6": {
+    "source": "Return a troop or spy",
+    "name": "Отставка",
+    "text": "Верните отряд или шпиона"
+  },
+  "option_299480b80110": {
+    "source": "Put a House Guard into your hand",
+    "name": "Оруженосец",
+    "text": "Возьмите Стража дома в руку"
+  },
+  "option_dc6f51beb95a": {
+    "source": "Place a spy and return up to 2 troops at that site",
+    "name": "Оковы",
+    "text": "Разместите шпиона и верните до 2 отрядов в его локации"
+  },
+  "option_a6de406273f4": {
+    "source": "Return one of your spies -> return up to 3 troops there, then deploy up to 3 troops there",
+    "name": "Зачистка и захват",
+    "text": "Верните своего шпиона ► Верните до 3 отрядов в его локации, затем разместите там до 3 отрядов"
+  },
+  "option_a2db08fa23a1": {
+    "source": "Put your deck into your discard pile, then promote a card from it",
+    "name": "Королевский указ",
+    "text": "Переложите свою колоду в сброс, затем возвысьте карту своего сброса"
+  },
+  "option_e766371e3714": {
+    "source": "Assassinate up to 4 troops at one site",
+    "name": "Драконье пламя",
+    "text": "Уничтожьте до 4 отрядов в одной локации"
+  },
+  "option_27130cb9db5d": {
+    "source": "Return troops -> supplant that many at one site",
+    "name": "Драконья дань",
+    "text": "Верните свои отряды ► Замените столько же отрядов в одной локации"
+  },
+  "option_84259c15fdaf": {
+    "source": "Return another player's troop or spy",
+    "name": "Изгнание",
+    "text": "Верните отряд или шпиона другого игрока"
+  },
+  "option_7bd053a9e88b": {
+    "source": "+2 Influence, House Guards cost 1 less this turn",
+    "name": "Реквизиция",
+    "text": "+2 Влияния. В этот ход скидка 1 на Стражей дома"
   }
 }
