@@ -1,5 +1,7 @@
 extends HBoxContainer
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Вкладка FRIENDS главного меню (владелец, 2026-10-11), между LEADERBOARD и
 ## SETTINGS. Слева: добавить по нику, заявки (принять / отклонить), свои
 ## отправленные заявки и список друзей (кто в сети — выше, непрочитанные —
@@ -38,7 +40,7 @@ var _list: VBoxContainer
 var _side: VBoxContainer
 var _card: VBoxContainer
 var _status: Label
-var _actions: HBoxContainer
+var _actions: HFlowContainer
 var _thread_scroll: ScrollContainer
 var _thread: VBoxContainer
 var _message: LineEdit
@@ -58,7 +60,7 @@ func _init(session: NetSession = null) -> void:
 	add_row.add_theme_constant_override("separation", 2)
 	left.add_child(add_row)
 	_nick = LineEdit.new()
-	_nick.placeholder_text = "nickname"
+	PageText.bind(_nick, "nickname", "placeholder_text")
 	_nick.max_length = PlayerProfile.NAME_MAX
 	_nick.custom_minimum_size = Vector2(LIST_WIDTH - 42, 16)
 	_nick.text_submitted.connect(func(_t: String): _add())
@@ -90,8 +92,9 @@ func _init(session: NetSession = null) -> void:
 	_side.add_child(_card)
 	_status = _label("", PixelTheme.TEXT_DIM)
 	_side.add_child(_status)
-	_actions = HBoxContainer.new()
-	_actions.add_theme_constant_override("separation", 2)
+	_actions = HFlowContainer.new()
+	_actions.add_theme_constant_override("h_separation", 2)
+	_actions.add_theme_constant_override("v_separation", 2)
 	_side.add_child(_actions)
 	_actions.add_child(_button("PROFILE", 56, func(): profile_requested.emit(_selected)))
 	_invite = _button("INVITE", 56, func(): invite_requested.emit(_selected))
@@ -115,7 +118,7 @@ func _init(session: NetSession = null) -> void:
 	send_row.add_theme_constant_override("separation", 2)
 	_side.add_child(send_row)
 	_message = LineEdit.new()
-	_message.placeholder_text = "message"
+	PageText.bind(_message, "message", "placeholder_text")
 	_message.max_length = FriendBook.TEXT_MAX
 	_message.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_message.custom_minimum_size.y = 16
@@ -165,7 +168,7 @@ func _send_message() -> void:
 func show_data(data: Dictionary) -> void:
 	_data = data
 	if String(data.get("note", "")) != "":
-		_note.text = String(data["note"])
+		PageText.bind(_note, String(data["note"]))
 	for child in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
@@ -176,7 +179,7 @@ func show_data(data: Dictionary) -> void:
 		for who in incoming:
 			var row := HBoxContainer.new()
 			row.add_theme_constant_override("separation", 2)
-			var name_label := _label(String(who), PixelTheme.TEXT)
+			var name_label := _label(String(who), PixelTheme.TEXT, true)
 			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			name_label.clip_text = true
 			row.add_child(name_label)
@@ -195,6 +198,7 @@ func show_data(data: Dictionary) -> void:
 		var b := Button.new()
 		var unread := int(f.get("unread", 0))
 		badge += unread
+		b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		b.text = fname + ("  (%d)" % unread if unread > 0 else "")
 		b.toggle_mode = true
 		b.button_pressed = fname == _selected
@@ -210,7 +214,7 @@ func show_data(data: Dictionary) -> void:
 		_list.add_child(_label("SENT", PixelTheme.TEXT_DIM))
 		for who in outgoing:
 			var row := HBoxContainer.new()
-			var name_label := _label(String(who), PixelTheme.TEXT_DIM)
+			var name_label := _label(String(who), PixelTheme.TEXT_DIM, true)
 			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			name_label.clip_text = true
 			row.add_child(name_label)
@@ -251,7 +255,7 @@ func _show_friend() -> void:
 	_actions.visible = not f.is_empty()
 	_message.editable = not f.is_empty()
 	if f.is_empty():
-		_status.text = "Choose a friend on the left."
+		PageText.bind(_status, "Choose a friend on the left.")
 		for child in _thread.get_children():
 			child.queue_free()
 		return
@@ -263,7 +267,7 @@ func _show_friend() -> void:
 	var line := status
 	if int(f.get("records", 0)) > 0:
 		line += "   WORLD RECORDS %d" % int(f["records"])
-	_status.text = line
+	PageText.bind(_status, line)
 	_status.add_theme_color_override("font_color", STATUS_COLOURS.get(status, PixelTheme.TEXT_DIM))
 	_invite.disabled = status == "OFFLINE" or status == "IN GAME"
 	_watch.disabled = String(f.get("room", "")) == ""
@@ -280,7 +284,9 @@ func _show_thread(fname: String, messages: Array) -> void:
 	for m: Dictionary in messages:
 		var mine := bool(m["mine"])
 		var label := _label(("YOU: " if mine else fname + ": ") + String(m["text"]),
-			PixelTheme.GOLD if mine else PixelTheme.TEXT)
+			PixelTheme.GOLD if mine else PixelTheme.TEXT, true)
+		if mine:
+			PageText.bind(label, "YOU: ", "text", String(m["text"]))
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size.x = SIDE_WIDTH - 12
 		_thread.add_child(label)
@@ -293,15 +299,19 @@ func _show_thread(fname: String, messages: Array) -> void:
 
 func _button(text: String, width: float, action: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = Vector2(width, 16)
 	SetupScreen._style_button(b)
 	b.pressed.connect(action)
 	return b
 
 
-func _label(text: String, colour: Color) -> Label:
+func _label(text: String, colour: Color, literal := false) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	if literal:
+		label.text = text
+	else:
+		PageText.bind(label, text)
 	label.add_theme_color_override("font_color", colour)
 	return label

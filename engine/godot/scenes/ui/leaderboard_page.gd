@@ -1,5 +1,7 @@
 extends VBoxContainer
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Вкладка LEADERBOARD главного меню (владелец, 2026-10-11): первые 100 по
 ## рейтингу; сколько всего тиранов (сыграли хоть одну рейтинговую партию),
 ## сколько сейчас на связи (меню, поиск, лобби, партии) и сколько в партиях.
@@ -50,7 +52,7 @@ func _init(session: NetSession = null) -> void:
 		if not SetupScreen.TEAMS_ENABLED and mode in ["team", "2v2"]:
 			continue  # 2v2 спрятан
 		var b := Button.new()
-		b.text = MODES[mode]
+		PageText.bind(b, MODES[mode])
 		b.toggle_mode = true
 		b.button_group = group
 		b.button_pressed = mode == _mode
@@ -96,7 +98,7 @@ func _init(session: NetSession = null) -> void:
 		net.leaderboard_received.connect(show_data)
 		net.connection_lost.connect(func(reason: String):
 			if _grid.get_child_count() == 0:
-				_status.text = "The server is not available. %s" % reason)
+				PageText.bind(_status, "The server is not available. %s" % reason))
 
 
 func _process(delta: float) -> void:
@@ -122,8 +124,8 @@ static func server_address() -> String:
 ## Ответ сервера (NetSession.leaderboard): {top, registered, online, in_game, mine?}.
 func show_data(data: Dictionary) -> void:
 	_data = data
-	_counts.text = "TYRANTS %d   ONLINE %d   IN GAME %d" % [int(data.get("registered", 0)),
-		int(data.get("online", 0)), int(data.get("in_game", 0))]
+	PageText.bind(_counts, "TYRANTS %d   ONLINE %d   IN GAME %d" % [int(data.get("registered", 0)),
+		int(data.get("online", 0)), int(data.get("in_game", 0))])
 	var records := not PLAYER_MODES.has(_mode)
 	_head.visible = not records
 	_grid.visible = not records
@@ -131,7 +133,7 @@ func show_data(data: Dictionary) -> void:
 	_rec_grid.visible = records
 	if records:
 		_status.visible = false
-		_mine.text = "Records count only in SEARCH games you win. First to set a value keeps it."
+		PageText.bind(_mine, "Records count only in SEARCH games you win. First to set a value keeps it.")
 		_show_records(_mode)
 		return
 	for child in _grid.get_children():
@@ -141,14 +143,14 @@ func show_data(data: Dictionary) -> void:
 	var table: Dictionary = data.get("team", {}) if _mode == "team" else data
 	var top: Array = table.get("top", [])
 	_status.visible = top.is_empty()
-	_status.text = "No rated games yet."
+	PageText.bind(_status, "No rated games yet.")
 	for i in top.size():
 		var row: Dictionary = top[i]
 		var me := bool(row.get("me", false))
 		var colour := PixelTheme.GOLD if me else PixelTheme.TEXT
 		var rating := int(row.get("rating", 0))
 		_grid.add_child(_cell(str(i + 1), PixelTheme.TEXT_DIM, int(COLUMNS[0][1])))
-		var name_cell := _cell(String(row.get("name", "")), colour, int(COLUMNS[1][1]))
+		var name_cell := _cell(String(row.get("name", "")), colour, int(COLUMNS[1][1]), true)
 		# Щелчок по чужому имени — карточка игрока с ADD FRIEND (владелец, 2026-10-12).
 		if not me:
 			var card := {"name": String(row.get("name", "")), "rating": rating,
@@ -162,14 +164,13 @@ func show_data(data: Dictionary) -> void:
 		_grid.add_child(_cell(str(int(row.get("wins", 0))), colour, int(COLUMNS[5][1])))
 	var mine: Dictionary = table.get("mine", {})
 	if mine.is_empty():
-		_mine.text = "Play a 2V2 game from SEARCH to get on the board." if _mode == "team" \
-			else "Play a game from SEARCH to get on the board."
+		PageText.bind(_mine, "Play a 2V2 game from SEARCH to get on the board." if _mode == "team"  else "Play a game from SEARCH to get on the board.")
 	elif int(mine["rank"]) > top.size():
-		_mine.text = "YOU: #%d   %d" % [int(mine["rank"]), int(mine["rating"])]
+		PageText.bind(_mine, "YOU: #%d   %d" % [int(mine["rank"]), int(mine["rating"])])
 	else:
-		_mine.text = "YOU: #%d" % int(mine["rank"])
+		PageText.bind(_mine, "YOU: #%d" % int(mine["rank"]))
 	if not top.is_empty():
-		_mine.text += "\nClick a player's name for the profile."
+		PageText.bind(_mine, String(_mine.get_meta("_page_source_text").source) + "\nClick a player's name for the profile.")
 
 
 func _set_mode(mode: String) -> void:
@@ -191,8 +192,8 @@ func _show_records(n: String) -> void:
 		var colour := PixelTheme.GOLD if holder != "" and holder == my_name else PixelTheme.TEXT
 		_rec_grid.add_child(_cell(String(kind[1]), PixelTheme.TEXT_DIM, int(RECORD_COLUMNS[0][1])))
 		_rec_grid.add_child(_cell(str(int(r["value"])) if not r.is_empty() else "-", colour, int(RECORD_COLUMNS[1][1])))
-		_rec_grid.add_child(_cell(holder if holder != "" else "-", colour, int(RECORD_COLUMNS[2][1])))
-		_rec_grid.add_child(_cell(String(r.get("date", "")), PixelTheme.TEXT_DIM, int(RECORD_COLUMNS[3][1])))
+		_rec_grid.add_child(_cell(holder if holder != "" else "-", colour, int(RECORD_COLUMNS[2][1]), true))
+		_rec_grid.add_child(_cell(String(r.get("date", "")), PixelTheme.TEXT_DIM, int(RECORD_COLUMNS[3][1]), true))
 
 
 func _header(columns: Array) -> GridContainer:
@@ -206,16 +207,20 @@ func _header(columns: Array) -> GridContainer:
 	return head
 
 
-func _cell(text: String, colour: Color, width: int) -> Label:
-	var label := _label(text, colour)
+func _cell(text: String, colour: Color, width: int, literal := false) -> Label:
+	var label := _label(text, colour, literal)
 	label.custom_minimum_size.x = width
 	label.clip_text = true
 	return label
 
 
-func _label(text: String, colour: Color) -> Label:
+func _label(text: String, colour: Color, literal := false) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	if literal:
+		label.text = text
+	else:
+		PageText.bind(label, text)
 	label.add_theme_color_override("font_color", colour)
 	return label
 

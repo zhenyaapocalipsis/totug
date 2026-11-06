@@ -28,8 +28,8 @@ static func text(source: String, depth: int = 0) -> String:
  if source.begins_with(" "):
   return source.substr(0, source.length() - source.lstrip(" ").length()) + text(source.lstrip(" "), depth + 1)
  if source.ends_with("  ON"): return text(source.trim_suffix("  ON"), depth + 1) + "  ВКЛ"
- var price := RegEx.create_from_string("^(.+?)  ([0-9]+)$").search(source)
- if price != null: return text(price.get_string(1), depth + 1) + "  " + price.get_string(2)
+ if source.contains("\n"):
+  return "\n".join(Array(source.split("\n")).map(func(line): return text(line, depth + 1)))
  for item: Array in _patterns:
   var found: RegExMatch = item[0].search(source)
   if found == null: continue
@@ -37,6 +37,8 @@ static func text(source: String, depth: int = 0) -> String:
   for i in range(1, found.get_group_count() + 1):
    values["v%d" % (i - 1)] = text(found.get_string(i), depth + 1) if item[2].has(i - 1) else found.get_string(i)
   return String(item[1]).format(values)
+ var price := RegEx.create_from_string("^(.+?)  ([0-9]+)$").search(source)
+ if price != null: return text(price.get_string(1), depth + 1) + "  " + price.get_string(2)
  if _cards.has(source.to_upper()):
   var value := Cards.field(String(_cards[source.to_upper()]), "name")
   return value.to_upper() if source == source.to_upper() else value
@@ -44,10 +46,11 @@ static func text(source: String, depth: int = 0) -> String:
 class BoundSource extends Node:
  var source := ""
  var property := "text"
+ var literal_suffix := ""
  func refresh() -> void:
   if get_parent() != null:
-   get_parent().set(property, load("res://scenes/page_text.gd").text(source))
-static func bind(control: Control, source: String, property: String = "text") -> void:
+   get_parent().set(property, load("res://scenes/page_text.gd").text(source) + literal_suffix)
+static func bind(control: Control, source: String, property: String = "text", literal_suffix: String = "") -> void:
  var metadata := "_page_source_" + property
  var binding: BoundSource = control.get_meta(metadata) if control.has_meta(metadata) else null
  if binding == null:
@@ -55,9 +58,10 @@ static func bind(control: Control, source: String, property: String = "text") ->
   control.add_child(binding)
   control.set_meta(metadata, binding)
   L10n.events.changed.connect(binding.refresh)
- elif binding.source == source and binding.property == property:
+ elif binding.source == source and binding.property == property and binding.literal_suffix == literal_suffix:
   return
  binding.source = source
  binding.property = property
+ binding.literal_suffix = literal_suffix
  if property == "text": control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
  binding.refresh()

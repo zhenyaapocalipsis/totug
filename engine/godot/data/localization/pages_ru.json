@@ -36,7 +36,53 @@
     "ULTRA - applies to your whole deck": "УЛЬТРА — для всей вашей колоды",
     "OPENING BOX...": "ОТКРЫВАЕМ ЛУТБОКС...",
     "NEW": "НОВОЕ",
-    "DUST": "ПЫЛЬ"
+    "DUST": "ПЫЛЬ",
+    "nickname": "ник",
+    "message": "сообщение",
+    "ADD": "ДОБАВИТЬ",
+    "Connecting to the server...": "Подключение к серверу...",
+    "INVITE": "ПРИГЛАСИТЬ",
+    "WATCH": "СМОТРЕТЬ",
+    "REMOVE": "УДАЛИТЬ",
+    "SEND": "ОТПРАВИТЬ",
+    "REQUESTS": "ЗАЯВКИ",
+    "Add a friend by nickname,\nor click a player's name\nin a lobby, a game or\nLEADERBOARD.": "Добавьте друга по нику\nили нажмите на имя\nигрока в лобби, партии\nили таблице рейтинга.",
+    "SENT": "ОТПРАВЛЕНО",
+    "Choose a friend on the left.": "Выберите друга слева.",
+    "IN GAME": "В ПАРТИИ",
+    "IN LOBBY": "В ЛОББИ",
+    "ONLINE": "В СЕТИ",
+    "OFFLINE": "НЕ В СЕТИ",
+    "No messages yet.": "Сообщений пока нет.",
+    "YOU: ": "ВЫ: ",
+    "PLAYERS": "ИГРОКИ",
+    "PLAYERS 2V2": "ИГРОКИ 2V2",
+    "RECORDS 2P": "РЕКОРДЫ 2 ИГР.",
+    "RECORDS 3P": "РЕКОРДЫ 3 ИГР.",
+    "RECORDS 4P": "РЕКОРДЫ 4 ИГР.",
+    "RECORDS 2V2": "РЕКОРДЫ 2V2",
+    "Records count only in SEARCH games you win. First to set a value keeps it.": "Рекорды учитываются в победах через ПОИСК. При равенстве рекорд остаётся у первого.",
+    "No rated games yet.": "Рейтинговых партий пока нет.",
+    "Play a 2V2 game from SEARCH to get on the board.": "Сыграйте 2V2 через ПОИСК, чтобы войти в рейтинг.",
+    "Play a game from SEARCH to get on the board.": "Сыграйте через ПОИСК, чтобы войти в рейтинг.",
+    "Click a player's name for the profile.": "Нажмите на имя игрока, чтобы открыть профиль.",
+    "NAME": "ИМЯ",
+    "RANK": "ЗВАНИЕ",
+    "RATING": "РЕЙТИНГ",
+    "GAMES": "ПАРТИИ",
+    "WINS": "ПОБЕДЫ",
+    "RECORD": "РЕКОРД",
+    "BEST": "ЛУЧШИЙ",
+    "HOLDER": "ОБЛАДАТЕЛЬ",
+    "DATE": "ДАТА",
+    "Your name is taken or not set. Change it in your profile first.": "Ник занят или не задан. Сначала измените его в профиле.",
+    "Too many requests. Wait a moment.": "Слишком много запросов. Немного подождите.",
+    "That is you.": "Это вы.",
+    "Too many messages. Wait a moment.": "Слишком много сообщений. Немного подождите.",
+    "Leave your lobby first.": "Сначала выйдите из своего лобби.",
+    "Create a lobby first (PLAY > LOBBY), then invite.": "Сначала создайте лобби (ИГРАТЬ > ЛОББИ), затем пригласите друга.",
+    "YES": "ДА",
+    "NO": "НЕТ"
   },
   "patterns": [
     {
@@ -260,6 +306,100 @@
       "source": "%d NEW, +%d DUST",
       "regex": "^([0-9]+) NEW, \\+([0-9]+) DUST$",
       "target": "НОВЫХ: {v0}, +{v1} ПЫЛИ",
+      "translate": []
+    },
+    {
+      "source": "FRIENDS %d",
+      "regex": "^FRIENDS ([0-9]+)$",
+      "target": "ДРУЗЬЯ: {v0}",
+      "translate": []
+    },
+    {
+      "source": "%s   WORLD RECORDS %d",
+      "regex": "^(.+?)   WORLD RECORDS ([0-9]+)$",
+      "target": "{v0}   МИРОВЫЕ РЕКОРДЫ: {v1}",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "TYRANTS %d   ONLINE %d   IN GAME %d",
+      "regex": "^TYRANTS ([0-9]+)   ONLINE ([0-9]+)   IN GAME ([0-9]+)$",
+      "target": "ТИРАНОВ: {v0}   В СЕТИ: {v1}   В ПАРТИИ: {v2}",
+      "translate": []
+    },
+    {
+      "source": "The server is not available. %s",
+      "regex": "^The server is not available\\. (.+?)$",
+      "target": "Сервер недоступен. {v0}",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "YOU: #%d   %d",
+      "regex": "^YOU: #([0-9]+)   ([0-9]+)$",
+      "target": "ВЫ: #{v0}   {v1}",
+      "translate": []
+    },
+    {
+      "source": "YOU: #%d",
+      "regex": "^YOU: #([0-9]+)$",
+      "target": "ВЫ: #{v0}",
+      "translate": []
+    },
+    {
+      "source": "No player named %s.",
+      "regex": "^No player named (.+?)\\.$",
+      "target": "Игрок с ником {v0} не найден.",
+      "translate": []
+    },
+    {
+      "source": "Friend request sent to %s.",
+      "regex": "^Friend request sent to (.+?)\\.$",
+      "target": "Заявка в друзья отправлена: {v0}.",
+      "translate": []
+    },
+    {
+      "source": "%s is now your friend.",
+      "regex": "^(.+?) is now your friend\\.$",
+      "target": "Теперь у вас в друзьях: {v0}.",
+      "translate": []
+    },
+    {
+      "source": "%s is already your friend or has your request.",
+      "regex": "^(.+?) is already your friend or has your request\\.$",
+      "target": "{v0} уже в друзьях или получил вашу заявку.",
+      "translate": []
+    },
+    {
+      "source": "%s is not your friend.",
+      "regex": "^(.+?) is not your friend\\.$",
+      "target": "{v0} пока нет в ваших друзьях.",
+      "translate": []
+    },
+    {
+      "source": "%s is not in a game now.",
+      "regex": "^(.+?) is not in a game now\\.$",
+      "target": "{v0} сейчас не в партии.",
+      "translate": []
+    },
+    {
+      "source": "%s is offline.",
+      "regex": "^(.+?) is offline\\.$",
+      "target": "{v0} не в сети.",
+      "translate": []
+    },
+    {
+      "source": "%s is in a game.",
+      "regex": "^(.+?) is in a game\\.$",
+      "target": "{v0} сейчас в партии.",
+      "translate": []
+    },
+    {
+      "source": "Invitation sent to %s.",
+      "regex": "^Invitation sent to (.+?)\\.$",
+      "target": "Приглашение отправлено: {v0}.",
       "translate": []
     }
   ]
