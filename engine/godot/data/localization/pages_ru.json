@@ -82,7 +82,58 @@
     "Leave your lobby first.": "Сначала выйдите из своего лобби.",
     "Create a lobby first (PLAY > LOBBY), then invite.": "Сначала создайте лобби (ИГРАТЬ > ЛОББИ), затем пригласите друга.",
     "YES": "ДА",
-    "NO": "НЕТ"
+    "NO": "НЕТ",
+    "PLAY": "ПУСК",
+    "PAUSE": "ПАУЗА",
+    "AUTO": "АВТО",
+    "STATS": "СТАТИСТИКА",
+    "EXIT": "ВЫХОД",
+    "SETUP": "ПОДГОТОВКА",
+    "GAME STATS": "СТАТИСТИКА ПАРТИИ",
+    "VP": "ПО",
+    "VERSUS": "ПРОТИВ",
+    "RESOURCES": "РЕСУРСЫ",
+    "ACTIONS": "ДЕЙСТВИЯ",
+    "BUYS": "ПОКУПКИ",
+    "MAP": "ПОЛЕ",
+    "SITES": "ЛОКАЦИИ",
+    "TOTAL CONTROL": "ПОЛНЫЙ КОНТРОЛЬ",
+    "TROPHIES": "ТРОФЕИ",
+    "DECK": "КОЛОДА",
+    "INNER CIRCLE": "ВНУТРЕННИЙ КРУГ",
+    "VP TOKENS": "ЖЕТОНЫ ПО",
+    "CARDS PLAYED": "СЫГРАНО КАРТ",
+    "CARDS BOUGHT": "НАНЯТО КАРТ",
+    "TROOPS DEPLOYED": "РАЗМЕЩЕНО ОТРЯДОВ",
+    "ASSASSINATED": "УНИЧТОЖЕНО",
+    "SPIES PLACED": "РАЗМЕЩЕНО ШПИОНОВ",
+    "RETURNED": "ВОЗВРАЩЕНО",
+    "DEVOURED": "ПОГЛОЩЕНО",
+    "PROMOTED": "ВОЗВЫШЕНО",
+    "VP AFTER EACH TURN (AS IF THE GAME ENDED THERE)": "ПО ПОСЛЕ КАЖДОГО ХОДА (КАК ПРИ КОНЦЕ ПАРТИИ)",
+    "VP AFTER EACH TURN (AS IF THE GAME ENDED THERE). CLICK TO JUMP": "ПО ПОСЛЕ ХОДА (КАК ПРИ КОНЦЕ ПАРТИИ). НАЖМИТЕ ДЛЯ ПЕРЕМОТКИ",
+    "FINAL VP": "ИТОГОВЫЕ ПО",
+    "TOTAL": "ИТОГО",
+    "BEST TURN": "ЛУЧШИЙ ХОД",
+    "LEADER (STRIP UNDER THE CHART)": "ЛИДЕР (ПОЛОСА ПОД ГРАФИКОМ)",
+    "WHO \\ TO WHOM": "КТО \\ КОМУ",
+    "RECEIVED": "ПОЛУЧЕНО",
+    "KILL": "УНИЧТ",
+    "SUPP": "ЗАМЕН",
+    "SITE": "ЛОКАЦИЯ",
+    "OUTC": "ИЗГОЙ",
+    "DISC": "СБРОС",
+    "SPY": "ШПИОН",
+    "RET": "ВОЗВР",
+    "KILL killed  SUPP supplanted  SITE took a site  OUTC gave Insane Outcasts  DISC forced a discard  SPY returned a spy  RET returned a troop": "УНИЧТ: уничтожение; ЗАМЕН: замена; ЛОКАЦИЯ: захват; ИЗГОЙ: безумные изгои; СБРОС: вынужденный сброс; ШПИОН/ВОЗВР: возврат",
+    "VP EACH TURN.  SQUARE ON THE ATTACKER'S LINE, COLOUR = VICTIM:  K KILL  S SUPP  T SITE  O OUTC  D DISC  P SPY  R RET": "ПО ПО ХОДАМ. МЕТКА НА ЛИНИИ АТАКУЮЩЕГО, ЦВЕТ ЖЕРТВЫ: K УНИЧТ; S ЗАМЕН; T ЛОКАЦИЯ; O ИЗГОЙ; D СБРОС; P ШПИОН; R ВОЗВР",
+    "AVERAGE PER TURN": "В СРЕДНЕМ ЗА ХОД",
+    "POWER": "СИЛА",
+    "INFLUENCE": "ВЛИЯНИЕ",
+    "EACH ROW IS A SITE, MOST VP FIRST. LEFT TO RIGHT: THE WHOLE GAME, ONE STEP PER TURN. COLOUR: WHO CONTROLLED THE SITE AFTER THAT TURN, DARK: NOBODY. RIGHT: WHO HELD IT LONGEST.": "Строка — локация, сверху наиболее ценные. Слева направо — партия по ходам. Цвет — кто контролировал локацию после хода; тёмный — никто. Справа — кто владел дольше всех.",
+    "LONGEST": "ДОЛЬШЕ ВСЕХ",
+    "NOBODY": "НИКТО",
+    "NOBODY HELD IT": "НИКТО НЕ ВЛАДЕЛ"
   },
   "patterns": [
     {
@@ -400,6 +451,102 @@
       "source": "Invitation sent to %s.",
       "regex": "^Invitation sent to (.+?)\\.$",
       "target": "Приглашение отправлено: {v0}.",
+      "translate": []
+    },
+    {
+      "source": "TURN %d/%d",
+      "regex": "^TURN ([0-9]+)/([0-9]+)$",
+      "target": "ХОД {v0}/{v1}",
+      "translate": []
+    },
+    {
+      "source": "END %d/%d",
+      "regex": "^END ([0-9]+)/([0-9]+)$",
+      "target": "КОНЕЦ {v0}/{v1}",
+      "translate": []
+    },
+    {
+      "source": "%s +%d VP IN ROUND %d (GOLD MARK)",
+      "regex": "^(.+?) \\+([0-9]+) VP IN ROUND ([0-9]+) \\(GOLD MARK\\)$",
+      "target": "{v0} +{v1} ПО В РАУНДЕ {v2} (ЗОЛОТАЯ МЕТКА)",
+      "translate": []
+    },
+    {
+      "source": "LED %d TURNS",
+      "regex": "^LED ([0-9]+) TURNS$",
+      "target": "ХОДОВ ЛИДЕРСТВА: {v0}",
+      "translate": []
+    },
+    {
+      "source": "LEAD CHANGED %d TIMES%s",
+      "regex": "^LEAD CHANGED ([0-9]+) TIMES(.+?)$",
+      "target": "СМЕН ЛИДЕРА: {v0}{v1}",
+      "translate": [
+        1
+      ]
+    },
+    {
+      "source": ", LAST %d:",
+      "regex": "^, LAST ([0-9]+):$",
+      "target": ", ПОСЛЕДНИЕ {v0}:",
+      "translate": []
+    },
+    {
+      "source": "R%d",
+      "regex": "^R([0-9]+)$",
+      "target": "Р{v0}",
+      "translate": []
+    },
+    {
+      "source": "LEAD CHANGES: %d",
+      "regex": "^LEAD CHANGES: ([0-9]+)$",
+      "target": "СМЕН ЛИДЕРА: {v0}",
+      "translate": []
+    },
+    {
+      "source": "BEST TURN: %s +%d VP (ROUND %d).  %s",
+      "regex": "^BEST TURN: (.+?) \\+([0-9]+) VP \\(ROUND ([0-9]+)\\)\\.  (.+?)$",
+      "target": "ЛУЧШИЙ ХОД: {v0} +{v1} ПО (РАУНД {v2}).  {v3}",
+      "translate": [
+        3
+      ]
+    },
+    {
+      "source": "TURN %d, ROUND %d, %s",
+      "regex": "^TURN ([0-9]+), ROUND ([0-9]+), (.+?)$",
+      "target": "ХОД {v0}, РАУНД {v1}, {v2}",
+      "translate": []
+    },
+    {
+      "source": "%s GAINED EACH ROUND",
+      "regex": "^(.+?) GAINED EACH ROUND$",
+      "target": "{v0}: ПОЛУЧЕНО ЗА РАУНД",
+      "translate": [
+        0
+      ]
+    },
+    {
+      "source": "ROUND %d",
+      "regex": "^ROUND ([0-9]+)$",
+      "target": "РАУНД {v0}",
+      "translate": []
+    },
+    {
+      "source": "%s: %d CARDS",
+      "regex": "^(.+?): ([0-9]+) CARDS$",
+      "target": "{v0}: КАРТ {v1}",
+      "translate": []
+    },
+    {
+      "source": "HELD BY %s",
+      "regex": "^HELD BY (.+?)$",
+      "target": "ВЛАДЕЕТ: {v0}",
+      "translate": []
+    },
+    {
+      "source": "%s: %d VP",
+      "regex": "^(.+?): ([0-9]+) VP$",
+      "target": "{v0}: {v1} ПО",
       "translate": []
     }
   ]

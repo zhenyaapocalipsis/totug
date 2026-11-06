@@ -1,5 +1,9 @@
 extends Control
 
+const PageText := preload("res://scenes/page_text.gd")
+const L10n := preload("res://scenes/localization.gd")
+const SiteText := preload("res://scenes/site_text.gd")
+
 ## Экран STATS просмотрщика реплея (этап Replay-3) — поверх партии, как итоги.
 ## Данные — ReplayStats.collect(). Вкладки:
 ##   VP        — график VP всех игроков по ходам (будь партия окончена в этот
@@ -65,7 +69,7 @@ func _init(stats_data: Dictionary, jump := true) -> void:
 	top.add_theme_constant_override("separation", 2)
 	col.add_child(top)
 	var title := Label.new()
-	title.text = "GAME STATS"
+	PageText.bind(title, "GAME STATS")
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.custom_minimum_size.x = 80
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -171,7 +175,7 @@ func _build_vp() -> Control:
 	side.add_child(grid)
 	grid.add_child(_cell("", PixelTheme.TEXT_DIM))
 	for pid in ids():
-		grid.add_child(_cell(_short(pid), player_colour(pid)))
+		grid.add_child(_cell(_short(pid), player_colour(pid), true))
 	var parts: Dictionary = stats["parts"]
 	for key: String in PlayerProfile.VP_PARTS:
 		grid.add_child(_cell(VP_PART_NAMES[key], PixelTheme.TEXT_DIM))
@@ -199,7 +203,7 @@ func _build_vp() -> Control:
 	lead_grid.add_theme_constant_override("v_separation", 2)
 	side.add_child(lead_grid)
 	for pid in ids():
-		lead_grid.add_child(_cell(_short(pid), player_colour(pid)))
+		lead_grid.add_child(_cell(_short(pid), player_colour(pid), true))
 		lead_grid.add_child(_cell("LED %d TURNS" % who.count(pid), PixelTheme.TEXT))
 	side.add_child(_cell("LEAD CHANGED %d TIMES%s" % [leads.size(),
 		", LAST %d:" % LEADS_SHOWN if leads.size() > LEADS_SHOWN else (":" if leads.size() > 0 else "")],
@@ -212,7 +216,7 @@ func _build_vp() -> Control:
 	for t in leads.slice(maxi(0, leads.size() - LEADS_SHOWN)):
 		var pid := String(who[int(t)])
 		change_grid.add_child(_cell("R%d" % int((turns[int(t)] as Dictionary)["round"]), PixelTheme.TEXT_DIM))
-		change_grid.add_child(_cell(_short(pid), player_colour(pid)))
+		change_grid.add_child(_cell(_short(pid), player_colour(pid), true))
 	return row
 
 
@@ -265,9 +269,9 @@ func _turn_title(i: int) -> String:
 static func turn_title(data: Dictionary, i: int) -> String:
 	var turns: Array = data["turns"]
 	if i <= 0 or i >= turns.size():
-		return "SETUP"
+		return PageText.text("SETUP")
 	var t: Dictionary = turns[i]
-	return "TURN %d, ROUND %d, %s" % [i, int(t["round"]), EventLogPanel.player_name(String(t["player"])).to_upper()]
+	return PageText.text("TURN %d, ROUND %d, %s" % [i, int(t["round"]), EventLogPanel.player_name(String(t["player"])).to_upper()])
 
 
 # --- VERSUS -----------------------------------------------------------------
@@ -294,11 +298,11 @@ func _build_versus() -> Control:
 	col.add_child(grid)
 	grid.add_child(_cell("WHO \\ TO WHOM", PixelTheme.TEXT_DIM))
 	for pid in ids():
-		grid.add_child(_sized(_cell(_short(pid), player_colour(pid)), VERSUS_COL))
+		grid.add_child(_sized(_cell(_short(pid), player_colour(pid), true), VERSUS_COL))
 	grid.add_child(_cell("TOTAL", PixelTheme.TEXT_DIM))
 	var received := {}
 	for from in ids():
-		grid.add_child(_cell(_short(from), player_colour(from)))
+		grid.add_child(_cell(_short(from), player_colour(from), true))
 		var row: Dictionary = matrix.get(from, {})
 		var main := ""
 		var main_n := 0
@@ -322,6 +326,7 @@ func _build_versus() -> Control:
 	grid.add_child(_cell("", PixelTheme.TEXT_DIM))
 	var legend := _cell("KILL killed  SUPP supplanted  SITE took a site  OUTC gave Insane Outcasts  "
 		+ "DISC forced a discard  SPY returned a spy  RET returned a troop", PixelTheme.TEXT_DIM)
+	legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(legend)
 	col.add_child(HSeparator.new())
 	var chart := vp_chart(stats, "VP EACH TURN.  SQUARE ON THE ATTACKER'S LINE, COLOUR = VICTIM:  "
@@ -351,8 +356,15 @@ func _versus_cell(cell: Dictionary, main: bool) -> Control:
 	var lines: Array[String] = []
 	for i in range(0, parts.size(), 2):
 		lines.append("  ".join(parts.slice(i, i + 2)))
-	var label := _cell("\n".join(lines) if not lines.is_empty() else ".",
-		PixelTheme.TEXT if not lines.is_empty() else PixelTheme.TEXT_DIM)
+	var label := _cell("", PixelTheme.TEXT if not lines.is_empty() else PixelTheme.TEXT_DIM)
+	PageText.bind_value(label, func():
+		var translated: Array[String] = []
+		for line: String in lines:
+			var value := line
+			for token: String in HIT_NAMES.values():
+				value = value.replace(token, PageText.text(token))
+			translated.append(value)
+		return "\n".join(translated) if not translated.is_empty() else ".")
 	var box := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = PixelTheme.PANEL_HI if main else Color(0, 0, 0, 0)
@@ -405,7 +417,7 @@ static func versus_line(data: Dictionary, i: int) -> String:
 		if not pairs.has(key):
 			order.append(key)
 			pairs[key] = []
-		(pairs[key] as Array).append("%s %d" % [HIT_NAMES[v["kind"]], int(v["n"])])
+		(pairs[key] as Array).append("%s %d" % [PageText.text(HIT_NAMES[v["kind"]]), int(v["n"])])
 	var text := turn_title(data, i)
 	for key: String in order:
 		text += "%s  %s %s" % [":" if key == order[0] else ";", key, " ".join(pairs[key])]
@@ -449,7 +461,7 @@ func _build_resources() -> Control:
 	grid.add_child(_cell("POWER", GameScreen.POWER_COLOR))
 	grid.add_child(_cell("INFLUENCE", GameScreen.INFLUENCE_COLOR))
 	for pid in ids():
-		grid.add_child(_cell(_short(pid), player_colour(pid)))
+		grid.add_child(_cell(_short(pid), player_colour(pid), true))
 		grid.add_child(_cell("%.1f" % float(averages["%s/power" % pid]), PixelTheme.TEXT))
 		grid.add_child(_cell("%.1f" % float(averages["%s/influence" % pid]), PixelTheme.TEXT))
 	return row
@@ -475,7 +487,7 @@ func _build_actions() -> Control:
 	centre.add_child(grid)
 	grid.add_child(_cell("", PixelTheme.TEXT_DIM))
 	for pid in ids():
-		grid.add_child(_cell(_short(pid), player_colour(pid)))
+		grid.add_child(_cell(_short(pid), player_colour(pid), true))
 	var counts: Dictionary = stats["counts"]
 	for action: String in ReplayStats.ACTION_ORDER:
 		grid.add_child(_cell(ACTION_NAMES[action], PixelTheme.TEXT_DIM))
@@ -544,7 +556,7 @@ func _build_map() -> Control:
 		chip.custom_minimum_size = Vector2(6, 6)
 		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		legend.add_child(chip)
-		legend.add_child(_cell(EventLogPanel.player_name(pid).to_upper(), player_colour(pid)))
+		legend.add_child(_cell(EventLogPanel.player_name(pid).to_upper(), player_colour(pid), true))
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -576,6 +588,7 @@ class SiteTimeline extends Control:
 	var _hover := Vector2i(-1, -1)
 
 	func _init(data: Dictionary, labeler: Callable) -> void:
+		L10n.events.changed.connect(_locale_changed)
 		sites = data["sites"]
 		turns = data["turns"]
 		label_of = labeler
@@ -585,6 +598,10 @@ class SiteTimeline extends Control:
 			_hover = Vector2i(-1, -1)
 			queue_redraw()
 			hovered.emit(""))
+
+	func _locale_changed() -> void:
+		queue_redraw()
+		hovered.emit(text_at(_hover))
 
 	func _strip() -> Rect2:
 		var x := NAME_W + VP_W
@@ -598,9 +615,9 @@ class SiteTimeline extends Control:
 		var font := get_theme_font("font", "Label")
 		var font_size := get_theme_font_size("font_size", "Label")
 		var r := _strip()
-		draw_string(font, Vector2(0, HEAD_H - 2), "SITE", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.TEXT_DIM)
-		draw_string(font, Vector2(NAME_W, HEAD_H - 2), "VP", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.TEXT_DIM)
-		draw_string(font, Vector2(r.end.x + 6, HEAD_H - 2), "LONGEST", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+		draw_string(font, Vector2(0, HEAD_H - 2), PageText.text("SITE"), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.TEXT_DIM)
+		draw_string(font, Vector2(NAME_W, HEAD_H - 2), PageText.text("VP"), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, PixelTheme.TEXT_DIM)
+		draw_string(font, Vector2(r.end.x + 6, HEAD_H - 2), PageText.text("LONGEST"), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 			PixelTheme.TEXT_DIM)
 		# Начало каждого пятого раунда — подпись сверху и черта через все строки.
 		for i in range(1, turns.size()):
@@ -608,12 +625,12 @@ class SiteTimeline extends Control:
 			if int((turns[i - 1] as Dictionary)["round"]) != rnd and (rnd == 1 or rnd % 5 == 0):
 				var x := _cell_x(i)
 				draw_line(Vector2(x, HEAD_H - 1), Vector2(x, r.end.y), PixelTheme.BORDER, 1.0)
-				draw_string(font, Vector2(x + 2, HEAD_H - 2), "R%d" % rnd, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+				draw_string(font, Vector2(x + 2, HEAD_H - 2), PageText.text("R%d" % rnd), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 					PixelTheme.TEXT_DIM)
 		for row in sites.size():
 			var s: Dictionary = sites[row]
 			var y := HEAD_H + ROW_H * row
-			var name_text := String(s["name"]).to_upper()
+			var name_text := SiteText.name_of(String(s["name"])).to_upper()
 			if name_text.length() > 19:
 				name_text = name_text.substr(0, 19)
 			var base := y + ROW_H - 3
@@ -640,7 +657,7 @@ class SiteTimeline extends Control:
 				draw_string(font, Vector2(r.end.x + 6, base), "%s %d" % [who.substr(0, 10), most_n],
 					HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, EventLogPanel.player_color(most))
 			else:
-				draw_string(font, Vector2(r.end.x + 6, base), "NOBODY", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+				draw_string(font, Vector2(r.end.x + 6, base), PageText.text("NOBODY"), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 					PixelTheme.TEXT_OFF)
 		if _hover.x >= 0:
 			var hx0 := _cell_x(_hover.x)
@@ -670,13 +687,13 @@ class SiteTimeline extends Control:
 		if cell.y < 0:
 			return ""
 		var s: Dictionary = sites[cell.y]
-		var name_text := String(s["name"]).to_upper()
+		var name_text := SiteText.name_of(String(s["name"])).to_upper()
 		if cell.x < 0:
-			return "%s: %d VP" % [name_text, int(s["vp"])]
+			return PageText.text("%s: %d VP" % [name_text, int(s["vp"])])
 		var held: Array = s.get("held", [])
 		var owner := String(held[cell.x]) if cell.x < held.size() else ""
 		return "%s, %s: %s" % [name_text, label_of.call(cell.x),
-			"HELD BY " + EventLogPanel.player_name(owner).to_upper() if owner != "" else "NOBODY HELD IT"]
+			PageText.text("HELD BY %s" % EventLogPanel.player_name(owner).to_upper()) if owner != "" else PageText.text("NOBODY HELD IT")]
 
 
 # --- мелочи -----------------------------------------------------------------
@@ -688,19 +705,25 @@ func _short(pid: String) -> String:
 
 
 func _heading(text: String) -> Label:
-	return GameScreen.section_label(text)
+	var label := GameScreen.section_label("")
+	PageText.bind(label, text)
+	return label
 
 
-func _cell(text: String, colour: Color) -> Label:
+func _cell(text: String, colour: Color, literal := false) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	if literal:
+		label.text = text
+	else:
+		PageText.bind(label, text)
 	label.add_theme_color_override("font_color", colour)
 	return label
 
 
 func _button(text: String, action: Callable, width: float) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = Vector2(width, 14)
 	b.focus_mode = Control.FOCUS_NONE
 	SetupScreen._style_button(b)
@@ -738,12 +761,14 @@ class LineChart extends VBoxContainer:
 	var _hover := -1
 
 	func _init(data: Array, caption: String, labeler: Callable) -> void:
+		L10n.events.changed.connect(_update_readout)
 		series = data
 		title = caption
 		label_of = labeler
 		add_theme_constant_override("separation", 2)
 		var head := Label.new()
-		head.text = caption
+		PageText.bind(head, caption)
+		head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		head.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 		add_child(head)
 		_plot = Control.new()

@@ -1,5 +1,7 @@
 extends PanelContainer
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Просмотр реплея (этап Replay-2): полоса управления поверх верха доски и
 ## сама партия реплея. Экран партии (GameScreen в режиме реплея) только
 ## показывает — партию двигает эта полоса (ReplayBook.step / seek).
@@ -254,12 +256,11 @@ func handle_key(key: InputEventKey) -> bool:
 func _sync() -> void:
 	if _play == null:
 		return
-	_play.text = "PAUSE" if playing else "PLAY"
+	PageText.bind(_play, "PAUSE" if playing else "PLAY")
 	var at := _shown_cursor()
-	_turn_label.text = "SETUP" if turn_at(at) == 0 and at < total() \
-		else "TURN %d/%d" % [turn_at(at), turn_count()]
+	PageText.bind(_turn_label, "SETUP" if turn_at(at) == 0 and at < total()  else "TURN %d/%d" % [turn_at(at), turn_count()])
 	if at >= total():
-		_turn_label.text = "END %d/%d" % [turn_count(), turn_count()]
+		PageText.bind(_turn_label, "END %d/%d" % [turn_count(), turn_count()])
 	_timeline.queue_redraw()
 
 
@@ -323,7 +324,7 @@ func _shown_cursor() -> int:
 
 func _button(text: String, action: Callable, width: float = 18.0) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = Vector2(width, BUTTON_H)
 	b.focus_mode = Control.FOCUS_NONE
 	SetupScreen._style_button(b)

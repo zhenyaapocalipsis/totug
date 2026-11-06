@@ -65,3 +65,15 @@ static func bind(control: Control, source: String, property: String = "text", li
  binding.literal_suffix = literal_suffix
  if property == "text": control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
  binding.refresh()
+
+class BoundValue extends Node:
+ var value: Callable
+ func refresh() -> void:
+  get_parent().text = value.call()
+static func bind_value(control: Control, value: Callable) -> void:
+ var binding := BoundValue.new()
+ binding.value = value
+ control.add_child(binding)
+ control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+ L10n.events.changed.connect(binding.refresh)
+ binding.refresh()
