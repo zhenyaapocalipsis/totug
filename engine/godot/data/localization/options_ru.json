@@ -313,5 +313,90 @@
     "source": "+2 Influence, House Guards cost 1 less this turn",
     "name": "Реквизиция",
     "text": "+2 Влияния. В этот ход скидка 1 на Стражей дома"
+  },
+  "option_27927a0e5bac": {
+    "source": "Place a spy (full site: each opponent recruits an Insane Outcast)",
+    "name": "Преследование",
+    "text": "Разместите шпиона. Полная локация: каждый соперник нанимает Безумного изгоя"
+  },
+  "option_5d52ea94f17e": {
+    "source": "Return one of your spies -> Insane Outcasts from your top 5 cards into your hand, draw a card",
+    "name": "Жатва душ",
+    "text": "Верните своего шпиона ► Возьмите в руку Безумных изгоев из 5 верхних карт колоды, затем возьмите карту"
+  },
+  "option_7845d6f5e5ac": {
+    "source": "Deploy 3 troops, each opponent recruits an Insane Outcast",
+    "name": "Всадники ужаса",
+    "text": "Разместите 3 отряда. Каждый соперник нанимает Безумного изгоя"
+  },
+  "option_20d114e9d460": {
+    "source": "Insane Outcasts from your top 6 cards into your hand",
+    "name": "Сбор заблудших",
+    "text": "Из 6 верхних карт своей колоды возьмите Безумных изгоев в руку"
+  },
+  "option_eec58dd678e4": {
+    "source": "Devour a card in your hand, then draw a card",
+    "name": "Растерзание",
+    "text": "Поглотите карту руки, затем возьмите карту"
+  },
+  "option_b4c235312478": {
+    "source": "Scry 1, then draw a card per Insane Outcast played this turn",
+    "name": "Мрачная жатва",
+    "text": "Предвидение 1, затем возьмите карту за каждого Безумного изгоя, сыгранного в этот ход"
+  },
+  "option_dd6edef3a631": {
+    "source": "Deploy 3 troops, Insane Outcasts from your top 6 cards into your hand",
+    "name": "Марш бессмертных",
+    "text": "Разместите 3 отряда. Из 6 верхних карт своей колоды возьмите Безумных изгоев в руку"
+  },
+  "option_49e37e7ddca0": {
+    "source": "Place a spy and draw a card",
+    "name": "Неусыпный дозор",
+    "text": "Разместите шпиона и возьмите карту"
+  },
+  "option_fec393f12816": {
+    "source": "Return any number of your spies -> assassinate a troop for each",
+    "name": "Ярость полтергейста",
+    "text": "Верните любое число своих шпионов ► Уничтожьте по отряду за каждого"
+  },
+  "option_cef157b295f3": {
+    "source": "Deploy 3 troops (next to another player's troop: each opponent recruits an Insane Outcast)",
+    "name": "Проклятый легион",
+    "text": "Разместите 3 отряда. Если какой-либо из них рядом с отрядом игрока, каждый соперник нанимает Безумного изгоя"
+  },
+  "option_1d6555a3bd50": {
+    "source": "Move a troop",
+    "name": "Марш",
+    "text": "Переместите отряд"
+  },
+  "option_4d22f241f497": {
+    "source": "Place a spy, then scry 3",
+    "name": "Дальний взор",
+    "text": "Разместите шпиона, затем Предвидение 3"
+  },
+  "option_83290ccfb9ad": {
+    "source": "Return one of your spies -> +3 Power",
+    "name": "Удар духа",
+    "text": "Верните своего шпиона ► +3 Силы"
+  },
+  "option_9035dfb371b3": {
+    "source": "An opponent splits your top 5 cards into two piles, keep one",
+    "name": "Мрачный выбор",
+    "text": "Соперник делит 5 верхних карт вашей колоды на открытую и закрытую стопки. Одну возьмите в руку, другую сбросьте"
+  },
+  "option_13d5f20a30ac": {
+    "source": "Supplant a troop anywhere",
+    "name": "Шаг сквозь тень",
+    "text": "Замените отряд в любом месте поля"
+  },
+  "option_24c801d2af7e": {
+    "source": "+4 Power",
+    "name": "Могильная сила",
+    "text": "+4 Силы"
+  },
+  "option_89051688d319": {
+    "source": "Recruit one of the top 3 devoured cards for free",
+    "name": "Раскопки могил",
+    "text": "Просмотрите 3 верхние поглощённые карты. Можете нанять одну бесплатно"
   }
 }
