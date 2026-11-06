@@ -518,5 +518,55 @@
     "source": "Convert 3 Influence to Power",
     "name": "Полный залп",
     "text": "Обменяйте 3 Влияния на 3 Силы"
+  },
+  "option_f247547359c1": {
+    "source": "Steal 1 VP",
+    "name": "Засада",
+    "text": "Украдите 1 ПО"
+  },
+  "option_94daa09d80c0": {
+    "source": "Bribe -> +3 Power",
+    "name": "Наёмные головорезы",
+    "text": "Подкуп ► +3 Силы"
+  },
+  "option_8bd2ac4c50f9": {
+    "source": "Bribe -> Supplant a white troop",
+    "name": "Кто больше заплатит",
+    "text": "Подкуп ► Замените белый отряд"
+  },
+  "option_1544fe174f15": {
+    "source": "Discard a card -> Gain 1 VP and draw a card",
+    "name": "Честная сделка",
+    "text": "Сбросьте карту ► Получите 1 ПО и возьмите карту"
+  },
+  "option_51f3895720d5": {
+    "source": "Bribe -> Place a spy and draw 2 cards",
+    "name": "Тайная комната",
+    "text": "Подкуп ► Разместите шпиона и возьмите 2 карты"
+  },
+  "option_3569a496ed33": {
+    "source": "Return one of your spies -> Steal 3 VP",
+    "name": "Срезать кошелёк",
+    "text": "Верните своего шпиона ► Украдите 3 ПО"
+  },
+  "option_b96c01210477": {
+    "source": "Return one of your spies -> Steal that site's control marker until your next turn",
+    "name": "Чужое знамя",
+    "text": "Верните своего шпиона ► Украдите маркер контроля его локации до начала вашего следующего хода"
+  },
+  "option_2e344a379cf4": {
+    "source": "Return one of your spies -> Swap this card with a card in a rival's discard pile",
+    "name": "Лазутчик",
+    "text": "Верните своего шпиона ► Обменяйте эту карту на карту сброса соперника с отрядом в его локации"
+  },
+  "option_10077201595a": {
+    "source": "Move one of your troops and gain 1 Influence",
+    "name": "Обход работорговца",
+    "text": "Переместите свой отряд и получите 1 Влияние"
+  },
+  "option_091ee55ff7b8": {
+    "source": "Bribe -> Swap 2 troops anywhere on the board",
+    "name": "Смена оков",
+    "text": "Подкуп ► Поменяйте местами 2 отряда в любом месте поля"
   }
 }
