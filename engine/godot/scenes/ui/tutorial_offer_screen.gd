@@ -1,5 +1,7 @@
 extends Control
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Вопрос сразу после создания профиля: пройти обучение (HOW TO PLAY) или
 ## сразу в главное меню. Тексты кнопок — решение владельца (2026-09-26).
 ##
@@ -31,14 +33,14 @@ func _init() -> void:
 
 	var name_text := String(PlayerProfile.load_local()["name"])
 	var title := Label.new()
-	title.text = "WELCOME, %s!" % name_text.to_upper() if name_text != "" else "WELCOME!"
+	PageText.bind(title, "WELCOME, %s!" % name_text.to_upper() if name_text != "" else "WELCOME!")
 	title.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
 
 	var question := Label.new()
-	question.text = "Is this your first time in the Underdark?\nThe tutorial explains the rules page by page."
+	PageText.bind(question, "Is this your first time in the Underdark?\nThe tutorial explains the rules page by page.")
 	question.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
 	question.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(question)
@@ -53,7 +55,7 @@ func _init() -> void:
 
 func _button(text: String, wants: bool) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = Vector2(160, 22)
 	SetupScreen._style_button(b)
 	b.pressed.connect(func(): answered.emit(wants))

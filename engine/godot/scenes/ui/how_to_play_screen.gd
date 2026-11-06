@@ -1,5 +1,7 @@
 extends VBoxContainer
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## HOW TO PLAY: обучение для новичков по основной книге правил (Tyrants of the
 ## Underdark Rulebook), без правил Demonweb (решение владельца, 2026-09-25).
 ##
@@ -10,6 +12,8 @@ extends VBoxContainer
 ## (CardView) и маленькая доска, нарисованная тем же SchematicPainter, что и
 ## доска в партии, с настоящими фишками (красные — с гербом игрока).
 
+const L10n := preload("res://scenes/localization.gd")
+static var _ru_pages: Array = []
 const WIDTH := 470
 ## Под текст — место на 10 строк: картинка под ним не прыгает от страницы к
 ## странице.
@@ -87,6 +91,7 @@ func _init(page: int = 0) -> void:
 	buttons.add_child(_next)
 
 	show_page(page)
+	L10n.events.changed.connect(_locale_changed)
 
 
 func page_count() -> int:
@@ -100,13 +105,12 @@ func current_page() -> int:
 func show_page(index: int) -> void:
 	_page = clampi(index, 0, _pages.size() - 1)
 	var page: Dictionary = _pages[_page]
-	_title.text = String(page["title"])
-	_text.text = String(page["text"])
+	_refresh_text()
 	for child in _pic.get_children():
 		_pic.remove_child(child)
 		child.queue_free()
 	_pic.add_child((page["pic"] as Callable).call())
-	_counter.text = "%d / %d" % [_page + 1, _pages.size()]
+	PageText.bind(_counter, "%d / %d" % [_page + 1, _pages.size()])
 	_prev.disabled = _page == 0
 	_next.disabled = _page == _pages.size() - 1
 
@@ -128,7 +132,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = BUTTON_SIZE
 	b.focus_mode = Control.FOCUS_NONE
 	SetupScreen._style_button(b)
@@ -330,12 +334,12 @@ func _pic_rows(rows: Array, heading: String) -> Control:
 		line.add_theme_constant_override("separation", 8)
 		box.add_child(line)
 		var left := Label.new()
-		left.text = String(r[0])
+		PageText.bind(left, String(r[0]))
 		left.custom_minimum_size = Vector2(80, 0)
 		left.add_theme_color_override("font_color", PixelTheme.GOLD)
 		line.add_child(left)
 		var right := Label.new()
-		right.text = String(r[1])
+		PageText.bind(right, String(r[1]))
 		line.add_child(right)
 		col.add_child(box)
 	return col
@@ -359,12 +363,12 @@ func _pic_aspects() -> Control:
 		chip.add_theme_stylebox_override("panel", PixelTheme.box(CardView.ASPECT_COLORS[aspect], PixelTheme.BG, 1, 3, 2))
 		chip.custom_minimum_size = Vector2(76, 0)
 		var name_label := Label.new()
-		name_label.text = aspect
+		PageText.bind(name_label, aspect)
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		chip.add_child(name_label)
 		line.add_child(chip)
 		var role := Label.new()
-		role.text = String(roles[aspect])
+		PageText.bind(role, String(roles[aspect]))
 		role.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		line.add_child(role)
 		col.add_child(line)
@@ -430,7 +434,7 @@ func _board_block(img: Image, caption: String) -> Control:
 
 func _caption(text: String, colour: Color) -> Label:
 	var label := Label.new()
-	label.text = text
+	PageText.bind(label, text)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", colour)
 	return label
@@ -506,3 +510,22 @@ static func mini_board(sites: Dictionary, rings: Array, traces: Array, size: Arr
 						img.set_pixel(c.x + dx, c.y + dy,
 							_colour(String(owners[i])) if d <= 2 else Color(0.04, 0.03, 0.06))
 	return img
+
+func _refresh_text() -> void:
+	var source: Dictionary = _pages[_page]
+	if L10n.locale() == "ru":
+		if _ru_pages.is_empty():
+			_ru_pages = JSON.parse_string(FileAccess.get_file_as_string("res://data/localization/tutorial_ru.json"))
+		source = _ru_pages[_page]
+	_title.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	_text.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	_title.text = source.title
+	_text.text = source.text
+
+func _locale_changed() -> void:
+	_refresh_text()
+	# Illustrations have no interactive state. Repaint text and card faces at original geometry.
+	for child in _pic.get_children():
+		_pic.remove_child(child)
+		child.queue_free()
+	_pic.add_child((_pages[_page].pic as Callable).call())

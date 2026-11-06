@@ -178,5 +178,9 @@
   "Fountain of Screams": {
     "name": "Фонтан криков",
     "short_name": "КРИКИ"
+  },
+  "Blingdenstone": {
+    "name": "Блингденстоун",
+    "short_name": "БЛИНГД"
   }
 }
