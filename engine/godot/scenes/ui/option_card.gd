@@ -456,5 +456,8 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _refresh_language() -> void:
+	tooltip_text = option_name(_source_text)
+	if L10n.locale() == "ru" and NAMES.has(_source_text):
+		tooltip_text += " / " + String(NAMES[_source_text])
 	_tex = ImageTexture.create_from_image(render(_source_card, _source_text, _source_art))
 	queue_redraw()

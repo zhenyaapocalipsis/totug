@@ -70,6 +70,7 @@ const OPTION_IDS := {"+1 Influence": "gain_influence_1", "Promote another card i
 	"Place a spy": "place_spy",
 	"Return one of your spies -> Recruit up to 2 cards that cost 3 or less": "return_spy_recruit_2_max3"}
 static var _options: Dictionary = {}
+static var _english_options: Dictionary = {}
 
 
 static func option_id(source: String) -> String:
@@ -78,7 +79,11 @@ static func option_id(source: String) -> String:
 
 static func option_field(source: String, key: String, fallback: String) -> String:
 	if L10n.locale() != "ru":
-		return fallback
+		if _english_options.is_empty():
+			var file := FileAccess.open("res://data/localization/options_en.json", FileAccess.READ)
+			var data: Variant = JSON.parse_string(file.get_as_text()) if file != null else null
+			_english_options = data if data is Dictionary else {}
+		return String(_english_options.get(option_id(source), {}).get(key, fallback))
 	if _options.is_empty():
 		var file := FileAccess.open("res://data/localization/options_ru.json", FileAccess.READ)
 		var data: Variant = JSON.parse_string(file.get_as_text()) if file != null else null

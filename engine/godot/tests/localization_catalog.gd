@@ -126,6 +126,9 @@ func _run() -> void:
 		var name:=Text.option_field(source,"name","")
 		var body:=Text.option_field(source,"text","")
 		check(name!="" and body!="","option has name and body: "+source)
+		var option_control:=OptionCard.new("48306",source)
+		check(option_control.tooltip_text.contains(String(OptionCard.NAMES[source])) and option_control._source_text==source,"English action title available without changing source answer: "+source)
+		option_control.free()
 		check(OptionCard._wrap(body).size()*OptionCard.LINE_H-2<=OptionCard.TEXT_H-4,"option body stays in source field: "+source)
 		var title_lines:=OptionCard._wrap_plain(name.to_upper(),OptionCard.W-14)
 		check(title_lines.size()<=2,"option name fits original header: "+source)
@@ -136,6 +139,9 @@ func _run() -> void:
 		raw.convert(Image.FORMAT_RGBA8)
 		check(option_image.get_region(Rect2i(6,34,164,PC.ART_H)).get_data()==raw.get_region(Rect2i(6,34,164,PC.ART_H)).get_data(),"translated option keeps source art: "+source)
 	L10n.set_locale("en")
+	var green_source:="Return one of your spies -> supplant a troop at that spy's site, then gain VP per site controlled"
+	check(Text.option_field(green_source,"text",green_source).contains("site control marker"),"Green Dragon English option matches current card and control-marker rule")
+	check(Text.option_field(green_source,"name",OptionCard.NAMES[green_source])=="Coup","Green Dragon English action name preserved")
 	for cid: String in ids:
 		if not originals.has(cid): continue
 		var image:=CardView.pixel_texture(cid).get_image()

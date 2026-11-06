@@ -78,5 +78,20 @@
     "source": "Assassinate a white troop",
     "name": "Отсев слабых",
     "text": "Уничтожьте белый отряд"
+  },
+  "option_f79b27a45e9a": {
+    "source": "Place a spy, then supplant a troop at that site",
+    "name": "Внедрение",
+    "text": "Разместите шпиона, затем замените отряд в его локации"
+  },
+  "option_ae93aec73031": {
+    "source": "Return one of your spies -> supplant a troop at that spy's site, then gain VP per site controlled",
+    "name": "Захват власти",
+    "text": "Верните своего шпиона ► Замените отряд в его локации, затем получите 1 ПО за каждый свой маркер контроля"
+  },
+  "option_894bc5f54675": {
+    "source": "Return one of your spies -> +3 Influence",
+    "name": "Донесение шпиона",
+    "text": "Верните своего шпиона ► +3 Влияния"
   }
 }
