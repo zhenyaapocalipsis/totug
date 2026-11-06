@@ -94,7 +94,7 @@ char id=122 x=48 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chn
 char id=124 x=54 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=183 x=60 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=215 x=66 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
-char id=1025 x=72 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
+char id=1025 x=72 y=45 width=6 height=9 xoffset=0 yoffset=-2 xadvance=6 page=0 chnl=15
 char id=1041 x=78 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=1043 x=84 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15
 char id=1044 x=90 y=45 width=6 height=9 xoffset=0 yoffset=0 xadvance=6 page=0 chnl=15

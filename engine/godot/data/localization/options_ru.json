@@ -93,5 +93,40 @@
     "source": "Return one of your spies -> +3 Influence",
     "name": "Донесение шпиона",
     "text": "Верните своего шпиона ► +3 Влияния"
+  },
+  "option_670052c54fa4": {
+    "source": "Deploy 3 troops",
+    "name": "Легион",
+    "text": "Разместите 3 отряда"
+  },
+  "option_a6ece827fa75": {
+    "source": "Assassinate 2 white troops",
+    "name": "Зачистка",
+    "text": "Уничтожьте 2 белых отряда"
+  },
+  "option_3c364b3c919b": {
+    "source": "Return any number of your spies -> supplant a troop at each of those sites",
+    "name": "Ночь ножей",
+    "text": "Верните любое число своих шпионов ► Замените отряд в каждой из их локаций"
+  },
+  "option_200a107a3075": {
+    "source": "Return one of your spies -> +2 Power +2 Influence",
+    "name": "Двойной агент",
+    "text": "Верните своего шпиона ► +2 Силы, +2 Влияния"
+  },
+  "option_4130ec183db3": {
+    "source": "+3 Influence",
+    "name": "Сладкие речи",
+    "text": "+3 Влияния"
+  },
+  "option_0b4c290a038b": {
+    "source": "Return one of your spies -> Draw 2 cards",
+    "name": "Шёпот",
+    "text": "Верните своего шпиона ► Возьмите 2 карты"
+  },
+  "option_345b18021a95": {
+    "source": "Return one of your spies -> +5 Power",
+    "name": "К оружию!",
+    "text": "Верните своего шпиона ► +5 Сил"
   }
 }

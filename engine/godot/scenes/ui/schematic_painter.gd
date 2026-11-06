@@ -169,8 +169,8 @@ static func _site(img: Image, site: Dictionary) -> void:
 	var caption := SiteText.short_name(String(site["name"]))
 	# Translate inside the existing rectangle; never feed localized text into site_box.
 	name_at.x = floori((rect.size.x - PixelFont.text_width(caption)) * 0.5)
-	# The capital Й breve uses the existing header gap, inside the frame.
-	if caption.contains("Й"):
+	# Capital accents use the existing header gap, inside the frame.
+	if caption.contains("Й") or caption.contains("Ё"):
 		name_at.y += 2
 	PixelFont.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
 		caption, ink)

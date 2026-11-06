@@ -53,7 +53,7 @@ const CYRILLIC := {
 	"Б": ["111","100","110","101","110"],
 	"Г": ["111","100","100","100","100"],
 	"Д": ["011","101","101","111","101"],
-	"Ё": ["101","000","111","110","111"],
+	"Ё": ["101","000","111","100","110","100","111"],
 	"Ж": ["101","101","010","101","101"],
 	"З": ["110","001","010","001","110"],
 	"И": ["101","101","111","101","101"],
@@ -90,6 +90,10 @@ static func text_width(s: String, scale: int = 1) -> int:
 	return s.length() * ADVANCE * scale - scale
 
 
+static func y_offset(ch: String) -> int:
+	return -2 if ch.to_upper() in ["Й", "Ё"] else 0
+
+
 static func draw_text(img: Image, x: int, y: int, s: String, c: Color, scale: int = 1) -> void:
 	for i in s.length():
 		var rows: Array = glyph(s[i])
@@ -98,4 +102,4 @@ static func draw_text(img: Image, x: int, y: int, s: String, c: Color, scale: in
 			var row: String = rows[ry]
 			for rx in row.length():
 				if row[rx] == "1":
-					img.fill_rect(Rect2i(gx + rx * scale, y + (ry + (-2 if s[i].to_upper() == "Й" else 0)) * scale, scale, scale), c)
+					img.fill_rect(Rect2i(gx + rx * scale, y + (ry + y_offset(s[i])) * scale, scale, scale), c)

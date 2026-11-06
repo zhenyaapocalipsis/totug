@@ -79,10 +79,10 @@ static func text_width(s: String, scale: int = 1) -> int:
 	return s.length() * ADVANCE * scale - scale
 
 
-## A capital Й has the full seven-row И body, with its breve above the cap.
-## Lowercase й keeps the five-row lowercase body and zero bearing.
+## Capital Й and Ё retain their full seven-row bodies below the accents.
+## Lowercase й and ё keep their lowercase bodies and zero bearing.
 static func y_offset(ch: String) -> int:
-	return -2 if ch == "Й" else 0
+	return -2 if ch in ["Й", "Ё"] else 0
 
 
 static func draw_text(img: Image, x: int, y: int, s: String, c: Color, scale: int = 1) -> void:
@@ -157,7 +157,7 @@ const CYRILLIC := {
 	"Б": ["11111","10000","10000","11110","10001","10001","11110","00000","00000"],
 	"Г": ["11111","10000","10000","10000","10000","10000","10000","00000","00000"],
 	"Д": ["00110","01010","01010","01010","01010","01010","11111","10001","00000"],
-	"Ё": ["01010","00000","11111","10000","11110","10000","11111","00000","00000"],
+	"Ё": ["01010","00000","11111","10000","10000","11110","10000","10000","11111"],
 	"Ж": ["10101","10101","10101","01110","10101","10101","10101","00000","00000"],
 	"З": ["01110","10001","00001","00110","00001","10001","01110","00000","00000"],
 	"И": ["10001","10001","10011","10101","11001","10001","10001","00000","00000"],

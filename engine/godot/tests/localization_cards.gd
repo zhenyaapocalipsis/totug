@@ -26,6 +26,10 @@ func _run() -> void:
 	check(PixelFont.glyph("Й") != PixelFont.glyph("й"), "distinct Й and й")
 	check(PixelFont.glyph("Й").slice(2) == PixelFont.glyph("И").slice(0, 7), "capital Й has full-height И body")
 	check(PixelFont.y_offset("Й") == -2 and PixelFont.y_offset("й") == 0, "breve above capital body")
+	check(PixelFont.glyph("Ё").slice(2) == PixelFont.glyph("Е"), "capital Ё has full-height Е body")
+	check(PixelFont.y_offset("Ё") == -2 and PixelFont.y_offset("ё") == 0, "dots above capital body")
+	check(PixelFontSmall.glyph("Ё").slice(2) == PixelFontSmall.glyph("Е"), "small Ё has full-height Е body")
+	check(PixelFontSmall.y_offset("Ё") == -2, "small Ё dots above cap")
 	var pending := PendingDecision.new()
 	pending.player_id = "red"
 	pending.prompt = "Сбросьте карту"
@@ -39,6 +43,7 @@ func _run() -> void:
 	check(not DecisionDialog.is_discard_choice({"prompt": "Discard a card"}), "English wording does not determine action")
 	var metrics := FileAccess.get_file_as_string("res://assets/font/pixel5.fnt")
 	check(RegEx.create_from_string("char id=1049 .*yoffset=-2 ").search(metrics) != null, "BMFont capital bearing")
+	check(RegEx.create_from_string("char id=1025 .*yoffset=-2 ").search(metrics) != null, "BMFont Ё bearing")
 	for ch: String in "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ":
 		check(PixelFontSmall.glyph(ch) != PixelFontSmall.FONT[" "], "small Cyrillic " + ch)
 	var ids := {}
