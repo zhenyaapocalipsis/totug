@@ -6,7 +6,7 @@ static var _ru: Dictionary = {}
 static var _loaded := false
 const KEYWORDS := {"ПОГЛОТИТЕ":"DEVOUR", "ЗАМЕНИТЕ":"SUPPLANT", "РАЗМЕСТИТЕ":"DEPLOY",
 	"УНИЧТОЖЬТЕ":"ASSASSINATE", "ВЕРНИТЕ":"RETURN", "ВОЗВЫСЬТЕ":"PROMOTE",
-	"НАЙМИТЕ":"RECRUIT", "НАНИМАЕТ":"RECRUITS", "НАНИМАЮТ":"RECRUITS", "КОНЦЕНТРАЦИЯ":"FOCUS", "РВЕНИЕ":"DEVOTION", "ЧАРЫ":"GLAMOUR",
+	"НАЙМИТЕ":"RECRUIT", "НАНИМАЕТ":"RECRUITS", "НАНИМАЮТ":"RECRUITS", "КОНЦЕНТРАЦИЯ":"FOCUS", "КОНЦЕНТРАЦИИ":"FOCUS", "КОНЦЕНТРАЦИЕЙ":"FOCUS", "РВЕНИЕ":"DEVOTION", "ЧАРЫ":"GLAMOUR",
 	"ПРЕВРАЩЕНИЕ":"TRANSFORM", "ПРЕВРАТИТЕ":"TRANSFORM", "ПРЕВРАТИТЬ":"TRANSFORM",
 	"ПЕРЕМЕСТИТЕ":"MOVE", "ПОДКУП":"BRIBE", "УКРАДИТЕ":"STEAL",
 	"ПРЕДВИДЕНИЕ":"SCRY", "МОЩЬ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE",

@@ -398,5 +398,70 @@
     "source": "Recruit one of the top 3 devoured cards for free",
     "name": "Раскопки могил",
     "text": "Просмотрите 3 верхние поглощённые карты. Можете нанять одну бесплатно"
+  },
+  "option_95d8a0c1cf31": {
+    "source": "Deploy 2 troops",
+    "name": "Патруль",
+    "text": "Разместите 2 отряда"
+  },
+  "option_0ed66b469f9c": {
+    "source": "Return 2 of your troops -> Draw a card",
+    "name": "Смена караула",
+    "text": "Верните 2 своих отряда ► Возьмите карту"
+  },
+  "option_3ec0365f99f5": {
+    "source": "Place a spy (full site: deploy 2 troops)",
+    "name": "Химическая сделка",
+    "text": "Разместите шпиона. Полная локация: разместите 2 отряда"
+  },
+  "option_1ac84ab6e906": {
+    "source": "Return a spy",
+    "name": "Зачистка улиц",
+    "text": "Верните шпиона"
+  },
+  "option_e2886d259a30": {
+    "source": "Draw a card",
+    "name": "Озарение",
+    "text": "Возьмите карту"
+  },
+  "option_9667bded9bc4": {
+    "source": "Assassinate a troop anywhere",
+    "name": "Дальний выстрел",
+    "text": "Уничтожьте отряд в любом месте поля"
+  },
+  "option_02aeea98926c": {
+    "source": "+2 Influence, at end of turn promote a card you played",
+    "name": "Магический патент",
+    "text": "+2 Влияния. В конце хода возвысьте сыгранную вами карту"
+  },
+  "option_ef11cb86b1cb": {
+    "source": "Assassinate a troop and return a spy",
+    "name": "Ртутный молот",
+    "text": "Уничтожьте отряд и верните шпиона"
+  },
+  "option_24dc97733a90": {
+    "source": "This turn you may choose all options instead of one",
+    "name": "Великий замысел",
+    "text": "В этот ход можете выбирать все варианты вместо одного"
+  },
+  "option_44e2f55b5e1f": {
+    "source": "This turn Focus effects trigger an additional time",
+    "name": "Улучшение!",
+    "text": "В этот ход эффекты Концентрации срабатывают ещё раз"
+  },
+  "option_fb861c2a4f8d": {
+    "source": "Focus cards from your top 6 into your hand, discard the rest",
+    "name": "Воющий ветер",
+    "text": "Из 6 верхних карт своей колоды возьмите карты с Концентрацией в руку, остальные сбросьте"
+  },
+  "option_d22b7e1b028c": {
+    "source": "Recruit a market card for free, gain VP equal to its deck VP",
+    "name": "Зефир",
+    "text": "Бесплатно наймите карту рынка и получите ПО в размере её ПО колоды"
+  },
+  "option_29c88933c20a": {
+    "source": "All of them",
+    "name": "Всё сразу",
+    "text": "Все варианты"
   }
 }
