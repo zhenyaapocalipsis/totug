@@ -637,7 +637,7 @@
   "option_a4b1b18864ae": {
     "source": "Return any number of your spies -> +1 Influence and supplant a troop at each of those sites",
     "name": "Великая стратегия",
-    "text": "Верните любое число своих шпионов ► +1 Влияние и замените отряд в каждой из их локаций"
+    "text": "Верните любое число своих шпионов ► За каждого: +1 Влияние и замените отряд в его локации"
   },
   "option_650e5ea2a35c": {
     "source": "Devour a card in your hand -> draw cards equal to its inner circle VP",
@@ -692,7 +692,7 @@
   "option_328e2ccae19a": {
     "source": "Return any number of your spies -> +2 Power and draw a card for each",
     "name": "Ледяная гробница",
-    "text": "Верните любое число своих шпионов ► +2 Силы и возьмите карту за каждого"
+    "text": "Верните любое число своих шпионов ► За каждого: +2 Силы и возьмите карту"
   },
   "option_8abbbd268dce": {
     "source": "Each opponent discards down to 3 cards",
@@ -908,5 +908,145 @@
     "source": "Place a spy -> assassinate a troop at that site",
     "name": "Метка смерти",
     "text": "Разместите шпиона ► Уничтожьте отряд в его локации"
+  },
+  "option_12a5b0ba45be": {
+    "source": "No Glamour",
+    "name": "Простой фокус",
+    "text": "Без Чар"
+  },
+  "option_4f5cf2e75d6a": {
+    "source": "Return one of your spies -> assassinate up to 3 troops at that site",
+    "name": "Громовой сюрикен",
+    "text": "Верните своего шпиона ► Уничтожьте до 3 отрядов в его локации"
+  },
+  "option_9af983798e71": {
+    "source": "This turn, whenever you assassinate or supplant a troop, gain 1 VP",
+    "name": "Охотник за наградой",
+    "text": "В этот ход за каждый уничтоженный или заменённый вами отряд получите 1 ПО"
+  },
+  "option_39ff804f593a": {
+    "source": "This turn, whenever you assassinate a troop, you may supplant it instead",
+    "name": "Разрывной выстрел",
+    "text": "В этот ход можете заменять отряды вместо уничтожения"
+  },
+  "option_8f43182041cd": {
+    "source": "This turn, you may put cards you recruit on top of your deck",
+    "name": "Закладка",
+    "text": "В этот ход можете класть нанятые карты наверх своей колоды"
+  },
+  "option_1936e009f476": {
+    "source": "Gain 1 VP for each card you recruit this turn",
+    "name": "Последняя глава",
+    "text": "Получите по 1 ПО за каждую карту, нанятую в этот ход"
+  },
+  "option_f2d61564a927": {
+    "source": "Place a spy and deploy 4 troops",
+    "name": "Валькирия",
+    "text": "Разместите шпиона и разместите 4 отряда"
+  },
+  "option_16319fc45c94": {
+    "source": "Return one of your spies -> supplant a troop at that site and gain 1 VP",
+    "name": "Особая доставка",
+    "text": "Верните своего шпиона ► Замените отряд в его локации и получите 1 ПО"
+  },
+  "option_bd1b0de5f2df": {
+    "source": "Draw a card, then discard a card and gain 1 VP",
+    "name": "Хитрый выстрел",
+    "text": "Возьмите карту, затем сбросьте карту и получите 1 ПО"
+  },
+  "option_79024a79f1ed": {
+    "source": "Glamour (1 VP): +2 Influence",
+    "name": "Чары: золотой чай",
+    "text": "Чары (1 ПО): +2 Влияния"
+  },
+  "option_aa6acb0e040b": {
+    "source": "Gain a card that costs up to 3",
+    "name": "Горшочек золота",
+    "text": "Получите карту ценой до 3"
+  },
+  "option_75a76767e9c2": {
+    "source": "Glamour (1 VP): +3 Influence instead",
+    "name": "Чары: золотые монеты",
+    "text": "Чары (1 ПО): вместо этого +3 Влияния"
+  },
+  "option_3f805bf96bcf": {
+    "source": "Glamour (1 VP): Gain a card that costs up to 5 instead",
+    "name": "Чары: конец радуги",
+    "text": "Чары (1 ПО): вместо этого получите карту ценой до 5"
+  },
+  "option_0cc5809ac153": {
+    "source": "Place a spy (site full: gain 1 VP)",
+    "name": "Тесный холст",
+    "text": "Разместите шпиона. Полная локация: получите 1 ПО"
+  },
+  "option_17c2802bb351": {
+    "source": "Return one of your spies -> +2 Influence and draw a card",
+    "name": "Свежая краска",
+    "text": "Верните своего шпиона ► +2 Влияния и возьмите карту"
+  },
+  "option_035447d85c85": {
+    "source": "Place a spy (another player's troop there: gain 1 VP)",
+    "name": "Скользкая смазка",
+    "text": "Разместите шпиона. Чужой отряд там: получите 1 ПО"
+  },
+  "option_0af446179dfc": {
+    "source": "Return one of your spies -> take 2 VP from each other player with a troop at that site",
+    "name": "Липкие пальцы",
+    "text": "Верните своего шпиона ► Заберите по 2 ПО у каждого другого игрока с отрядом в его локации"
+  },
+  "option_e9cc7579db8a": {
+    "source": "Place a spy (site full: you may devour a card in your hand or discard pile to gain 1 VP)",
+    "name": "Ставка на арене",
+    "text": "Разместите шпиона. Полная локация: можете поглотить карту руки или сброса ► +1 ПО"
+  },
+  "option_716ba024c56b": {
+    "source": "Return one of your spies -> devour 2 cards in the market, their replacements cost 2 less this turn",
+    "name": "Подставной рынок",
+    "text": "Верните своего шпиона ► Поглотите 2 карты рынка. Их замены дешевле на 2 в этот ход"
+  },
+  "option_fe5b6b5704a4": {
+    "source": "Glamour (1 VP): Deploy 3 troops",
+    "name": "Чары: рой теней",
+    "text": "Чары (1 ПО): разместите 3 отряда"
+  },
+  "option_a16f37f0f5e7": {
+    "source": "Glamour (1 VP): Return a troop or spy",
+    "name": "Чары: ночной захват",
+    "text": "Чары (1 ПО): верните отряд или шпиона"
+  },
+  "option_5f0f493029b5": {
+    "source": "Glamour (1 VP): +2 Power",
+    "name": "Чары: когти ужаса",
+    "text": "Чары (1 ПО): +2 Силы"
+  },
+  "option_1b0161ab6443": {
+    "source": "Glamour (1 VP): Supplant any troop instead",
+    "name": "Чары: удушливое облако",
+    "text": "Чары (1 ПО): вместо этого замените любой отряд"
+  },
+  "option_d1c92cdd7e64": {
+    "source": "Glamour (1 VP): Supplant a white troop anywhere instead",
+    "name": "Чары: плывущий дым",
+    "text": "Чары (1 ПО): вместо этого замените белый отряд в любом месте поля"
+  },
+  "option_0544c0495566": {
+    "source": "Glamour (1 VP): At end of turn, promote an Obedience card you played this turn",
+    "name": "Чары: великая вспышка",
+    "text": "Чары (1 ПО): в конце хода возвысьте карту Покорности, сыгранную вами в этот ход"
+  },
+  "option_8532f57cca0e": {
+    "source": "Glamour (1 VP): At end of turn, promote another card you played this turn",
+    "name": "Чары: сбор шайки",
+    "text": "Чары (1 ПО): в конце хода возвысьте другую карту, сыгранную вами в этот ход"
+  },
+  "option_d81480ef2569": {
+    "source": "Place a spy -> move one of your troops to that site",
+    "name": "Открытый портал",
+    "text": "Разместите шпиона ► Переместите свой отряд в его локацию"
+  },
+  "option_3143cceaeef8": {
+    "source": "Return one of your spies -> move up to one enemy troop at that site and one of your troops",
+    "name": "Смена мест",
+    "text": "Верните своего шпиона ► Переместите до 1 вражеского отряда из его локации и 1 свой отряд"
   }
 }
