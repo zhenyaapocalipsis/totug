@@ -133,5 +133,30 @@
     "source": "Return one of your spies -> Deploy 3 troops",
     "name": "Откройте ворота",
     "text": "Верните своего шпиона ► Разместите 3 отряда"
+  },
+  "option_9a72813f0a76": {
+    "source": "Return one of your spies -> assassinate a troop at that spy's site",
+    "name": "Скрытый клинок",
+    "text": "Верните своего шпиона ► Уничтожьте отряд в его локации"
+  },
+  "option_28954f2455ae": {
+    "source": "Return one of your spies -> Draw a card; each opponent with more than 3 cards discards a card",
+    "name": "Сейте страх",
+    "text": "Верните своего шпиона ► Возьмите карту. Каждый соперник с более чем 3 картами руки сбрасывает карту"
+  },
+  "option_0e5b09702e0a": {
+    "source": "Draw a card, then choose an opponent with more than 3 cards to discard a card",
+    "name": "Игры разума",
+    "text": "Возьмите карту, затем выберите соперника с более чем 3 картами руки: он сбрасывает карту"
+  },
+  "option_7830b7ccdc61": {
+    "source": "Return up to two troops or spies",
+    "name": "Изгнание",
+    "text": "Верните до 2 отрядов или шпионов"
+  },
+  "option_2c512753c60c": {
+    "source": "Draw a card for each spy you have on the board",
+    "name": "Хозяин шпионов",
+    "text": "Возьмите карту за каждого своего шпиона на поле"
   }
 }
