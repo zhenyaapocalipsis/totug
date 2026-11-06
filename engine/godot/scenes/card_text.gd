@@ -13,7 +13,7 @@ const KEYWORDS := {"ПОГЛОТИТЬ":"DEVOUR", "ЗАМЕНИТЬ":"SUPPLANT",
 	"ПЕРЕМЕСТИТЕ":"MOVE", "ПОДКУП":"BRIBE", "УКРАДИТЕ":"STEAL",
 	"ПРЕДВИДЕНИЕ":"SCRY", "ПРЕДВИДЕНИЕМ":"SCRY", "МОЩЬ":"MIGHT", "МОЩИ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE", "ОБМОРОЖЕНИЯ":"FROSTBITE", "ОБМОРОЖЕНИИ":"FROSTBITE",
 	"РАЗЛИЧНЫЙ":"DISTINCT", "РАЗЛИЧНЫЕ":"DISTINCT", "РАЗЛИЧНЫХ":"DISTINCT", "УДЕРЖИТЕ":"RETAIN", "УДЕРЖАТЬ":"RETAIN",
-	"УДЕРЖАНО":"RETAINED", "ИССЛЕДОВАНИЕ":"EXPLORE", "ИССЛЕДУЙТЕ":"EXPLORE"}
+	"УДЕРЖАНО":"RETAINED", "УДЕРЖАННУЮ":"RETAINED", "УДЕРЖАНИЕ":"RETAIN", "УДЕРЖАНИИ":"RETAIN", "УДЕРЖАНИЯ":"RETAIN", "ИССЛЕДОВАНИЕ":"EXPLORE", "ИССЛЕДУЙТЕ":"EXPLORE"}
 
 
 static func translations() -> Dictionary:

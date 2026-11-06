@@ -808,5 +808,105 @@
     "source": "Both of them name a card",
     "name": "Боевой клич",
     "text": "Оба игрока называют по карте рынка"
+  },
+  "option_5d19bdfff34f": {
+    "source": "Play this card now",
+    "name": "Удар сейчас",
+    "text": "Сыграйте эту карту сейчас"
+  },
+  "option_b8af56900a7f": {
+    "source": "Retain it: keep it for your next hand",
+    "name": "Выжидание",
+    "text": "Удержите: сохраните эту карту для следующей руки"
+  },
+  "option_058e6194b5f6": {
+    "source": "Place a spy (site full: +2 Power)",
+    "name": "Облако спор",
+    "text": "Разместите шпиона. Полная локация: +2 Силы"
+  },
+  "option_6b5083fe56b3": {
+    "source": "Deploy a troop for each different Aspect you played this turn",
+    "name": "Множество путей",
+    "text": "Разместите по отряду за каждый разный аспект карт, сыгранных вами в этот ход"
+  },
+  "option_b144b8ba53fc": {
+    "source": "Double your Power",
+    "name": "Дерзкий танец",
+    "text": "Удвойте свою Силу"
+  },
+  "option_17cac1425771": {
+    "source": "Return all enemy spies from a site",
+    "name": "Взмах клинка",
+    "text": "Верните всех вражеских шпионов из одной локации"
+  },
+  "option_2f88e80803ae": {
+    "source": "Become Ambition: +1 Influence per Ambition card played",
+    "name": "Маска тщеславия",
+    "text": "Получите аспект Тщеславия: +1 Влияние за каждую карту Тщеславия, сыгранную вами в этот ход"
+  },
+  "option_90deb8388ed6": {
+    "source": "Become Conquest: +1 Influence per Conquest card played",
+    "name": "Маска завоевания",
+    "text": "Получите аспект Завоевания: +1 Влияние за каждую карту Завоевания, сыгранную вами в этот ход"
+  },
+  "option_0000b66df421": {
+    "source": "Become Guile: +1 Influence per Guile card played",
+    "name": "Маска коварства",
+    "text": "Получите аспект Коварства: +1 Влияние за каждую карту Коварства, сыгранную вами в этот ход"
+  },
+  "option_6a0fecef56b4": {
+    "source": "Become Malice: +1 Influence per Malice card played",
+    "name": "Маска злобы",
+    "text": "Получите аспект Злобы: +1 Влияние за каждую карту Злобы, сыгранную вами в этот ход"
+  },
+  "option_0c2d0fd93e02": {
+    "source": "Become Ambition: +1 Power per Ambition card played",
+    "name": "Прилив тщеславия",
+    "text": "Получите аспект Тщеславия: +1 Сила за каждую карту Тщеславия, сыгранную вами в этот ход"
+  },
+  "option_4c61d3cef58c": {
+    "source": "Become Conquest: +1 Power per Conquest card played",
+    "name": "Прилив завоевания",
+    "text": "Получите аспект Завоевания: +1 Сила за каждую карту Завоевания, сыгранную вами в этот ход"
+  },
+  "option_2a2c226ddd44": {
+    "source": "Become Guile: +1 Power per Guile card played",
+    "name": "Прилив коварства",
+    "text": "Получите аспект Коварства: +1 Сила за каждую карту Коварства, сыгранную вами в этот ход"
+  },
+  "option_8d503310a7a2": {
+    "source": "Become Malice: +1 Power per Malice card played",
+    "name": "Прилив злобы",
+    "text": "Получите аспект Злобы: +1 Сила за каждую карту Злобы, сыгранную вами в этот ход"
+  },
+  "option_bde5e627affd": {
+    "source": "Place a spy (site full: you may Retain the top card of your deck)",
+    "name": "Скрытый резерв",
+    "text": "Разместите шпиона. Полная локация: можете Удержать верхнюю карту своей колоды"
+  },
+  "option_9249c7ce52a6": {
+    "source": "Return two of your spies -> Retain a card you played this turn",
+    "name": "Долгая игра",
+    "text": "Верните 2 своих шпионов ► Удержите карту, сыгранную вами в этот ход"
+  },
+  "option_a5c424e665cb": {
+    "source": "Place a spy (another player's troop there: you may Retain the top card of your deck)",
+    "name": "Пронзительный крик",
+    "text": "Разместите шпиона. Чужой отряд там: можете Удержать верхнюю карту своей колоды"
+  },
+  "option_1bec31b4cb8c": {
+    "source": "This turn, cards cost 1 less to recruit",
+    "name": "Очарование",
+    "text": "В этот ход скидка 1 на найм карт"
+  },
+  "option_782fd562588d": {
+    "source": "This turn, whenever you recruit a card, you may assassinate a troop",
+    "name": "Рывок духа",
+    "text": "В этот ход при каждом найме карты можете уничтожить отряд"
+  },
+  "option_158097c7f75c": {
+    "source": "Place a spy -> assassinate a troop at that site",
+    "name": "Метка смерти",
+    "text": "Разместите шпиона ► Уничтожьте отряд в его локации"
   }
 }
