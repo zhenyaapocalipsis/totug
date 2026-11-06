@@ -189,6 +189,7 @@ const ASPECT_COLOR := {
 	"MALICE": Color("d0283e"), "OBEDIENCE": Color("ffffff"), "": Color("a89cc0"),
 }
 
+const KeywordStyle := preload("res://scenes/ui/keyword_style.gd")
 const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE", "BRIBE", "STEAL",
 	"RECRUIT", "RECRUITS", "MOVE", "FOCUS",
 	# новые слова New Era и фанатских колод (владелец, 2026-10-15)
@@ -953,23 +954,17 @@ func is_keyword(word: String) -> bool:
 	return KEYWORDS.has(word.rstrip(".,:;"))
 
 
-## Bold = glyph drawn twice, shifted one pixel right (1px wider per letter).
+## Preserve the original keyword advance while rendering regular coloured glyphs.
 func word_width(word: String) -> int:
 	var bare := word.rstrip(".,:;")
-	var extra := bare.length() if is_keyword(word) else 0
-	return text_width(word, 1) + extra
+	return bare.length() * 7 + text_width(word.substr(bare.length()), 1) + (0 if bare.length() < word.length() else -1) if is_keyword(word) else text_width(word, 1)
 
 
 func draw_word(x: int, y: int, word: String) -> void:
 	if not is_keyword(word):
 		text(x, y, word, C_INK, 1)
 		return
-	var bare := word.rstrip(".,:;")
-	for i in bare.length():
-		var g: Array = glyph(bare[i])
-		glyph_rows(x + i * 7, y + PixelFont.y_offset(bare[i]), g, C_INK)
-		glyph_rows(x + i * 7 + 1, y + PixelFont.y_offset(bare[i]), g, C_INK)
-	text(x + bare.length() * 7, y, word.substr(bare.length()), C_INK, 1)
+	KeywordStyle.draw_word(img, x, y, word, word.rstrip(".,:;"))
 
 
 static func wrap_plain(s: String, max_px: int) -> Array[String]:
@@ -987,7 +982,10 @@ static func wrap_plain(s: String, max_px: int) -> Array[String]:
 
 
 static func text_width(s: String, scale: int) -> int:
-	return max(0, s.length() * (6 * scale - (scale - 1)) - 1)
+	var width := 0
+	for ch: String in s:
+		width += PixelFont.advance(ch) * scale - (scale - 1)
+	return maxi(0, width - 1)
 
 
 func glyph(ch: String) -> Array:
@@ -1012,11 +1010,13 @@ func glyph_rows(x: int, y: int, rows: Array, c: Color, s: int = 1) -> void:
 
 
 func text(x: int, y: int, s: String, c: Color, scale: int, shadow := Color(0, 0, 0, 0)) -> void:
+	var cursor := x
 	for i in s.length():
 		var g: Array = glyph(s[i])
 		if shadow.a > 0:
-			glyph_rows(x + i * (6 * scale - (scale - 1)) + scale, y + (PixelFont.y_offset(s[i]) + 1) * scale, g, shadow, scale)
-		glyph_rows(x + i * (6 * scale - (scale - 1)), y + PixelFont.y_offset(s[i]) * scale, g, c, scale)
+			glyph_rows(cursor + scale, y + (PixelFont.y_offset(s[i]) + 1) * scale, g, shadow, scale)
+		glyph_rows(cursor, y + PixelFont.y_offset(s[i]) * scale, g, c, scale)
+		cursor += PixelFont.advance(s[i]) * scale - (scale - 1)
 
 
 func pixelize(src: Image, tw: int, th: int, k: int) -> Image:

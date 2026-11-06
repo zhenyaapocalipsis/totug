@@ -1,8 +1,8 @@
 class_name PixelFont
 extends RefCounted
 
-## 5x7 pixel font shared by the schematic board painter (same glyphs as
-## tools/pixel_cards.gd). Advance is 6 px per character at scale 1.
+## Pixel font shared by UI, board and card renderers.
+## Advance is 6 px; the approved wider Ю/ю uses 7 px including its gap.
 
 const FONT := {
 	"A": ["01110","10001","10001","11111","10001","10001","10001"],
@@ -73,10 +73,17 @@ static func glyph(ch: String) -> Array:
 	return FONT.get(ch.to_upper(), FONT[" "])
 
 
+static func advance(ch: String) -> int:
+	return 7 if ch in ["Ю", "ю"] else ADVANCE
+
+
 static func text_width(s: String, scale: int = 1) -> int:
 	if s.is_empty():
 		return 0
-	return s.length() * ADVANCE * scale - scale
+	var width := 0
+	for ch: String in s:
+		width += advance(ch) * scale
+	return width - scale
 
 
 ## Capital Й and Ё retain their full seven-row bodies below the accents.
@@ -86,14 +93,15 @@ static func y_offset(ch: String) -> int:
 
 
 static func draw_text(img: Image, x: int, y: int, s: String, c: Color, scale: int = 1) -> void:
+	var gx := x
 	for i in s.length():
 		var rows: Array = glyph(s[i])
-		var gx := x + i * ADVANCE * scale
 		for ry in rows.size():
 			var row: String = rows[ry]
 			for rx in row.length():
 				if row[rx] == "1":
 					img.fill_rect(Rect2i(gx + rx * scale, y + (ry + y_offset(s[i])) * scale, scale, scale), c)
+		gx += advance(s[i]) * scale
 
 
 ## Строчные буквы и дополнительные знаки. Ячейка 5x9: строки 0-6 — как у
@@ -174,7 +182,7 @@ const CYRILLIC := {
 	"Ы": ["10001","10001","10001","11101","10011","10011","11101","00000","00000"],
 	"Ь": ["10000","10000","10000","11110","10001","10001","11110","00000","00000"],
 	"Э": ["01110","10001","00001","00111","00001","10001","01110","00000","00000"],
-	"Ю": ["10010","10101","10101","11101","10101","10101","10010","00000","00000"],
+	"Ю": ["100110","101001","101001","111001","101001","101001","100110","000000","000000"],
 	"Я": ["01111","10001","10001","01111","00101","01001","10001","00000","00000"],
 	"б": ["00011","01100","10000","11110","10001","10001","01110","00000","00000"],
 	"в": ["00000","00000","11110","10001","11110","10001","11110","00000","00000"],
@@ -200,7 +208,7 @@ const CYRILLIC := {
 	"ы": ["00000","00000","10001","10001","11101","10011","11101","00000","00000"],
 	"ь": ["00000","00000","10000","10000","11110","10001","11110","00000","00000"],
 	"э": ["00000","00000","01110","10001","00111","10001","01110","00000","00000"],
-	"ю": ["00000","00000","10010","10101","11101","10101","10010","00000","00000"],
+	"ю": ["000000","000000","100110","101001","111001","101001","100110","000000","000000"],
 	"я": ["00000","00000","01111","10001","01111","01001","10001","00000","00000"],
 }
 ## Кириллические буквы, которые рисуются латинскими.

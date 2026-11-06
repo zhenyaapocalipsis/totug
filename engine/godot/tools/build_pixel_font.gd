@@ -8,13 +8,13 @@ extends SceneTree
 ##   Godot_v4.7.2-stable_win64_console.exe --headless --path <проект> \
 ##       --script res://tools/build_pixel_font.gd
 ##
-## Ячейка 5x9 (базовая линия под строкой 6), шаг 6 px. Размер шрифта 9 даёт
+## Ячейка до 6x9 (базовая линия под строкой 6), шаг 6 px, у Ю/ю — 7. Шрифт 9 даёт
 ## пиксель в пиксель; 18 — тот же шрифт ровно вдвое крупнее.
 
 const OUT_DIR := "res://assets/font/"
 const PNG_NAME := "pixel5.png"
 const FNT_NAME := "pixel5.fnt"
-const CELL_W := PixelFont.ADVANCE      # 6
+const CELL_W := 7  # Six-pixel Ю plus its gap; other glyph advances stay six.
 const CELL_H := PixelFont.CELL_H       # 9
 const COLUMNS := 16
 
@@ -34,7 +34,7 @@ func _init() -> void:
 		_blit_glyph(atlas, ch, cx, cy)
 		cell_of[ch] = Vector2i(cx, cy)
 		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=%d xadvance=%d page=0 chnl=15"
-			% [ch.unicode_at(0), cx, cy, CELL_W, CELL_H, PixelFont.y_offset(ch), CELL_W])
+			% [ch.unicode_at(0), cx, cy, PixelFont.advance(ch), CELL_H, PixelFont.y_offset(ch), PixelFont.advance(ch)])
 
 	# Замены из PixelFont.CHAR_MAP (типографское тире, кавычка и прочее) и
 	# кириллица, которая пишется как латиница (CYRILLIC_SAME), — это
@@ -49,7 +49,7 @@ func _init() -> void:
 			continue
 		var cell: Vector2i = cell_of[target]
 		lines.append("char id=%d x=%d y=%d width=%d height=%d xoffset=0 yoffset=0 xadvance=%d page=0 chnl=15"
-			% [alias.unicode_at(0), cell.x, cell.y, CELL_W, CELL_H, CELL_W])
+			% [alias.unicode_at(0), cell.x, cell.y, PixelFont.advance(target), CELL_H, PixelFont.advance(target)])
 
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	var png_err := atlas.save_png(OUT_DIR + PNG_NAME)

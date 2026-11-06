@@ -15,7 +15,7 @@ func _init() -> void:
  var img := Image.create(1050, 560, false, Image.FORMAT_RGBA8)
  img.fill(Color("#1d222a"))
  PixelFont.draw_text(img, 24, 26, "Ж М Ю: СРАВНЕНИЕ НАЧЕРТАНИЙ", Color.WHITE, 3)
- var labels := ["1. СЕЙЧАС", "2. РУЧНОЙ РИСУНОК", "3. БЕЗ УТОЛЩЕНИЯ"]
+ var labels := ["1. БЫЛО", "2. РУЧНОЙ РИСУНОК", "3. БЕЗ УТОЛЩЕНИЯ"]
  for v in 3:
   var x := 18 + v * 344
   img.fill_rect(Rect2i(x, 82, 328, 346), PAPER)

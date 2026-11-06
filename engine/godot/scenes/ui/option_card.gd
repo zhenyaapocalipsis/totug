@@ -12,6 +12,8 @@ extends Control
 
 signal pressed
 
+const KeywordStyle := preload("res://scenes/ui/keyword_style.gd")
+const PC := preload("res://tools/pixel_cards.gd")
 const CardText := preload("res://scenes/card_text.gd")
 const L10n := preload("res://scenes/localization.gd")
 var _source_card := ""
@@ -30,8 +32,7 @@ const C_LIGHT := Color("f0e6d2")
 const C_PARCH := Color("e6d9bc")
 const C_PARCH_LO := Color("bfae88")
 const C_INK := Color("2a1a30")
-const KEYWORDS := ["DEVOUR", "SUPPLANT", "DEPLOY", "ASSASSINATE", "PLACE", "RETURN", "PROMOTE", "BRIBE", "STEAL",
-	"RECRUIT", "RECRUITS", "MOVE", "FOCUS"]
+const KEYWORDS := PC.KEYWORDS
 
 ## Названия вариантов — по тексту варианта (ChooseEffect.labels), одинаковые
 ## действия у разных карт называются одинаково. Нет в таблице — шапка пустая.
@@ -351,13 +352,19 @@ static func render(card_id: String, text: String, art: String = "") -> Image:
 	img.fill_rect(Rect2i(W - 9, TEXT_TOP + 1, 1, TEXT_H - 2), C_PARCH_LO)
 	var lines := _wrap(CardText.option_field(text, "text", text))
 	var y := TEXT_TOP + (TEXT_H - (lines.size() * LINE_H - 2)) / 2
+	var all_words: Array = []
+	for line: Array in lines:
+		all_words.append_array(line)
+	var word_index := 0
 	for line: Array in lines:
 		var line_w := -5
 		for word: String in line:
 			line_w += _word_width(word) + 5
 		var x := (W - line_w) / 2
-		for word: String in line:
-			_draw_word(img, x, y, word)
+		for wi in line.size():
+			var word: String = line[wi]
+			_draw_word(img, x, y, word, all_words.slice(word_index + 1, word_index + 5))
+			word_index += 1
 			x += _word_width(word) + 5
 		y += LINE_H
 
@@ -403,15 +410,16 @@ static func _wrap_plain(s: String, max_px: int) -> Array[String]:
 
 ## Шаг букв как в генераторе карт: при 2x буквы стоят плотнее (11 px, не 12).
 static func _text_width(s: String, scale: int) -> int:
-	return maxi(0, s.length() * (6 * scale - (scale - 1)) - 1)
+	return PC.text_width(s, scale)
 
 
 ## Текст с тенью (как название на обычной карте).
 static func _text(img: Image, x: int, y: int, s: String, c: Color, scale: int) -> void:
-	var step := 6 * scale - (scale - 1)
+	var cursor := x
 	for i in s.length():
-		_glyph(img, x + i * step + scale, y + scale, s[i], C_OUTLINE, scale)
-		_glyph(img, x + i * step, y, s[i], c, scale)
+		_glyph(img, cursor + scale, y + scale, s[i], C_OUTLINE, scale)
+		_glyph(img, cursor, y, s[i], c, scale)
+		cursor += PixelFont.advance(s[i]) * scale - (scale - 1)
 
 
 static func _glyph(img: Image, x: int, y: int, ch: String, c: Color, scale: int) -> void:
@@ -428,21 +436,17 @@ static func _is_keyword(word: String) -> bool:
 	return KEYWORDS.has(CardText.keyword(word))
 
 
-## Ключевое слово — жирное: каждая буква дважды со сдвигом на пиксель.
+## The old keyword advance is retained; glyphs are regular and coloured.
 static func _word_width(word: String) -> int:
-	var extra := word.rstrip(".,:;").length() if _is_keyword(word) else 0
-	return PixelFont.text_width(word) + extra
+	var bare := word.rstrip(".,:;")
+	return bare.length() * 7 + word.substr(bare.length()).length() * 6 - 1 if _is_keyword(word) else PixelFont.text_width(word)
 
 
-static func _draw_word(img: Image, x: int, y: int, word: String) -> void:
+static func _draw_word(img: Image, x: int, y: int, word: String, following: Array = []) -> void:
 	if not _is_keyword(word):
 		PixelFont.draw_text(img, x, y, word, C_INK)
 		return
-	var bare := word.rstrip(".,:;")
-	for i in bare.length():
-		PixelFont.draw_text(img, x + i * 7, y, bare[i], C_INK)
-		PixelFont.draw_text(img, x + i * 7 + 1, y, bare[i], C_INK)
-	PixelFont.draw_text(img, x + bare.length() * 7, y, word.substr(bare.length()), C_INK)
+	KeywordStyle.draw_word(img, x, y, word, KeywordStyle.resolve(word, following))
 
 
 func _draw() -> void:

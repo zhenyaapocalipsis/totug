@@ -37,6 +37,7 @@ func _run() -> void:
 	var sheet:=Image.create(3*244 if make_sheet else 1,ceili(ids.size()/3.0)*278 if make_sheet else 1,false,Image.FORMAT_RGBA8)
 	sheet.fill(PixelTheme.BG)
 	var originals:={}
+	var english_faces:={}
 	var mechanics:={}
 	L10n.set_locale("en")
 	for cid: String in ids:
@@ -44,6 +45,7 @@ func _run() -> void:
 		if not all.has(cid): continue
 		mechanics[cid]=JSON.stringify(CardLibrary.card_data(cid))
 		originals[cid]=CardView.pixel_texture(cid,"",false).get_image()
+		english_faces[cid]=CardView.pixel_texture(cid).get_image().get_data()
 	L10n.set_locale("ru")
 	check(CardLiveFace.keyword_spots("48722",[],176,254).any(func(spot):return spot[1]=="PLACE"),"Russian spy instruction resolves PLACE rather than DEPLOY")
 	for i in ids.size():
@@ -147,6 +149,6 @@ func _run() -> void:
 		var image:=CardView.pixel_texture(cid).get_image()
 		if image.is_compressed(): image.decompress()
 		image.convert(Image.FORMAT_RGBA8)
-		check(image.get_data()==(originals[cid] as Image).get_data(),"English raster restored exactly: "+cid)
+		check(image.get_data()==english_faces[cid],"English styled face restored exactly after locale roundtrip: "+cid)
 	print("localized catalog ",selected,": ",passed," checks, failed ",failed)
 	quit(1 if failed else 0)

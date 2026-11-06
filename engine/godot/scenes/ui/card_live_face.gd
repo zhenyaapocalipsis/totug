@@ -11,6 +11,7 @@ extends RefCounted
 
 const CardText := preload("res://scenes/card_text.gd")
 const L10n := preload("res://scenes/localization.gd")
+const KeywordStyle := preload("res://scenes/ui/keyword_style.gd")
 const PC := preload("res://tools/pixel_cards.gd")
 const TEXT_TOP := 34 + PC.ART_H + 5
 const MINI_COST_X := PC.MINI_SIDE_X + 2
@@ -85,8 +86,11 @@ static func _draw_text_box(img: Image, cid: String, notes: Array) -> int:
 	img.fill_rect(Rect2i(w - 9, top + 1, 1, box_h - 2), PC.C_PARCH_LO)
 	for dot: Vector2i in box["bullets"]:
 		_text(img, dot.x, dot.y, "•", PC.C_INK, 1)
-	for spot: Array in box["words"]:
-		_draw_word(img, spot[0], spot[1], spot[2])
+	var words: Array = box["words"]
+	for index in words.size():
+		var spot: Array = words[index]
+		var following: Array = words.slice(index + 1, index + 5).map(func(item): return String(item[2]))
+		_draw_word(img, spot[0], spot[1], spot[2], KeywordStyle.resolve(String(spot[2]), following))
 	return box["content_h"]
 
 
@@ -142,14 +146,8 @@ static func keyword_spots(cid: String, notes: Array, w: int, h: int) -> Array:
 		if word.begins_with(MARK_OK) or word.begins_with(MARK_NO) or not is_keyword(word):
 			continue
 		var bare := word.rstrip(".,:;")
-		var keyword := CardText.keyword(bare)
-		if bare == "РАЗМЕСТИТЕ":
-			for following: Array in spots.slice(index + 1, index + 5):
-				if String(following[2]).begins_with("ШПИОН"):
-					keyword = "PLACE"
-					break
-				if String(following[2]).ends_with(".") or is_keyword(String(following[2])):
-					break
+		var following: Array = spots.slice(index + 1, index + 5).map(func(item): return String(item[2]))
+		var keyword := KeywordStyle.resolve(bare, following)
 		out.append([Rect2i(spot[0] - 1, spot[1] - 1, word_width(bare) + 2, 9), keyword])
 	return out
 
@@ -267,24 +265,18 @@ static func is_keyword(word: String) -> bool:
 
 static func word_width(word: String) -> int:
 	var plain := _bare(word)
-	var extra := plain.rstrip(".,:;").length() if is_keyword(plain) else 0
-	return _width(plain, 1) + extra
+	var bare := plain.rstrip(".,:;")
+	return bare.length() * 7 + plain.substr(bare.length()).length() * 6 - 1 if is_keyword(plain) else _width(plain, 1)
 
 
-static func _draw_word(img: Image, x: int, y: int, word: String) -> void:
+static func _draw_word(img: Image, x: int, y: int, word: String, keyword: String = "") -> void:
 	if word.begins_with(MARK_OK) or word.begins_with(MARK_NO):
 		_text(img, x, y, _bare(word), OK_INK if word.begins_with(MARK_OK) else NO_INK, 1)
 		return
 	if not is_keyword(word):
 		_text(img, x, y, word, PC.C_INK, 1)
 		return
-	# Ключевое слово — жирным: буква дважды, со сдвигом на пиксель.
-	var bare := word.rstrip(".,:;")
-	for i in bare.length():
-		var g: Array = _glyph(bare[i])
-		_rows(img, x + i * 7, y + PixelFont.y_offset(bare[i]), g, PC.C_INK)
-		_rows(img, x + i * 7 + 1, y + PixelFont.y_offset(bare[i]), g, PC.C_INK)
-	_text(img, x + bare.length() * 7, y, word.substr(bare.length()), PC.C_INK, 1)
+	KeywordStyle.draw_word(img, x, y, word, KeywordStyle.resolve(word) if keyword.is_empty() else keyword)
 
 
 ## Новая цена в шапке большой карты: старую закрашиваем цветом рамки.
@@ -297,7 +289,7 @@ static func _draw_cost_full(img: Image, cost: int, printed: int) -> void:
 
 
 static func _width(s: String, scale: int) -> int:
-	return maxi(0, s.length() * (6 * scale - (scale - 1)) - 1)
+	return PC.text_width(s, scale)
 
 
 static func _glyph(ch: String) -> Array:
@@ -313,16 +305,18 @@ static func _rows(img: Image, x: int, y: int, rows: Array, c: Color, s: int = 1)
 
 
 static func _text(img: Image, x: int, y: int, s: String, c: Color, scale: int, shadow := Color(0, 0, 0, 0)) -> void:
+	var cursor := x
 	for i in s.length():
 		var g := _glyph(s[i])
 		if shadow.a > 0:
-			_rows(img, x + i * (6 * scale - (scale - 1)) + scale, y + (PixelFont.y_offset(s[i]) + 1) * scale, g, shadow, scale)
-		_rows(img, x + i * (6 * scale - (scale - 1)), y + PixelFont.y_offset(s[i]) * scale, g, c, scale)
+			_rows(img, cursor + scale, y + (PixelFont.y_offset(s[i]) + 1) * scale, g, shadow, scale)
+		_rows(img, cursor, y + PixelFont.y_offset(s[i]) * scale, g, c, scale)
+		cursor += PixelFont.advance(s[i]) * scale - (scale - 1)
 
 
 ## Redraw presentation regions only; existing art, borders and VP badges survive.
 static func localized_texture(cid: String, art: String, base: Texture2D, mini_face: bool) -> Texture2D:
-	if base == null or not CardText.translated(cid):
+	if base == null or (mini_face and not CardText.translated(cid)):
 		return base
 	var key := "%s|%s|%s|%s" % [L10n.locale(), cid, art, mini_face]
 	if _localized.has(key):
@@ -331,6 +325,10 @@ static func localized_texture(cid: String, art: String, base: Texture2D, mini_fa
 	if img.is_compressed():
 		img.decompress()
 	img.convert(Image.FORMAT_RGBA8)
+	if not CardText.translated(cid):
+		_draw_text_box(img, cid, [])
+		_localized[key] = ImageTexture.create_from_image(img)
+		return _localized[key]
 	var data := CardLibrary.card_data(cid)
 	var w := img.get_width()
 	if mini_face:
