@@ -1,6 +1,9 @@
 class_name CardShowcase
 extends Control
 
+const L10n := preload("res://scenes/localization.gd")
+const PageText := preload("res://scenes/page_text.gd")
+
 ## «Витрина»: то, что игроки иначе пропускают (соперник купил карту, кто-то
 ## промоутил верхнюю карту колоды, съел карту рынка), показывается крупной
 ## картой над доской с плашкой «RED RECRUITS» — журнал никто не читает.
@@ -72,6 +75,7 @@ const ROW_GAP := 8.0
 
 
 func _init() -> void:
+	L10n.events.changed.connect(_locale_changed)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	set_process(false)
@@ -104,7 +108,7 @@ func _enqueue(cid: String, slots: Array, from: Variant, face_down: bool, back: S
 	_queue.append({"cid": cid, "slots": slots, "from": from,
 		"face_down": face_down, "back": CardBack.texture(back),
 		"face": CardView.pixel_texture(cid), "mini": CardView.mini_texture(cid),
-		"art": alt, "alt_face": AltArts.full_texture(alt), "alt_mini": AltArts.mini_texture(alt),
+		"art": alt, "alt_face": CardView.pixel_texture(cid, alt) if alt != "" else null, "alt_mini": CardView.mini_texture(cid, alt) if alt != "" else null,
 		"morph": alt != "" and morph})
 	if _item.is_empty():
 		_next()
@@ -157,7 +161,7 @@ func _next() -> void:
 		_banners.append(banner)
 	for i in slots.size():
 		var banner := _banners[i]
-		(banner.get_child(0) as Label).text = String(slots[i]["text"])
+		PageText.bind(banner.get_child(0) as Label, String(slots[i]["text"]))
 		var colour: Color = slots[i]["colour"]
 		banner.add_theme_stylebox_override("panel",
 			PixelTheme.box(colour.darkened(0.55), colour, 1, 6, 2))
@@ -527,3 +531,17 @@ static func _ease_out(x: float) -> float:
 static func _ease_in(x: float) -> float:
 	x = clampf(x, 0.0, 1.0)
 	return x * x
+
+func _locale_changed() -> void:
+	var items: Array = _queue.duplicate()
+	if not _item.is_empty():
+		items.append(_item)
+	for item: Dictionary in items:
+		var cid := String(item.cid)
+		var art := String(item.art)
+		item.face = CardView.pixel_texture(cid)
+		item.mini = CardView.mini_texture(cid)
+		if art != "":
+			item.alt_face = CardView.pixel_texture(cid, art)
+			item.alt_mini = CardView.mini_texture(cid, art)
+	queue_redraw()

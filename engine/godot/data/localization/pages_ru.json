@@ -188,7 +188,23 @@
     "WELCOME!": "ДОБРО ПОЖАЛОВАТЬ!",
     "Is this your first time in the Underdark?\nThe tutorial explains the rules page by page.": "Вы впервые в Подземье?\nОбучение объяснит правила шаг за шагом.",
     "YES, I'M NEWBIE": "ДА, Я НОВИЧОК",
-    "NO, I'M ALREADY KIKORIKI": "НЕТ, Я УЖЕ СМЕШАРИК"
+    "NO, I'M ALREADY KIKORIKI": "НЕТ, Я УЖЕ СМЕШАРИК",
+    "VP BY ROUND": "ПО ПО РАУНДАМ",
+    "PLAY STYLE": "ИГРА",
+    "No replays to analyse yet: finish an online game.": "Повторов для анализа пока нет. Завершите сетевую партию.",
+    "CARD": "КАРТА",
+    "COPIES": "КОПИИ",
+    "WIN %": "ПОБЕДЫ %",
+    "AVERAGE PER GAME: ALL YOUR GAMES, THE ONES YOU WON AND THE ONES YOU LOST": "В СРЕДНЕМ ЗА ПАРТИЮ: ВСЕ ПАРТИИ, ПОБЕДЫ И ПОРАЖЕНИЯ",
+    "ALL": "ВСЕ",
+    "LOSSES": "ПОРАЖЕНИЯ",
+    "POWER PER TURN": "СИЛА ЗА ХОД",
+    "INFLUENCE PER TURN": "ВЛИЯНИЕ ЗА ХОД",
+    "YOU WHEN YOU WON": "ВЫ В ПОБЕДАХ",
+    "YOU WHEN YOU LOST": "ВЫ В ПОРАЖЕНИЯХ",
+    "BEST RIVAL": "ЛУЧШИЙ СОПЕРНИК",
+    "AVERAGE VP AT THE END OF EACH ROUND. GREEN: YOU IN GAMES YOU WON, RED: IN GAMES YOU LOST, GREY: THE BEST RIVAL": "СРЕДНИЕ ПО В КОНЦЕ РАУНДА. ЗЕЛЁНЫЙ — ВЫ В ПОБЕДАХ, КРАСНЫЙ — В ПОРАЖЕНИЯХ, СЕРЫЙ — ЛУЧШИЙ СОПЕРНИК",
+    "no card data": "нет данных карты"
   },
   "patterns": [
     {
@@ -614,6 +630,60 @@
       "source": "WELCOME, %s!",
       "regex": "^WELCOME, (.+?)!$",
       "target": "ДОБРО ПОЖАЛОВАТЬ, {v0}!",
+      "translate": []
+    },
+    {
+      "source": "ALL GAMES: %d",
+      "regex": "^ALL GAMES: ([0-9]+)$",
+      "target": "ВСЕ ПАРТИИ: {v0}",
+      "translate": []
+    },
+    {
+      "source": "CARDS YOU BOUGHT. WIN %: HOW OFTEN YOU WON THE GAMES WHERE YOU BOUGHT IT (ALL YOUR GAMES: %d%%). GREEN: ABOVE THAT, RED: BELOW.",
+      "regex": "^CARDS YOU BOUGHT\\. WIN %: HOW OFTEN YOU WON THE GAMES WHERE YOU BOUGHT IT \\(ALL YOUR GAMES: ([0-9]+)%\\)\\. GREEN: ABOVE THAT, RED: BELOW\\.$",
+      "target": "Нанятые карты. % побед в партиях с наймом этой карты (во всех ваших партиях: {v0}%). Зелёный — выше, красный — ниже.",
+      "translate": []
+    },
+    {
+      "source": "%s invites you to a lobby.",
+      "regex": "^(.+?) invites you to a lobby\\.$",
+      "target": "{v0} приглашает вас в лобби.",
+      "translate": []
+    },
+    {
+      "source": "%s RECRUITS",
+      "regex": "^(.+?) RECRUITS$",
+      "target": "{v0} НАНИМАЕТ",
+      "translate": []
+    },
+    {
+      "source": "%s RECRUITS ×%d",
+      "regex": "^(.+?) RECRUITS ×([0-9]+)$",
+      "target": "{v0} НАНИМАЕТ ×{v1}",
+      "translate": []
+    },
+    {
+      "source": "%s PROMOTES",
+      "regex": "^(.+?) PROMOTES$",
+      "target": "{v0} ВОЗВЫШАЕТ",
+      "translate": []
+    },
+    {
+      "source": "%s DEVOURS",
+      "regex": "^(.+?) DEVOURS$",
+      "target": "{v0} ПОГЛОЩАЕТ",
+      "translate": []
+    },
+    {
+      "source": "deck %d",
+      "regex": "^deck ([0-9]+)$",
+      "target": "в колоде {v0}",
+      "translate": []
+    },
+    {
+      "source": "inner circle %d",
+      "regex": "^inner circle ([0-9]+)$",
+      "target": "во Внутреннем круге {v0}",
       "translate": []
     }
   ]

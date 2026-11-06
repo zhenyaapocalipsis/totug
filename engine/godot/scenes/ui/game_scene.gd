@@ -1,5 +1,7 @@
 extends Control
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Тонкая обёртка: сначала меню хотсита (сколько человек за экраном), потом
 ## сам GameScreen. Оба экрана собираются кодом (см. пояснение в
 ## scenes/ui/game_screen.gd — .tscn в этом проекте плохо править вслепую,
@@ -156,12 +158,12 @@ func _on_invite(from_name: String, code: String) -> void:
 	row.add_theme_constant_override("separation", 4)
 	box.add_child(row)
 	var text := Label.new()
-	text.text = "%s invites you to a lobby." % from_name
+	PageText.bind(text, "%s invites you to a lobby." % from_name)
 	text.add_theme_color_override("font_color", PixelTheme.GOLD)
 	row.add_child(text)
 	for choice: String in ["JOIN", "NO"]:
 		var b := Button.new()
-		b.text = choice
+		PageText.bind(b, choice)
 		b.custom_minimum_size = Vector2(40, 16)
 		SetupScreen._style_button(b)
 		b.pressed.connect(func():

@@ -902,5 +902,5 @@ class LineChart extends VBoxContainer:
 		for s in series:
 			var points: Array = s["points"]
 			if _hover < points.size():
-				parts.append("%s %d" % [String(s["name"]).to_upper(), int(points[_hover])])
+				parts.append("%s %d" % [PageText.text(String(s["name"])) if s.get("name_owned", false) else String(s["name"]).to_upper(), int(points[_hover])])
 		_readout.text = ":  ".join(parts.slice(0, 1)) + ":  " + "  ".join(parts.slice(1))

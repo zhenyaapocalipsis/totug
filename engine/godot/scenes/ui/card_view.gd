@@ -1,6 +1,8 @@
 class_name CardView
 extends PanelContainer
 
+const PageText := preload("res://scenes/page_text.gd")
+const Terms := preload("res://scenes/term_text.gd")
 const CardText := preload("res://scenes/card_text.gd")
 const L10n := preload("res://scenes/localization.gd")
 
@@ -526,7 +528,7 @@ func set_card(cid: String) -> void:
 	if data.is_empty():
 		_name_label.text = "?" + cid
 		_cost_label.text = ""
-		_meta_label.text = "no card data"
+		_meta_label.text = PageText.text("no card data")
 		_text_label.text = ""
 		_vp_label.text = ""
 		_apply_colors()
@@ -544,9 +546,9 @@ func set_card(cid: String) -> void:
 	# Insane Outcast — единственная карта вообще без аспекта (этап 4), поэтому
 	# строку собираем из того, что есть, а не по жёсткому шаблону.
 	if aspect != "" and type_name != "":
-		_meta_label.text = "%s · %s" % [aspect, type_name]
+		_meta_label.text = "%s · %s" % [Terms.name_of(aspect), Terms.name_of(type_name, "", "race")]
 	else:
-		_meta_label.text = aspect + type_name
+		_meta_label.text = Terms.name_of(aspect) + Terms.name_of(type_name, "", "race")
 
 	_aspect_color = ASPECT_COLORS.get(aspect, NO_ASPECT_COLOR)
 	_text_label.text = CardText.ability(cid)
@@ -555,10 +557,10 @@ func set_card(cid: String) -> void:
 	var ic_vp = data.get("inner_circle_vp")
 	var parts: Array[String] = []
 	if deck_vp != null:
-		parts.append("deck %d" % int(deck_vp))
+		parts.append(PageText.text("deck %d" % int(deck_vp)))
 	if ic_vp != null:
-		parts.append("inner circle %d" % int(ic_vp))
-	_vp_label.text = "VP: " + ", ".join(parts) if not parts.is_empty() else ""
+		parts.append(PageText.text("inner circle %d" % int(ic_vp)))
+	_vp_label.text = ("ПО: " if L10n.locale() == "ru" else "VP: ") + ", ".join(parts) if not parts.is_empty() else ""
 	_apply_colors()
 
 

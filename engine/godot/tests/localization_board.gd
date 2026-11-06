@@ -25,7 +25,7 @@ func _run() -> void:
 			for marker in [false,true]:
 				var box := BoardSchematic.site_box(site.name, site.troop_slots.size(), marker)
 				check(PixelFont.text_width(String(Sites.translations()[site.name].short_name)) <= int(box.w) - 4, "caption fits original rectangle: " + site.name)
-	check(Sites.name_of("Blingdenstone") == "Блингденстоун", "additional tutorial site covered")
+	check(Sites.translations().get("Blingdenstone", {}).get("name", "") == "Блингденстоун", "additional tutorial site covered")
 	check(originals.size() == 45 and Sites.translations().size() >= originals.size(), "all 45 original site names covered")
 	var screen := GameScreen.new(7,["drow","dragons"],["red","blue"])
 	root.add_child(screen)

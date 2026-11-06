@@ -1,5 +1,7 @@
 extends Control
 
+const PageText := preload("res://scenes/page_text.gd")
+
 ## Сводка по многим партиям (этап Replay-4) — окно ALL GAMES в профиле,
 ## поверх меню. Данные — выжимки партий истории (ReplayStats.history_summaries,
 ## сводит ReplayStats.aggregate). Вкладки:
@@ -53,14 +55,14 @@ func _init(dir: String = ReplayBook.DIR) -> void:
 	top.add_theme_constant_override("separation", 2)
 	col.add_child(top)
 	var title := Label.new()
-	title.text = "ALL GAMES: %d" % int(data["games"])
+	PageText.bind(title, "ALL GAMES: %d" % int(data["games"]))
 	title.add_theme_color_override("font_color", PixelTheme.GOLD)
 	title.custom_minimum_size.x = 80
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(title)
 	var group := ButtonGroup.new()
 	for tab in TABS:
-		var b := _button(tab, func(): show_tab(tab), 80)
+		var b := _button("PLAY STYLE" if tab == "PLAY" else tab, func(): show_tab(tab), 80)
 		b.toggle_mode = true
 		b.button_group = group
 		_tab_buttons[tab] = b
@@ -215,10 +217,10 @@ func _build_curve() -> Control:
 	var series: Array = []
 	for s in [["wins", "YOU WHEN YOU WON", WIN_COLOUR], ["losses", "YOU WHEN YOU LOST", PixelTheme.DANGER],
 			["rival", "BEST RIVAL", PixelTheme.TEXT_DIM]]:
-		series.append({"colour": s[2], "points": curve.get(s[0], []), "name": s[1]})
+		series.append({"colour": s[2], "points": curve.get(s[0], []), "name": s[1], "name_owned": true})
 	var chart := ReplayStatsPanelScript.LineChart.new(series,
 		"AVERAGE VP AT THE END OF EACH ROUND. GREEN: YOU IN GAMES YOU WON, RED: IN GAMES YOU LOST, GREY: THE BEST RIVAL",
-		func(i: int) -> String: return "ROUND %d" % (i + 1))
+		func(i: int) -> String: return PageText.text("ROUND %d" % (i + 1)))
 	return chart
 
 
@@ -226,7 +228,7 @@ func _build_curve() -> Control:
 
 func _cell(text: String, colour: Color) -> Label:
 	var label := Label.new()
-	label.text = text
+	PageText.bind(label, text)
 	label.add_theme_color_override("font_color", colour)
 	return label
 
@@ -246,7 +248,7 @@ func _bar(share: float, colour: Color) -> Control:
 
 func _button(text: String, action: Callable, width: float) -> Button:
 	var b := Button.new()
-	b.text = text
+	PageText.bind(b, text)
 	b.custom_minimum_size = Vector2(width, 14)
 	b.focus_mode = Control.FOCUS_NONE
 	SetupScreen._style_button(b)
