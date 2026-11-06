@@ -150,6 +150,8 @@ func _run() -> void:
 	var green_source:="Return one of your spies -> supplant a troop at that spy's site, then gain VP per site controlled"
 	check(Text.option_field(green_source,"text",green_source).contains("site control marker"),"Green Dragon English option matches current card and control-marker rule")
 	check(Text.option_field(green_source,"name",OptionCard.NAMES[green_source])=="Coup","Green Dragon English action name preserved")
+	var blade_source := "Blade Fragments and Half-Dragons from your top 5 cards into your hand, discard the rest"
+	check(Text.option_field(blade_source,"text",blade_source).contains(String(CardLibrary.card_data("49521").name)), "Blade Fragment English option uses current card name")
 	for cid: String in ids:
 		if not originals.has(cid): continue
 		var image:=CardView.pixel_texture(cid).get_image()

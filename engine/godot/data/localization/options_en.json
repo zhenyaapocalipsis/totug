@@ -2,5 +2,8 @@
   "option_ae93aec73031": {
     "source": "Return one of your spies -> supplant a troop at that spy's site, then gain VP per site controlled",
     "text": "Return one of your spies -> Supplant a troop at that spy's site, then gain 1 VP for each site control marker you have"
+  },
+  "option_0915d0e1661c": {
+    "text": "Blade Fragments and Erinyes from your top 5 cards into your hand, discard the rest"
   }
 }

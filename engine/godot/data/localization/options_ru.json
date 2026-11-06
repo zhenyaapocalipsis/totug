@@ -568,5 +568,95 @@
     "source": "Bribe -> Swap 2 troops anywhere on the board",
     "name": "Смена оков",
     "text": "Подкуп ► Поменяйте местами 2 отряда в любом месте поля"
+  },
+  "option_b0b2ed9a4f18": {
+    "source": "Devour a card in your hand",
+    "name": "Отсев слабых",
+    "text": "Поглотите карту руки"
+  },
+  "option_b1fa11d5044a": {
+    "source": "Devour a card in your hand or your discard pile",
+    "name": "Кровавая десятина",
+    "text": "Поглотите карту своей руки или сброса"
+  },
+  "option_d105ee54826a": {
+    "source": "Devour a card in the market",
+    "name": "Захват добычи",
+    "text": "Поглотите карту рынка"
+  },
+  "option_66904daf9119": {
+    "source": "Place a spy (full site: you may devour a card in your hand or discard pile)",
+    "name": "Багровый ритуал",
+    "text": "Разместите шпиона. Полная локация: можете поглотить карту своей руки или сброса"
+  },
+  "option_4b661a8af0b6": {
+    "source": "+1 Power, devour a card in the market, your hand or discard pile",
+    "name": "Колючая роза",
+    "text": "+1 Сила. Поглотите карту рынка, своей руки или сброса"
+  },
+  "option_d48a7014f0a8": {
+    "source": "Place a spy, devour a card in the market (its replacement costs 3 less)",
+    "name": "Чёрная роза",
+    "text": "Разместите шпиона и поглотите карту рынка. Её замена дешевле на 3 в этот ход"
+  },
+  "option_68d6d30430ac": {
+    "source": "Return one of your spies -> +4 Influence",
+    "name": "Шёпот благосклонности",
+    "text": "Верните своего шпиона ► +4 Влияния"
+  },
+  "option_bfec7ec11590": {
+    "source": "Place a spy, you may assassinate up to 3 troops there (then no deploying there this turn)",
+    "name": "Смертельный лотос",
+    "text": "Разместите шпиона. Можете уничтожить до 3 отрядов в его локации; затем до конца хода нельзя размещать там отряды"
+  },
+  "option_2b0ed747671c": {
+    "source": "Move up to 2 of your troops and draw a card",
+    "name": "Мгновенный шаг",
+    "text": "Переместите до 2 своих отрядов и возьмите карту"
+  },
+  "option_36f10d76a4b9": {
+    "source": "Devour half the market deck (if it is already empty, you win)",
+    "name": "Железное владычество",
+    "text": "Поглотите половину колоды рынка. Если она уже пуста, вы побеждаете"
+  },
+  "option_e311b186cf96": {
+    "source": "Play up to 2 cards from the devoured pile",
+    "name": "Царство смерти",
+    "text": "Сыграйте до 2 поглощённых карт"
+  },
+  "option_0dd305d36cb1": {
+    "source": "Each time you trigger Might this turn, supplant a troop",
+    "name": "Владыка разорения",
+    "text": "В этот ход при каждом срабатывании Мощи замените отряд"
+  },
+  "option_4687dfc4c49b": {
+    "source": "Place 2 spies and draw a card",
+    "name": "Вороны над головой",
+    "text": "Разместите 2 шпионов и возьмите карту"
+  },
+  "option_a4b1b18864ae": {
+    "source": "Return any number of your spies -> +1 Influence and supplant a troop at each of those sites",
+    "name": "Великая стратегия",
+    "text": "Верните любое число своих шпионов ► +1 Влияние и замените отряд в каждой из их локаций"
+  },
+  "option_650e5ea2a35c": {
+    "source": "Devour a card in your hand -> draw cards equal to its inner circle VP",
+    "name": "Сорвиголова",
+    "text": "Поглотите карту руки ► Возьмите столько карт, сколько она стоит ПО во Внутреннем круге"
+  },
+  "option_bdeeac72e4c0": {
+    "source": "Devour a card in the market -> gain VP equal to its deck VP",
+    "name": "Гвоздь программы",
+    "text": "Поглотите карту рынка ► Получите её ПО колоды"
+  },
+  "option_a267defa543f": {
+    "source": "Assassinate 2 troops at a site",
+    "name": "Дикий рывок",
+    "text": "Уничтожьте 2 отряда в одной локации"
+  },
+  "option_0915d0e1661c": {
+    "source": "Blade Fragments and Half-Dragons from your top 5 cards into your hand, discard the rest",
+    "name": "Сломанные крылья",
+    "text": "Из 5 верхних карт своей колоды возьмите Осколки клинка и Эринию в руку, остальные сбросьте"
   }
 }

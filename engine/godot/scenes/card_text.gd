@@ -4,12 +4,14 @@ extends RefCounted
 const L10n := preload("res://scenes/localization.gd")
 static var _ru: Dictionary = {}
 static var _loaded := false
-const KEYWORDS := {"ПОГЛОТИТЕ":"DEVOUR", "ЗАМЕНИТЕ":"SUPPLANT", "РАЗМЕСТИТЕ":"DEPLOY",
+const KEYWORDS := {"ПОГЛОТИТЬ":"DEVOUR", "ЗАМЕНИТЬ":"SUPPLANT", "РАЗМЕСТИТЬ":"DEPLOY",
+	"УНИЧТОЖИТЬ":"ASSASSINATE", "ВЕРНУТЬ":"RETURN", "ВОЗВЫСИТЬ":"PROMOTE",
+	"НАНЯТЬ":"RECRUIT", "ПЕРЕМЕСТИТЬ":"MOVE", "ПОГЛОТИТЕ":"DEVOUR", "ЗАМЕНИТЕ":"SUPPLANT", "РАЗМЕСТИТЕ":"DEPLOY",
 	"УНИЧТОЖЬТЕ":"ASSASSINATE", "ВЕРНИТЕ":"RETURN", "ВОЗВЫСЬТЕ":"PROMOTE",
 	"НАЙМИТЕ":"RECRUIT", "НАНИМАЕТ":"RECRUITS", "НАНИМАЮТ":"RECRUITS", "КОНЦЕНТРАЦИЯ":"FOCUS", "КОНЦЕНТРАЦИИ":"FOCUS", "КОНЦЕНТРАЦИЕЙ":"FOCUS", "РВЕНИЕ":"DEVOTION", "ЧАРЫ":"GLAMOUR",
 	"ПРЕВРАЩЕНИЕ":"TRANSFORM", "ПРЕВРАТИТЕ":"TRANSFORM", "ПРЕВРАТИТЬ":"TRANSFORM",
 	"ПЕРЕМЕСТИТЕ":"MOVE", "ПОДКУП":"BRIBE", "УКРАДИТЕ":"STEAL",
-	"ПРЕДВИДЕНИЕ":"SCRY", "МОЩЬ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE",
+	"ПРЕДВИДЕНИЕ":"SCRY", "МОЩЬ":"MIGHT", "МОЩИ":"MIGHT", "ОБМОРОЖЕНИЕ":"FROSTBITE",
 	"РАЗЛИЧНЫЙ":"DISTINCT", "РАЗЛИЧНЫЕ":"DISTINCT", "РАЗЛИЧНЫХ":"DISTINCT", "УДЕРЖИТЕ":"RETAIN", "УДЕРЖАТЬ":"RETAIN",
 	"УДЕРЖАНО":"RETAINED", "ИССЛЕДОВАНИЕ":"EXPLORE", "ИССЛЕДУЙТЕ":"EXPLORE"}
 
