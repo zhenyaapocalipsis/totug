@@ -22,6 +22,11 @@ func _run() -> void:
 	if OS.get_cmdline_user_args().has("--complete"):
 		check(all.size()==CardLibrary.all_ids().size(),"complete catalog has exactly all source IDs")
 		for cid: String in CardLibrary.all_ids(): check(all.has(cid),"complete catalog: "+cid)
+	var unique_names:={}
+	for cid: String in all:
+		var normalized:=String(all[cid].get("name", "")).to_lower()
+		check(not unique_names.has(normalized),"unique full Russian name: "+cid)
+		unique_names[normalized]=cid
 	var ids: Array = all.keys()
 	if selected=="base": ids=["48340","48341","48342","48343","48344","48345"]
 	elif selected!="translated":
@@ -114,12 +119,22 @@ func _run() -> void:
 		if make_sheet: sheet.blit_rect(mini,Rect2i(Vector2i.ZERO,mini.get_size()),Vector2i((i%3)*244+180,(i/3)*278))
 		check(JSON.stringify(CardLibrary.card_data(cid))==mechanics[cid],"rules data unchanged: "+cid)
 	if make_sheet: check(sheet.save_png("res://.godot/localization_catalog_%s_ru.png"%selected)==OK,"saved contact sheet")
-	for source: String in Text.OPTION_IDS:
+	var option_rows: Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://data/localization/options_ru.json"))
+	for id: String in option_rows:
+		var source:=String(option_rows[id].get("source", ""))
+		check(Text.option_id(source)==id and (OptionCard.NAMES.has(source) or Text.OPTION_IDS.has(source)),"stable option ID matches known source: "+id)
 		var name:=Text.option_field(source,"name","")
 		var body:=Text.option_field(source,"text","")
 		check(name!="" and body!="","option has name and body: "+source)
 		check(OptionCard._wrap(body).size()*OptionCard.LINE_H-2<=OptionCard.TEXT_H-4,"option body stays in source field: "+source)
-		check(OptionCard._wrap_plain(name.to_upper(),OptionCard.W-14).size()<=2,"option name fits original header: "+source)
+		var title_lines:=OptionCard._wrap_plain(name.to_upper(),OptionCard.W-14)
+		check(title_lines.size()<=2,"option name fits original header: "+source)
+		for line: String in title_lines: check(OptionCard._text_width(line,1)<=OptionCard.W-14,"option title line stays inside header: "+source)
+		var option_image:=OptionCard.render("48306",source)
+		var raw:=CardView.pixel_texture("48306","",false).get_image()
+		if raw.is_compressed(): raw.decompress()
+		raw.convert(Image.FORMAT_RGBA8)
+		check(option_image.get_region(Rect2i(6,34,164,PC.ART_H)).get_data()==raw.get_region(Rect2i(6,34,164,PC.ART_H)).get_data(),"translated option keeps source art: "+source)
 	L10n.set_locale("en")
 	for cid: String in ids:
 		if not originals.has(cid): continue

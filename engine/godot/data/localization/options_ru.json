@@ -1,26 +1,82 @@
 {
   "gain_influence_2": {
     "name": "Серебряный язык",
-    "text": "+2 к влиянию"
+    "text": "+2 Влияния",
+    "source": "+2 Influence"
   },
   "promote_other_at_end": {
     "name": "Покровительство",
-    "text": "В конце хода возвысьте другую карту, разыгранную в этот ход."
+    "text": "В конце хода возвысьте другую карту, разыгранную в этот ход.",
+    "source": "At end of turn, promote another card played this turn"
   },
   "place_spy": {
     "name": "Тайный агент",
-    "text": "Разместите шпиона."
+    "text": "Разместите шпиона.",
+    "source": "Place a spy"
   },
   "return_spy_recruit_2_max3": {
     "name": "Вербовщики",
-    "text": "Верните своего шпиона ► Наймите до 2 карт стоимостью не более 3 каждая, не оплачивая их стоимость."
+    "text": "Верните своего шпиона ► Наймите до 2 карт стоимостью не более 3 каждая, не оплачивая их стоимость.",
+    "source": "Return one of your spies -> Recruit up to 2 cards that cost 3 or less"
   },
   "gain_influence_1": {
     "name": "Старшинство",
-    "text": "+1 Влияние"
+    "text": "+1 Влияние",
+    "source": "+1 Influence"
   },
   "promote_other_in_hand": {
     "name": "Призыв",
-    "text": "Возвысьте другую карту руки"
+    "text": "Возвысьте другую карту руки",
+    "source": "Promote another card in your hand"
+  },
+  "option_a39f79130d27": {
+    "source": "+2 Power",
+    "name": "Железная воля",
+    "text": "+2 Силы"
+  },
+  "option_4c49a8b97721": {
+    "source": "Assassinate a troop",
+    "name": "Отравленный клинок",
+    "text": "Уничтожьте отряд"
+  },
+  "option_8a499b3fa758": {
+    "source": "Return one of your spies -> Draw 3 cards",
+    "name": "Продажа тайн",
+    "text": "Верните своего шпиона ► Возьмите 3 карты"
+  },
+  "option_4287ee964165": {
+    "source": "Deploy 4 troops",
+    "name": "Воинство",
+    "text": "Разместите 4 отряда"
+  },
+  "option_253b29daf773": {
+    "source": "Supplant a white troop anywhere on the board",
+    "name": "Переворот",
+    "text": "Замените белый отряд в любом месте поля"
+  },
+  "option_f3f6907eb87e": {
+    "source": "Place 2 spies",
+    "name": "Сеть глаз",
+    "text": "Разместите 2 шпионов"
+  },
+  "option_07f295fa7e1f": {
+    "source": "Return one of your spies -> +4 Power",
+    "name": "Сигнал к сбору",
+    "text": "Верните своего шпиона ► +4 Силы"
+  },
+  "option_dafebcae96dd": {
+    "source": "Return one of your spies -> Supplant a troop at that spy's site",
+    "name": "Свой человек",
+    "text": "Верните своего шпиона ► Замените отряд в локации этого шпиона"
+  },
+  "option_c40e61e86c79": {
+    "source": "Deploy a troop",
+    "name": "Мобилизация",
+    "text": "Разместите отряд"
+  },
+  "option_76cbaca40df6": {
+    "source": "Assassinate a white troop",
+    "name": "Отсев слабых",
+    "text": "Уничтожьте белый отряд"
   }
 }

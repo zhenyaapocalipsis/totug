@@ -239,6 +239,9 @@ const NAME_BREAKS := {
 	# Russian mini-card names keep syllable boundaries with the same wrapping rules.
 	"АРИСТОКРАТ": [1, 3, 6], "ВЕРБОВЩИК": [3, 6],
 	"ПЕРЕГОВОРЩИК": [2, 4, 6, 9], "ЗАКЛИНАТЕЛЬ": [2, 5, 7],
+	"РАЗВЕДЧИК": [3, 6], "ИЗБРАННИК": [2, 6], "ДОППЕЛЬГАНГЕР": [3, 7, 10],
+	"СВЕДЕНИЯМИ": [3, 5, 7, 8], "ИНКВИЗИТОР": [2, 5, 7],
+	"НАЁМНИКОВ": [2, 4, 6], "ЗАКЛИНАНИЙ": [2, 5, 7],
 }
 
 # deck id -> [sheet file, columns, card w, card h, art rect (x, y, w, h) inside the card]
