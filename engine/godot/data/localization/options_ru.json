@@ -158,5 +158,45 @@
     "source": "Draw a card for each spy you have on the board",
     "name": "Хозяин шпионов",
     "text": "Возьмите карту за каждого своего шпиона на поле"
+  },
+  "option_2ed016469538": {
+    "source": "Deploy three troops",
+    "name": "Легион",
+    "text": "Разместите 3 отряда"
+  },
+  "option_8d12e7394b88": {
+    "source": "Return one of your spies -> treat the top devoured card as if it was in the market this turn",
+    "name": "Расхититель могил",
+    "text": "Верните своего шпиона ► До конца хода считайте верхнюю поглощённую карту картой рынка"
+  },
+  "option_763efef15edc": {
+    "source": "Devour this card -> at end of turn, promote up to 2 other cards played this turn",
+    "name": "Последний дар",
+    "text": "Поглотите эту карту ► В конце хода возвысьте до 2 других карт, сыгранных в этот ход"
+  },
+  "option_dcf034fcf6f4": {
+    "source": "Devour this card -> assassinate up to three white troops at a single site",
+    "name": "Резня",
+    "text": "Поглотите эту карту ► Уничтожьте до 3 белых отрядов в одной локации"
+  },
+  "option_8ac2dc464e33": {
+    "source": "Devour a card in your hand -> Supplant a troop",
+    "name": "Жертва",
+    "text": "Поглотите карту руки ► Замените отряд"
+  },
+  "option_326fcc3a2ac6": {
+    "source": "Promote this card, or a card from your hand or discard pile",
+    "name": "Возвышение",
+    "text": "Возвысьте эту карту или карту своей руки либо сброса"
+  },
+  "option_15ea85614d3f": {
+    "source": "Take a white troop from any trophy hall and deploy it",
+    "name": "Перебежчики",
+    "text": "Заберите белый отряд из любого зала трофеев и разместите его"
+  },
+  "option_31f51308b12c": {
+    "source": "Promote a card from your discard pile, then gain VP per inner circle card",
+    "name": "Величие",
+    "text": "Возвысьте карту своего сброса, затем получите по 1 ПО за каждые 3 карты Внутреннего круга"
   }
 }
