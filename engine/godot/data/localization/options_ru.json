@@ -91,7 +91,7 @@
   },
   "option_894bc5f54675": {
     "source": "Return one of your spies -> +3 Influence",
-    "name": "Донесение шпиона",
+    "name": "Донесение",
     "text": "Верните своего шпиона ► +3 Влияния"
   },
   "option_670052c54fa4": {
@@ -128,5 +128,10 @@
     "source": "Return one of your spies -> +5 Power",
     "name": "К оружию!",
     "text": "Верните своего шпиона ► +5 Сил"
+  },
+  "option_17d38cc4fd20": {
+    "source": "Return one of your spies -> Deploy 3 troops",
+    "name": "Откройте ворота",
+    "text": "Верните своего шпиона ► Разместите 3 отряда"
   }
 }

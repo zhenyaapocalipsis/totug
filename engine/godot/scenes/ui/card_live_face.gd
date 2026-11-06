@@ -174,7 +174,7 @@ static func layout(raw: String, notes: Array, w: int = PC.W) -> Array:
 			continue
 		var prev := paras[-1]
 		var brk := prev.ends_with(".") or prev.ends_with(":") or line.begins_with("•") \
-			or resource_line.search(prev) != null or line.begins_with("+") or line.contains("Focus ►")
+			or resource_line.search(prev) != null or line.begins_with("+") or line.contains("Focus ►") or line.begins_with("Концентрация ")
 		if prev.ends_with("►"):
 			brk = false
 		if brk:
