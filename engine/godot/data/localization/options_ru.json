@@ -1048,5 +1048,115 @@
     "source": "Return one of your spies -> move up to one enemy troop at that site and one of your troops",
     "name": "Смена мест",
     "text": "Верните своего шпиона ► Переместите до 1 вражеского отряда из его локации и 1 свой отряд"
+  },
+  "option_905317ad6737": {
+    "source": "Supplant a troop anywhere on the board",
+    "name": "Инстинкт убийцы",
+    "text": "Замените отряд в любом месте поля"
+  },
+  "option_a40db8244015": {
+    "source": "+1 Power for each card in your hand",
+    "name": "Икатийский дождь",
+    "text": "+1 Сила за каждую карту вашей руки"
+  },
+  "option_9873d4e28f82": {
+    "source": "Draw 2 cards, then discard a card",
+    "name": "Перезарядка",
+    "text": "Возьмите 2 карты, затем сбросьте карту"
+  },
+  "option_54b869499dae": {
+    "source": "Assassinate 2 troops",
+    "name": "Искатель Бездны",
+    "text": "Уничтожьте 2 отряда"
+  },
+  "option_4425be761323": {
+    "source": "Return up to 2 troops or spies",
+    "name": "Зов Бездны",
+    "text": "Верните до 2 отрядов или шпионов"
+  },
+  "option_ef3870251aad": {
+    "source": "Supplant 2 white troops",
+    "name": "Гибельные видения",
+    "text": "Замените 2 белых отряда"
+  },
+  "option_99d0eeb44681": {
+    "source": "Draw a card for every 2 sites under your total control",
+    "name": "Чувство дрожи",
+    "text": "Возьмите карту за каждые 2 локации под вашим полным контролем"
+  },
+  "option_4cc6bce07a82": {
+    "source": "Supplant a troop and deploy 2 troops",
+    "name": "Из-под земли",
+    "text": "Замените отряд и разместите 2 отряда"
+  },
+  "option_b82df6a96459": {
+    "source": "Move up to 2 troops or spies",
+    "name": "Тоннель",
+    "text": "Переместите до 2 отрядов или шпионов"
+  },
+  "option_c6f5f0fea12b": {
+    "source": "Move one of your spies",
+    "name": "Сдвиг",
+    "text": "Переместите своего шпиона"
+  },
+  "option_4578b4b5dfac": {
+    "source": "Move a spy",
+    "name": "Сдвиг",
+    "text": "Переместите шпиона"
+  },
+  "option_11a6767d5674": {
+    "source": "Done",
+    "name": "Удержать позицию",
+    "text": "Завершить"
+  },
+  "option_eb030f42ae86": {
+    "source": "+1 Influence for every 2 sites you control",
+    "name": "Лиловая десятина",
+    "text": "+1 Влияние за каждые 2 контролируемые вами локации"
+  },
+  "option_c4db8cd3bd28": {
+    "source": "At end of turn, promote another card you played this turn",
+    "name": "Бесконечный пир",
+    "text": "В конце хода возвысьте другую карту, сыгранную вами в этот ход"
+  },
+  "option_574f5bc9ba4a": {
+    "source": "Look at the top 5 cards of your deck: up to 2 that cost 2 or less to your hand",
+    "name": "Зов улья",
+    "text": "Из 5 верхних карт своей колоды возьмите до 2 карт ценой до 2 в руку, остальные положите наверх"
+  },
+  "option_e66ccc833f8d": {
+    "source": "+1 Power for every 2 sites you control",
+    "name": "Глоток песка",
+    "text": "+1 Сила за каждые 2 контролируемые вами локации"
+  },
+  "option_87bd661bc982": {
+    "source": "Return a troop",
+    "name": "Камнелом",
+    "text": "Верните отряд"
+  },
+  "option_229abd910275": {
+    "source": "Place a spy (site full: deploy 2 troops)",
+    "name": "Сигнал выводка",
+    "text": "Разместите шпиона. Полная локация: разместите 2 отряда"
+  },
+  "option_65dd7abb96ac": {
+    "source": "Return one of your spies -> supplant a white troop at that site",
+    "name": "Зов королевы",
+    "text": "Верните своего шпиона ► Замените белый отряд в его локации"
+  },
+  "option_79e986368766": {
+    "source": "Place a spy at a site",
+    "name": "Зоркий глаз",
+    "text": "Разместите шпиона в локации"
+  },
+  "option_2e5cee12c71a": {
+    "source": "Place a spy on a market card",
+    "name": "Взгляд Бездны",
+    "text": "Разместите шпиона на карте рынка"
+  },
+  "option_a62f1c08fcd0": {
+    "source": "Gain a market card with the same name as a card you played this turn",
+    "name": "Эхо Бездны",
+    "text": "Получите карту рынка с тем же именем, что карта, сыгранная вами в этот ход"
   }
 }
