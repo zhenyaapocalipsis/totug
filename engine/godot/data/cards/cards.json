@@ -1822,7 +1822,7 @@
   },
   {
     "card_id": 49201,
-    "name": "Cogwork Archivist",
+    "name": "Ruin Grinder",
     "cost": 3,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1833,7 +1833,7 @@
   },
   {
     "card_id": 49202,
-    "name": "Caldron Magen",
+    "name": "Helmed Horror",
     "cost": 4,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1855,7 +1855,7 @@
   },
   {
     "card_id": 49204,
-    "name": "Animated Chained Library",
+    "name": "Loading Rig",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
@@ -1877,7 +1877,7 @@
   },
   {
     "card_id": 49206,
-    "name": "Virvos Magen",
+    "name": "Warforged Titan",
     "cost": 4,
     "aspect": "CONQUEST",
     "type": "WATERDEEP",
@@ -1910,7 +1910,7 @@
   },
   {
     "card_id": 49209,
-    "name": "Terran Magen",
+    "name": "Nimblewright Guard",
     "cost": 4,
     "aspect": "GUILE",
     "type": "WATERDEEP",
@@ -1943,7 +1943,7 @@
   },
   {
     "card_id": 49212,
-    "name": "Lorehold Apprentice",
+    "name": "Viktra Mordenheim",
     "cost": 6,
     "aspect": "MALICE",
     "type": "WATERDEEP",
@@ -1998,7 +1998,7 @@
   },
   {
     "card_id": 49217,
-    "name": "Conjurer Archmage",
+    "name": "Manshoon",
     "cost": 7,
     "aspect": "GUILE",
     "type": "WATERDEEP",
@@ -2031,11 +2031,11 @@
   },
   {
     "card_id": 49220,
-    "name": "Silverquill Apprentice",
+    "name": "Trobriand",
     "cost": 7,
     "aspect": "AMBITION",
     "type": "WATERDEEP",
-    "race": "HUMAN",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+5 Influence\nDouble Ambition Focus ► +4 Influence. This turn, whenever you buy a card, you may recruit a cheaper one for free."

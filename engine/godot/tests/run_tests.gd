@@ -7129,7 +7129,7 @@ func test_siege_deck() -> void:
 func test_mercenaries_deck() -> void:
 	section("Mercenaries: полуколода")
 	check_eq(GameSetup.expand_half_deck("mercenaries").size(), 40, "Mercenaries: 40 карт")
-	check_eq(CardLibrary.card_data("49220").get("name"), "Silverquill Apprentice", "Waterdeep: Hydra отдала имя карте Siege, потом Harpy, теперь Silverquill Apprentice")
+	check_eq(CardLibrary.card_data("49220").get("name"), "Trobriand", "Waterdeep: Trobriand replaces Silverquill Apprentice (NE-54)")
 	var names: Array = []
 	var repeated: Array = []
 	for cid: String in CardLibrary.all_ids():

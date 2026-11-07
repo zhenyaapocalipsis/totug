@@ -168,10 +168,10 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | ~~Manticore~~ (—, существо убрано из игры NE-49; на 49214 теперь Elise) | Lo'Gosh, Blood Fighter (TIME_850) | `TIME_LoGosh_CustomSummon.prefab` | анимация свободна |
 | Homunculus (49215) | Norgannon (TTN_075) | `TTNFX_Norgannon_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Chimera (49216) | Dave Berard (CRED_215) | `AVFX_BrukanElements_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
-| Archmage (49217) | Khadgar (DAL_575) | `Khadgar_CustomSummon.prefab` | архимаг |
+| Manshoon (49217) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Conjurer Archmage). |
 | ~~Basilisk~~ (—, существо убрано из игры NE-37; на 49113/49115/49118 теперь Strahd / Relentless Slasher / Zombie Plague Spreader) | Overseer Frigidara (LEG_RLK_224) | `RLKFX_Frigidara_CustomSummon.prefab` | анимация свободна |
 | Behir (49219) | Mastermind Yogg-Saron (BE_009) | `BEFX_YoggSarontheMastermind_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Harpy (49220) | Serena Bloodfeather (BAR_315) | `BARFX_SerenaBloodFeather_CustomSummon.prefab` | гарпия |
+| Trobriand (49220) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Silverquill Apprentice). |
 
 ### siege
 
@@ -263,8 +263,8 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | ~~Satyr Thornbearer~~ (—, существо убрано из игры NE-45; на 49900 теперь Green Hag) | Nightmare Lord Xavius (EDR_856) | `EDRFX_Xavius_CustomSummon.prefab` | анимация свободна |
 | ~~High Fae Kindguard~~ (—, существо убрано из игры NE-45; на 49901 теперь Yarnspinner) | Prince Malchezaar (LT24_821H) | `Malchezaar_CustomSummon.prefab` | анимация свободна |
 | ~~High Fae Noble~~ (—, существо убрано из игры NE-45; на 49902 теперь Incarnation of Transience) | Glugg the Gulper (TSC_639) | `TSCFX_GluggTheGulper_CustomSummon.prefab` | анимация свободна |
-| Lorehold Apprentice (49212; NE-45 убран из Feywild, NE-49 вернулся в Waterdeep) | Farseer Wo (TIME_013) | `TIME_FarseerWo_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Silverquill Apprentice (49220; NE-45 убран из Feywild, NE-49 вернулся в Waterdeep) | Farseer Nobundo (GDB_447) | `GDBFX_FarsserNobundo_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| Viktra Mordenheim (49212) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Lorehold Apprentice). |
+| Trobriand (49220) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Silverquill Apprentice). |
 | ~~Faerie Pathlighter~~ (—, существо убрано из игры NE-45; на 49905 теперь Lampad) | Soulburner Varia (YOG_520) | `YOGFX_SoulburnerVaria_CustomSummon.prefab` | анимация свободна |
 | Faerie Dragon Youth (49906) | Eternus (TIME_435) | `TIME_Eternus_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | ~~Witherbloom Apprentice~~ (—, существо убрано из игры NE-45; на 49908 теперь The Gardener) | Altruis the Outcast (TOY_401t2) | `Altruis_CustomSummon.prefab` | анимация свободна |

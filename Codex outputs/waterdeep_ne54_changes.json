@@ -1,0 +1,224 @@
+[
+  {
+    "slug": "177246-loading-rig",
+    "name": "Loading Rig",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/4719/878/1000/1000/636755111085324284.png",
+    "source": "Guildmasters’ Guide to Ravnica",
+    "type": "Construct",
+    "number": 2,
+    "file": "loading_rig.png",
+    "originalNumber": 130,
+    "crop": [
+      110,
+      0,
+      760,
+      463
+    ],
+    "url": "https://www.dndbeyond.com/monsters/177246-loading-rig",
+    "nameOccupied": false,
+    "id": 49204,
+    "n": 2,
+    "ru": "Погрузочный механизм",
+    "short": "ПОГРУЗЧИК",
+    "race": "CONSTRUCT",
+    "face": [
+      99,
+      0
+    ],
+    "old": "Animated Chained Library"
+  },
+  {
+    "slug": "2160327-ruin-grinder",
+    "name": "Ruin Grinder",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/22135/829/1000/1000/637743395605609263.jpeg",
+    "source": "Strixhaven: A Curriculum of Chaos",
+    "type": "Construct",
+    "number": 3,
+    "file": "ruin_grinder.jpeg",
+    "originalNumber": 159,
+    "crop": [
+      0,
+      100,
+      944,
+      576
+    ],
+    "url": "https://www.dndbeyond.com/monsters/2160327-ruin-grinder",
+    "nameOccupied": false,
+    "id": 49201,
+    "n": 3,
+    "ru": "Разрушитель руин",
+    "short": "РАЗРУШИТЕЛЬ РУИН",
+    "race": "CONSTRUCT",
+    "face": [
+      44,
+      0
+    ],
+    "old": "Cogwork Archivist"
+  },
+  {
+    "slug": "5195072-helmed-horror",
+    "name": "Helmed Horror",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/47138/970/1000/1000/638741964266365034.png",
+    "source": "Monster Manual",
+    "type": "Construct",
+    "number": 4,
+    "file": "helmed_horror.png",
+    "originalNumber": 98,
+    "crop": [
+      30,
+      15,
+      850,
+      518
+    ],
+    "url": "https://www.dndbeyond.com/monsters/5195072-helmed-horror",
+    "nameOccupied": false,
+    "id": 49202,
+    "n": 4,
+    "ru": "Шлемоносный ужас",
+    "short": "ШЛЕМНЫЙ УЖАС",
+    "race": "CONSTRUCT",
+    "face": [
+      28,
+      0
+    ],
+    "old": "Caldron Magen"
+  },
+  {
+    "slug": "5900665-nimblewright-guard",
+    "name": "Nimblewright Guard",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/52421/865/1000/1000/638972033488064010.png",
+    "source": "Forgotten Realms: Adventures in Faerûn",
+    "type": "Construct",
+    "number": 5,
+    "file": "nimblewright_guard.png",
+    "originalNumber": 8,
+    "crop": [
+      560,
+      105,
+      420,
+      256
+    ],
+    "url": "https://www.dndbeyond.com/monsters/5900665-nimblewright-guard",
+    "nameOccupied": false,
+    "id": 49209,
+    "n": 5,
+    "ru": "Страж-нимблрайт",
+    "short": "СТРАЖ-НИМБЛРАЙТ",
+    "race": "CONSTRUCT",
+    "face": [
+      28,
+      0
+    ],
+    "old": "Terran Magen"
+  },
+  {
+    "slug": "486238-warforged-titan",
+    "name": "Warforged Titan",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/7726/424/1000/1000/637091717747436808.png",
+    "source": "Eberron: Rising from the Last War",
+    "type": "Construct",
+    "number": 7,
+    "file": "warforged_titan.png",
+    "originalNumber": 204,
+    "crop": [
+      135,
+      260,
+      495,
+      302
+    ],
+    "url": "https://www.dndbeyond.com/monsters/486238-warforged-titan",
+    "nameOccupied": false,
+    "id": 49206,
+    "n": 7,
+    "ru": "Кованый титан",
+    "short": "КОВАНЫЙ ТИТАН",
+    "race": "CONSTRUCT",
+    "face": [
+      40,
+      45
+    ],
+    "old": "Virvos Magen"
+  },
+  {
+    "slug": "6491399-viktra-mordenheim",
+    "name": "Viktra Mordenheim",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/56892/762/1000/1000/639156777278376936.jpeg",
+    "source": "Ravenloft: The Horrors Within",
+    "type": "Humanoid",
+    "number": 10,
+    "file": "viktra_mordenheim.jpeg",
+    "originalNumber": 171,
+    "crop": [
+      200,
+      0,
+      580,
+      354
+    ],
+    "url": "https://www.dndbeyond.com/monsters/6491399-viktra-mordenheim",
+    "nameOccupied": false,
+    "id": 49212,
+    "n": 10,
+    "ru": "Виктра Морденхейм",
+    "short": "ВИКТРА МОРДЕНХЕЙМ",
+    "race": "HUMAN",
+    "face": [
+      58,
+      27
+    ],
+    "old": "Lorehold Apprentice"
+  },
+  {
+    "slug": "5900664-manshoon",
+    "name": "Manshoon",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/52421/853/1000/1000/638972033169364092.png",
+    "source": "Forgotten Realms: Adventures in Faerûn",
+    "type": "Humanoid",
+    "number": 12,
+    "file": "manshoon.png",
+    "crop": [
+      90,
+      50,
+      820,
+      500
+    ],
+    "url": "https://www.dndbeyond.com/monsters/5900664-manshoon",
+    "nameOccupied": false,
+    "id": 49217,
+    "n": 12,
+    "ru": "Мэншун",
+    "short": "МЭНШУН",
+    "race": "HUMAN",
+    "face": [
+      55,
+      0
+    ],
+    "old": "Conjurer Archmage"
+  },
+  {
+    "slug": "278033-trobriand",
+    "name": "Trobriand",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/6567/178/1000/1000/636988921466984635.jpeg",
+    "source": "Waterdeep: Dungeon of the Mad Mage",
+    "number": 9,
+    "file": "trobriand.jpeg",
+    "originalNumber": 21,
+    "crop": [
+      30,
+      0,
+      800,
+      488
+    ],
+    "url": "https://www.dndbeyond.com/monsters/278033-trobriand",
+    "nameOccupied": false,
+    "id": 49220,
+    "n": 9,
+    "ru": "Тробрианд",
+    "short": "ТРОБРИАНД",
+    "race": "CONSTRUCT",
+    "face": [
+      82,
+      0
+    ],
+    "old": "Silverquill Apprentice"
+  }
+]
