@@ -11,8 +11,8 @@ extends RefCounted
 ## владельцем (2026-11-03): и с этой полуколодой у каждого 40 войск.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "kassadin"    — Githzerai Zerth: убивать войска можно где угодно;
-##   "kogmaw"      — Red Slaad: deploy / assassinate / supplant до 3 мест от своих войск;
+##   "kassadin"    — Feyr: убивать войска можно где угодно;
+##   "kogmaw"      — Shoggoth: deploy / assassinate / supplant до 3 мест от своих войск;
 ##   "malzahar"    — Inquisitor of the Mind Fire: другая карта поставила войска -> ещё 2;
 ##   "undertitan"  — Githyanki Knight: "deploy X troops" карты можно заменить на +X Power;
 ##   "hive_herald" — Carrion Stalker: свой шпион к чужому -> вернуть чужого;
@@ -29,15 +29,15 @@ extends RefCounted
 const KAISA := "50000"  # Elder Thing
 const BELVETH := "50001"  # Greater Star Spawn Emissary
 const CHOGATH := "50002"  # Froghemoth Elder
-const KASSADIN := "50003"  # Githzerai Zerth
-const KHAZIX := "50004"  # Thri-kreen Marauder
-const KOGMAW := "50005"  # Red Slaad
+const KASSADIN := "50003"  # Feyr
+const KHAZIX := "50004"  # Cthulhu
+const KOGMAW := "50005"  # Shoggoth
 const MALZAHAR := "50006"  # Inquisitor of the Mind Fire
 const REKSAI := "50007"  # Groundling Stalker
 const VELKOZ := "50008"  # Eye Monger
 const HATCHLING := "50010"  # Lesser Star Spawn Emissary (Xer'Sai Hatchling)
 const ELDER := "50011"  # Githzerai Monk (Belvethi Elder)
-const CALLER := "50012"  # Thri-kreen Psion (Xer'Sai Caller)
+const CALLER := "50012"  # Red Slaad (Xer'Sai Caller)
 const SWALLOWER := "50013"  # Hook Horror (Dune Swallower)
 const UNDERTITAN := "50014"  # Githyanki Knight (Xerxa'Reth Undertitan)
 const HERALD := "50015"  # Carrion Stalker (Hive Herald)
@@ -52,7 +52,7 @@ const REACH := 3
 const SPY_RETURN_POWER := 3
 const SPY_DISCOUNT := 6
 
-## Thri-kreen Marauder (Kha'Zix): способности, которые карта копит навсегда.
+## Cthulhu (Kha'Zix): способности, которые карта копит навсегда.
 const EVOLUTIONS := ["power", "kill", "spies", "draw"]
 const EVOLUTION_LABELS := ["+2 Power", "Assassinate a troop", "Place 2 spies", "Draw a card"]
 
@@ -175,7 +175,7 @@ static func note_deploy(state: GameState) -> void:
 	IxtalCards.on_deploy_count(state)  # CHULT, Lizardfolk Geomancer: 7-е войско — карта
 
 
-# --- Дальность (Red Slaad, Githzerai Zerth) --------------------------------------
+# --- Дальность (Shoggoth, Feyr) --------------------------------------
 
 ## Может ли игрок действовать по слоту вне Присутствия: kind "deploy" | "kill" | "supplant".
 static func reach(state: GameState, player_id: String, slot_id: String, kind: String) -> bool:
@@ -227,7 +227,7 @@ static func _with_site(state: GameState, slot_id: String) -> Array:
 	return Array(state.graph.slots_of_site(site))
 
 
-## Red Slaad: пустые слоты в пределах досягаемости — к обычным слотам для войск.
+## Shoggoth: пустые слоты в пределах досягаемости — к обычным слотам для войск.
 static func add_reach_slots(state: GameState, player_id: String, legal: PackedStringArray) -> PackedStringArray:
 	if player_id != state.current_player() or not state.turn_flags.get("kogmaw", false):
 		return legal
@@ -239,7 +239,7 @@ static func add_reach_slots(state: GameState, player_id: String, legal: PackedSt
 	return out
 
 
-## Базовое убийство (3 Power) по дальности Red Slaad / Githzerai Zerth.
+## Базовое убийство (3 Power) по дальности Shoggoth / Feyr.
 static func can_kill_far(state: GameState, player_id: String, slot_id: String) -> bool:
 	return state.is_enemy(player_id, String(state.troops.get(slot_id, ""))) and reach(state, player_id, slot_id, "kill")
 
@@ -474,7 +474,7 @@ class _DevourHex extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Thri-kreen Marauder (Kha'Zix): за каждые 4 войска в трофейном зале — ещё одна
+## Cthulhu (Kha'Zix): за каждые 4 войска в трофейном зале — ещё одна
 ## способность навсегда (PlayerState.evolutions); потом все накопленные.
 class _Evolve extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -496,7 +496,7 @@ class _Evolve extends CardEffect:
 					labels.append(VoidCards.EVOLUTION_LABELS[i])
 			var pd := PendingDecision.new()
 			pd.player_id = player_id
-			pd.prompt = "Thri-kreen Marauder keeps an ability for good:"
+			pd.prompt = "Cthulhu keeps an ability for good:"
 			pd.choice_type = "choose_option"
 			pd.legal_options = indices
 			pd.option_labels = labels
@@ -607,7 +607,7 @@ static func _devoured(state: GameState, player_id: String, card: String, src: St
 	NoxusCards.on_devour(state, player_id, card, src, resolver)
 
 
-## Thri-kreen Psion (Xer'Sai Caller): top N карт колоды — до take карт ценой до
+## Red Slaad (Xer'Sai Caller): top N карт колоды — до take карт ценой до
 ## max_cost в руку, остальные обратно наверх в том же порядке.
 class _TopCheap extends CardEffect:
 	var amount: int

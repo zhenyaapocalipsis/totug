@@ -3729,33 +3729,33 @@
   },
   {
     "card_id": 50003,
-    "name": "Githzerai Zerth",
+    "name": "Feyr",
     "cost": 6,
     "aspect": "GUILE",
     "type": "FAR REALM",
-    "race": "GITH",
+    "race": "FEYR",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, you may assassinate troops anywhere on the board.\nAssassinate a troop for every 2 sites you control."
   },
   {
     "card_id": 50004,
-    "name": "Thri-kreen Marauder",
+    "name": "Cthulhu",
     "cost": 7,
     "aspect": "GUILE",
     "type": "FAR REALM",
-    "race": "THRI-KREEN",
+    "race": "GREAT OLD ONE",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "For every 4 troops in your trophy hall, this card keeps one more of these for good. Then use all it has:\n• +2 Power\n• Assassinate a troop\n• Place 2 spies\n• Draw a card"
   },
   {
     "card_id": 50005,
-    "name": "Red Slaad",
+    "name": "Shoggoth",
     "cost": 6,
     "aspect": "MALICE",
     "type": "FAR REALM",
-    "race": "SLAAD",
+    "race": "SHOGGOTH",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "+4 Power\nThis turn, you may deploy, assassinate and supplant up to 3 spaces away from your troops."
@@ -3817,11 +3817,11 @@
   },
   {
     "card_id": 50012,
-    "name": "Thri-kreen Psion",
+    "name": "Red Slaad",
     "cost": 2,
     "aspect": "MALICE",
     "type": "FAR REALM",
-    "race": "THRI-KREEN",
+    "race": "SLAAD",
     "deck_vp": 1,
     "inner_circle_vp": 2,
     "ability_text": "Choose one:\n• Look at the top 5 cards of your deck. Put up to 2 that cost 2 or less into your hand, the rest back on top.\n• Assassinate a white troop."

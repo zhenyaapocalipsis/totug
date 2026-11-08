@@ -1,0 +1,84 @@
+[
+  {
+    "id": 50004,
+    "name": "Cthulhu",
+    "ru": "Ктулху",
+    "short": "КТУЛХУ",
+    "race": "GREAT OLD ONE",
+    "raceRu": "ДРЕВНИЙ",
+    "file": "cthulhu.jpeg",
+    "crop": [
+      0,
+      15,
+      780,
+      476
+    ],
+    "face": [
+      12,
+      10
+    ],
+    "source": "https://www.dndbeyond.com/monsters/6491348-cthulhu",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/56892/599/1000/1000/639156777083121654.jpeg"
+  },
+  {
+    "id": 50003,
+    "name": "Feyr",
+    "ru": "Фейр",
+    "short": "ФЕЙР",
+    "race": "FEYR",
+    "raceRu": "ФЕЙР",
+    "file": "feyr.jpeg",
+    "crop": [
+      360,
+      35,
+      630,
+      384
+    ],
+    "face": [
+      92,
+      39
+    ],
+    "source": "https://www.dndbeyond.com/monsters/2821164-feyr",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/28079/835/1000/1000/637961800767549014.jpeg"
+  },
+  {
+    "id": 50005,
+    "name": "Shoggoth",
+    "ru": "Шоггот",
+    "short": "ШОГГОТ",
+    "race": "SHOGGOTH",
+    "raceRu": "ШОГГОТ",
+    "file": "shoggoth.png",
+    "crop": [
+      20,
+      20,
+      370,
+      225
+    ],
+    "face": [
+      103,
+      0
+    ],
+    "source": "https://www.dndbeyond.com/monsters/6491388-shoggoth",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/56892/728/1000/1000/639156777236571562.png"
+  },
+  {
+    "id": 50012,
+    "name": "Red Slaad",
+    "ru": "Красный слаад",
+    "short": "КРАСНЫЙ СЛААД",
+    "race": "SLAAD",
+    "raceRu": "СЛААД",
+    "file": "red_slaad.jpeg",
+    "crop": [
+      0,
+      50,
+      613,
+      374
+    ],
+    "face": [
+      50,
+      47
+    ]
+  }
+]
