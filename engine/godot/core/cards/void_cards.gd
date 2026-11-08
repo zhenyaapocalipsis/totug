@@ -14,7 +14,7 @@ extends RefCounted
 ##   "kassadin"    — Githzerai Zerth: убивать войска можно где угодно;
 ##   "kogmaw"      — Red Slaad: deploy / assassinate / supplant до 3 мест от своих войск;
 ##   "malzahar"    — Inquisitor of the Mind Fire: другая карта поставила войска -> ещё 2;
-##   "undertitan"  — Elder Thing: "deploy X troops" карты можно заменить на +X Power;
+##   "undertitan"  — Githyanki Knight: "deploy X troops" карты можно заменить на +X Power;
 ##   "hive_herald" — Carrion Stalker: свой шпион к чужому -> вернуть чужого;
 ##   "deploys"     — сколько войск игрок поставил в этот ход (Lesser Star Spawn Emissary).
 ##
@@ -26,7 +26,7 @@ extends RefCounted
 ## Eye Monger (Vel'Koz): Deck.set_aside = [Eye Monger, отложенная карта]; в
 ## начале каждого своего хода отложенная карта разыгрывается (on_start_turn).
 
-const KAISA := "50000"  # Githyanki Knight
+const KAISA := "50000"  # Elder Thing
 const BELVETH := "50001"  # Greater Star Spawn Emissary
 const CHOGATH := "50002"  # Froghemoth Elder
 const KASSADIN := "50003"  # Githzerai Zerth
@@ -39,7 +39,7 @@ const HATCHLING := "50010"  # Lesser Star Spawn Emissary (Xer'Sai Hatchling)
 const ELDER := "50011"  # Githzerai Monk (Belvethi Elder)
 const CALLER := "50012"  # Thri-kreen Psion (Xer'Sai Caller)
 const SWALLOWER := "50013"  # Hook Horror (Dune Swallower)
-const UNDERTITAN := "50014"  # Elder Thing (Xerxa'Reth Undertitan)
+const UNDERTITAN := "50014"  # Githyanki Knight (Xerxa'Reth Undertitan)
 const HERALD := "50015"  # Carrion Stalker (Hive Herald)
 const DUNEBREAKER := "50016"  # Gray Slaad (Xer'Sai Dunebreaker)
 const HORROR := "50017"  # Green Slaad (Camouflaged Horror)
@@ -246,7 +246,7 @@ static func can_kill_far(state: GameState, player_id: String, slot_id: String) -
 
 # --- Хуки войск и шпионов ------------------------------------------------------
 
-## DeployTroop перед первым войском цепочки. Elder Thing: вопрос "войска или
+## DeployTroop перед первым войском цепочки. Githyanki Knight: вопрос "войска или
 ## Power". true — эффект заменён вопросом (DeployTroop сам ничего не делает).
 static func before_deploy(state: GameState, player_id: String, eff: DeployTroop, resolver: EffectResolver) -> bool:
 	eff.void_checked = true
@@ -255,7 +255,7 @@ static func before_deploy(state: GameState, player_id: String, eff: DeployTroop,
 		return false
 	var n := eff.remaining
 	var c := ChooseEffect.new([eff, GainPower.new(n)],
-		["Deploy %d troop%s" % [n, "" if n == 1 else "s"], "+%d Power instead" % n], "Elder Thing:")
+		["Deploy %d troop%s" % [n, "" if n == 1 else "s"], "+%d Power instead" % n], "Githyanki Knight:")
 	c.source_card = UNDERTITAN
 	resolver.push(c, player_id)
 	return true

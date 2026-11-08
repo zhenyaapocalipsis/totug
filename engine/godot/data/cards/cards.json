@@ -3696,11 +3696,11 @@
   },
   {
     "card_id": 50000,
-    "name": "Githyanki Knight",
+    "name": "Elder Thing",
     "cost": 6,
     "aspect": "MALICE",
     "type": "FAR REALM",
-    "race": "GITH",
+    "race": "ELDER THING",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Choose one:\n• Supplant a troop anywhere on the board.\n• +1 Power for each card in your hand.\n• Draw 2 cards, then discard a card.\n• Assassinate 2 troops."
@@ -3839,11 +3839,11 @@
   },
   {
     "card_id": 50014,
-    "name": "Elder Thing",
+    "name": "Githyanki Knight",
     "cost": 5,
     "aspect": "MALICE",
     "type": "FAR REALM",
-    "race": "ELDER THING",
+    "race": "GITH",
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "This turn, whenever a card tells you to deploy X troops, you may gain X Power instead.\nDeploy 3 troops."

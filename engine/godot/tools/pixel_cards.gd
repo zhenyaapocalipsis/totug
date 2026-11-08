@@ -150,10 +150,10 @@ const MINI_FACE := {
 	49917: Vector2i(53, 2), 49918: Vector2i(74, 0), 49919: Vector2i(26, 15), 49920: Vector2i(65, 18),
 	49921: Vector2i(62, 38), 49922: Vector2i(43, 29),
 	# FAR REALM (Void)
-	50000: Vector2i(0, 14), 50001: Vector2i(74, 0), 50002: Vector2i(56, 14), 50003: Vector2i(77, 27),
+	50000: Vector2i(41, 11), 50001: Vector2i(74, 0), 50002: Vector2i(56, 14), 50003: Vector2i(77, 27),
 	50004: Vector2i(0, 41), 50005: Vector2i(50, 47), 50006: Vector2i(14, 31), 50007: Vector2i(54, 23),
 	50008: Vector2i(36, 0), 50010: Vector2i(44, 11), 50011: Vector2i(24, 0), 50012: Vector2i(56, 11),
-	50013: Vector2i(64, 4), 50014: Vector2i(41, 11), 50015: Vector2i(53, 0), 50016: Vector2i(44, 1),
+	50013: Vector2i(64, 4), 50014: Vector2i(0, 14), 50015: Vector2i(53, 0), 50016: Vector2i(44, 1),
 	50017: Vector2i(21, 34), 50018: Vector2i(53, 31), 50019: Vector2i(84, 24), 50020: Vector2i(27, 14),
 	# CHULT (Ixtal)
 	50100: Vector2i(54, 0), 50101: Vector2i(26, 0), 50102: Vector2i(49, 0), 50103: Vector2i(105, 30),
@@ -521,7 +521,7 @@ const SINGLE_ART := {
 	49921: ["bandle/goblin_hexer.png", Rect2i(0, 150, 578, 352)],
 	49922: ["bandle/faerie_dragon_adult.jpeg", Rect2i(0, 190, 520, 317)],
 	# FAR REALM (Void)
-	50000: ["void/githyanki_knight.png", Rect2i(0, 0, 525, 320)],
+	50000: ["void/elder_thing.jpeg", Rect2i(100, 0, 877, 535)],
 	50001: ["void/greater_star_spawn_emissary.jpeg", Rect2i(100, 100, 800, 488)],
 	50002: ["void/froghemoth_elder.jpeg", Rect2i(0, 0, 773, 471)],
 	50003: ["void/githzerai_zerth.jpeg", Rect2i(0, 120, 525, 320)],
@@ -534,7 +534,7 @@ const SINGLE_ART := {
 	50011: ["void/githzerai_monk.jpeg", Rect2i(0, 180, 555, 338)],
 	50012: ["void/thri_kreen_psion.jpeg", Rect2i(0, 60, 547, 333)],
 	50013: ["void/hook_horror.png", Rect2i(0, 50, 800, 488)],
-	50014: ["void/elder_thing.jpeg", Rect2i(100, 0, 877, 535)],
+	50014: ["void/githyanki_knight.png", Rect2i(0, 0, 525, 320)],
 	50015: ["void/carrion_stalker.png", Rect2i(100, 50, 820, 500)],
 	50016: ["void/gray_slaad.jpeg", Rect2i(0, 250, 655, 400)],
 	50017: ["void/green_slaad.jpeg", Rect2i(0, 280, 501, 305)],
