@@ -3707,11 +3707,11 @@
   },
   {
     "card_id": 50001,
-    "name": "Greater Star Spawn Emissary",
+    "name": "Zargon the Returner",
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
-    "race": "STAR SPAWN",
+    "race": "GREAT OLD ONE",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Deploy 4 troops.\nGain 1 VP for each site under your total control."
@@ -3762,7 +3762,7 @@
   },
   {
     "card_id": 50006,
-    "name": "Inquisitor of the Mind Fire",
+    "name": "Qunbraxel",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
@@ -3773,11 +3773,11 @@
   },
   {
     "card_id": 50007,
-    "name": "Groundling Stalker",
+    "name": "Hazlik",
     "cost": 7,
     "aspect": "CONQUEST",
     "type": "FAR REALM",
-    "race": "GROUNDLING",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 7,
     "ability_text": "Choose one:\n• Draw a card for every 2 sites under your total control.\n• Supplant a troop and deploy 2 troops.\n• Move up to 2 troops or spies."

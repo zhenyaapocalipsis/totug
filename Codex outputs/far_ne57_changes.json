@@ -1,0 +1,68 @@
+[
+  {
+    "id": 50006,
+    "name": "Qunbraxel",
+    "ru": "Кунбраксель",
+    "short": "КУНБРАКСЕЛЬ",
+    "race": "ILLITHID",
+    "raceRu": "ИЛЛИТИД",
+    "file": "qunbraxel.png",
+    "face": [
+      27,
+      0
+    ],
+    "crop": [
+      70,
+      75,
+      738,
+      450
+    ],
+    "source": "https://www.dndbeyond.com/monsters/3805765-qunbraxel",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/36576/640/1000/1000/638291908636758750.png",
+    "old": "Inquisitor of the Mind Fire"
+  },
+  {
+    "id": 50001,
+    "name": "Zargon the Returner",
+    "ru": "Заргон Возвращающийся",
+    "short": "ЗАРГОН",
+    "race": "GREAT OLD ONE",
+    "raceRu": "ДРЕВНИЙ",
+    "file": "zargon_the_returner.png",
+    "face": [
+      49,
+      0
+    ],
+    "crop": [
+      120,
+      12,
+      720,
+      439
+    ],
+    "source": "https://www.dndbeyond.com/monsters/4635169-zargon-the-returner",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/42855/672/1000/1000/638560560817330491.png",
+    "old": "Greater Star Spawn Emissary"
+  },
+  {
+    "id": 50007,
+    "name": "Hazlik",
+    "ru": "Хазлик",
+    "short": "ХАЗЛИК",
+    "race": "HUMAN",
+    "raceRu": "ЧЕЛОВЕК",
+    "file": "hazlik.jpeg",
+    "face": [
+      77,
+      5
+    ],
+    "crop": [
+      100,
+      105,
+      650,
+      396
+    ],
+    "source": "https://www.dndbeyond.com/monsters/6491361-hazlik",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/56892/640/1000/1000/639156777132671418.jpeg",
+    "old": "Groundling Stalker"
+  }
+]

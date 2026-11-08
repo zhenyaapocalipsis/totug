@@ -13,7 +13,7 @@ extends RefCounted
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "kassadin"    — Feyr: убивать войска можно где угодно;
 ##   "kogmaw"      — Shoggoth: deploy / assassinate / supplant до 3 мест от своих войск;
-##   "malzahar"    — Inquisitor of the Mind Fire: другая карта поставила войска -> ещё 2;
+##   "malzahar"    — Qunbraxel: другая карта поставила войска -> ещё 2;
 ##   "undertitan"  — Githyanki Knight: "deploy X troops" карты можно заменить на +X Power;
 ##   "hive_herald" — Carrion Stalker: свой шпион к чужому -> вернуть чужого;
 ##   "deploys"     — сколько войск игрок поставил в этот ход (Lesser Star Spawn Emissary).
@@ -27,13 +27,13 @@ extends RefCounted
 ## начале каждого своего хода отложенная карта разыгрывается (on_start_turn).
 
 const KAISA := "50000"  # Elder Thing
-const BELVETH := "50001"  # Greater Star Spawn Emissary
+const BELVETH := "50001"  # Zargon the Returner
 const CHOGATH := "50002"  # Froghemoth Elder
 const KASSADIN := "50003"  # Feyr
 const KHAZIX := "50004"  # Cthulhu
 const KOGMAW := "50005"  # Shoggoth
-const MALZAHAR := "50006"  # Inquisitor of the Mind Fire
-const REKSAI := "50007"  # Groundling Stalker
+const MALZAHAR := "50006"  # Qunbraxel
+const REKSAI := "50007"  # Hazlik
 const VELKOZ := "50008"  # Eye Monger
 const HATCHLING := "50010"  # Lesser Star Spawn Emissary (Xer'Sai Hatchling)
 const ELDER := "50011"  # Githzerai Monk (Belvethi Elder)
@@ -145,7 +145,7 @@ static func _choose(card_id: String, opts: Array[CardEffect], labels: Array[Stri
 	return c
 
 
-## Groundling Stalker (Rek'Sai): "move up to 2 troops or spies" — дважды выбор.
+## Hazlik (Rek'Sai): "move up to 2 troops or spies" — дважды выбор.
 static func _move_unit() -> ChooseEffect:
 	var c := ChooseEffect.new([MoveTroop.any(1), SiegeCards.MoveSpy.new(false, true), SequenceEffect.new()],
 		["Move a troop", "Move a spy", "Done"])
@@ -261,7 +261,7 @@ static func before_deploy(state: GameState, player_id: String, eff: DeployTroop,
 	return true
 
 
-## Первое войско цепочки DeployTroop встало. Inquisitor of the Mind Fire: ещё 2.
+## Первое войско цепочки DeployTroop встало. Qunbraxel: ещё 2.
 static func on_card_deploy(state: GameState, player_id: String, eff: DeployTroop, resolver: EffectResolver) -> void:
 	if eff.bonus or player_id != state.current_player() or not state.turn_flags.get("malzahar", false):
 		return
