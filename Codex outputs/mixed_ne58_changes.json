@@ -1,0 +1,154 @@
+[
+  {
+    "id": 49519,
+    "name": "Sewer King",
+    "ru": "Король канализации",
+    "short": "КОРОЛЬ СТОКОВ",
+    "race": "FIEND",
+    "raceRu": "ИСЧАДИЕ",
+    "path": "avernus/sewer_king.jpeg",
+    "face": [
+      108,
+      8
+    ],
+    "old": "Troll",
+    "crop": [
+      200,
+      210,
+      780,
+      476
+    ],
+    "source": "https://www.dndbeyond.com/monsters/3852145-sewer-king",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/36958/376/1000/1000/638308300231406527.jpeg"
+  },
+  {
+    "id": 50108,
+    "from": 49519,
+    "old": "Euryale",
+    "name": "Troll",
+    "ru": "Тролль",
+    "short": "ТРОЛЛЬ",
+    "race": "TROLL",
+    "raceRu": "ТРОЛЛЬ",
+    "path": "avernus/troll.jpeg",
+    "crop": [
+      0,
+      0,
+      571,
+      348
+    ],
+    "face": [
+      77,
+      45
+    ]
+  },
+  {
+    "id": 50101,
+    "name": "Displacer Beast",
+    "ru": "Зверь смещения",
+    "short": "ЗВЕРЬ СМЕЩЕНИЯ",
+    "race": "DISPLACER BEAST",
+    "raceRu": "ЗВЕРЬ СМЕЩЕНИЯ",
+    "path": "ixtal/displacer_beast.png",
+    "face": [
+      18,
+      40
+    ],
+    "old": "Ras Nsi",
+    "crop": [
+      20,
+      145,
+      480,
+      293
+    ],
+    "source": "https://www.dndbeyond.com/monsters/5194970-displacer-beast",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/47138/764/1000/1000/638741963979068987.png"
+  },
+  {
+    "id": 49214,
+    "name": "Ivan Dilisnya",
+    "ru": "Иван Дилисня",
+    "short": "ИВАН ДИЛИСНЯ",
+    "race": "HUMAN",
+    "raceRu": "ЧЕЛОВЕК",
+    "path": "pz/ivan_dilisnya.jpeg",
+    "face": [
+      20,
+      5
+    ],
+    "old": "Elise",
+    "crop": [
+      90,
+      100,
+      630,
+      384
+    ],
+    "source": "https://www.dndbeyond.com/monsters/6491365-ivan-dilisnya",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/56892/653/1000/1000/639156777147335721.jpeg"
+  },
+  {
+    "id": 49212,
+    "name": "Koboldzilla",
+    "ru": "Кобольдзилла",
+    "short": "КОБОЛЬДЗИЛЛА",
+    "race": "CONSTRUCT",
+    "raceRu": "КОНСТРУКТ",
+    "path": "pz/koboldzilla.jpeg",
+    "face": [
+      95,
+      0
+    ],
+    "old": "Viktra Mordenheim",
+    "crop": [
+      100,
+      0,
+      880,
+      536
+    ],
+    "source": "https://www.dndbeyond.com/monsters/6285299-koboldzilla",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/55407/48/1000/1000/639089451173685682.jpeg"
+  },
+  {
+    "id": 49104,
+    "from": 49122,
+    "old": "Vampire Nosferatu",
+    "name": "Shadow",
+    "ru": "Тень",
+    "short": "ТЕНЬ",
+    "race": "UNDEAD",
+    "raceRu": "НЕЖИТЬ",
+    "path": "shadow/shadow.png",
+    "crop": [
+      0,
+      0,
+      700,
+      427
+    ],
+    "face": [
+      51,
+      24
+    ]
+  },
+  {
+    "id": 49122,
+    "name": "Ankhtepot",
+    "ru": "Анхтепот",
+    "short": "АНХТЕПОТ",
+    "race": "UNDEAD",
+    "raceRu": "НЕЖИТЬ",
+    "path": "shadow/ankhtepot.jpeg",
+    "face": [
+      36,
+      25
+    ],
+    "old": "Shadow",
+    "crop": [
+      100,
+      60,
+      650,
+      396
+    ],
+    "source": "https://www.dndbeyond.com/monsters/6491339-ankhtepot",
+    "art": "https://www.dndbeyond.com/avatars/thumbnails/56892/572/1000/1000/639156777051164405.jpeg"
+  }
+]

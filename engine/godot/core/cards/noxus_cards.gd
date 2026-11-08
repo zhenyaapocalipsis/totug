@@ -17,7 +17,7 @@ extends RefCounted
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "devours"        — сколько карт текущий игрок сожрал в этот ход (note_devour);
 ##   "trophy_start"   — трофеи игрока в начале хода (Azer Sentinel, TurnEngine.start_turn);
-##   "might_twice"    — Troll: каждая Might срабатывает дважды;
+##   "might_twice"    — Sewer King: каждая Might срабатывает дважды;
 ##   "might_supplant" — Horned Devil: каждое срабатывание Might ещё и supplant;
 ##   "devour_promote" — Efreeti: сожранную из руки/сброса карту можно продвинуть;
 ##   "no_deploy"      — Weretiger: {site: player} — туда нельзя ставить войска.
@@ -139,7 +139,7 @@ static func build(card_id: String) -> CardEffect:
 					GainInfluence.new(sites.size()), ShadowCards._SupplantAtSites.new(sites)])),
 			], ["Place 2 spies and draw a card",
 				"Return any number of your spies -> +1 Influence and supplant a troop at each of those sites"])
-		"49519":  # Troll (Sion)
+		"49519":  # Sewer King (Sion)
 			return SequenceEffect.new([
 				ShadowCards._SetFlag.new("might_twice"),
 				DrawCards.new(1),
@@ -230,7 +230,7 @@ static func _hit_player(state: GameState, player_id: String, before: Dictionary)
 
 ## "Might: X" — срабатывает, если в этот ход сожрано не меньше index карт.
 ## make — Callable() -> CardEffect: дерево эффекта пересобирается на каждое
-## срабатывание (Troll — дважды).
+## срабатывание (Sewer King — дважды).
 class Might extends CardEffect:
 	var index: int
 	var make: Callable

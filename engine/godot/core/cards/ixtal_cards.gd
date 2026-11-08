@@ -16,7 +16,7 @@ extends RefCounted
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "milio"     — Chwinga: Explore берёт в руку все подходящие карты;
-##   "ezreal"    — Euryale: Explore смотрит 4 карты;
+##   "ezreal"    — Troll: Explore смотрит 4 карты;
 ##   "landing"   — Yuan-ti Malison: после каждого Explore — столько войск;
 ##   "rengar"    — Troglodyte: верхняя карта колоды открыта, с Power — можно в руку;
 ##   "skarner"   — Ironscale Hydra: маркеры контроля считаются тотальным контролем;
@@ -29,14 +29,14 @@ extends RefCounted
 ## войска возвращаются в бараки (sync_market_troops).
 
 const NEEKO := "50100"  # Hythonia
-const MALPHITE := "50101"  # Ras Nsi
+const MALPHITE := "50101"  # Displacer Beast
 const ZILEAN := "50102"  # Sarrukh Tyrant
 const SKARNER := "50103"  # Ironscale Hydra
 const MILIO := "50104"  # Chwinga
 const RENGAR := "50105"  # Troglodyte
 const ZYRA := "50106"  # Snapping Hydra
 const QIYANA := "50107"  # Dao
-const EZREAL := "50108"  # Euryale
+const EZREAL := "50108"  # Troll
 const SEEKER := "50110"  # Bandit Deceiver (Treasure Seeker)
 const TROOPER := "50111"  # Lizardfolk Warden (All Terrain Trooper)
 const VASTAYA := "50112"  # Yuan-ti Abomination (Avenging Vastaya)
@@ -606,7 +606,7 @@ class _ZyraCheck extends CardEffect:
 		IxtalCards.on_deploy_count(state)
 
 
-## Euryale (Ezreal): "Name a region. Explore for a card from that region".
+## Troll (Ezreal): "Name a region. Explore for a card from that region".
 ## Регионы — типы карт рынка и своей колоды (CHULT, FAR REALM, DROW...).
 class _NameRegion extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:

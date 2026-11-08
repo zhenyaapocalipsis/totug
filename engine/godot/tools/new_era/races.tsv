@@ -40,7 +40,6 @@ Zaratan	ELEMENTAL
 Bone Devil	DEVIL
 Drider	DRIDER
 Green Hag	HAG
-Shadow	UNDEAD
 Phase Spider	PHASE SPIDER
 Twig Blight	PLANT
 Wererat	LYCANTHROPE
@@ -68,7 +67,6 @@ Horned Devil	DEVIL
 Efreeti	GENIE
 Azer Sentinel	ELEMENTAL
 Ice Devil	DEVIL
-Troll	TROLL
 Fire Giant	GIANT
 Half-Dragon	DRAGON
 Wyvern	WYVERN
@@ -195,7 +193,6 @@ Ramya Vasavadan	UNDEAD
 Relentless Slasher	FIEND
 Nightmare Haunt	ABERRATION
 Graveyard Revenant	UNDEAD
-Vampire Nosferatu	UNDEAD
 Sphinx of Secrets	SPHINX
 Archon of Boundaries	CELESTIAL
 Empyrean Iota	CELESTIAL
@@ -222,8 +219,6 @@ Gold-Forged Sentinel	CONSTRUCT
 Helmed Horror	CONSTRUCT
 Nimblewright Guard	CONSTRUCT
 Warforged Titan	CONSTRUCT
-Elise	CONSTRUCT
-Viktra Mordenheim	HUMAN
 Manshoon	HUMAN
 Trobriand	CONSTRUCT
 Assassin	HUMAN
@@ -244,8 +239,13 @@ Doomwake Giant	GIANT
 Hythonia	MEDUSA
 Ironscale Hydra	HYDRA
 Snapping Hydra	HYDRA
-Euryale	MEDUSA
 Ssurran Defiler	SSURRAN
 Yuan-ti Malison	YUAN-TI
-Ras Nsi	YUAN-TI
 Red Slaad	SLAAD
+Sewer King	FIEND
+Troll	TROLL
+Displacer Beast	DISPLACER BEAST
+Ivan Dilisnya	HUMAN
+Koboldzilla	CONSTRUCT
+Shadow	UNDEAD
+Ankhtepot	UNDEAD

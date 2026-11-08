@@ -1580,7 +1580,7 @@
   },
   {
     "card_id": 49104,
-    "name": "Vampire Nosferatu",
+    "name": "Shadow",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "RAVENLOFT",
@@ -1778,7 +1778,7 @@
   },
   {
     "card_id": 49122,
-    "name": "Shadow",
+    "name": "Ankhtepot",
     "cost": 6,
     "aspect": "CONQUEST",
     "type": "RAVENLOFT",
@@ -1943,11 +1943,11 @@
   },
   {
     "card_id": 49212,
-    "name": "Viktra Mordenheim",
+    "name": "Koboldzilla",
     "cost": 6,
     "aspect": "MALICE",
     "type": "WATERDEEP",
-    "race": "HUMAN",
+    "race": "CONSTRUCT",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate a troop anywhere.\nLook at the top 2 cards of each player's deck. You may discard 1 of them.\nMalice Focus ► Assassinate a troop anywhere or draw a card."
@@ -1965,11 +1965,11 @@
   },
   {
     "card_id": 49214,
-    "name": "Elise",
+    "name": "Ivan Dilisnya",
     "cost": 6,
     "aspect": "GUILE",
     "type": "WATERDEEP",
-    "race": "CONSTRUCT",
+    "race": "HUMAN",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, whenever you place a spy, you may move a troop.\nPlace 2 spies.\nGuile Focus ► Place 2 spies or draw a card."
@@ -2651,11 +2651,11 @@
   },
   {
     "card_id": 49519,
-    "name": "Troll",
+    "name": "Sewer King",
     "cost": 9,
     "aspect": "CONQUEST",
     "type": "AVERNUS",
-    "race": "TROLL",
+    "race": "FIEND",
     "deck_vp": 4,
     "inner_circle_vp": 9,
     "ability_text": "Might triggers twice this turn.\nDraw a card and devour a card in your hand, the market or your discard pile.\nMight: Deploy 4 troops.\nMight: Supplant a troop."
@@ -3927,11 +3927,11 @@
   },
   {
     "card_id": 50101,
-    "name": "Ras Nsi",
+    "name": "Displacer Beast",
     "cost": 8,
     "aspect": "CONQUEST",
     "type": "CHULT",
-    "race": "YUAN-TI",
+    "race": "DISPLACER BEAST",
     "deck_vp": 6,
     "inner_circle_vp": 12,
     "ability_text": "+8 Power"
@@ -4004,11 +4004,11 @@
   },
   {
     "card_id": 50108,
-    "name": "Euryale",
+    "name": "Troll",
     "cost": 6,
     "aspect": "AMBITION",
     "type": "CHULT",
-    "race": "MEDUSA",
+    "race": "TROLL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Assassinate up to 2 troops at one site.\nWhenever you Explore this turn, look at 4 cards instead of 2.\nName a region. Explore for a card of that region."

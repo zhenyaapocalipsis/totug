@@ -14,7 +14,7 @@ extends RefCounted
 ## Флаги хода (state.turn_flags, сбрасываются в start_turn):
 ##   "choose_all"  — Homunculus: в "Choose one" есть вариант "All of them";
 ##   "focus_extra" — Homunculus: каждый Focus срабатывает ещё раз;
-##   "spy_move"    — Elise: после каждого шпиона можно подвинуть войско;
+##   "spy_move"    — Ivan Dilisnya: после каждого шпиона можно подвинуть войско;
 ##   "buy_echo"    — Trobriand: после покупки можно бесплатно взять карту дешевле.
 ## Лишний ход Basilisk — state.extra_turn_for / in_extra_turn (GameEnd).
 
@@ -90,7 +90,7 @@ static func build(card_id: String) -> CardEffect:
 				FocusEffect.new("CONQUEST", ChooseEffect.new([DeployTroop.new(4), DrawCards.new(1)],
 					["Deploy 4 troops", "Draw a card"])),
 			])
-		"49212":  # Viktra Mordenheim (Caitlyn)
+		"49212":  # Koboldzilla (Caitlyn)
 			return SequenceEffect.new([
 				_strike_anywhere(),
 				_TopTwoPeek.new(),
@@ -106,7 +106,7 @@ static func build(card_id: String) -> CardEffect:
 				FocusEffect.new("AMBITION", ChooseEffect.new([GainInfluence.new(3), DrawCards.new(1)],
 					["+3 Influence", "Draw a card"])),
 			])
-		"49214":  # Elise (Jinx) — ход шпиона: PlaceSpy._place_at
+		"49214":  # Ivan Dilisnya (Jinx) — ход шпиона: PlaceSpy._place_at
 			return SequenceEffect.new([
 				ShadowCards._SetFlag.new("spy_move"),
 				PlaceSpy.new(2),
@@ -333,7 +333,7 @@ class _RecruitFreeVp extends RecruitFree:
 				resolver.push(GainVP.new(vp), player_id)
 
 
-## Viktra Mordenheim: "Look at the top 2 cards of each player's deck. You may discard
+## Koboldzilla: "Look at the top 2 cards of each player's deck. You may discard
 ## up to 1 of them" — по очереди от себя по часовой; одна карта на всех.
 class _TopTwoPeek extends CardEffect:
 	var _queue: Array[String] = []

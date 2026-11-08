@@ -15,7 +15,7 @@ extends RefCounted
 ##
 ## Счётчики хода лежат в state.turn_flags (сбрасываются в start_turn):
 ##   "outcasts"       — сколько Insane Outcast текущий игрок сыграл в этот ход;
-##   "outcast_bonus"  — Shadow: +2 Power и карта за каждый Outcast;
+##   "outcast_bonus"  — Ankhtepot: +2 Power и карта за каждый Outcast;
 ##   "echo"           — Shambling Mound: следующая карта разыгрывается дважды;
 ##   "market_affinity"— Drider: скидка за Outcast и у всех карт рынка.
 
@@ -157,7 +157,7 @@ static func build(card_id: String) -> CardEffect:
 			])
 		"49121":  # Azalin Rex (Gwen)
 			return SequenceEffect.new([GainPower.new(3), _HagDevour.new(), _OpponentsMayDevour.new()])
-		"49122":  # Shadow (Kalista) — 0 VP за Outcast: Scoring.card_bonus_vp
+		"49122":  # Ankhtepot (Kalista) — 0 VP за Outcast: Scoring.card_bonus_vp
 			return SequenceEffect.new([_CycleHand.new(), _AddFlag.new("outcast_bonus")])
 		"49123":  # Phase Spider (Spider Elise)
 			return SequenceEffect.new([
@@ -172,7 +172,7 @@ static func build(card_id: String) -> CardEffect:
 
 
 ## Вызывается TurnEngine.play_card до запуска эффекта карты: считает сыгранные
-## Insane Outcast, добавляет бонус Shadow и повтор Shambling Mound.
+## Insane Outcast, добавляет бонус Ankhtepot и повтор Shambling Mound.
 static func on_play(state: GameState, player_id: String, card_id: String, effect: CardEffect) -> CardEffect:
 	var plays := 1
 	if state.turn_flags.get("echo", false):

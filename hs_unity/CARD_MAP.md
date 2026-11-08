@@ -156,7 +156,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Bone Devil (49516) | G'huun (BE_287) | `BE_287_GhuunTheCataStrophic_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Drider (49120) | Blightfang (RLK_225) | `RLK_225_BlightFang_Spawn.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Green Hag (49920; до NE-45 — 49121 в Ravenloft, NE-45 — 49900) | Jace Darkweaver (SW_044) | `SWFX_JaceDarkweaver_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
-| Shadow (49122) | The Jailer (CORE_MAW_034) | `MAWFX_TheJailer_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| Ankhtepot (49122) | — | — | NE-58: owner-approved new creature; no HS animation assigned. Previous creature and its binding moved to 49104. |
 
 ### piltover
 
@@ -165,7 +165,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Stone Golem (49211) | Chronogor (TIME_032) | `TIMEFX_Chronogor_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Assassin (49707; NE-49 убран из Waterdeep, NE-50 вернулся в Calimshan) | Garona Halforcen (TIME_875) | `TIME_875_Garona_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Iron Golem (49213) | Mathias Shaw (CAP_005) | `CAP_005_MathiasShaw_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| ~~Manticore~~ (—, существо убрано из игры NE-49; на 49214 теперь Elise) | Lo'Gosh, Blood Fighter (TIME_850) | `TIME_LoGosh_CustomSummon.prefab` | анимация свободна |
+| ~~Manticore~~ (—, существо убрано из игры NE-49; на 49214 теперь Ivan Dilisnya) | Lo'Gosh, Blood Fighter (TIME_850) | `TIME_LoGosh_CustomSummon.prefab` | анимация свободна |
 | Homunculus (49215) | Norgannon (TTN_075) | `TTNFX_Norgannon_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Chimera (49216) | Dave Berard (CRED_215) | `AVFX_BrukanElements_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Manshoon (49217) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Conjurer Archmage). |
@@ -206,7 +206,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Efreeti (49715) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Azer Sentinel (49801) | Mug'Zee (JAIL_800) | `JAILFX_MugZee_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Ice Devil (49518) | Moroes (KAR_044) | `Moroes_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
-| Troll (49519) | Shudderblock (TOY_501t) | `TOYFX_Shudderblock_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| Sewer King (49519) | — | — | NE-58: owner-approved new creature; no HS animation assigned. Previous creature and its binding moved to 50108. |
 | Fire Giant (49636) | Neeru Fireblade (LETL_823H) | `BARFX_NeeruFireblade_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | ~~Half-Dragon~~ (—, существо убрано из игры NE-39; на 49018 теперь другое существо) | Sire Denathrius (REV_906t) | `REVFX_SireDenathrius_Infused_CustomSummon.prefab` | анимация свободна |
 | Wyvern (49522) | Captain Crowley (CAP_106) | `CAPFX_CaptainCrowley_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
@@ -233,7 +233,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | ~~Roper~~ (—, существо убрано из игры NE-50; на 49711 теперь Marid) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | анимация свободна |
 | ~~Ancient Brass Dragon~~ (—, существо убрано из игры NE-38; на 49016 теперь другое существо) | Mister Clocksworth (TIME_038t3) | `TIMEFX_MisterClocksWorth_CustomSummon.prefab` | анимация свободна |
 | Purple Worm (49713) | Arisen Onyxia (CATA_155) | `CATA_155_ArisenOnyxia_Fab_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Ras Nsi (50101) | — | — | NE-52: новое существо; анимация пока не назначена. Guardian Naga перенесена на обычную карту 50115; прежний Razidir освобождён |
+| Displacer Beast (50101) | — | — | NE-58: owner-approved new creature; no HS animation assigned. |
 | ~~Adult Brass Dragon~~ (—, существо убрано из игры NE-38; на 49021 теперь другое существо) | Anachronos (CORE_RLK_919) | `RLKFX_Anachronos_CustomSummon.prefab` | анимация свободна |
 | Stone Giant (49606) | Toy Captain Tarim (TOY_813t) | `TOYFX_ToyCaptainTarim_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Gorgon (49717) | Gorgonzormu (VAC_955) | `VACFX_Gorgonzormu_CustomSummon.prefab` | горгона (по имени; при желании — заменить) |
@@ -263,7 +263,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | ~~Satyr Thornbearer~~ (—, существо убрано из игры NE-45; на 49900 теперь Green Hag) | Nightmare Lord Xavius (EDR_856) | `EDRFX_Xavius_CustomSummon.prefab` | анимация свободна |
 | ~~High Fae Kindguard~~ (—, существо убрано из игры NE-45; на 49901 теперь Yarnspinner) | Prince Malchezaar (LT24_821H) | `Malchezaar_CustomSummon.prefab` | анимация свободна |
 | ~~High Fae Noble~~ (—, существо убрано из игры NE-45; на 49902 теперь Incarnation of Transience) | Glugg the Gulper (TSC_639) | `TSCFX_GluggTheGulper_CustomSummon.prefab` | анимация свободна |
-| Viktra Mordenheim (49212) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Lorehold Apprentice). |
+| Koboldzilla (49212) | — | — | NE-58: owner-approved new creature; no HS animation assigned. |
 | Trobriand (49220) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Silverquill Apprentice). |
 | ~~Faerie Pathlighter~~ (—, существо убрано из игры NE-45; на 49905 теперь Lampad) | Soulburner Varia (YOG_520) | `YOGFX_SoulburnerVaria_CustomSummon.prefab` | анимация свободна |
 | Faerie Dragon Youth (49906) | Eternus (TIME_435) | `TIME_Eternus_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
@@ -296,4 +296,8 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Troglodyte (50105) | The Unknowable One (BE_725) | `BEFX_UnknowableOne_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Snapping Hydra (50106) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Lizardfolk Geomancer освобождено |
 | Dao (49720) | Dreamplanner Zephrys (WORK_027) | `WORKFX_ZephrysOverworked_CustomSummon.prefab` | земляной джинн |
-| Euryale (50108) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Knight of Eldraine освобождено |
+| Troll (50108) | Shudderblock (TOY_501t) | `TOYFX_Shudderblock_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+
+| Ivan Dilisnya (49214) | — | — | NE-58: owner-approved new creature; no HS animation assigned. |
+
+| Shadow (49104) | The Jailer (CORE_MAW_034) | `MAWFX_TheJailer_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
