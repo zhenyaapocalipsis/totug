@@ -1,0 +1,654 @@
+[
+  {
+    "id": "48632",
+    "name": "Olhydra",
+    "before": [
+      102,
+      4
+    ],
+    "after": [
+      112,
+      23
+    ]
+  },
+  {
+    "id": "49014",
+    "name": "Warrior Commander",
+    "before": [
+      72,
+      31
+    ],
+    "after": [
+      85,
+      36
+    ]
+  },
+  {
+    "id": "49020",
+    "name": "Empyrean",
+    "before": [
+      30,
+      22
+    ],
+    "after": [
+      24,
+      22
+    ]
+  },
+  {
+    "id": "49021",
+    "name": "Archon of Boundaries",
+    "before": [
+      56,
+      26
+    ],
+    "after": [
+      57,
+      39
+    ]
+  },
+  {
+    "id": "49022",
+    "name": "Adult Gold Dragon",
+    "before": [
+      8,
+      7
+    ],
+    "after": [
+      12,
+      19
+    ]
+  },
+  {
+    "id": "49101",
+    "name": "Nightmare Haunt",
+    "before": [
+      56,
+      10
+    ],
+    "after": [
+      53,
+      10
+    ]
+  },
+  {
+    "id": "49102",
+    "name": "Flaming Skeleton",
+    "before": [
+      72,
+      2
+    ],
+    "after": [
+      72,
+      9
+    ]
+  },
+  {
+    "id": "49103",
+    "name": "Graveyard Revenant",
+    "before": [
+      56,
+      20
+    ],
+    "after": [
+      112,
+      0
+    ]
+  },
+  {
+    "id": "49108",
+    "name": "Warhorse Skeleton",
+    "before": [
+      64,
+      7
+    ],
+    "after": [
+      68,
+      6
+    ]
+  },
+  {
+    "id": "49109",
+    "name": "Mist Horror",
+    "before": [
+      20,
+      0
+    ],
+    "after": [
+      87,
+      43
+    ]
+  },
+  {
+    "id": "49113",
+    "name": "Dracolich",
+    "before": [
+      34,
+      0
+    ],
+    "after": [
+      33,
+      8
+    ]
+  },
+  {
+    "id": "49116",
+    "name": "Saidra d'Honaire",
+    "before": [
+      23,
+      0
+    ],
+    "after": [
+      28,
+      0
+    ]
+  },
+  {
+    "id": "49119",
+    "name": "Dullahan",
+    "before": [
+      92,
+      12
+    ],
+    "after": [
+      37,
+      4
+    ]
+  },
+  {
+    "id": "49207",
+    "name": "Clockwork Behir",
+    "before": [
+      56,
+      8
+    ],
+    "after": [
+      59,
+      8
+    ]
+  },
+  {
+    "id": "49210",
+    "name": "Carrionette",
+    "before": [
+      81,
+      22
+    ],
+    "after": [
+      71,
+      25
+    ]
+  },
+  {
+    "id": "49219",
+    "name": "Behir",
+    "before": [
+      91,
+      18
+    ],
+    "after": [
+      100,
+      23
+    ]
+  },
+  {
+    "id": "49500",
+    "name": "Relentless Juggernaut",
+    "before": [
+      56,
+      29
+    ],
+    "after": [
+      54,
+      0
+    ]
+  },
+  {
+    "id": "49502",
+    "name": "Relentless Slasher",
+    "before": [
+      60,
+      10
+    ],
+    "after": [
+      108,
+      7
+    ]
+  },
+  {
+    "id": "49503",
+    "name": "Hell Hound",
+    "before": [
+      112,
+      9
+    ],
+    "after": [
+      112,
+      0
+    ]
+  },
+  {
+    "id": "49506",
+    "name": "Speaker Devil",
+    "before": [
+      73,
+      0
+    ],
+    "after": [
+      72,
+      12
+    ]
+  },
+  {
+    "id": "49510",
+    "name": "Felhound",
+    "before": [
+      51,
+      23
+    ],
+    "after": [
+      44,
+      13
+    ]
+  },
+  {
+    "id": "49511",
+    "name": "Minotaur of Baphomet",
+    "after": [
+      83,
+      33
+    ]
+  },
+  {
+    "id": "49519",
+    "name": "Sewer King",
+    "before": [
+      108,
+      8
+    ],
+    "after": [
+      81,
+      4
+    ]
+  },
+  {
+    "id": "49520",
+    "name": "Daemogoth Titan",
+    "before": [
+      75,
+      5
+    ],
+    "after": [
+      68,
+      4
+    ]
+  },
+  {
+    "id": "49604",
+    "name": "Yeti",
+    "before": [
+      90,
+      0
+    ],
+    "after": [
+      89,
+      7
+    ]
+  },
+  {
+    "id": "49607",
+    "name": "Berserker Commander",
+    "before": [
+      66,
+      0
+    ],
+    "after": [
+      62,
+      14
+    ]
+  },
+  {
+    "id": "49609",
+    "name": "Fomorian",
+    "before": [
+      76,
+      0
+    ],
+    "after": [
+      60,
+      20
+    ]
+  },
+  {
+    "id": "49611",
+    "name": "Basilisk",
+    "before": [
+      30,
+      0
+    ],
+    "after": [
+      36,
+      0
+    ]
+  },
+  {
+    "id": "49613",
+    "name": "Doomwake Giant",
+    "before": [
+      109,
+      0
+    ],
+    "after": [
+      88,
+      0
+    ]
+  },
+  {
+    "id": "49701",
+    "name": "Rakshasa",
+    "before": [
+      54,
+      0
+    ],
+    "after": [
+      56,
+      0
+    ]
+  },
+  {
+    "id": "49712",
+    "name": "Nafas",
+    "before": [
+      30,
+      15
+    ],
+    "after": [
+      79,
+      6
+    ]
+  },
+  {
+    "id": "49714",
+    "name": "Abveku",
+    "before": [
+      15,
+      28
+    ],
+    "after": [
+      6,
+      23
+    ]
+  },
+  {
+    "id": "49718",
+    "name": "Ankheg",
+    "before": [
+      63,
+      13
+    ],
+    "after": [
+      42,
+      36
+    ]
+  },
+  {
+    "id": "49800",
+    "name": "Biha Babir",
+    "before": [
+      14,
+      15
+    ],
+    "after": [
+      24,
+      14
+    ]
+  },
+  {
+    "id": "49803",
+    "name": "Elder Tempest",
+    "before": [
+      40,
+      0
+    ],
+    "after": [
+      37,
+      0
+    ]
+  },
+  {
+    "id": "49807",
+    "name": "Elemental Cataclysm",
+    "before": [
+      60,
+      5
+    ],
+    "after": [
+      41,
+      5
+    ]
+  },
+  {
+    "id": "49811",
+    "name": "Zaratan",
+    "before": [
+      40,
+      0
+    ],
+    "after": [
+      37,
+      0
+    ]
+  },
+  {
+    "id": "49813",
+    "name": "Water Weird",
+    "before": [
+      80,
+      43
+    ],
+    "after": [
+      81,
+      47
+    ]
+  },
+  {
+    "id": "49819",
+    "name": "Mist Hulk",
+    "before": [
+      48,
+      0
+    ],
+    "after": [
+      53,
+      0
+    ]
+  },
+  {
+    "id": "49820",
+    "name": "Khargra",
+    "before": [
+      40,
+      10
+    ],
+    "after": [
+      65,
+      35
+    ]
+  },
+  {
+    "id": "49821",
+    "name": "Auril",
+    "before": [
+      76,
+      0
+    ],
+    "after": [
+      78,
+      13
+    ]
+  },
+  {
+    "id": "49900",
+    "name": "Mother Lorinda",
+    "before": [
+      63,
+      7
+    ],
+    "after": [
+      61,
+      7
+    ]
+  },
+  {
+    "id": "49901",
+    "name": "Yarnspinner",
+    "before": [
+      44,
+      14
+    ],
+    "after": [
+      46,
+      18
+    ]
+  },
+  {
+    "id": "49902",
+    "name": "Incarnation of Transience",
+    "before": [
+      75,
+      41
+    ],
+    "after": [
+      64,
+      36
+    ]
+  },
+  {
+    "id": "49912",
+    "name": "Bullywug Warrior",
+    "before": [
+      33,
+      25
+    ],
+    "after": [
+      42,
+      34
+    ]
+  },
+  {
+    "id": "49916",
+    "name": "Alseid",
+    "before": [
+      68,
+      0
+    ],
+    "after": [
+      59,
+      0
+    ]
+  },
+  {
+    "id": "49919",
+    "name": "Bullywug Bog Sage",
+    "before": [
+      40,
+      15
+    ],
+    "after": [
+      42,
+      18
+    ]
+  },
+  {
+    "id": "50001",
+    "name": "Zargon the Returner",
+    "before": [
+      49,
+      0
+    ],
+    "after": [
+      41,
+      4
+    ]
+  },
+  {
+    "id": "50003",
+    "name": "Feyr",
+    "before": [
+      92,
+      39
+    ],
+    "after": [
+      60,
+      30
+    ]
+  },
+  {
+    "id": "50006",
+    "name": "Qunbraxel",
+    "before": [
+      27,
+      0
+    ],
+    "after": [
+      31,
+      0
+    ]
+  },
+  {
+    "id": "50100",
+    "name": "Hythonia",
+    "before": [
+      54,
+      0
+    ],
+    "after": [
+      73,
+      0
+    ]
+  },
+  {
+    "id": "50101",
+    "name": "Displacer Beast",
+    "before": [
+      18,
+      40
+    ],
+    "after": [
+      32,
+      32
+    ]
+  },
+  {
+    "id": "50103",
+    "name": "Ironscale Hydra",
+    "after": [
+      89,
+      15
+    ]
+  },
+  {
+    "id": "50106",
+    "name": "Snapping Hydra",
+    "before": [
+      85,
+      25
+    ],
+    "after": [
+      46,
+      18
+    ]
+  },
+  {
+    "id": "50118",
+    "name": "Ssurran Defiler",
+    "before": [
+      80,
+      0
+    ],
+    "after": [
+      53,
+      0
+    ]
+  }
+]
