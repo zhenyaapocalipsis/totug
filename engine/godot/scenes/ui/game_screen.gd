@@ -94,6 +94,7 @@ const SIDE_BUTTONS_W := 40.0
 ## ниже ряда руки, чтобы таблице четырёх игроков хватило места над рынком
 ## (владелец, 2026-10-03).
 const RIGHT_BOTTOM_H := 48.0
+const END_TURN_H := 24.0
 ## Полоска цвета ходящего на кнопке End turn — вместо ника, который в кнопку
 ## не влезал (владелец, 2026-10-03).
 const TURN_CHIP_H := 5.0
@@ -551,19 +552,22 @@ func _build_layout() -> void:
 	L10n.scope(_timer_label)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	L10n.bind(_timer_label, "game.timer_tip", {}, "tooltip_text")
-	_end_turn_area.add_child(_timer_label)
+	add_child(_timer_label)
+	_timer_label.add_theme_stylebox_override("normal", zone_style(1))
 	_last_round_label = Label.new()
 	L10n.scope(_last_round_label)
 	_last_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_last_round_label.text = "LAST ROUND"
 	_last_round_label.visible = false
 	_last_round_label.add_theme_color_override("font_color", PixelTheme.GOLD)
-	_end_turn_area.add_child(_last_round_label)
+	add_child(_last_round_label)
+	_last_round_label.add_theme_stylebox_override("normal", zone_style(1))
 	_pause_button = _side_button("PAUSE", _on_pause_pressed)
 	# Реплей ставят на паузу своей полосой, зрителю пауза не положена.
-	_pause_button.visible = replay_bar == null and not watching
+	_pause_button.hide()
 	_menu_button = _side_button("MENU", func(): _pause_menu.visible = true)
 	L10n.bind(_menu_button, "game.menu_tip", {}, "tooltip_text")
+	_menu_button.hide()
 
 	# 1. Рука — поверх остальных зон: поднятая, она накрывает зону сыгранных карт.
 	_hand_panel = HandPanel.new()
@@ -1185,17 +1189,14 @@ func _layout() -> void:
 	# осталось.
 	_place(_barracks, d_x, top_y, COL, TOP_H)
 	var market_h := _market_panel.get_combined_minimum_size().y
-	var market_y := right_bottom_y - GAP - market_h
+	var end_turn_y := h - MARGIN - END_TURN_H
+	var market_y := end_turn_y - GAP - market_h
 	var market_x := d_x
 	_place(_market_panel, market_x, market_y, COL, market_h)
 	var players_y := top_y + TOP_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
-	var ew := COL - SIDE_BUTTONS_W - GAP
-	_place(_end_turn_area, market_x, right_bottom_y, ew, RIGHT_BOTTOM_H)
-	var side_x := market_x + ew + GAP
-	var side_h := floorf((RIGHT_BOTTOM_H - GAP) * 0.5)
-	_place(_pause_button, side_x, right_bottom_y, SIDE_BUTTONS_W, side_h)
-	_place(_menu_button, side_x, h - MARGIN - side_h, SIDE_BUTTONS_W, side_h)
+	var ew := COL
+	_place(_end_turn_area, market_x, end_turn_y, ew, END_TURN_H)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
 	# 2026-09-27: чат убран, сводка — до низа), за ней дектрекер тоже во всю
@@ -1219,26 +1220,18 @@ func _layout() -> void:
 	_place(_hand_panel, hand_x, hand_top, d_x - GAP - hand_x, h - MARGIN - hand_top)
 	_place_res_frame()
 
-	# Внутри зоны End turn: снизу таймер, кнопка — на всё, что над ним.
-	# Подписи «чей ход» и «END TURN» лежат по центру кнопки.
-	var timer_block: float = TIMER_H
-	if _last_round_label.visible:
-		timer_block += float(PixelTheme.LINE_H)
-	var button_h: float = RIGHT_BOTTOM_H - timer_block
 	_end_turn_button.position = Vector2.ZERO
-	_end_turn_button.size = Vector2(ew, button_h)
-	var caption_y := floorf((button_h - PixelTheme.LINE_H * 2.0) * 0.5)
-	_turn_label.position = Vector2(0, caption_y)
+	_end_turn_button.size = Vector2(ew, END_TURN_H)
+	_turn_label.position = Vector2(0, 6)
 	_turn_label.size = Vector2(ew, PixelTheme.LINE_H)
-	# Полоска цвета — по центру первой строки, с полями от краёв кнопки.
-	_turn_chip.position = Vector2(6, caption_y + floorf((PixelTheme.LINE_H - TURN_CHIP_H) * 0.5))
-	_turn_chip.size = Vector2(ew - 12, TURN_CHIP_H)
-	_end_label.position = Vector2(0, caption_y + PixelTheme.LINE_H)
-	_end_label.size = Vector2(ew, PixelTheme.LINE_H)
-	_timer_label.position = Vector2(0, button_h)
-	_timer_label.size = Vector2(ew, TIMER_H)
-	_last_round_label.position = Vector2(0, button_h + TIMER_H)
-	_last_round_label.size = Vector2(ew, PixelTheme.LINE_H)
+	_turn_chip.position = Vector2(5, 9)
+	_turn_chip.size = Vector2(5, 5)
+	_end_label.position = Vector2(12, 6)
+	_end_label.size = Vector2(ew - 14, PixelTheme.LINE_H)
+	var timer_x := board_x + floorf((_board_area.size.x - 44) * 0.5)
+	_place(_timer_label, timer_x, top_y, 44, TIMER_H + 2)
+	_place(_last_round_label, timer_x + 46, top_y, 90, TIMER_H + 2)
+
 
 
 ## Счётчики ходящего — по центру над рукой, поверх низа доски. Низ плашки —
@@ -2729,7 +2722,9 @@ func _market_rect(index: int) -> Rect2:
 
 func _on_supply_clicked(card_id: String) -> void:
 	if PlayerProfile.art_of(viewer_id, card_id) == "":
-		_fly_to_discard(_market_panel.supply_rect(card_id), card_id)
+		var source := _market_panel.supply_rect(card_id)
+		# The compact button launches a complete card, not a clipped short face.
+		_fly_to_discard(Rect2(source.get_center() - CardView.MINI_SIZE * 0.5, CardView.MINI_SIZE), card_id)
 	send(Intent.recruit_supply(viewer_id, card_id))
 
 

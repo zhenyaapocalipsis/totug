@@ -88,7 +88,7 @@ const SERVER_PORT := 7780
 const DEFAULT_SERVER := "129.101.123.70"
 ## Меняется при любой несовместимой правке сети или правил: сервер и игроки
 ## должны играть одной версией.
-const PROTOCOL := 46  # 46: Yuan-ti Infiltrator copies count their aspect for Focus; 45: supplant without troops = +1 VP
+const PROTOCOL := 47  # 47: eight-card market; older deals and peers use six slots
 ## Режим партий, собранных поиском игры: зависит от размера стола
 ## (2 — STANDARD, 3 — RANDOM 3, 4 — RANDOM 4).
 static func match_mode(player_count: int) -> String:

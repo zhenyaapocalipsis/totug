@@ -592,8 +592,8 @@ func test_team_stock() -> void:
 	red.troops_in_barracks = 1
 	deploy._deploy_at(state, "green", slots[2], resolver)
 	check(state.game_end_triggered, "конец игры — когда пусты общие бараки")
-	check(ReplayBook.same_rules(22) and not ReplayBook.same_rules(22, true) and ReplayBook.same_rules(NetSession.PROTOCOL, true),
-		"реплей 2v2 до общих бараков — OLD, обычный — нет")
+	check(not ReplayBook.same_rules(22) and not ReplayBook.same_rules(22, true) and ReplayBook.same_rules(NetSession.PROTOCOL, true),
+		"старые раздачи на 6 карт — OLD, текущий 2v2 совместим")
 
 
 func test_team_mode() -> void:
@@ -912,8 +912,8 @@ func test_market() -> void:
 		half_b.append("b%d" % i)
 
 	var market := Market.build(half_a, half_b, rng)
-	check_eq(market.display.size(), Market.DISPLAY_SIZE, "дисплей — 6 карт")
-	check_eq(market.deck.size(), 20 - Market.DISPLAY_SIZE, "колода маркета = 20 - 6 открытых")
+	check_eq(market.display.size(), 8, "дисплей — 8 карт")
+	check_eq(market.deck.size(), 20 - Market.DISPLAY_SIZE, "колода маркета = 20 - 8 открытых")
 	var empty_slots := 0
 	for c: String in market.display:
 		if c == "":
@@ -924,6 +924,11 @@ func test_market() -> void:
 	check(recruited != "", "recruit_at(0) вернул карту")
 	check(market.display[0] != "", "слот 0 пополнен из колоды маркета")
 	check_eq(market.deck.size(), 20 - Market.DISPLAY_SIZE - 1, "колода маркета уменьшилась на одну")
+	var eighth := market.display[7]
+	var refill: String = market.deck.back()
+	check_eq(market.recruit_at(7), eighth, "восьмую карту можно купить")
+	check_eq(market.display[7], refill, "восьмой слот пополняется из колоды")
+	check_eq(market.recruit_at(8), "", "девятого слота нет")
 
 	check_eq(market.recruit_at(-1), "", "неверный индекс — пустая строка")
 	check_eq(market.recruit_at(99), "", "индекс за пределами дисплея — пустая строка")
@@ -2545,14 +2550,14 @@ func test_game_setup_real_game() -> void:
 	check(state.graph.site_count() >= 15, "доска собрана: локаций %d" % state.graph.site_count())
 	check(state.graph.slot_count() >= 80, "троп-слотов %d" % state.graph.slot_count())
 
-	# маркет: 2 полуколоды по 40 = 80 карт, 6 из них открыты на дисплее
-	check_eq(state.market.display.size(), 6, "на дисплее маркета 6 слотов")
+	# маркет: 2 полуколоды по 40 = 80 карт, 8 из них открыты на дисплее
+	check_eq(state.market.display.size(), 8, "на дисплее маркета 8 слотов")
 	var empty_slots := 0
 	for cid: String in state.market.display:
 		if cid == "":
 			empty_slots += 1
-	check_eq(empty_slots, 0, "все 6 слотов дисплея заполнены")
-	check_eq(state.market.deck_size(), 80 - 6, "в колоде маркета 74 карты (80 минус 6 открытых)")
+	check_eq(empty_slots, 0, "все 8 слотов дисплея заполнены")
+	check_eq(state.market.deck_size(), 80 - 8, "в колоде маркета 72 карты (80 минус 8 открытых)")
 
 	# все id маркета — настоящие карты из cards.json
 	var unknown: Array[String] = []
@@ -3018,9 +3023,9 @@ func test_game_modes() -> void:
 	check(max_ok, "RANDOM: копий не больше 2 (на добор аспекта — 3)")
 	check(singles_ok, "RANDOM: от каждой полуколоды ровно 5 уникальных карт")
 	check(size_ok, "RANDOM: маркет набирает 80 карт (RANDOM 3 — не меньше 77)")
-	check(ReplayBook.same_rules(28, false, GameSetup.MODE_STANDARD) and not ReplayBook.same_rules(28, false, GameSetup.MODE_RANDOM_4)
+	check(not ReplayBook.same_rules(28, false, GameSetup.MODE_STANDARD) and not ReplayBook.same_rules(28, false, GameSetup.MODE_RANDOM_4)
 		and ReplayBook.same_rules(NetSession.PROTOCOL, false, GameSetup.MODE_RANDOM_4),
-		"реплеи: RANDOM до Market-1 — OLD, STANDARD прежней версии смотрится")
+		"реплеи на 6 карт — OLD, текущий RANDOM совместим")
 
 
 ## Лобби банов поиска игры (Ban-1): очередь по кругу, по 2 бана на игрока,
@@ -5067,6 +5072,11 @@ func test_bot_player() -> void:
 		var pair: Array[String] = []
 		pair.assign([["drow", "dragons"], ["drow", "elementals"], ["demons", "undead"], ["aberrations", "dragons"]][g])
 		var state := GameSetup.new_game(["red", "blue"], 100 + g, pair, false, true, true)
+		# Keep the historical strength benchmark on its original six-card fixture.
+		# The eight-card variant changes these deals (3/4 wins, formerly 4/4).
+		# Legality and complete games above exercise the current eight-card market.
+		while state.market.display.size() > 6:
+			state.market.deck.append(state.market.display.pop_back())
 		var server := GameServer.new(state)
 		server.build_views = false
 		var guard := 0

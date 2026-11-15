@@ -177,6 +177,9 @@ const RANDOM_MARKET := 29
 
 ## mode — режим из заголовка реплея ("" — неизвестен, считаем не RANDOM).
 static func same_rules(protocol: int, teams: bool = false, mode: String = "") -> bool:
+	# Eight face-up cards change every initial deal, including STANDARD.
+	if protocol < 47:
+		return false
 	if teams and protocol < TEAM_STOCK:
 		return false
 	if protocol < RANDOM_MARKET and is_random_mode(mode):

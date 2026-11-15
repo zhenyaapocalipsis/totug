@@ -1,7 +1,7 @@
 class_name MarketPanel
 extends PanelContainer
 
-## Маркет: 6 открытых карт дисплея плюс общие стопки — House Guard и
+## Маркет: 8 открытых карт дисплея плюс общие стопки — House Guard и
 ## Priestess of Lolth (рулбук стр. 4 шаг 3 и стр. 13). Стопки лежат СВОИМИ
 ## местами, а не в слотах дисплея, и не пополняются из колоды маркета,
 ## поэтому показаны отдельным рядом с остатком стопки.
@@ -24,7 +24,7 @@ signal choice_clicked(index: int)
 ## Слот карты маркета — мелкое лицо карты целиком, пиксель в пиксель
 ## (решение владельца, 2026-09-22: карты рынка не обрезаются). Слоты не
 ## тянутся. Рынок в два столбца (решение владельца, 2026-09-24): дисплей —
-## три ряда, под ним общие стопки.
+## четыре ряда, под ним компактные общие стопки.
 const L10n := preload("res://scenes/localization.gd")
 const GameText := preload("res://scenes/game_text.gd")
 
@@ -36,7 +36,8 @@ const PAD := 1
 ## показывает стопка DEVOUR (GameScreen, владелец 2026-11-03): в ряду стопок
 ## рынка она растила рынок, и таблица игроков схлопывалась так, что игрока
 ## нельзя было выбрать целью.
-const DISPLAY_SLOTS := 6
+const DISPLAY_SLOTS := Market.DISPLAY_SIZE
+const SupplyCard := preload("res://scenes/ui/supply_card.gd")
 const COLUMNS := 2
 ## Ширина панели: два слота, промежутки между ними и рамка. По ней же
 ## GameScreen задаёт ширину всей правой колонки.
@@ -61,7 +62,6 @@ var _cards: Array[CardView] = []
 var _empties: Array[Control] = []
 var _boxes: Array[Control] = []
 var _supply_cards: Array[CardView] = []
-var _supply_counts: Array[Label] = []
 ## Сейчас на рынке отвечают на вопрос карты (см. choice_clicked).
 var _choosing := false
 
@@ -74,22 +74,23 @@ func _init() -> void:
 	col.add_theme_constant_override("separation", 1)
 	add_child(col)
 
-	var title_row := HBoxContainer.new()
-	col.add_child(title_row)
-	var title := GameScreen.section_label("MARKET")
-	L10n.bind(title, "market.title")
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_title = title
-	title_row.add_child(title)
+	var market_row := HBoxContainer.new()
+	market_row.add_theme_constant_override("separation", 1)
+	col.add_child(market_row)
+	var gutter := Control.new()
+	gutter.custom_minimum_size.x = 11
+	market_row.add_child(gutter)
+	_title = GameScreen.section_label("MARKET")
+	L10n.bind(_title, "market.title")
+	_vertical_label(gutter, _title, 0)
 	_deck_label = GameScreen.section_label("")
-	title_row.add_child(_deck_label)
+	_vertical_label(gutter, _deck_label, 75)
 
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", 2)
 	_grid.add_theme_constant_override("v_separation", 2)
-	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER  # колонка шире рынка — по центру
-	col.add_child(_grid)
+	market_row.add_child(_grid)
 
 	for i in range(DISPLAY_SLOTS):
 		var box := _make_slot()
@@ -98,32 +99,26 @@ func _init() -> void:
 		_cards.append(null)
 		_empties.append(box.get_child(0))
 
+	var supply_section := HBoxContainer.new()
+	supply_section.add_theme_constant_override("separation", 1)
+	col.add_child(supply_section)
+	var supply_gutter := Control.new()
+	supply_gutter.custom_minimum_size.x = 11
+	supply_section.add_child(supply_gutter)
 	var supply_title := GameScreen.section_label("")
 	L10n.bind(supply_title, "market.supply")
-	col.add_child(supply_title)
-
-	# Сетка, а не ряд: слоты те же, что у дисплея, и их может стать больше.
+	_vertical_label(supply_gutter, supply_title, 0)
 	_supply_row = GridContainer.new()
 	_supply_row.columns = COLUMNS
 	_supply_row.add_theme_constant_override("h_separation", 2)
-	_supply_row.add_theme_constant_override("v_separation", 2)
-	_supply_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	col.add_child(_supply_row)
-
-	# Карты общих стопок не меняются всю партию — их слоты наполняются сразу.
+	supply_section.add_child(_supply_row)
 	for cid: String in Supplies.PURCHASABLE:
-		var box := _make_slot()
-		box.get_child(0).visible = false
-		var card := CardView.new(cid, SLOT.x, SLOT.y)
-		card.hover_full = true   # полная карта по наведению, без Alt
-		card.set_live(true)   # цена со скидкой и живой текст (CardLive)
-		card.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var card := SupplyCard.new(cid)
+		card.set_live(true)
 		card.refused.connect(func(_cid: String): card.shake_refusal())
 		card.pressed.connect(func(clicked: String): supply_card_clicked.emit(clicked))
-		box.add_child(card)
 		_supply_cards.append(card)
-		_supply_counts.append(_add_count_label(box))
-		_supply_row.add_child(box)
+		_supply_row.add_child(card)
 
 	# Стопку Insane Outcast в маркете не показываем вовсе (решение владельца,
 	# 2026-09-19): её не вербуют, карты раздают её сами при розыгрыше.
@@ -181,9 +176,7 @@ func update_from_view(view: Dictionary) -> void:
 	for k in range(Supplies.PURCHASABLE.size()):
 		var sid: String = Supplies.PURCHASABLE[k]
 		var left: int = int(supplies.get(sid, 0))
-		_supply_counts[k].text = "×%d" % left
-		_supply_counts[k].add_theme_color_override("font_color",
-			PixelTheme.TEXT if left > 0 else PixelTheme.DANGER)
+		_supply_cards[k].set("remaining", left)
 		_supply_cards[k].set_clickable(left > 0 and affordable_supply.has(sid))
 
 
@@ -361,15 +354,7 @@ static func _make_slot() -> Control:
 	return box
 
 
-## Остаток общей стопки написан прямо поверх карты — отдельной строки под неё
-## в колонке нет.
-static func _add_count_label(box: Control) -> Label:
-	var left_label := Label.new()
-	left_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	left_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	left_label.offset_top = -11
-	left_label.offset_left = 2
-	left_label.add_theme_color_override("font_outline_color", PixelTheme.BG)
-	left_label.add_theme_constant_override("outline_size", 2)
-	box.add_child(left_label)
-	return left_label
+static func _vertical_label(parent: Control, label: Label, top: float) -> void:
+	parent.add_child(label)
+	label.position = Vector2(11, top)
+	label.rotation = PI * 0.5
