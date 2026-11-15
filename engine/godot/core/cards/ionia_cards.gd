@@ -2,7 +2,7 @@ class_name IoniaCards
 extends RefCounted
 
 ## Полуколода Ionia (New Era) — способности карт Ionia из фан-мода Runeterra
-## Reforged на элементалях KARA-TUR (NE-53). Таблица id -> существо
+## Reforged в полуколоде KARA-TUR. Таблица id -> существо
 ## -> карта мода — Claude outputs/new_era_ionia.md.
 ##
 ## Перевод на правила этой игры: Valor -> MALICE.
@@ -17,41 +17,41 @@ extends RefCounted
 ## щелчке по ней вопрос "сыграть или удержать" (GameServer, PLAY_CARD). Удержанная
 ## уходит из руки в Deck.retained, её бонус "Retain: ..." срабатывает сразу, в конце
 ## хода после добора до 5 она возвращается в руку (TurnEngine.finish_end_of_turn).
-## Любое удержание (своё, Auril, Lightning Hulk, верхняя карта
+## Любое удержание (своё, Ivana Boritsi, Gas Spore Fungus, верхняя карта
 ## колоды) считается "Retain a card": бонус карты и счётчики хода срабатывают.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "retains"        — сколько карт удержано в этот ход (Elder Tempest);
+##   "retains"        — сколько карт удержано в этот ход (Blob of Annihilation);
 ##   "retain_power" / "retain_influence" / "retain_deploy" — "Whenever you Retain a
-##                      card this turn" (Blistercoil Weird, Merfolk Skirmisher,
-##                      Water Weird);
+##                      card this turn" (Blistercoil Weird, Twig Blight,
+##                      Ochre Jelly);
 ##   "witness"        — сколько раз сыграть ещё раз следующую карту ценой <= 5 (Mage);
 ##   "ahri"           — "Whenever you recruit a card, you may Assassinate a troop";
 ##   "yi"             — "Whenever you Assassinate or Supplant a troop, gain 1 Power";
 ##   "all_white"      — Tarrasque: войска других игроков считаются белыми (SiegeCards).
 
 const AKALI := "49800"  # Biha Babir
-const SHEN := "49801"  # Oni: реакция из руки — ShieldGuard.ONI
+const SHEN := "49801"  # Ancient of War: реакция из руки — ShieldGuard.ONI
 const WAYFINDER := "49802"  # Thessalheart Construct (Kinkou Wayfinder)
-const ZED := "49803"  # Elder Tempest
-const AIRIS := "49804"  # Sprite
-const BLADE := "49805"  # Dryad (Blossoming Blade)
+const ZED := "49803"  # Blob of Annihilation
+const AIRIS := "49804"  # Gelatinous Cube
+const BLADE := "49805"  # Vine Blight (Blossoming Blade)
 const HWEI := "49806"  # Nafas
-const YASUO := "49807"  # Elemental Cataclysm
-const WITNESS := "49808"  # Phoenix
+const YASUO := "49807"  # Groff
+const WITNESS := "49808"  # Plagueworks Ooze
 const CONSPIRATOR := "49809"  # Violet Fungus (Navori Conspirator)
-const RIVERSHAPER := "49810"  # Merfolk Skirmisher
+const RIVERSHAPER := "49810"  # Twig Blight
 const LEE_SIN := "49811"  # Zaratan
-const HIGHWAYMAN := "49812"  # Dust Hulk
-const GREENGLADE := "49813"  # Water Weird
+const HIGHWAYMAN := "49812"  # Bodytaker Podling
+const GREENGLADE := "49813"  # Ochre Jelly
 const SQUIRREL := "49814"  # Treefolk (Swole Squirrel)
 const IRELIA := "49815"  # Leviathan
 const PATHLESS := "49816"  # Blistercoil Weird
-const LIFEBLADE := "49817"  # Cinder Hulk
-const SCHEMER := "49818"  # Lightning Hulk
-const SHADOWBLADE := "49819"  # Mist Hulk
-const AHRI := "49820"  # Khargra
-const KARMA := "49821"  # Auril
+const LIFEBLADE := "49817"  # Needle Blight
+const SCHEMER := "49818"  # Gas Spore Fungus
+const SHADOWBLADE := "49819"  # Shrieker Fungus
+const AHRI := "49820"  # Spore of Moander
+const KARMA := "49821"  # Ivana Boritsi
 const MASTER_YI := "49822"  # Kraken
 
 ## Карты со словом Retain: их можно удержать вместо розыгрыша.
@@ -225,7 +225,7 @@ static func retain(state: GameState, player_id: String, card_id: String, resolve
 		resolver.push(DeployTroop.new(deploy), player_id)
 
 
-## Mage (The Witness): следующая карта ценой <= 5 разыгрывается ещё раз.
+## Plagueworks Ooze (The Witness): следующая карта ценой <= 5 разыгрывается ещё раз.
 static func on_play(state: GameState, _player_id: String, card_id: String, effect: CardEffect) -> CardEffect:
 	var n := int(state.turn_flags.get("witness", 0))
 	if n <= 0 or CardLibrary.card_cost(card_id) > 5:
@@ -237,7 +237,7 @@ static func on_play(state: GameState, _player_id: String, card_id: String, effec
 	return SequenceEffect.new(all)
 
 
-## Khargra (Ahri): "Whenever you recruit a card, you may Assassinate a
+## Spore of Moander (Ahri): "Whenever you recruit a card, you may Assassinate a
 ## troop". immediate — зовёт GameServer вне розыгрыша карты.
 static func on_recruit(state: GameState, player_id: String, resolver: EffectResolver, immediate: bool = false) -> void:
 	var n := int(state.turn_flags.get("ahri", 0))
@@ -352,7 +352,7 @@ class _RetainFromHand extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Удержать верхнюю карту колоды (Lightning Hulk, Mist Hulk).
+## Удержать верхнюю карту колоды (Gas Spore Fungus, Shrieker Fungus).
 class _RetainTop extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
@@ -365,7 +365,7 @@ class _RetainTop extends CardEffect:
 		IoniaCards.retain(state, player_id, d.draw_pile.pop_back(), resolver, "deck")
 
 
-## Auril (Karma), Retain: "You may also Retain 2 other cards".
+## Ivana Boritsi (Karma), Retain: "You may also Retain 2 other cards".
 class _RetainOthers extends CardEffect:
 	var left: int
 	func _init(n: int) -> void:
@@ -403,7 +403,7 @@ class _RetainOthers extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Lightning Hulk (The Schemer): "You may return two of your spies to Retain
+## Gas Spore Fungus (The Schemer): "You may return two of your spies to Retain
 ## a card you've played this turn".
 class _ReturnTwoRetain extends CardEffect:
 	func is_available(state: GameState, player_id: String) -> bool:
@@ -441,7 +441,7 @@ class _RetainPlayed extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Dryad (Blossoming Blade), Retain: "Choose another player, you may look at their hand".
+## Vine Blight (Blossoming Blade), Retain: "Choose another player, you may look at their hand".
 class _LookAtHand extends CardEffect:
 	var _who := ""
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -514,7 +514,7 @@ class _Wayfinder extends CardEffect:
 		resolver.push(SequenceEffect.new(all), player_id)
 
 
-## Elder Tempest (Zed): выбор повторяется ещё раз за каждую удержанную в
+## Blob of Annihilation (Zed): выбор повторяется ещё раз за каждую удержанную в
 ## этот ход карту (не больше 2 раз).
 class _Zed extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -528,7 +528,7 @@ class _Zed extends CardEffect:
 		resolver.push(SequenceEffect.new(all), player_id)
 
 
-## Sprite (Airis) / Merrow (Kinkou Lifeblade): карта становится названным Аспектом,
+## Gelatinous Cube (Airis) / Needle Blight (Kinkou Lifeblade): карта становится названным Аспектом,
 ## +1 ресурс за каждую сыгранную в этот ход карту этого Аспекта (и её саму).
 class _BecomeAspect extends CardEffect:
 	var card: String
@@ -588,7 +588,7 @@ class _NeighbourHand extends CardEffect:
 				return
 
 
-## Dust Hulk (Navori Highwayman): войско за каждый разный Аспект хода.
+## Bodytaker Podling (Navori Highwayman): войско за каждый разный Аспект хода.
 class _DeployPerAspect extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var kinds := {}
@@ -653,13 +653,13 @@ class _ReturnAllSpies extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Khargra (Ahri): "For the rest of your turn, cards in the Market cost 1 less".
+## Spore of Moander (Ahri): "For the rest of your turn, cards in the Market cost 1 less".
 class _RecruitDiscount extends CardEffect:
 	func apply(state: GameState, _player_id: String, _resolver: EffectResolver) -> void:
 		state.turn_discounts["recruit"] = int(state.turn_discounts.get("recruit", 0)) + 1
 
 
-## Auril (Karma), в конце хода: "Promote a card you played to
+## Ivana Boritsi (Karma), в конце хода: "Promote a card you played to
 ## recruit a card from the market that costs up to 2 more".
 class _KarmaPromote extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:

@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48426": "worldbreaker", "48429": "herenn", "48433": "vyranoth", "48500": "ragnaros_gf", "48501": "kiljaeden", "48513": "xavius", "48514": "umbra", "48535": "archimonde", "48538": "nythendra", "48539": "moldara", "48600": "inara", "48626": "mutanus", "48630": "yshaarj", "48631": "ravitz", "48632": "azshara_ocean", "48700": "kithix", "48701": "azalina", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "48715": "staff_endbringer", "48728": "tichondrius", "48732": "broxigar", "48738": "sylvanastheaccused", "49003": "gennworgenking", "49004": "sunsapperlynessa", "49015": "medivhthehallowed", "49017": "commanderbeatrix", "49019": "tyrande", "49022": "ursol", "49104": "thejailer", "49114": "thunderbringer", "49117": "blooddoctorthalena", "49120": "blightfang", "49211": "chronogor", "49213": "mathiasshaw", "49215": "norgannon", "49216": "daveberard", "49218": "omen", "49219": "mastermindyoggsaro", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49402": "ladydarkvein", "49407": "karovthebroken", "49412": "staffoftrickery", "49416": "drestagath", "49418": "nzothdreamsend", "49514": "amitutkeeperofamit", "49515": "archvillainrafaam", "49516": "ghuun", "49517": "wrathion", "49518": "moroes", "49521": "fyrakktheblazing", "49522": "captaincrowley", "49606": "toycaptaintarim", "49614": "bearonglashear", "49615": "hodirfatherofgiant", "49616": "rasfrostwhisper", "49618": "thaddiusmonstrosit", "49620": "thelichking", "49634": "irida", "49635": "zerontu", "49636": "neerufireblade", "49707": "garonahalforcen", "49712": "titanographerosk", "49713": "arisenonyxia", "49715": "kaelthas", "49716": "velenleaderoftheex", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49800": "arannathrillseeker", "49801": "mugzee", "49806": "baronessvashj", "49807": "endtimemurozond", "49820": "elisebadlandssavio", "49822": "krogcraterking", "49906": "eternus", "49909": "nablyathewatcher", "49920": "jacedarkweaver", "50002": "theexodar", "50008": "the8handsfrombeyon", "50012": "bloodqueenlanathel", "50102": "timethiefrafaam", "50104": "maruutstonebinder", "50105": "theunknowableone", "50108": "shudderblock"}
+const RECIPES := {"48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48426": "worldbreaker", "48429": "herenn", "48433": "vyranoth", "48500": "ragnaros_gf", "48501": "kiljaeden", "48513": "xavius", "48514": "umbra", "48535": "archimonde", "48538": "nythendra", "48539": "moldara", "48600": "inara", "48626": "mutanus", "48630": "yshaarj", "48631": "ravitz", "48632": "azshara_ocean", "48700": "kithix", "48701": "azalina", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "48715": "staff_endbringer", "48728": "tichondrius", "48732": "broxigar", "48738": "sylvanastheaccused", "49003": "gennworgenking", "49004": "sunsapperlynessa", "49015": "medivhthehallowed", "49017": "commanderbeatrix", "49019": "tyrande", "49022": "ursol", "49104": "thejailer", "49114": "thunderbringer", "49117": "blooddoctorthalena", "49120": "blightfang", "49211": "chronogor", "49213": "mathiasshaw", "49215": "norgannon", "49216": "daveberard", "49218": "omen", "49219": "mastermindyoggsaro", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49402": "ladydarkvein", "49407": "karovthebroken", "49412": "staffoftrickery", "49416": "drestagath", "49418": "nzothdreamsend", "49514": "amitutkeeperofamit", "49515": "archvillainrafaam", "49516": "ghuun", "49517": "wrathion", "49518": "moroes", "49521": "fyrakktheblazing", "49522": "captaincrowley", "49606": "toycaptaintarim", "49614": "bearonglashear", "49615": "hodirfatherofgiant", "49616": "rasfrostwhisper", "49618": "thaddiusmonstrosit", "49620": "thelichking", "49634": "irida", "49635": "zerontu", "49636": "neerufireblade", "49707": "garonahalforcen", "49712": "titanographerosk", "49713": "arisenonyxia", "49715": "kaelthas", "49716": "velenleaderoftheex", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49800": "arannathrillseeker", "49806": "baronessvashj", "49822": "krogcraterking", "49906": "eternus", "49909": "nablyathewatcher", "49920": "jacedarkweaver", "50002": "theexodar", "50008": "the8handsfrombeyon", "50012": "bloodqueenlanathel", "50102": "timethiefrafaam", "50104": "maruutstonebinder", "50105": "theunknowableone", "50108": "shudderblock"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -649,7 +649,7 @@ const SCRIPTS := {
 		"cues": [[0, "TOY_813_ToyCaptainTarim_CustomSummon_Sound", 0.4], [1.5, "TOY_813_ToyCaptainTarim_CustomSummon_Impact_Sound", 0.4]],
 		# CameraShaker2
 		"shakers": [[0.367, 1.35, 0.04, [[0, 0.26], [0.12, 0.96], [0.39, 0.52], [0.98, 0.43]], 0.208], [1.467, 2.933, 0.06, [[0, 0.26], [0.12, 0.96], [0.47, 0.15], [1, 0]], 0.075]]},
-	# Elise, Badlands Savior (WW_392) — Khargra: золотые ленты света сходятся в точку
+	# Elise, Badlands Savior (WW_392): золотые ленты света сходятся в точку
 	# посадки, на 1.43 с вспышка. Жетон HS спрятан, весь эффект под картой. Выжигание золотое.
 	# Владелец выбрал в HsBrowser 2026-10-27.
 	"elisebadlandssavio": {"frames": "elisebadlandssavio", "sounds": "elisebadlandssavio",
@@ -667,7 +667,7 @@ const SCRIPTS := {
 		"cues": [[0, "AyaLotusKingpin_CustomSummon_Sound", 0.7], [1.5, "AyaLotusKingpin_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2
 		"shakers": [[1.483, 2.133, 0.06, [[0, 1], [1, 0]], 0.075]]},
-	# Endtime Murozond (END_037) — Elemental Cataclysm: в точке посадки рождается синяя сфера,
+	# Endtime Murozond (END_037): в точке посадки рождается синяя сфера,
 	# молнии бьют во все стороны, на 1.25 с удар. Сетки жетона HS и виньетка-прожектор
 	# спрятаны, весь эффект под картой. Выжигание синее. Владелец выбрал в HsBrowser 2026-10-27.
 	"endtimemurozond": {"frames": "endtimemurozond", "sounds": "endtimemurozond",
@@ -965,7 +965,7 @@ const SCRIPTS := {
 		"cues": [[0, "JAIL_448_KarovTheBroken_CustomSummon_Sound", 0.7], [1.62, "JAIL_448_KarovTheBroken_CustomSummon_Impact_Sound", 0.7]],
 		# CameraShaker2
 		"shakers": [[0.817, 1.6, 0.05, [[0, 0], [0.27, 0.77], [0.49, 1], [0.7, 0.79], [0.96, 0.01]], 0.25], [1.617, 2.217, 0.2, [[0, 1], [1, 0]], 0.075]]},
-	# Mug'Zee (JAIL_800) — Azer Sentinel: огненный выстрел справа, взрыв и голубые искры. Сетки
+	# Mug'Zee (JAIL_800): огненный выстрел справа, взрыв и голубые искры. Сетки
 	# жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
 	# Владелец выбрал в HsBrowser 2026-10-27.
 	"mugzee": {"frames": "mugzee", "sounds": "mugzee",

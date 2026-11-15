@@ -24,8 +24,8 @@ Gold Dragon	DRAGON
 Giant Eagle	BEAST
 Ancient Gold Dragon	DRAGON
 Vampire Familiar	HUMAN
-Cinder Hulk	ELEMENTAL
-Phoenix	ELEMENTAL
+Needle Blight	PLANT
+Plagueworks Ooze	OOZE
 Bearded Devil	DEVIL
 Sea Hag	HAG
 Lemure	DEVIL
@@ -65,7 +65,7 @@ Weretiger	LYCANTHROPE
 Lamia	LAMIA
 Horned Devil	DEVIL
 Efreeti	GENIE
-Azer Sentinel	ELEMENTAL
+Ancient of War	PLANT
 Ice Devil	DEVIL
 Fire Giant	GIANT
 Half-Dragon	DRAGON
@@ -75,12 +75,12 @@ Blade of Exile	WEAPON
 Guard	HUMAN
 Skeleton	UNDEAD
 Werewolf	LYCANTHROPE
-Magmin	ELEMENTAL
+Twig Blight	PLANT
 Bulette	BULETTE
 Ice Mephit	MEPHIT
-Invisible Stalker	ELEMENTAL
+Vine Blight	PLANT
 Ettercap	ETTERCAP
-Xorn	ELEMENTAL
+Gelatinous Cube	OOZE
 Giant Owl	BEAST
 Giant Hyena	BEAST
 Hill Giant	GIANT
@@ -111,23 +111,23 @@ Deva	ANGEL
 Biha Babir	ELEMENTAL
 Oni	GIANT
 Thessalheart Construct	CONSTRUCT
-Elder Tempest	ELEMENTAL
+Blob of Annihilation	OOZE
 Mother Lorinda	HAG
 Nafas	GENIE
-Elemental Cataclysm	ELEMENTAL
+Groff	PLANT
 Violet Fungus	PLANT
 Merfolk Skirmisher	MERFOLK
 Tarrasque	TARRASQUE
-Dust Hulk	ELEMENTAL
-Water Weird	ELEMENTAL
+Bodytaker Podling	PLANT
+Ochre Jelly	OOZE
 Treefolk	PLANT
 Leviathan	ELEMENTAL
 Blistercoil Weird	ELEMENTAL
 Merrow	MERFOLK
-Lightning Hulk	ELEMENTAL
-Mist Hulk	ELEMENTAL
-Khargra	ELEMENTAL
-Auril	ELEMENTAL
+Gas Spore Fungus	PLANT
+Shrieker Fungus	PLANT
+Spore of Moander	PLANT
+Ivana Boritsi	HUMAN
 Kraken	KRAKEN
 Lampad	FEY
 Yarnspinner	FEY

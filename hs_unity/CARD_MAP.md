@@ -204,7 +204,7 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 | Lamia (49514) | Amitut, Keeper of Amitus (BE_143) | `BE_143_Amitut_Keeper_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Horned Devil (49515) | Arch-Villain Rafaam (CORE_DAL_422) | `ArchVillianRafaam_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Efreeti (49715) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
-| Azer Sentinel (49801) | Mug'Zee (JAIL_800) | `JAILFX_MugZee_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
+| Ancient of War (49801) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Mug'Zee освобождено. |
 | Ice Devil (49518) | Moroes (KAR_044) | `Moroes_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Sewer King (49519) | — | — | NE-58: owner-approved new creature; no HS animation assigned. Previous creature and its binding moved to 50108. |
 | Fire Giant (49636) | Neeru Fireblade (LETL_823H) | `BARFX_NeeruFireblade_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
@@ -247,13 +247,13 @@ S'theno, Neptulon TID, Neeru, Al'Akir NEW1 заменены свежими).
 |---|---|---|---|
 | Biha Babir (49800) | Aranna, Thrill Seeker (VAC_501) | `VACFX_ArannatheExtreme_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Oni (49634) | Irida Sinseeker (JAIL_719) | `JAIL_719_IridaSinseeker_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
-| Elder Tempest (49803) | — | — | NE-53: новое существо; анимация пока не назначена. Прежнее назначение Murder Comet освобождено |
+| Blob of Annihilation (49803) | — | — | NE-60: новое существо; анимация пока не назначена. |
 | Nafas (49712) | Titanographer Osk (TLC_452t35) | `TLCFX_Titangrapher_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
-| Elemental Cataclysm (49807) | Endtime Murozond (END_037) | `ENDFX_EndtimeMurozond_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
+| Groff (49807) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Endtime Murozond освобождено. |
 | Tarrasque (50104) | Maruut Stonebinder (DEEP_037) | `DEEPFX_MaruutStonebinder_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Leviathan (49815) | — | — | NE-53: новое существо; анимация пока не назначена. Прежнее назначение Brackish Trudge освобождено |
-| Khargra (49820) | Elise, Badlands Savior (WW_392) | `WWFX_EliseBadlandsSavior_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
-| Auril (49821) | — | — | NE-53: новое существо; анимация пока не назначена. Прежнее назначение Gulthias Blight освобождено |
+| Spore of Moander (49820) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Elise, Badlands Savior освобождено. |
+| Ivana Boritsi (49821) | — | — | NE-60: новое существо; анимация пока не назначена. |
 | Kraken (50107) | Ozumat (TID_711) | `TIDFX_Ozumat_CustomSummon.prefab` | морское чудище |
 
 ### bandle

@@ -22,11 +22,11 @@ extends CardEffect
 ## сначала спрашивается Shield Guardian, при отказе — Ankheg.
 
 ##
-## Oni (Kara-Tur, Shen из Runeterra Reforged) — та же реакция, но только на
+## Ancient of War (Kara-Tur, Shen из Runeterra Reforged) — та же реакция, но только на
 ## эффекты КАРТ соперника (from_card): "If an opponent's card would cause one of
 ## your units to be Assassinated, Supplanted, returned, or moved, you may discard
 ## this card to negate that effect and draw 2 cards". Порядок вопросов:
-## Shield Guardian, Ankheg, Oni.
+## Shield Guardian, Ankheg, Ancient of War.
 
 const CARD := "49021"
 const ANKHEG := "49718"
@@ -54,7 +54,7 @@ func _init(victim_id: String, hit_effect: CardEffect, description: String = "", 
 
 ## Защищён ли юнит владельца owner от действия игрока attacker (kill — убийство
 ## или вытеснение войска: на них отвечает ещё и Ankheg; from_card — удар картой,
-## а не базовым действием: на него отвечает ещё и Oni).
+## а не базовым действием: на него отвечает ещё и Ancient of War).
 static func can_react(state: GameState, attacker: String, owner: String, is_kill: bool = false,
 		is_from_card: bool = true) -> bool:
 	return _guards(state, attacker, owner, is_kill, is_from_card).size() > 0
