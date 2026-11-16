@@ -87,23 +87,16 @@ const COL := float(MarketPanel.WIDTH) + HALL_EXTRA
 ## сводкой ходов и доской (владелец, 2026-09-28). Зона доски — 598 при самой
 ## широкой 4p-схеме 596, схема 1:1.
 const TRACKER_W := float(DeckTracker.WIDTH)
-## Кнопки PAUSE и MENU столбиком справа от End turn (владелец, 2026-11-01);
-## стопки INNER и DEVOUR переехали под дектрекер.
-const SIDE_BUTTONS_W := 40.0
-## Высота низа правой колонки (End turn с кнопками) и стопок под дектрекером:
-## ниже ряда руки, чтобы таблице четырёх игроков хватило места над рынком
-## (владелец, 2026-10-03).
-const RIGHT_BOTTOM_H := 48.0
-const END_TURN_H := 24.0
+## Высота стопок INNER и DEVOUR под дектрекером.
+const PILES_H := 48.0
+const TURN_BAR_H := 18.0
+const END_TURN_W := 96.0
+const TIMER_W := 44.0
 ## Полоска цвета ходящего на кнопке End turn — вместо ника, который в кнопку
 ## не влезал (владелец, 2026-10-03).
 const TURN_CHIP_H := 5.0
-## Высота зоны бараков.
-const TOP_H := 22.0
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
-## Той же высоты кнопки стопок слева и End turn справа.
 const BOTTOM_H := 80.0
-const TIMER_H := 11.0
 const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
@@ -515,8 +508,7 @@ func _build_layout() -> void:
 	_pile_devour.clicked.connect(func(): _open_pile("devour"))
 	_piles_column.add_child(_pile_devour)
 
-	# 7. End turn — правый нижний угол: высокая кнопка, на ней же написано,
-	# чей сейчас ход; под ней таймер.
+	# 7. End turn — над доской рядом с таймером. Цвет указывает, чей ход.
 	_end_turn_area = Control.new()
 	_end_turn_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_end_turn_area)
@@ -551,12 +543,14 @@ func _build_layout() -> void:
 	_timer_label = Label.new()
 	L10n.scope(_timer_label)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	L10n.bind(_timer_label, "game.timer_tip", {}, "tooltip_text")
 	add_child(_timer_label)
 	_timer_label.add_theme_stylebox_override("normal", zone_style(1))
 	_last_round_label = Label.new()
 	L10n.scope(_last_round_label)
 	_last_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_last_round_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_last_round_label.text = "LAST ROUND"
 	_last_round_label.visible = false
 	_last_round_label.add_theme_color_override("font_color", PixelTheme.GOLD)
@@ -1182,34 +1176,30 @@ func _layout() -> void:
 	var d_x := w - MARGIN - COL
 	var top_y := MARGIN
 	var bottom_y := h - MARGIN - BOTTOM_H
-	var right_bottom_y := h - MARGIN - RIGHT_BOTTOM_H
+	var piles_y := h - MARGIN - PILES_H
 
-	# Правая колонка: бараки, таблица игроков, под ней рынок, под рынком
-	# кнопки. Рынок ровно своего размера (карты целиком), таблице — всё, что
-	# осталось.
-	_place(_barracks, d_x, top_y, COL, TOP_H)
+	# Справа бараки, таблица и рынок с общими стопками до нижнего края.
+	_place(_barracks, d_x, top_y, COL, BarracksBar.BOX_H)
 	var market_h := _market_panel.get_combined_minimum_size().y
-	var end_turn_y := h - MARGIN - END_TURN_H
-	var market_y := end_turn_y - GAP - market_h
-	var market_x := d_x
-	_place(_market_panel, market_x, market_y, COL, market_h)
-	var players_y := top_y + TOP_H + GAP
+	var market_y := h - MARGIN - market_h
+	_place(_market_panel, d_x, market_y, COL, market_h)
+	var players_y := top_y + BarracksBar.BOX_H + GAP
 	_place(_players_panel, d_x, players_y, COL, market_y - GAP - players_y)
-	var ew := COL
-	_place(_end_turn_area, market_x, end_turn_y, ew, END_TURN_H)
 
 	# Слева — сводка ходов во всю высоту экрана (решение владельца,
 	# 2026-09-27: чат убран, сводка — до низа), за ней дектрекер тоже во всю
-	# высоту; доска — всё между ним и правой колонкой, от верха экрана до руки.
+	# высоту; доска — всё между ним и правой колонкой, от таймера до руки.
 	# Ширины сводки доске не жалко: масштаб схемы от неё не падает ни на
 	# двоих, ни на четверых.
-	var board_h := bottom_y - GAP - top_y
+	var turn_bar_y := top_y + GAP
+	var board_y := turn_bar_y + TURN_BAR_H + GAP
+	var board_h := bottom_y - GAP - board_y
 	_place(_feed, a_x, top_y, TurnFeed.WIDTH, h - MARGIN - top_y)
 	var tracker_x := a_x + TurnFeed.WIDTH + GAP
-	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, right_bottom_y - GAP - top_y)
-	_place(_piles_column, tracker_x, right_bottom_y, TRACKER_W, RIGHT_BOTTOM_H)
+	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, piles_y - GAP - top_y)
+	_place(_piles_column, tracker_x, piles_y, TRACKER_W, PILES_H)
 	var board_x := tracker_x + TRACKER_W + GAP
-	_place(_board_area, board_x, top_y, d_x - GAP - board_x, board_h)
+	_place(_board_area, board_x, board_y, d_x - GAP - board_x, board_h)
 	if _god_panel != null:
 		_place(_god_panel, a_x, top_y, board_x - GAP - a_x, h - MARGIN - top_y)
 
@@ -1220,17 +1210,16 @@ func _layout() -> void:
 	_place(_hand_panel, hand_x, hand_top, d_x - GAP - hand_x, h - MARGIN - hand_top)
 	_place_res_frame()
 
-	_end_turn_button.position = Vector2.ZERO
-	_end_turn_button.size = Vector2(ew, END_TURN_H)
-	_turn_label.position = Vector2(0, 6)
-	_turn_label.size = Vector2(ew, PixelTheme.LINE_H)
-	_turn_chip.position = Vector2(5, 9)
-	_turn_chip.size = Vector2(5, 5)
-	_end_label.position = Vector2(12, 6)
-	_end_label.size = Vector2(ew - 14, PixelTheme.LINE_H)
-	var timer_x := board_x + floorf((_board_area.size.x - 44) * 0.5)
-	_place(_timer_label, timer_x, top_y, 44, TIMER_H + 2)
-	_place(_last_round_label, timer_x + 46, top_y, 90, TIMER_H + 2)
+	var timer_x := board_x + floorf((_board_area.size.x - TIMER_W - GAP - END_TURN_W) * 0.5)
+	var end_turn_x := timer_x + TIMER_W + GAP
+	_place(_timer_label, timer_x, turn_bar_y, TIMER_W, TURN_BAR_H)
+	_place(_end_turn_area, end_turn_x, turn_bar_y, END_TURN_W, TURN_BAR_H)
+	_place(_last_round_label, end_turn_x + END_TURN_W + GAP, turn_bar_y, 90, TURN_BAR_H)
+	var caption_y := floorf((TURN_BAR_H - PixelTheme.LINE_H) * 0.5)
+	_place(_end_turn_button, 0, 0, END_TURN_W, TURN_BAR_H)
+	_place(_turn_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
+	_place(_turn_chip, 5, floorf((TURN_BAR_H - TURN_CHIP_H) * 0.5), TURN_CHIP_H, TURN_CHIP_H)
+	_place(_end_label, 12, caption_y, END_TURN_W - 14, PixelTheme.LINE_H)
 
 
 
@@ -2242,15 +2231,12 @@ func _process(delta: float) -> void:
 		_timer_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 		return
 	var current := acting_player(_view)
-	# Под таймером — единственная оставшаяся пометка о состоянии партии:
-	# начался последний круг, дальше подсчёт очков. Отдельной строкой: рядом с
-	# таймером она в узкую колонку не помещается.
+	# Рядом с кнопкой хода — предупреждение о последнем круге.
 	var last_round := bool(_view["game_end_triggered"])
 	if _last_round_label.visible != last_round:
 		if last_round:
 			Sfx.play("last_round")
 		_last_round_label.visible = last_round
-		_layout()
 	var pending: Dictionary = _view.get("pending_decision", {})
 	if current != _timed_player:
 		_timed_player = current
@@ -2722,9 +2708,7 @@ func _market_rect(index: int) -> Rect2:
 
 func _on_supply_clicked(card_id: String) -> void:
 	if PlayerProfile.art_of(viewer_id, card_id) == "":
-		var source := _market_panel.supply_rect(card_id)
-		# The compact button launches a complete card, not a clipped short face.
-		_fly_to_discard(Rect2(source.get_center() - CardView.MINI_SIZE * 0.5, CardView.MINI_SIZE), card_id)
+		_fly_to_discard(_market_panel.supply_rect(card_id), card_id)
 	send(Intent.recruit_supply(viewer_id, card_id))
 
 

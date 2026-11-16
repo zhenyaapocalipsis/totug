@@ -12,7 +12,14 @@ const GLYPH_H := 7
 ## Отступ надписи от верха полосы.
 const TOP := 2
 
-var text := ""
+var text := "":
+	set(value):
+		text = value
+		queue_redraw()
+var detail := "":
+	set(value):
+		detail = value
+		queue_redraw()
 
 
 func _init(label: String = "") -> void:
@@ -23,14 +30,21 @@ func _init(label: String = "") -> void:
 
 func _draw() -> void:
 	draw_rect(Rect2(size.x - 1, 0, 1, size.y), PixelTheme.BORDER)
+	var next_y := _draw_caption(text, TOP)
+	if not detail.is_empty():
+		_draw_caption(detail, next_y + 8)
+
+
+func _draw_caption(caption: String, top: float) -> float:
 	var font := get_theme_font("font", "Label")
 	var font_size := get_theme_font_size("font_size", "Label")
-	var text_w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var text_w := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	# Повёрнутая строка идёт вверх от точки начала, а её базовая линия — это
 	# вертикаль x = origin.x: заглавные (GLYPH_H над линией) ложатся левее неё,
 	# в столбцы 1..GLYPH_H полосы.
-	var origin := Vector2(1 + GLYPH_H, roundf(TOP + text_w))
+	var origin := Vector2(1 + GLYPH_H, roundf(top + text_w))
 	draw_set_transform(origin, -PI * 0.5)
-	draw_string(font, Vector2.ZERO, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+	draw_string(font, Vector2.ZERO, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 		PixelTheme.TEXT_DIM)
 	draw_set_transform(Vector2.ZERO)
+	return origin.y

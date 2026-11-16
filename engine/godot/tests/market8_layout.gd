@@ -24,10 +24,18 @@ func _run() -> void:
 			check(screen._players_panel.size.y >= screen._players_panel.get_combined_minimum_size().y, "Player table fits")
 			for card: CardView in panel._cards:
 				check(card.size == CardView.MINI_SIZE, "Market face keeps native size")
-			check(panel.get_global_rect().end.y < screen._end_turn_area.position.y, "Market stays above End Turn")
+			check(screen._players_panel.get_global_rect().end.y < panel.global_position.y,
+				"Player table clears market (%s, %d players): %s vs %s" % [
+					language, count, screen._players_panel.get_global_rect(), panel.global_position])
+			check(panel.get_global_rect().end.y <= screen.size.y, "Full supply fits on screen")
 			check(not screen._pause_button.visible and not screen._menu_button.visible, "Side buttons removed")
-			check(screen._timer_label.position.y < panel.position.y, "Timer above board")
+			check(screen._timer_label.get_global_rect().end.y < screen._board_area.global_position.y,
+				"Timer clears top of board")
+			check(screen._end_turn_area.position.y == screen._timer_label.position.y
+				and screen._timer_label.get_global_rect().end.x < screen._end_turn_area.global_position.x,
+				"End Turn sits beside timer")
 			var supply: CardView = panel._supply_cards[0]
+			check(supply.size == CardView.MINI_SIZE and supply.is_pixel(), "Supply uses full mini card faces")
 			supply._on_mouse_entered()
 			await process_frame
 			check(CardPreview.active.has_preview(), "Supply full preview appears")
@@ -36,7 +44,7 @@ func _run() -> void:
 			check(not CardPreview.active.has_preview(), "Supply preview closes")
 			if language == "en":
 				await RenderingServer.frame_post_draw
-				root.get_texture().get_image().save_png("res://market8_%dp_en.png" % count)
+				root.get_texture().get_image().save_png("res://market8_full_supply_%dp_en.png" % count)
 			var selected: Array = []
 			panel.supply_card_clicked.disconnect(screen._on_supply_clicked)
 			panel.supply_card_clicked.connect(func(cid: String): selected.append(cid))

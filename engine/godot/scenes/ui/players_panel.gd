@@ -37,7 +37,7 @@ const COL_GAP := 3
 const HALL_GAP := 3.0
 ## Строка цифр наезжает на пустой низ строки ника: глиф 7 пикселей в
 ## строке 11, так четыре блока с шапкой влезают над рынком.
-const LINE_OVERLAP := 2
+const LINE_OVERLAP := 3
 ## Сколько пикселей от правого края панели до конца видимой части таблицы
 ## (рамка и отступ зоны).
 const TROPHY_RIGHT_PAD := 2.0
@@ -67,7 +67,10 @@ var _trophy_buttons: Array = []
 
 func _init() -> void:
 	L10n.events.changed.connect(_refresh_language)
-	add_theme_stylebox_override("panel", GameScreen.zone_style(2))
+	var frame := GameScreen.zone_style(2)
+	frame.content_margin_top = 1
+	frame.content_margin_bottom = 1
+	add_theme_stylebox_override("panel", frame)
 	_current_style = PixelTheme.box(PixelTheme.PANEL_HI, PixelTheme.PANEL_HI, 0, 0, 0)
 	_plain_style = StyleBoxEmpty.new()
 	_list = VBoxContainer.new()

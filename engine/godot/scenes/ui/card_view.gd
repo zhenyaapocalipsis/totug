@@ -84,6 +84,8 @@ var hover_preview: bool = true
 var hover_full: bool = false
 ## Рисовать ли золотую рамку у доступной карты (в окне выбора её нет).
 var highlight: bool = true
+## Set to -0.5 to keep the one-pixel frame inside a tightly spaced slot.
+var frame_outset := 1.0
 var _pixel: Texture2D = null
 ## Мелкое лицо (true) или полное (false) — зависит от ширины слота.
 var _mini := false
@@ -287,12 +289,12 @@ func _draw() -> void:
 		texture_filter = filter
 	draw_texture_rect_region(_pixel, dest, rects[1])
 	if clickable and highlight:
-		draw_rect(dest.grow(1), PIXEL_HIGHLIGHT, false, 1.0)
+		draw_rect(dest.grow(frame_outset), PIXEL_HIGHLIGHT, false, 1.0)
 	if _shake_left > 0.0:
 		# Красная плёнка поверх лица и рамка — «сейчас нельзя».
 		var k := _shake_left / SHAKE_TIME
 		draw_rect(dest, Color(PixelTheme.DANGER, 0.32 * k))
-		draw_rect(dest.grow(1), Color(PixelTheme.DANGER, k), false, 1.0)
+		draw_rect(dest.grow(frame_outset), Color(PixelTheme.DANGER, k), false, 1.0)
 	if _arrive_left > 0.0:
 		# Белая вспышка, гаснущая быстрее, чем карта доезжает.
 		var a := _arrive_left / ARRIVE_TIME
