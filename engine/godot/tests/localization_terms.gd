@@ -19,7 +19,7 @@ func _run() -> void:
  check(Decisions.text("ILLITHID") == "ИЛЛИТИД", "race label")
  check(Decisions.text("Ravenloft") == "Равенлофт", "region label")
  check(Decisions.text("Explore for Power: put a card into your hand").contains("Сила"), "resource in explore prompt")
- check(Decisions.text("Discard a card to Retain Treefolk").contains("Древолюда"), "Treefolk current Russian name")
+ check(Decisions.text("Discard a card to Retain Needle Blight").contains("Игольчатую поросль"), "Needle Blight current Russian name")
  check(Decisions.text("Devotion: put Deva on top of your deck?").contains("Дао"), "legacy Deva prompt refers to current Dao")
  check(Decisions.text("Put Pirate Captain on top of your deck?").contains("Они"), "legacy Pirate Captain prompt refers to current Oni")
  var font := PixelTheme.theme().default_font

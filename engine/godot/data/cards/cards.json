@@ -3355,7 +3355,7 @@
   },
   {
     "card_id": 49814,
-    "name": "Treefolk",
+    "name": "Needle Blight",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
@@ -3388,7 +3388,7 @@
   },
   {
     "card_id": 49817,
-    "name": "Needle Blight",
+    "name": "Treefolk",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
@@ -3410,7 +3410,7 @@
   },
   {
     "card_id": 49819,
-    "name": "Shrieker Fungus",
+    "name": "Tree Blight",
     "cost": 4,
     "aspect": "GUILE",
     "type": "KARA-TUR",

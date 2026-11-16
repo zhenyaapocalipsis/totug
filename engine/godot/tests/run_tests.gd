@@ -6112,7 +6112,7 @@ func test_shadow_isles() -> void:
 	state.market.display[0] = "49113"
 	state.market.display[1] = "49104"
 	check_eq(Actions.market_cost(state, 0), 6, "Skull Lord: 8 - 2 за Outcast")
-	check_eq(Actions.market_cost(state, 1), 4, "Needle Blight без скидки")
+	check_eq(Actions.market_cost(state, 1), 4, "Treefolk без скидки")
 	EffectResolver.new().apply(ShadowCards._SetFlag.new("market_affinity"), "red", state)
 	check_eq(Actions.market_cost(state, 1), 2, "после Drider скидка у всех карт рынка")
 	TurnEngine.start_turn(state, "red")
@@ -6350,7 +6350,7 @@ func test_karatur_deck() -> void:
 	section("Kara-Tur (New Era Ionia): полуколода и Retain")
 	var I := IoniaCards
 	var deck := GameSetup.expand_half_deck("ionia")
-	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Thessalheart Construct, Violet Fungus, Treefolk; Mage и Sprite по 3)")
+	check_eq(deck.size(), 40, "Kara-Tur: 40 карт (без Thessalheart Construct, Violet Fungus и резервной Needle Blight)")
 	var uniques := {}
 	for cid: String in deck:
 		uniques[cid] = true
@@ -6398,7 +6398,7 @@ func test_karatur_deck() -> void:
 	check(red.deck.played_pile.has(I.YASUO), "Elemental Cataclysm сыгран")
 	check_eq(red.power, 1, "Elemental Cataclysm: +1 Power за другую сыгранную карту")
 
-	# Treefolk: удержать — сбросить другую карту, жетон Acorn; при розыгрыше +2 и +1 за жетон
+	# Needle Blight: удержать — сбросить другую карту, жетон Acorn; при розыгрыше +2 и +1 за жетон
 	state = _build_rich_state(50)
 	red = state.players["red"]
 	blue = state.players["blue"]
@@ -6407,13 +6407,13 @@ func test_karatur_deck() -> void:
 	var rq := EffectResolver.new()
 	rq.apply(I.play_or_retain(I.SQUIRREL), "red", state, I.SQUIRREL)
 	TurnEngine.resume_card(state, 1, rq)
-	check(rq.is_waiting() and rq.pending.legal_options == ["48342"], "Treefolk: сначала сбросить другую карту")
+	check(rq.is_waiting() and rq.pending.legal_options == ["48342"], "Needle Blight: сначала сбросить другую карту")
 	TurnEngine.resume_card(state, "48342", rq)
 	check(red.deck.discard_pile.has("48342") and red.deck.retained.has(I.SQUIRREL), "карта сброшена, дракон удержан")
 	check_eq(red.acorns, 1, "жетон Acorn")
 	red.power = 0
 	_play_with(state, I.SQUIRREL)
-	check_eq(red.power, 3, "Treefolk: +2 и +1 за жетон")
+	check_eq(red.power, 3, "Needle Blight: +2 и +1 за жетон")
 
 	# Mage: следующая карта ценой <= 5 играется ещё раз
 	red.power = 0

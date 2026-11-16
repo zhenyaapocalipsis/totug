@@ -44,12 +44,12 @@ const RIVERSHAPER := "49810"  # Twig Blight
 const LEE_SIN := "49811"  # Zaratan
 const HIGHWAYMAN := "49812"  # Bodytaker Podling
 const GREENGLADE := "49813"  # Ochre Jelly
-const SQUIRREL := "49814"  # Treefolk (Swole Squirrel)
+const SQUIRREL := "49814"  # Needle Blight (Swole Squirrel)
 const IRELIA := "49815"  # Leviathan
 const PATHLESS := "49816"  # Blistercoil Weird
-const LIFEBLADE := "49817"  # Needle Blight
+const LIFEBLADE := "49817"  # Treefolk
 const SCHEMER := "49818"  # Gas Spore Fungus
-const SHADOWBLADE := "49819"  # Shrieker Fungus
+const SHADOWBLADE := "49819"  # Tree Blight
 const AHRI := "49820"  # Spore of Moander
 const KARMA := "49821"  # Ivana Boritsi
 const MASTER_YI := "49822"  # Kraken
@@ -182,7 +182,7 @@ static func can_retain(state: GameState, player_id: String, card_id: String) -> 
 	var hand: Array = state.players[player_id].deck.hand
 	if not hand.has(card_id):
 		return false
-	# Treefolk: "Discard a card to Retain" — нужна ещё карта в руке.
+	# Needle Blight: "Discard a card to Retain" — нужна ещё карта в руке.
 	return card_id != SQUIRREL or hand.size() >= 2
 
 
@@ -326,7 +326,7 @@ class _RetainFromHand extends CardEffect:
 		if card != IoniaCards.SQUIRREL:
 			IoniaCards.retain(state, player_id, card, resolver, "hand")
 			return
-		# Treefolk: сначала сбросить другую карту из руки.
+		# Needle Blight: сначала сбросить другую карту из руки.
 		var options := _discard_options(state, player_id)
 		if is_answered():
 			var chosen := String(answer()) if answer() != null else ""
@@ -342,7 +342,7 @@ class _RetainFromHand extends CardEffect:
 			return
 		var pd := PendingDecision.new()
 		pd.player_id = player_id
-		pd.prompt = "Discard a card to Retain Treefolk"
+		pd.prompt = "Discard a card to Retain Needle Blight"
 		pd.choice_type = "target_card"
 		pd.tag = "hand"
 		pd.legal_options = options
@@ -352,7 +352,7 @@ class _RetainFromHand extends CardEffect:
 		resolver.request_decision(pd)
 
 
-## Удержать верхнюю карту колоды (Gas Spore Fungus, Shrieker Fungus).
+## Удержать верхнюю карту колоды (Gas Spore Fungus, Tree Blight).
 class _RetainTop extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
 		var d: Deck = state.players[player_id].deck
@@ -528,7 +528,7 @@ class _Zed extends CardEffect:
 		resolver.push(SequenceEffect.new(all), player_id)
 
 
-## Gelatinous Cube (Airis) / Needle Blight (Kinkou Lifeblade): карта становится названным Аспектом,
+## Gelatinous Cube (Airis) / Treefolk (Kinkou Lifeblade): карта становится названным Аспектом,
 ## +1 ресурс за каждую сыгранную в этот ход карту этого Аспекта (и её саму).
 class _BecomeAspect extends CardEffect:
 	var card: String
