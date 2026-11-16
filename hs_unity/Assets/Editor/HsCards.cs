@@ -85,13 +85,15 @@ public class HsCards
             foreach (var line in File.ReadLines(mapPath))
             {
                 var m = Regex.Match(line, @"^\|\s*[^|]*\((\d{5})\)\s*\|\s*([^|]*?)\s*\(([A-Za-z0-9_]+)\)\s*\|");
-                if (m.Success) picks[m.Groups[1].Value] = new Pick { hsId = m.Groups[3].Value, hsName = m.Groups[2].Value, done = line.Contains("СДЕЛАНО") };
+                if (m.Success && byId.ContainsKey(m.Groups[1].Value))
+                    picks[m.Groups[1].Value] = new Pick { hsId = m.Groups[3].Value, hsName = m.Groups[2].Value, done = line.Contains("СДЕЛАНО") };
             }
         if (File.Exists(AssignPath))
             foreach (var line in File.ReadLines(AssignPath).Skip(1))
             {
                 var s = line.Split('\t');
-                if (s.Length >= 7) assigns[s[0]] = new Assign { hsId = s[3], hsName = s[4], kind = s[5], date = s[6] };
+                if (s.Length >= 7 && byId.ContainsKey(s[0]))
+                    assigns[s[0]] = new Assign { hsId = s[3], hsName = s[4], kind = s[5], date = s[6] };
             }
         Users();
     }
@@ -116,7 +118,7 @@ public class HsCards
             foreach (var c in d.cards)
                 if (assigns.TryGetValue(c.id, out var a))
                     lines.Add($"{c.id}\t{c.name}\t{d.key}\t{a.hsId}\t{a.hsName}\t{a.kind}\t{a.date}");
-        File.WriteAllLines(AssignPath, lines);
+        File.WriteAllText(AssignPath, string.Join("\n", lines) + "\n");
         Users();
         Browser?.UsedChanged();
     }
@@ -179,7 +181,14 @@ public class HsCards
             GUILayout.Label($" {byId.Count} карт, ● {assigns.Count}", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Свернуть", EditorStyles.toolbarButton)) closed = decks.Select(d => d.key).ToList();
-            if (GUILayout.Button("Обновить", EditorStyles.toolbarButton)) { Load(); Free(); }
+            if (GUILayout.Button("Обновить", EditorStyles.toolbarButton))
+            {
+                Load();
+                Free();
+                b.UsedChanged();
+                byId.TryGetValue(selId, out sel);
+                bcur = b.Cur;
+            }
         }
         if (loadErr != "") { EditorGUILayout.HelpBox(loadErr, MessageType.Error); return; }
 

@@ -100,6 +100,7 @@ func _initialize() -> void:
 	test_game_setup_real_game()
 	test_hotseat_three_and_four_players()
 	test_god_mode()
+	test_hs_play_unique_cards()
 	test_hs_play_always_releases()
 	test_supplant_empty_barracks()
 	test_market_mulligan()
@@ -2704,6 +2705,17 @@ func test_market_mulligan() -> void:
 	m.mulligan_replace(0)
 	check_eq(m.display[0], "G", "копии убранной карты пропускаются, выходит первая подходящая")
 	check_eq(m.deck, ["A", "A"] as Array[String], "пропущенные копии остались в колоде")
+
+
+func test_hs_play_unique_cards() -> void:
+	section("HsPlay: эффекты только у уникальных карт")
+	var non_unique: Array[String] = []
+	for deck: String in GameSetup.available_half_decks():
+		var copies := GameSetup.half_deck_copies(deck)
+		for card_id: String in copies:
+			if int(copies[card_id]) != 1 and HsPlay.has(card_id):
+				non_unique.append(card_id)
+	check(non_unique.is_empty(), "нет HS-эффектов у карт с несколькими копиями: %s" % [non_unique])
 
 
 ## Хотсит на 3 и 4 человек: раскладка доски, стартовые сайты и интерактивный
