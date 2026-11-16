@@ -16,6 +16,7 @@ var white_only: bool
 var anywhere: bool
 var up_to: bool
 var _post_effect_factory: Callable  # func(slot_id: String) -> CardEffect, опционально
+var last_victim: String = ""  # владелец последнего успешно заменённого войска
 var preset_site: String = ""
 var lock_after_first: bool = false  # "up to N troops at one site": локация фиксируется первым выбором
 ## Gorgon (New Era): цели только среди этих слотов (пусто — без ограничения).
@@ -88,6 +89,7 @@ func _after_hit(state: GameState, player_id: String, resolver: EffectResolver) -
 func _supplant(state: GameState, player_id: String, resolver: EffectResolver, slot_id: String) -> void:
 	var p: PlayerState = state.players[player_id]
 	var victim: String = state.troops.get(slot_id, "")
+	last_victim = victim
 	var stock: PlayerState = state.stock(player_id)
 	stock.add_trophy(victim)
 	IoniaCards.on_kill(state, player_id)

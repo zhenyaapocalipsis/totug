@@ -142,11 +142,13 @@ static func build(card_id: String) -> CardEffect:
 			return ChooseEffect.new([RecruitFree.new("", 5), RecruitFree.new("", 3, 2)],
 				["Recruit a card that costs 5 or less for free", "Recruit 2 cards that cost 3 or less for free"])
 		DEVA:
-			return PiltoverCards._AfterTroops.new(SupplantTroop.new(1), func(state, pid, before):
-				for victim: String in PiltoverCards._victims(state, before):
-					if victim != "white" and state.is_enemy(pid, victim):
-						return TakeFromTrophyHall.new(1, true, false, victim, false)
-				return ScryCards.new(2))
+			var supplant := SupplantTroop.new(1)
+			return SequenceEffect.new([supplant, CallbackEffect.new(func(state: GameState, pid: String, r: EffectResolver):
+				var victim := supplant.last_victim
+				if state.is_opponent(pid, victim):
+					r.push(TakeFromTrophyHall.new(1, true, false, victim, false), pid)
+				else:
+					r.push(ScryCards.new(2), pid))])
 	return null
 
 

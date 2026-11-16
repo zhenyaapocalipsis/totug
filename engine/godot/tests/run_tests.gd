@@ -71,6 +71,7 @@ func _initialize() -> void:
 	test_avernus_deck()
 	test_icewind_deck()
 	test_calimshan_deck()
+	test_dao()
 	test_karatur_deck()
 	test_feywild_deck()
 	test_farrealm_deck()
@@ -6344,6 +6345,49 @@ func test_calimshan_deck() -> void:
 	check(rs.is_waiting() and rs.pending.choice_type == "confirm", "Deva: вопрос «наверх колоды?»")
 	TurnEngine.resume_card(state, true, rs)
 	check_eq(red.deck.draw_pile.back(), S.DEVA, "Deva наверху колоды")
+
+
+func test_dao() -> void:
+	section("Dao: замена войска и трофеи")
+	for victim: String in ["blue", "purple", GameState.WHITE]:
+		var state := _build_rich_state(47)
+		if victim == "purple":
+			state.add_player("purple", [])
+			state.set_teams({"red": "red", "green": "red", "blue": "blue", "purple": "blue"})
+			state.pool_stocks()
+			var blue_slot: String = state.troops.find_key("blue")
+			state.troops[blue_slot] = "purple"
+		state.stock("blue").add_trophy("green")
+		state.stock("blue").add_trophy(GameState.WHITE)
+		TurnEngine.start_turn(state, "red")
+		var r := _play_with(state, ShurimaCards.DEVA)
+		var target := _slot_of(state, r.pending, victim)
+		check(target != "", "Dao: можно заменить войско %s" % victim)
+		if target == "":
+			continue
+		TurnEngine.resume_card(state, target, r)
+		check_eq(state.troops[target], "red", "Dao: своё войско встало на место цели")
+		if victim == GameState.WHITE:
+			check(r.is_waiting() and r.pending.prompt.begins_with("Scry:") and r.pending.legal_options.size() == 3,
+				"Dao: после белого войска — Scry 2")
+			continue
+		var can_take := r.is_waiting() and r.pending.tag == "trophy_hall"
+		check(can_take, "Dao: после замены войска %s можно взять трофей" % victim)
+		if not can_take:
+			continue
+		check_eq(r.pending.data["trophies"], ["blue|green", "blue|white"], "Dao: выбор из зала владельца цели")
+		check(r.pending.legal_options.has(-1), "Dao: трофей можно не брать")
+		var barracks := state.stock("red").troops_in_barracks
+		TurnEngine.resume_card(state, 0, r)
+		check(r.is_waiting() and r.pending.choice_type == "target_slot", "Dao: выбор места для трофея")
+		if not r.is_waiting() or r.pending.choice_type != "target_slot":
+			continue
+		var slot: String = r.pending.legal_options[0]
+		TurnEngine.resume_card(state, slot, r)
+		check_eq(state.troops[slot], "green", "Dao: трофей сохраняет свой цвет")
+		check_eq(state.stock("blue").trophies, {GameState.WHITE: 1}, "Dao: выбранный трофей ушёл из зала")
+		check_eq(state.stock("red").troops_in_barracks, barracks, "Dao: трофей выставлен без расхода бараков")
+		check(not r.is_waiting(), "Dao: эффект завершён после выставления трофея")
 
 
 func test_karatur_deck() -> void:

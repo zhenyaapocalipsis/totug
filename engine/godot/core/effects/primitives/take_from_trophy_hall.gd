@@ -4,7 +4,7 @@ extends CardEffect
 ## "Take a white troop from any trophy hall and deploy it anywhere on the
 ## board" (Mummy Lord) / "take up to N troops from any trophy halls and deploy
 ## them anywhere on the board" (Orcus) / "take up to N troops from THEIR trophy
-## hall and deploy them" (Lich, specific_player_id).
+## hall and deploy them" (Lich, Dao, specific_player_id).
 ##
 ## Решение владельца игры (2026-09-15): взятое войско выставляется СВОИМ
 ## цветом — белое остаётся белым, красное красным. Бараки никого не меняются:
@@ -36,7 +36,7 @@ func _collect(state: GameState, player_id: String) -> Array[String]:
 		return result
 	# "any trophy hall" — только залы соперников, свой не в счёт (решение
 	# владельца, 2026-09-26).
-	var halls: Array = [specific_player_id] if specific_player_id != "" \
+	var halls: Array = [state.stock(specific_player_id).id] if specific_player_id != "" \
 		else state.turn_order.filter(func(pid): return state.is_opponent(player_id, pid))
 	for hall: String in halls:
 		if state.stock(hall) != state.players[hall]:
