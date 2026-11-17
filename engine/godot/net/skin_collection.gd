@@ -23,17 +23,25 @@ const TIERS: Array[String] = ["epic", "legendary", "ultra"]
 const TIER_TITLES := {"epic": "EPIC", "legendary": "LEGENDARY", "ultra": "ULTRA"}
 const TIER_COLOURS := {"epic": "b9a0ff", "legendary": "ffc24a", "ultra": "9ff0ff"}
 
-const SHADERS: Array[String] = ["faerie", "gilded", "prism", "magma", "frost", "eclipse", "thorn"]
+const SHADERS: Array[String] = [
+	"faerie", "gilded", "prism", "magma", "frost", "eclipse", "thorn",
+	"moonweb", "rose_quartz", "tideglass", "obsidian",
+]
 const SHADER_TITLES := {
 	"faerie": "FAERIE FIRE", "gilded": "GILDED", "prism": "PRISM",
 	"magma": "MAGMA RIFT", "frost": "FROSTSHARD", "eclipse": "VOID ECLIPSE", "thorn": "THORNWEAVE",
+	"moonweb": "SILVER WEB", "rose_quartz": "ROSE QUARTZ", "tideglass": "TIDEGLASS", "obsidian": "OBSIDIAN MIRROR",
 }
 const SHADER_COLOURS := {
 	"faerie": "b9a0ff", "gilded": "ffc24a", "prism": "9ff0ff",
 	"magma": "ff775e", "frost": "7cbfff", "eclipse": "cf93ff", "thorn": "a5e878",
+	"moonweb": "cddcff", "rose_quartz": "ff93bd", "tideglass": "6ceacb", "obsidian": "c5babc",
 }
 ## Номер эффекта в card_skin.gdshader (0 — без шейдера).
-const SHADER_INDEX := {"faerie": 1, "gilded": 2, "prism": 3, "magma": 4, "frost": 5, "eclipse": 6, "thorn": 7}
+const SHADER_INDEX := {
+	"faerie": 1, "gilded": 2, "prism": 3, "magma": 4, "frost": 5, "eclipse": 6, "thorn": 7,
+	"moonweb": 8, "rose_quartz": 9, "tideglass": 10, "obsidian": 11,
+}
 ## Ступень всех шейдеров.
 const SHADER_TIER := "ultra"
 const SHADER_PREFIX := "shader"

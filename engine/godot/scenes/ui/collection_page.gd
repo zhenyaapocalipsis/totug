@@ -451,6 +451,11 @@ func _shaders_page() -> Control:
 	list.add_theme_constant_override("separation", 3)
 	list.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	body.add_child(list)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 3)
+	list.add_child(grid)
 	var choices: Array[String] = [""]
 	choices.append_array(SkinCollection.SHADERS)
 	for shader in choices:
@@ -459,7 +464,7 @@ func _shaders_page() -> Control:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.mouse_entered.connect(func(): _try_on(shader))
 		b.mouse_exited.connect(func(): _try_on(_shader_shown()))
-		list.add_child(b)
+		grid.add_child(b)
 		_shader_buttons[shader] = b
 	var hint := _label("The shader covers your whole\ndeck in a game, starting cards\ntoo. Market cards stay plain.",
 		PixelTheme.TEXT_DIM)

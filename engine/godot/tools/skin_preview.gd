@@ -4,11 +4,12 @@ extends SceneTree
 ## со всеми образами — мелкое и полное лицо (окно игры само рисует x2). Запуск (с окном):
 ##   Godot --path . --script res://tools/skin_preview.gd -- --card=48314 --out=C:/path/skins.png
 ## --screen=foil — четыре фольги при двух фиксированных наклонах.
+## --page=2 — вторая страница каталога или второй набор в режиме foil.
 ## Снимок — на CAPTURE_FRAME кадре: к нему шейдер точно собран и нарисован.
 
 const CAPTURE_FRAME := 20
 const COLUMNS := 4
-const FOILS: Array[String] = ["magma", "frost", "eclipse", "thorn"]
+const PAGE_SIZE := COLUMNS * 2
 const PageText := preload("res://scenes/page_text.gd")
 
 var _frame := 0
@@ -17,11 +18,14 @@ var _out := "res://skin_preview.png"
 
 func _initialize() -> void:
 	var card := "48314"
+	var page := 1
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--card="):
 			card = arg.get_slice("=", 1)
 		elif arg.begins_with("--out="):
 			_out = arg.get_slice("=", 1)
+		elif arg.begins_with("--page="):
+			page = maxi(1, int(arg.get_slice("=", 1)))
 
 	var bg := ColorRect.new()
 	bg.color = Color("0e0a16")
@@ -78,11 +82,12 @@ func _initialize() -> void:
 		return
 	var foil := OS.get_cmdline_user_args().has("--screen=foil")
 	var skins: Array[String] = [""]
+	skins.append_array(SkinCollection.SHADERS)
+	var entries := COLUMNS if foil else PAGE_SIZE
+	var first := (page - 1) * entries + (4 if foil else 0)
+	skins = skins.slice(first, first + entries)
 	if foil:
-		skins.assign(FOILS)
-		skins.append_array(FOILS)
-	else:
-		skins.append_array(SkinCollection.SHADERS)
+		skins = skins + skins
 	for i in skins.size():
 		var skin := skins[i]
 		var at := Vector2(6 + (i % COLUMNS) * 238, 15 + (i / COLUMNS) * 266)
