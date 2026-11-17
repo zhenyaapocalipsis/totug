@@ -2,8 +2,8 @@
 // 4–7 — Magma Rift, Frostshard, Void Eclipse и Thornweave.
 //
 // Всё считается по пикселям карты (texelFetch), а не экрана: при любом целом
-// масштабе пиксели остаются квадратными. У образов 1–3 переходы с дизерингом,
-// у фольги — мягкие отражения на сетке пикселей. За краем карты рисуется
+// масштабе пиксели остаются квадратными. Переходы — уровнями палитры
+// и дизерингом Байера на сетке текстуры. За краем карты рисуется
 // жёлтая рамка «можно сыграть» (CardView.PIXEL_HIGHLIGHT), с ней не спорим.
 //
 // Шейдер висит на всём CardView, но меняет только лицо карты: у остальной
@@ -32,6 +32,19 @@ const float BAYER[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 
 	13.0, 5.0);
 const vec3 GOLD[6] = vec3[](vec3(35.0, 18.0, 8.0), vec3(95.0, 50.0, 14.0), vec3(165.0, 100.0, 24.0),
 	vec3(222.0, 160.0, 44.0), vec3(255.0, 212.0, 96.0), vec3(255.0, 246.0, 196.0));
+
+// По восемь красок на металл и блик: медь, лёд, аметист, малахит.
+const vec3 FOIL_RAMPS[32] = vec3[](
+	vec3(32, 9, 20), vec3(65, 16, 33), vec3(109, 25, 45), vec3(162, 42, 54),
+	vec3(203, 70, 58), vec3(239, 117, 67), vec3(255, 177, 104), vec3(255, 235, 181),
+	vec3(9, 17, 42), vec3(21, 36, 78), vec3(25, 62, 116), vec3(32, 94, 154),
+	vec3(48, 136, 194), vec3(77, 181, 220), vec3(156, 229, 247), vec3(228, 250, 255),
+	vec3(21, 9, 44), vec3(44, 18, 78), vec3(68, 29, 124), vec3(105, 52, 163),
+	vec3(148, 72, 195), vec3(196, 117, 222), vec3(237, 175, 240), vec3(254, 226, 255),
+	vec3(8, 25, 23), vec3(16, 51, 42), vec3(21, 81, 62), vec3(30, 120, 81),
+	vec3(54, 153, 101), vec3(111, 183, 108), vec3(205, 214, 114), vec3(251, 245, 176)
+);
+const vec3 ECLIPSE_COOL[3] = vec3[](vec3(62, 110, 197), vec3(97, 178, 226), vec3(170, 228, 250));
 
 varying vec4 vertex_colour;
 
@@ -200,53 +213,36 @@ bool is_frame_ink(vec3 ink) {
 		|| matches_print(ink, vec3(22.0, 12.0, 40.0));
 }
 
-vec3 foil_skin(vec3 ink, ivec2 pixel, int reg) {
-	float l = lum(ink);
-	// Печатные знаки и тёмные контуры сохраняют цвет.
-	if (reg > 1 && !is_frame_ink(ink)) {
-		return ink;
+vec3 foil_ink(float value, ivec2 pixel, bool cool_band) {
+	int tone = int(round(dith(value, pixel, 7.0) * 7.0));
+	if (cool_band && tone >= 4 && tone <= 6) {
+		return ECLIPSE_COOL[tone - 4] / 255.0;
 	}
-	vec3 base_metal;
-	vec3 foil_a;
-	vec3 foil_b;
-	vec3 mirror;
+	return FOIL_RAMPS[(tier - 4) * 8 + tone] / 255.0;
+}
+
+vec3 foil_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope) {
 	vec3 paper_tone;
 	vec2 axis;
 	float width;
 	if (tier == 4) {
-		base_metal = vec3(0.19, 0.035, 0.055);
-		foil_a = vec3(0.95, 0.16, 0.24);
-		foil_b = vec3(1.0, 0.69, 0.33);
-		mirror = vec3(1.0, 0.91, 0.69);
 		paper_tone = vec3(0.985, 0.875, 0.745);
 		axis = vec2(0.86, 0.51);
 		width = 0.105;
 	} else if (tier == 5) {
-		base_metal = vec3(0.041, 0.105, 0.225);
-		foil_a = vec3(0.36, 0.44, 1.0);
-		foil_b = vec3(0.15, 0.85, 0.99);
-		mirror = vec3(0.91, 0.98, 1.0);
 		paper_tone = vec3(0.84, 0.92, 0.96);
 		axis = vec2(0.77, -0.64);
 		width = 0.122;
 	} else if (tier == 6) {
-		base_metal = vec3(0.107, 0.038, 0.234);
-		foil_a = vec3(0.44, 0.33, 1.0);
-		foil_b = vec3(0.97, 0.41, 0.79);
-		mirror = vec3(0.96, 0.87, 1.0);
 		paper_tone = vec3(0.935, 0.87, 0.975);
 		axis = vec2(0.94, 0.34);
 		width = 0.111;
 	} else {
-		base_metal = vec3(0.035, 0.16, 0.095);
-		foil_a = vec3(0.045, 0.77, 0.53);
-		foil_b = vec3(0.88, 0.78, 0.25);
-		mirror = vec3(0.99, 0.97, 0.73);
 		paper_tone = vec3(0.884, 0.938, 0.792);
 		axis = vec2(0.60, -0.80);
 		width = 0.133;
 	}
-	if (reg == 0) {
+	if (inside(text_rect, pixel)) {
 		// Красится только фон бумаги, печать поверх него сохраняется.
 		if (matches_print(ink, vec3(230.0, 217.0, 188.0))) {
 			return mix(ink, paper_tone, 0.52);
@@ -254,6 +250,9 @@ vec3 foil_skin(vec3 ink, ivec2 pixel, int reg) {
 		if (matches_print(ink, vec3(191.0, 174.0, 136.0))) {
 			return mix(ink, paper_tone * 0.79, 0.52);
 		}
+		return ink;
+	}
+	if (!art && !is_frame_ink(ink)) {
 		return ink;
 	}
 
@@ -265,54 +264,51 @@ vec3 foil_skin(vec3 ink, ivec2 pixel, int reg) {
 	lean.x += foil_turn * 0.84;
 	vec4 surface = foil_surface(uv, p);
 
-	// Цветная полоса дифракции и более узкое зеркальное ядро движутся вместе.
-	float d = dot(p, axis) - dot(lean, axis * vec2(0.64, 0.48)) + surface.x;
-	float broad = foil_lobe(d + 0.07, width * 2.65);
+	// Положение света меняется при наклоне. В палитру попадают ступени яркости.
+	float shift = round(dot(lean, axis * vec2(0.64, 0.48)) * face_size.x) / face_size.x;
+	float d = dot(p, axis) - shift + surface.x;
+	float broad = foil_lobe(d + 0.055, width * 2.5);
 	float key = foil_lobe(d, width) * surface.y;
-	float flank = foil_lobe(d - 0.17, width * 0.65) * surface.y;
-	float specular = foil_lobe(d + 0.024, width * 0.36) * surface.y;
-	float dispersion = smoothstep(-0.17, 0.22, d + surface.w * 0.27 + dot(lean, vec2(0.15, -0.10)));
-	vec3 colour = mix(foil_a, foil_b, dispersion);
-	if (tier == 6) {
-		colour = mix(colour, vec3(0.25, 0.86, 1.0), foil_lobe(d + 0.10 + surface.w * 0.17, 0.085) * 0.70);
-	}
-	vec3 reflection = mix(colour, mirror, clamp(specular * 0.92 + key * 0.21, 0.0, 1.0));
-	float engraved = surface.z * (0.29 + key * 0.55 + flank * 0.34);
+	float flank = foil_lobe(d - 0.17, width * 0.59) * surface.y;
+	float specular = foil_lobe(d + 0.018, width * 0.34) * surface.y;
+	bool cool_band = tier == 6 && abs(d + 0.10 + surface.w * 0.17) < 0.064;
+	float etched = surface.z * (0.14 + key * 0.30 + flank * 0.24);
 
-	if (reg == 1) {
-		// Свет отражают светлые краски и металлизированные штрихи под печатью.
-		float ink_light = smoothstep(0.07, 0.78, l);
-		float coating = (0.095 + broad * 0.20 + key * 0.38 + flank * 0.16)
-			* mix(0.38, 1.0, ink_light);
-		vec3 printed = mix(ink, reflection, coating);
-		vec3 stamp = mix(colour, mirror, 0.29 + specular * 0.62);
-		printed = mix(printed, stamp, engraved * mix(0.09, 0.39, ink_light));
+	if (art) {
+		// Под печатью свет цепляется за светлые краски и рёбра самой иллюстрации.
+		float ink_light = clamp((lum(ink) - 0.07) / 0.67, 0.0, 1.0);
+		float relief = max(0.0, dot(art_slope, axis)) * step(0.12, key);
+		float coating = max(0.0, 0.17 * broad + 0.37 * key + 0.21 * flank + 0.25 * relief - 0.055)
+			* mix(0.32, 1.0, ink_light);
+		vec3 tint = foil_ink(0.41 + 0.23 * key + 0.34 * specular + 0.13 * flank, pixel, cool_band);
+		vec3 printed = mix(ink, tint, dith(coating, pixel, 4.0));
+		// Отдельные яркие пиксели остаются внутри блика или на печатном клейме.
+		float fleck = (surface.z * (key * 0.52 + flank * 0.20) + relief * key * 0.54)
+			* mix(0.12, 0.70, ink_light);
+		float seal = 0.0;
 		if (text_rect.z > text_rect.x) {
-			float mark = foil_seal(at - (art_rect.zw - vec2(15.0, 11.0)));
-			printed = mix(printed, stamp, mark * (0.32 + key * 0.38));
+			seal = foil_seal(at - (art_rect.zw - vec2(15.0, 11.0)));
+		}
+		if (bay(pixel) + 0.085 < max(fleck, seal * (0.32 + key * 0.53))) {
+			return foil_ink(0.54 + specular * 0.41 + key * 0.14, pixel, cool_band);
 		}
 		return printed;
 	}
 
-	// Наружный кант и оправка арта печатаются в металле.
+	// Кант шириной в пиксель и тиснение делят те же краски, что и блик.
 	vec2 outer = min(at, face_size - at);
 	float edge = min(outer.x, outer.y);
 	vec2 from_art = max(art_rect.xy - at, at - art_rect.zw);
 	float art_edge = max(from_art.x, from_art.y);
-	float rim = 1.0 - smoothstep(0.38, 1.28, abs(edge - 2.2));
-	float inner_rim = 1.0 - smoothstep(0.44, 1.36, abs(art_edge - 1.6));
-	float trim = max(rim, inner_rim * 0.93);
-	float relief = max(trim * 0.76, engraved);
-	vec3 metal = mix(ink * 0.50, base_metal, 0.78);
-	metal = mix(metal, colour, 0.075 + broad * 0.32 + key * 0.27 + flank * 0.24);
-	vec3 etching = mix(colour, reflection, 0.40 + specular * 0.55);
-	etching = mix(etching, mirror, 0.13 + relief * 0.25);
-	vec3 finish = mix(metal, etching, clamp(relief * 0.76 + specular * 0.46, 0.0, 1.0));
-	// Чуть темнее под строкой аспекта, чтобы красная печать читалась на меди.
+	float trim = max(1.0 - step(0.52, abs(edge - 1.5)), 1.0 - step(0.52, abs(art_edge - 1.5)));
+	float level = 0.16 + 0.26 * broad + 0.32 * key + 0.28 * specular + 0.27 * flank
+		+ max(trim * 0.28, etched);
+	// Под строкой аспекта оставляем тёмные ступени, чтобы держать контраст красных букв.
 	float aspect_row = float(text_rect.z > text_rect.x)
 		* smoothstep(-14.0, -10.0, at.y - art_rect.y)
 		* (1.0 - smoothstep(-4.0, -1.0, at.y - art_rect.y));
-	return mix(finish, base_metal, aspect_row * (1.0 - smoothstep(0.48, 0.67, uv.x)) * 0.61);
+	level *= 1.0 - aspect_row * (1.0 - smoothstep(0.48, 0.67, uv.x)) * 0.47;
+	return foil_ink(level, pixel, cool_band);
 }
 
 void fragment() {
@@ -320,10 +316,12 @@ void fragment() {
 	bool face = abs(TEXTURE_PIXEL_SIZE.x * face_size.x - 1.0) < 0.01 && abs(TEXTURE_PIXEL_SIZE.y * face_size.y - 1.0) < 0.01;
 	if (tier == 0 || !face) {
 		COLOR = base * vertex_colour;
-	} else if (tier >= 4) {
+	} else if (tier >= 4 && tier <= 7) {
 		ivec2 p = clamp(ivec2(floor(UV / TEXTURE_PIXEL_SIZE)), ivec2(0), ivec2(face_size) - 1);
 		vec4 src = texelFetch(TEXTURE, p, 0);
-		vec3 c = foil_skin(src.rgb, p, region(TEXTURE, p));
+		bool art = inside(art_rect, p);
+		vec2 grain = art ? slope(TEXTURE, p) : vec2(0.0);
+		vec3 c = foil_skin(src.rgb, p, art, grain);
 		COLOR = vec4(c, src.a) * vertex_colour;
 	} else {
 		ivec2 p = ivec2(floor(UV / TEXTURE_PIXEL_SIZE));
