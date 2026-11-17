@@ -209,6 +209,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	_asker_slot.visible = false
+	_asker_slot.size_flags_vertical = Control.SIZE_FILL
 	_cards_slot.visible = false
 	var cards_mode := false
 	# Вопрос полосой сверху, без затемнения: "You may..." и выбор карты
@@ -297,6 +298,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			_add_asker(pd, decider)
 			_add_strip_buttons([["Show", toggle_cards]])
 		else:
+			_add_asker(pd, decider)
+			_asker_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			_add_option_cards(pd)
 			var hide := Button.new()
 			DecisionText.bind(hide, "Hide")
@@ -324,6 +327,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	DecisionText.bind(_who, _who.text)
 	DecisionText.bind(_prompt, _prompt.text)
 	_set_cards_look(cards_mode or on_board or waiting or strip, decider)
+	_set_dim(not waiting and not on_board and not strip and cards_mode)
 	_fit_strip()
 	# Полоса вопроса над доской прозрачна, но клики ловила сама: шпион или
 	# войско у верхнего края доски оказывались под ней — рамка цели видна, а
@@ -331,7 +335,6 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# target"; Xith Idrana на 4 игрока). Теперь сквозь неё кликается доска,
 	# кнопка Skip ловит клики сама.
 	_pass_clicks(on_board or waiting or strip)
-	_set_dim(not waiting and not on_board and not strip and cards_mode)
 	var rows: int = _options_box.get_child_count()
 	var max_h: float = MAX_LIST_HEIGHT
 	if on_board or waiting or strip:
@@ -356,7 +359,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 func _fit_strip() -> void:
 	var col := _who.get_parent() as Control
 	(col.get_parent() as HBoxContainer).alignment = BoxContainer.ALIGNMENT_CENTER
-	if not _asker_slot.visible and not _cards_slot.visible:
+	if _dim.visible or (not _asker_slot.visible and not _cards_slot.visible):
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_prompt.custom_minimum_size.x = 0
 		return
@@ -588,6 +591,12 @@ func _add_asker(pd: Dictionary, decider: String, yes_on_click: bool = false) -> 
 		card.pressed.connect(func(_id): option_chosen.emit(true))
 	_asker_slot.add_child(card)
 	_asker_slot.visible = true
+
+
+func source_card() -> CardView:
+	if is_visible_in_tree() and _asker_slot.visible and _asker_slot.get_child_count() > 0:
+		return _asker_slot.get_child(0) as CardView
+	return null
 
 
 ## Hide / Show у "Choose one" картами: окно по центру <-> полоса под доской.

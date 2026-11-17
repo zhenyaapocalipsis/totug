@@ -1435,7 +1435,7 @@ func _launch_play(cid: String, from: Rect2, face: Texture2D, unique: bool) -> Pl
 		var badge := _turn_emblem.get_global_rect().get_center()
 		var launch_size := Vector2(9, 13)
 		from = Rect2(badge - launch_size * 0.5, launch_size)
-	var flight := PlayedCardFlight.new(face)
+	var flight := PlayedCardFlight.new(cid, face)
 	var stage: Rect2
 	if unique:
 		stage = HsPlay.play_card_rect(cid, face, _hs_play.size)
@@ -1445,18 +1445,22 @@ func _launch_play(cid: String, from: Rect2, face: Texture2D, unique: bool) -> Pl
 		var board := _board_area.get_global_rect()
 		var card_size := CardView.MINI_SIZE
 		var x := board.get_center().x - card_size.x * 0.5
-		if _decision_dialog.visible or _piles_window.visible:
-			# Карта видна сбоку от вопроса. Модальное затемнение оставляем
-			# под ней, а все кнопки и цели работают сквозь полёт.
-			x = board.position.x + 8.0
-			if not _decision_dialog.at_top or _piles_window.visible:
-				flight.z_index = 1002
 		stage = Rect2(Vector2(x, board.end.y - _decision_dialog.strip_bottom - card_size.y), card_size)
 		stage.position -= global_position
 		add_child(flight)
 	flight.enter(from, stage)
 	_played_flight = flight
 	return flight
+
+
+func _play_has_choice(cid: String) -> bool:
+	var pd: Dictionary = _view.get("pending_decision", {})
+	return replay_bar == null and not watching and String(pd.get("source_card", "")) == cid
+
+
+func _play_choice_card(cid: String) -> CardView:
+	var card := _piles_window.source_card() if _piles_window.visible else _decision_dialog.source_card()
+	return card if card != null and card.card_id == cid else null
 
 
 func _apply_result(err: int, events: Array, view: Dictionary) -> void:
@@ -1518,6 +1522,9 @@ func _show_looks(events: Array, view: Dictionary) -> void:
 ## покажет сигнал CardShowcase.finished. В реплее окна нет: оно закрывало бы
 ## доску, а ответ всё равно придёт следующим шагом.
 func _show_decision(view: Dictionary) -> void:
+	if (is_instance_valid(_played_flight) and _played_flight.is_docking()
+			and not _play_has_choice(_played_flight.card_id)):
+		_played_flight.depart()
 	_decision_dialog.update_from_view(view, viewer_id)
 	var busy := _showcase.is_busy() or _hs_play.is_busy() or replay_bar != null or watching
 	if busy:
@@ -1881,6 +1888,12 @@ func _note_recap(events: Array, animate_plays: bool = false) -> void:
 					flight = _launch_play(cid, evt.get("play_from", Rect2()), face, false)
 				if is_instance_valid(flight):
 					flight.park_at(slot, _feed, evt.has("hs_started"))
+					if _play_has_choice(cid):
+						if flight.get_parent() != self:
+							flight.reparent(self, true)
+						# Над затемнением, как и сама карта внутри окна.
+						flight.z_index = 1002
+						flight.dock_to(_play_choice_card.bind(cid), pid)
 		elif type == "jarlaxle":
 			# Карту соперника разыграли за него: она — его сыгранная карта.
 			_feed.add_to_turn(String(evt.get("rival", "")), String(evt.get("card_id", "")), "PLAYED")

@@ -103,7 +103,7 @@ static func handles(pd: Dictionary) -> bool:
 func show_decision(pd: Dictionary, viewer_id: String) -> void:
 	_data = pd.get("data", {})
 	_viewer = viewer_id
-	var key := "%s|%s|%s" % [pd.get("tag", ""), pd.get("prompt", ""), str(_data)]
+	var key := "%s|%s|%s|%s" % [pd.get("tag", ""), pd.get("source_card", ""), pd.get("prompt", ""), str(_data)]
 	visible = true
 	if key == _key:
 		return
@@ -137,6 +137,12 @@ func show_decision(pd: Dictionary, viewer_id: String) -> void:
 func close() -> void:
 	visible = false
 	_key = ""
+
+
+func source_card() -> CardView:
+	if is_visible_in_tree() and _asker.get_child_count() > 0:
+		return _asker.get_child(0) as CardView
+	return null
 
 
 func _clear() -> void:
