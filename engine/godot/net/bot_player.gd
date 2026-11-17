@@ -576,6 +576,8 @@ static func _promote_value(cid: String, state: GameState, pid: String, ctx: Dict
 ## Ответ бота на вопрос pd (MAKE_DECISION). Всегда одно из legal_options,
 ## кроме confirm (true/false) и пустых списков (null — пропустить).
 static func answer(state: GameState, pd: PendingDecision, pid: String, fast: bool = false):
+	if pd.tag == IxtalCards.MARKER_AGAIN_TAG:
+		return pd.data["default_site"]
 	var opts: Array = pd.legal_options
 	var ctx := _fast_context(state, pid) if fast else _context(state, pid)
 	var prompt := pd.prompt.to_lower()

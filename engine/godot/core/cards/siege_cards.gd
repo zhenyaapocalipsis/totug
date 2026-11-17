@@ -260,7 +260,7 @@ class _MarkerEffect extends CardEffect:
 		var influence := int(marker.get("control_influence", 0))
 		state.players[player_id].influence += influence
 		resolver.log_event("marker_effect", {"player_id": player_id, "site_id": site, "influence": influence})
-		if state.control.has_total_control(player_id, site, state.troops, state.spies):
+		if ControlMarkers.has_total_reward(state, player_id, site):
 			resolver.push(GainVP.new(int(marker.get("total_control_vp", 0))), player_id)
 
 

@@ -32,6 +32,7 @@ const NEEKO := "50100"  # Hythonia
 const MALPHITE := "50101"  # Displacer Beast
 const ZILEAN := "50102"  # Sarrukh Tyrant
 const SKARNER := "50103"  # Ironscale Hydra
+const MARKER_AGAIN_TAG := "ironscale_hydra_marker"
 const MILIO := "50104"  # Chwinga
 const RENGAR := "50105"  # Troglodyte
 const ZYRA := "50106"  # Snapping Hydra
@@ -576,28 +577,51 @@ class _FullExtraTurn extends CardEffect:
 		resolver.log_event("extra_turn", {"player_id": player_id, "cards": 0})
 
 
-## Ironscale Hydra (Skarner): "activate 1 of them an additional time" —
-## лучший свой маркер (уже как тотальный контроль) даёт награду ещё раз сейчас.
+## Ironscale Hydra: игрок выбирает, какой из своих маркеров активировать ещё раз.
 class _MarkerAgain extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var best := {}
-		var best_site := ""
-		for site_id: String in ControlMarkers.marked_sites(state):
-			if not ControlMarkers.holds(state, player_id, site_id):
-				continue
-			var m := ControlMarkers.marker_for(state, site_id)
-			var value := int(m.get("control_influence", 0)) + int(m.get("total_control_vp", 0))
-			if best.is_empty() or value > int(best.get("control_influence", 0)) + int(best.get("total_control_vp", 0)):
-				best = m
-				best_site = site_id
-		if best.is_empty():
+		if is_answered():
+			_grant(state, player_id, resolver, String(answer()))
 			return
+		var sites: Array[String] = []
+		for site_id: String in ControlMarkers.marked_sites(state):
+			if ControlMarkers.holds(state, player_id, site_id):
+				sites.append(site_id)
+		if sites.is_empty():
+			return
+		if sites.size() == 1:
+			_grant(state, player_id, resolver, sites[0])
+			return
+		var pd := PendingDecision.new()
+		pd.player_id = player_id
+		pd.prompt = "Choose a site control marker to activate again"
+		pd.choice_type = "target_site"
+		pd.tag = MARKER_AGAIN_TAG
+		pd.legal_options = sites
+		pd.data["default_site"] = _best_site(state, sites)
+		pd.target_effect = self
+		resolver.request_decision(pd)
+
+	func _best_site(state: GameState, sites: Array[String]) -> String:
+		var best := sites[0]
+		var best_value := -1
+		for site_id in sites:
+			var marker := ControlMarkers.marker_for(state, site_id)
+			var value := int(marker["control_influence"]) + int(marker["total_control_vp"])
+			if value > best_value:
+				best = site_id
+				best_value = value
+		return best
+
+	func _grant(state: GameState, player_id: String, resolver: EffectResolver, site_id: String) -> void:
+		var marker := ControlMarkers.marker_for(state, site_id)
+		var influence := int(marker.get("control_influence", 0))
 		var p: PlayerState = state.players[player_id]
-		p.influence += int(best.get("control_influence", 0))
-		var vp := state.vp_bank.grant(int(best.get("total_control_vp", 0)))
+		p.influence += influence
+		var vp := state.vp_bank.grant(int(marker.get("total_control_vp", 0)))
 		p.vp_tokens += vp
-		resolver.log_event("marker_again", {"player_id": player_id, "site_id": best_site,
-			"influence": int(best.get("control_influence", 0)), "vp": vp})
+		resolver.log_event("marker_again", {"player_id": player_id, "site_id": site_id,
+			"influence": influence, "vp": vp})
 
 
 ## Snapping Hydra: уже поставлено 7+ войск в этот ход — карта сразу.

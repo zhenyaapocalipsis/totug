@@ -248,7 +248,7 @@ static func turn_starts(replay: Dictionary) -> Array[int]:
 ## GameServer.apply_intent.
 static func step(server: GameServer, replay: Dictionary, index: int) -> Dictionary:
 	var intents: Array = replay["intents"]
-	var result := server.apply_intent(Intent.from_dict(intents[index] as Dictionary))
+	var result := server.apply_recorded_intent(Intent.from_dict(intents[index] as Dictionary))
 	var gone := String((replay["header"] as Dictionary).get("abandoned_by", ""))
 	if index == intents.size() - 1 and gone != "" and not server.state.game_over:
 		return server.abandon(gone)

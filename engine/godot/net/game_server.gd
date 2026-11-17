@@ -180,6 +180,20 @@ func apply_intent(intent: Intent) -> Dictionary:
 	}
 
 
+## В старых журналах Гидра выбирала лучший маркер сама, поэтому ответа нет.
+func apply_recorded_intent(intent: Intent) -> Dictionary:
+	var pd := resolver.pending
+	if pd == null or pd.tag != IxtalCards.MARKER_AGAIN_TAG:
+		return apply_intent(intent)
+	if intent.type == Intent.Type.MAKE_DECISION and intent.player_id == pd.player_id \
+			and intent.answer is String and pd.legal_options.has(intent.answer):
+		return apply_intent(intent)
+	var automatic := apply_intent(Intent.make_decision(pd.player_id, pd.data["default_site"]))
+	var result := apply_intent(intent)
+	result["events"] = automatic["events"] + result["events"]
+	return result
+
+
 ## Режим бога в хотсите (GodMode): правка партии мимо правил. Возвращает то
 ## же, что apply_intent. Передать ход можно только в спокойной точке (нет
 ## вопроса карты и недоигранного конца хода).

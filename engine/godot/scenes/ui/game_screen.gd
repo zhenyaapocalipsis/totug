@@ -89,7 +89,7 @@ const COL := float(MarketPanel.WIDTH) + HALL_EXTRA
 const TRACKER_W := float(DeckTracker.WIDTH)
 ## Высота стопок INNER и DEVOUR под дектрекером.
 const PILES_H := 48.0
-const TURN_BAR_H := 18.0
+const TURN_BAR_H := 16.0
 const END_TURN_W := 96.0
 const TIMER_W := 44.0
 ## Полоска цвета ходящего на кнопке End turn — вместо ника, который в кнопку
@@ -479,6 +479,8 @@ func _build_layout() -> void:
 	_decision_dialog.board = board_data  # чтобы подписывать цели названиями локаций
 	_decision_dialog.option_chosen.connect(_on_decision_answer)
 	_board_area.add_child(_decision_dialog)
+	_decision_dialog.item_rect_changed.connect(_fit_board_above_decision, CONNECT_DEFERRED)
+	_decision_dialog.visibility_changed.connect(_fit_board_above_decision, CONNECT_DEFERRED)
 
 	# 6. Маркет.
 	_market_panel = MarketPanel.new()
@@ -546,7 +548,8 @@ func _build_layout() -> void:
 	_timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	L10n.bind(_timer_label, "game.timer_tip", {}, "tooltip_text")
 	add_child(_timer_label)
-	_timer_label.add_theme_stylebox_override("normal", zone_style(1))
+	var turn_bar_style := PixelTheme.button_box(PixelTheme.PANEL, PixelTheme.BORDER, 1, 1)
+	_timer_label.add_theme_stylebox_override("normal", turn_bar_style)
 	_last_round_label = Label.new()
 	L10n.scope(_last_round_label)
 	_last_round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -555,7 +558,7 @@ func _build_layout() -> void:
 	_last_round_label.visible = false
 	_last_round_label.add_theme_color_override("font_color", PixelTheme.GOLD)
 	add_child(_last_round_label)
-	_last_round_label.add_theme_stylebox_override("normal", zone_style(1))
+	_last_round_label.add_theme_stylebox_override("normal", turn_bar_style)
 	_pause_button = _side_button("PAUSE", _on_pause_pressed)
 	# Реплей ставят на паузу своей полосой, зрителю пауза не положена.
 	_pause_button.hide()
@@ -1215,11 +1218,19 @@ func _layout() -> void:
 	_place(_timer_label, timer_x, turn_bar_y, TIMER_W, TURN_BAR_H)
 	_place(_end_turn_area, end_turn_x, turn_bar_y, END_TURN_W, TURN_BAR_H)
 	_place(_last_round_label, end_turn_x + END_TURN_W + GAP, turn_bar_y, 90, TURN_BAR_H)
-	var caption_y := floorf((TURN_BAR_H - PixelTheme.LINE_H) * 0.5)
+	var caption_y := floorf((TURN_BAR_H - PixelTheme.LINE_H) * 0.5) + PixelTheme.CAPS_SHIFT
 	_place(_end_turn_button, 0, 0, END_TURN_W, TURN_BAR_H)
 	_place(_turn_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
 	_place(_turn_chip, 5, floorf((TURN_BAR_H - TURN_CHIP_H) * 0.5), TURN_CHIP_H, TURN_CHIP_H)
-	_place(_end_label, 12, caption_y, END_TURN_W - 14, PixelTheme.LINE_H)
+	_place(_end_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
+
+
+## Верх нижней полосы меняется после раскладки текста и карт.
+func _fit_board_above_decision() -> void:
+	var edge := -1.0
+	if _decision_dialog.visible and _decision_dialog.at_top:
+		edge = maxf(1.0, _decision_dialog.position.y - GAP)
+	_board_panel.set_decision_edge(edge)
 
 
 

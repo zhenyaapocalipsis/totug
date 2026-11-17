@@ -3956,7 +3956,7 @@
     "race": "HYDRA",
     "deck_vp": 3,
     "inner_circle_vp": 7,
-    "ability_text": "Supplant a troop.\nThis turn your site control markers count as total control. One of them gives its reward again now."
+    "ability_text": "Supplant a troop.\nThis turn your site control markers count as total control. Choose one of them and gain its reward again now."
   },
   {
     "card_id": 50104,

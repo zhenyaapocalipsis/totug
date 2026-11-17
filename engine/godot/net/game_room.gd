@@ -504,7 +504,7 @@ static func restore(header: Dictionary, intents: Array) -> GameRoom:
 	room.server = GameServer.new(state, bool(header.get("mulligan", false)))
 	room.started = true
 	for d in intents:
-		room.server.apply_intent(Intent.from_dict(d as Dictionary))
+		room.server.apply_recorded_intent(Intent.from_dict(d as Dictionary))
 		room.log.append(d)
 	# только выделенный сервер: доска без лимита времени — та же, что до перезапуска
 	room.cached_board = StateView.board_snapshot(state, {}, BoardSchematic.NO_BUDGET)

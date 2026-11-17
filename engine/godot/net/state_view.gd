@@ -34,6 +34,7 @@ static func for_player(state: GameState, viewer_id: String) -> Dictionary:
 		"troops": state.troops.duplicate(),
 		"site_control": _site_control(state),
 		"site_total_control": _site_total_control(state),
+		"site_marker_rewards": _site_marker_rewards(state),
 		"spies": _duplicate_spies(state.spies),
 		"board_vp": state.board_vp.duplicate(),
 		"played_aspects_this_turn": state.played_aspects_this_turn.duplicate(),
@@ -279,6 +280,19 @@ static func _site_total_control(state: GameState) -> Array:
 		var owner := state.control.controller_of(site_id, state.troops)
 		if owner != "" and state.control.has_total_control(owner, site_id, state.troops, state.spies):
 			out.append(site_id)
+	return out
+
+
+static func _site_marker_rewards(state: GameState) -> Dictionary:
+	var out := {}
+	var current := state.current_player()
+	for site_id: String in ControlMarkers.marked_sites(state):
+		var owner: String = state.stolen_markers.get(site_id,
+			state.control.controller_of(site_id, state.troops))
+		if owner == "":
+			continue
+		var beneficiary := current if ControlMarkers.holds(state, current, site_id) else owner
+		out[site_id] = {"owner": owner, "total": ControlMarkers.has_total_reward(state, beneficiary, site_id)}
 	return out
 
 

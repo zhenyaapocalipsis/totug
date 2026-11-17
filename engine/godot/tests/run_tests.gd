@@ -116,6 +116,7 @@ func _initialize() -> void:
 	test_board_geometry_spreads_tiles()
 	test_vp_income_is_explained()
 	test_control_markers()
+	test_ironscale_hydra()
 	test_presence_slots_explain_refusal()
 	test_no_actions_while_decision_pending()
 	test_cross_hex_site_to_site_presence()
@@ -3747,6 +3748,63 @@ func test_control_markers() -> void:
 	check_eq(state.players["red"].influence - before2,
 		int(ControlMarkers.marker_for(state, site2)["control_influence"]),
 		"повторно в тот же ход за ту же локацию не платится")
+
+
+func test_ironscale_hydra() -> void:
+	section("Ironscale Hydra: выбор повторной награды и полный доход от маркеров")
+	var state := GameSetup.new_game(["red", "blue"], 2)
+	var marked := ControlMarkers.marked_sites(state)
+	for slot_id: String in state.troops:
+		state.troops[slot_id] = ""
+	var first_slots := state.graph.slots_of_site(marked[0])
+	state.troops[first_slots[0]] = "red"
+	state.troops[first_slots[1]] = "white"
+	state.troops[state.graph.slots_of_site(marked[1])[0]] = "red"
+	state.troops[state.graph.slots_of_site(marked[2])[0]] = "blue"
+	TurnEngine.start_turn(state, "red")
+	var old_state := StateCopy.copy_state(state)
+	var red: PlayerState = state.players["red"]
+	var host := GameServer.new(state, false, false, false)
+	red.deck.hand.append(IxtalCards.SKARNER)
+	host.apply_intent(Intent.play_card("red", IxtalCards.SKARNER))
+	check(host.resolver.is_waiting() and host.resolver.pending.choice_type == "target_slot",
+		"сначала Гидра спрашивает, какой отряд заменить")
+	host.apply_intent(Intent.make_decision("red", first_slots[1]))
+	check_eq(state.troops[first_slots[1]], "red", "Гидра заменила белый отряд")
+	if not host.resolver.is_waiting():
+		check(false, "Гидра должна предложить выбор маркера")
+		return
+	check_eq(host.resolver.pending.choice_type, "target_site", "выбор маркера на доске")
+	check_eq(host.resolver.pending.legal_options, marked.slice(0, 2),
+		"только свои маркеры, включая обычный контроль")
+	var view := StateView.for_player(state, "blue")
+	check(view["site_marker_rewards"][marked[1]]["total"],
+		"всем видно, что обычный маркер даёт полный доход")
+	check(not view["site_total_control"].has(marked[1]),
+		"контроль самой локации остаётся обычным")
+	var influence_before := red.influence
+	var vp_before := red.vp_tokens
+	var reward := ControlMarkers.marker_for(state, marked[1])
+	host.apply_intent(Intent.make_decision("red", marked[1]))
+	check(not host.resolver.is_waiting(), "после выбора розыгрыш завершился")
+	check_eq(red.influence - influence_before, int(reward["control_influence"]), "сразу получено влияние")
+	check_eq(red.vp_tokens - vp_before, int(reward["total_control_vp"]), "сразу получены ПО выбранного маркера")
+	var end_reward := int(reward["total_control_vp"]) \
+		+ int(ControlMarkers.marker_for(state, marked[0])["total_control_vp"])
+	var end_vp_before := red.vp_tokens
+	host.apply_intent(Intent.end_turn("red"))
+	check_eq(red.vp_tokens - end_vp_before, end_reward, "в конце хода получены ПО обоих маркеров")
+	view = StateView.for_player(state, "blue")
+	check(not view["site_marker_rewards"][marked[1]]["total"], "на следующем ходу временный эффект снят")
+
+	var old_host := GameServer.new(old_state, false, false, false)
+	old_state.players["red"].deck.hand.append(IxtalCards.SKARNER)
+	old_host.apply_recorded_intent(Intent.play_card("red", IxtalCards.SKARNER))
+	old_host.apply_recorded_intent(Intent.make_decision("red", first_slots[1]))
+	var old_turn := old_host.apply_recorded_intent(Intent.end_turn("red"))
+	check_eq(old_turn["error"], GameServer.Error.OK, "старый реплей продолжается без записанного выбора")
+	check(old_turn["events"].any(func(event): return event["type"] == "marker_again"),
+		"старый реплей автоматически начисляет повторную награду")
 
 
 func test_cross_hex_site_to_site_presence() -> void:
