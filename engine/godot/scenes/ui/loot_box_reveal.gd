@@ -571,6 +571,10 @@ func _draw_card(c: CardLayer) -> void:
 			c.draw_rect(Rect2(base + Vector2(i * 16, -(i % 2) * 6), Vector2(12, 12)), Color(PixelTheme.GOLD, p))
 		return
 	var rect := Rect2(((v - CardView.PIXEL_SIZE) * 0.5).round() + Vector2(0, -6 + (1.0 - p) * 40.0), CardView.PIXEL_SIZE)
+	var mat := c.material as ShaderMaterial
+	if mat != null:
+		# Блик проходит по фольге, пока карта поднимается.
+		mat.set_shader_parameter("foil_turn", (1.0 - p) * -0.90)
 	c.draw_texture_rect(face, rect, false, Color(1, 1, 1, p))
 	var a := 0.0
 	if _tier() == "epic":

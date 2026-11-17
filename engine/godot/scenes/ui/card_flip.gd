@@ -100,6 +100,10 @@ func _process(delta: float) -> void:
 	var back := shows_back()
 	_back_layer.visible = back
 	_face_layer.visible = not back
+	if not back:
+		var mat := _face_layer.material as ShaderMaterial
+		if mat != null:
+			mat.set_shader_parameter("foil_turn", sin(angle))
 	(_back_layer if back else _face_layer).queue_redraw()
 
 
