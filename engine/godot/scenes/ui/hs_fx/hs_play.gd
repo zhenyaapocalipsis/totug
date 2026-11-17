@@ -1343,18 +1343,14 @@ func _init() -> void:
 	set_process(false)
 
 
-## То же место в слоях эффекта, где рисуется лицо в предпросмотре.
-func add_flying_face(flight: Control) -> void:
-	_card.add_child(flight)
-
-
 ## Разыграть карту cid: face — её лицо, quiet — чужая (тише); preview — только
 ## посмотреть (меню CARD ANIMATIONS): действий не будет, дымка уходит после эффекта.
+## take_face принимает прямоугольник лица перед применением ответа сервера.
 func play(cid: String, face: Texture2D, quiet: bool = false, preview: bool = false,
-		draw_face: bool = true) -> void:
+		take_face: Callable = Callable()) -> void:
 	if not has(cid):
 		return
-	_queue.append({"cid": cid, "face": face, "quiet": quiet, "preview": preview, "draw_face": draw_face})
+	_queue.append({"cid": cid, "face": face, "quiet": quiet, "preview": preview, "take_face": take_face})
 	if _item.is_empty():
 		_next()
 
@@ -1479,15 +1475,13 @@ func _process(delta: float) -> void:
 		_render_card()
 		var cs: Dictionary = _script["card"]
 		if not _released and _main.t >= float(cs["reveal"]) + float(cs["sweep"]) + float(cs["hold"]) + float(cs["out"]):
-			_released = true
-			released.emit()
+			_release()
 		if _main.finished():
 			# Клип короче появления карты (Council Member: 205 кадров = 3.417 с, карта
 			# уходит к 3.42 с): без этого released не приходил, ответы сервера копились
 			# в очереди экрана навсегда — партия висела до перезахода (Fix-1104a).
 			if not _released:
-				_released = true
-				released.emit()
+				_release()
 			if bool(_item.get("preview", false)):
 				fog_off()
 			_next()
@@ -1533,9 +1527,20 @@ func _set_camera(off: Vector2) -> void:
 	camera_offset.emit(off)
 
 
-## Карта: проявляется снизу вверх, стоит, гаснет.
+func _release() -> void:
+	_released = true
+	var take_face: Callable = _item["take_face"]
+	if take_face.is_valid():
+		var final_rect := _card.get_global_transform() * _card_rect()
+		_card.show_card(null, Rect2(), 0.0, 1.0)
+		take_face.call(final_rect)
+	released.emit()
+
+
+## Карта проявляется снизу вверх. В партии её подхватывает полёт из точки эффекта.
 func _render_card() -> void:
-	if not bool(_item["draw_face"]):
+	var take_face: Callable = _item["take_face"]
+	if _released and take_face.is_valid():
 		return
 	var cs: Dictionary = _script["card"]
 	var t0 := float(cs["reveal"])
@@ -1544,7 +1549,7 @@ func _render_card() -> void:
 		return
 	var shown := clampf((_main.t - t0) / float(cs["sweep"]), 0.0, 1.0)
 	var out_at := t0 + float(cs["sweep"]) + float(cs["hold"])
-	var a := 1.0 - clampf((_main.t - out_at) / float(cs["out"]), 0.0, 1.0)
+	var a := 1.0 if take_face.is_valid() else 1.0 - clampf((_main.t - out_at) / float(cs["out"]), 0.0, 1.0)
 	_card.show_card(_item["face"], _card_rect(), a, shown)
 
 
@@ -1557,13 +1562,10 @@ static func face_of(cid: String, art: String = "") -> Texture2D:
 
 ## Где карта на экране: в своём размере, центр сценария (960x540) -> размер HsPlay.
 func _card_rect() -> Rect2:
-	return play_card_rect(_item["cid"], _item["face"], size)
-
-
-static func play_card_rect(cid: String, face: Texture2D, area_size: Vector2) -> Rect2:
-	var k := area_size / DESIGN
+	var k := size / DESIGN
+	var face: Texture2D = _item["face"]
 	var s := (face.get_size() if face != null else CardView.PIXEL_SIZE) * k
-	var c := Vector2(SCRIPTS[RECIPES[cid]]["card"]["center"]) * k
+	var c := Vector2(_script["card"]["center"]) * k
 	return Rect2((c - s * 0.5).round(), s.round())
 
 

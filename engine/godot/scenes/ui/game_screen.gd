@@ -1403,14 +1403,17 @@ func _present_result(err: int, events: Array, view: Dictionary) -> void:
 func _hs_start(evt: Dictionary, view: Dictionary) -> void:
 	var pid := String(evt.get("player_id", ""))
 	var cid := String(evt.get("card_id", ""))
-	var from := _play_origin(pid, cid)
+	if is_instance_valid(_played_flight):
+		_played_flight.depart()
+	_play_origin(pid, cid)  # скрыть сыгранную миниатюру при обновлении руки
 	if pid == viewer_id:
 		_hand_panel.update_from_view(view, viewer_id)
 	var face := HsPlay.face_of(cid, PlayerProfile.art_of(pid, cid))
-	evt["played_flight"] = _launch_play(cid, from, face, true)
 	_decision_dialog.visible = false
 	_piles_window.visible = false
-	_hs_play.play(cid, face, pid != viewer_id, false, evt["played_flight"] == null)
+	_hs_play.play(cid, face, pid != viewer_id, false, func(rect: Rect2):
+		evt["play_from"] = rect
+		evt["revealed_face"] = face)
 
 
 ## Эффект закончился: отложенные ответы — по порядку (следующий может снова начать эффект).
@@ -1426,29 +1429,28 @@ func _play_origin(pid: String, cid: String) -> Rect2:
 	return _hand_panel.play_origin(pid, cid)
 
 
-func _launch_play(cid: String, from: Rect2, face: Texture2D, unique: bool) -> PlayedCardFlight:
+func _launch_play(cid: String, from: Rect2, face: Texture2D, revealed: bool) -> PlayedCardFlight:
 	if face == null or not is_inside_tree():
 		return null
 	if is_instance_valid(_played_flight):
 		_played_flight.depart()
-	if not from.has_area():
-		var badge := _turn_emblem.get_global_rect().get_center()
-		var launch_size := Vector2(9, 13)
-		from = Rect2(badge - launch_size * 0.5, launch_size)
 	var flight := PlayedCardFlight.new(cid, face)
-	var stage: Rect2
-	if unique:
-		stage = HsPlay.play_card_rect(cid, face, _hs_play.size)
-		_hs_play.add_flying_face(flight)
+	flight.z_index = 939
+	add_child(flight)
+	if revealed:
+		flight.global_position = from.position
+		flight.size = from.size
 	else:
-		flight.z_index = 939
+		if not from.has_area():
+			var badge := _turn_emblem.get_global_rect().get_center()
+			var launch_size := Vector2(9, 13)
+			from = Rect2(badge - launch_size * 0.5, launch_size)
 		var board := _board_area.get_global_rect()
 		var card_size := CardView.MINI_SIZE
 		var x := board.get_center().x - card_size.x * 0.5
-		stage = Rect2(Vector2(x, board.end.y - _decision_dialog.strip_bottom - card_size.y), card_size)
+		var stage := Rect2(Vector2(x, board.end.y - _decision_dialog.strip_bottom - card_size.y), card_size)
 		stage.position -= global_position
-		add_child(flight)
-	flight.enter(from, stage)
+		flight.enter(from, stage)
 	_played_flight = flight
 	return flight
 
@@ -1882,18 +1884,19 @@ func _note_recap(events: Array, animate_plays: bool = false) -> void:
 			var cid := String(evt.get("card_id", ""))
 			var slot := _feed.add_played(pid, cid)
 			if animate_plays:
-				var flight: PlayedCardFlight = evt.get("played_flight")
-				if not evt.has("hs_started"):
-					var face := CardView.mini_texture(cid, PlayerProfile.art_of(pid, cid))
-					flight = _launch_play(cid, evt.get("play_from", Rect2()), face, false)
+				var revealed := evt.has("hs_started")
+				var face: Texture2D = evt.get("revealed_face") if revealed else CardView.mini_texture(cid, PlayerProfile.art_of(pid, cid))
+				var flight := _launch_play(cid, evt.get("play_from", Rect2()), face, revealed)
 				if is_instance_valid(flight):
-					flight.park_at(slot, _feed, evt.has("hs_started"))
+					flight.park_at(slot, _feed)
 					if _play_has_choice(cid):
-						if flight.get_parent() != self:
-							flight.reparent(self, true)
 						# Над затемнением, как и сама карта внутри окна.
 						flight.z_index = 1002
 						flight.dock_to(_play_choice_card.bind(cid), pid)
+					elif revealed:
+						flight.depart()
+					else:
+						flight.hold_then_depart()
 		elif type == "jarlaxle":
 			# Карту соперника разыграли за него: она — его сыгранная карта.
 			_feed.add_to_turn(String(evt.get("rival", "")), String(evt.get("card_id", "")), "PLAYED")

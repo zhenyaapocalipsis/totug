@@ -42,13 +42,16 @@ func enter(from: Rect2, stage: Rect2) -> void:
 		0.0, 1.0, ENTER_TIME).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
-func park_at(slot: CardView, feed: TurnFeed, unique: bool) -> void:
+func park_at(slot: CardView, feed: TurnFeed) -> void:
 	_slot = slot
 	_feed = feed
 	_slot.modulate.a = 0.0
 	_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func hold_then_depart() -> void:
 	_dwell = create_tween()
-	_dwell.tween_interval(0.35 if unique else ENTER_TIME + HOLD_TIME)
+	_dwell.tween_interval(ENTER_TIME + HOLD_TIME)
 	_dwell.tween_callback(depart)
 
 
@@ -59,8 +62,8 @@ func is_docking() -> bool:
 ## Во время посадки миниатюра остаётся в раскладке и принимает ввод.
 ## В конце полёта её лицо подменяет спрайт в том же прямоугольнике.
 func dock_to(find_choice_card: Callable, owner: String) -> void:
-	_motion.kill()
-	_dwell.kill()
+	if _motion != null:
+		_motion.kill()
 	_find_choice_card = find_choice_card
 	_choice_owner = owner
 	_dock_start = get_global_rect()
