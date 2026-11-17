@@ -126,8 +126,8 @@ func add(pid: String, cid: String, tag: String) -> void:
 
 
 ## pid сыграл карту cid.
-func add_played(pid: String, cid: String) -> void:
-	add(pid, cid, "PLAYED")
+func add_played(pid: String, cid: String) -> CardView:
+	return add_to_turn(pid, cid, "PLAYED")
 
 
 ## pid сбросил карту cid. Во время чужого хода (его заставили) карта ложится
@@ -139,14 +139,17 @@ func add_discard(pid: String, cid: String) -> void:
 ## Карта cid досталась pid в ход того, кто сейчас ходит (сброс, изгой от
 ## чужой карты): ложится в блок ходящего. Если pid — не ходящий, группа
 ## своя, с подписью цвета pid.
-func add_to_turn(pid: String, cid: String, tag: String) -> void:
+func add_to_turn(pid: String, cid: String, tag: String) -> CardView:
 	var follow := _at_bottom()
 	var block := _current_block(pid)
-	if block.pid == pid or pid == "":
-		block.add_card(tag, _card(cid, pid, tag))
-	else:
-		block.add_card(tag + ":" + pid, _card(cid, pid, tag))
+	var card := _card(cid, pid, tag)
+	block.add_card(tag if block.pid == pid or pid == "" else tag + ":" + pid, card)
 	_after_add(follow)
+	return card
+
+
+func card_viewport_rect() -> Rect2:
+	return _scroll.get_global_rect()
 
 
 ## Муллиган рынка перед стартом (владелец, 2026-10-15): у каждого игрока свой

@@ -80,6 +80,7 @@ var _hovered_card: CardView = null
 ## одноимённая карта ряда — в руке три Noble, и при розыгрыше самого левого
 ## «сыгранной» выглядела бы самая правая.
 var _played_card: CardView = null
+var _flying_play: CardView
 ## Чья рука: карты в ней — в образах этого игрока (CardView.set_owner).
 var _viewer := ""
 ## Сейчас в руке отвечают на вопрос карты (см. choice_clicked).
@@ -213,7 +214,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		var played_zone := _is_zone(_played_card)
 		var now := entries.filter(func(e): return e[0] == played_id and e[1] == played_zone).size()
 		var before := old_cards.filter(func(c): return c.card_id == played_id and _is_zone(c) == played_zone).size()
-		if now < before:
+		if _played_card == _flying_play or now < before:
 			played = old_cards.find(_played_card)
 	_played_card = null
 
@@ -274,9 +275,28 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 			old_cards[j].queue_free()
 		else:
 			_start_leaving(old_cards[j])
+	_flying_play = null
 
 	_layout()
 	queue_redraw()
+
+
+## Точка старта до обновления руки; при одинаковых картах берём именно нажатую.
+func play_origin(pid: String, cid: String) -> Rect2:
+	if pid != _viewer:
+		return Rect2()
+	var card := _played_card
+	if not is_instance_valid(card) or card.card_id != cid or not _cards.has(card):
+		card = null
+		for candidate in _cards:
+			if candidate.card_id == cid and not _is_zone(candidate):
+				card = candidate
+				break
+	if card == null:
+		return Rect2()
+	_played_card = card
+	_flying_play = card
+	return card.get_global_rect()
 
 
 ## Шорох карты, входящей в руку, в момент её вылета; каждая следующая карта
@@ -353,9 +373,11 @@ func _make_card(cid: String) -> CardView:
 	return card
 
 
-## Сыгранная карта не исчезает мгновенно: она уплывает вниз за край экрана и
-## гаснет. Кликать её по дороге уже нельзя — действие уже ушло на сервер.
+## Карта, покинувшая руку, уплывает вниз. При розыгрыше её лицо уже забрал
+## полёт на GameScreen; старый узел доживает невидимым, чтобы ряд пересобрался.
 func _start_leaving(card: CardView) -> void:
+	if card == _flying_play:
+		card.visible = false
 	if card == _hovered_card:
 		_hovered_card = null
 	card.set_clickable(false)

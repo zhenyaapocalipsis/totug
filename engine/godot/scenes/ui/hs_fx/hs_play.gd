@@ -1340,16 +1340,21 @@ func _init() -> void:
 		add_child(c)
 	_fog_snd.bus = Sfx.BUS
 	add_child(_fog_snd)
-	visible = false
 	set_process(false)
+
+
+## То же место в слоях эффекта, где рисуется лицо в предпросмотре.
+func add_flying_face(flight: Control) -> void:
+	_card.add_child(flight)
 
 
 ## Разыграть карту cid: face — её лицо, quiet — чужая (тише); preview — только
 ## посмотреть (меню CARD ANIMATIONS): действий не будет, дымка уходит после эффекта.
-func play(cid: String, face: Texture2D, quiet: bool = false, preview: bool = false) -> void:
+func play(cid: String, face: Texture2D, quiet: bool = false, preview: bool = false,
+		draw_face: bool = true) -> void:
 	if not has(cid):
 		return
-	_queue.append({"cid": cid, "face": face, "quiet": quiet, "preview": preview})
+	_queue.append({"cid": cid, "face": face, "quiet": quiet, "preview": preview, "draw_face": draw_face})
 	if _item.is_empty():
 		_next()
 
@@ -1398,7 +1403,7 @@ func fog_off() -> void:
 
 ## Идёт ли розыгрыш, который ещё держит действия карты.
 func is_busy() -> bool:
-	return not _item.is_empty() and not _released
+	return not _queue.is_empty() or (not _item.is_empty() and not _released)
 
 
 ## Готов ли розыгрыш (для снимков и превью).
@@ -1426,7 +1431,6 @@ func frame_info() -> Vector2i:
 
 
 func _wake() -> void:
-	visible = true
 	set_process(true)
 
 
@@ -1502,7 +1506,6 @@ func _process(delta: float) -> void:
 			_fog = null
 	_set_camera(_camera())
 	if _main == null and _actions.is_empty() and _fog == null:
-		visible = false
 		set_process(false)
 
 
@@ -1532,6 +1535,8 @@ func _set_camera(off: Vector2) -> void:
 
 ## Карта: проявляется снизу вверх, стоит, гаснет.
 func _render_card() -> void:
+	if not bool(_item["draw_face"]):
+		return
 	var cs: Dictionary = _script["card"]
 	var t0 := float(cs["reveal"])
 	if _main.t < t0:
@@ -1552,10 +1557,13 @@ static func face_of(cid: String, art: String = "") -> Texture2D:
 
 ## Где карта на экране: в своём размере, центр сценария (960x540) -> размер HsPlay.
 func _card_rect() -> Rect2:
-	var k := size / DESIGN
-	var face: Texture2D = _item["face"]
+	return play_card_rect(_item["cid"], _item["face"], size)
+
+
+static func play_card_rect(cid: String, face: Texture2D, area_size: Vector2) -> Rect2:
+	var k := area_size / DESIGN
 	var s := (face.get_size() if face != null else CardView.PIXEL_SIZE) * k
-	var c := Vector2(_script["card"]["center"]) * k
+	var c := Vector2(SCRIPTS[RECIPES[cid]]["card"]["center"]) * k
 	return Rect2((c - s * 0.5).round(), s.round())
 
 

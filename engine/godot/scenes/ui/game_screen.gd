@@ -37,6 +37,7 @@ const TurnBanner := preload("res://scenes/ui/turn_banner.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 const ReplayBar := preload("res://scenes/ui/replay_bar.gd")
 const ReplayStatsPanel := preload("res://scenes/ui/replay_stats_panel.gd")
+const PlayedCardFlight := preload("res://scenes/ui/played_card_flight.gd")
 
 # Сетка экрана в пикселях расчётного размера 960x540 (пиксель-арт: цифры
 # только целые, отступы маленькие). Раскладка по макету владельца
@@ -92,9 +93,7 @@ const PILES_H := 48.0
 const TURN_BAR_H := 16.0
 const END_TURN_W := 96.0
 const TIMER_W := 44.0
-## Полоска цвета ходящего на кнопке End turn — вместо ника, который в кнопку
-## не влезал (владелец, 2026-10-03).
-const TURN_CHIP_H := 5.0
+const TURN_EMBLEM_SIZE := float(PlayerProfile.SIZE)
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
 const BOTTOM_H := 80.0
 const DEPLOY_H := 13.0
@@ -223,7 +222,9 @@ var _end_turn_style: StyleBoxFlat
 ## Две строки поверх кнопки End turn: чей ход (в цвет игрока) и сама надпись.
 ## Кнопка Godot однострочная, поэтому текст лежит отдельными подписями.
 var _turn_label: Label
-var _turn_chip: ColorRect
+var _turn_emblem: TextureRect
+var _turn_emblem_key := ""
+var _played_flight: PlayedCardFlight
 var _end_label: Label
 var _timer_label: Label
 ## Пометка «начался последний круг» — отдельной строкой: в узкую колонку
@@ -533,9 +534,10 @@ func _build_layout() -> void:
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_turn_label.clip_text = true
 	_end_turn_area.add_child(_turn_label)
-	_turn_chip = ColorRect.new()
-	_turn_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_end_turn_area.add_child(_turn_chip)
+	_turn_emblem = TextureRect.new()
+	_turn_emblem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_turn_emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_end_turn_area.add_child(_turn_emblem)
 	_end_label = Label.new()
 	L10n.scope(_end_label)
 	_end_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1221,7 +1223,7 @@ func _layout() -> void:
 	var caption_y := floorf((TURN_BAR_H - PixelTheme.LINE_H) * 0.5) + PixelTheme.CAPS_SHIFT
 	_place(_end_turn_button, 0, 0, END_TURN_W, TURN_BAR_H)
 	_place(_turn_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
-	_place(_turn_chip, 5, floorf((TURN_BAR_H - TURN_CHIP_H) * 0.5), TURN_CHIP_H, TURN_CHIP_H)
+	_place(_turn_emblem, 4, floorf((TURN_BAR_H - TURN_EMBLEM_SIZE) * 0.5), TURN_EMBLEM_SIZE, TURN_EMBLEM_SIZE)
 	_place(_end_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
 
 
@@ -1382,12 +1384,16 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 	if _hs_play.is_busy() or not _hs_pending.is_empty():
 		_hs_pending.append([err, events, view])
 		return
+	_present_result(err, events, view)
+
+
+func _present_result(err: int, events: Array, view: Dictionary) -> void:
 	for evt: Dictionary in events:
 		if String(evt.get("type", "")) == "play_card" and HsPlay.has(String(evt.get("card_id", ""))) \
 				and not evt.has("hs_started"):
-			_hs_start(evt, view)
 			evt["hs_started"] = true
-			_hs_pending.append([err, events, view])
+			_hs_pending.push_front([err, events, view])
+			_hs_start(evt, view)
 			return
 	_apply_result(err, events, view)
 
@@ -1397,35 +1403,68 @@ func _on_result(err: int, events: Array, view: Dictionary) -> void:
 func _hs_start(evt: Dictionary, view: Dictionary) -> void:
 	var pid := String(evt.get("player_id", ""))
 	var cid := String(evt.get("card_id", ""))
+	var from := _play_origin(pid, cid)
 	if pid == viewer_id:
 		_hand_panel.update_from_view(view, viewer_id)
-		for card: CardView in _hand_panel.leaving_cards():
-			if card.card_id == cid:
-				card.visible = false
+	var face := HsPlay.face_of(cid, PlayerProfile.art_of(pid, cid))
+	evt["played_flight"] = _launch_play(cid, from, face, true)
 	_decision_dialog.visible = false
 	_piles_window.visible = false
-	_hs_play.play(cid, HsPlay.face_of(cid, PlayerProfile.art_of(pid, cid)), pid != viewer_id)
+	_hs_play.play(cid, face, pid != viewer_id, false, evt["played_flight"] == null)
 
 
 ## Эффект закончился: отложенные ответы — по порядку (следующий может снова начать эффект).
 func _hs_flush() -> void:
 	while not _hs_pending.is_empty() and not _hs_play.is_busy():
 		var r: Array = _hs_pending.pop_front()
-		var evts: Array = r[1]
-		var again := false
-		for evt: Dictionary in evts:
-			if String(evt.get("type", "")) == "play_card" and HsPlay.has(String(evt.get("card_id", ""))) \
-					and not evt.has("hs_started"):
-				again = true
-		if again:
-			_on_result(int(r[0]), evts, r[2])
-		else:
-			_apply_result(int(r[0]), evts, r[2])
+		_present_result(int(r[0]), r[1], r[2])
+
+
+func _play_origin(pid: String, cid: String) -> Rect2:
+	if watching or (net != null and pid != viewer_id):
+		return Rect2()
+	return _hand_panel.play_origin(pid, cid)
+
+
+func _launch_play(cid: String, from: Rect2, face: Texture2D, unique: bool) -> PlayedCardFlight:
+	if face == null or not is_inside_tree():
+		return null
+	if is_instance_valid(_played_flight):
+		_played_flight.depart()
+	if not from.has_area():
+		var badge := _turn_emblem.get_global_rect().get_center()
+		var launch_size := Vector2(9, 13)
+		from = Rect2(badge - launch_size * 0.5, launch_size)
+	var flight := PlayedCardFlight.new(face)
+	var stage: Rect2
+	if unique:
+		stage = HsPlay.play_card_rect(cid, face, _hs_play.size)
+		_hs_play.add_flying_face(flight)
+	else:
+		flight.z_index = 939
+		var board := _board_area.get_global_rect()
+		var card_size := CardView.MINI_SIZE
+		var x := board.get_center().x - card_size.x * 0.5
+		if _decision_dialog.visible or _piles_window.visible:
+			# Карта видна сбоку от вопроса. Модальное затемнение оставляем
+			# под ней, а все кнопки и цели работают сквозь полёт.
+			x = board.position.x + 8.0
+			if not _decision_dialog.at_top or _piles_window.visible:
+				flight.z_index = 1002
+		stage = Rect2(Vector2(x, board.end.y - _decision_dialog.strip_bottom - card_size.y), card_size)
+		stage.position -= global_position
+		add_child(flight)
+	flight.enter(from, stage)
+	_played_flight = flight
+	return flight
 
 
 func _apply_result(err: int, events: Array, view: Dictionary) -> void:
 	if err != GameServer.Error.OK:
 		_refuse("Not allowed: %s" % _error_name(err))
+	for evt: Dictionary in events:
+		if evt.get("type") == "play_card" and not evt.has("hs_started"):
+			evt["play_from"] = _play_origin(String(evt["player_id"]), String(evt["card_id"]))
 	refresh(view)
 	_react_to_events(events)
 	_show_looks(events, view)
@@ -1516,6 +1555,11 @@ func show_replay(events: Array, animate: bool) -> void:
 ## Реплей перемотали: партия собрана заново, сводка — из recap (события
 ## последних ходов), без анимаций.
 func replay_seeked(recap: Array) -> void:
+	_hs_pending.clear()
+	if is_instance_valid(_played_flight):
+		_played_flight.hide()
+		_played_flight.queue_free()
+	_played_flight = null
 	_feed.clear()
 	show_replay([], false)
 	_note_recap(recap)
@@ -1769,7 +1813,7 @@ func _react_to_events(events: Array) -> void:
 		_showcase_outcasts(outcasts)
 	if power > 0.0:
 		_board_panel.shake(power)
-	_note_recap(events)
+	_note_recap(events, true)
 
 
 ## Звук события: сыгранная карта — шлепок, покупка — монеты. Ходы соперника
@@ -1817,7 +1861,7 @@ const RECAP_TAGS := {
 
 ## Пополняет сводку ходов (колонку слева) сыгранными картами, покупками,
 ## промоутами и devour всех игроков; конец хода начинает в ней новый блок.
-func _note_recap(events: Array) -> void:
+func _note_recap(events: Array, animate_plays: bool = false) -> void:
 	for e in events:
 		var evt: Dictionary = e
 		var type := String(evt.get("type", ""))
@@ -1827,7 +1871,16 @@ func _note_recap(events: Array) -> void:
 			if pid != "" and cid != "":
 				_feed.add(pid, cid, RECAP_TAGS[type])
 		elif type == "play_card":
-			_feed.add_played(String(evt.get("player_id", "")), String(evt.get("card_id", "")))
+			var pid := String(evt.get("player_id", ""))
+			var cid := String(evt.get("card_id", ""))
+			var slot := _feed.add_played(pid, cid)
+			if animate_plays:
+				var flight: PlayedCardFlight = evt.get("played_flight")
+				if not evt.has("hs_started"):
+					var face := CardView.mini_texture(cid, PlayerProfile.art_of(pid, cid))
+					flight = _launch_play(cid, evt.get("play_from", Rect2()), face, false)
+				if is_instance_valid(flight):
+					flight.park_at(slot, _feed, evt.has("hs_started"))
 		elif type == "jarlaxle":
 			# Карту соперника разыграли за него: она — его сыгранная карта.
 			_feed.add_to_turn(String(evt.get("rival", "")), String(evt.get("card_id", "")), "PLAYED")
@@ -2434,17 +2487,21 @@ func _refresh_turn(view: Dictionary) -> void:
 	if bool(view["game_over"]):
 		_turn_label.text = "GAME OVER"
 		_turn_label.add_theme_color_override("font_color", PixelTheme.GOLD)
-		_turn_chip.visible = false
+		_turn_emblem.visible = false
 		_end_label.text = ""
 		return
 	_announce_turn(view)
-	# Ник в кнопку не влезает — чей ход, говорит полоска цвета ходящего
-	# (владелец, 2026-10-03), имя — в подсказке.
+	# Герб показывает, чей ход. Имя игрока — в подсказке.
 	_turn_label.text = ""
-	_turn_chip.visible = true
-	_turn_chip.color = EventLogPanel.player_color(current)
+	_turn_emblem.visible = true
+	var emblem := PlayerProfile.emblem_of(current)
+	var key := current + ":" + emblem
+	if _turn_emblem_key != key:
+		_turn_emblem_key = key
+		_turn_emblem.texture = ImageTexture.create_from_image(
+			SchematicPainter.token(EventLogPanel.player_color(current), emblem))
 	_refresh_end_tip(current)
-	# Сетевая партия, ход чужой: кого ждём — полоской, сама кнопка серая
+	# Сетевая партия, ход чужой: показываем герб игрока, сама кнопка серая
 	# (решение владельца, 2026-09-27).
 	if replay_bar != null or watching:
 		_end_label.text = "REPLAY" if replay_bar != null else "WATCHING"
