@@ -1,12 +1,13 @@
 extends SceneTree
 
 ## Снимок образов карт (SkinCollection, шейдер card_skin.gdshader): одна карта
-## во всех ступенях — мелкое и полное лицо (окно игры само рисует x2). Запуск (с окном):
+## со всеми образами — мелкое и полное лицо (окно игры само рисует x2). Запуск (с окном):
 ##   Godot --path . --script res://tools/skin_preview.gd -- --card=48314 --out=C:/path/skins.png
 ## Снимок — на CAPTURE_FRAME кадре: к нему шейдер точно собран и нарисован.
 
 const CAPTURE_FRAME := 20
-const TIERS := ["", "faerie", "gilded", "prism"]
+const COLUMNS := 4
+const PageText := preload("res://scenes/page_text.gd")
 
 var _frame := 0
 var _out := "res://skin_preview.png"
@@ -73,18 +74,28 @@ func _initialize() -> void:
 			screen._collection.select(card)
 			screen._collection.select_art("48403_2")
 		return
-	for i in TIERS.size():
+	var skins: Array[String] = [""]
+	skins.append_array(SkinCollection.SHADERS)
+	for i in skins.size():
+		var skin := skins[i]
+		var at := Vector2(6 + (i % COLUMNS) * 238, 15 + (i / COLUMNS) * 266)
+		var title := Label.new()
+		title.theme = PixelTheme.theme()
+		title.position = at - Vector2(0, 13)
+		title.add_theme_color_override("font_color", Color(SkinCollection.SHADER_COLOURS.get(skin, "ffffff")))
+		PageText.bind(title, String(SkinCollection.SHADER_TITLES.get(skin, "PLAIN")))
+		root.add_child(title)
+
 		var mini := CardView.new(card, int(CardView.MINI_SIZE.x), int(CardView.MINI_SIZE.y))
-		mini.set_skin(TIERS[i])
-		mini.position = Vector2(10 + i * 90, 4)
+		mini.set_skin(skin)
+		mini.position = at + Vector2(179, 0)
 		mini.size = CardView.MINI_SIZE
-
 		root.add_child(mini)
-		var full := CardView.new(card, 176, 254)
-		full.set_skin(TIERS[i])
-		full.position = Vector2(10 + i * 186, 90)
-		full.size = Vector2(176, 254)
 
+		var full := CardView.new(card, 176, 254)
+		full.set_skin(skin)
+		full.position = at
+		full.size = Vector2(176, 254)
 		root.add_child(full)
 
 

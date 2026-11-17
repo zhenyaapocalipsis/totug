@@ -6,8 +6,7 @@ extends RefCounted
 ## Награды — только за партии поиска игры (NetSession._match) на выделенном
 ## сервере: первое место получает лутбокс, остальные — пыль по месту.
 ##
-## Шейдеры (решение владельца, 2026-09-30): FAERIE FIRE, GILDED, PRISM — как
-## они выглядят, см. scenes/ui/card_skin.gdshader. Все — ступени ULTRA.
+## Шейдеры карт (scenes/ui/card_skin.gdshader) — все ступени ULTRA.
 ## Включённый шейдер ложится сразу на всю колоду игрока в партии, со
 ## стартовыми картами (CardView.skin_of); в маркете карты ничьи и обычные.
 ##
@@ -24,11 +23,17 @@ const TIERS: Array[String] = ["epic", "legendary", "ultra"]
 const TIER_TITLES := {"epic": "EPIC", "legendary": "LEGENDARY", "ultra": "ULTRA"}
 const TIER_COLOURS := {"epic": "b9a0ff", "legendary": "ffc24a", "ultra": "9ff0ff"}
 
-const SHADERS: Array[String] = ["faerie", "gilded", "prism"]
-const SHADER_TITLES := {"faerie": "FAERIE FIRE", "gilded": "GILDED", "prism": "PRISM"}
-const SHADER_COLOURS := {"faerie": "b9a0ff", "gilded": "ffc24a", "prism": "9ff0ff"}
+const SHADERS: Array[String] = ["faerie", "gilded", "prism", "magma", "frost", "eclipse", "thorn"]
+const SHADER_TITLES := {
+	"faerie": "FAERIE FIRE", "gilded": "GILDED", "prism": "PRISM",
+	"magma": "MAGMA RIFT", "frost": "FROSTSHARD", "eclipse": "VOID ECLIPSE", "thorn": "THORNWEAVE",
+}
+const SHADER_COLOURS := {
+	"faerie": "b9a0ff", "gilded": "ffc24a", "prism": "9ff0ff",
+	"magma": "ff775e", "frost": "7cbfff", "eclipse": "cf93ff", "thorn": "a5e878",
+}
 ## Номер эффекта в card_skin.gdshader (0 — без шейдера).
-const SHADER_INDEX := {"faerie": 1, "gilded": 2, "prism": 3}
+const SHADER_INDEX := {"faerie": 1, "gilded": 2, "prism": 3, "magma": 4, "frost": 5, "eclipse": 6, "thorn": 7}
 ## Ступень всех шейдеров.
 const SHADER_TIER := "ultra"
 const SHADER_PREFIX := "shader"
