@@ -1246,11 +1246,16 @@ func render_alt(all: Array, H: int, text_top: int, text_h: int) -> void:
 		AltArts.face_zoom_min = 0.25
 	var out := ROOT + ("Claude outputs/alt_arts_rejected/" if rejected else "Claude outputs/alt_arts/")
 	DirAccess.make_dir_recursive_absolute(out + "mini/")
+	var entries: Array = AltArts.REJECTED if rejected else AltArts.ALT
+	var selected_ids := {}
+	for e: Array in entries:
+		if only.has(String(e[1]).get_basename()):
+			selected_ids[e[0]] = true
 	var counts := {}
 	var tiles: Array[Image] = []
-	for e: Array in (AltArts.REJECTED if rejected else AltArts.ALT):
+	for e: Array in entries:
 		var id: int = e[0]
-		if not only.is_empty() and not only.has(String(e[1]).get_basename()):
+		if not only.is_empty() and not selected_ids.has(id):
 			continue
 		var aw := W - 12
 		var src := AltArts.source(e, aw, ART_H, 2)
@@ -1258,6 +1263,9 @@ func render_alt(all: Array, H: int, text_top: int, text_h: int) -> void:
 			print("DROPPED (too much background): ", e[1])
 			continue
 		counts[id] = counts.get(id, 0) + 1
+		# Keep the same variant ID in full and filtered renders.
+		if not only.is_empty() and not only.has(String(e[1]).get_basename()):
+			continue
 		alt_art = pixelize(src, aw, ART_H, ART_COLORS)
 		alt_face = e[4] if e[4] != AltArts.NO_FACE else MINI_FACE_DEFAULT
 		if AltArts.FACE_CROP.has(e[1]):

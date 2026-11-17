@@ -19,6 +19,7 @@ const TIER_OF := {
 	"48318_1": "epic",
 	"48325_1": "epic",
 	"48400_1": "legendary",
+	"48400_2": "legendary",
 	"48402_1": "epic",
 	"48403_1": "legendary",
 	"48403_2": "legendary",
@@ -78,6 +79,7 @@ const TIER_OF := {
 	"48736_1": "epic",
 	"48737_1": "epic",
 	"48739_1": "epic",
+	"50101_1": "legendary",
 }
 
 
