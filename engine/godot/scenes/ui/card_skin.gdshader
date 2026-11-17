@@ -113,117 +113,206 @@ bool is_edge(sampler2D tex, ivec2 p) {
 	return inside(vec4(art_rect.xy + 1.0, art_rect.zw - 1.0), p) && length(slope(tex, p)) > 0.3;
 }
 
-// Микрорельеф закреплён на фольге. x смещает блик, y меняет его силу.
-vec2 foil_surface(vec2 uv, vec2 p) {
+// Рельеф фольги: наклон граней, отражающая способность, гравировка и дисперсия.
+vec4 foil_surface(vec2 uv, vec2 p) {
 	if (tier == 4) {
-		// Шлифовка меди: длинные бороздки с разной глубиной.
-		float grain = dot(uv, vec2(37.0, 29.0)) + 0.17 * sin(dot(uv, vec2(9.0, -14.0)));
-		float ridge = sin(grain * TAU);
-		float depth = hash(vec2(floor(grain), 8.7));
-		return vec2(ridge * 0.022 + (depth - 0.5) * 0.023, mix(0.66, 1.0, depth));
+		// Веер глубоких бороздок и рёбер на чеканной меди.
+		vec2 fan = p - vec2(0.0, 0.74);
+		float angle = atan(fan.x, -fan.y);
+		float ridge = 0.5 + 0.5 * sin(angle * 56.0 + sin(length(fan) * 9.0) * 0.68);
+		float brush = sin(dot(uv, vec2(33.0, 18.0)) * TAU);
+		float grooves = max(smoothstep(0.78, 0.98, ridge) * 0.80, smoothstep(0.65, 0.99, brush) * 0.34);
+		return vec4((ridge - 0.5) * 0.070, 0.59 + ridge * 0.25 + brush * 0.055, grooves, ridge * 0.24);
 	}
 	if (tier == 5) {
-		// Развёрнутые в разные стороны, неподвижные треугольные грани.
-		vec2 lattice = vec2(uv.x + uv.y * 0.29, uv.y) * vec2(11.0, 14.0);
+		// Треугольные пластины с разным наклоном и тонким стыком под серебро.
+		vec2 lattice = (vec2(uv.x + uv.y * 0.36, uv.y)
+			+ vec2(sin(uv.y * 14.0), sin(uv.x * 11.0)) * 0.033) * vec2(9.0, 12.0);
 		vec2 cell = floor(lattice);
 		vec2 f = fract(lattice);
 		float half_cell = step(f.y, f.x);
 		float facet = hash(cell + vec2(0.37, 0.67) * half_cell);
-		return vec2((facet - 0.5) * 0.19, mix(0.57, 1.0, facet));
+		float edge = min(min(min(f.x, f.y), 1.0 - max(f.x, f.y)), 0.707 * abs(f.x - f.y));
+		return vec4((facet - 0.5) * 0.35, 0.52 + facet * 0.42,
+			1.0 - smoothstep(0.019, 0.074, edge), facet * 0.55);
 	}
 	if (tier == 6) {
-		// Гильоше из тонких замкнутых линий, как на гравированной печати.
-		float angle = atan(p.y, p.x + 0.00001);
-		float radius = length(p);
-		float groove = cos(TAU * (radius * 25.0) + 1.5 * sin(angle * 7.0 + radius * 31.0));
-		float relief = smoothstep(0.26, 0.95, groove);
-		relief *= smoothstep(0.04, 0.14, radius);
-		return vec2((relief - 0.3) * 0.042, 0.58 + relief * 0.42);
+		// Гильоше вокруг печати и спектральный сдвиг между двумя рельефами.
+		vec2 centre = p - vec2(0.04, -0.24);
+		float angle = atan(centre.y, centre.x + 0.00001);
+		float radius = length(centre);
+		float rings = radius * 29.0 + 0.31 * sin(angle * 8.0 + radius * 31.0);
+		float groove = 0.5 + 0.5 * cos(TAU * rings);
+		float rosette = smoothstep(0.58, 0.96, groove) * smoothstep(0.027, 0.09, radius);
+		float phase_shift = sin(radius * 28.0 - angle * 4.0);
+		return vec4(phase_shift * 0.070, 0.53 + groove * 0.38, rosette, phase_shift * 0.40);
 	}
-	// Перламутр: широкие слои с плавной волной и тонкими прожилками.
-	float flow = p.y * 8.0 + p.x * 3.2 + 1.35 * sin(p.x * 6.1 - p.y * 2.2);
-	float sheen = 0.5 + 0.5 * sin(flow * 2.4 + 0.42 * sin(flow * 7.4));
-	return vec2((sheen - 0.5) * 0.151, 0.63 + sheen * 0.37);
+	// Малахитовые слои, по краям — металлическая гравировка листьев и жилок.
+	float flow = p.y * 10.0 + p.x * 4.0 + sin(p.x * 8.0 - p.y * 3.0) * 1.6;
+	float layer = 0.5 + 0.5 * sin(flow * 2.65 + sin(flow * 5.0) * 0.41);
+	float side = step(0.5, uv.x);
+	float stem_x = 0.044 + sin(uv.y * 33.0 + side * 2.0) * 0.018;
+	float across = (min(uv.x, 1.0 - uv.x) - stem_x) / 0.152;
+	float leaf_y = abs(fract(uv.y * 11.0 + side * 0.51) - 0.5 + across * 0.28);
+	float leaf_width = max(0.0, 1.0 - abs(across * 2.0 - 1.0));
+	float leaf = (1.0 - smoothstep(0.010, 0.058, abs(leaf_y - leaf_width * 0.25)))
+		* smoothstep(0.02, 0.15, leaf_width);
+	float stem = 1.0 - smoothstep(0.025, 0.077, abs(across));
+	float veins = smoothstep(0.76, 0.98, layer) * 0.45;
+	return vec4((layer - 0.5) * 0.133, 0.59 + layer * 0.35, max(max(0.65 * stem, leaf), veins), layer * 0.38);
 }
 
-float foil_lobe(float distance, float width) {
-	float x = distance / width;
+float foil_lobe(float d, float width) {
+	float x = d / width;
 	return exp(-x * x);
 }
 
+// Клеймо фольги в углу крупной иллюстрации, по одному на отделку.
+float foil_seal(vec2 p) {
+	float diamond = abs(p.x) + 1.4 * abs(p.y);
+	if (tier == 4) {
+		float chevrons = abs(mod(diamond + p.y * 0.85, 3.5) - 1.75);
+		return (1.0 - smoothstep(0.38, 0.95, chevrons)) * (1.0 - smoothstep(7.0, 13.0, diamond));
+	}
+	if (tier == 5) {
+		float facets = min(abs(p.x), abs(abs(p.x) * 0.44 - abs(p.y)));
+		return max(1.0 - smoothstep(0.42, 1.18, abs(diamond - 10.0)),
+			(1.0 - smoothstep(0.35, 1.0, facets)) * (1.0 - smoothstep(9.0, 10.5, diamond)));
+	}
+	if (tier == 6) {
+		float arcs = abs(length(p + vec2(2.5, 0.0)) - 4.4);
+		float shaded = smoothstep(3.5, 5.5, length(p - vec2(1.2, -0.9)));
+		return max((1.0 - smoothstep(0.38, 1.12, arcs)) * shaded,
+			1.0 - smoothstep(0.50, 1.50, abs(p.x - 6.0) + abs(p.y + 2.5)));
+	}
+	float leaves = abs(abs(p.y) - sin(clamp(abs(p.x) / 10.0, 0.0, 1.0) * PI) * 3.5);
+	return (1.0 - smoothstep(0.38, 1.18, leaves)) * (1.0 - smoothstep(8.1, 10.5, abs(p.x)));
+}
+
+bool matches_print(vec3 ink, vec3 rgb) {
+	return all(lessThan(abs(ink * 255.0 - rgb), vec3(1.5)));
+}
+
+bool is_frame_ink(vec3 ink) {
+	// Три краски рамки из pixel_cards.gd. Среди букв есть и тёмные цвета.
+	return matches_print(ink, vec3(36.0, 21.0, 63.0))
+		|| matches_print(ink, vec3(74.0, 47.0, 130.0))
+		|| matches_print(ink, vec3(22.0, 12.0, 40.0));
+}
+
 vec3 foil_skin(vec3 ink, ivec2 pixel, int reg) {
-	// Правила, название и печатные значки не покрыты фольгой.
-	if (reg != 1 && reg != 2) {
+	float l = lum(ink);
+	// Печатные знаки и тёмные контуры сохраняют цвет.
+	if (reg > 1 && !is_frame_ink(ink)) {
 		return ink;
 	}
-	vec2 at = vec2(pixel) + 0.5;
-	vec2 uv = at / face_size;
-	vec2 p = (uv - 0.5) * vec2(1.0, 1.38);
-	vec2 idle = vec2(sin(TIME * 0.67 + phase) * 0.57, cos(TIME * 0.51 + phase) * 0.34) * idle_amp;
-	vec2 lean = mix(idle, tilt, hover);
-	lean.x += foil_turn * 0.82;
-	vec2 surface = foil_surface(uv, p);
 	vec3 base_metal;
 	vec3 foil_a;
 	vec3 foil_b;
 	vec3 mirror;
+	vec3 paper_tone;
 	vec2 axis;
 	float width;
 	if (tier == 4) {
-		base_metal = vec3(0.23, 0.047, 0.069);
-		foil_a = vec3(0.88, 0.21, 0.32);
-		foil_b = vec3(1.0, 0.55, 0.33);
-		mirror = vec3(1.0, 0.85, 0.68);
-		axis = vec2(0.87, 0.50);
-		width = 0.067;
+		base_metal = vec3(0.19, 0.035, 0.055);
+		foil_a = vec3(0.95, 0.16, 0.24);
+		foil_b = vec3(1.0, 0.69, 0.33);
+		mirror = vec3(1.0, 0.91, 0.69);
+		paper_tone = vec3(0.985, 0.875, 0.745);
+		axis = vec2(0.86, 0.51);
+		width = 0.105;
 	} else if (tier == 5) {
-		base_metal = vec3(0.065, 0.16, 0.30);
-		foil_a = vec3(0.24, 0.43, 0.95);
-		foil_b = vec3(0.22, 0.77, 0.91);
-		mirror = vec3(0.87, 0.95, 1.0);
-		axis = vec2(0.75, -0.66);
-		width = 0.083;
+		base_metal = vec3(0.041, 0.105, 0.225);
+		foil_a = vec3(0.36, 0.44, 1.0);
+		foil_b = vec3(0.15, 0.85, 0.99);
+		mirror = vec3(0.91, 0.98, 1.0);
+		paper_tone = vec3(0.84, 0.92, 0.96);
+		axis = vec2(0.77, -0.64);
+		width = 0.122;
 	} else if (tier == 6) {
-		base_metal = vec3(0.19, 0.084, 0.32);
-		foil_a = vec3(0.47, 0.42, 0.98);
-		foil_b = vec3(0.87, 0.47, 0.91);
-		mirror = vec3(0.94, 0.86, 1.0);
-		axis = vec2(0.93, 0.36);
-		width = 0.075;
+		base_metal = vec3(0.107, 0.038, 0.234);
+		foil_a = vec3(0.44, 0.33, 1.0);
+		foil_b = vec3(0.97, 0.41, 0.79);
+		mirror = vec3(0.96, 0.87, 1.0);
+		paper_tone = vec3(0.935, 0.87, 0.975);
+		axis = vec2(0.94, 0.34);
+		width = 0.111;
 	} else {
-		base_metal = vec3(0.05, 0.22, 0.145);
-		foil_a = vec3(0.16, 0.76, 0.55);
-		foil_b = vec3(0.73, 0.82, 0.33);
-		mirror = vec3(0.96, 0.97, 0.79);
-		axis = vec2(0.59, -0.81);
-		width = 0.098;
+		base_metal = vec3(0.035, 0.16, 0.095);
+		foil_a = vec3(0.045, 0.77, 0.53);
+		foil_b = vec3(0.88, 0.78, 0.25);
+		mirror = vec3(0.99, 0.97, 0.73);
+		paper_tone = vec3(0.884, 0.938, 0.792);
+		axis = vec2(0.60, -0.80);
+		width = 0.133;
 	}
-	// На наклоне узкое отражение скользит по более широкому цветному блику.
-	float d = dot(p, axis) - dot(lean, axis * vec2(0.56, 0.44)) + surface.x;
-	float broad = foil_lobe(d + 0.055, width * 2.55) * surface.y;
+	if (reg == 0) {
+		// Красится только фон бумаги, печать поверх него сохраняется.
+		if (matches_print(ink, vec3(230.0, 217.0, 188.0))) {
+			return mix(ink, paper_tone, 0.52);
+		}
+		if (matches_print(ink, vec3(191.0, 174.0, 136.0))) {
+			return mix(ink, paper_tone * 0.79, 0.52);
+		}
+		return ink;
+	}
+
+	vec2 at = vec2(pixel) + 0.5;
+	vec2 uv = at / face_size;
+	vec2 p = (uv - 0.5) * vec2(1.0, 1.38);
+	vec2 idle = vec2(sin(TIME * 0.64 + phase) * 0.67, cos(TIME * 0.48 + phase) * 0.37) * idle_amp;
+	vec2 lean = mix(idle, tilt, hover);
+	lean.x += foil_turn * 0.84;
+	vec4 surface = foil_surface(uv, p);
+
+	// Цветная полоса дифракции и более узкое зеркальное ядро движутся вместе.
+	float d = dot(p, axis) - dot(lean, axis * vec2(0.64, 0.48)) + surface.x;
+	float broad = foil_lobe(d + 0.07, width * 2.65);
 	float key = foil_lobe(d, width) * surface.y;
-	float second = foil_lobe(d - 0.16, width * 0.48) * surface.y;
-	float dispersion = smoothstep(-0.17, 0.15, d + dot(lean, vec2(0.12, -0.085)));
+	float flank = foil_lobe(d - 0.17, width * 0.65) * surface.y;
+	float specular = foil_lobe(d + 0.024, width * 0.36) * surface.y;
+	float dispersion = smoothstep(-0.17, 0.22, d + surface.w * 0.27 + dot(lean, vec2(0.15, -0.10)));
 	vec3 colour = mix(foil_a, foil_b, dispersion);
-	float specular = foil_lobe(d + 0.012, width * 0.45) * surface.y;
-	vec3 reflection = mix(colour, mirror, 0.20 * key + 0.77 * specular);
-	if (reg == 1) {
-		// Полупрозрачные печатные краски оставляют в светлых участках больше отражения.
-		float ink_light = smoothstep(0.06, 0.72, lum(ink));
-		float amount = (broad * 0.23 + key * 0.37 + second * 0.09) * mix(0.52, 1.0, ink_light);
-		return mix(ink, reflection, amount);
+	if (tier == 6) {
+		colour = mix(colour, vec3(0.25, 0.86, 1.0), foil_lobe(d + 0.10 + surface.w * 0.17, 0.085) * 0.70);
 	}
-	// Прикатанный кант ловит свет по краям листа и вокруг иллюстрации.
+	vec3 reflection = mix(colour, mirror, clamp(specular * 0.92 + key * 0.21, 0.0, 1.0));
+	float engraved = surface.z * (0.29 + key * 0.55 + flank * 0.34);
+
+	if (reg == 1) {
+		// Свет отражают светлые краски и металлизированные штрихи под печатью.
+		float ink_light = smoothstep(0.07, 0.78, l);
+		float coating = (0.095 + broad * 0.20 + key * 0.38 + flank * 0.16)
+			* mix(0.38, 1.0, ink_light);
+		vec3 printed = mix(ink, reflection, coating);
+		vec3 stamp = mix(colour, mirror, 0.29 + specular * 0.62);
+		printed = mix(printed, stamp, engraved * mix(0.09, 0.39, ink_light));
+		if (text_rect.z > text_rect.x) {
+			float mark = foil_seal(at - (art_rect.zw - vec2(15.0, 11.0)));
+			printed = mix(printed, stamp, mark * (0.32 + key * 0.38));
+		}
+		return printed;
+	}
+
+	// Наружный кант и оправка арта печатаются в металле.
 	vec2 outer = min(at, face_size - at);
 	float edge = min(outer.x, outer.y);
 	vec2 from_art = max(art_rect.xy - at, at - art_rect.zw);
 	float art_edge = max(from_art.x, from_art.y);
-	float bevel = 1.0 - smoothstep(0.5, 2.0, abs(art_edge - 1.1));
-	float rim = 1.0 - smoothstep(0.3, 1.7, abs(edge - 1.5));
-	float trim = max(rim, bevel * 0.82);
-	vec3 metal = mix(ink * 0.42, base_metal, 0.65);
-	metal = mix(metal, colour, 0.09 + broad * 0.31 + trim * 0.28 + surface.y * 0.07);
-	return mix(metal, reflection, min(0.96, key * (0.60 + trim * 0.36) + second * (0.15 + trim * 0.17)));
+	float rim = 1.0 - smoothstep(0.38, 1.28, abs(edge - 2.2));
+	float inner_rim = 1.0 - smoothstep(0.44, 1.36, abs(art_edge - 1.6));
+	float trim = max(rim, inner_rim * 0.93);
+	float relief = max(trim * 0.76, engraved);
+	vec3 metal = mix(ink * 0.50, base_metal, 0.78);
+	metal = mix(metal, colour, 0.075 + broad * 0.32 + key * 0.27 + flank * 0.24);
+	vec3 etching = mix(colour, reflection, 0.40 + specular * 0.55);
+	etching = mix(etching, mirror, 0.13 + relief * 0.25);
+	vec3 finish = mix(metal, etching, clamp(relief * 0.76 + specular * 0.46, 0.0, 1.0));
+	// Чуть темнее под строкой аспекта, чтобы красная печать читалась на меди.
+	float aspect_row = float(text_rect.z > text_rect.x)
+		* smoothstep(-14.0, -10.0, at.y - art_rect.y)
+		* (1.0 - smoothstep(-4.0, -1.0, at.y - art_rect.y));
+	return mix(finish, base_metal, aspect_row * (1.0 - smoothstep(0.48, 0.67, uv.x)) * 0.61);
 }
 
 void fragment() {
