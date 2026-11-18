@@ -196,6 +196,10 @@ static func open_box(rng: RandomNumberGenerator) -> Dictionary:
 ## Создать шейдер за пыль (цена ULTRA) и сразу включить. false — уже есть или
 ## не хватает пыли.
 static func craft_shader(shader: String) -> bool:
+	return purchase_shader(shader, true)
+
+
+static func purchase_shader(shader: String, equip: bool = false) -> bool:
 	if not SHADERS.has(shader):
 		return false
 	var data := load_data()
@@ -204,7 +208,8 @@ static func craft_shader(shader: String) -> bool:
 		return false
 	data["dust"] = int(data["dust"]) - cost
 	(data["owned"] as Array).append(shader_key(shader))
-	data["shader"] = shader
+	if equip:
+		data["shader"] = shader
 	_save(data)
 	return true
 
@@ -238,6 +243,10 @@ static func art_cost(art: String) -> int:
 ## Создать арт за пыль и сразу включить. false — неизвестный, уже есть или не
 ## хватает пыли.
 static func craft_art(art: String) -> bool:
+	return purchase_art(art, true)
+
+
+static func purchase_art(art: String, equip: bool = false) -> bool:
 	if not AltArts.has(art):
 		return false
 	var data := load_data()
@@ -246,7 +255,8 @@ static func craft_art(art: String) -> bool:
 		return false
 	data["dust"] = int(data["dust"]) - cost
 	(data["owned"] as Array).append(art_key(art))
-	data["arts"][AltArts.card_of(art)] = art
+	if equip:
+		data["arts"][AltArts.card_of(art)] = art
 	_save(data)
 	return true
 

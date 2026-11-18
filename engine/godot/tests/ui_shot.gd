@@ -120,6 +120,12 @@ func _menu_profile() -> ProfileScreen:
 ## ровно теми же путями, что и живой игрок мышкой.
 func _run_scenario() -> void:
 	match _scenario:
+		"shop":
+			PlayerProfile.path_override = "user://shop_shot.cfg"
+			SkinCollection.grant({"dust": 2400})
+			var shop_profile := _menu_profile()
+			(func(): shop_profile._show_tab.call_deferred("SHOP")).call_deferred()
+			shop_profile._shop.show_item("alt:50107_1")
 		"":
 			return
 		"game_over", "game_over_rated":

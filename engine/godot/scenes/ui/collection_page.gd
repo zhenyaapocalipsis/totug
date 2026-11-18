@@ -1,6 +1,8 @@
 class_name CollectionPage
 extends VBoxContainer
 
+signal shop_requested(key: String)
+
 const PageText := preload("res://scenes/page_text.gd")
 
 ## Вкладка COLLECTION профиля (решение владельца, 2026-09-30).
@@ -317,25 +319,7 @@ func press_art() -> void:
 		Sfx.play("click")
 		refresh()
 		return
-	var tier := AltArts.tier_of(art)
-	var cost := SkinCollection.art_cost(art)
-	if int(SkinCollection.load_data()["dust"]) < cost:
-		_pending_art = ""
-		_set_note("Not enough dust: this %s art costs %d." % [SkinCollection.TIER_TITLES[tier], cost])
-		Sfx.play("error")
-		refresh()
-		return
-	if _pending_art != art:
-		_pending_art = art
-		_set_note("Craft this %s art for %d dust? Click again." % [SkinCollection.TIER_TITLES[tier], cost])
-		refresh()
-		return
-	_pending_art = ""
-	SkinCollection.craft_art(art)
-	_set_note("Crafted: %s art." % SkinCollection.TIER_TITLES[tier])
-	Sfx.play("coins")
-	refresh()
-	_preview.flash_arrival()
+	shop_requested.emit(SkinCollection.art_key(art))
 
 
 ## Сделать выбранную карту любимой; она уже любимая — снять.
@@ -526,26 +510,7 @@ func press_shader() -> void:
 		Sfx.play("click")
 		refresh()
 		return
-	var title := String(SkinCollection.SHADER_TITLES[shader])
-	var cost := int(SkinCollection.CRAFT_COST[SkinCollection.SHADER_TIER])
-	if int(SkinCollection.load_data()["dust"]) < cost:
-		_pending_craft = ""
-		_set_note("Not enough dust: %s costs %d." % [title, cost])
-		Sfx.play("error")
-		refresh()
-		return
-	if _pending_craft != shader:
-		_pending_craft = shader
-		_set_note("Craft %s for %d dust? Click again." % [title, cost])
-		refresh()
-		return
-	_pending_craft = ""
-	SkinCollection.craft_shader(shader)
-	_set_note("Crafted: %s." % title)
-	Sfx.play("coins")
-	refresh()
-	for view in _shader_views:
-		view.flash_arrival()
+	shop_requested.emit(SkinCollection.shader_key(shader))
 
 
 # --- CARD BACKS ----------------------------------------------------------------
@@ -634,7 +599,7 @@ func refresh() -> void:
 	elif _art_selected == "" or SkinCollection.owns_art(_art_selected):
 		PageText.bind(_art_action, "USE")
 	else:
-		PageText.bind(_art_action, "CRAFT %d" % SkinCollection.art_cost(_art_selected))
+		PageText.bind(_art_action, "VIEW IN SHOP")
 	_art_action.disabled = _art_selected == worn_art
 
 	var ultra := Color(SkinCollection.TIER_COLOURS[SkinCollection.SHADER_TIER])
@@ -655,7 +620,7 @@ func refresh() -> void:
 	elif _shader_selected == "" or SkinCollection.owns_shader(_shader_selected):
 		PageText.bind(_shader_action, "USE")
 	else:
-		PageText.bind(_shader_action, "CRAFT ULTRA %d" % cost)
+		PageText.bind(_shader_action, "VIEW IN SHOP")
 	_shader_action.disabled = _shader_selected == worn
 
 	_back_preview.set_face(_showcase_card(), worn)
