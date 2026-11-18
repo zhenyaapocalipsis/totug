@@ -33,20 +33,19 @@ const float BAYER[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 
 const vec3 GOLD[6] = vec3[](vec3(35.0, 18.0, 8.0), vec3(95.0, 50.0, 14.0), vec3(165.0, 100.0, 24.0),
 	vec3(222.0, 160.0, 44.0), vec3(255.0, 212.0, 96.0), vec3(255.0, 246.0, 196.0));
 
-const vec3 ECLIPSE_FOIL[8] = vec3[](
+// По восемь красок на отделку, в порядке индексов SkinCollection.
+const vec3 FOIL_RAMPS[24] = vec3[](
 	vec3(21, 9, 44), vec3(44, 18, 78), vec3(68, 29, 124), vec3(105, 52, 163),
-	vec3(148, 72, 195), vec3(196, 117, 222), vec3(237, 175, 240), vec3(254, 226, 255)
-);
-const vec3 THORN_FOIL[8] = vec3[](
-	vec3(12, 28, 24), vec3(17, 49, 38), vec3(25, 77, 52), vec3(34, 104, 65),
-	vec3(63, 141, 79), vec3(117, 170, 86), vec3(203, 206, 118), vec3(255, 239, 178)
-);
-const vec3 GLASS_FOIL[8] = vec3[](
-	vec3(9, 24, 43), vec3(15, 40, 62), vec3(24, 63, 89), vec3(28, 91, 122),
-	vec3(45, 132, 169), vec3(71, 182, 205), vec3(142, 231, 243), vec3(237, 251, 255)
+	vec3(148, 72, 195), vec3(196, 117, 222), vec3(237, 175, 240), vec3(254, 226, 255),
+	vec3(8, 25, 23), vec3(16, 51, 42), vec3(21, 81, 62), vec3(30, 120, 81),
+	vec3(54, 153, 101), vec3(111, 183, 108), vec3(205, 214, 114), vec3(251, 245, 176),
+	vec3(7, 25, 33), vec3(11, 50, 61), vec3(14, 82, 96), vec3(20, 119, 130),
+	vec3(40, 161, 160), vec3(76, 206, 181), vec3(154, 239, 195), vec3(231, 254, 212)
 );
 const vec3 ECLIPSE_COOL[3] = vec3[](vec3(62, 110, 197), vec3(97, 178, 226), vec3(170, 228, 250));
 const vec3 FOIL_PAPER[3] = vec3[](vec3(0.935, 0.870, 0.975), vec3(0.884, 0.938, 0.792), vec3(0.817, 0.955, 0.912));
+// xy — направление движения блика, z — его ширина.
+const vec3 FOIL_LIGHT[3] = vec3[](vec3(0.94, 0.34, 0.111), vec3(0.60, -0.80, 0.133), vec3(0.64, -0.77, 0.123));
 
 varying vec4 vertex_colour;
 
@@ -129,16 +128,41 @@ bool is_edge(sampler2D tex, ivec2 p) {
 }
 
 // Рельеф фольги: наклон граней, отражающая способность, гравировка и дисперсия.
-vec4 eclipse_surface(vec2 p) {
-	// Гильоше вокруг печати и спектральный сдвиг между двумя рельефами.
-	vec2 centre = p - vec2(0.04, -0.24);
-	float angle = atan(centre.y, centre.x + 0.00001);
-	float radius = length(centre);
-	float rings = radius * 29.0 + 0.31 * sin(angle * 8.0 + radius * 31.0);
-	float groove = 0.5 + 0.5 * cos(TAU * rings);
-	float rosette = smoothstep(0.58, 0.96, groove) * smoothstep(0.027, 0.09, radius);
-	float phase_shift = sin(radius * 28.0 - angle * 4.0);
-	return vec4(phase_shift * 0.070, 0.53 + groove * 0.38, rosette, phase_shift * 0.40);
+vec4 foil_surface(vec2 uv, vec2 p) {
+	if (tier == 4) {
+		// Гильоше вокруг печати и спектральный сдвиг между двумя рельефами.
+		vec2 centre = p - vec2(0.04, -0.24);
+		float angle = atan(centre.y, centre.x + 0.00001);
+		float radius = length(centre);
+		float rings = radius * 29.0 + 0.31 * sin(angle * 8.0 + radius * 31.0);
+		float groove = 0.5 + 0.5 * cos(TAU * rings);
+		float rosette = smoothstep(0.58, 0.96, groove) * smoothstep(0.027, 0.09, radius);
+		float phase_shift = sin(radius * 28.0 - angle * 4.0);
+		return vec4(phase_shift * 0.070, 0.53 + groove * 0.38, rosette, phase_shift * 0.40);
+	}
+	if (tier == 6) {
+		// Два семейства преломлённых бороздок, как свет под рифлёным стеклом.
+		float wave = sin(p.x * 18.0 + p.y * 8.0) * 0.41;
+		float current = p.y * 13.0 + p.x * 5.0 + wave;
+		float crest = 0.5 + 0.5 * sin(current * TAU);
+		float cross = 0.5 + 0.5 * sin((p.x * 7.0 - p.y * 4.0 + sin(current) * 0.44) * TAU);
+		float pools = crest * cross;
+		return vec4((pools - 0.40) * 0.17, 0.61 + crest * 0.15 + pools * 0.23,
+			smoothstep(0.70, 0.94, pools) * 0.86, 0.0);
+	}
+	// Малахитовые слои, по краям — металлическая гравировка листьев и жилок.
+	float flow = p.y * 10.0 + p.x * 4.0 + sin(p.x * 8.0 - p.y * 3.0) * 1.6;
+	float layer = 0.5 + 0.5 * sin(flow * 2.65 + sin(flow * 5.0) * 0.41);
+	float side = step(0.5, uv.x);
+	float stem_x = 0.044 + sin(uv.y * 33.0 + side * 2.0) * 0.018;
+	float across = (min(uv.x, 1.0 - uv.x) - stem_x) / 0.152;
+	float leaf_y = abs(fract(uv.y * 11.0 + side * 0.51) - 0.5 + across * 0.28);
+	float leaf_width = max(0.0, 1.0 - abs(across * 2.0 - 1.0));
+	float leaf = (1.0 - smoothstep(0.010, 0.058, abs(leaf_y - leaf_width * 0.25)))
+		* smoothstep(0.02, 0.15, leaf_width);
+	float stem = 1.0 - smoothstep(0.025, 0.077, abs(across));
+	float veins = smoothstep(0.76, 0.98, layer) * 0.45;
+	return vec4((layer - 0.5) * 0.133, 0.59 + layer * 0.35, max(max(0.65 * stem, leaf), veins), layer * 0.38);
 }
 
 float foil_lobe(float d, float width) {
@@ -146,12 +170,21 @@ float foil_lobe(float d, float width) {
 	return exp(-x * x);
 }
 
-// Клеймо Void Eclipse в углу крупной иллюстрации.
-float eclipse_seal(vec2 p) {
-	float arcs = abs(length(p + vec2(2.5, 0.0)) - 4.4);
-	float shaded = smoothstep(3.5, 5.5, length(p - vec2(1.2, -0.9)));
-	return max((1.0 - smoothstep(0.38, 1.12, arcs)) * shaded,
-		1.0 - smoothstep(0.50, 1.50, abs(p.x - 6.0) + abs(p.y + 2.5)));
+// Клеймо фольги в углу крупной иллюстрации, по одному на отделку.
+float foil_seal(vec2 p) {
+	if (tier == 4) {
+		float arcs = abs(length(p + vec2(2.5, 0.0)) - 4.4);
+		float shaded = smoothstep(3.5, 5.5, length(p - vec2(1.2, -0.9)));
+		return max((1.0 - smoothstep(0.38, 1.12, arcs)) * shaded,
+			1.0 - smoothstep(0.50, 1.50, abs(p.x - 6.0) + abs(p.y + 2.5)));
+	}
+	if (tier == 6) {
+		float current = sin(p.x * 0.52) * 1.55;
+		float crest = abs(abs(p.y - current) - 1.45);
+		return (1.0 - smoothstep(0.26, 1.03, crest)) * (1.0 - smoothstep(7.0, 10.0, abs(p.x)));
+	}
+	float leaves = abs(abs(p.y) - sin(clamp(abs(p.x) / 10.0, 0.0, 1.0) * PI) * 3.5);
+	return (1.0 - smoothstep(0.38, 1.18, leaves)) * (1.0 - smoothstep(8.1, 10.5, abs(p.x)));
 }
 
 bool matches_print(vec3 ink, vec3 rgb) {
@@ -165,42 +198,52 @@ bool is_frame_ink(vec3 ink) {
 		|| matches_print(ink, vec3(22.0, 12.0, 40.0));
 }
 
-vec3 eclipse_ink(float value, ivec2 pixel, bool cool_band) {
+vec3 foil_ink(float value, ivec2 pixel, bool cool_band) {
 	int tone = int(round(dith(value, pixel, 7.0) * 7.0));
 	if (cool_band && tone >= 4 && tone <= 6) {
 		return ECLIPSE_COOL[tone - 4] / 255.0;
 	}
-	return ECLIPSE_FOIL[tone] / 255.0;
+	return FOIL_RAMPS[(tier - 4) * 8 + tone] / 255.0;
 }
 
-vec3 foil_paper(vec3 ink) {
-	// Красится только фон бумаги, печать поверх него сохраняется.
-	vec3 paper_tone = FOIL_PAPER[tier - 4];
-	if (matches_print(ink, vec3(230.0, 217.0, 188.0))) {
-		return mix(ink, paper_tone, 0.52);
+vec3 foil_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope) {
+	int style = tier - 4;
+	vec3 paper_tone = FOIL_PAPER[style];
+	vec2 axis = FOIL_LIGHT[style].xy;
+	float width = FOIL_LIGHT[style].z;
+	if (inside(text_rect, pixel)) {
+		// Красится только фон бумаги, печать поверх него сохраняется.
+		if (matches_print(ink, vec3(230.0, 217.0, 188.0))) {
+			return mix(ink, paper_tone, 0.52);
+		}
+		if (matches_print(ink, vec3(191.0, 174.0, 136.0))) {
+			return mix(ink, paper_tone * 0.79, 0.52);
+		}
+		return ink;
 	}
-	if (matches_print(ink, vec3(191.0, 174.0, 136.0))) {
-		return mix(ink, paper_tone * 0.79, 0.52);
+	if (!art && !is_frame_ink(ink)) {
+		return ink;
 	}
-	return ink;
-}
 
-vec3 eclipse_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope, vec2 lean) {
-	const vec2 axis = vec2(0.94, 0.34);
-	const float width = 0.111;
 	vec2 at = vec2(pixel) + 0.5;
 	vec2 uv = at / face_size;
 	vec2 p = (uv - 0.5) * vec2(1.0, 1.38);
-	vec4 surface = eclipse_surface(p);
+	vec2 idle = vec2(sin(TIME * 0.64 + phase) * 0.67, cos(TIME * 0.48 + phase) * 0.37) * idle_amp;
+	vec2 lean = mix(idle, tilt, hover);
+	lean.x += foil_turn * 0.84;
+	vec4 surface = foil_surface(uv, p);
 
 	// Положение света меняется при наклоне. В палитру попадают ступени яркости.
 	float shift = round(dot(lean, axis * vec2(0.64, 0.48)) * face_size.x) / face_size.x;
 	float d = dot(p, axis) - shift + surface.x;
+	if (tier == 6) {
+		d += sin(p.x * 9.0 + p.y * 2.0) * 0.075;
+	}
 	float broad = foil_lobe(d + 0.055, width * 2.5);
 	float key = foil_lobe(d, width) * surface.y;
 	float flank = foil_lobe(d - 0.17, width * 0.59) * surface.y;
 	float specular = foil_lobe(d + 0.018, width * 0.34) * surface.y;
-	bool cool_band = abs(d + 0.10 + surface.w * 0.17) < 0.064;
+	bool cool_band = tier == 4 && abs(d + 0.10 + surface.w * 0.17) < 0.064;
 	float etched = surface.z * (0.14 + key * 0.30 + flank * 0.24);
 
 	if (art) {
@@ -209,17 +252,17 @@ vec3 eclipse_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope, vec2 lean) {
 		float relief = max(0.0, dot(art_slope, axis)) * step(0.12, key);
 		float coating = max(0.0, 0.17 * broad + 0.37 * key + 0.21 * flank + 0.25 * relief - 0.055)
 			* mix(0.32, 1.0, ink_light);
-		vec3 tint = eclipse_ink(0.41 + 0.23 * key + 0.34 * specular + 0.13 * flank, pixel, cool_band);
+		vec3 tint = foil_ink(0.41 + 0.23 * key + 0.34 * specular + 0.13 * flank, pixel, cool_band);
 		vec3 printed = mix(ink, tint, dith(coating, pixel, 4.0));
 		// Отдельные яркие пиксели остаются внутри блика или на печатном клейме.
 		float fleck = (surface.z * (key * 0.52 + flank * 0.20) + relief * key * 0.54)
 			* mix(0.12, 0.70, ink_light);
 		float seal = 0.0;
 		if (text_rect.z > text_rect.x) {
-			seal = eclipse_seal(at - (art_rect.zw - vec2(15.0, 11.0)));
+			seal = foil_seal(at - (art_rect.zw - vec2(15.0, 11.0)));
 		}
 		if (bay(pixel) + 0.085 < max(fleck, seal * (0.32 + key * 0.53))) {
-			return eclipse_ink(0.54 + specular * 0.41 + key * 0.14, pixel, cool_band);
+			return foil_ink(0.54 + specular * 0.41 + key * 0.14, pixel, cool_band);
 		}
 		return printed;
 	}
@@ -237,115 +280,7 @@ vec3 eclipse_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope, vec2 lean) {
 		* smoothstep(-14.0, -10.0, at.y - art_rect.y)
 		* (1.0 - smoothstep(-4.0, -1.0, at.y - art_rect.y));
 	level *= 1.0 - aspect_row * (1.0 - smoothstep(0.48, 0.67, uv.x)) * 0.47;
-	return eclipse_ink(level, pixel, cool_band);
-}
-
-
-// На арте блик зависит от рельефа печати. Форма стеклянной грани или листа
-// используется только для рамки, где не закрывает детали иллюстрации.
-vec3 tideglass_art(vec3 ink, ivec2 pixel, vec2 normal, vec2 uv, vec2 lean) {
-	float light = lum(ink);
-	float lit = smoothstep(0.20, 0.81, light);
-	float field = 1.0 - smoothstep(0.05, 0.85, abs(uv.x - 0.50 - lean.x * 0.42));
-	float edge = smoothstep(0.07, 0.42, max(0.0, dot(normal, vec2(lean.x * 0.54 + 0.30, -0.72))));
-	float gain = dith((0.042 * lit + 0.25 * edge) * field * lit, pixel, 12.0);
-	vec3 light_colour = mix(vec3(0.22, 0.79, 1.0), vec3(0.66, 1.0, 0.91),
-		smoothstep(-0.45, 0.75, lean.x + lean.y * 0.48));
-	return mix(ink, max(ink, light_colour), gain);
-}
-
-vec3 tideglass_frame(ivec2 pixel, vec2 uv, vec2 outer, vec2 lean) {
-	float depth = min(outer.x, outer.y);
-	float rail = 1.0 - step(0.51, abs(depth - 1.5));
-	// На стыке в углу отражение смещается с одной грани на другую.
-	float bevel = 1.0 - step(0.51, abs(depth - 3.5));
-	float facet = step(outer.x, outer.y);
-	float shift = dot(lean, vec2(0.57, -0.31));
-	float ray = dot(uv - 0.5, vec2(0.96, -0.50)) - shift + facet * 0.095;
-	float wash = 1.0 - smoothstep(0.02, 0.44, abs(ray));
-	// Тонкое второе отражение дробится на рёбрах стекла.
-	float face = 1.0 - smoothstep(0.05, 0.128, abs(ray));
-	float rib = 1.0 - step(0.25, fract((uv.x + uv.y * 0.77) * 20.0));
-	float second = (1.0 - smoothstep(0.015, 0.045, abs(ray - 0.163))) * mix(0.55, 1.0, rib);
-	float band = (1.0 - step(0.51, abs(depth - 5.5))) * smoothstep(0.55, 0.86, uv.y);
-	float level = 0.16 + 0.13 * wash + 0.30 * face + 0.43 * second
-		+ rail * (0.20 + face * 0.35) + bevel * (0.17 + second * 0.35) + band * 0.09;
-	int tone = int(round(dith(level, pixel, 7.0) * 7.0));
-	vec3 base = GLASS_FOIL[tone] / 255.0;
-	return mix(base, base.brg, second * smoothstep(0.42, 0.76, level) * 0.24);
-}
-
-vec3 thornweave_art(vec3 ink, ivec2 pixel, vec2 normal, vec2 uv, vec2 lean) {
-	float green_ink = smoothstep(-0.03, 0.25, ink.g - max(ink.r, ink.b));
-	float warm_ink = smoothstep(-0.04, 0.34, ink.r - ink.b);
-	float light = lum(ink);
-	float field = 1.0 - smoothstep(0.03, 0.93, abs(uv.y - 0.5 + lean.y * 0.46 + lean.x * 0.21));
-	float edge = smoothstep(0.08, 0.46, max(0.0, dot(normal, vec2(-0.42 + lean.x * 0.40, -0.79))));
-	float gilding = dith(edge * field * smoothstep(0.24, 0.70, light) * (0.11 + warm_ink * 0.22),
-		pixel, 12.0);
-	float glaze = green_ink * smoothstep(0.14, 0.58, light) * field * 0.12;
-	vec3 leaf = mix(ink, max(ink, vec3(0.24, 0.73, 0.40)), dith(glaze, pixel, 12.0));
-	return mix(leaf, max(leaf, vec3(1.0, 0.82, 0.36)), gilding);
-}
-
-vec3 thornweave_frame(ivec2 pixel, vec2 uv, vec2 outer, vec2 lean) {
-	bool horizontal = outer.y <= outer.x;
-	float depth = min(outer.x, outer.y);
-	float along = horizontal ? float(pixel.x) : float(pixel.y);
-	float reverse = horizontal ? step(0.5, uv.y) : step(0.5, uv.x);
-	float repeat = face_size.x < 80.0 ? 15.0 : 23.0;
-	float shoot = along / repeat + reverse * 0.52;
-	float middle = (horizontal ? 10.0 : 2.5) + sin(shoot * PI) * (horizontal ? 1.7 : 0.72);
-	float side = mod(floor(shoot), 2.0) * 2.0 - 1.0;
-	float leaf_pos = clamp((fract(shoot) - 0.04) / 0.89, 0.0, 1.0);
-	float leaf_width = sin(leaf_pos * PI) * 3.2;
-	float leaf_axis = middle + side * leaf_pos * (horizontal ? 8.4 : 4.1);
-	float leaf_dist = abs(depth - leaf_axis);
-	float leaf = step(0.8, leaf_width) * (1.0 - smoothstep(leaf_width - 0.82, leaf_width + 0.37, leaf_dist));
-	float vein = leaf * (1.0 - smoothstep(0.24, 0.91, leaf_dist));
-	float stem = 1.0 - smoothstep(0.36, 1.28, abs(depth - middle));
-
-	float shift = dot(lean, vec2(-0.42, 0.63));
-	float position = (uv.y - 0.5) + abs(uv.x - 0.47) * 0.31 - shift;
-	float light = 1.0 - smoothstep(0.02, 0.46, abs(position));
-	float branch_light = (horizontal ? uv.x : uv.y) - 0.50 - shift + reverse * 0.16;
-	float tip = 1.0 - smoothstep(0.04, 0.25, abs(branch_light));
-	float rail = 1.0 - step(0.51, abs(depth - 1.5));
-	float stone = 0.5 + 0.5 * sin(depth * 1.05 + sin(along * 0.074) * 1.38);
-	float level = 0.16 + 0.10 * light + 0.055 * stone
-		+ max(stem * 0.22, leaf * 0.25) + vein * (0.11 + 0.29 * tip) + rail * (0.17 + 0.10 * light);
-	int tone = int(round(dith(level, pixel, 7.0) * 7.0));
-	return THORN_FOIL[tone] / 255.0;
-}
-
-vec3 foil_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope) {
-	if (inside(text_rect, pixel)) {
-		return foil_paper(ink);
-	}
-	if (!art && !is_frame_ink(ink)) {
-		return ink;
-	}
-	vec2 idle = vec2(sin(TIME * 0.64 + phase) * 0.67, cos(TIME * 0.48 + phase) * 0.37) * idle_amp;
-	vec2 lean = mix(idle, tilt, hover);
-	lean.x += foil_turn * 0.84;
-	if (tier == 4) {
-		return eclipse_skin(ink, pixel, art, art_slope, lean);
-	}
-
-	vec2 at = vec2(pixel) + 0.5;
-	if (art) {
-		vec2 uv = (at - art_rect.xy) / (art_rect.zw - art_rect.xy);
-		if (tier == 5) {
-			return thornweave_art(ink, pixel, art_slope, uv, lean);
-		}
-		return tideglass_art(ink, pixel, art_slope, uv, lean);
-	}
-	vec2 uv = at / face_size;
-	vec2 outer = min(at, face_size - at);
-	if (tier == 5) {
-		return thornweave_frame(pixel, uv, outer, lean);
-	}
-	return tideglass_frame(pixel, uv, outer, lean);
+	return foil_ink(level, pixel, cool_band);
 }
 
 void fragment() {
