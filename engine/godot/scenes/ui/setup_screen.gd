@@ -92,7 +92,8 @@ const PAGE_PLAY := "play"
 const PAGE_LEADERBOARD := "leaderboard"
 const PAGE_FRIENDS := "friends"
 const PAGE_SETTINGS := "settings"
-const TABS: Array[String] = [PAGE_PROFILE, PAGE_PLAY, PAGE_LEADERBOARD, PAGE_FRIENDS, PAGE_SETTINGS]
+const PAGE_SHOP := "shop"
+const TABS: Array[String] = [PAGE_PROFILE, PAGE_PLAY, PAGE_LEADERBOARD, PAGE_FRIENDS, PAGE_SETTINGS, PAGE_SHOP]
 ## Разделы PLAY (столбец слева в окне).
 const PAGE_ONLINE := "online"
 const PAGE_LOBBY := "lobby"
@@ -333,7 +334,12 @@ func _show_tab(tab: String) -> void:
 			PAGE_PROFILE:
 				var profile := ProfileScreen.new()
 				profile.replay_requested.connect(func(file: String): replay_requested.emit(file))
+				profile.shop_requested.connect(func(key: String):
+					_show_tab(PAGE_SHOP)
+					(_tabs[PAGE_SHOP] as ShopPage).show_item(key))
 				content = profile
+			PAGE_SHOP:
+				content = ShopPage.new()
 			PAGE_SETTINGS:
 				content = _build_settings()
 			PAGE_LEADERBOARD:
@@ -360,6 +366,8 @@ func _show_tab(tab: String) -> void:
 		(_tab_buttons[key] as Button).set_pressed_no_signal(key == tab)
 	if tab == PAGE_PLAY:
 		_show_section(_section)
+	elif tab == PAGE_SHOP:
+		(_tabs[tab] as ShopPage).refresh()
 
 
 ## Полный профиль другого игрока поверх меню (PlayerProfilePanel); WATCH в

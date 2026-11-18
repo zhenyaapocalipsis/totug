@@ -12,6 +12,15 @@ extends RefCounted
 
 const FULL_DIR := "res://assets/cards_alt/"
 const MINI_DIR := "res://assets/cards_alt_mini/"
+static var _titles: Dictionary = {}
+
+
+static func title_of(art: String) -> String:
+	if _titles.is_empty():
+		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/cards/alt_art_names.json"))
+		if parsed is Dictionary:
+			_titles = parsed
+	return String(_titles.get(art, EventLogPanel.card_name(card_of(art))))
 
 ## арт -> ступень (SkinCollection.TIERS)
 const TIER_OF := {

@@ -1742,6 +1742,13 @@ func test_skin_collection() -> void:
 	check(page.open_box().is_empty(), "лутбоксов больше нет — открывать нечего")
 	var shop := ShopPage.new()
 	check(shop.items().size() == AltArts.TIER_OF.size() + SkinCollection.SHADERS.size(), "SHOP lists every art and shader")
+	check_eq(shop._grid.get_child_count(), ShopPage.PAGE_SIZE, "SHOP paginates the native card grid")
+	shop._next.pressed.emit()
+	check_eq(shop._page, 1, "SHOP next page")
+	shop._previous.pressed.emit()
+	check_eq(shop._page, 0, "SHOP previous page")
+	for art: String in AltArts.TIER_OF:
+		check(AltArts.title_of(art) != "" and not AltArts.title_of(art).begins_with("ART "), "Art has a display name: " + art)
 	var links: Array[String] = []
 	page.shop_requested.connect(func(key: String): links.append(key))
 	page.select_shader("gilded")
@@ -4588,6 +4595,9 @@ func test_how_to_play() -> void:
 func test_main_menu() -> void:
 	section("главное меню, первый профиль и вопрос про обучение")
 	var menu := SetupScreen.new()
+	check(SetupScreen.TABS[-2] == SetupScreen.PAGE_SETTINGS and SetupScreen.TABS[-1] == SetupScreen.PAGE_SHOP,
+		"SHOP is between SETTINGS and EXIT")
+	check(not ProfileScreen.TABS.has("SHOP"), "SHOP has its own main-menu page")
 	check_eq(menu.current_page(), SetupScreen.PAGE_ONLINE, "меню открывается на PLAY → ONLINE")
 	for text in ["PROFILE", "PLAY", "SETTINGS", "EXIT"]:
 		check(_find_button(menu, text) != null, "под названием есть кнопка %s" % text)

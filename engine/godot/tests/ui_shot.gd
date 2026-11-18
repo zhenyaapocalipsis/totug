@@ -123,9 +123,9 @@ func _run_scenario() -> void:
 		"shop":
 			PlayerProfile.path_override = "user://shop_shot.cfg"
 			SkinCollection.grant({"dust": 2400})
-			var shop_profile := _menu_profile()
-			(func(): shop_profile._show_tab.call_deferred("SHOP")).call_deferred()
-			shop_profile._shop.show_item("alt:50107_1")
+			var shop_menu := SetupScreen.new(SetupScreen.PAGE_SHOP)
+			root.add_child(shop_menu)
+			(shop_menu._tabs[SetupScreen.PAGE_SHOP] as ShopPage).show_item("alt:50107_1")
 		"":
 			return
 		"game_over", "game_over_rated":

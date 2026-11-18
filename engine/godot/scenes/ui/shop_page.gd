@@ -2,20 +2,54 @@ class_name ShopPage
 extends VBoxContainer
 
 const PageText := preload("res://scenes/page_text.gd")
+const PAGE_SIZE := 15
+
+class Choices extends HFlowContainer:
+	signal item_selected(index: int)
+	var selected := 0
+	var buttons: Array[Button] = []
+
+	func configure(titles: Array[String]) -> void:
+		alignment = FlowContainer.ALIGNMENT_CENTER
+		add_theme_constant_override("h_separation", 3)
+		add_theme_constant_override("v_separation", 3)
+		var group := ButtonGroup.new()
+		for title in titles:
+			var index := buttons.size()
+			var button := Button.new()
+			button.text = title
+			button.toggle_mode = true
+			button.button_group = group
+			button.custom_minimum_size.y = 16
+			SetupScreen._style_button(button)
+			button.pressed.connect(func():
+				select(index)
+				item_selected.emit(index))
+			add_child(button)
+			buttons.append(button)
+		select(0)
+
+	func select(index: int) -> void:
+		selected = index
+		for i in buttons.size():
+			buttons[i].set_pressed_no_signal(i == index)
 
 var _catalog: Array[Dictionary] = []
 var _selected := ""
 var _dust: Label
 var _count: Label
 var _search: LineEdit
-var _kind: OptionButton
-var _faction: OptionButton
-var _rarity: OptionButton
-var _sort: OptionButton
-var _affordable: CheckButton
-var _hide_owned: CheckButton
+var _kind: Choices
+var _faction: Choices
+var _rarity: Choices
+var _sort: Choices
+var _affordable: CheckBox
+var _hide_owned: CheckBox
 var _grid: GridContainer
-var _scroll: ScrollContainer
+var _page := 0
+var _page_label: Label
+var _previous: Button
+var _next: Button
 var _preview: CardView
 var _title: Label
 var _price: Label
@@ -44,20 +78,22 @@ func _init() -> void:
 	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	filters.add_child(_search)
 	_search.text_changed.connect(func(_text: String): _rebuild())
-	_kind = _options(filters, ["ALL ITEMS", "ARTS", "SHADERS"])
+	_kind = _options(self, ["ALL ITEMS", "ARTS", "SHADERS"])
+	move_child(_kind, 1)
 	var factions: Array[String] = ["ALL FACTIONS"]
 	for faction in CollectionPage.FACTIONS:
 		factions.append(String(SetupScreen.NEW_ERA_TITLES.get(faction, faction.to_upper())))
-	_faction = _options(filters, factions)
+	_faction = _options(self, factions)
+	move_child(_faction, 2)
 	_rarity = _options(filters, ["ALL RARITIES", "EPIC", "LEGENDARY", "ULTRA"])
 	var tools := HBoxContainer.new()
 	add_child(tools)
 	_sort = _options(tools, ["NEWEST", "NAME", "PRICE"])
-	_affordable = CheckButton.new()
+	_affordable = CheckBox.new()
 	_affordable.text = "CAN AFFORD"
 	tools.add_child(_affordable)
 	_affordable.toggled.connect(func(_on: bool): _rebuild())
-	_hide_owned = CheckButton.new()
+	_hide_owned = CheckBox.new()
 	_hide_owned.text = "HIDE OWNED"
 	tools.add_child(_hide_owned)
 	_hide_owned.toggled.connect(func(_on: bool): _rebuild())
@@ -66,20 +102,28 @@ func _init() -> void:
 	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	tools.add_child(_count)
 	var body := HBoxContainer.new()
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 12)
 	add_child(body)
-	_scroll = ScrollContainer.new()
-	_scroll.custom_minimum_size = Vector2(450, 310)
-	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body.add_child(_scroll)
+	var catalog := VBoxContainer.new()
+	catalog.custom_minimum_size.x = 450
+	body.add_child(catalog)
 	_grid = GridContainer.new()
-	_grid.columns = 4
-	_grid.add_theme_constant_override("h_separation", 6)
-	_grid.add_theme_constant_override("v_separation", 8)
-	_scroll.add_child(_grid)
+	_grid.columns = 5
+	_grid.add_theme_constant_override("h_separation", 4)
+	_grid.add_theme_constant_override("v_separation", 4)
+	_grid.custom_minimum_size = Vector2(450, 312)
+	catalog.add_child(_grid)
+	var pages := HBoxContainer.new()
+	pages.alignment = BoxContainer.ALIGNMENT_CENTER
+	catalog.add_child(pages)
+	_previous = _button("<", func(): _page -= 1; _rebuild())
+	pages.add_child(_previous)
+	_page_label = _label("", PixelTheme.TEXT_DIM)
+	pages.add_child(_page_label)
+	_next = _button(">", func(): _page += 1; _rebuild())
+	pages.add_child(_next)
 	var side := VBoxContainer.new()
 	side.custom_minimum_size.x = 176
 	side.add_theme_constant_override("separation", 4)
@@ -94,6 +138,8 @@ func _init() -> void:
 	_price = _label("", PixelTheme.GOLD)
 	side.add_child(_price)
 	_action = Button.new()
+	SetupScreen._style_button(_action)
+	_action.custom_minimum_size.y = 16
 	_action.pressed.connect(press_selected)
 	side.add_child(_action)
 	_note = _label("", PixelTheme.TEXT_DIM)
@@ -101,13 +147,16 @@ func _init() -> void:
 	_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	side.add_child(_note)
 	_confirm = ConfirmationDialog.new()
+	_confirm.theme = PixelTheme.theme()
 	_confirm.title = "BUY WITH DUST"
+	SetupScreen._style_button(_confirm.get_ok_button())
+	SetupScreen._style_button(_confirm.get_cancel_button())
 	_confirm.confirmed.connect(_buy_confirmed)
 	add_child(_confirm)
 	for art: String in AltArts.TIER_OF:
 		var cid := AltArts.card_of(art)
 		_catalog.append({"key": SkinCollection.art_key(art), "id": art, "card": cid,
-			"name": EventLogPanel.card_name(cid), "kind": "art", "tier": AltArts.tier_of(art),
+			"name": AltArts.title_of(art), "card_name": EventLogPanel.card_name(cid), "kind": "art", "tier": AltArts.tier_of(art),
 			"cost": SkinCollection.art_cost(art), "faction": CollectionPage.faction_of(cid)})
 	for shader in SkinCollection.SHADERS:
 		_catalog.append({"key": SkinCollection.shader_key(shader), "id": shader, "card": "48342",
@@ -123,13 +172,27 @@ func _label(value: String, colour: Color) -> Label:
 	return label
 
 
-func _options(parent: Control, titles: Array[String]) -> OptionButton:
-	var button := OptionButton.new()
-	for title in titles:
-		button.add_item(title)
-	parent.add_child(button)
-	button.item_selected.connect(func(_index: int): _rebuild())
+func _button(value: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = value
+	button.custom_minimum_size = Vector2(30, 16)
+	SetupScreen._style_button(button)
+	button.pressed.connect(action)
 	return button
+
+
+func _options(parent: Control, titles: Array[String]) -> Choices:
+	var choices := Choices.new()
+	choices.configure(titles)
+	if parent is HBoxContainer:
+		var width := 0.0
+		for button in choices.buttons:
+			width += button.get_combined_minimum_size().x + 3
+		choices.custom_minimum_size.x = width
+		choices.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	parent.add_child(choices)
+	choices.item_selected.connect(func(_index: int): _page = 0; _rebuild())
+	return choices
 
 
 func items() -> Array[Dictionary]:
@@ -164,7 +227,7 @@ func _rebuild() -> void:
 		if _hide_owned.button_pressed and owned.has(item["key"]):
 			continue
 		var query := _search.text.strip_edges().to_lower()
-		if query != "" and not (str(item["name"]) + " " + str(item["id"])).to_lower().contains(query):
+		if query != "" and not (str(item["name"]) + " " + str(item.get("card_name", "")) + " " + str(item["id"])).to_lower().contains(query):
 			continue
 		filtered.append(item)
 	if _sort.selected == 0:
@@ -178,34 +241,34 @@ func _rebuild() -> void:
 		_grid.remove_child(child)
 		child.queue_free()
 	_count.text = "%d ITEMS" % filtered.size()
-	for item in filtered:
+	var pages := maxi(1, ceili(filtered.size() / float(PAGE_SIZE)))
+	_page = clampi(_page, 0, pages - 1)
+	_page_label.text = " %d / %d " % [_page + 1, pages]
+	_previous.disabled = _page == 0
+	_next.disabled = _page == pages - 1
+	for item in filtered.slice(_page * PAGE_SIZE, (_page + 1) * PAGE_SIZE):
 		var tile := VBoxContainer.new()
-		tile.custom_minimum_size.x = 100
+		tile.custom_minimum_size.x = 86
 		_grid.add_child(tile)
 		var frame := Control.new()
-		frame.custom_minimum_size = Vector2(100, 127)
+		frame.custom_minimum_size = Vector2(86, 84)
 		tile.add_child(frame)
-		var view := CardView.new(item["card"], 176, 254)
-		view.scale = Vector2(0.5, 0.5)
+		var view := CardView.new(item["card"], int(CollectionPage.MINI.x), int(CollectionPage.MINI.y))
 		view.hover_preview = false
 		view.set_art(item["id"] if item["kind"] == "art" else "")
 		view.set_skin(item["id"] if item["kind"] == "shader" else "")
 		view.set_clickable(true)
 		view.pressed.connect(func(_cid: String): show_item(item["key"]))
 		frame.add_child(view)
+		tile.set_meta("shop_key", item["key"])
+		tile.set_meta("shop_view", view)
+		view.tooltip_text = str(item["name"])
 		var name_label := _label(str(item["name"]), PixelTheme.TEXT)
-		name_label.custom_minimum_size.x = 100
+		name_label.custom_minimum_size.x = 86
 		name_label.clip_text = true
 		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		name_label.tooltip_text = str(item["name"])
 		tile.add_child(name_label)
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(100, 22)
-		button.clip_text = true
-		button.text = "OWNED" if owned.has(item["key"]) else "%d DUST" % item["cost"]
-		button.tooltip_text = str(item["name"]) + " · " + str(item["id"])
-		button.pressed.connect(show_item.bind(item["key"]))
-		tile.add_child(button)
 	if filtered.is_empty():
 		_grid.add_child(_label("No matching items.", PixelTheme.TEXT_DIM))
 	if _selected == "" and not filtered.is_empty():
@@ -221,6 +284,11 @@ func _item(key: String) -> Dictionary:
 
 
 func _select_preview() -> void:
+	for tile in _grid.get_children():
+		if tile.has_meta("shop_view"):
+			var view: CardView = tile.get_meta("shop_view")
+			view.highlight = tile.get_meta("shop_key") == _selected
+			view.queue_redraw()
 	var item := _item(_selected)
 	_preview.visible = not item.is_empty()
 	_action.visible = not item.is_empty()
@@ -229,7 +297,7 @@ func _select_preview() -> void:
 	_preview.set_card(item["card"])
 	_preview.set_art(item["id"] if item["kind"] == "art" else "")
 	_preview.set_skin(item["id"] if item["kind"] == "shader" else "")
-	_title.text = str(item["name"]) + (" · ART " + str(item["id"]).get_slice("_", 1) if item["kind"] == "art" else "")
+	_title.text = str(item["name"]) + ("\n" + str(item["card_name"]) if item["kind"] == "art" else "")
 	var data := SkinCollection.load_data()
 	var owned: bool = (data["owned"] as Array).has(item["key"])
 	var in_use: bool = str(data["shader"]) == item["id"] if item["kind"] == "shader" else SkinCollection.art_of(item["card"]) == item["id"]

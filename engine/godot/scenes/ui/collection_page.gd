@@ -587,7 +587,10 @@ func refresh() -> void:
 		var b: Button = _art_buttons[art]
 		var has := art == "" or SkinCollection.owns_art(art)
 		var tier := AltArts.tier_of(art)
-		var title := "ORIGINAL" if art == "" else "%s %s" % [SkinCollection.TIER_TITLES[tier], art.get_slice("_", 1)]
+		var title := "ORIGINAL" if art == "" else AltArts.title_of(art)
+		b.clip_text = true
+		b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		b.tooltip_text = title if art == "" else "%s · %s" % [title, SkinCollection.TIER_TITLES[tier]]
 		var state := "  ON" if art == worn_art else ("" if has else "  %d" % SkinCollection.art_cost(art))
 		PageText.bind(b, " %s%s" % [title, state])
 		var tint := PixelTheme.TEXT if art == "" else Color(SkinCollection.TIER_COLOURS[tier])

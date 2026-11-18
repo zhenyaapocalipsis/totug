@@ -22,6 +22,7 @@ const L10n := preload("res://scenes/localization.gd")
 
 ## Профиль сохранён (при первом запуске после этого открывается меню).
 signal closed
+signal shop_requested(key: String)
 ## WATCH в истории партий: открыть реплей (файл ReplayBook).
 signal replay_requested(file: String)
 
@@ -42,7 +43,7 @@ const PLACES := ["1ST", "2ND", "3RD", "4TH"]
 const UnderdarkBg := preload("res://scenes/ui/underdark_bg.gd")
 const GameSettings := preload("res://scenes/game_settings.gd")
 ## Вкладки обычного профиля; STATS первой и открыта сразу (владелец, 2026-09-28).
-const TABS: Array[String] = ["STATS", "EMBLEM", "CHAT", "SHOP", "COLLECTION"]
+const TABS: Array[String] = ["STATS", "EMBLEM", "CHAT", "COLLECTION"]
 ## Высота прокрутки истории онлайн-партий (до PlayerProfile.HISTORY_MAX строк).
 const HISTORY_H := 200.0
 const GamesAnalysisPanel := preload("res://scenes/ui/games_analysis_panel.gd")
@@ -72,7 +73,6 @@ var replays_dir := ReplayBook.DIR
 var analysis_panel: Control
 ## Вкладка COLLECTION: образы карт (CollectionPage).
 var _collection: CollectionPage
-var _shop: ShopPage
 ## Любимый цвет места ("" — любой, PlayerProfile.clean_colour) и рамки его выбора.
 var _colour := ""
 var _frames: Dictionary = {}
@@ -162,13 +162,8 @@ func _init(first_run: bool = false) -> void:
 		col.add_child(_chat)
 		_chat.visible = false
 		# Образы карт: лутбоксы, пыль, создание и выбор (SkinCollection).
-		_shop = ShopPage.new()
-		col.add_child(_shop)
-		_shop.visible = false
 		_collection = CollectionPage.new()
-		_collection.shop_requested.connect(func(key: String):
-			_show_tab("SHOP")
-			_shop.show_item(key))
+		_collection.shop_requested.connect(func(key: String): shop_requested.emit(key))
 		col.add_child(_collection)
 		_collection.visible = false
 		_look.visible = false
@@ -486,7 +481,7 @@ func _save_name() -> void:
 ## page — STATS, EMBLEM, CHAT или COLLECTION.
 func _show_tab(page: String) -> void:
 	_page = page
-	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat, "COLLECTION": _collection, "SHOP": _shop}
+	var pages := {"STATS": _stats, "EMBLEM": _look, "CHAT": _chat, "COLLECTION": _collection}
 	# Окно меню постоянного размера, страницы не выравниваются — каждая
 	# своей высоты, SAVE сразу под ней (всё компактно, 2026-10-06).
 	for key: String in pages:
@@ -495,8 +490,6 @@ func _show_tab(page: String) -> void:
 	L10n.bind(_saved_note, "lobby.raw", {"value": ""})
 	# Ушли со STATS посреди правки имени — правка отменяется.
 	_edit_name(false)
-	if _shop.visible:
-		_shop.refresh()
 	if _collection.visible:
 		_collection.refresh()
 	for b: Button in _tab_buttons:
