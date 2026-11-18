@@ -115,11 +115,10 @@ func has_preview() -> bool:
 ## путями: событием самой клавиши и — если это Alt, Shift или Ctrl — флагом на
 ## любом другом событии (например, движении мыши с уже зажатой клавишей).
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		var key := event as InputEventKey
-		if GameSettings.is_key(key, "zoom") or key.physical_keycode == GameSettings.key("zoom"):
-			_set_alt(key.pressed)
-			return
+	if GameSettings.is_key(event, "zoom") or (event is InputEventKey
+			and (event as InputEventKey).physical_keycode == GameSettings.key("zoom")):
+		_set_alt(event.is_pressed())
+		return
 	if event is InputEventWithModifiers:
 		var held: Variant = GameSettings.modifier_held(event as InputEventWithModifiers, "zoom")
 		if held != null:

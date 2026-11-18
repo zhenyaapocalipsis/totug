@@ -1081,10 +1081,10 @@ func ping_count() -> int:
 ## клавиши игры не срабатывают.
 func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null:
+	if key == null and not event is InputEventMouseButton:
 		return
 	# Отпускание пробела сбрасывает удержание при любом состоянии экрана.
-	if GameSettings.is_key(key, "end_turn") and not key.pressed:
+	if GameSettings.is_key(event, "end_turn") and not event.is_pressed():
 		_space_held = false
 	# Окно BUG REPORT (открыто из меню Esc, оно остаётся под ним): клавиши — его
 	# полю текста, иначе ветка меню паузы ниже глотала всё и писать было нельзя.
@@ -1092,58 +1092,60 @@ func _input(event: InputEvent) -> void:
 		return
 	var typing := get_viewport().gui_get_focus_owner() is LineEdit
 	if replay_bar != null and not _pause_menu.visible and not _game_over_panel.visible \
-			and not (stats_panel != null and stats_panel.visible) and replay_bar.handle_key(key):
+			and not (stats_panel != null and stats_panel.visible) and key != null and replay_bar.handle_key(key):
 		get_viewport().set_input_as_handled()
 		return
+	if _pause_menu.visible and key == null:
+		return  # Мышь нужна кнопкам меню и панели назначения.
 	if _pause_menu.visible:
 		# Под меню паузы клавиши до игры не доходят; Esc его закрывает, из
 		# настроек — назад к кнопкам меню.
-		if key.keycode == KEY_ESCAPE and key.pressed and not key.echo:
+		if key.keycode == KEY_ESCAPE and event.is_pressed() and not event.is_echo():
 			if _pause_menu.settings_open():
 				_pause_menu.show_settings(false)
 			else:
 				_pause_menu.visible = false
 		_cancel_tab()
 		get_viewport().set_input_as_handled()
-	elif GameSettings.is_key(key, "ping") and not (typing and key.keycode != KEY_TAB):
+	elif GameSettings.is_key(event, "ping") and not (typing and key != null and key.keycode != KEY_TAB):
 		# Tab глотаем и при наборе (иначе он уводит фокус); буквенную клавишу
 		# пинга при наборе отдаём строке чата.
 		get_viewport().set_input_as_handled()
-		if key.echo:
+		if event.is_echo():
 			return
-		if not (key.pressed and typing):
-			tab_key(key.pressed, get_local_mouse_position())
+		if not (event.is_pressed() and typing):
+			tab_key(event.is_pressed(), get_local_mouse_position())
 	elif typing:
-		if key.keycode == KEY_ESCAPE and key.pressed:
+		if key != null and key.keycode == KEY_ESCAPE and event.is_pressed():
 			get_viewport().gui_get_focus_owner().release_focus()
 			get_viewport().set_input_as_handled()
-	elif GameSettings.is_key(key, "end_turn"):
+	elif GameSettings.is_key(event, "end_turn"):
 		# Пробел глотаем целиком, чтобы он не жал кнопку в фокусе; сам конец
 		# хода — в _tick_space_hold, после удержания (GameSettings.hold_seconds).
-		if key.pressed and not key.echo:
+		if event.is_pressed() and not event.is_echo():
 			_space_held = true
 		get_viewport().set_input_as_handled()
-	elif GameSettings.is_key(key, "ally_hand"):
-		if key.pressed and not key.echo:
+	elif GameSettings.is_key(event, "ally_hand"):
+		if event.is_pressed() and not event.is_echo():
 			toggle_ally_hand()
 		get_viewport().set_input_as_handled()
-	elif key.keycode == KEY_G and key.pressed and not key.echo and _god_panel != null:
+	elif key != null and key.keycode == KEY_G and event.is_pressed() and not event.is_echo() and _god_panel != null:
 		toggle_god_panel()
 		get_viewport().set_input_as_handled()
-	elif _god_panel != null and _god_panel.visible and key.pressed \
+	elif key != null and _god_panel != null and _god_panel.visible and event.is_pressed() \
 			and key.keycode in [KEY_P, KEY_LEFT, KEY_RIGHT]:
 		# Анимации розыгрыша: P — пауза, стрелки — кадр назад и вперёд (держать — листать).
 		if key.keycode == KEY_P:
-			if not key.echo:
+			if not event.is_echo():
 				_god_panel.toggle_pause()
 		else:
 			_god_panel.step(-1 if key.keycode == KEY_LEFT else 1)
 		get_viewport().set_input_as_handled()
-	elif key.keycode == KEY_B and key.pressed and not key.echo:
+	elif key != null and key.keycode == KEY_B and event.is_pressed() and not event.is_echo():
 		# Stage 0 фонового арта гексов (PixelLab) — временная клавиша, пока
 		# владелец не решил, входит ли это в игру насовсем.
 		_board_panel.set_art_layer(not _board_panel.art_layer)
-	elif key.keycode == KEY_O and key.pressed and not key.echo:
+	elif key != null and key.keycode == KEY_O and event.is_pressed() and not event.is_echo():
 		# Тематические объекты на 5 плитках (PixelLab) — временная клавиша,
 		# пока владелец не решил, входит ли это в игру насовсем.
 		_board_panel.set_object_layer(not _board_panel.object_layer)

@@ -267,8 +267,7 @@ func _append_chat(seat: String, text: String, deck: String) -> void:
 
 ## Tab (клавиша пинга) над миниатюрой — в чат предложение забанить её.
 func _input(event: InputEvent) -> void:
-	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo or not GameSettings.is_key(key, "ping"):
+	if not event.is_pressed() or event.is_echo() or not GameSettings.is_key(event, "ping"):
 		return
 	if _hovered != "":
 		_net.send_chat(SUGGEST_PREFIX + _hovered)

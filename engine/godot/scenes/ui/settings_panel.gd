@@ -4,7 +4,7 @@ extends HBoxContainer
 ## и SETTINGS в меню по Esc (владелец, 2026-10-06). Слева звук и экран, справа
 ## клавиши и игровые мелочи. Всё сохраняется сразу, кнопки APPLY нет.
 ##
-## Переназначить клавишу: щелчок по ней, потом нужная клавиша (Esc — передумать).
+## Переназначить клавишу: щелчок по ней, потом нужная клавиша или кнопка мыши (Esc — передумать).
 ## Занятая клавиша меняется местами с прежней.
 
 const GameSettings := preload("res://scenes/game_settings.gd")
@@ -100,12 +100,12 @@ func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():
 		_wait_key("")
 		return
-	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo:
+	var code := GameSettings.input_code(event)
+	if code == 0 or not event.is_pressed() or event.is_echo():
 		return
 	get_viewport().set_input_as_handled()
-	if key.keycode != KEY_ESCAPE:
-		GameSettings.set_key(_waiting, key.keycode if key.keycode != KEY_NONE else key.physical_keycode)
+	if code != KEY_ESCAPE:
+		GameSettings.set_key(_waiting, code)
 	_wait_key("")
 
 

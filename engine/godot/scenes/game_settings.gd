@@ -124,13 +124,29 @@ static func reset_keys() -> void:
 
 
 static func key_name(action: String) -> String:
-	return OS.get_keycode_string(key(action)).to_upper()
+	var code := key(action)
+	if code < 0:
+		return "MOUSE %d" % -code
+	return OS.get_keycode_string(code).to_upper()
 
 
 ## Нажата ли клавиша действия (по коду клавиши или по физической).
-static func is_key(event: InputEventKey, action: String) -> bool:
-	var k := key(action)
-	return event.keycode == k or (event.keycode == KEY_NONE and event.physical_keycode == k)
+## Отрицательные коды в прежнем разделе keys обозначают кнопки мыши.
+## Положительные коды клавиатуры остаются совместимы со старыми настройками.
+static func input_code(event: InputEvent) -> int:
+	if event is InputEventMouseButton:
+		var button := (event as InputEventMouseButton).button_index
+		if button in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE,
+				MOUSE_BUTTON_XBUTTON1, MOUSE_BUTTON_XBUTTON2]:
+			return -button
+	if event is InputEventKey:
+		var keyboard := event as InputEventKey
+		return keyboard.keycode if keyboard.keycode != KEY_NONE else keyboard.physical_keycode
+	return 0
+
+
+static func is_key(event: InputEvent, action: String) -> bool:
+	return input_code(event) != 0 and input_code(event) == key(action)
 
 
 ## Зажата ли клавиша-модификатор действия по флагу события (Alt, Shift, Ctrl

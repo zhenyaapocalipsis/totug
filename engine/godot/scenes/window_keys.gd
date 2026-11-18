@@ -34,6 +34,18 @@ func _process(_delta: float) -> void:
 		_fps.text = "%d FPS" % Engine.get_frames_per_second()
 
 
+## Кнопки мыши не поступают в _shortcut_input: ловим их до GUI.
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.is_pressed() and GameSettings.is_key(event, "fullscreen"):
+		_toggle_fullscreen()
+
+
+func _toggle_fullscreen() -> void:
+	var full := GameSettings.window_mode_now() != "window"
+	GameSettings.set_value("window_mode", "window" if full else "full")
+	get_viewport().set_input_as_handled()
+
+
 func _shortcut_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -42,6 +54,4 @@ func _shortcut_input(event: InputEvent) -> void:
 		or (key.keycode == KEY_ENTER and key.alt_pressed)
 	if not toggle:
 		return
-	var full := GameSettings.window_mode_now() != "window"
-	GameSettings.set_value("window_mode", "window" if full else "full")
-	get_viewport().set_input_as_handled()
+	_toggle_fullscreen()
