@@ -3,8 +3,8 @@ extends SceneTree
 ## Снимок образов карт (SkinCollection, шейдер card_skin.gdshader): одна карта
 ## со всеми образами — мелкое и полное лицо (окно игры само рисует x2). Запуск (с окном):
 ##   Godot --path . --script res://tools/skin_preview.gd -- --card=48314 --out=C:/path/skins.png
-## --screen=foil — четыре фольги при двух фиксированных наклонах.
-## --page=2 — вторая страница каталога или второй набор в режиме foil.
+## --screen=foil — фольги при двух фиксированных наклонах.
+## --page=2 — следующая страница, если карточки не помещаются в один снимок.
 ## Снимок — на CAPTURE_FRAME кадре: к нему шейдер точно собран и нарисован.
 
 const CAPTURE_FRAME := 20
@@ -84,13 +84,14 @@ func _initialize() -> void:
 	var skins: Array[String] = [""]
 	skins.append_array(SkinCollection.SHADERS)
 	var entries := COLUMNS if foil else PAGE_SIZE
-	var first := (page - 1) * entries + (4 if foil else 0)
+	var first := (page - 1) * entries + (int(SkinCollection.SHADER_INDEX["eclipse"]) if foil else 0)
 	skins = skins.slice(first, first + entries)
+	var columns := maxi(1, skins.size()) if foil else COLUMNS
 	if foil:
 		skins = skins + skins
 	for i in skins.size():
 		var skin := skins[i]
-		var at := Vector2(6 + (i % COLUMNS) * 238, 15 + (i / COLUMNS) * 266)
+		var at := Vector2(6 + (i % columns) * 238, 15 + (i / columns) * 266)
 		var title := Label.new()
 		title.theme = PixelTheme.theme()
 		title.position = at - Vector2(0, 13)
@@ -110,7 +111,7 @@ func _initialize() -> void:
 		full.size = Vector2(176, 254)
 		root.add_child(full)
 		if foil:
-			var turn := -0.65 if i < COLUMNS else 0.65
+			var turn := -0.65 if i < columns else 0.65
 			for view in [mini, full]:
 				view.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				view.set_process(false)

@@ -1,5 +1,5 @@
 // Образы карт (SkinCollection). Индексы 1–3 — Faerie Fire, Gilded и Prism,
-// 4–11 — фойловые отделки с собственными палитрами и тиснением.
+// 4–6 — фойловые отделки с собственными палитрами и тиснением.
 //
 // Всё считается по пикселям карты (texelFetch), а не экрана: при любом целом
 // масштабе пиксели остаются квадратными. Переходы — уровнями палитры
@@ -34,34 +34,18 @@ const vec3 GOLD[6] = vec3[](vec3(35.0, 18.0, 8.0), vec3(95.0, 50.0, 14.0), vec3(
 	vec3(222.0, 160.0, 44.0), vec3(255.0, 212.0, 96.0), vec3(255.0, 246.0, 196.0));
 
 // По восемь красок на отделку, в порядке индексов SkinCollection.
-const vec3 FOIL_RAMPS[64] = vec3[](
-	vec3(32, 9, 20), vec3(65, 16, 33), vec3(109, 25, 45), vec3(162, 42, 54),
-	vec3(203, 70, 58), vec3(239, 117, 67), vec3(255, 177, 104), vec3(255, 235, 181),
-	vec3(9, 17, 42), vec3(21, 36, 78), vec3(25, 62, 116), vec3(32, 94, 154),
-	vec3(48, 136, 194), vec3(77, 181, 220), vec3(156, 229, 247), vec3(228, 250, 255),
+const vec3 FOIL_RAMPS[24] = vec3[](
 	vec3(21, 9, 44), vec3(44, 18, 78), vec3(68, 29, 124), vec3(105, 52, 163),
 	vec3(148, 72, 195), vec3(196, 117, 222), vec3(237, 175, 240), vec3(254, 226, 255),
 	vec3(8, 25, 23), vec3(16, 51, 42), vec3(21, 81, 62), vec3(30, 120, 81),
 	vec3(54, 153, 101), vec3(111, 183, 108), vec3(205, 214, 114), vec3(251, 245, 176),
-	vec3(19, 22, 39), vec3(42, 47, 72), vec3(70, 77, 111), vec3(104, 116, 153),
-	vec3(146, 160, 195), vec3(182, 201, 230), vec3(218, 234, 248), vec3(250, 249, 243),
-	vec3(44, 12, 32), vec3(81, 22, 54), vec3(131, 31, 80), vec3(183, 49, 111),
-	vec3(225, 80, 145), vec3(249, 132, 177), vec3(255, 185, 209), vec3(255, 235, 229),
 	vec3(7, 25, 33), vec3(11, 50, 61), vec3(14, 82, 96), vec3(20, 119, 130),
-	vec3(40, 161, 160), vec3(76, 206, 181), vec3(154, 239, 195), vec3(231, 254, 212),
-	vec3(12, 11, 16), vec3(26, 24, 31), vec3(40, 36, 45), vec3(60, 52, 63),
-	vec3(86, 76, 85), vec3(123, 110, 113), vec3(181, 170, 167), vec3(255, 239, 221)
+	vec3(40, 161, 160), vec3(76, 206, 181), vec3(154, 239, 195), vec3(231, 254, 212)
 );
 const vec3 ECLIPSE_COOL[3] = vec3[](vec3(62, 110, 197), vec3(97, 178, 226), vec3(170, 228, 250));
-const vec3 FOIL_PAPER[8] = vec3[](
-	vec3(0.985, 0.875, 0.745), vec3(0.840, 0.920, 0.960), vec3(0.935, 0.870, 0.975), vec3(0.884, 0.938, 0.792),
-	vec3(0.913, 0.936, 0.984), vec3(0.996, 0.830, 0.891), vec3(0.817, 0.955, 0.912), vec3(0.918, 0.890, 0.870)
-);
+const vec3 FOIL_PAPER[3] = vec3[](vec3(0.935, 0.870, 0.975), vec3(0.884, 0.938, 0.792), vec3(0.817, 0.955, 0.912));
 // xy — направление движения блика, z — его ширина.
-const vec3 FOIL_LIGHT[8] = vec3[](
-	vec3(0.86, 0.51, 0.105), vec3(0.77, -0.64, 0.122), vec3(0.94, 0.34, 0.111), vec3(0.60, -0.80, 0.133),
-	vec3(0.92, -0.39, 0.093), vec3(0.82, 0.57, 0.122), vec3(0.64, -0.77, 0.123), vec3(0.98, 0.20, 0.082)
-);
+const vec3 FOIL_LIGHT[3] = vec3[](vec3(0.94, 0.34, 0.111), vec3(0.60, -0.80, 0.133), vec3(0.64, -0.77, 0.123));
 
 varying vec4 vertex_colour;
 
@@ -146,27 +130,6 @@ bool is_edge(sampler2D tex, ivec2 p) {
 // Рельеф фольги: наклон граней, отражающая способность, гравировка и дисперсия.
 vec4 foil_surface(vec2 uv, vec2 p) {
 	if (tier == 4) {
-		// Веер глубоких бороздок и рёбер на чеканной меди.
-		vec2 fan = p - vec2(0.0, 0.74);
-		float angle = atan(fan.x, -fan.y);
-		float ridge = 0.5 + 0.5 * sin(angle * 56.0 + sin(length(fan) * 9.0) * 0.68);
-		float brush = sin(dot(uv, vec2(33.0, 18.0)) * TAU);
-		float grooves = max(smoothstep(0.78, 0.98, ridge) * 0.80, smoothstep(0.65, 0.99, brush) * 0.34);
-		return vec4((ridge - 0.5) * 0.070, 0.59 + ridge * 0.25 + brush * 0.055, grooves, ridge * 0.24);
-	}
-	if (tier == 5) {
-		// Треугольные пластины с разным наклоном и тонким стыком под серебро.
-		vec2 lattice = (vec2(uv.x + uv.y * 0.36, uv.y)
-			+ vec2(sin(uv.y * 14.0), sin(uv.x * 11.0)) * 0.033) * vec2(9.0, 12.0);
-		vec2 cell = floor(lattice);
-		vec2 f = fract(lattice);
-		float half_cell = step(f.y, f.x);
-		float facet = hash(cell + vec2(0.37, 0.67) * half_cell);
-		float edge = min(min(min(f.x, f.y), 1.0 - max(f.x, f.y)), 0.707 * abs(f.x - f.y));
-		return vec4((facet - 0.5) * 0.35, 0.52 + facet * 0.42,
-			1.0 - smoothstep(0.019, 0.074, edge), facet * 0.55);
-	}
-	if (tier == 6) {
 		// Гильоше вокруг печати и спектральный сдвиг между двумя рельефами.
 		vec2 centre = p - vec2(0.04, -0.24);
 		float angle = atan(centre.y, centre.x + 0.00001);
@@ -177,32 +140,7 @@ vec4 foil_surface(vec2 uv, vec2 p) {
 		float phase_shift = sin(radius * 28.0 - angle * 4.0);
 		return vec4(phase_shift * 0.070, 0.53 + groove * 0.38, rosette, phase_shift * 0.40);
 	}
-	if (tier == 8) {
-		// Натянутая паутина с бусинками на стыках радиальных и поперечных нитей.
-		vec2 hub = p + vec2(0.10, 0.14);
-		float radius = length(hub);
-		float sector = fract(atan(hub.y, hub.x + 0.00001) / TAU * 12.0 + 0.5);
-		float angle_to_thread = min(sector, 1.0 - sector);
-		float spoke = 1.0 - smoothstep(0.007, 0.021, angle_to_thread * radius);
-		float ring = radius * 11.8 + sin(sector * PI) * 0.23;
-		float strand = 1.0 - smoothstep(0.033, 0.11, abs(fract(ring) - 0.5));
-		float knot = spoke * strand;
-		float web = max(spoke * 0.63, strand * 0.88);
-		return vec4((web - 0.5) * 0.067, 0.56 + web * 0.29 + knot * 0.14, max(web, knot), 0.0);
-	}
-	if (tier == 9) {
-		// Фаски из розового кварца, где одна из сторон ловит блик наискось.
-		vec2 cuts = vec2(dot(p, vec2(0.80, 0.60)), dot(p, vec2(-0.60, 0.80))) * vec2(9.6, 7.6);
-		vec2 cell = floor(cuts);
-		vec2 facet = fract(cuts) - 0.5;
-		float diamond = abs(facet.x) + abs(facet.y);
-		float rim = 1.0 - smoothstep(0.028, 0.106, abs(diamond - 0.37));
-		float face = step(0.0, facet.x - facet.y) * step(diamond, 0.37);
-		float grain = hash(cell);
-		return vec4((face - 0.44) * 0.15 + (grain - 0.5) * 0.12,
-			0.49 + face * 0.30 + grain * 0.18, rim, 0.0);
-	}
-	if (tier == 10) {
+	if (tier == 6) {
 		// Два семейства преломлённых бороздок, как свет под рифлёным стеклом.
 		float wave = sin(p.x * 18.0 + p.y * 8.0) * 0.41;
 		float current = p.y * 13.0 + p.x * 5.0 + wave;
@@ -211,16 +149,6 @@ vec4 foil_surface(vec2 uv, vec2 p) {
 		float pools = crest * cross;
 		return vec4((pools - 0.40) * 0.17, 0.61 + crest * 0.15 + pools * 0.23,
 			smoothstep(0.70, 0.94, pools) * 0.86, 0.0);
-	}
-	if (tier == 11) {
-		// Чёрное зеркало: широкие сколы отделены тонким светлым торцом.
-		float split = p.x * 7.5 + abs(p.y + 0.07) * 2.35;
-		float plane = floor(split);
-		float shard = hash(vec2(plane, 13.1));
-		float bevel = 1.0 - smoothstep(0.016, 0.085, abs(fract(split) - 0.5));
-		float facet = step(0.5, fract(split));
-		return vec4((shard - 0.5) * 0.19 + facet * 0.055, 0.43 + shard * 0.29 + bevel * 0.27,
-			bevel * 0.84, 0.0);
 	}
 	// Малахитовые слои, по краям — металлическая гравировка листьев и жилок.
 	float flow = p.y * 10.0 + p.x * 4.0 + sin(p.x * 8.0 - p.y * 3.0) * 1.6;
@@ -244,44 +172,16 @@ float foil_lobe(float d, float width) {
 
 // Клеймо фольги в углу крупной иллюстрации, по одному на отделку.
 float foil_seal(vec2 p) {
-	float diamond = abs(p.x) + 1.4 * abs(p.y);
 	if (tier == 4) {
-		float chevrons = abs(mod(diamond + p.y * 0.85, 3.5) - 1.75);
-		return (1.0 - smoothstep(0.38, 0.95, chevrons)) * (1.0 - smoothstep(7.0, 13.0, diamond));
-	}
-	if (tier == 5) {
-		float facets = min(abs(p.x), abs(abs(p.x) * 0.44 - abs(p.y)));
-		return max(1.0 - smoothstep(0.42, 1.18, abs(diamond - 10.0)),
-			(1.0 - smoothstep(0.35, 1.0, facets)) * (1.0 - smoothstep(9.0, 10.5, diamond)));
-	}
-	if (tier == 6) {
 		float arcs = abs(length(p + vec2(2.5, 0.0)) - 4.4);
 		float shaded = smoothstep(3.5, 5.5, length(p - vec2(1.2, -0.9)));
 		return max((1.0 - smoothstep(0.38, 1.12, arcs)) * shaded,
 			1.0 - smoothstep(0.50, 1.50, abs(p.x - 6.0) + abs(p.y + 2.5)));
 	}
-	if (tier == 8) {
-		float thread = min(min(abs(p.x), abs(p.y)), abs(abs(p.x) - abs(p.y)));
-		float mesh = min(thread, abs(length(p) - 4.7));
-		return (1.0 - smoothstep(0.43, 1.1, mesh)) * (1.0 - smoothstep(5.5, 7.2, length(p)));
-	}
-	if (tier == 9) {
-		float bevel = max(abs(p.y) * 1.92, diamond);
-		float facet = abs(bevel - 9.0);
-		return max(1.0 - smoothstep(0.45, 1.28, abs(diamond - 4.5)),
-			1.0 - smoothstep(0.43, 1.13, facet));
-	}
-	if (tier == 10) {
+	if (tier == 6) {
 		float current = sin(p.x * 0.52) * 1.55;
 		float crest = abs(abs(p.y - current) - 1.45);
 		return (1.0 - smoothstep(0.26, 1.03, crest)) * (1.0 - smoothstep(7.0, 10.0, abs(p.x)));
-	}
-	if (tier == 11) {
-		float square = max(abs(p.x), abs(p.y) * 1.35);
-		float edge = abs(square - 5.4);
-		float split = abs(p.x - p.y * 1.35);
-		return max(1.0 - smoothstep(0.42, 1.13, edge),
-			(1.0 - smoothstep(0.43, 1.14, split)) * (1.0 - smoothstep(4.5, 5.6, square)));
 	}
 	float leaves = abs(abs(p.y) - sin(clamp(abs(p.x) / 10.0, 0.0, 1.0) * PI) * 3.5);
 	return (1.0 - smoothstep(0.38, 1.18, leaves)) * (1.0 - smoothstep(8.1, 10.5, abs(p.x)));
@@ -336,14 +236,14 @@ vec3 foil_skin(vec3 ink, ivec2 pixel, bool art, vec2 art_slope) {
 	// Положение света меняется при наклоне. В палитру попадают ступени яркости.
 	float shift = round(dot(lean, axis * vec2(0.64, 0.48)) * face_size.x) / face_size.x;
 	float d = dot(p, axis) - shift + surface.x;
-	if (tier == 10) {
+	if (tier == 6) {
 		d += sin(p.x * 9.0 + p.y * 2.0) * 0.075;
 	}
 	float broad = foil_lobe(d + 0.055, width * 2.5);
 	float key = foil_lobe(d, width) * surface.y;
 	float flank = foil_lobe(d - 0.17, width * 0.59) * surface.y;
 	float specular = foil_lobe(d + 0.018, width * 0.34) * surface.y;
-	bool cool_band = tier == 6 && abs(d + 0.10 + surface.w * 0.17) < 0.064;
+	bool cool_band = tier == 4 && abs(d + 0.10 + surface.w * 0.17) < 0.064;
 	float etched = surface.z * (0.14 + key * 0.30 + flank * 0.24);
 
 	if (art) {
@@ -388,7 +288,7 @@ void fragment() {
 	bool face = abs(TEXTURE_PIXEL_SIZE.x * face_size.x - 1.0) < 0.01 && abs(TEXTURE_PIXEL_SIZE.y * face_size.y - 1.0) < 0.01;
 	if (tier == 0 || !face) {
 		COLOR = base * vertex_colour;
-	} else if (tier >= 4 && tier <= 11) {
+	} else if (tier >= 4 && tier <= 6) {
 		ivec2 p = clamp(ivec2(floor(UV / TEXTURE_PIXEL_SIZE)), ivec2(0), ivec2(face_size) - 1);
 		vec4 src = texelFetch(TEXTURE, p, 0);
 		bool art = inside(art_rect, p);

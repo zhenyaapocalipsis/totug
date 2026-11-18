@@ -23,24 +23,19 @@ const TIERS: Array[String] = ["epic", "legendary", "ultra"]
 const TIER_TITLES := {"epic": "EPIC", "legendary": "LEGENDARY", "ultra": "ULTRA"}
 const TIER_COLOURS := {"epic": "b9a0ff", "legendary": "ffc24a", "ultra": "9ff0ff"}
 
-const SHADERS: Array[String] = [
-	"faerie", "gilded", "prism", "magma", "frost", "eclipse", "thorn",
-	"moonweb", "rose_quartz", "tideglass", "obsidian",
-]
+const SHADERS: Array[String] = ["faerie", "gilded", "prism", "eclipse", "thorn", "tideglass"]
+const RETIRED_SHADERS: Array[String] = ["magma", "frost", "moonweb", "rose_quartz", "obsidian"]
 const SHADER_TITLES := {
 	"faerie": "FAERIE FIRE", "gilded": "GILDED", "prism": "PRISM",
-	"magma": "MAGMA RIFT", "frost": "FROSTSHARD", "eclipse": "VOID ECLIPSE", "thorn": "THORNWEAVE",
-	"moonweb": "SILVER WEB", "rose_quartz": "ROSE QUARTZ", "tideglass": "TIDEGLASS", "obsidian": "OBSIDIAN MIRROR",
+	"eclipse": "VOID ECLIPSE", "thorn": "THORNWEAVE", "tideglass": "TIDEGLASS",
 }
 const SHADER_COLOURS := {
 	"faerie": "b9a0ff", "gilded": "ffc24a", "prism": "9ff0ff",
-	"magma": "ff775e", "frost": "7cbfff", "eclipse": "cf93ff", "thorn": "a5e878",
-	"moonweb": "cddcff", "rose_quartz": "ff93bd", "tideglass": "6ceacb", "obsidian": "c5babc",
+	"eclipse": "cf93ff", "thorn": "a5e878", "tideglass": "6ceacb",
 }
 ## Номер эффекта в card_skin.gdshader (0 — без шейдера).
 const SHADER_INDEX := {
-	"faerie": 1, "gilded": 2, "prism": 3, "magma": 4, "frost": 5, "eclipse": 6, "thorn": 7,
-	"moonweb": 8, "rose_quartz": 9, "tideglass": 10, "obsidian": 11,
+	"faerie": 1, "gilded": 2, "prism": 3, "eclipse": 4, "thorn": 5, "tideglass": 6,
 }
 ## Ступень всех шейдеров.
 const SHADER_TIER := "ultra"
@@ -116,7 +111,15 @@ static func _save(data: Dictionary) -> void:
 	cfg.load(PlayerProfile.path())
 	cfg.set_value(SECTION, "dust", int(data["dust"]))
 	cfg.set_value(SECTION, "boxes", int(data["boxes"]))
-	cfg.set_value(SECTION, "owned", data["owned"])
+	var owned: Array = (data["owned"] as Array).duplicate()
+	var saved_owned = cfg.get_value(SECTION, "owned", [])
+	# Выведенные из игры награды сохраняются как запись о получении.
+	if saved_owned is Array:
+		for shader in RETIRED_SHADERS:
+			var key := shader_key(shader)
+			if saved_owned.has(key):
+				owned.append(key)
+	cfg.set_value(SECTION, "owned", owned)
 	cfg.set_value(SECTION, "shader", data["shader"])
 	cfg.set_value(SECTION, "arts", data["arts"])
 	# Образы отдельных карт (до 2026-09-30) больше не нужны.

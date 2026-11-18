@@ -1492,7 +1492,7 @@ func test_skin_collection() -> void:
 		var got := SkinCollection.open_box(rng)
 		if String(got["shader"]) != "":
 			shaders += 1
-			right = right and got["tier"] == "ultra"
+			right = right and got["tier"] == "ultra" and String(got["shader"]) in SkinCollection.SHADERS
 			if first.is_empty():
 				first = got
 		else:
@@ -1503,7 +1503,7 @@ func test_skin_collection() -> void:
 			else:
 				new_arts += 1
 				right = right and int(got["dust"]) == 0
-	check(right, "арт выпадает ступенью своей редкости, повтор даёт пыль по ступени")
+	check(right, "лутбокс даёт доступные награды своей ступени, повтор арта даёт пыль")
 	check(shaders > 0 and shaders < 30, "шейдеры редки, как ULTRA (%d из 300)" % shaders)
 	check(not first.is_empty() and not first["duplicate"] and SkinCollection.owns_shader(String(first["shader"])),
 		"первый выпавший шейдер лёг в коллекцию")
@@ -1532,6 +1532,20 @@ func test_skin_collection() -> void:
 	check(SkinCollection.set_shader("faerie"), "открытый шейдер включается")
 	check_eq(PlayerProfile.load_local()["shader"], "faerie", "включённый шейдер — в профиле для партии")
 	check_eq(SkinCollection.clean_shader("gold"), "", "чужой шейдер из сети проверяется")
+
+	cfg.load(PlayerProfile.path())
+	cfg.set_value("collection", "owned", ["shader:obsidian", "shader:eclipse"])
+	cfg.set_value("collection", "shader", "obsidian")
+	cfg.set_value("collection", "dust", 2000)
+	cfg.save(PlayerProfile.path())
+	check_eq(SkinCollection.active_shader(), "", "снятый шейдер в старом профиле выключается")
+	check(not SkinCollection.owns_shader("obsidian") and not SkinCollection.set_shader("obsidian")
+		and not SkinCollection.craft_shader("obsidian"), "снятый шейдер нельзя создать или включить")
+	check_eq(PlayerProfile.clean({"shader": "obsidian"})["shader"], "", "снятый шейдер от старого клиента отсекается")
+	check(SkinCollection.set_shader("eclipse"), "оставшийся шейдер из старого профиля включается")
+	cfg.load(PlayerProfile.path())
+	check((cfg.get_value("collection", "owned", []) as Array).has("shader:obsidian"),
+		"запись о снятом шейдере остаётся после сохранения")
 
 	# Альтернативные арты: данные, создание за пыль, выбор.
 	check(AltArts.TIER_OF.size() >= 60, "в игре есть альтернативные арты (%d)" % AltArts.TIER_OF.size())
