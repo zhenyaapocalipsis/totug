@@ -1271,6 +1271,9 @@ func render_alt(all: Array, H: int, text_top: int, text_h: int) -> void:
 		if AltArts.FACE_CROP.has(e[1]):
 			alt_face = Vector2i(56, 23)  # лицо в центре вырезa
 		var tag := "%d_%d" % [id, counts[id]]
+		# Preserve historical variant numbers while preventing retired assets from returning.
+		if preload("res://net/alt_arts.gd").RETIRED_COST.has(tag):
+			continue
 		var card := render(by_id[id], H, text_top, text_h)
 		full_png = out + tag + ".png"
 		card.save_png(full_png)

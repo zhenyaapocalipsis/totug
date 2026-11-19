@@ -52,6 +52,7 @@ func _initialize() -> void:
 	test_final_breakdown()
 	test_rating()
 	test_skin_collection()
+	test_retired_art_refunds()
 	test_cluster_bonus()
 
 	# этап 5: система эффектов карт
@@ -1451,6 +1452,63 @@ func test_rating() -> void:
 	check(book.knows(a) and book.knows(b) and not book.knows("someone_new"),
 		"учётная запись с именем известна, без имени и партий — новая")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func test_retired_art_refunds() -> void:
+	section("Retired arts and full dust refunds")
+	var previous := PlayerProfile.path_override
+	PlayerProfile.path_override = "user://retired_art_refunds_test.cfg"
+	var cfg := ConfigFile.new()
+	cfg.set_value("profile", "name", "Refund fixture")
+	var owned: Array[String] = ["alt:48310_1", "shader:faerie"]
+	var worn := {"48310": "48310_1"}
+	var total := 0
+	for art: String in AltArts.RETIRED_COST:
+		owned.append(SkinCollection.art_key(art))
+		worn[AltArts.card_of(art)] = art
+		total += int(AltArts.RETIRED_COST[art])
+		check(not AltArts.has(art) and AltArts.clean(art) == "", "Retired art cannot be selected: " + art)
+		check(not SkinCollection.purchase_art(art), "Retired art cannot be bought: " + art)
+		check(not FileAccess.file_exists(AltArts.FULL_DIR + art + ".png")
+			and not FileAccess.file_exists(AltArts.MINI_DIR + art + ".png"), "Retired full and mini assets removed: " + art)
+	owned.append(SkinCollection.art_key(AltArts.RETIRED_COST.keys()[0]))
+	cfg.set_value("collection", "dust", 73)
+	cfg.set_value("collection", "boxes", 3)
+	cfg.set_value("collection", "owned", owned)
+	cfg.set_value("collection", "arts", worn)
+	cfg.set_value("collection", "shader", "faerie")
+	cfg.save(PlayerProfile.path())
+	var result := SkinCollection.load_data()
+	check_eq(total, 9400, "All 27 marked arts refund their original full price")
+	check_eq(result["dust"], 73 + total, "Every removed owned art refunded once, including duplicate saved keys")
+	check_eq(result["owned"], ["alt:48310_1", "shader:faerie"], "Only removed ownership entries are removed")
+	check_eq(result["arts"], {"48310": "48310_1"}, "Removed equipped arts return to original art")
+	check_eq(result["boxes"], 3, "Refund preserves loot boxes")
+	check_eq(result["shader"], "faerie", "Refund preserves shader")
+	check_eq(SkinCollection.load_data()["dust"], 73 + total, "Repeated load does not refund again")
+	cfg.load(PlayerProfile.path())
+	check_eq(cfg.get_value("profile", "name"), "Refund fixture", "Refund preserves unrelated profile fields")
+	check_eq(cfg.get_value("collection", "refunded_retired_arts").size(), 27, "Refund ledger is persisted")
+	SkinCollection.grant({"dust": 1})
+	cfg.load(PlayerProfile.path())
+	var current: Array = cfg.get_value("collection", "owned")
+	current.append(SkinCollection.art_key(AltArts.RETIRED_COST.keys()[0]))
+	cfg.set_value("collection", "owned", current)
+	cfg.save(PlayerProfile.path())
+	check_eq(SkinCollection.load_data()["dust"], 74 + total, "Old ownership cannot repay a refunded art")
+	cfg.clear()
+	cfg.set_value("collection", "dust", 73)
+	cfg.set_value("collection", "owned", ["alt:48310_1"])
+	cfg.save(PlayerProfile.path())
+	check_eq(SkinCollection.load_data()["dust"], 73, "Non-owners receive no refund")
+	var partial_ids: Array = AltArts.RETIRED_COST.keys()
+	cfg.set_value("collection", "owned", [SkinCollection.art_key(partial_ids[0]), SkinCollection.art_key(partial_ids[1])])
+	cfg.set_value("collection", "refunded_retired_arts", [partial_ids[0]])
+	cfg.save(PlayerProfile.path())
+	check_eq(SkinCollection.load_data()["dust"], 73 + int(AltArts.RETIRED_COST[partial_ids[1]]), "Partial migration refunds only the unpaid owned art")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlayerProfile.path()))
+	PlayerProfile.path_override = previous
+
 
 
 func test_skin_collection() -> void:

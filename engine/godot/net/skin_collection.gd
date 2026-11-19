@@ -82,6 +82,7 @@ static func art_key(art: String) -> String:
 static func load_data() -> Dictionary:
 	var cfg := ConfigFile.new()
 	cfg.load(PlayerProfile.path())
+	_refund_retired_arts(cfg)
 	var owned: Array[String] = []
 	var saved_owned = cfg.get_value(SECTION, "owned", [])
 	if saved_owned is Array:
@@ -104,6 +105,48 @@ static func load_data() -> Dictionary:
 	return {"dust": maxi(0, int(cfg.get_value(SECTION, "dust", 0))),
 		"boxes": maxi(0, int(cfg.get_value(SECTION, "boxes", 0))), "owned": owned, "shader": shader,
 		"arts": arts}
+
+
+static func _refund_retired_arts(cfg: ConfigFile) -> void:
+	var saved_owned = cfg.get_value(SECTION, "owned", [])
+	if not saved_owned is Array:
+		return
+	var owned: Array = saved_owned.duplicate()
+	var saved_refunds = cfg.get_value(SECTION, "refunded_retired_arts", [])
+	var refunds: Array = saved_refunds.duplicate() if saved_refunds is Array else []
+	var saved_arts = cfg.get_value(SECTION, "arts", {})
+	var arts: Dictionary = saved_arts.duplicate() if saved_arts is Dictionary else {}
+	var dust := 0
+	var changed := false
+	for art: String in AltArts.RETIRED_COST:
+		var key := art_key(art)
+		if owned.has(key):
+			if not refunds.has(art):
+				dust += int(AltArts.RETIRED_COST[art])
+				refunds.append(art)
+			while owned.has(key):
+				owned.erase(key)
+			changed = true
+		for cid in arts.keys():
+			if arts[cid] == art:
+				arts.erase(cid)
+				changed = true
+	if not changed:
+		return
+	cfg.set_value(SECTION, "dust", maxi(0, int(cfg.get_value(SECTION, "dust", 0))) + dust)
+	cfg.set_value(SECTION, "owned", owned)
+	cfg.set_value(SECTION, "arts", arts)
+	cfg.set_value(SECTION, "refunded_retired_arts", refunds)
+	# Commit ownership changes and reimbursement together, keeping the old profile on failure.
+	var target := PlayerProfile.path()
+	var temporary := target + ".refund-tmp"
+	var error := cfg.save(temporary)
+	if error == OK:
+		error = DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), ProjectSettings.globalize_path(target))
+	if error != OK:
+		push_error("Cannot save retired art refunds: " + error_string(error))
+		cfg.clear()
+		cfg.load(target)
 
 
 static func _save(data: Dictionary) -> void:
