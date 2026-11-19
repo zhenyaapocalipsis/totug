@@ -24,7 +24,6 @@ const SPECTER := "49100"
 const SHAMBLING_MOUND := "49103"
 const GARGOYLE := "49108"
 const CRAWLING_CLAWS := "49109"
-const WISP := "49111"
 const RAKSHASA := "49113"
 const NIGHTMARE := "49114"
 const CHAIN_DEVIL := "49115"
@@ -97,27 +96,6 @@ static func build(card_id: String) -> CardEffect:
 			return SequenceEffect.new([GainInfluence.new(2), _PerOutcast.new("influence")])
 		"49109":  # Mist Horror (Corpse Commander) — реакция из руки: ClawsReaction
 			return _SupplantPlayerBonus.new()
-		"49110":  # Lemure (Camavoran Soldier)
-			return SequenceEffect.new([
-				_PerOutcast.new("deploy"),
-				ChooseEffect.new([
-					_DeployNearEnemy.new(),
-					MoveTroop.any(1),
-				], ["Deploy 3 troops (next to another player's troop: each opponent recruits an Insane Outcast)",
-					"Move a troop"]),
-			])
-		"49111":  # Will-o'-Wisp (Soul Shepherd) — при Devour: on_devour
-			return SequenceEffect.new([GainInfluence.new(2), _OutcastUnlessHolding.new()])
-		"49112":  # Wight Lifedrinker (Ethereal Remitter)
-			return SequenceEffect.new([
-				ConditionalEffect.new(func(state, pid): return state.players[pid].deck.discard_pile.has(OUTCAST),
-					OptionalEffect.new(CelestialCards._AllFromDiscardToHand.new(OUTCAST),
-						"Put the Insane Outcasts from your discard pile into your hand?")),
-				ChooseEffect.new([
-					SequenceEffect.new([PlaceSpy.new(1), ScryCards.new(3)]),
-					ReturnOwnSpy.new(GainPower.new(3)),
-				], ["Place a spy, then scry 3", "Return one of your spies -> +3 Power"]),
-			])
 		"49113":  # Dracolich (Viego)
 			return SequenceEffect.new([
 				GainInfluence.new(2),
@@ -196,8 +174,14 @@ static func on_devour(state: GameState, player_id: String, card_id: String, reso
 			resolver.push(AssassinateTroop.new(1), player_id)
 		GARGOYLE:
 			state.players[player_id].start_of_turn_influence += 3
-		WISP:
-			resolver.push(PromoteCard.new("hand_or_discard", "", Callable(), 1, true), player_id)
+
+
+static func _next_to_enemy(state: GameState, player_id: String, slot_id: String) -> bool:
+	for other: String in MercenaryCards.near_slots(state, slot_id):
+		var owner: String = state.troops.get(other, "")
+		if owner != "white" and state.is_enemy(player_id, owner):
+			return true
+	return false
 
 
 static func outcasts_played(state: GameState) -> int:
@@ -281,44 +265,6 @@ class _SupplantPlayerBonus extends CardEffect:
 			if s.stock(pid).player_trophy_count() > before:
 				r.push(GainPower.new(1), pid)), player_id)
 		resolver.push(SupplantTroop.new(1), player_id)
-
-
-## Lemure: "Deploy 3 troops. If you deployed next to a player
-## troop this way, each opponent gains an Insane Outcast". "Рядом" — соседняя
-## клетка пути или та же локация.
-class _DeployNearEnemy extends CardEffect:
-	func is_available(state: GameState, player_id: String) -> bool:
-		return DeployTroop.new(3).is_available(state, player_id)
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var before := {}
-		for slot_id: String in state.troops.keys():
-			if state.troops[slot_id] == player_id:
-				before[slot_id] = true
-		resolver.push(CallbackEffect.new(func(s: GameState, pid: String, r: EffectResolver):
-			for slot_id: String in s.troops.keys():
-				if s.troops[slot_id] == pid and not before.has(slot_id) and ShadowCards._next_to_enemy(s, pid, slot_id):
-					r.push(GiveInsaneOutcast.new("each_opponent"), pid)
-					return), player_id)
-		resolver.push(DeployTroop.new(3), player_id)
-
-
-static func _next_to_enemy(state: GameState, player_id: String, slot_id: String) -> bool:
-	for other: String in MercenaryCards.near_slots(state, slot_id):
-		var owner: String = state.troops.get(other, "")
-		if owner != "white" and state.is_enemy(player_id, owner):
-			return true
-	return false
-
-
-## Will-o'-Wisp: "Each opponent recruits an Insane Outcast unless they reveal
-## one in their hand" — показать всегда выгодно, поэтому без вопроса.
-class _OutcastUnlessHolding extends CardEffect:
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var opps := ShadowCards._opponents_clockwise(state, player_id)
-		opps.reverse()  # стек: первым сработает ближайший по часовой
-		for opp: String in opps:
-			if not state.players[opp].deck.hand.has(ShadowCards.OUTCAST):
-				resolver.push(GiveInsaneOutcast.new("self"), opp)
 
 
 ## Mist Horror в руке: "Whenever you would gain an Insane Outcast, you may reveal

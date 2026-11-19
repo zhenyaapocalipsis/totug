@@ -14,7 +14,7 @@ const SRC := "C:/tyrants of the underdark godot/alt arts/"
 const AUTO := Vector3.ZERO
 const NO_FACE := Vector2i(-1, -1)
 ## Белые сами по себе (драконы, призраки): белое у них -- фигура, не фон.
-const KEEP_WHITE := ["intellec devourer.png", "white dragon 1.png", "white dragon.png", "white wirmling.png", "ghost.png", "banshee.png", "sphinx-of-lore-1.png"]
+const KEEP_WHITE := ["intellec devourer.png", "white dragon 1.png", "white dragon.png", "white wirmling.png", "ghost.png", "banshee.png"]
 const ALT := [
 	[48705, "aboleth.jpeg", "LEGENDARY", AUTO, NO_FACE],
 	[48604, "air elemental.jpeg", "EPIC", Vector3(0.5,0.12,0.55), NO_FACE],
@@ -112,7 +112,6 @@ const ALT := [
 	[49117, "ghast-1.png", "LEGENDARY", AUTO, Vector2i(30, 8)],
 	[49118, "strahd-von-zarovich-1.png", "LEGENDARY", AUTO, Vector2i(72, 8)],
 	[49120, "drider-1.png", "LEGENDARY", AUTO, Vector2i(53, 4)],
-	[49203, "rust-monster-1.png", "EPIC", AUTO, Vector2i(6, 46)],
 	[49213, "iron-golem-1.png", "LEGENDARY", AUTO, Vector2i(49, 8)],
 	[49300, "avatar-of-lolth-1.png", "LEGENDARY", AUTO, Vector2i(56, 0)],
 	[49401, "hobgoblin-warlord-1.png", "EPIC", AUTO, Vector2i(69, 10)],
@@ -156,7 +155,6 @@ const ALT := [
 	[50104, "tarrasque-2.png", "LEGENDARY", AUTO, NO_FACE],
 	[49100, "lord-soth-1.png", "EPIC", AUTO, NO_FACE],
 	[48732, "lich-2.png", "LEGENDARY", AUTO, NO_FACE],
-	[49700, "zombie-1.png", "EPIC", AUTO, NO_FACE],
 	[49107, "poltergeist-1.png", "EPIC", AUTO, NO_FACE],
 	[48730, "wraith-2.png", "EPIC", AUTO, NO_FACE],
 	[48723, "ghost-2.png", "EPIC", AUTO, NO_FACE],
@@ -175,11 +173,9 @@ const ALT := [
 	[49216, "chimera-2.png", "LEGENDARY", AUTO, NO_FACE],
 	[49601, "harpy-1.png", "EPIC", AUTO, NO_FACE],
 	[49013, "unicorn-1.png", "EPIC", AUTO, NO_FACE],
-	[49008, "pegasus-1.png", "EPIC", AUTO, NO_FACE],
 	[50108, "troll-2.png", "LEGENDARY", AUTO, NO_FACE],
 	[49914, "faerie-pest-1.png", "EPIC", AUTO, NO_FACE],
 	[49915, "sprite-skirmisher-1.png", "EPIC", AUTO, NO_FACE],
-	[49011, "sphinx-of-lore-1.png", "EPIC", AUTO, NO_FACE],
 	[48705, "aboleth-2.png", "LEGENDARY", AUTO, NO_FACE],
 	[48615, "earth-elemental-2.png", "EPIC", AUTO, NO_FACE],
 	[49405, "dragonborn-hireling-1.png", "EPIC", AUTO, NO_FACE],
@@ -223,12 +219,6 @@ const ALT := [
 	[50108, "troll-5.png", "LEGENDARY", AUTO, NO_FACE],
 	[49601, "harpy-2.png", "EPIC", AUTO, NO_FACE],
 	[49601, "harpy-3.png", "EPIC", AUTO, NO_FACE],
-	[49011, "sphinx-of-lore-2.png", "EPIC", AUTO, NO_FACE],
-	[49011, "sphinx-of-lore-3.png", "EPIC", AUTO, NO_FACE],
-	[49011, "sphinx-of-lore-4.png", "EPIC", AUTO, NO_FACE],
-	[49008, "pegasus-2.png", "EPIC", AUTO, NO_FACE],
-	[49008, "pegasus-3.png", "EPIC", AUTO, NO_FACE],
-	[49008, "pegasus-4.png", "EPIC", AUTO, NO_FACE],
 	[49013, "unicorn-3.png", "EPIC", AUTO, NO_FACE],
 	[49013, "unicorn-4.png", "EPIC", AUTO, NO_FACE],
 	[49511, "minotaur-of-baphomet-1.png", "EPIC", AUTO, NO_FACE],

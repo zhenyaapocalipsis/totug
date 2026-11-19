@@ -32,14 +32,6 @@ static func build(card_id: String) -> CardEffect:
 	match card_id:
 		"49500":  # Relentless Juggernaut (Armed Acquisitioner)
 			return SequenceEffect.new([GainInfluence.new(2), devour(["market"], true, Callable(), "pick3")])
-		"49501":  # Wereboar (Legion Marauder)
-			return PiltoverCards._AfterTroops.new(ChooseEffect.new([
-				DeployTroop.new(3),
-				AssassinateTroop.new(1),
-			], ["Deploy 3 troops", "Assassinate a troop"]), func(state, pid, before):
-				if PiltoverCards._moved_next_to_other(state, pid, before) or _hit_player(state, pid, before):
-					return devour(["hand", "market"], true)
-				return null)
 		"49502":  # Relentless Slasher (Crimson Disciple)
 			return ChooseEffect.new([
 				PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
@@ -53,8 +45,6 @@ static func build(card_id: String) -> CardEffect:
 				GainPower.new(3),
 				SequenceEffect.new([GainPower.new(1), devour(["market", "hand", "discard"], false)]),
 			], ["+3 Power", "+1 Power, devour a card in the market, your hand or discard pile"])
-		"49504":  # Pseudodragon (Crimson Aristocrat)
-			return PlaceSpy.new(1, false, func(site): return _AristocratBonus.new(site))
 		"49505":  # Yochlol (Lady of Blood)
 			return SequenceEffect.new([
 				GainPower.new(3),
@@ -73,8 +63,6 @@ static func build(card_id: String) -> CardEffect:
 				Might.new(1, func(): return ReturnTroopOrSpy.new(1)),
 				Might.new(2, func(): return DrawCards.new(1)),
 			])
-		"49508":  # Bugbear Warrior (Reckless Trifarian)
-			return SequenceEffect.new([AssassinateTroop.new(1), _TrophyPower.new()])
 		"49509":  # Relentless Nightmare (Grave Physician)
 			return SequenceEffect.new([
 				GainInfluence.new(2),
@@ -402,28 +390,6 @@ class _PromoteDevoured extends CardEffect:
 		state.stock(player_id).deck.inner_circle.append(card)
 		resolver.log_event("promote", {"player_id": player_id, "card_id": card})
 		ShurimaCards.on_promote(state, player_id, String(card), resolver)
-
-
-## Pseudodragon: +1 Influence за чужое войско, полную локацию и чужого шпиона там.
-class _AristocratBonus extends CardEffect:
-	var site: String
-	func _init(s: String) -> void:
-		site = s
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var n := 0
-		for slot_id: String in state.graph.slots_of_site(site):
-			var owner: String = state.troops.get(slot_id, "")
-			if owner != "" and owner != "white" and state.is_enemy(player_id, owner):
-				n += 1
-				break
-		if CelestialCards.site_is_full(state, site):
-			n += 1
-		for owner: String in state.spies.get(site, []):
-			if state.is_enemy(player_id, owner):
-				n += 1
-				break
-		if n > 0:
-			resolver.push(GainInfluence.new(n), player_id)
 
 
 ## "If you have 4 or more player troops in your trophy hall, +1 Power. 8 or more: +1 Power".

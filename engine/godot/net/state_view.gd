@@ -341,7 +341,6 @@ static func _player_view(p: PlayerState, is_owner: bool, stock: PlayerState = nu
 		"discard_size": p.deck.discard_pile.size(),
 		"deck_size": p.deck.draw_pile.size(),
 		"retained_size": p.deck.retained.size(),
-		"acorns": p.acorns,
 		"set_aside": p.deck.set_aside.duplicate(),
 		"evolutions": p.evolutions.duplicate(),
 	}

@@ -205,7 +205,7 @@ func _init() -> void:
 		_catalog.append({"key": SkinCollection.art_key(art), "id": art, "card": cid,
 			"name": AltArts.title_of(art), "source_name": AltArts.title_of(art, "en"),
 			"card_name": EventLogPanel.card_name(cid), "kind": "art", "tier": AltArts.tier_of(art),
-			"cost": SkinCollection.art_cost(art), "factions": membership.get(cid, _legacy_factions(cid))})
+			"cost": SkinCollection.art_cost(art), "factions": membership.get(cid, [CollectionPage.faction_of(cid)])})
 	for shader in SkinCollection.SHADERS:
 		_catalog.append({"key": SkinCollection.shader_key(shader), "id": shader, "card": "48342",
 			"name": L10n.text("shop.shader." + shader), "source_name": SkinCollection.SHADER_TITLES[shader], "kind": "shader",
@@ -234,16 +234,6 @@ func _label(value: String, colour: Color) -> Label:
 	label.add_theme_color_override("font_color", colour)
 	return label
 
-
-func _legacy_factions(cid: String) -> Array[String]:
-	# These older card slots remain in the art collection after deck revisions.
-	if cid == "49203":
-		return ["piltover"]
-	if cid == "49700":
-		return ["shurima"]
-	if cid in ["49008", "49011"]:
-		return ["celestial"]
-	return [CollectionPage.faction_of(cid)]
 
 
 func _button(value: String, action: Callable) -> Button:

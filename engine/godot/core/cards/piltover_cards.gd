@@ -43,15 +43,6 @@ static func build(card_id: String) -> CardEffect:
 					["Assassinate a troop", "Supplant a white troop"]),
 				FocusEffect.new("MALICE", GainPower.new(2)),
 			])
-		"49203":  # Rust Monster (Chief Mechanist)
-			return SequenceEffect.new([
-				ChooseEffect.new([
-					DeployTroop.new(2),
-					MoveTroop.new(1, false, true),
-					ReturnOwnTroops.new(2, true, func(_k): return DrawCards.new(1)),
-				], ["Deploy 2 troops", "Move one of your troops", "Return 2 of your troops -> Draw a card"]),
-				FocusEffect.new("CONQUEST", DrawCards.new(1)),
-			])
 		"49204":  # Loading Rig (Augmented Experimenter)
 			return SequenceEffect.new([
 				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),

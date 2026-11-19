@@ -32,19 +32,16 @@ extends RefCounted
 
 const AKALI := "49800"  # Biha Babir
 const SHEN := "49801"  # Ancient of War: реакция из руки — ShieldGuard.ONI
-const WAYFINDER := "49802"  # Thessalheart Construct (Kinkou Wayfinder)
 const ZED := "49803"  # Blob of Annihilation
 const AIRIS := "49804"  # Gelatinous Cube
 const BLADE := "49805"  # Vine Blight (Blossoming Blade)
 const HWEI := "49806"  # Nafas
 const YASUO := "49807"  # Groff
 const WITNESS := "49808"  # Plagueworks Ooze
-const CONSPIRATOR := "49809"  # Violet Fungus (Navori Conspirator)
 const RIVERSHAPER := "49810"  # Twig Blight
 const LEE_SIN := "49811"  # Zaratan
 const HIGHWAYMAN := "49812"  # Bodytaker Podling
 const GREENGLADE := "49813"  # Ochre Jelly
-const SQUIRREL := "49814"  # Needle Blight (Swole Squirrel)
 const IRELIA := "49815"  # Leviathan
 const PATHLESS := "49816"  # Blistercoil Weird
 const LIFEBLADE := "49817"  # Treefolk
@@ -55,7 +52,7 @@ const KARMA := "49821"  # Ivana Boritsi
 const MASTER_YI := "49822"  # Kraken
 
 ## Карты со словом Retain: их можно удержать вместо розыгрыша.
-const RETAINABLE := [AKALI, AIRIS, BLADE, YASUO, HIGHWAYMAN, SQUIRREL, LIFEBLADE, KARMA, MASTER_YI]
+const RETAINABLE := [AKALI, AIRIS, BLADE, YASUO, HIGHWAYMAN, LIFEBLADE, KARMA, MASTER_YI]
 const ASPECTS := ["AMBITION", "CONQUEST", "GUILE", "MALICE"]
 const PLAY_LABEL := "Play this card now"
 const RETAIN_LABEL := "Retain it: keep it for your next hand"
@@ -72,8 +69,6 @@ static func build(card_id: String) -> CardEffect:
 					return SequenceEffect.new(hits))])
 		SHEN:
 			return SequenceEffect.new([GainInfluence.new(2), GainPower.new(2)])
-		WAYFINDER:
-			return _Wayfinder.new()
 		ZED:
 			return _Zed.new()
 		AIRIS:
@@ -90,15 +85,6 @@ static func build(card_id: String) -> CardEffect:
 					r.log_event("gain_power", {"player_id": pid, "amount": n}))
 		WITNESS:
 			return ShadowCards._AddFlag.new("witness")
-		CONSPIRATOR:
-			return SequenceEffect.new([
-				_NeighbourHand.new(),
-				ChooseEffect.new([
-					PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
-						func(state, _pid): return ShurimaCards._site_full(state, site), GainPower.new(2))),
-					_spy_supplant(),
-				], ["Place a spy (site full: +2 Power)", "Return one of your spies -> supplant a troop at that site"]),
-			])
 		RIVERSHAPER:
 			return SequenceEffect.new([GainInfluence.new(2), ShadowCards._AddFlag.new("retain_influence")])
 		LEE_SIN:
@@ -116,11 +102,6 @@ static func build(card_id: String) -> CardEffect:
 				ChooseEffect.new([AssassinateTroop.new(1, true), DeployTroop.new(2)],
 					["Assassinate a white troop", "Deploy 2 troops"]),
 			])
-		SQUIRREL:
-			return CallbackEffect.new(func(s: GameState, pid: String, r: EffectResolver):
-				var n: int = 2 + s.players[pid].acorns
-				s.players[pid].power += n
-				r.log_event("gain_power", {"player_id": pid, "amount": n}))
 		IRELIA:
 			# "Choose 2 times" (владелец, 2026-10-18): два вопроса по одному
 			# варианту, как у Mummy Lord; порядок (когда удваивать Power) — за игроком.
@@ -166,10 +147,6 @@ static func retain_effect(card_id: String) -> CardEffect:
 			return _LookAtHand.new()
 		YASUO:
 			return GainPower.new(1)
-		SQUIRREL:
-			return CallbackEffect.new(func(s: GameState, pid: String, r: EffectResolver):
-				s.players[pid].acorns += 1
-				r.log_event("acorn", {"player_id": pid, "total": s.players[pid].acorns}))
 		KARMA:
 			return _RetainOthers.new(2)
 	return null
@@ -182,8 +159,7 @@ static func can_retain(state: GameState, player_id: String, card_id: String) -> 
 	var hand: Array = state.players[player_id].deck.hand
 	if not hand.has(card_id):
 		return false
-	# Needle Blight: "Discard a card to Retain" — нужна ещё карта в руке.
-	return card_id != SQUIRREL or hand.size() >= 2
+	return true
 
 
 ## Вопрос "сыграть или удержать" при щелчке по карте с Retain.
@@ -313,44 +289,8 @@ class _RetainFromHand extends CardEffect:
 	var card: String
 	func _init(c: String) -> void:
 		card = c
-	func _discard_options(state: GameState, player_id: String) -> Array:
-		var rest: Array = state.players[player_id].deck.hand.duplicate()
-		rest.erase(card)
-		var out: Array = []
-		for cid in rest:
-			if not out.has(cid):
-				out.append(cid)
-		return out
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var d: Deck = state.players[player_id].deck
-		if card != IoniaCards.SQUIRREL:
-			IoniaCards.retain(state, player_id, card, resolver, "hand")
-			return
-		# Needle Blight: сначала сбросить другую карту из руки.
-		var options := _discard_options(state, player_id)
-		if is_answered():
-			var chosen := String(answer()) if answer() != null else ""
-			if not options.has(chosen):
-				return
-			d.hand.remove_at(d.hand.find(chosen))
-			d.discard_pile.append(chosen)
-			resolver.log_event("discard", {"player_id": player_id, "card_id": chosen})
-			IoniaCards.retain(state, player_id, card, resolver, "hand")
-			FreljordCards.on_discard(state, player_id, chosen, resolver)
-			return
-		if options.is_empty():
-			return
-		var pd := PendingDecision.new()
-		pd.player_id = player_id
-		pd.prompt = "Discard a card to Retain Needle Blight"
-		pd.choice_type = "target_card"
-		pd.tag = "hand"
-		pd.legal_options = options
-		pd.source_card = card
-		pd.target_effect = self
-		pd.data["presentation_action"] = "discard"
-		resolver.request_decision(pd)
-
+		IoniaCards.retain(state, player_id, card, resolver, "hand")
 
 ## Удержать верхнюю карту колоды (Gas Spore Fungus, Tree Blight).
 class _RetainTop extends CardEffect:
@@ -502,18 +442,6 @@ class _PowerPerSpy extends CardEffect:
 			resolver.log_event("gain_power", {"player_id": player_id, "amount": n})
 
 
-## Thessalheart Construct (Kinkou Wayfinder): deploy 3; рука 5+ — ещё +2 Power; 7+ — карта.
-class _Wayfinder extends CardEffect:
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var n: int = state.players[player_id].deck.hand.size()
-		var all: Array[CardEffect] = [DeployTroop.new(3)]
-		if n >= 5:
-			all.append(GainPower.new(2))
-		if n >= 7:
-			all.append(DrawCards.new(1))
-		resolver.push(SequenceEffect.new(all), player_id)
-
-
 ## Blob of Annihilation (Zed): выбор повторяется ещё раз за каждую удержанную в
 ## этот ход карту (не больше 2 раз).
 class _Zed extends CardEffect:
@@ -571,21 +499,6 @@ class _Hwei extends CardEffect:
 					all.append(GainInfluence.new(3))
 		if not all.is_empty():
 			resolver.push(SequenceEffect.new(all), player_id)
-
-
-## Violet Fungus (Navori Conspirator): у соседа слева или справа больше 5 карт — +1 Power.
-class _NeighbourHand extends CardEffect:
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var order: Array[String] = state.turn_order
-		var i := order.find(player_id)
-		var n := order.size()
-		if n < 2 or i == -1:
-			return
-		for other: String in [order[(i + 1) % n], order[(i - 1 + n) % n]]:
-			if other != player_id and state.players[other].deck.hand.size() > 5:
-				state.players[player_id].power += 1
-				resolver.log_event("gain_power", {"player_id": player_id, "amount": 1})
-				return
 
 
 ## Bodytaker Podling (Navori Highwayman): войско за каждый разный Аспект хода.

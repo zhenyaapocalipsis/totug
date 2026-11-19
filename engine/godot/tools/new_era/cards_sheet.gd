@@ -1,7 +1,7 @@
 extends SceneTree
 
 # Sheet of finished cards (assets/cards_pixel/<id>.png, x2, 6 per row) for the owner
-# to pick what to cut: IDS="49700 49701 ..." OUT=<file.png>. Order = by cost, then by id
+# to pick what to cut: IDS="49701 49702 ..." OUT=<file.png>. Order = by cost, then by id
 # (owner, 2026-10-17: как во вкладке CARDS).
 func _init() -> void:
 	var root := "C:/tyrants of the underdark godot/"

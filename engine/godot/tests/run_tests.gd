@@ -95,6 +95,7 @@ func _initialize() -> void:
 
 	# этап 7: настоящая партия и общие стопки
 	test_half_deck_data()
+	test_active_card_catalog()
 	test_game_modes()
 	test_half_deck_ban()
 	test_card_ban_lobby()
@@ -1479,7 +1480,7 @@ func test_retired_art_refunds() -> void:
 	cfg.set_value("collection", "shader", "faerie")
 	cfg.save(PlayerProfile.path())
 	var result := SkinCollection.load_data()
-	check_eq(total, 9400, "All 27 marked arts refund their original full price")
+	check_eq(total, 10600, "All 33 retired arts refund their original full price")
 	check_eq(result["dust"], 73 + total, "Every removed owned art refunded once, including duplicate saved keys")
 	check_eq(result["owned"], ["alt:48310_1", "shader:faerie"], "Only removed ownership entries are removed")
 	check_eq(result["arts"], {"48310": "48310_1"}, "Removed equipped arts return to original art")
@@ -1488,7 +1489,7 @@ func test_retired_art_refunds() -> void:
 	check_eq(SkinCollection.load_data()["dust"], 73 + total, "Repeated load does not refund again")
 	cfg.load(PlayerProfile.path())
 	check_eq(cfg.get_value("profile", "name"), "Refund fixture", "Refund preserves unrelated profile fields")
-	check_eq(cfg.get_value("collection", "refunded_retired_arts").size(), 27, "Refund ledger is persisted")
+	check_eq(cfg.get_value("collection", "refunded_retired_arts").size(), 33, "Refund ledger is persisted")
 	SkinCollection.grant({"dust": 1})
 	cfg.load(PlayerProfile.path())
 	var current: Array = cfg.get_value("collection", "owned")
@@ -2324,10 +2325,10 @@ func test_devour_and_promote_effects() -> void:
 
 
 func test_card_library_smoke_all_cards() -> void:
-	section("CardLibrary: все 391 карт разыгрываются без зависаний/ошибок")
+	section("CardLibrary: все 373 карты разыгрываются без зависаний/ошибок")
 	CardLibrary._ensure_loaded()
 	var all_ids: Array = CardLibrary._data.keys()
-	check_eq(all_ids.size(), 391, "cards.json содержит 391 карту (126 + 25 Celestial Order + 25 Shadow Isles + 21 Piltover & Zaun + 20 Siege + 20 Mercenaries + 25 Avernus + 23 Icewind Dale + 21 Calimshan + 23 Kara-Tur + 22 Feywild + 20 Far Realm + 20 Chult)")
+	check_eq(all_ids.size(), 373, "cards.json contains only playable cards and generated forms")
 
 	for prefer_last in [true, false]:
 		var hung: Array[String] = []
@@ -5954,8 +5955,8 @@ func test_celestial_order() -> void:
 	check_eq(int(Scoring.card_bonus_vp(s2, "blue")["deck"]), 0, "у соперника без этих карт бонуса нет")
 
 	# все карты колоды разыгрываются до конца
-	for cid: String in ["49000", "49001", "49002", "49003", "49004", "49005", "49006", "49007", "49008",
-			"49009", "49010", "49011", "49012", "49013", "49014", "49015", "49016", "49017", "49018",
+	for cid: String in ["49000", "49002", "49003", "49004", "49005", "49006", "49007",
+			"49009", "49010", "49012", "49013", "49014", "49015", "49016", "49017", "49018",
 			"49019", "49020", "49021", "49022", "49023", "49024"]:
 		for prefer_last in [true, false]:
 			var st := _build_rich_state(hash(cid) % 1000)
@@ -6187,11 +6188,11 @@ func test_piltover_zaun() -> void:
 
 	# Behir: Focus-карты из 6 верхних — в руку, остальные — в сброс
 	red.deck.hand.clear()
-	red.deck.draw_pile = ["48342", "49201", "48344", "49203", "48342", "48344", "49205"] as Array[String]
+	red.deck.draw_pile = ["48342", "49201", "48344", "49204", "48342", "48344", "49205"] as Array[String]
 	red.deck.discard_pile.clear()
 	var rb := _play_with(state, "49219")
 	TurnEngine.resume_card(state, 0, rb)
-	check_eq(red.deck.hand, ["49205", "49203", "49201"] as Array[String], "Behir: в руку три Focus-карты")
+	check_eq(red.deck.hand, ["49205", "49204", "49201"] as Array[String], "Behir: в руку три Focus-карты")
 	check_eq(red.deck.discard_pile.size(), 3, "остальные три — в сброс")
 	check_eq(red.deck.draw_pile, ["48342"] as Array[String], "седьмая карта осталась в колоде")
 	# вторая ветка: бесплатная карта рынка и VP за неё
@@ -6356,14 +6357,6 @@ func test_shadow_isles() -> void:
 	TurnEngine.resume_card(state, "", r5)
 	check(not r5.is_waiting(), "реакция закончилась")
 
-	# Will-o'-Wisp: Outcast получает только тот, у кого его нет в руке
-	var green_discard := green.deck.discard_pile.count(outcast)
-	var blue_discard := blue.deck.discard_pile.count(outcast)
-	var r6 := EffectResolver.new()
-	r6.apply(ShadowCards._OutcastUnlessHolding.new(), "red", state)
-	check_eq(blue.deck.discard_pile.count(outcast), blue_discard, "blue показал Outcast — ничего не получил")
-	check_eq(green.deck.discard_pile.count(outcast), green_discard + 1, "green получил Outcast")
-
 	# Azalin Rex: соперники могут сожрать карту из руки
 	var r7 := EffectResolver.new()
 	r7.apply(ShadowCards._OpponentsMayDevour.new(), "red", state)
@@ -6395,7 +6388,7 @@ func test_shadow_isles() -> void:
 
 	# все карты колоды разыгрываются до конца
 	for cid: String in ["49100", "49101", "49102", "49103", "49104", "49105", "49106", "49107", "49108",
-			"49109", "49110", "49111", "49112", "49113", "49114", "49115", "49116", "49117", "49118",
+			"49109", "49113", "49114", "49115", "49116", "49117", "49118",
 			"49119", "49120", "49121", "49122", "49123", "49124"]:
 		for prefer_last in [true, false]:
 			var st := _build_rich_state(hash(cid) % 1000)
@@ -6478,7 +6471,7 @@ func test_calimshan_deck() -> void:
 	red.power = 0
 	var rh := _play_with(state, S.ROPER)
 	check_eq(red.power, 3, "Marid: +3 Power")
-	var rg := _play_with(state, S.ZOMBIE)
+	var rg := _play_with(state, S.WYRMLING)
 	var asked_kill := false
 	var steps := 0
 	while rg.is_waiting() and steps < 10:
@@ -6486,7 +6479,7 @@ func test_calimshan_deck() -> void:
 		if rg.pending.prompt.begins_with("Assassinate"):
 			asked_kill = true
 		TurnEngine.resume_card(state, rg.pending.legal_options[0], rg)
-	check(asked_kill, "Marid: Zombie поставил войска — вопрос «убить войско»")
+	check(asked_kill, "Marid: Wyrmling поставил войска — вопрос «убить войско»")
 	red.power = 5
 	var refunds := 0
 	for slot_id: String in state.deployable_slots("red"):
@@ -6497,7 +6490,7 @@ func test_calimshan_deck() -> void:
 			refunds += 1
 		if refunds > 3 or red.power <= 1:
 			break
-	check_eq(int(state.turn_flags.get("naafiri_used", 0)), 2, "Marid: Deploy вернул Power 2 раза (Marid и Zombie)")
+	check_eq(int(state.turn_flags.get("naafiri_used", 0)), 2, "Marid: Deploy вернул Power 2 раза (Marid и Wyrmling)")
 	state.turn_flags.erase("naafiri")
 
 	# Ankheg в руке жертвы: отменяет убийство и вытесняет войско нападавшего
@@ -6629,24 +6622,11 @@ func test_karatur_deck() -> void:
 	check(red.deck.played_pile.has(I.YASUO), "Elemental Cataclysm сыгран")
 	check_eq(red.power, 1, "Elemental Cataclysm: +1 Power за другую сыгранную карту")
 
-	# Needle Blight: удержать — сбросить другую карту, жетон Acorn; при розыгрыше +2 и +1 за жетон
+	# Mage: следующая карта ценой <= 5 играется ещё раз
 	state = _build_rich_state(50)
 	red = state.players["red"]
 	blue = state.players["blue"]
 	TurnEngine.start_turn(state, "red")
-	red.deck.hand = [I.SQUIRREL, "48342"]
-	var rq := EffectResolver.new()
-	rq.apply(I.play_or_retain(I.SQUIRREL), "red", state, I.SQUIRREL)
-	TurnEngine.resume_card(state, 1, rq)
-	check(rq.is_waiting() and rq.pending.legal_options == ["48342"], "Needle Blight: сначала сбросить другую карту")
-	TurnEngine.resume_card(state, "48342", rq)
-	check(red.deck.discard_pile.has("48342") and red.deck.retained.has(I.SQUIRREL), "карта сброшена, дракон удержан")
-	check_eq(red.acorns, 1, "жетон Acorn")
-	red.power = 0
-	_play_with(state, I.SQUIRREL)
-	check_eq(red.power, 3, "Needle Blight: +2 и +1 за жетон")
-
-	# Mage: следующая карта ценой <= 5 играется ещё раз
 	red.power = 0
 	_play_with(state, I.WITNESS)
 	_play_with(state, I.PATHLESS)
@@ -7272,6 +7252,8 @@ func _sweep_deck_with_vp(first: int, last: int) -> void:
 		var hung: Array[String] = []
 		for n in range(first, last + 1):
 			var card_id := str(n)
+			if CardLibrary.card_data(card_id).is_empty():
+				continue
 			var state := _build_rich_state(n % 1000)
 			for pid: String in state.players.keys():
 				state.players[pid].vp_tokens = 3
@@ -7532,7 +7514,6 @@ func test_icewind_deck() -> void:
 	check(blue.deck.discard_pile.has(F.MAGMIN), "Magmin сброшен")
 	check_eq(blue.deck.hand.size(), 4, "Frostbite Magmin: синий взял карту")
 	check_eq(red.power, 3, "Werewolf: +2 и +1 за Frostbite в этот ход")
-	check(state.turn_flags.get("other_discard", false), "сброс соперника отмечен (Giant Roper)")
 
 	# Hill Giant в руке: можно отменить сброс
 	blue.deck.hand = [F.HILL_GIANT, "48342", "48344", "48343"]
@@ -8008,3 +7989,24 @@ func test_owner_fixes_1019() -> void:
 	check(market._title.tooltip_text.contains("DROW") and market._title.tooltip_text.contains("DRAGONS"),
 		"MARKET: подсказка называет полуколоды")
 	market.free()
+
+
+func test_active_card_catalog() -> void:
+	section("Card catalog contains only playable cards and generated forms")
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/cards/half_decks.json"))
+	var expected := {}
+	for half: Dictionary in data.half_decks.values():
+		for cid: String in half.copies:
+			expected[cid] = true
+	for supply: Dictionary in data.supplies.values():
+		expected[String(supply.card_id)] = true
+	for cid: String in data.starting_deck.copies:
+		expected[cid] = true
+	# Obtained during play, rather than drawn from a market half-deck.
+	for cid: String in ["49023", "49024", "49123", "49124", "49523", "49524", "49922"]:
+		expected[cid] = true
+	check_eq(CardLibrary.all_ids().size(), expected.size(), "No unused cards in the catalog")
+	for cid: String in expected:
+		check(not CardLibrary.card_data(cid).is_empty(), "Playable card retained: " + cid)
+	for art: String in AltArts.TIER_OF:
+		check(expected.has(AltArts.card_of(art)), "Art belongs to a playable card: " + art)

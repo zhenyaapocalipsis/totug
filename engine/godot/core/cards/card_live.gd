@@ -32,14 +32,11 @@ const RULES := {
 	"48320": [["4 OR MORE CARDS IN YOUR INNER CIRCLE", "need", "inner_circle", 4]],  # Drow Negotiator
 	"48415": [["5 OR MORE PLAYER TROOPS IN YOUR TROPHY HALL", "need", "player_trophy", 5]],  # Dragonclaw
 	"48738": [["8 OR MORE TROOPS IN YOUR TROPHY HALL", "need", "trophy_hall", 8]],  # Revenant
-	"49001": [["6 OR MORE CARDS IN YOUR INNER CIRCLE", "need", "inner_circle", 6]],  # Priest
 	"49015": [["LEFT YOUR BARRACKS", "need", "troops_left", 10]],  # Solar
 	"49520": [["TROOPS ON THE BOARD", "need", "troops_on_board", 15], ["30+", "need", "troops_on_board", 30]],  # Daemogoth Titan
 	"49102": [["PUT AN INSANE OUTCAST INTO YOUR HAND", "have", "outcast_supply"]],  # Flaming Skeleton
-	"49112": [["INSANE OUTCASTS FROM YOUR DISCARD PILE", "count", "discard_outcasts"]],  # Wight Lifedrinker
 	"49019": [["GIANT EAGLE IN YOUR DISCARD PILE", "have", "eagle_discard"],  # Scout
 		["IN YOUR DECK", "have", "eagle_deck"]],
-	"49008": [["PER HOUSE GUARD PLAYED THIS TURN", "per", "guards_played", 1]],  # Pegasus
 	"49010": [["PER HOUSE GUARD PLAYED THIS TURN", "per", "guards_played", 1]],  # Planetar
 	"49013": [["PER SPY YOU HAVE ON THE BOARD", "per", "spies_on_board", 1]],  # Unicorn
 	"49120": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Drider
@@ -49,7 +46,6 @@ const RULES := {
 	"49105": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Sammaster
 	"49108": [["PER INSANE OUTCAST YOU PLAYED THIS TURN", "per", "outcasts_played", 1]],  # Warhorse Skeleton
 	"49107": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Poltergeist
-	"49110": [["PER INSANE OUTCAST PLAYED THIS TURN", "count", "outcasts_played"]],  # Lemure
 	"49115": [["PER INSANE OUTCAST IN YOUR DISCARD PILE", "per", "discard_outcasts_x3", 1]],  # Ramya Vasavadan
 	"49113": [["COSTS 1 LESS PER INSANE OUTCAST YOU PLAYED THIS TURN", "less", "outcasts_played"],  # Rakshasa
 		["CARDS IN YOUR INNER CIRCLE", "per", "inner_circle", 3]],

@@ -1,15 +1,12 @@
 # Creature race of every New Era card (shown on the card instead of the
 # half-deck name). Owner, 2026-11-01: one race = one half-deck.
 Warrior Infantry	HUMAN
-Priest	HUMAN
 Sphinx of Wonder	SPHINX
 Sphinx of Valor	SPHINX
-Sphinx of Lore	SPHINX
 Djinni	GENIE
 Azalin Rex	UNDEAD
 Couatl	COUATL
 Hippogriff	HIPPOGRIFF
-Pegasus	PEGASUS
 Planetar	ANGEL
 Griffon	GRIFFON
 Unicorn	UNICORN
@@ -24,12 +21,9 @@ Gold Dragon	DRAGON
 Giant Eagle	BEAST
 Ancient Gold Dragon	DRAGON
 Vampire Familiar	HUMAN
-Needle Blight	PLANT
 Plagueworks Ooze	OOZE
 Bearded Devil	DEVIL
 Sea Hag	HAG
-Lemure	DEVIL
-Will-o'-Wisp	UNDEAD
 Spirit Naga	NAGA
 Rakshasa	RAKSHASA
 Nightmare	NIGHTMARE
@@ -43,7 +37,6 @@ Green Hag	HAG
 Phase Spider	PHASE SPIDER
 Twig Blight	PLANT
 Wererat	LYCANTHROPE
-Rust Monster	RUST MONSTER
 Clockwork Behir	CONSTRUCT
 Carrionette	CONSTRUCT
 Stone Golem	CONSTRUCT
@@ -52,12 +45,9 @@ Homunculus	CONSTRUCT
 Chimera	CHIMERA
 Basilisk	BASILISK
 Behir	BEHIR
-Wereboar	LYCANTHROPE
 Speaker Devil	DEVIL
 Hell Hound	HELL HOUND
-Pseudodragon	DRAGON
 Medusa	MEDUSA
-Bugbear Warrior	GOBLINOID
 Felhound	DEMON
 Minotaur of Baphomet	MINOTAUR
 Degloth	DEMON
@@ -72,7 +62,6 @@ Half-Dragon	DRAGON
 Wyvern	WYVERN
 Blade Fragment	WEAPON
 Blade of Exile	WEAPON
-Guard	HUMAN
 Skeleton	UNDEAD
 Werewolf	LYCANTHROPE
 Twig Blight	PLANT
@@ -81,8 +70,6 @@ Ice Mephit	MEPHIT
 Vine Blight	PLANT
 Ettercap	ETTERCAP
 Gelatinous Cube	OOZE
-Giant Owl	BEAST
-Giant Hyena	BEAST
 Hill Giant	GIANT
 Cloud Giant	GIANT
 Remorhaz	REMORHAZ
@@ -91,7 +78,6 @@ Storm Giant	GIANT
 Frost Giant	GIANT
 Blink Dog	BLINK DOG
 Young White Dragon	DRAGON
-Zombie	UNDEAD
 Brass Dragon Wyrmling	DRAGON
 Steam Mephit	MEPHIT
 Incubus	INCUBUS
@@ -110,12 +96,10 @@ Dust Mephit	MEPHIT
 Deva	ANGEL
 Biha Babir	ELEMENTAL
 Oni	GIANT
-Thessalheart Construct	CONSTRUCT
 Blob of Annihilation	OOZE
 Mother Lorinda	HAG
 Nafas	GENIE
 Groff	PLANT
-Violet Fungus	PLANT
 Merfolk Skirmisher	MERFOLK
 Tarrasque	TARRASQUE
 Bodytaker Podling	PLANT
@@ -148,7 +132,6 @@ Arch-hag	HAG
 High Fae Impostor	FEY
 Bullywug Warrior	BULLYWUG
 Daemogoth Titan	DAEMOGOTH
-Goblin Hexer	GOBLINOID
 Faerie Dragon Adult	FAERIE DRAGON
 Githyanki Knight	GITH
 Zargon the Returner	GREAT OLD ONE
@@ -203,7 +186,6 @@ Empyrean	CELESTIAL
 Archaic	CELESTIAL
 Oracle of Strixhaven	HUMAN
 Adult Gold Dragon	DRAGON
-Wight Lifedrinker	UNDEAD
 Lord Soth	UNDEAD
 Flaming Skeleton	UNDEAD
 Sammaster	UNDEAD

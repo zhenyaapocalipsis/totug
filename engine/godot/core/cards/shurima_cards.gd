@@ -25,7 +25,6 @@ extends RefCounted
 ##   "naafiri_used"   — сколько раз Deploy уже вернул 1 Power;
 ##   "no_recruit"     — карты рынка, которые нельзя нанять в этот ход (Mud Mephit).
 
-const ZOMBIE := "49700"  # Voice of the Risen
 const COCKATRICE := "49701"  # Baccai Witherclaw
 const WYRMLING := "49702"  # Sandcrafter
 const STEAM_MEPHIT := "49703"  # Reaper of the Sands
@@ -50,8 +49,6 @@ const DEVA := "49720"  # Akshan
 
 static func build(card_id: String) -> CardEffect:
 	match card_id:
-		ZOMBIE:
-			return SequenceEffect.new([DeployTroop.new(2), ReturnTroopOrSpy.new(1)])
 		COCKATRICE:
 			return ChooseEffect.new([_TriggerAnother.new(), _InnerToHand.new(), GainPower.new(2)],
 				["Trigger the Devotion of another card you played this turn",
@@ -155,8 +152,6 @@ static func build(card_id: String) -> CardEffect:
 ## Эффект Devotion карты (null — у карты его нет).
 static func devotion_effect(card_id: String) -> CardEffect:
 	match card_id:
-		ZOMBIE:
-			return ReturnTroopOrSpy.new(1)
 		WYRMLING:
 			return DrawCards.new(1)
 		STEAM_MEPHIT:

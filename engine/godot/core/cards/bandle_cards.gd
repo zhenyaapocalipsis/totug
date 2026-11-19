@@ -49,7 +49,6 @@ const KINGPIN := "49917"  # Arch-hag (Arena Kingpin)
 const BLADETWIRLER := "49918"  # High Fae Impostor (Carved Bladetwirler)
 const TORNADO := "49919"  # Bullywug Bog Sage (Tornado Warrior)
 const CAPTAIN := "49920"  # Green Hag (Yordle Captain)
-const PORTAL := "49921"  # Goblin Hexer (Portal Scholar)
 const MEGA_GNAR := "49922"  # Faerie Dragon Adult (Mega Gnar, не в рынке)
 
 const NO_GLAMOUR := "No Glamour"
@@ -158,13 +157,6 @@ static func build(card_id: String) -> CardEffect:
 			return SequenceEffect.new([GainInfluence.new(3), glamours(CAPTAIN,
 				[AtEndOfTurn.new(PromoteCard.new("played_other", CAPTAIN))],
 				["At end of turn, promote another card you played this turn"])])
-		PORTAL:
-			return _choose(PORTAL, [
-				PlaceSpy.new(1, false, func(site): return _MoveOwnTo.new(site)),
-				ReturnOwnSpy.new(null, func(site): return SequenceEffect.new([
-					MoveTroop.new(1, true, false, true, site), MoveTroop.new(1, true, true)])),
-			], ["Place a spy -> move one of your troops to that site",
-				"Return one of your spies -> move up to one enemy troop at that site and one of your troops"])
 	return null
 
 
@@ -552,58 +544,4 @@ class _DiscardMarket extends CardEffect:
 		pd.legal_options = options
 		pd.source_card = BandleCards.MAYOR
 		pd.target_effect = self
-		resolver.request_decision(pd)
-
-
-## Goblin Hexer (Portal Scholar): "Move one of your troops to that site".
-class _MoveOwnTo extends CardEffect:
-	var site: String
-	var _from := ""
-	func _init(s: String) -> void:
-		site = s
-	func _empties(state: GameState) -> Array:
-		var out: Array = []
-		for slot_id: String in state.graph.slots_of_site(site):
-			if String(state.troops.get(slot_id, "")) == "":
-				out.append(slot_id)
-		return out
-	func _sources(state: GameState, player_id: String) -> Array:
-		var here: Array = Array(state.graph.slots_of_site(site))
-		var out: Array = []
-		for slot_id: String in state.troops.keys():
-			if String(state.troops[slot_id]) == player_id and not here.has(slot_id):
-				out.append(slot_id)
-		return out
-	func is_available(state: GameState, player_id: String) -> bool:
-		return not _empties(state).is_empty() and not _sources(state, player_id).is_empty()
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		if is_answered():
-			var chosen := String(answer()) if answer() != null else ""
-			_answered = false
-			_answer = null
-			if chosen == "":
-				return
-			if _from == "":
-				if not _sources(state, player_id).has(chosen):
-					return
-				_from = chosen
-			else:
-				if not _empties(state).has(chosen) or String(state.troops.get(_from, "")) != player_id:
-					return
-				MoveTroop._do_move(state, player_id, resolver, _from, chosen)
-				return
-		if not is_available(state, player_id):
-			return
-		var pd := PendingDecision.new()
-		pd.player_id = player_id
-		pd.choice_type = "target_slot"
-		pd.source_card = BandleCards.PORTAL
-		pd.target_effect = self
-		if _from == "":
-			pd.prompt = "Move one of your troops to %s: choose the troop" % site
-			pd.legal_options = _sources(state, player_id)
-			pd.legal_options.append("")
-		else:
-			pd.prompt = "Choose where at %s" % site
-			pd.legal_options = _empties(state)
 		resolver.request_decision(pd)

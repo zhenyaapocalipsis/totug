@@ -171,8 +171,6 @@ static func describe(e: Dictionary, board: Dictionary = {}) -> String:
 			return L10n.text("event.retain") % [who, card]
 		"oni_block":
 			return L10n.text("event.oni_block") % [who, card_name(ShieldGuard.ONI), DecisionText.text(String(e.get("what", L10n.text("event.it"))))]
-		"acorn":
-			return L10n.text("event.acorn") % [who, int(e.get("total", 1))]
 		"look_at_hand":
 			return L10n.text("event.look_hand") % [who, player_name(String(e.get("target", "")))]
 		# Feywild (New Era Bandle City)

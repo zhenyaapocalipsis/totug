@@ -1271,17 +1271,6 @@
     "ability_text": "Choose one:\n• +3 Power\n• Look at the top 6 cards of your deck. Put every House Guard among them into your hand and the rest back on top."
   },
   {
-    "card_id": 49001,
-    "name": "Priest",
-    "cost": 3,
-    "aspect": "AMBITION",
-    "type": "CELESTIAL",
-    "race": "HUMAN",
-    "deck_vp": 1,
-    "inner_circle_vp": 4,
-    "ability_text": "If you have 6 or more cards in your inner circle, +2 Influence.\nAt end of turn, promote another card played this turn."
-  },
-  {
     "card_id": 49002,
     "name": "Sphinx of Wonder",
     "cost": 3,
@@ -1348,17 +1337,6 @@
     "ability_text": "At end of turn, promote another card played this turn.\nReturn 2 of your troops ► Return another player's troop or spy, or +2 Influence and House Guards cost 1 less this turn."
   },
   {
-    "card_id": 49008,
-    "name": "Pegasus",
-    "cost": 5,
-    "aspect": "CONQUEST",
-    "type": "CELESTIAL",
-    "race": "PEGASUS",
-    "deck_vp": 2,
-    "inner_circle_vp": 5,
-    "ability_text": "+1 Power per House Guard played this turn.\nChoose one:\n• Assassinate 2 white troops.\n• Promote a card in your hand.\n• Move one of your troops."
-  },
-  {
     "card_id": 49009,
     "name": "Oracle of Strixhaven",
     "cost": 3,
@@ -1379,17 +1357,6 @@
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "Choose one:\n• Deploy 2 troops and draw a card.\n• Return 2 of your troops ► Supplant a white troop anywhere on the board.\n• Draw a card per House Guard played this turn."
-  },
-  {
-    "card_id": 49011,
-    "name": "Sphinx of Lore",
-    "cost": 5,
-    "aspect": "GUILE",
-    "type": "CELESTIAL",
-    "race": "SPHINX",
-    "deck_vp": 3,
-    "inner_circle_vp": 5,
-    "ability_text": "Choose one:\n• Place a spy. If the site is full, draw a card.\n• Return one of your spies ► Draw a card and +3 Power."
   },
   {
     "card_id": 49012,
@@ -1645,39 +1612,6 @@
     "ability_text": "Supplant a troop. If it was another player's troop, +1 Power.\nWhen you would recruit an Insane Outcast, you may reveal this card from hand to take it into your hand and scry 1."
   },
   {
-    "card_id": 49110,
-    "name": "Lemure",
-    "cost": 3,
-    "aspect": "CONQUEST",
-    "type": "RAVENLOFT",
-    "race": "DEVIL",
-    "deck_vp": 2,
-    "inner_circle_vp": 4,
-    "ability_text": "Deploy a troop per Insane Outcast played this turn.\nChoose one:\n• Deploy 3 troops. Any next to a player troop: each opponent recruits an Insane Outcast.\n• Move a troop."
-  },
-  {
-    "card_id": 49111,
-    "name": "Will-o'-Wisp",
-    "cost": 2,
-    "aspect": "AMBITION",
-    "type": "RAVENLOFT",
-    "race": "UNDEAD",
-    "deck_vp": 1,
-    "inner_circle_vp": 2,
-    "ability_text": "+2 Influence. Each opponent without an Insane Outcast in hand recruits one.\nIf this card is devoured, you may promote a card from your hand or discard pile."
-  },
-  {
-    "card_id": 49112,
-    "name": "Wight Lifedrinker",
-    "cost": 2,
-    "aspect": "GUILE",
-    "type": "RAVENLOFT",
-    "race": "UNDEAD",
-    "deck_vp": 2,
-    "inner_circle_vp": 4,
-    "ability_text": "You may put the Insane Outcasts from your discard pile into your hand.\nChoose one:\n• Place a spy, then scry 3.\n• Return one of your spies ► +3 Power"
-  },
-  {
     "card_id": 49113,
     "name": "Dracolich",
     "cost": 8,
@@ -1841,17 +1775,6 @@
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• Assassinate a troop.\n• Supplant a white troop.\nMalice Focus ► +2 Power"
-  },
-  {
-    "card_id": 49203,
-    "name": "Rust Monster",
-    "cost": 2,
-    "aspect": "CONQUEST",
-    "type": "WATERDEEP",
-    "race": "RUST MONSTER",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Choose one:\n• Deploy 2 troops.\n• Move one of your troops.\n• Return 2 of your troops ► Draw a card.\nConquest Focus ► Draw a card."
   },
   {
     "card_id": 49204,
@@ -2452,17 +2375,6 @@
     "ability_text": "+2 Influence\nYou may devour a card in the market. Look at the top 3 cards of the market deck: one replaces it, the rest go to the bottom."
   },
   {
-    "card_id": 49501,
-    "name": "Wereboar",
-    "cost": 3,
-    "aspect": "CONQUEST",
-    "type": "AVERNUS",
-    "race": "LYCANTHROPE",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Choose one:\n• Deploy 3 troops.\n• Assassinate a troop.\nIf you deployed next to or assassinated another player's troop, you may devour a card in your hand or the market."
-  },
-  {
     "card_id": 49502,
     "name": "Relentless Slasher",
     "cost": 3,
@@ -2483,17 +2395,6 @@
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "Choose one:\n• +3 Power\n• +1 Power. Devour a card in the market, your hand or your discard pile."
-  },
-  {
-    "card_id": 49504,
-    "name": "Pseudodragon",
-    "cost": 2,
-    "aspect": "GUILE",
-    "type": "AVERNUS",
-    "race": "DRAGON",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Place a spy. +1 Influence if another player's troop is at that site, +1 if the site is full, +1 if another player's spy is there."
   },
   {
     "card_id": 49505,
@@ -2527,17 +2428,6 @@
     "deck_vp": 2,
     "inner_circle_vp": 5,
     "ability_text": "+3 Influence\nMight: Return a troop or spy.\nMight: Draw a card."
-  },
-  {
-    "card_id": 49508,
-    "name": "Bugbear Warrior",
-    "cost": 3,
-    "aspect": "MALICE",
-    "type": "AVERNUS",
-    "race": "GOBLINOID",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Assassinate a troop.\n+1 Power if you have 4+ player troops in your trophy hall, +1 more at 8+."
   },
   {
     "card_id": 49509,
@@ -2716,17 +2606,6 @@
     "ability_text": "Put Erinyes from your top 5 cards into your hand, the rest back on top.\n+3 Power. Draw 3 cards."
   },
   {
-    "card_id": 49600,
-    "name": "Guard",
-    "cost": 2,
-    "aspect": "MALICE",
-    "type": "ICEWIND",
-    "race": "HUMAN",
-    "deck_vp": 1,
-    "inner_circle_vp": 2,
-    "ability_text": "+2 Influence. If this is the first card you play this turn and you have 3 or fewer cards in hand, +1 Influence.\nFrostbite: Recruit a card that costs 3 or less from the market for free."
-  },
-  {
     "card_id": 49601,
     "name": "Harpy",
     "cost": 5,
@@ -2826,17 +2705,6 @@
     "ability_text": "At end of turn, promote another card played this turn.\nFrostbite: Promote another card in your hand or discard pile."
   },
   {
-    "card_id": 49610,
-    "name": "Giant Owl",
-    "cost": 2,
-    "aspect": "GUILE",
-    "type": "ICEWIND",
-    "race": "BEAST",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Place a spy. Each opponent with a troop there and 3+ cards in hand discards a card. Deploy a troop.\nFrostbite: Place a spy."
-  },
-  {
     "card_id": 49611,
     "name": "Basilisk",
     "cost": 3,
@@ -2846,17 +2714,6 @@
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Choose one:\n• Supplant a white troop.\n• Deploy 2 troops. Draw a card, then discard a card."
-  },
-  {
-    "card_id": 49612,
-    "name": "Giant Hyena",
-    "cost": 3,
-    "aspect": "CONQUEST",
-    "type": "ICEWIND",
-    "race": "BEAST",
-    "deck_vp": 2,
-    "inner_circle_vp": 4,
-    "ability_text": "Deploy 3 troops. If another player discarded a card this turn, +2 Power.\nFrostbite: Assassinate a troop."
   },
   {
     "card_id": 49613,
@@ -2967,17 +2824,6 @@
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "This turn, each troop your cards deploy gives +1 Power. You can't deploy with that Power.\nDeploy 3 troops."
-  },
-  {
-    "card_id": 49700,
-    "name": "Zombie",
-    "cost": 3,
-    "aspect": "CONQUEST",
-    "type": "CALIMSHAN",
-    "race": "UNDEAD",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Devotion: Return a troop or spy.\nDeploy 2 troops.\nReturn a troop or spy."
   },
   {
     "card_id": 49701,
@@ -3222,17 +3068,6 @@
     "ability_text": "+2 Influence, +2 Power\nIf an opponent's card would assassinate, supplant, return or move your unit, you may discard this card to stop it and draw 2 cards."
   },
   {
-    "card_id": 49802,
-    "name": "Thessalheart Construct",
-    "cost": 3,
-    "aspect": "CONQUEST",
-    "type": "KARA-TUR",
-    "race": "CONSTRUCT",
-    "deck_vp": 2,
-    "inner_circle_vp": 4,
-    "ability_text": "Deploy 3 troops.\n5+ cards in hand: also +2 Power.\n7+ cards in hand: also draw a card."
-  },
-  {
     "card_id": 49803,
     "name": "Blob of Annihilation",
     "cost": 7,
@@ -3299,17 +3134,6 @@
     "ability_text": "The next card you play that costs 5 or less is played one more time."
   },
   {
-    "card_id": 49809,
-    "name": "Violet Fungus",
-    "cost": 3,
-    "aspect": "GUILE",
-    "type": "KARA-TUR",
-    "race": "PLANT",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "+1 Power if a neighbour has more than 5 cards in hand.\nChoose one:\n• Place a spy. Site full: +2 Power.\n• Return one of your spies, supplant a troop at that site."
-  },
-  {
     "card_id": 49810,
     "name": "Twig Blight",
     "cost": 2,
@@ -3352,17 +3176,6 @@
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "This turn, whenever you Retain a card, deploy a troop.\nChoose one:\n• Assassinate a white troop.\n• Deploy 2 troops."
-  },
-  {
-    "card_id": 49814,
-    "name": "Needle Blight",
-    "cost": 3,
-    "aspect": "MALICE",
-    "type": "KARA-TUR",
-    "race": "PLANT",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Discard a card to Retain: gain an Acorn token.\n+2 Power, +1 Power for each Acorn token you have."
   },
   {
     "card_id": 49815,
@@ -3671,17 +3484,6 @@
     "deck_vp": 3,
     "inner_circle_vp": 5,
     "ability_text": "+3 Influence\nGlamour: At end of turn, promote another card you played this turn."
-  },
-  {
-    "card_id": 49921,
-    "name": "Goblin Hexer",
-    "cost": 3,
-    "aspect": "GUILE",
-    "type": "FEYWILD",
-    "race": "GOBLINOID",
-    "deck_vp": 1,
-    "inner_circle_vp": 3,
-    "ability_text": "Choose one:\n• Place a spy, move one of your troops to that site.\n• Return one of your spies, move up to one enemy troop at that site and one of your troops."
   },
   {
     "card_id": 49922,

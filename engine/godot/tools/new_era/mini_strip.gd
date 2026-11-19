@@ -1,6 +1,6 @@
 extends SceneTree
 
-# Mini cards (assets/cards_mini/<id>.png) of IDS ("49203 49205 ...") in one strip, x4 — to check mini faces.
+# Mini cards (assets/cards_mini/<id>.png) of IDS ("49204 49205 ...") in one strip, x4 — to check mini faces.
 func _init() -> void:
 	var ids: Array = Array(OS.get_environment("IDS").split(" ")).map(func(s): return int(s))
 	var sheet := Image.create(58 * 4 * ids.size(), 84 * 4, false, Image.FORMAT_RGBA8)

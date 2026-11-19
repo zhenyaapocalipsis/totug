@@ -18,7 +18,6 @@ extends RefCounted
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
 ##   "frostbite_any" — в этот ход кто-то активировал Frostbite (Werewolf);
-##   "other_discard" — в этот ход сбросил карту не текущий игрок (Giant Hyena);
 ##   "deck_frostbite" — id игрока: его сброс с верха колоды (scry) тоже Frostbite (Skeleton);
 ##   "frost_copy"    — id игрока: получает Frostbite соперников (Bulette);
 ##   "frost_shield"  — id игрока: его соперники Frostbite не активируют (Mammoth);
@@ -32,7 +31,6 @@ extends RefCounted
 ## вместе с Glacial Storm, Ice Pillar, Roc Egg и колодой Masterwork; вместо них —
 ## Pirate Captain (Gragas), Blink Dog (Aurora), Young White Dragon (Olaf).
 
-const GUARD := "49600"
 const SKELETON := "49601"
 const WEREWOLF := "49602"
 const MAGMIN := "49603"
@@ -42,9 +40,7 @@ const MEPHIT := "49606"
 const STALKER := "49607"
 const ETTERCAP := "49608"
 const XORN := "49609"
-const OWL := "49610"
 const WINTER_WOLF := "49611"
-const HYENA := "49612"
 const OWLBEAR := "49613"
 const HILL_GIANT := "49614"
 const CLOUD_GIANT := "49615"
@@ -56,18 +52,11 @@ const PIRATE_CAPTAIN := "49634"
 const BLINK_DOG := "49635"
 const WHITE_DRAGON := "49636"
 
-const FROSTBITE: Array[String] = [GUARD, MAGMIN, CENTAUR, MEPHIT, XORN, OWL, HYENA, MAMMOTH]
+const FROSTBITE: Array[String] = [MAGMIN, CENTAUR, MEPHIT, XORN, MAMMOTH]
 
 
 static func build(card_id: String) -> CardEffect:
 	match card_id:
-		GUARD:  # Avarosan Sentry
-			return SequenceEffect.new([
-				GainInfluence.new(2),
-				ConditionalEffect.new(func(state, pid):
-					return int(state.turn_flags.get("cards_played", 0)) == 1 and state.players[pid].deck.hand.size() <= 3,
-					GainInfluence.new(1)),
-			])
 		SKELETON:  # Bone Scryer
 			return SequenceEffect.new([
 				_SetPidFlag.new("deck_frostbite"),
@@ -117,22 +106,11 @@ static func build(card_id: String) -> CardEffect:
 				"Return one of your spies -> +3 Power"])
 		XORN:  # Avarosan Hearthguard
 			return AtEndOfTurn.new(PromoteCard.new("played_other", XORN))
-		OWL:  # Starlit Seer
-			return SequenceEffect.new([
-				PlaceSpy.new(1, false, func(site): return _OwlDiscard.new(site)),
-				DeployTroop.new(1),
-			])
 		WINTER_WOLF:  # Murkwolf Shaman
 			return ChooseEffect.new([
 				SupplantTroop.new(1, true),
 				SequenceEffect.new([DeployTroop.new(2), DrawCards.new(1), DiscardCardEffect.new(1)]),
 			], ["Supplant a white troop", "Deploy 2 troops, draw a card, then discard a card"])
-		HYENA:  # Scarmother
-			return SequenceEffect.new([
-				DeployTroop.new(3),
-				ConditionalEffect.new(func(state, _pid): return state.turn_flags.get("other_discard", false),
-					GainPower.new(2)),
-			])
 		OWLBEAR:  # Nunu & Willump
 			return SequenceEffect.new([
 				DrawCards.new(4),
@@ -186,8 +164,6 @@ static func build(card_id: String) -> CardEffect:
 ## Эффект Frostbite карты (null — у карты его нет).
 static func frostbite_effect(card_id: String) -> CardEffect:
 	match card_id:
-		GUARD:
-			return RecruitFree.new("", 3)
 		MAGMIN:
 			return DrawCards.new(1)
 		CENTAUR:
@@ -196,10 +172,6 @@ static func frostbite_effect(card_id: String) -> CardEffect:
 			return _DiscardToHand.new(2)
 		XORN:
 			return _PromoteAnother.new(XORN)
-		OWL:
-			return PlaceSpy.new(1)
-		HYENA:
-			return AssassinateTroop.new(1)
 		MAMMOTH:
 			return _ReturnToHand.new(MAMMOTH)
 	return null
@@ -208,8 +180,6 @@ static func frostbite_effect(card_id: String) -> CardEffect:
 ## Карту сбросили из руки (from_deck — с верха колоды, Scry). Зовут все пути
 ## сброса эффектом: DiscardCardEffect, ForceDiscard, ScryCards и карточные.
 static func on_discard(state: GameState, player_id: String, card_id: String, resolver: EffectResolver, from_deck: bool = false) -> void:
-	if not from_deck and player_id != state.current_player():
-		state.turn_flags["other_discard"] = true
 	if not FROSTBITE.has(card_id):
 		return
 	if from_deck and String(state.turn_flags.get("deck_frostbite", "")) != player_id:
@@ -324,25 +294,6 @@ class _DiscardDownTo extends CardEffect:
 
 
 ## Starlit Seer: соперники с войском в локации шпиона и 3+ картами в руке сбрасывают карту.
-class _OwlDiscard extends CardEffect:
-	var site: String
-	func _init(s: String) -> void:
-		site = s
-	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var opps := ShadowCards._opponents_clockwise(state, player_id)
-		opps.reverse()
-		for opp: String in opps:
-			if state.players[opp].deck.hand.size() < 3:
-				continue
-			var there := false
-			for slot_id: String in state.graph.slots_of_site(site):
-				if String(state.troops.get(slot_id, "")) == opp:
-					there = true
-					break
-			if there:
-				resolver.push(FreljordCards.guard(opp, player_id, "discarding",
-					ForceDiscard.VictimDiscard.new(player_id)), opp)
-
 
 ## Avarosan Trapper: в локации шпиона войско другого игрока — можно активировать
 ## Frostbite другой карты, сыгранной в этот ход.

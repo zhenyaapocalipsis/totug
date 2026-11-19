@@ -267,7 +267,7 @@ func _snap(state: GameState) -> Dictionary:
 			"set_aside": p.deck.set_aside.duplicate(),
 			"troops_board": on_board, "spies_board": spies,
 			"barracks": state.stock(pid).troops_in_barracks, "spy_barracks": state.stock(pid).spies_in_barracks,
-			"trophies": p.trophies.duplicate(), "acorns": p.acorns, "evolutions": p.evolutions.duplicate(),
+			"trophies": p.trophies.duplicate(), "evolutions": p.evolutions.duplicate(),
 			"promotions": p.pending_promotions.duplicate(), "start_inf": p.start_of_turn_influence,
 			"end_of_turn": p.pending_end_of_turn.size(),
 		}

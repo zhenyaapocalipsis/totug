@@ -599,7 +599,6 @@
   "event.retain_top": "%s retains the top card of their deck",
   "event.retain": "%s retains %s for the next turn",
   "event.oni_block": "%s discards %s and stops %s",
-  "event.acorn": "%s gains an Acorn token (%d)",
   "event.look_hand": "%s looks at %s's hand",
   "event.glamour": "%s spends 1 VP on Glamour",
   "event.market_discard": "%s discards %s from the market",

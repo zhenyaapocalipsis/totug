@@ -31,11 +31,6 @@ static func build(card_id: String) -> CardEffect:
 				GainPower.new(3),
 				FetchFromTop.new(6, func(c): return c == HOUSE_GUARD),
 			], ["+3 Power", "Look at the top 6 cards: House Guards into your hand"])
-		"49001":  # Priest (Dawnspeakers)
-			return SequenceEffect.new([
-				ConditionalEffect.new(func(state, pid): return state.stock(pid).deck.inner_circle.size() >= 6, GainInfluence.new(2)),
-				AtEndOfTurn.new(PromoteCard.new("played_other", card_id)),
-			])
 		"49002":  # Sphinx of Wonder (Insightful Investigator)
 			return PlaceSpy.new(1, false, func(site): return SequenceEffect.new([
 				ConditionalEffect.new(func(state, pid): return CardLibrary._site_has_enemy_troop(state, pid, site), GainPower.new(1)),
@@ -64,15 +59,6 @@ static func build(card_id: String) -> CardEffect:
 					SequenceEffect.new([GainInfluence.new(2), TurnDiscount.new("supply:" + HOUSE_GUARD, 1)]),
 				], ["Return another player's troop or spy", "+2 Influence, House Guards cost 1 less this turn"])),
 			])
-		"49008":  # Pegasus (Silverwing Diver)
-			return SequenceEffect.new([
-				_PerPlayed.new(HOUSE_GUARD, "power"),
-				ChooseEffect.new([
-					AssassinateTroop.new(2, true),
-					PromoteCard.new("hand"),
-					MoveTroop.new(1, false, true),
-				], ["Assassinate 2 white troops", "Promote a card in your hand", "Move one of your troops"]),
-			])
 		"49009":  # Druid (Greenfang Warden) — бонус в конце партии: Scoring.card_bonus_vp
 			return SupplantTroop.new(1, true)
 		"49010":  # Planetar (Radiant Guardian)
@@ -82,12 +68,6 @@ static func build(card_id: String) -> CardEffect:
 				_PerPlayed.new(HOUSE_GUARD, "draw"),
 			], ["Deploy 2 troops and draw a card", "Return 2 of your troops -> Supplant a white troop anywhere",
 				"Draw a card per House Guard played this turn"])
-		"49011":  # Sphinx of Lore (Mageseeker Inquisitor)
-			return ChooseEffect.new([
-				PlaceSpy.new(1, false, func(site): return ConditionalEffect.new(
-					func(state, _pid): return site_is_full(state, site), DrawCards.new(1))),
-				ReturnOwnSpy.new(SequenceEffect.new([DrawCards.new(1), GainPower.new(3)])),
-			], ["Place a spy (full site: draw a card)", "Return one of your spies -> Draw a card, +3 Power"])
 		"49012":  # Griffon (Dauntless Reinforcements)
 			return ChooseEffect.new([
 				_PromoteHandDeployIc.new(),
