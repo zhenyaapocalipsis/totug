@@ -37,7 +37,7 @@ extends RefCounted
 ## приближения (решение владельца, 2026-09-22): карта на четверых встаёт в
 ## зону доски 612x456 один в один. Шаг 60 (было 128, 64, 48 под экран
 ## 640x360), подписи и очки шрифтом 5x7 (3x5 на новом экране не читался),
-## места под войска 9 px вплотную, тупиковые кольца убраны из игры
+## места под войска 11 px вплотную, тупиковые кольца убраны из игры
 ## (MapGraph.prune_dead_ends), названия сокращены до пяти знаков (SHORT_NAMES):
 ## при шести рамки на тесных гексах налезали друг на друга.
 ## Замер: tools/measure_board.gd, наложения: tools/overlaps.gd.
@@ -62,10 +62,12 @@ const NODE_GAP := 4
 const IMAGE_MARGIN := 4
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
-const RING_R := 4
+const RING_R := 5
 const BOX_PAD := 1
-const SLOT_R := 4
-const SLOT_PITCH := 9
+## 11px troops and tunnel spaces (owner's trial, 2026-11-20).
+## Saved 9px emblems are centred on the larger token by SchematicPainter.
+const SLOT_R := 5
+const SLOT_PITCH := 11
 const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
@@ -119,7 +121,9 @@ const W_BEND := 12.0
 const W_LEN := 0.01
 const W_SHORT := 25.0
 const W_HIT := 300.0
-const W_CROSS := 200.0
+## A crossing must cost more than straightening a ring (RING_TURN[0]).
+## Otherwise whole-board polish can turn a clean tile into a crossing.
+const W_CROSS := 2000.0
 const W_OVERLAP := 250.0
 const W_CLOSE := 40.0
 const W_DISP := 0.08

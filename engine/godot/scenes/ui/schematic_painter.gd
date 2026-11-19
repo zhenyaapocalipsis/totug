@@ -131,9 +131,11 @@ static func token(colour: Color, emblem: String = "") -> Image:
 	disc(img, Vector2i(r, r), r - 1, colour)
 	if emblem != "":
 		var pixels := PlayerProfile.emblem_pixels(emblem)
+		# Keep saved/network emblems at 9x9; centre them on the larger token.
+		var offset := (img.get_width() - PlayerProfile.SIZE) / 2
 		for i in pixels.size():
 			if pixels[i].a > 0.0:
-				img.set_pixel(i % PlayerProfile.SIZE, i / PlayerProfile.SIZE, pixels[i])
+				img.set_pixel(offset + i % PlayerProfile.SIZE, offset + i / PlayerProfile.SIZE, pixels[i])
 	return img
 
 

@@ -4210,7 +4210,7 @@ func test_no_actions_while_decision_pending() -> void:
 ## графа есть трасса, рамки локаций не налезают друг на друга.
 func test_board_schematic() -> void:
 	section("Схема доски: трассы по правилам разводки")
-	for run: Array in [[2, 1], [2, 7], [2, 42], [3, 5], [3, 9], [4, 3], [4, 11]]:
+	for run: Array in [[2, 1], [2, 7], [2, 42], [3, 5], [3, 9], [4, 3], [4, 11], [4, 23]]:
 		var ids: Array[String] = []
 		ids.assign(["red", "blue", "green", "purple"].slice(0, int(run[0])))
 		var state := GameSetup.new_game(ids, int(run[1]))
@@ -4442,7 +4442,7 @@ func test_update_signature() -> void:
 
 func test_player_profile() -> void:
 	section("профиль игрока: имя и герб на фишке")
-	check_eq(PlayerProfile.SIZE, BoardSchematic.SLOT_R * 2 + 1, "холст герба = размер фишки войска")
+	check(PlayerProfile.SIZE <= BoardSchematic.SLOT_R * 2 + 1, "сохранённый герб помещается на фишке войска")
 	check(PlayerProfile.paintable(4, 4) and PlayerProfile.paintable(1, 4), "центр и край кружка красятся")
 	check(not PlayerProfile.paintable(0, 4) and not PlayerProfile.paintable(0, 0), "ободок и угол не красятся")
 	check_eq(PlayerProfile.clean_name("  Dr0w Лорд <b>King of all  "), "Dr0w Лорд bK", "имя: только знаки шрифта, до 12")
@@ -4460,9 +4460,11 @@ func test_player_profile() -> void:
 	check(not PlayerProfile.is_blank(emblem) and PlayerProfile.is_blank(PlayerProfile.blank_emblem()), "пустой герб узнаётся")
 
 	var img := SchematicPainter.token(Color("d93838"), emblem)
-	check(img.get_pixel(4, 4).to_html(false) == "ac3232", "на фишке нарисован герб")
-	check(img.get_pixel(3, 4).is_equal_approx(Color("d93838")), "пустой пиксель герба — цвет места")
-	check(img.get_pixel(0, 4).a > 0.9 and img.get_pixel(0, 4).v < 0.1, "ободок фишки остаётся тёмным")
+	var centre := BoardSchematic.SLOT_R
+	check_eq(img.get_width(), centre * 2 + 1, "размер картинки соответствует фишке")
+	check(img.get_pixel(centre, centre).to_html(false) == "ac3232", "старый герб по центру увеличенной фишки")
+	check(img.get_pixel(centre - 1, centre).is_equal_approx(Color("d93838")), "пустой пиксель герба — цвет места")
+	check(img.get_pixel(0, centre).a > 0.9 and img.get_pixel(0, centre).v < 0.1, "ободок фишки остаётся тёмным")
 
 	check_eq(PlayerProfile.paintable_count(), 37, "внутри кружка 37 пикселей")
 	var full: Array[Color] = []
