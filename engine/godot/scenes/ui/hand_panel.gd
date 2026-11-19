@@ -132,6 +132,12 @@ func _init() -> void:
 	add_child(_aside_label)
 
 
+## Чужие зоны при Jarlaxle показываются отдельным выбором, не в своей руке.
+static func uses_foreign_zone(pd: Dictionary, viewer_id: String) -> bool:
+	var owner := String((pd.get("data", {}) as Dictionary).get("acting_for", viewer_id))
+	return owner != viewer_id
+
+
 func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	_viewer = viewer_id
 	var p: Dictionary = (view["players"] as Dictionary)[viewer_id]
@@ -141,7 +147,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Вопрос "выбери карту в руке": кликаются и подсвечены золотом только
 	# карты-варианты (решение владельца, 2026-09-27).
 	var pd: Dictionary = view.get("pending_decision", {})
-	var mine := String(pd.get("player_id", "")) == viewer_id
+	var mine := String(pd.get("player_id", "")) == viewer_id and not uses_foreign_zone(pd, viewer_id)
 	var tag := String(pd.get("tag", ""))
 	var both := tag == HAND_OR_DISCARD
 	_choosing = mine and (tag == "hand" or both or ZONE_LABELS.has(tag))

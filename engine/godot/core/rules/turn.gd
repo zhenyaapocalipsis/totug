@@ -138,6 +138,7 @@ static func begin_play(state: GameState, player_id: String, card_id: String) -> 
 		return null
 	if not p.deck.play_from_hand(card_id):
 		return null
+	note_play(state, player_id, card_id)
 	state.turn_flags["cards_played"] = int(state.turn_flags.get("cards_played", 0)) + 1
 	var aspect: String = CardLibrary.card_aspect(card_id)
 	if aspect != "":
@@ -145,6 +146,15 @@ static func begin_play(state: GameState, player_id: String, card_id: String) -> 
 	var effect: CardEffect = ShadowCards.on_play(state, player_id, card_id, CardLibrary.get_effect(card_id))
 	effect = IoniaCards.on_play(state, player_id, card_id, effect)
 	return IxtalCards.on_play(state, player_id, card_id, effect)  # CHULT: Troglodyte — проверка верха колоды
+
+
+## История розыгрышей не зависит от перемещения карт между стопками.
+static func note_play(state: GameState, player_id: String, card_id: String) -> void:
+	var history: Dictionary = state.turn_flags.get("play_history", {})
+	var cards: Array = history.get(player_id, [])
+	cards.append(card_id)
+	history[player_id] = cards
+	state.turn_flags["play_history"] = history
 
 
 ## Можно ли сейчас сыграть ещё карту из руки: в лишнем ходу Basilisk — не

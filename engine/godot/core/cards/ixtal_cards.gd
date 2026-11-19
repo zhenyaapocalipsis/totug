@@ -168,7 +168,8 @@ static func refill(state: GameState, d: Deck) -> void:
 
 ## Предыдущая сыгранная в этот ход карта перед последним розыгрышем card_id.
 static func previous_played(state: GameState, player_id: String, card_id: String) -> String:
-	var pile: Array[String] = state.players[player_id].deck.played_pile
+	var history: Dictionary = state.turn_flags.get("play_history", {})
+	var pile: Array = history.get(player_id, state.players[player_id].deck.played_pile)
 	var idx := pile.rfind(card_id)
 	if idx <= 0:
 		return ""

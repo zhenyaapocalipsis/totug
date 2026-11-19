@@ -415,10 +415,7 @@ class _Jarlaxle extends CardEffect:
 			return
 		MercenaryCards._ask(self, player_id, resolver, "Look at whose hand?", "target_player", rivals)
 	func _ask_card(state: GameState, player_id: String, resolver: EffectResolver) -> void:
-		var pool: Array = []
-		for cid: String in state.players[_rival].deck.hand:
-			if not pool.has(cid):
-				pool.append(cid)
+		var pool: Array = state.players[_rival].deck.hand.duplicate()
 		MercenaryCards._ask(self, player_id, resolver, "%s plays a card of your choice" % _rival.capitalize(),
 			"target_card", pool)
 	func _play(state: GameState, player_id: String, card: String, resolver: EffectResolver) -> void:
@@ -428,6 +425,7 @@ class _Jarlaxle extends CardEffect:
 			return
 		theirs.hand.remove_at(idx)
 		theirs.played_pile.append(card)
+		TurnEngine.note_play(state, _rival, card)
 		resolver.log_event("jarlaxle", {"player_id": player_id, "rival": _rival, "card_id": card})
 		var rival := _rival
 		resolver.push(MercenaryCards.maybe_bribe(MercenaryCards._PlayAs.new(card), "Copy that card's effect"), player_id, card)

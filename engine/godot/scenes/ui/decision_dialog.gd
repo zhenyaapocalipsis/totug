@@ -167,6 +167,9 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# самом рынке (market_panel.gd), поэтому вопрос — такая же полоса сверху,
 	# как у цели на доске.
 	var tag := String(pd.get("tag", ""))
+	if HandPanel.uses_foreign_zone(pd, viewer_id) and choice_type == "target_card" \
+			and (tag == "hand" or tag == HandPanel.HAND_OR_DISCARD or HandPanel.ZONE_LABELS.has(tag)):
+		tag = ""  # Карты соперника выбираются в полосе вопроса.
 	var in_hand := tag == "hand"
 	var hand_or_discard := tag == HandPanel.HAND_OR_DISCARD
 	# Inner Circle и сброс на время выбора встают в ряд руки справа (hand_panel.gd).
@@ -179,6 +182,8 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	# Схема доски занимает всю свою зону, поэтому вопрос про цель НА ДОСКЕ
 	# показываем одной узкой полосой сверху: имя ходящего и вопрос в строку.
 	_who.text = "%s decides" % EventLogPanel.player_name(decider)
+	if HandPanel.uses_foreign_zone(pd, viewer_id):
+		_who.text += " — " + EventLogPanel.player_name(String((pd.get("data", {}) as Dictionary)["acting_for"]))
 	_who.modulate = EventLogPanel.player_color(decider)
 	_prompt.text = String(pd.get("prompt", "Choose an option"))
 	# Сброс: крупно и мерцая, цветом игрока — кто сейчас сбрасывает (решение
@@ -285,7 +290,7 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 	elif choice_type == "target_card":
 		strip = true
 		_add_asker(pd, decider)
-		_add_stairs(options, [], decider)
+		_add_stairs(options, [], String((pd.get("data", {}) as Dictionary).get("acting_for", decider)))
 		if options.has(""):
 			_add_strip_buttons([["Skip", ""]])
 	elif _can_show_option_cards(pd):
