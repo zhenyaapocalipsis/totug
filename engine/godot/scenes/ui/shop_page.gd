@@ -2,7 +2,7 @@ class_name ShopPage
 extends VBoxContainer
 
 const PageText := preload("res://scenes/page_text.gd")
-const PAGE_SIZE := 15
+const PAGE_SIZE := 8
 
 class Choices extends HFlowContainer:
 	signal item_selected(index: int)
@@ -35,6 +35,7 @@ class Choices extends HFlowContainer:
 			buttons[i].set_pressed_no_signal(i == index)
 
 var _catalog: Array[Dictionary] = []
+var _filtered_keys: Array[String] = []
 var _selected := ""
 var _dust: Label
 var _count: Label
@@ -65,7 +66,7 @@ func _init() -> void:
 	add_theme_constant_override("separation", 5)
 	var top := HBoxContainer.new()
 	add_child(top)
-	top.add_child(_label("SHOP", PixelTheme.GOLD))
+	_kind = _options(top, ["ARTS", "SHADERS"])
 	_dust = _label("", PixelTheme.GOLD)
 	_dust.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_dust.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -78,13 +79,11 @@ func _init() -> void:
 	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	filters.add_child(_search)
 	_search.text_changed.connect(func(_text: String): _rebuild())
-	_kind = _options(self, ["ALL ITEMS", "ARTS", "SHADERS"])
-	move_child(_kind, 1)
-	var factions: Array[String] = ["ALL FACTIONS"]
+	var factions: Array[String] = []
 	for faction in CollectionPage.FACTIONS:
 		factions.append(String(SetupScreen.NEW_ERA_TITLES.get(faction, faction.to_upper())))
 	_faction = _options(self, factions)
-	move_child(_faction, 2)
+	move_child(_faction, 1)
 	_rarity = _options(filters, ["ALL RARITIES", "EPIC", "LEGENDARY", "ULTRA"])
 	var tools := HBoxContainer.new()
 	add_child(tools)
@@ -110,7 +109,7 @@ func _init() -> void:
 	catalog.custom_minimum_size.x = 450
 	body.add_child(catalog)
 	_grid = GridContainer.new()
-	_grid.columns = 5
+	_grid.columns = 4
 	_grid.add_theme_constant_override("h_separation", 4)
 	_grid.add_theme_constant_override("v_separation", 4)
 	_grid.custom_minimum_size = Vector2(450, 312)
@@ -128,13 +127,15 @@ func _init() -> void:
 	side.custom_minimum_size.x = 176
 	side.add_theme_constant_override("separation", 4)
 	body.add_child(side)
+	_title = _label("", PixelTheme.TEXT)
+	_title.custom_minimum_size = Vector2(176, 33)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	side.add_child(_title)
 	_preview = CardView.new("48342", 176, 254)
 	_preview.hover_preview = false
 	side.add_child(_preview)
-	_title = _label("", PixelTheme.TEXT)
-	_title.custom_minimum_size.x = 176
-	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	side.add_child(_title)
 	_price = _label("", PixelTheme.GOLD)
 	side.add_child(_price)
 	_action = Button.new()
@@ -153,11 +154,19 @@ func _init() -> void:
 	SetupScreen._style_button(_confirm.get_cancel_button())
 	_confirm.confirmed.connect(_buy_confirmed)
 	add_child(_confirm)
+	var membership := {}
+	for faction in CollectionPage.FACTIONS:
+		for cid in CollectionPage.faction_cards(faction):
+			for form in CollectionPage.card_forms(cid):
+				if not membership.has(form):
+					membership[form] = []
+				if not membership[form].has(faction):
+					membership[form].append(faction)
 	for art: String in AltArts.TIER_OF:
 		var cid := AltArts.card_of(art)
 		_catalog.append({"key": SkinCollection.art_key(art), "id": art, "card": cid,
 			"name": AltArts.title_of(art), "card_name": EventLogPanel.card_name(cid), "kind": "art", "tier": AltArts.tier_of(art),
-			"cost": SkinCollection.art_cost(art), "faction": CollectionPage.faction_of(cid)})
+			"cost": SkinCollection.art_cost(art), "factions": membership.get(cid, _legacy_factions(cid))})
 	for shader in SkinCollection.SHADERS:
 		_catalog.append({"key": SkinCollection.shader_key(shader), "id": shader, "card": "48342",
 			"name": SkinCollection.SHADER_TITLES[shader], "kind": "shader",
@@ -170,6 +179,17 @@ func _label(value: String, colour: Color) -> Label:
 	label.text = value
 	label.add_theme_color_override("font_color", colour)
 	return label
+
+
+func _legacy_factions(cid: String) -> Array[String]:
+	# These older card slots remain in the art collection after deck revisions.
+	if cid == "49203":
+		return ["piltover"]
+	if cid == "49700":
+		return ["shurima"]
+	if cid in ["49008", "49011"]:
+		return ["celestial"]
+	return [CollectionPage.faction_of(cid)]
 
 
 func _button(value: String, action: Callable) -> Button:
@@ -200,7 +220,27 @@ func items() -> Array[Dictionary]:
 
 
 func show_item(key: String) -> void:
+	var item := _item(key)
+	if item.is_empty():
+		return
 	_selected = key
+	if not _filtered_keys.has(key):
+		_kind.select(0 if item["kind"] == "art" else 1)
+		if item["kind"] == "art":
+			_faction.select(CollectionPage.FACTIONS.find(item["factions"][0]))
+		_search.text = ""
+		_rarity.select(0)
+		_affordable.set_pressed_no_signal(false)
+		_hide_owned.set_pressed_no_signal(false)
+		_page = 0
+		_selected = key
+		_rebuild()
+	var position := _filtered_keys.find(key)
+	if position >= 0:
+		var target_page := position / PAGE_SIZE
+		if target_page != _page:
+			_page = target_page
+			_rebuild()
 	_select_preview()
 
 
@@ -214,13 +254,17 @@ func _rebuild() -> void:
 	var data := SkinCollection.load_data()
 	_dust.text = "DUST %d" % int(data["dust"])
 	var owned: Array = data["owned"]
+	var arts := _kind.selected == 0
+	_faction.visible = arts
+	_rarity.visible = arts
+	_search.placeholder_text = "Search cards or art names" if arts else "Search shaders"
 	var filtered: Array[Dictionary] = []
 	for item in _catalog:
-		if _kind.selected > 0 and item["kind"] != ("art" if _kind.selected == 1 else "shader"):
+		if item["kind"] != ("art" if arts else "shader"):
 			continue
-		if _faction.selected > 0 and item["faction"] != CollectionPage.FACTIONS[_faction.selected - 1]:
+		if arts and not item["factions"].has(CollectionPage.FACTIONS[_faction.selected]):
 			continue
-		if _rarity.selected > 0 and item["tier"] != SkinCollection.TIERS[_rarity.selected - 1]:
+		if arts and _rarity.selected > 0 and item["tier"] != SkinCollection.TIERS[_rarity.selected - 1]:
 			continue
 		if _affordable.button_pressed and (int(item["cost"]) > int(data["dust"]) or owned.has(item["key"])):
 			continue
@@ -241,6 +285,11 @@ func _rebuild() -> void:
 		_grid.remove_child(child)
 		child.queue_free()
 	_count.text = "%d ITEMS" % filtered.size()
+	_filtered_keys.clear()
+	for item in filtered:
+		_filtered_keys.append(item["key"])
+	if not _filtered_keys.has(_selected):
+		_selected = _filtered_keys[0] if not _filtered_keys.is_empty() else ""
 	var pages := maxi(1, ceili(filtered.size() / float(PAGE_SIZE)))
 	_page = clampi(_page, 0, pages - 1)
 	_page_label.text = " %d / %d " % [_page + 1, pages]
@@ -248,10 +297,10 @@ func _rebuild() -> void:
 	_next.disabled = _page == pages - 1
 	for item in filtered.slice(_page * PAGE_SIZE, (_page + 1) * PAGE_SIZE):
 		var tile := VBoxContainer.new()
-		tile.custom_minimum_size.x = 86
+		tile.custom_minimum_size.x = 108
 		_grid.add_child(tile)
-		var frame := Control.new()
-		frame.custom_minimum_size = Vector2(86, 84)
+		var frame := CenterContainer.new()
+		frame.custom_minimum_size = Vector2(108, 84)
 		tile.add_child(frame)
 		var view := CardView.new(item["card"], int(CollectionPage.MINI.x), int(CollectionPage.MINI.y))
 		view.hover_preview = false
@@ -264,15 +313,16 @@ func _rebuild() -> void:
 		tile.set_meta("shop_view", view)
 		view.tooltip_text = str(item["name"])
 		var name_label := _label(str(item["name"]), PixelTheme.TEXT)
-		name_label.custom_minimum_size.x = 86
-		name_label.clip_text = true
-		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_label.custom_minimum_size = Vector2(108, 22)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		name_label.tooltip_text = str(item["name"])
 		tile.add_child(name_label)
+		var state := _label("OWNED" if owned.has(item["key"]) else "%d DUST" % item["cost"], PixelTheme.TEXT_DIM)
+		state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		tile.add_child(state)
 	if filtered.is_empty():
 		_grid.add_child(_label("No matching items.", PixelTheme.TEXT_DIM))
-	if _selected == "" and not filtered.is_empty():
-		_selected = filtered[0]["key"]
 	_select_preview()
 
 
@@ -292,12 +342,15 @@ func _select_preview() -> void:
 	var item := _item(_selected)
 	_preview.visible = not item.is_empty()
 	_action.visible = not item.is_empty()
+	_title.visible = not item.is_empty()
+	_price.visible = not item.is_empty()
+	_note.visible = not item.is_empty()
 	if item.is_empty():
 		return
 	_preview.set_card(item["card"])
 	_preview.set_art(item["id"] if item["kind"] == "art" else "")
 	_preview.set_skin(item["id"] if item["kind"] == "shader" else "")
-	_title.text = str(item["name"]) + ("\n" + str(item["card_name"]) if item["kind"] == "art" else "")
+	_title.text = str(item["name"])
 	var data := SkinCollection.load_data()
 	var owned: bool = (data["owned"] as Array).has(item["key"])
 	var in_use: bool = str(data["shader"]) == item["id"] if item["kind"] == "shader" else SkinCollection.art_of(item["card"]) == item["id"]
