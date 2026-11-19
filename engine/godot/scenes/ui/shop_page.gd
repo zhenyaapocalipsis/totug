@@ -2,6 +2,7 @@ class_name ShopPage
 extends VBoxContainer
 
 const PageText := preload("res://scenes/page_text.gd")
+const L10n := preload("res://scenes/localization.gd")
 const PAGE_SIZE := 8
 
 class Choices extends HFlowContainer:
@@ -17,7 +18,10 @@ class Choices extends HFlowContainer:
 		for title in titles:
 			var index := buttons.size()
 			var button := Button.new()
-			button.text = title
+			if title.begins_with("shop."):
+				L10n.bind(button, title)
+			else:
+				PageText.bind(button, title)
 			button.toggle_mode = true
 			button.button_group = group
 			button.custom_minimum_size.y = 16
@@ -30,6 +34,10 @@ class Choices extends HFlowContainer:
 		select(0)
 
 	func _ready() -> void:
+		_fit_width()
+		L10n.events.changed.connect(func(): _fit_width.call_deferred())
+
+	func _fit_width() -> void:
 		if get_parent() is HBoxContainer:
 			# Inherited game fonts are available now; default-font widths leave large empty gaps.
 			var width := -3.0
@@ -81,7 +89,7 @@ func _init() -> void:
 	margins.add_child(content)
 	var top := HBoxContainer.new()
 	content.add_child(top)
-	_kind = _options(top, ["ARTS", "SHADERS"])
+	_kind = _options(top, ["shop.arts", "shop.shaders"])
 	_dust = _label("", PixelTheme.GOLD)
 	_dust.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_dust.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -99,17 +107,17 @@ func _init() -> void:
 		factions.append(String(SetupScreen.NEW_ERA_TITLES.get(faction, faction.to_upper())))
 	_faction = _options(content, factions)
 	content.move_child(_faction, 1)
-	_rarity = _options(filters, ["ALL RARITIES", "EPIC", "LEGENDARY", "ULTRA"])
+	_rarity = _options(filters, ["shop.all_rarities", "shop.tier.epic", "shop.tier.legendary", "shop.tier.ultra"])
 	var tools := HBoxContainer.new()
 	content.add_child(tools)
 	tools.add_theme_constant_override("separation", 8)
-	_sort = _options(tools, ["NEWEST", "NAME", "PRICE"])
+	_sort = _options(tools, ["shop.newest", "shop.name", "shop.price"])
 	_affordable = CheckBox.new()
-	_affordable.text = "CAN AFFORD"
+	L10n.bind(_affordable, "shop.can_afford")
 	tools.add_child(_affordable)
 	_affordable.toggled.connect(func(_on: bool): _rebuild())
 	_hide_owned = CheckBox.new()
-	_hide_owned.text = "HIDE OWNED"
+	L10n.bind(_hide_owned, "shop.hide_owned")
 	tools.add_child(_hide_owned)
 	_hide_owned.toggled.connect(func(_on: bool): _rebuild())
 	_count = _label("", PixelTheme.TEXT_DIM)
@@ -177,7 +185,9 @@ func _init() -> void:
 	side.add_child(_note)
 	_confirm = ConfirmationDialog.new()
 	_confirm.theme = PixelTheme.theme()
-	_confirm.title = "BUY WITH DUST"
+	_confirm.title = L10n.text("shop.confirm_title")
+	L10n.bind(_confirm.get_ok_button(), "shop.confirm_buy")
+	L10n.bind(_confirm.get_cancel_button(), "shop.cancel")
 	SetupScreen._style_button(_confirm.get_ok_button())
 	SetupScreen._style_button(_confirm.get_cancel_button())
 	_confirm.confirmed.connect(_buy_confirmed)
@@ -193,13 +203,29 @@ func _init() -> void:
 	for art: String in AltArts.TIER_OF:
 		var cid := AltArts.card_of(art)
 		_catalog.append({"key": SkinCollection.art_key(art), "id": art, "card": cid,
-			"name": AltArts.title_of(art), "card_name": EventLogPanel.card_name(cid), "kind": "art", "tier": AltArts.tier_of(art),
+			"name": AltArts.title_of(art), "source_name": AltArts.title_of(art, "en"),
+			"card_name": EventLogPanel.card_name(cid), "kind": "art", "tier": AltArts.tier_of(art),
 			"cost": SkinCollection.art_cost(art), "factions": membership.get(cid, _legacy_factions(cid))})
 	for shader in SkinCollection.SHADERS:
 		_catalog.append({"key": SkinCollection.shader_key(shader), "id": shader, "card": "48342",
-			"name": SkinCollection.SHADER_TITLES[shader], "kind": "shader",
+			"name": L10n.text("shop.shader." + shader), "source_name": SkinCollection.SHADER_TITLES[shader], "kind": "shader",
 			"tier": SkinCollection.SHADER_TIER, "cost": SkinCollection.CRAFT_COST[SkinCollection.SHADER_TIER], "faction": ""})
 	_rebuild()
+	L10n.events.changed.connect(_refresh_language)
+
+
+func _refresh_language() -> void:
+	_confirm.title = L10n.text("shop.confirm_title")
+	for item in _catalog:
+		if item["kind"] == "art":
+			item["name"] = AltArts.title_of(item["id"])
+			item["card_name"] = EventLogPanel.card_name(item["card"])
+		else:
+			item["name"] = L10n.text("shop.shader." + str(item["id"]))
+	_rebuild()
+	if _confirm.visible and not _item(_purchase_key).is_empty():
+		var item := _item(_purchase_key)
+		_confirm.dialog_text = L10n.text("shop.confirm", {"name": item["name"], "cost": item["cost"]})
 
 
 func _label(value: String, colour: Color) -> Label:
@@ -276,12 +302,12 @@ func _rebuild() -> void:
 	if not is_instance_valid(_grid):
 		return
 	var data := SkinCollection.load_data()
-	_dust.text = "DUST %d" % int(data["dust"])
+	_dust.text = L10n.text("shop.dust", {"amount": int(data["dust"])})
 	var owned: Array = data["owned"]
 	var arts := _kind.selected == 0
 	_faction.visible = arts
 	_rarity.visible = arts
-	_search.placeholder_text = "Search cards or art names" if arts else "Search shaders"
+	_search.placeholder_text = L10n.text("shop.search_arts" if arts else "shop.search_shaders")
 	var filtered: Array[Dictionary] = []
 	for item in _catalog:
 		if item["kind"] != ("art" if arts else "shader"):
@@ -295,7 +321,7 @@ func _rebuild() -> void:
 		if _hide_owned.button_pressed and owned.has(item["key"]):
 			continue
 		var query := _search.text.strip_edges().to_lower()
-		if query != "" and not (str(item["name"]) + " " + str(item.get("card_name", "")) + " " + str(item["id"])).to_lower().contains(query):
+		if query != "" and not (str(item["name"]) + " " + str(item["source_name"]) + " " + str(item.get("card_name", "")) + " " + str(item["id"])).to_lower().contains(query):
 			continue
 		filtered.append(item)
 	if _sort.selected == 0:
@@ -308,7 +334,7 @@ func _rebuild() -> void:
 	for child in _grid.get_children():
 		_grid.remove_child(child)
 		child.queue_free()
-	_count.text = "%d ITEMS" % filtered.size()
+	_count.text = L10n.text("shop.count", {"count": filtered.size()})
 	_filtered_keys.clear()
 	for item in filtered:
 		_filtered_keys.append(item["key"])
@@ -345,7 +371,7 @@ func _rebuild() -> void:
 		name_label.tooltip_text = str(item["name"])
 		tile.add_child(name_label)
 	if filtered.is_empty():
-		_grid.add_child(_label("No matching items.", PixelTheme.TEXT_DIM))
+		_grid.add_child(_label(L10n.text("shop.empty"), PixelTheme.TEXT_DIM))
 	_select_preview()
 
 
@@ -377,14 +403,14 @@ func _select_preview() -> void:
 	var data := SkinCollection.load_data()
 	var owned: bool = (data["owned"] as Array).has(item["key"])
 	var in_use: bool = str(data["shader"]) == item["id"] if item["kind"] == "shader" else SkinCollection.art_of(item["card"]) == item["id"]
-	_price.text = str(item["tier"]).to_upper() + (" · OWNED" if owned else "")
-	_action.text = ("IN USE" if in_use else "APPLY") if owned else "BUY %d DUST" % item["cost"]
+	_price.text = L10n.text("shop.tier." + str(item["tier"])) + (" · " + L10n.text("shop.owned") if owned else "")
+	_action.text = L10n.text("shop.in_use" if in_use else "shop.apply") if owned else L10n.text("shop.buy", {"cost": item["cost"]})
 	_action.disabled = in_use or (not owned and int(data["dust"]) < int(item["cost"]))
 	_note.text = ""
 	if not owned and int(data["dust"]) < int(item["cost"]):
-		_note.text = "Need %d more dust." % (int(item["cost"]) - int(data["dust"]))
+		_note.text = L10n.text("shop.need_dust", {"amount": int(item["cost"]) - int(data["dust"])})
 	elif item["kind"] == "shader":
-		_note.text = "Applies to your whole deck."
+		_note.text = L10n.text("shop.whole_deck")
 
 
 func press_selected() -> void:
@@ -399,7 +425,7 @@ func press_selected() -> void:
 		_select_preview()
 		return
 	_purchase_key = _selected
-	_confirm.dialog_text = "Buy %s for %d dust?" % [item["name"], item["cost"]]
+	_confirm.dialog_text = L10n.text("shop.confirm", {"name": item["name"], "cost": item["cost"]})
 	_confirm.popup_centered()
 
 
@@ -413,4 +439,4 @@ func _buy_confirmed() -> void:
 		Sfx.play("coins")
 	_rebuild()
 	if success:
-		_note.text = "Purchased. Select APPLY to use it."
+		_note.text = L10n.text("shop.purchased")

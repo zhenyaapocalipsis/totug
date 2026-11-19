@@ -38,6 +38,10 @@ static func catalog(language: String) -> Dictionary:
 		if not data is Dictionary:
 			push_error("Localization: invalid catalog %s" % code)
 			data = {}
+		var shop_path := "res://data/localization/shop_%s.json" % code
+		var shop = JSON.parse_string(FileAccess.get_file_as_string(shop_path))
+		if shop is Dictionary:
+			data.merge(shop)
 		_catalogs[code] = data
 	return _catalogs[code]
 

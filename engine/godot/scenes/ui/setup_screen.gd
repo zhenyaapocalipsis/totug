@@ -185,7 +185,7 @@ var _window: PanelContainer
 var _tabs: Dictionary = {}
 const L10n := preload("res://scenes/localization.gd")
 const TAB_TEXT_KEYS := {"PROFILE": "menu.profile", "PLAY": "menu.play", "LEADERBOARD": "menu.leaderboard",
-	"FRIENDS": "menu.friends", "SETTINGS": "menu.settings", "EXIT": "menu.exit"}
+	"FRIENDS": "menu.friends", "SETTINGS": "menu.settings", "SHOP": "menu.shop", "EXIT": "menu.exit"}
 var _menu_captions: Array[Dictionary] = []
 var _friend_badge := 0
 var _tab_buttons: Dictionary = {}

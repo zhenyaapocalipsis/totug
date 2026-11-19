@@ -50,6 +50,8 @@ func _run() -> void:
  page.select("48426")
  var arts := AltArts.arts_of("48426")
  check(not arts.is_empty(), "alternate art fixture")
+ var shop_requests: Array[String] = []
+ page.shop_requested.connect(func(key: String): shop_requests.append(key))
  page.select_art(arts[0])
  page.press_art()
  page._back_preview.set_process(false)
@@ -62,10 +64,11 @@ func _run() -> void:
  for i in 4: await process_frame
  check(page._dust_label.text == "ПЫЛЬ 2000" and page._boxes_label.text == "ЛУТБОКСЫ 3", "resource captions")
  check(page._section_buttons.SHADERS.text == "ОБРАЗЫ" and page._section_buttons.CARDS.text == "КАРТЫ", "section captions")
- check(page._selected == "48426" and page._art_selected == selected and page._pending_art == pending and pending != "", "card, art and pending confirmation survive")
+ check(page._selected == "48426" and page._art_selected == selected and page._pending_art == pending and pending == ""
+  and shop_requests == [SkinCollection.art_key(arts[0])], "card, art and shop request survive without collection crafting")
  check(controls(page) == nodes and is_equal_approx(page._back_preview.angle,1.23), "same controls and flip angle")
  check(JSON.stringify(SkinCollection.load_data()) == data, "locale switch spends no dust or boxes")
- check(page._note.text.contains("Нажмите ещё раз") and page._note.text.contains("Создать") and page._note.text.contains("ЛЕГЕНДАРНЫЙ"), "pending confirmation translates")
+ check(page._art_action.text == "ОТКРЫТЬ МАГАЗИН" and page._note.text == "", "collection shop link translates without crafting prompt")
  check(Pages.text(" EPIC 1  ON") == " ЭПИЧЕСКИЙ 1  ВКЛ", "rarity, art index and active state")
  check(Pages.text("BOX: ART EPIC 75% / LEGENDARY 21%, SHADER ULTRA 4%; REPEAT = DUST").contains("75%") and Pages.text("BOX: ART EPIC 75% / LEGENDARY 21%, SHADER ULTRA 4%; REPEAT = DUST").begins_with("ШАНСЫ:"), "literal percentage formatting")
  for button: Button in page._faction_buttons.values():

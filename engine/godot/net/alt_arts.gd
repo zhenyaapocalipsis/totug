@@ -13,13 +13,22 @@ extends RefCounted
 const FULL_DIR := "res://assets/cards_alt/"
 const MINI_DIR := "res://assets/cards_alt_mini/"
 static var _titles: Dictionary = {}
+static var _titles_ru: Dictionary = {}
 
 
-static func title_of(art: String) -> String:
+static func title_of(art: String, language: String = "") -> String:
 	if _titles.is_empty():
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/cards/alt_art_names.json"))
 		if parsed is Dictionary:
 			_titles = parsed
+	var code := preload("res://scenes/localization.gd").locale() if language == "" else language
+	if code == "ru":
+		if _titles_ru.is_empty():
+			var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/cards/alt_art_names_ru.json"))
+			if parsed is Dictionary:
+				_titles_ru = parsed
+		if _titles_ru.has(art):
+			return String(_titles_ru[art])
 	return String(_titles.get(art, EventLogPanel.card_name(card_of(art))))
 
 ## арт -> ступень (SkinCollection.TIERS)
