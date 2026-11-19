@@ -1814,7 +1814,10 @@ func test_skin_collection() -> void:
 	var caption: Label = tile.get_child(1)
 	check(caption.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER and not caption.clip_text
 		and caption.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "Art names are centered and wrap in full")
-	check(shop._title.get_index() < shop._preview.get_index(), "Art title is above the showcase")
+	var title_row := shop._title.get_parent()
+	var card_row := shop._preview.get_parent().get_parent()
+	check(title_row.get_parent() == card_row.get_parent() and title_row.get_index() < card_row.get_index(),
+		"Art title is above the showcase")
 	shop.show_item("alt:49024_1")
 	check(shop._item("alt:49024_1")["factions"].has("celestial"), "Transformed card art belongs to its parent half-deck")
 	for art: String in AltArts.TIER_OF:

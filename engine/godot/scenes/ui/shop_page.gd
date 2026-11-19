@@ -10,7 +10,7 @@ class Choices extends HFlowContainer:
 	var buttons: Array[Button] = []
 
 	func configure(titles: Array[String]) -> void:
-		alignment = FlowContainer.ALIGNMENT_CENTER
+		alignment = FlowContainer.ALIGNMENT_BEGIN
 		add_theme_constant_override("h_separation", 3)
 		add_theme_constant_override("v_separation", 3)
 		var group := ButtonGroup.new()
@@ -28,6 +28,14 @@ class Choices extends HFlowContainer:
 			add_child(button)
 			buttons.append(button)
 		select(0)
+
+	func _ready() -> void:
+		if get_parent() is HBoxContainer:
+			# Inherited game fonts are available now; default-font widths leave large empty gaps.
+			var width := -3.0
+			for button in buttons:
+				width += button.get_combined_minimum_size().x + 3
+			custom_minimum_size.x = width
 
 	func select(index: int) -> void:
 		selected = index
@@ -63,16 +71,23 @@ var _purchase_key := ""
 func _init() -> void:
 	theme = PixelTheme.theme()
 	custom_minimum_size = Vector2(650, 410)
-	add_theme_constant_override("separation", 5)
+	var margins := MarginContainer.new()
+	margins.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for edge in ["left", "top", "right", "bottom"]:
+		margins.add_theme_constant_override("margin_" + edge, 8)
+	add_child(margins)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	margins.add_child(content)
 	var top := HBoxContainer.new()
-	add_child(top)
+	content.add_child(top)
 	_kind = _options(top, ["ARTS", "SHADERS"])
 	_dust = _label("", PixelTheme.GOLD)
 	_dust.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_dust.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	top.add_child(_dust)
 	var filters := HBoxContainer.new()
-	add_child(filters)
+	content.add_child(filters)
 	_search = LineEdit.new()
 	_search.placeholder_text = "Search cards or shaders"
 	_search.custom_minimum_size.x = 165
@@ -82,11 +97,12 @@ func _init() -> void:
 	var factions: Array[String] = []
 	for faction in CollectionPage.FACTIONS:
 		factions.append(String(SetupScreen.NEW_ERA_TITLES.get(faction, faction.to_upper())))
-	_faction = _options(self, factions)
-	move_child(_faction, 1)
+	_faction = _options(content, factions)
+	content.move_child(_faction, 1)
 	_rarity = _options(filters, ["ALL RARITIES", "EPIC", "LEGENDARY", "ULTRA"])
 	var tools := HBoxContainer.new()
-	add_child(tools)
+	content.add_child(tools)
+	tools.add_theme_constant_override("separation", 8)
 	_sort = _options(tools, ["NEWEST", "NAME", "PRICE"])
 	_affordable = CheckBox.new()
 	_affordable.text = "CAN AFFORD"
@@ -100,19 +116,34 @@ func _init() -> void:
 	_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	tools.add_child(_count)
+	var heading := HBoxContainer.new()
+	heading.add_theme_constant_override("separation", 16)
+	content.add_child(heading)
+	var heading_space := Control.new()
+	heading_space.custom_minimum_size.x = 450
+	heading_space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(heading_space)
+	_title = _label("", PixelTheme.TEXT)
+	_title.custom_minimum_size = Vector2(176, 22)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.add_child(_title)
 	var body := HBoxContainer.new()
-	body.alignment = BoxContainer.ALIGNMENT_CENTER
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 12)
-	add_child(body)
+	body.add_theme_constant_override("separation", 16)
+	content.add_child(body)
 	var catalog := VBoxContainer.new()
 	catalog.custom_minimum_size.x = 450
+	catalog.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	catalog.add_theme_constant_override("separation", 8)
 	body.add_child(catalog)
 	_grid = GridContainer.new()
 	_grid.columns = 4
 	_grid.add_theme_constant_override("h_separation", 4)
-	_grid.add_theme_constant_override("v_separation", 4)
-	_grid.custom_minimum_size = Vector2(450, 312)
+	_grid.add_theme_constant_override("v_separation", 18)
+	_grid.custom_minimum_size = Vector2(450, 282)
+	_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	catalog.add_child(_grid)
 	var pages := HBoxContainer.new()
 	pages.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -125,18 +156,14 @@ func _init() -> void:
 	pages.add_child(_next)
 	var side := VBoxContainer.new()
 	side.custom_minimum_size.x = 176
+	side.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	side.add_theme_constant_override("separation", 4)
 	body.add_child(side)
-	_title = _label("", PixelTheme.TEXT)
-	_title.custom_minimum_size = Vector2(176, 33)
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	side.add_child(_title)
 	_preview = CardView.new("48342", 176, 254)
 	_preview.hover_preview = false
 	side.add_child(_preview)
 	_price = _label("", PixelTheme.GOLD)
+	_price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	side.add_child(_price)
 	_action = Button.new()
 	SetupScreen._style_button(_action)
@@ -146,6 +173,7 @@ func _init() -> void:
 	_note = _label("", PixelTheme.TEXT_DIM)
 	_note.custom_minimum_size.x = 176
 	_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	side.add_child(_note)
 	_confirm = ConfirmationDialog.new()
 	_confirm.theme = PixelTheme.theme()
@@ -205,10 +233,6 @@ func _options(parent: Control, titles: Array[String]) -> Choices:
 	var choices := Choices.new()
 	choices.configure(titles)
 	if parent is HBoxContainer:
-		var width := 0.0
-		for button in choices.buttons:
-			width += button.get_combined_minimum_size().x + 3
-		choices.custom_minimum_size.x = width
 		choices.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	parent.add_child(choices)
 	choices.item_selected.connect(func(_index: int): _page = 0; _rebuild())
@@ -298,6 +322,8 @@ func _rebuild() -> void:
 	for item in filtered.slice(_page * PAGE_SIZE, (_page + 1) * PAGE_SIZE):
 		var tile := VBoxContainer.new()
 		tile.custom_minimum_size.x = 108
+		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tile.add_theme_constant_override("separation", 4)
 		_grid.add_child(tile)
 		var frame := CenterContainer.new()
 		frame.custom_minimum_size = Vector2(108, 84)
@@ -313,14 +339,11 @@ func _rebuild() -> void:
 		tile.set_meta("shop_view", view)
 		view.tooltip_text = str(item["name"])
 		var name_label := _label(str(item["name"]), PixelTheme.TEXT)
-		name_label.custom_minimum_size = Vector2(108, 22)
+		name_label.custom_minimum_size = Vector2(108, 44)
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		name_label.tooltip_text = str(item["name"])
 		tile.add_child(name_label)
-		var state := _label("OWNED" if owned.has(item["key"]) else "%d DUST" % item["cost"], PixelTheme.TEXT_DIM)
-		state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tile.add_child(state)
 	if filtered.is_empty():
 		_grid.add_child(_label("No matching items.", PixelTheme.TEXT_DIM))
 	_select_preview()
@@ -354,7 +377,7 @@ func _select_preview() -> void:
 	var data := SkinCollection.load_data()
 	var owned: bool = (data["owned"] as Array).has(item["key"])
 	var in_use: bool = str(data["shader"]) == item["id"] if item["kind"] == "shader" else SkinCollection.art_of(item["card"]) == item["id"]
-	_price.text = str(item["tier"]).to_upper() + (" · OWNED" if owned else " · %d DUST" % item["cost"])
+	_price.text = str(item["tier"]).to_upper() + (" · OWNED" if owned else "")
 	_action.text = ("IN USE" if in_use else "APPLY") if owned else "BUY %d DUST" % item["cost"]
 	_action.disabled = in_use or (not owned and int(data["dust"]) < int(item["cost"]))
 	_note.text = ""
