@@ -3069,22 +3069,22 @@
   },
   {
     "card_id": 49803,
-    "name": "Blob of Annihilation",
+    "name": "Elemental Cataclysm",
     "cost": 7,
     "aspect": "GUILE",
     "type": "KARA-TUR",
-    "race": "OOZE",
+    "race": "ELEMENTAL",
     "deck_vp": 3,
     "inner_circle_vp": 6,
     "ability_text": "Repeat once for each card you Retained this turn (up to 2). Choose one:\n• Place a spy, assassinate a troop at that site.\n• Return one of your spies, supplant a troop at that site."
   },
   {
     "card_id": 49804,
-    "name": "Gelatinous Cube",
+    "name": "Shambling Mound",
     "cost": 3,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
-    "race": "OOZE",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "Retain.\nName a non-Obedience Aspect: this card becomes it. +1 Influence for each card of it you played this turn."
@@ -3124,11 +3124,11 @@
   },
   {
     "card_id": 49808,
-    "name": "Plagueworks Ooze",
+    "name": "Gulthias Blight",
     "cost": 4,
     "aspect": "AMBITION",
     "type": "KARA-TUR",
-    "race": "OOZE",
+    "race": "PLANT",
     "deck_vp": 2,
     "inner_circle_vp": 4,
     "ability_text": "The next card you play that costs 5 or less is played one more time."
@@ -3168,11 +3168,11 @@
   },
   {
     "card_id": 49813,
-    "name": "Ochre Jelly",
+    "name": "Shrieker Fungus",
     "cost": 2,
     "aspect": "CONQUEST",
     "type": "KARA-TUR",
-    "race": "OOZE",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "This turn, whenever you Retain a card, deploy a troop.\nChoose one:\n• Assassinate a white troop.\n• Deploy 2 troops."
@@ -3190,11 +3190,11 @@
   },
   {
     "card_id": 49816,
-    "name": "Blistercoil Weird",
+    "name": "Needle Blight",
     "cost": 3,
     "aspect": "MALICE",
     "type": "KARA-TUR",
-    "race": "ELEMENTAL",
+    "race": "PLANT",
     "deck_vp": 1,
     "inner_circle_vp": 3,
     "ability_text": "+2 Power\nThis turn, whenever you Retain a card, +1 Power."

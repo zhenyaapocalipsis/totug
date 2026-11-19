@@ -203,7 +203,7 @@
 |---|---|---|---|
 | Biha Babir (49800) | Aranna, Thrill Seeker (VAC_501) | `VACFX_ArannatheExtreme_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Ancient of War (49801) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Mug'Zee освобождено. |
-| Blob of Annihilation (49803) | — | — | NE-60: новое существо; анимация пока не назначена. |
+| Elemental Cataclysm (49803) | — | — | NE-62: restored artwork in slot 49803; animation unassigned. |
 | Chwinga (49806) | Baroness Vashj (REV_788) | `REVFX_BaronessVashj_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Groff (49807) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Endtime Murozond освобождено. |
 | Zaratan (49811) | — | — | NE-53: новое существо; анимация пока не назначена. Прежнее назначение Treant освобождено |

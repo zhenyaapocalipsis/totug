@@ -21,10 +21,10 @@ extends RefCounted
 ## колоды) считается "Retain a card": бонус карты и счётчики хода срабатывают.
 ##
 ## Счётчики хода — state.turn_flags (сбрасываются в start_turn):
-##   "retains"        — сколько карт удержано в этот ход (Blob of Annihilation);
+##   "retains"        — сколько карт удержано в этот ход (Elemental Cataclysm);
 ##   "retain_power" / "retain_influence" / "retain_deploy" — "Whenever you Retain a
-##                      card this turn" (Blistercoil Weird, Twig Blight,
-##                      Ochre Jelly);
+##                      card this turn" (Needle Blight, Twig Blight,
+##                      Shrieker Fungus);
 ##   "witness"        — сколько раз сыграть ещё раз следующую карту ценой <= 5 (Mage);
 ##   "ahri"           — "Whenever you recruit a card, you may Assassinate a troop";
 ##   "yi"             — "Whenever you Assassinate or Supplant a troop, gain 1 Power";
@@ -32,18 +32,18 @@ extends RefCounted
 
 const AKALI := "49800"  # Biha Babir
 const SHEN := "49801"  # Ancient of War: реакция из руки — ShieldGuard.ONI
-const ZED := "49803"  # Blob of Annihilation
-const AIRIS := "49804"  # Gelatinous Cube
+const ZED := "49803"  # Elemental Cataclysm
+const AIRIS := "49804"  # Shambling Mound
 const BLADE := "49805"  # Vine Blight (Blossoming Blade)
 const HWEI := "49806"  # Nafas
 const YASUO := "49807"  # Groff
-const WITNESS := "49808"  # Plagueworks Ooze
+const WITNESS := "49808"  # Gulthias Blight
 const RIVERSHAPER := "49810"  # Twig Blight
 const LEE_SIN := "49811"  # Zaratan
 const HIGHWAYMAN := "49812"  # Bodytaker Podling
-const GREENGLADE := "49813"  # Ochre Jelly
+const GREENGLADE := "49813"  # Shrieker Fungus
 const IRELIA := "49815"  # Leviathan
-const PATHLESS := "49816"  # Blistercoil Weird
+const PATHLESS := "49816"  # Needle Blight
 const LIFEBLADE := "49817"  # Treefolk
 const SCHEMER := "49818"  # Gas Spore Fungus
 const SHADOWBLADE := "49819"  # Tree Blight
@@ -201,7 +201,7 @@ static func retain(state: GameState, player_id: String, card_id: String, resolve
 		resolver.push(DeployTroop.new(deploy), player_id)
 
 
-## Plagueworks Ooze (The Witness): следующая карта ценой <= 5 разыгрывается ещё раз.
+## Gulthias Blight (The Witness): следующая карта ценой <= 5 разыгрывается ещё раз.
 static func on_play(state: GameState, _player_id: String, card_id: String, effect: CardEffect) -> CardEffect:
 	var n := int(state.turn_flags.get("witness", 0))
 	if n <= 0 or CardLibrary.card_cost(card_id) > 5:
@@ -442,7 +442,7 @@ class _PowerPerSpy extends CardEffect:
 			resolver.log_event("gain_power", {"player_id": player_id, "amount": n})
 
 
-## Blob of Annihilation (Zed): выбор повторяется ещё раз за каждую удержанную в
+## Elemental Cataclysm (Zed): выбор повторяется ещё раз за каждую удержанную в
 ## этот ход карту (не больше 2 раз).
 class _Zed extends CardEffect:
 	func apply(state: GameState, player_id: String, resolver: EffectResolver) -> void:
@@ -456,7 +456,7 @@ class _Zed extends CardEffect:
 		resolver.push(SequenceEffect.new(all), player_id)
 
 
-## Gelatinous Cube (Airis) / Treefolk (Kinkou Lifeblade): карта становится названным Аспектом,
+## Shambling Mound (Airis) / Treefolk (Kinkou Lifeblade): карта становится названным Аспектом,
 ## +1 ресурс за каждую сыгранную в этот ход карту этого Аспекта (и её саму).
 class _BecomeAspect extends CardEffect:
 	var card: String

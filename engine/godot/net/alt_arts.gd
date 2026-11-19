@@ -34,6 +34,8 @@ static func title_of(art: String, language: String = "") -> String:
 ## арт -> ступень (SkinCollection.TIERS)
 ## Removed art IDs stay reserved. Values are the full dust prices paid back to owners.
 const RETIRED_COST := {
+	"49804_1": 200,
+	"49813_1": 200,
 	"49700_1": 200,
 	"49011_1": 200,
 	"49011_2": 200,
@@ -167,8 +169,6 @@ const TIER_OF := {
 	"49713_1": "legendary",
 	"49716_1": "legendary",
 	"49718_1": "legendary",
-	"49804_1": "epic",
-	"49813_1": "epic",
 	"49910_1": "epic",
 	"50011_1": "epic",
 	"50016_1": "epic",

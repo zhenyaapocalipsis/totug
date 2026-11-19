@@ -125,8 +125,6 @@ const ALT := [
 	[49713, "purple-worm-1.png", "LEGENDARY", AUTO, Vector2i(40, 34)],
 	[49716, "djinni-1.png", "LEGENDARY", AUTO, Vector2i(20, 2)],
 	[49718, "ankheg-1.png", "LEGENDARY", AUTO, Vector2i(59, 26)],
-	[49804, "gelatinous-cube-1.png", "EPIC", AUTO, Vector2i(56, 26)],
-	[49813, "ochre-jelly-1.png", "EPIC", AUTO, Vector2i(76, 30)],
 	[49910, "sea-hag-1.png", "EPIC", AUTO, Vector2i(54, 10)],
 	[50011, "githzerai-monk-1.png", "EPIC", AUTO, Vector2i(69, 0)],
 	[50016, "gray-slaad-1.png", "EPIC", AUTO, Vector2i(59, 6)],
