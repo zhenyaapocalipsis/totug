@@ -197,7 +197,7 @@ static func _separate_nodes(s: Dictionary, quality: Dictionary) -> Dictionary:
 	return best
 
 
-static func _route(s: Dictionary, edge: int, ignore: Array = []) -> Array:
+static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, trace_gap := 1, max_pops := 500000) -> Array:
 	var old: Array = s["traces"][edge]
 	var a := Vector2(old[0], old[1])
 	var b := Vector2(old[-2], old[-1])
@@ -215,27 +215,27 @@ static func _route(s: Dictionary, edge: int, ignore: Array = []) -> Array:
 		var r: Array = s["sites"][id]["rect"]
 		var box := Rect2(r[0], r[1], r[2], r[3])
 		if ends.has(id):
-			own.append(box.grow(1))
+			own.append(box.grow(trace_gap))
 		else:
-			_mark(hard, size, box.grow(2))
+			_mark(hard, size, box.grow(node_gap))
 	for id: String in s["rings"]:
 		var p: Array = s["rings"][id]
 		var box := Rect2(p[0] - 5, p[1] - 5, 11, 11)
 		if ends.has(id):
-			own.append(box.grow(1))
+			own.append(box.grow(trace_gap))
 		else:
-			_mark(hard, size, box.grow(2))
+			_mark(hard, size, box.grow(node_gap))
 	for id: String in ends:
 		if s["ports"].has(id):
 			var p: Array = s["ports"][id]
-			own.append(Rect2(p[0] - 1, p[1] - 1, 2, 2))
+			own.append(Rect2(p[0] - trace_gap, p[1] - trace_gap, trace_gap * 2, trace_gap * 2))
 	for t in s["traces"].size():
 		if t == edge or ignore.has(t):
 			continue
 		var f: Array = s["traces"][t]
 		for k in range(0, f.size() - 2, 2):
 			_mark(traces, size, Rect2(Vector2(f[k], f[k + 1]), Vector2.ZERO)
-				.expand(Vector2(f[k + 2], f[k + 3])).grow(1))
+				.expand(Vector2(f[k + 2], f[k + 3])).grow(trace_gap))
 	for rect in own:
 		_mark(traces, size, rect, 0)
 	var start := Vector2i(a)
@@ -259,7 +259,7 @@ static func _route(s: Dictionary, edge: int, ignore: Array = []) -> Array:
 		_push(heap, [0.0, state])
 	var reached := -1
 	var pops := 0
-	while not heap.is_empty() and pops < 500000:
+	while not heap.is_empty() and pops < max_pops:
 		var item: Array = _pop(heap)
 		var state: int = item[1]
 		var d := state % 4

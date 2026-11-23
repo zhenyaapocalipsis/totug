@@ -3,6 +3,7 @@ extends RefCounted
 
 const Quality = preload("res://core/map/board_quality.gd")
 const RouteRepair = preload("res://core/map/board_route_repair.gd")
+const Spacing = preload("res://core/map/board_spacing.gd")
 
 ## The board as a circuit-board schematic: sites are boxes, tunnel rings are
 ## small circles, tunnels are traces. No hex art is drawn, but everything is
@@ -215,9 +216,9 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ## whole board (POLISH_PASSES). Without dead ends (MapGraph.prune_dead_ends)
 ## nodes near the board edge get room the pieces had to keep for tunnels to
 ## neighbours that are not there; the board comes out narrower and cleaner.
-## Takes ~0.4-0.9 s (was 2-4 s before the exact cuts in _cost_around and
-## _choose_route), so it runs once per game (StateView.board_snapshot); the
-## dedicated server runs it off the main thread (NetSession._start_room).
+## Layout, geometry validation and clearance polishing run once per game
+## (StateView.board_snapshot). The dedicated server prepares boards off the
+## main thread (NetSession._start_room and BoardStock).
 static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS) -> Dictionary:
 	var result := _build_once(state, polish, budget_ms)
 	if result.is_empty():
@@ -229,7 +230,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 		result["quality_rerouted"] = true
 	var best_score := _quality_score(quality)
 	if best_score == 0:
-		return result
+		return Spacing.optimise(result)
 	# Keep the same deal and graph. If local polishing or a time-limited
 	# route left a bad drawing, try the clean tile arrangement and then
 	# allow routing to finish. Never silently treat grid=true as validation.
@@ -247,7 +248,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 			best_score = score
 		if best_score == 0:
 			result["quality_rebuilt"] = true
-			return result
+			return Spacing.optimise(result)
 	result["quality_issues"] = quality
 	push_error("Board geometry failed validation: %s" % quality)
 	return result
