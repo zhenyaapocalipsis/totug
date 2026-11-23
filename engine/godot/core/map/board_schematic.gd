@@ -1,6 +1,9 @@
 class_name BoardSchematic
 extends RefCounted
 
+const Quality = preload("res://core/map/board_quality.gd")
+const RouteRepair = preload("res://core/map/board_route_repair.gd")
+
 ## The board as a circuit-board schematic: sites are boxes, tunnel rings are
 ## small circles, tunnels are traces. No hex art is drawn, but everything is
 ## derived from the assembled hexes and their rotations (state.layout and
@@ -120,7 +123,9 @@ const A2_LEGEND_KEY := "a2_legend"
 const W_BEND := 12.0
 const W_LEN := 0.01
 const W_SHORT := 25.0
-const W_HIT := 300.0
+## Going through a city must never be cheaper than extra bends or a detour.
+const W_HIT := 20000.0
+const TILE_HIT_WEIGHT := 300.0
 ## A crossing must cost more than straightening a ring (RING_TURN[0]).
 ## Otherwise whole-board polish can turn a clean tile into a crossing.
 const W_CROSS := 2000.0
@@ -168,12 +173,16 @@ const JOG_MIN := 6
 const PUSH_ROUNDS := 10
 const PUSH_GAP := 3.0      # least gap between boxes after _push_apart (see there)
 
+var _hit_weight := W_HIT
 var _key: Array[String] = []
 var _kind: Array[int] = []
 var _hex: Array[String] = []
 var _pos: Array[Vector2] = []
 var _home: Array[Vector2] = []
 var _half: Array[Vector2] = []
+## Pixel bounds are distinct from the integer centre offset: odd-sized cities
+## and rings include their final pixel row/column too.
+var _node_size: Array[Vector2] = []
 var _index: Dictionary = {}          # key -> node index
 var _centre: Dictionary = {}         # layout slot -> Vector2
 var _lattice_centre: Dictionary = {} # то же до раздвигания (_spread): кто кому сосед
@@ -210,6 +219,45 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ## _choose_route), so it runs once per game (StateView.board_snapshot); the
 ## dedicated server runs it off the main thread (NetSession._start_room).
 static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS) -> Dictionary:
+	var result := _build_once(state, polish, budget_ms)
+	if result.is_empty():
+		return result
+	var quality := Quality.inspect(result, RING_R)
+	if not quality["bad_traces"].is_empty():
+		result = RouteRepair.repair(result)
+		quality = Quality.inspect(result, RING_R)
+		result["quality_rerouted"] = true
+	var best_score := _quality_score(quality)
+	if best_score == 0:
+		return result
+	# Keep the same deal and graph. If local polishing or a time-limited
+	# route left a bad drawing, try the clean tile arrangement and then
+	# allow routing to finish. Never silently treat grid=true as validation.
+	for attempt in [[not polish, budget_ms, false], [polish, NO_BUDGET, false],
+			[not polish, NO_BUDGET, false], [polish, NO_BUDGET, true], [not polish, NO_BUDGET, true]]:
+		var candidate := _build_once(state, attempt[0], attempt[1], attempt[2])
+		var candidate_quality := Quality.inspect(candidate, RING_R)
+		if not candidate_quality["bad_traces"].is_empty():
+			candidate = RouteRepair.repair(candidate)
+			candidate_quality = Quality.inspect(candidate, RING_R)
+		var score := _quality_score(candidate_quality)
+		if score < best_score:
+			result = candidate
+			quality = candidate_quality
+			best_score = score
+		if best_score == 0:
+			result["quality_rebuilt"] = true
+			return result
+	result["quality_issues"] = quality
+	push_error("Board geometry failed validation: %s" % quality)
+	return result
+
+
+static func _quality_score(quality: Dictionary) -> int:
+	return int(quality["crossings"]) * 10000 + int(quality["overlaps"]) * 1000 + int(quality["foreign_hits"])
+
+
+static func _build_once(state: GameState, polish: bool, budget_ms: int, repair_cross_hex := false) -> Dictionary:
 	var hex_by_slot: Dictionary = state.layout.get("hex_by_slot", {})
 	if hex_by_slot.is_empty():
 		return {}
@@ -224,7 +272,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 		schematic._optimise(POLISH_PASSES)
 	# Grid placement separates whole hex groups later. Repairing their
 	# temporary overlap here can push two cities of one hex together.
-	schematic._repair_hex_only = SPREAD_PLAYERS.has(players)
+	schematic._repair_hex_only = SPREAD_PLAYERS.has(players) and not repair_cross_hex
 	schematic._repair()
 	schematic._repair_hex_only = false
 	if SPREAD_PLAYERS.has(players):
@@ -270,6 +318,9 @@ static func layout_tile(builder: BoardBuilder, tile: String, rotation: int) -> D
 
 static func _tile_attempt(builder: BoardBuilder, graph: MapGraph, tile: String, rotation: int, attempt: int) -> BoardSchematic:
 	var schematic := BoardSchematic.new()
+	# Keep the offline seed arrangements diverse; final whole-board repair
+	# and validation enforce the stronger city-clearance rule.
+	schematic._hit_weight = TILE_HIT_WEIGHT
 	schematic._collect(graph, {"slots": {"a": {"x": 0.0, "z": 0.0}}, "adjacency": []}, {"a": tile})
 	for world_dir: String in BoardBuilder.DIR_CYCLE:
 		if not builder.hex_has_connection_facing(tile, world_dir, rotation):
@@ -426,6 +477,7 @@ func _add_node(key: String, kind: int, hex: String, home: Vector2, half: Vector2
 	_home.append(home)
 	_pos.append(home if kind == Kind.PORT else _snap(home))
 	_half.append(half)
+	_node_size.append(half * 2.0 + (Vector2.ONE if kind == Kind.RING else Vector2.ZERO))
 	_incident.append([])
 	_index[key] = i
 	return i
@@ -464,6 +516,7 @@ func _collect(graph: MapGraph, layout: Dictionary, hex_by_slot: Dictionary) -> v
 		var box := site_box(String(site["name"]), members.size(), ControlMarkers.is_marked(String(site["hex"]), String(site["name"])))
 		var home: Vector2 = _centre[hex] + to_schematic(sum / maxi(members.size(), 1))
 		var site_node := _add_node(site_id, Kind.SITE, hex, home, Vector2(int(box["w"]) / 2, int(box["h"]) / 2))
+		_node_size[site_node] = Vector2(box["w"], box["h"])
 		if ControlMarkers.is_marked(String(site["hex"]), String(site["name"])):
 			_marked[site_node] = true
 	# Табличка ярусов бонуса A2 — узел без туннелей рядом с его тремя
@@ -604,6 +657,23 @@ func _repair() -> void:
 			for n in _key.size():
 				if _kind[n] == kind and _crowded(n):
 					_step_aside(n)
+	# A city can cover a mandatory edge-port exit without overlapping any
+	# node. Rerouting that exit cannot help: move the blocking city instead.
+	for n in _key.size():
+		if _kind[n] != Kind.SITE:
+			continue
+		var rect := _node_rect(n, 2.0)
+		var blocked := false
+		for e in _routes.size():
+			if _edge_a[e] == n or _edge_b[e] == n:
+				continue
+			if _repair_hex_only and _hex[_edge_b[e]] != _hex[n]:
+				continue
+			for k in range(0, _visible[e].size(), 2):
+				if _segment_hits_rect(_visible[e][k], _visible[e][k + 1], rect):
+					blocked = true
+		if blocked:
+			_move_node(n, GRID, K / 2, true)
 	_push_apart()
 	# a moved box may now sit on a tunnel of the neighbouring hex
 	for e in _routes.size():
@@ -613,14 +683,14 @@ func _repair() -> void:
 
 ## Последнее средство: рамки, которые всё ещё пересекаются, просто
 ## растаскиваются в стороны по кратчайшей оси — по половине перекрытия каждой.
-## Поиск места до этого работает внутри своего гекса, и на тесных гексах
+## Поиск места обычно работает внутри своего гекса, и на тесных гексах
 ## свободного места там иногда нет вовсе. Гексы не рисуются, так что выход
 ## рамки за свой гекс не виден, а вот наложение видно сразу. Трассы после
 ## сдвига перекладываются (см. конец _repair).
-## Рамки растаскиваются до зазора PUSH_GAP, а не до касания: у рамки нечётной
-## ширины (45) _half округлён вниз, и на экране она на пиксель шире, чем
-## _node_rect. «Касающиеся» по расчёту Red Gate и Caer Sidi рисовались с общей
-## линией рамки — слипались (жалоба владельца, 2026-09-30).
+## Рамки растаскиваются до зазора PUSH_GAP, а не до касания. Раньше нечётная
+## ширина округлялась вниз в _node_rect, и Red Gate с Caer Sidi рисовались
+## с общей линией рамки (жалоба владельца, 2026-09-30). Теперь _node_size
+## учитывает последний пиксель рамки.
 func _push_apart() -> void:
 	var pushed := {}
 	for _round in PUSH_ROUNDS:
@@ -932,7 +1002,7 @@ static func _keep(out: Array[PackedVector2Array], points: PackedVector2Array) ->
 
 
 func _node_rect(n: int, grow: float = 0.0) -> Rect2:
-	return Rect2(_pos[n] - _half[n] - Vector2(grow, grow), _half[n] * 2.0 + Vector2(grow, grow) * 2.0)
+	return Rect2(_pos[n] - _half[n] - Vector2(grow, grow), _node_size[n] + Vector2(grow, grow) * 2.0)
 
 
 ## Segments of the route outside its two end boxes, as point pairs.
@@ -1020,7 +1090,7 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array, o
 			if segs[i].distance_to(segs[i + 1]) < MIN_SEG:
 				cost += W_SHORT
 	if _edge_dir[e] >= 0 and _dir_index(points[1] - points[0]) != _edge_dir[e]:
-		cost += W_HIT * 3.0
+		cost += _hit_weight * 3.0
 	# tiles are laid out alone: a tunnel that leaves its hex could cross the neighbour's
 	var poly: PackedVector2Array = _poly[_hex[_edge_b[e]]]
 	for i in range(0, segs.size(), 2):
@@ -1039,7 +1109,7 @@ func _local_cost(e: int, points: PackedVector2Array, segs: PackedVector2Array, o
 			continue
 		for i in range(0, segs.size(), 2):
 			if _segment_hits_rect(segs[i], segs[i + 1], rect):
-				cost += W_HIT
+				cost += _hit_weight
 				break
 	return cost
 
@@ -1161,7 +1231,7 @@ func _choose_route(e: int, skip: Dictionary, base := 0.0, hits := 0, limit := IN
 		_routes[e] = PackedVector2Array([_pos[_edge_a[e]], _pos[_edge_b[e]]])
 		_visible[e] = PackedVector2Array()
 		_bbox[e] = Rect2(Vector2(INF, INF), Vector2.ZERO)
-		return W_HIT * 10.0
+		return _hit_weight * 10.0
 	var best := INF
 	for k in mini(4, ranked.size()):
 		var segs2: PackedVector2Array = ranked[k][2]
@@ -1224,9 +1294,9 @@ func _cost_around(n: int, limit: float = INF) -> float:
 	return _with_hits(cost, hits)
 
 
-static func _with_hits(cost: float, hits: int) -> float:
+func _with_hits(cost: float, hits: int) -> float:
 	for _i in hits:
-		cost += W_HIT
+		cost += _hit_weight
 	return cost
 
 
@@ -1260,7 +1330,7 @@ func _optimise(passes: Array = PASSES) -> void:
 			_choose_route(e, {})
 
 
-func _move_node(n: int, step: int, radius: int) -> void:
+func _move_node(n: int, step: int, radius: int, allow_outside := false) -> void:
 	var start := _pos[n]
 	var inc: Array = _incident[n]
 	var poly: PackedVector2Array = _poly_nodes[_hex[n]] if _kind[n] != Kind.PORT \
@@ -1273,7 +1343,7 @@ func _move_node(n: int, step: int, radius: int) -> void:
 			if dx == 0 and dy == 0:
 				continue
 			var p := start + Vector2(dx, dy)
-			if not Geometry2D.is_point_in_polygon(p, poly):
+			if not allow_outside and not Geometry2D.is_point_in_polygon(p, poly):
 				continue
 			_pos[n] = p
 			var cost := _cost_around(n, best_cost - 0.01)
@@ -2515,7 +2585,7 @@ func _rt_route_all(order: Array, ends: Dictionary) -> int:
 
 ## Запас кольца n, стоящего в точке at (как в _rt_hard: рамка + 2 px).
 func _rt_ring_rect(n: int, at: Vector2) -> Rect2:
-	return Rect2(at - _half[n] - Vector2(2, 2), _half[n] * 2.0 + Vector2(4, 4))
+	return Rect2(at - _half[n] - Vector2(2, 2), _node_size[n] + Vector2(4, 4))
 
 
 static func _path_len(path: PackedVector2Array) -> float:
@@ -4093,7 +4163,7 @@ func _extent() -> Rect2:
 		if _kind[n] == Kind.PORT:
 			continue
 		lo = lo.min(_pos[n] - _half[n])
-		hi = hi.max(_pos[n] + _half[n])
+		hi = hi.max(_pos[n] - _half[n] + _node_size[n])
 	for points in _routes:
 		for p in points:
 			lo = lo.min(p)

@@ -49,8 +49,8 @@ func tick() -> void:
 			return
 		WorkerThreadPool.wait_for_task_completion(_task)
 		_task = -1
-		# не лёг в сетку и без лимита времени — такой доске в запасе не место
-		if bool(_result.get("grid", false)):
+		# В запас идут только доски в сетке, прошедшие проверку геометрии.
+		if bool(_result.get("grid", false)) and not _result.has("quality_issues"):
 			_ready[_building["players"]].append({"seed": _building["seed"],
 				"layout": _building["layout"], "schematic": _result})
 		_result = {}
