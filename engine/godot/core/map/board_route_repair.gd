@@ -197,7 +197,7 @@ static func _separate_nodes(s: Dictionary, quality: Dictionary) -> Dictionary:
 	return best
 
 
-static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, trace_gap := 1, max_pops := 500000) -> Array:
+static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, trace_gap := 1, max_pops := 500000, entry_gap := 0) -> Array:
 	var old: Array = s["traces"][edge]
 	var a := Vector2(old[0], old[1])
 	var b := Vector2(old[-2], old[-1])
@@ -207,8 +207,13 @@ static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, 
 	var bounds := Rect2i(Vector2i.ZERO, size)
 	var hard := PackedByteArray()
 	var traces := PackedByteArray()
+	var entries := PackedByteArray()
+	var hidden := PackedByteArray()
 	hard.resize(size.x * size.y)
 	traces.resize(hard.size())
+	if entry_gap > 0:
+		entries.resize(hard.size())
+		hidden.resize(hard.size())
 	var ends: Array = s["trace_ends"][edge]
 	var own: Array[Rect2] = []
 	for id: String in s["sites"]:
@@ -216,6 +221,19 @@ static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, 
 		var box := Rect2(r[0], r[1], r[2], r[3])
 		if ends.has(id):
 			own.append(box.grow(trace_gap))
+			if entry_gap > 0:
+				_mark(hidden,size,Rect2(box.position,box.size-Vector2.ONE))
+				_mark(entries,size,box.grow(entry_gap))
+				_mark(entries,size,Rect2(box.position,box.size-Vector2.ONE),0)
+				for x in range(int(box.position.x)+3,int(box.end.x)-3,2):
+					_mark(entries,size,Rect2(x,box.position.y-entry_gap,0,box.size.y+entry_gap*2),0)
+				for y in range(int(box.position.y)+3,int(box.end.y)-3,2):
+					_mark(entries,size,Rect2(box.position.x-entry_gap,y,box.size.x+entry_gap*2,0),0)
+				var reference := b if id == ends[0] else a
+				var pin_x := clampi(roundi(reference.x),int(box.position.x)+3,int(box.end.x)-4)
+				var pin_y := clampi(roundi(reference.y),int(box.position.y)+3,int(box.end.y)-4)
+				_mark(entries,size,Rect2(pin_x,box.position.y-entry_gap,0,box.size.y+entry_gap*2),0)
+				_mark(entries,size,Rect2(box.position.x-entry_gap,pin_y,box.size.x+entry_gap*2,0),0)
 		else:
 			_mark(hard, size, box.grow(node_gap))
 	for id: String in s["rings"]:
@@ -240,6 +258,10 @@ static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, 
 		_mark(traces, size, rect, 0)
 	var start := Vector2i(a)
 	var goal := Vector2i(b)
+	var goal_box := Rect2i()
+	if entry_gap > 0 and s["sites"].has(ends[1]):
+		var r: Array = s["sites"][ends[1]]["rect"]
+		goal_box = Rect2i(int(r[0]),int(r[1]),int(r[2]),int(r[3]))
 	if not bounds.has_point(start) or not bounds.has_point(goal):
 		return []
 	var first_dir := _port_direction(s, edge, ends[0], true)
@@ -265,11 +287,11 @@ static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, 
 		var d := state % 4
 		var cell := state / 4
 		var at := Vector2i(cell % size.x, cell / size.x)
-		var h := absi(goal.x - at.x) + absi(goal.y - at.y)
+		var h := _goal_distance(at,goal,goal_box) if goal_box.has_area() else absi(goal.x-at.x)+absi(goal.y-at.y)
 		if float(item[0]) > costs[state] + h + 0.01:
 			continue
 		pops += 1
-		if at == goal and (last_dir < 0 or d == last_dir):
+		if at != start and (at == goal or (goal_box.has_area() and goal_box.has_point(at))) and (last_dir < 0 or d == last_dir):
 			reached = state
 			break
 		for nd in 4:
@@ -279,15 +301,16 @@ static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, 
 			if not bounds.has_point(next):
 				continue
 			var index: int = next.y * size.x + next.x
-			if hard[index] != 0 or traces[index] != 0:
+			if hard[index] != 0 or traces[index] != 0 or (entry_gap > 0 and entries[index] != 0):
 				continue
 			var ns: int = index * 4 + nd
-			var cost := costs[state] + 1.0 + (20.0 if d != nd else 0.0)
+			var cost := costs[state] + 1.0 + (20.0 if d != nd and (entry_gap == 0 or hidden[cell] == 0) else 0.0)
 			if cost >= costs[ns]:
 				continue
 			costs[ns] = cost
 			parent[ns] = state
-			_push(heap, [cost + abs(goal.x - next.x) + abs(goal.y - next.y), ns])
+			var remaining := _goal_distance(next,goal,goal_box) if goal_box.has_area() else absi(goal.x-next.x)+absi(goal.y-next.y)
+			_push(heap, [cost + remaining, ns])
 	if reached < 0:
 		return []
 	var points: Array[Vector2i] = []
@@ -296,6 +319,18 @@ static func _route(s: Dictionary, edge: int, ignore: Array = [], node_gap := 2, 
 		points.append(Vector2i(cell % size.x, cell / size.x))
 		reached = parent[reached]
 	points.reverse()
+	if entry_gap > 0 and s["sites"].has(ends[0]):
+		var r: Array = s["sites"][ends[0]]["rect"]
+		var box := Rect2i(int(r[0]),int(r[1]),int(r[2]),int(r[3]))
+		var exit_index := 0
+		while exit_index < points.size() and box.has_point(points[exit_index]): exit_index += 1
+		if exit_index > 1:
+			var last := points[exit_index-1]
+			var prefix: Array[Vector2i] = [points[0]]
+			if points[0].x != last.x: prefix.append(Vector2i(last.x,points[0].y))
+			if prefix[-1] != last: prefix.append(last)
+			prefix.append_array(points.slice(exit_index))
+			points = prefix
 	var simple: Array[Vector2i] = []
 	for p in points:
 		if simple.size() >= 2 and (simple[-1] - simple[-2]) == (p - simple[-1]):
@@ -320,6 +355,7 @@ static func _port_direction(s: Dictionary, edge: int, id: String, at_start: bool
 	if neighbours.size() != 1:
 		return -1
 	var f: Array = s["traces"][neighbours[0]]
+	if f.size() < 4: return -1
 	var p := Vector2(f[0], f[1])
 	var next := Vector2(f[2], f[3])
 	if s["trace_ends"][neighbours[0]][1] == id:
@@ -363,3 +399,9 @@ static func _pop(heap: Array) -> Array:
 		i = child
 	heap[i] = last
 	return first
+
+
+static func _goal_distance(at: Vector2i, goal: Vector2i, box: Rect2i) -> int:
+	if box.has_area():
+		return maxi(0,maxi(box.position.x-at.x,at.x-box.end.x+1))+maxi(0,maxi(box.position.y-at.y,at.y-box.end.y+1))
+	return absi(goal.x-at.x)+absi(goal.y-at.y)

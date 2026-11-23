@@ -5,8 +5,8 @@ const Repair = preload("res://core/map/board_route_repair.gd")
 ## Clearance targets in board pixels (the 1920x1080 view uses scale 2).
 const NODE_GAP := 6
 const TRACE_GAP := 4
-const MAX_ATTEMPTS := 64
-const MAX_PASSES := 16
+const MAX_ATTEMPTS := 32
+const MAX_PASSES := 8
 const SEARCH_LIMIT := 20000
 const SHIFTS := [Vector2(0,12),Vector2(12,0),Vector2(0,-12),Vector2(-12,0),
 	Vector2(12,12),Vector2(-12,12),Vector2(12,-12),Vector2(-12,-12),
@@ -25,11 +25,13 @@ static func inspect(s: Dictionary) -> Dictionary:
 		nodes[id] = Rect2(p[0]-5,p[1]-5,11,11)
 	var score := 0
 	var crowded := {}
+	var tight := {}
 	var bad := {}
 	var ids: Array = nodes.keys()
 	for i in ids.size():
 		for j in range(i+1,ids.size()):
 			var gap := _gap(nodes[ids[i]],nodes[ids[j]])
+			if gap < 3: tight["nodes:%s:%s" % [ids[i],ids[j]]] = 3-gap
 			if gap < NODE_GAP:
 				var penalty := int(pow(NODE_GAP-gap,2))
 				score += penalty
@@ -51,6 +53,7 @@ static func inspect(s: Dictionary) -> Dictionary:
 			var gap := float(NODE_GAP)
 			for rect: Rect2 in line:
 				gap = minf(gap,_gap(rect,nodes[id]))
+			if gap < 3: tight["node:%s:edge:%d" % [id,edge]] = 3-gap
 			if gap < NODE_GAP:
 				var penalty := int(pow(NODE_GAP-gap,2)) * 8
 				score += penalty
@@ -78,11 +81,14 @@ static func inspect(s: Dictionary) -> Dictionary:
 						common = true
 			if common:
 				continue
+			if gap < 3:
+				var key := "edges:%d:%d" % [mini(a[1],b[1]),maxi(a[1],b[1])]
+				tight[key] = maxf(tight.get(key,0),3-gap)
 			var penalty := int(pow(TRACE_GAP-gap,2)) * 8
 			score += penalty
 			_add(bad,a[1],penalty)
 			_add(bad,b[1],penalty)
-	return {"score":score,"crowded_nodes":crowded,"bad_traces":bad}
+	return {"score":score,"crowded_nodes":crowded,"bad_traces":bad,"tight":tight}
 
 
 ## Bounded local search. Accept only less crowding with valid geometry;
@@ -110,12 +116,13 @@ static func optimise(s: Dictionary) -> Dictionary:
 				tried[signature] = true
 				var candidate := result.duplicate(true)
 				var group := _move(candidate,id,shift)
-				_add_affected(candidate,id,group)
+				if group.is_empty(): continue
+				_add_affected(candidate,id,group,result)
 				node_attempts += 1
 				attempts += 1
 				if _reroute(candidate,group):
 					var next := inspect(candidate)
-					if next["score"] < metric["score"] and _valid(candidate):
+					if next["score"] < metric["score"] and _valid(candidate) and _keeps_straight_links(result,candidate):
 						result = candidate
 						if not moved_nodes.has(id):
 							moved_nodes.append(id)
@@ -163,39 +170,125 @@ static func _fits(s: Dictionary, id: String, rect: Rect2) -> bool:
 	return true
 
 
+## Move aligned ring/port chains together across their common axis.
+## Along the axis, an individual ring may move to increase its spacing.
 static func _move(s: Dictionary, id: String, shift: Vector2) -> Array:
-	if s["sites"].has(id):
-		var site: Dictionary = s["sites"][id]
-		site["rect"][0] += shift.x
-		site["rect"][1] += shift.y
-		if site.has("icons_at"):
-			site["icons_at"][0] += shift.x
-			site["icons_at"][1] += shift.y
-		for slot: String in site["slots"]:
-			site["slots"][slot][0] += shift.x
-			site["slots"][slot][1] += shift.y
-			s["slots"][slot]["x"] += shift.x
-			s["slots"][slot]["y"] += shift.y
-	else:
-		s["rings"][id][0] += shift.x
-		s["rings"][id][1] += shift.y
-		s["slots"][id]["x"] += shift.x
-		s["slots"][id]["y"] += shift.y
+	s.erase("__spacing_metrics")
+	var shifts := {id:shift}
+	var links := _straight_links(s)
+	for _round in s["rings"].size():
+		var changed := false
+		for link: Dictionary in links:
+			var axis: int = link["axis"]
+			var delta := 0.0
+			for ring: String in link["rings"]:
+				if shifts.has(ring) and not is_zero_approx((shifts[ring] as Vector2)[axis]): delta = (shifts[ring] as Vector2)[axis]
+			if is_zero_approx(delta): continue
+			for node: String in link["rings"]+[link["port"]]:
+				var current: Vector2 = shifts.get(node,Vector2.ZERO)
+				if not is_equal_approx(current[axis],delta):
+					current[axis] = delta
+					shifts[node] = current
+					changed = true
+		if not changed: break
+	var nodes: Array = s["sites"].keys()+s["rings"].keys()
+	for node: String in shifts:
+		if s["ports"].has(node): continue
+		var rect := Repair._node_rect(s,node)
+		rect.position += shifts[node]
+		if not Rect2(2,2,s["size"][0]-4,s["size"][1]-4).encloses(rect): return []
+		var legend: Array = s.get("a2_legend",[])
+		if legend.size() == 4 and rect.grow(2).intersects(Rect2(legend[0],legend[1],legend[2],legend[3])): return []
+		for other: String in nodes:
+			if other == node: continue
+			var box := Repair._node_rect(s,other)
+			box.position += shifts.get(other,Vector2.ZERO)
+			if rect.grow(2).intersects(box): return []
+	for node: String in shifts:
+		var delta: Vector2 = shifts[node]
+		if s["sites"].has(node):
+			var site: Dictionary = s["sites"][node]
+			site["rect"][0] += delta.x
+			site["rect"][1] += delta.y
+			if site.has("icons_at"):
+				site["icons_at"][0] += delta.x
+				site["icons_at"][1] += delta.y
+			for slot: String in site["slots"]:
+				site["slots"][slot][0] += delta.x
+				site["slots"][slot][1] += delta.y
+				s["slots"][slot]["x"] += delta.x
+				s["slots"][slot]["y"] += delta.y
+		elif s["rings"].has(node):
+			s["rings"][node][0] += delta.x
+			s["rings"][node][1] += delta.y
+			s["slots"][node]["x"] += delta.x
+			s["slots"][node]["y"] += delta.y
+		else:
+			s["ports"][node][0] += delta.x
+			s["ports"][node][1] += delta.y
 	var group := []
 	for edge in s["trace_ends"].size():
 		for endpoint in 2:
-			if s["trace_ends"][edge][endpoint] != id:
-				continue
+			var node: String = s["trace_ends"][edge][endpoint]
+			if not shifts.has(node): continue
 			var flat: Array = s["traces"][edge]
 			var at := 0 if endpoint == 0 else flat.size()-2
-			flat[at] += shift.x
-			flat[at+1] += shift.y
-			group.append(edge)
+			flat[at] += (shifts[node] as Vector2).x
+			flat[at+1] += (shifts[node] as Vector2).y
+			if not group.has(edge): group.append(edge)
 	return group
 
 
-static func _add_affected(s: Dictionary, id: String, group: Array) -> void:
+static func _straight_links(s: Dictionary) -> Array:
+	var ports := {}
+	for edge in s["trace_ends"].size():
+		var ends: Array = s["trace_ends"][edge]
+		if ends.size() != 2: continue
+		for endpoint in 2:
+			var port: String = ends[endpoint]
+			if s["ports"].has(port):
+				if not ports.has(port): ports[port] = []
+				ports[port].append([ends[1-endpoint],edge])
+	var links := []
+	for port: String in ports:
+		var joined: Array = ports[port]
+		if joined.size() != 2 or not s["rings"].has(joined[0][0]) or not s["rings"].has(joined[1][0]): continue
+		var a: Array = s["rings"][joined[0][0]]
+		var b: Array = s["rings"][joined[1][0]]
+		var at: Array = s["ports"][port]
+		for axis in 2:
+			if a[axis] != b[axis] or a[axis] != at[axis]: continue
+			var straight := true
+			for pair: Array in joined:
+				var f: Array = s["traces"][pair[1]]
+				for k in range(axis,f.size(),2):
+					if f[k] != at[axis]: straight = false
+			if straight:
+				links.append({"rings":[joined[0][0],joined[1][0]],"edges":[joined[0][1],joined[1][1]],"port":port,"axis":axis})
+	return links
+
+
+static func _keeps_straight_links(before: Dictionary, after: Dictionary) -> bool:
+	for link: Dictionary in _straight_links(before):
+		var axis: int = link["axis"]
+		var coordinate: float = after["rings"][link["rings"][0]][axis]
+		if after["rings"][link["rings"][1]][axis] != coordinate or after["ports"][link["port"]][axis] != coordinate: return false
+		for edge: int in link["edges"]:
+			var f: Array = after["traces"][edge]
+			for k in range(axis,f.size(),2):
+				if f[k] != coordinate: return false
+	return true
+
+
+static func _add_affected(s: Dictionary, id: String, group: Array, before: Dictionary = {}) -> void:
 	var rect := Repair._node_rect(s,id).grow(NODE_GAP)
+	for moved: String in s["rings"]:
+		if not before.is_empty() and before["rings"][moved] != s["rings"][moved]:
+			_add_nearby(s,Repair._node_rect(s,moved).grow(NODE_GAP),group)
+	_add_nearby(s,rect,group)
+
+
+static func _add_nearby(s: Dictionary, rect: Rect2, group: Array) -> void:
 	for edge in s["traces"].size():
 		if group.has(edge):
 			continue
@@ -208,7 +301,8 @@ static func _add_affected(s: Dictionary, id: String, group: Array) -> void:
 				break
 
 
-static func _reroute(s: Dictionary, group: Array) -> bool:
+static func _reroute(s: Dictionary, group: Array, clean_entries := false) -> bool:
+	s.erase("__spacing_metrics")
 	var remaining := group.duplicate()
 	var route_view := s.duplicate()
 	var legend: Array = s.get("a2_legend",[])
@@ -224,12 +318,12 @@ static func _reroute(s: Dictionary, group: Array) -> bool:
 				var at := 0 if endpoint == 0 else flat.size()-2
 				flat[at] = r[0]+floori(r[2]/2.0)
 				flat[at+1] = r[1]+floori(r[3]/2.0)
-		var path := Repair._route(route_view,edge,remaining,NODE_GAP,TRACE_GAP,SEARCH_LIMIT)
+		var path := Repair._route(route_view,edge,remaining,NODE_GAP,TRACE_GAP,SEARCH_LIMIT,6 if clean_entries else 0)
 		if path.is_empty():
 			# Open a crowded cluster incrementally: the next accepted move can
 			# then give its neighbour enough room for the full target clearance.
-			path = Repair._route(route_view,edge,remaining,2,2,SEARCH_LIMIT)
-		if path.is_empty():
+			path = Repair._route(route_view,edge,remaining,2,2,SEARCH_LIMIT,6 if clean_entries else 0)
+		if path.size() < 4:
 			return false
 		s["traces"][edge] = path
 		remaining.erase(edge)

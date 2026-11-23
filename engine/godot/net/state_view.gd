@@ -246,6 +246,7 @@ static func board_snapshot(state: GameState, schematic: Dictionary = {},
 			slots[slot_id] = {"x": pos.x, "y": pos.y, "site_id": sl.get("site", ""), "hex": sl.get("hex", "")}
 
 	return {
+		"seed": int(state.layout.get("seed",state.rng.seed)),
 		"sites": sites,
 		"slots": slots,
 		"tiles": geometry.get("tiles", []),

@@ -227,6 +227,7 @@ var _turn_emblem_key := ""
 var _played_flight: PlayedCardFlight
 var _end_label: Label
 var _timer_label: Label
+var _board_seed_label: Label
 ## Пометка «начался последний круг» — отдельной строкой: в узкую колонку
 ## End turn она рядом с таймером не помещается.
 var _last_round_label: Label
@@ -544,6 +545,12 @@ func _build_layout() -> void:
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.text = "END TURN"
 	_end_turn_area.add_child(_end_label)
+	_board_seed_label = Label.new()
+	_board_seed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_board_seed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_board_seed_label.clip_text = true
+	_board_seed_label.add_theme_color_override("font_color", PixelTheme.TEXT_DIM)
+	add_child(_board_seed_label)
 	_timer_label = Label.new()
 	L10n.scope(_timer_label)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1219,6 +1226,7 @@ func _layout() -> void:
 
 	var timer_x := board_x + floorf((_board_area.size.x - TIMER_W - GAP - END_TURN_W) * 0.5)
 	var end_turn_x := timer_x + TIMER_W + GAP
+	_place(_board_seed_label,board_x+2,turn_bar_y,maxf(1,timer_x-board_x-GAP-2),TURN_BAR_H)
 	_place(_timer_label, timer_x, turn_bar_y, TIMER_W, TURN_BAR_H)
 	_place(_end_turn_area, end_turn_x, turn_bar_y, END_TURN_W, TURN_BAR_H)
 	_place(_last_round_label, end_turn_x + END_TURN_W + GAP, turn_bar_y, 90, TURN_BAR_H)
@@ -2473,6 +2481,8 @@ func _sound_game_over(view: Dictionary) -> void:
 
 
 func refresh(view: Dictionary) -> void:
+	if _board_seed_label != null:
+		_board_seed_label.text = "BOARD SEED: %s" % (str(int(board_data["seed"])) if board_data.has("seed") else "--")
 	_view = view
 	BoardPanel.team_of = view.get("teams", BoardPanel.team_of)
 	# Живой текст карт: новые числа — и уже показанные живые карты перерисовываются.

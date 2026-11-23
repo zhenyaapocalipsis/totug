@@ -4,6 +4,7 @@ extends RefCounted
 const Quality = preload("res://core/map/board_quality.gd")
 const RouteRepair = preload("res://core/map/board_route_repair.gd")
 const Spacing = preload("res://core/map/board_spacing.gd")
+const RouteCleanup = preload("res://core/map/board_route_cleanup.gd")
 
 ## The board as a circuit-board schematic: sites are boxes, tunnel rings are
 ## small circles, tunnels are traces. No hex art is drawn, but everything is
@@ -127,7 +128,7 @@ const W_SHORT := 25.0
 ## Going through a city must never be cheaper than extra bends or a detour.
 const W_HIT := 20000.0
 const TILE_HIT_WEIGHT := 300.0
-## A crossing must cost more than straightening a ring (RING_TURN[0]).
+## A crossing must cost more than separating overlapping ring exits.
 ## Otherwise whole-board polish can turn a clean tile into a crossing.
 const W_CROSS := 2000.0
 const W_OVERLAP := 250.0
@@ -137,7 +138,8 @@ const W_OUT := 15.0
 const W_OUT_PX := 6.0      # per pixel a box corner sticks out of its hex
 const W_NODE_OVERLAP := 400.0
 ## Ring with two tunnels: penalty by the angle between them, index = steps of 90.
-## 0 — обе трассы уходят в одну сторону (так нельзя), 1 — поворот, 2 — насквозь.
+## Preserve the established tile layout. Final local route cleanup permits
+## turns inside a ring instead of adding a detour outside it.
 const RING_TURN := [500.0, 60.0, 0.0]
 const PASSES := [[10, 40], [4, 12], [2, 4], [2, 4]]
 ## Whole-board polish starts from good pieces, so the coarse pass is skipped:
@@ -230,7 +232,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 		result["quality_rerouted"] = true
 	var best_score := _quality_score(quality)
 	if best_score == 0:
-		return Spacing.optimise(result)
+		return RouteCleanup.simplify(Spacing.optimise(result))
 	# Keep the same deal and graph. If local polishing or a time-limited
 	# route left a bad drawing, try the clean tile arrangement and then
 	# allow routing to finish. Never silently treat grid=true as validation.
@@ -248,7 +250,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 			best_score = score
 		if best_score == 0:
 			result["quality_rebuilt"] = true
-			return Spacing.optimise(result)
+			return RouteCleanup.simplify(Spacing.optimise(result))
 	result["quality_issues"] = quality
 	push_error("Board geometry failed validation: %s" % quality)
 	return result
@@ -1155,7 +1157,7 @@ static func _pair_cost(s1: PackedVector2Array, s2: PackedVector2Array) -> float:
 	return cost
 
 
-## Angle penalty at a ring: tunnels through a ring should go straight on.
+## Prevent coincident ring exits; perpendicular and opposed exits are valid.
 func _ring_cost(n: int) -> float:
 	if _kind[n] != Kind.RING:
 		return 0.0

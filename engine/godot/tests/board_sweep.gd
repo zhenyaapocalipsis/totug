@@ -23,6 +23,7 @@ func _initialize() -> void:
 		var s := BoardSchematic.build(state,polish)
 		var result := inspect(s)
 		result["spacing"] = s.get("spacing",{})
+		result["route_cleanup"] = s.get("route_cleanup",{})
 		result.merge({"seed":seed_value,"players":players,"grid":s["grid"],"ms":Time.get_ticks_msec()-started,"rebuilt":s.get("quality_rebuilt",false)})
 		rows.append(result)
 		if not s["grid"]: grid_fallback += 1

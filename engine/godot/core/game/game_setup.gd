@@ -183,6 +183,7 @@ static func new_game(player_ids: Array[String], seed_value: int = 0,
 
 	var state := GameState.new(graph, seed_value)
 	state.layout = {
+		"seed": seed_value,
 		"player_count": players,
 		"hex_by_slot": hex_by_slot,
 		"rotations": rotations,
