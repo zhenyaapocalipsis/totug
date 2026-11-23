@@ -16,6 +16,7 @@ func _initialize() -> void:
 
 func test_space_pixels() -> void:
 	section("Troop spaces: one free pixel and matching outlines")
+	var radius := BoardSchematic.SLOT_R
 	for count in range(1, 10):
 		for marker: bool in [false, true]:
 			var box := BoardSchematic.site_box("Wells of Darkness", count, marker)
@@ -33,25 +34,25 @@ func test_space_pixels() -> void:
 			var tag := "%d spaces, marker=%s" % [count, marker]
 			for i in count:
 				var p := Vector2i((box["slots"][i] as Vector2).round())
-				check(p.x - 5 > 0 and p.x + 5 < int(box["w"]) - 1
-					and p.y - 5 > 0 and p.y + 5 < int(box["h"]) - 1,
+				check(p.x - radius > 0 and p.x + radius < int(box["w"]) - 1
+					and p.y - radius > 0 and p.y + radius < int(box["h"]) - 1,
 					"%s: circle stays inside its frame" % tag)
 				if i % BoardSchematic.SLOT_COLS < BoardSchematic.SLOT_COLS - 1 and i + 1 < count:
-					check(image.get_pixel(p.x + 6, p.y).is_equal_approx(fill),
+					check(image.get_pixel(p.x + radius + 1, p.y).is_equal_approx(fill),
 						"%s: free pixel between columns" % tag)
 				if i + BoardSchematic.SLOT_COLS < count:
 					var below := Vector2i((box["slots"][i + BoardSchematic.SLOT_COLS] as Vector2).round())
 					# A short last row can be centred between columns; test aligned rows.
 					if p.x == below.x:
-						check(image.get_pixel(p.x, p.y + 6).is_equal_approx(fill),
+						check(image.get_pixel(p.x, p.y + radius + 1).is_equal_approx(fill),
 							"%s: free pixel between rows" % tag)
 			var at := Vector2i((box["slots"][0] as Vector2).round())
-			for dx in [5]:
+			for dx in [radius]:
 				check(image.get_pixel(at.x + dx, at.y).is_equal_approx(SchematicPainter.INK)
 					and image.get_pixel(road.x + dx, road.y).is_equal_approx(SchematicPainter.TRACE),
 					"%s: city and road both have a one-pixel outline" % tag)
-			check(image.get_pixel(at.x + 4, at.y).is_equal_approx(fill)
-				and image.get_pixel(road.x + 4, road.y).is_equal_approx(image.get_pixel(road.x, road.y)),
+			check(image.get_pixel(at.x + radius - 1, at.y).is_equal_approx(fill)
+				and image.get_pixel(road.x + radius - 1, road.y).is_equal_approx(image.get_pixel(road.x, road.y)),
 				"%s: both outlines end after one pixel" % tag)
 
 

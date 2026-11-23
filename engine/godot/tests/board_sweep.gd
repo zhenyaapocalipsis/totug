@@ -19,6 +19,7 @@ func _initialize() -> void:
 	var grid_fallback := 0
 	for seed_value in range(first,first+count):
 		var state := GameSetup.new_game(ids,seed_value)
+		print("BUILD_START ",players," ",seed_value)
 		var started := Time.get_ticks_msec()
 		var s := BoardSchematic.build(state,polish)
 		var result := inspect(s)
@@ -32,6 +33,7 @@ func _initialize() -> void:
 			print("BAD ",result)
 			if bad <= 12:
 				FileAccess.open("res://../../engine/board-sweep-%d-%d.json" % [players,seed_value],FileAccess.WRITE).store_string(JSON.stringify(s))
+		FileAccess.open("res://../../engine/board-sweep-results-%d-%d.json" % [players,first],FileAccess.WRITE).store_string(JSON.stringify(rows,"\t"))
 		if rows.size() % 10 == 0: print("PROGRESS ",players," ",rows.size(),"/",count," bad=",bad," fallback=",grid_fallback)
 	FileAccess.open("res://../../engine/board-sweep-results-%d-%d.json" % [players,first],FileAccess.WRITE).store_string(JSON.stringify(rows,"\t"))
 	print("SWEEP ",players," runs=",count," bad=",bad," fallback=",grid_fallback)

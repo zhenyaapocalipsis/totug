@@ -24,18 +24,25 @@ func _init() -> void:
 	verify(Quality.inspect(spacing)["foreign_hits"] == 0,"one empty pixel on either side of city")
 	spacing["traces"] = [[9,5,9,25],[20,5,20,25]]
 	verify(Quality.inspect(spacing)["foreign_hits"] == 2,"adjacent pixels without a gap are rejected")
+	var joined := {"sites":{"a":{"rect":[0,0,10,10]},"b":{"rect":[20,0,10,10]}},"rings":{},"ports":{"p":[15,5]},"slots":{"a0":{"x":5,"y":5},"b0":{"x":25,"y":5}},"traces":[[15,5,5,5],[15,5,25,5]],"trace_ends":[["p","a"],["p","b"]]}
+	var flat := Repair._flatten_ports(joined)
+	verify(flat["trace_ends"] == [["a","b"]],"removing a drawing join preserves the actual graph link")
+	verify(flat["slots"] == joined["slots"],"removing a drawing join preserves every troop slot")
+	verify(flat["traces"] == [[5.0,5.0,25.0,5.0]] and Quality.inspect(flat)["crossings"] == 0,"merged road has no artificial bend or intersection")
 	var board := BoardSchematic.new()
 	var index := board._add_node("odd",BoardSchematic.Kind.SITE,"a",Vector2(20,20),Vector2(22,12))
 	board._node_size[index] = Vector2(45,25)
 	verify(board._node_rect(index).size == Vector2(45,25),"full odd-sized pixel bounds")
-	for pair in [[4,23],[4,34],[4,61],[4,69],[4,83],[4,94],[4,130],[4,139],[4,156],[4,158],[4,226],[4,286],[2,30]]:
+	for pair in [[4,23],[4,34],[4,61],[4,69],[4,83],[4,94],[4,130],[4,139],[4,156],[4,158],[4,226],[4,286],[4,1],[4,9],[4,108],[4,203],[4,205],[4,257],[4,96],[4,147],[4,300],[4,220],[2,30],[2,9],[2,13],[2,25],[3,25]]:
 		var ids: Array[String] = []
 		ids.assign(["red","blue","green","purple"].slice(0,pair[0]))
+		print("REGRESSION ",pair)
 		var state := GameSetup.new_game(ids,pair[1])
 		var drawing := BoardSchematic.build(state)
 		var quality := Quality.inspect(drawing)
 		verify(BoardSchematic._quality_score(quality) == 0,"regression %s: %s" % [pair,quality])
 		verify(_slots_match(drawing,state),"slot identities and coordinates %s" % [pair])
+		verify(_links_match(drawing,state),"drawing preserves every actual game link %s" % [pair])
 	print("board quality: passed=",passed,", failed=",failed)
 	quit(1 if failed > 0 else 0)
 
@@ -66,4 +73,23 @@ func _slots_match(drawing: Dictionary, state: GameState) -> bool:
 				return false
 			if not Rect2(r[0],r[1],r[2],r[3]).has_point(Vector2(p[0],p[1])):
 				return false
+	return true
+
+
+func _links_match(drawing: Dictionary, state: GameState) -> bool:
+	var links := {}
+	for pair: Array in drawing["trace_ends"]:
+		links[str(pair[0])+"|"+str(pair[1])] = true
+		links[str(pair[1])+"|"+str(pair[0])] = true
+	for slot: String in state.graph.slots:
+		var a: String = state.graph.site_of_slot(slot)
+		if a.is_empty(): a = slot
+		for other: String in state.graph.adjacent_slots(slot):
+			var b: String = state.graph.site_of_slot(other)
+			if b.is_empty(): b = other
+			if a == b or links.has(a+"|"+b): continue
+			var joined := false
+			for port: String in drawing["ports"]:
+				if links.has(a+"|"+port) and links.has(b+"|"+port): joined = true
+			if not joined: return false
 	return true

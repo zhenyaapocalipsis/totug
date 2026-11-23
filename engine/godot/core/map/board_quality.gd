@@ -1,7 +1,9 @@
 extends RefCounted
 
+const Metrics = preload("res://core/map/board_metrics.gd")
+
 ## Geometry checks on the exported pixels, independent of the layout solver.
-static func inspect(s: Dictionary, ring_radius := 5) -> Dictionary:
+static func inspect(s: Dictionary, ring_radius := Metrics.RADIUS) -> Dictionary:
 	var sites := {}
 	var nodes := {}
 	for id: String in s["sites"]:
@@ -20,6 +22,10 @@ static func inspect(s: Dictionary, ring_radius := 5) -> Dictionary:
 			if (nodes[ids[i]] as Rect2).intersects(nodes[ids[j]]):
 				overlaps += 1
 				overlap_nodes.append([ids[i], ids[j]])
+	var close_nodes := []
+	for ring: String in s["rings"]:
+		for city: String in sites:
+			if not (nodes[ring] as Rect2).intersects(sites[city]) and (nodes[ring] as Rect2).grow(2).intersects(sites[city]): close_nodes.append([ring,city])
 	var segments := []
 	var foreign_hits := 0
 	var bad_traces := {}
@@ -79,7 +85,7 @@ static func inspect(s: Dictionary, ring_radius := 5) -> Dictionary:
 				bad_traces[a[1]] = true
 				bad_traces[b[1]] = true
 	return {"overlaps": overlaps, "crossings": crossings, "foreign_hits": foreign_hits,
-		"bad_traces": bad_traces.keys(), "overlap_nodes": overlap_nodes}
+		"bad_traces": bad_traces.keys(), "overlap_nodes": overlap_nodes,"close_nodes":close_nodes}
 
 
 ## A city-to-city connection is split at a hex port. The second half may

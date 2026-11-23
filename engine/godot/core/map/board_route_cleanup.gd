@@ -1,20 +1,25 @@
 extends RefCounted
 
+const Metrics = preload("res://core/map/board_metrics.gd")
+
 const Repair = preload("res://core/map/board_route_repair.gd")
 const Spacing = preload("res://core/map/board_spacing.gd")
 const SEARCH_LIMIT := 20000
 const MAX_EDGES := 12
 const MAX_RINGS := 8
+const WORK_LIMIT := 1000000
 
 
 ## Remove geometric backtracking without deleting troop spaces or links.
 ## A degree-two ring is a movable marker on its road, not a required detour.
 static func simplify(s: Dictionary) -> Dictionary:
+	var work_budget := {"left":WORK_LIMIT}
 	var result := s.duplicate(true)
 	var before := inspect(result)
 	var shape := before
 	var clearance: int = _spacing(result)["score"]
 	var changed := 0
+	var failed_cities := {}
 	var edges := []
 	for edge in result["traces"].size():
 		var excess := _excess(_visible_route(result,edge))
@@ -23,18 +28,23 @@ static func simplify(s: Dictionary) -> Dictionary:
 			edges.append([edge,bad*1000+excess])
 	edges.sort_custom(func(a,b): return a[1] > b[1])
 	for entry: Array in edges.slice(0,MAX_EDGES):
+		if int(work_budget["left"]) <= 0: break
 		var edge: int = entry[0]
 		var candidate := result.duplicate(true)
-		var routed := Spacing._reroute(candidate,[edge],true)
-		if not routed or not _improves(shape,inspect(candidate)) or not _acceptable(candidate,clearance,result):
-			candidate = _fix_entry(result,edge,clearance)
+		var routed := Spacing._reroute(candidate,[edge],true,work_budget)
+		var next: Dictionary = inspect(candidate) if routed else {}
+		if not routed or not _improves(shape,next) or not _acceptable(candidate,clearance,result):
+			candidate = _fix_entry(result,edge,clearance,failed_cities,work_budget)
 			if candidate.is_empty(): continue
-		var next := inspect(candidate)
-		if _improves(shape,next) and _acceptable(candidate,clearance,result):
-			result = candidate
-			shape = next
-			clearance = _spacing(result)["score"]
-			changed += 1
+			next = inspect(candidate)
+		# Both branches have already checked the candidate against result.
+		result = candidate
+		shape = next
+		clearance = _spacing(result)["score"]
+		changed += 1
+		failed_cities.clear()
+	var failed_regions := {}
+	var dirty_regions := []
 	for _pass in 2:
 		var accepted := false
 		var protected := {}
@@ -49,17 +59,26 @@ static func simplify(s: Dictionary) -> Dictionary:
 			if excess > 0: rings.append([id,excess])
 		rings.sort_custom(func(a,b): return a[1] > b[1])
 		for entry: Array in rings.slice(0,MAX_RINGS):
-			var candidate := _shorten_ring(result,entry[0])
+			if int(work_budget["left"]) <= 0: break
+			var id: String = entry[0]
+			if _pass > 0:
+				var affected := false
+				for region: Rect2 in dirty_regions:
+					if failed_regions.has(id) and (failed_regions[id] as Rect2).intersects(region): affected = true
+				if not affected: continue
+			failed_regions[id] = _path_bounds(_joined(result,id,_incident(result,id))).grow(16)
+			var candidate := _shorten_ring(result,entry[0],work_budget)
 			if candidate.is_empty(): continue
-			var next := inspect(candidate)
-			if _improves(shape,next) and _acceptable(candidate,clearance,result):
-				result = candidate
-				shape = next
-				clearance = _spacing(result)["score"]
-				changed += 1
-				accepted = true
+			# _shorten_ring returns only an improving, validated candidate.
+			dirty_regions.append(_changed_bounds(result,candidate).grow(6))
+			failed_regions.erase(id)
+			result = candidate
+			shape = inspect(candidate)
+			clearance = _spacing(result)["score"]
+			changed += 1
+			accepted = true
 		if not accepted: break
-	result["route_cleanup"] = {"before":before,"after":shape,"changed":changed}
+	result["route_cleanup"] = {"before":before,"after":shape,"changed":changed,"work":WORK_LIMIT-int(work_budget["left"]),"budget_exhausted":int(work_budget["left"]) <= 0}
 	if result.has("spacing"): result["spacing"]["after"] = clearance
 	result.erase("__spacing_metrics")
 	return result
@@ -103,20 +122,20 @@ static func _acceptable(s: Dictionary, _clearance: int, before: Dictionary = {})
 
 ## If the clean road is blocked by another movable ring, open that corridor
 ## jointly rather than keeping a hook around the old marker location.
-static func _shorten_ring(s: Dictionary, id: String) -> Dictionary:
+static func _shorten_ring(s: Dictionary, id: String, work_budget: Dictionary = {}) -> Dictionary:
 	var baseline := inspect(s)
 	var clearance: int = _spacing(s)["score"]
-	var simple := _place_ring(s,id)
+	var simple := _place_ring(s,id,work_budget)
 	if not simple.is_empty() and _improves(baseline,inspect(simple)):
 		return simple
 	var incident := _incident(s,id)
 	for edge: int in incident:
 		for city: String in s["trace_ends"][edge]:
-			if not s["sites"].has(city): continue
+			if not s["sites"].has(city) or _bad_entries(s,edge) == 0: continue
 			var refreshed := s.duplicate(true)
 			var group := _incident(refreshed,city)
-			if Spacing._reroute(refreshed,group,true) and Spacing._valid(refreshed):
-				var placed := _place_ring(refreshed,id)
+			if Spacing._reroute(refreshed,group,true,work_budget) and Spacing._valid(refreshed):
+				var placed := _place_ring(refreshed,id,work_budget)
 				if not placed.is_empty() and _improves(baseline,inspect(placed)) and _acceptable(placed,clearance,s): return placed
 	var whole := _joined(s,id,incident)
 	var start := Vector2(whole[0],whole[1])
@@ -156,8 +175,8 @@ static func _shorten_ring(s: Dictionary, id: String) -> Dictionary:
 			if group.is_empty(): continue
 			Spacing._add_affected(moved,other,group,s)
 			tried += 1
-			if Spacing._reroute(moved,group,true) and Spacing._valid(moved):
-				var candidate := _place_ring(moved,id)
+			if Spacing._reroute(moved,group,true,work_budget) and Spacing._valid(moved):
+				var candidate := _place_ring(moved,id,work_budget)
 				if not candidate.is_empty() and _improves(baseline,inspect(candidate)) and _acceptable(candidate,clearance,s):
 					return candidate
 			if tried >= 2:
@@ -169,7 +188,7 @@ static func _improves(before: Dictionary, after: Dictionary) -> bool:
 	return int(after["bad_entries"]) <= int(before["bad_entries"]) and (int(after["bad_entries"]) < int(before["bad_entries"]) or float(after["detour"]) <= float(before["detour"])) and float(after["cost"]) < float(before["cost"])-0.01
 
 
-static func _place_ring(s: Dictionary, id: String) -> Dictionary:
+static func _place_ring(s: Dictionary, id: String, work_budget: Dictionary = {}) -> Dictionary:
 	var incident := _incident(s,id)
 	if incident.size() != 2:
 		return {}
@@ -190,14 +209,15 @@ static func _place_ring(s: Dictionary, id: String) -> Dictionary:
 	var reserve := view.duplicate(true)
 	for ring: String in view["rings"]:
 		if ring == from or ring == to: continue
-		var box := Repair._node_rect(view,ring).grow(2)
+		var box := Repair._node_rect(view,ring).grow(maxi(1,Metrics.RADIUS-3))
 		reserve["sites"]["marker_reserve:"+ring] = {"rect":[box.position.x,box.position.y,box.size.x,box.size.y]}
-	if Spacing._reroute(reserve,[e],true):
+	if Spacing._reroute(reserve,[e],true,work_budget):
 		view = reserve
-	elif not Spacing._reroute(view,[e],true):
+	elif not Spacing._reroute(view,[e],true,work_budget):
 		return {}
 	var path: Array = view["traces"][e]
 	var original: Array = s["rings"][id]
+	var baseline := inspect(s)
 	var positions := []
 	for k in range(0,path.size()-2,2):
 		var start := Vector2(path[k],path[k+1])
@@ -207,15 +227,18 @@ static func _place_ring(s: Dictionary, id: String) -> Dictionary:
 		for step in range(0,distance+1):
 			var p := start+direction*step
 			# Put a turn inside the marker, or leave a visible straight stub.
-			if (step > 0 and step < 10) or (step < distance and distance-step < 10):
-				continue
-			var rect := Rect2(p-Vector2(5,5),Vector2(11,11))
-			if not Spacing._fits(s,id,rect) or not _clear_marker(view,e,rect):
+			if (step > 0 and step < Metrics.RADIUS+5) or (step < distance and distance-step < Metrics.RADIUS+5):
 				continue
 			positions.append([p,k,p.distance_squared_to(Vector2(original[0],original[1]))])
 	positions.sort_custom(func(x,y): return x[2] < y[2])
-	for option: Array in positions.slice(0,6):
+	# Test nearest positions first; stop after the same six valid options.
+	var valid_options := 0
+	for option: Array in positions:
 		var p: Vector2 = option[0]
+		var rect := Rect2(p-Vector2.ONE*Metrics.RADIUS,Vector2.ONE*Metrics.DIAMETER)
+		if not Spacing._fits(s,id,rect) or not _clear_marker(view,e,rect): continue
+		valid_options += 1
+		if valid_options > 6: break
 		var k: int = option[1]
 		var left: Array = path.slice(0,k+2)
 		if Vector2(left[-2],left[-1]) != p:
@@ -237,6 +260,7 @@ static func _place_ring(s: Dictionary, id: String) -> Dictionary:
 		candidate["traces"][e] = left
 		candidate["traces"][other] = right
 		candidate.erase("__spacing_metrics")
+		if not _improves(baseline,inspect(candidate)): continue
 		if _acceptable(candidate,_spacing(s)["score"],s):
 			return candidate
 	return {}
@@ -304,7 +328,7 @@ static func _hidden(s: Dictionary, edge: int, p: Vector2) -> bool:
 				return true
 		elif s["rings"].has(id):
 			var r: Array = s["rings"][id]
-			if p.distance_squared_to(Vector2(r[0],r[1])) <= 25.0:
+			if p.distance_squared_to(Vector2(r[0],r[1])) <= Metrics.RADIUS*Metrics.RADIUS+Metrics.RADIUS:
 				return true
 	return false
 
@@ -332,23 +356,38 @@ static func _bad_entries(s: Dictionary, edge: int) -> int:
 	return bad
 
 
-static func _fix_entry(s: Dictionary, edge: int, clearance: int) -> Dictionary:
+static func _fix_entry(s: Dictionary, edge: int, clearance: int, failed_cities: Dictionary = {}, work_budget: Dictionary = {}) -> Dictionary:
 	if _bad_entries(s,edge) == 0: return {}
 	for city: String in s["trace_ends"][edge]:
 		if not s["sites"].has(city): continue
+		if failed_cities.has(city): continue
 		var outward := _outward(s,edge,city)
-		var direction := Vector2(outward[-2],outward[-1])-Repair._node_rect(s,city).get_center()
+		var outside := Vector2(outward[-2],outward[-1])
+		var direction := outside-Repair._node_rect(s,city).get_center()
+		var alignment := _entry_alignment(Repair._node_rect(s,city),outside)
 		var shifts := [Vector2(6,0),Vector2(-6,0),Vector2(0,6),Vector2(0,-6)]
 		shifts.sort_custom(func(a,b): return (a as Vector2).dot(direction) > (b as Vector2).dot(direction))
 		for shift: Vector2 in shifts:
 			var rect := Repair._node_rect(s,city)
 			if not Spacing._fits(s,city,Rect2(rect.position+shift,rect.size)): continue
+			if _entry_alignment(Rect2(rect.position+shift,rect.size),outside) >= alignment: continue
 			var candidate := s.duplicate(true)
 			var group := Spacing._move(candidate,city,shift)
 			if group.is_empty(): continue
 			Spacing._add_affected(candidate,city,group,s)
-			if Spacing._reroute(candidate,group,true) and _improves(inspect(s),inspect(candidate)) and _acceptable(candidate,clearance,s): return candidate
+			if Spacing._reroute(candidate,group,true,work_budget) and _improves(inspect(s),inspect(candidate)) and _acceptable(candidate,clearance,s): return candidate
+		failed_cities[city] = true
 	return {}
+
+
+## Only shift a city when it improves the available face/lead geometry.
+## Otherwise retrying all four shifts just repeats the same blocked search.
+static func _entry_alignment(rect: Rect2, p: Vector2) -> float:
+	var dx := maxf(0,maxf(rect.position.x+3-p.x,p.x-rect.end.x+4))
+	var dy := maxf(0,maxf(rect.position.y+3-p.y,p.y-rect.end.y+4))
+	var vertical := maxf(p.y-rect.end.y+1,rect.position.y-p.y)
+	var horizontal := maxf(p.x-rect.end.x+1,rect.position.x-p.x)
+	return minf(dx*dx+pow(maxf(0,6-vertical),2),dy*dy+pow(maxf(0,6-horizontal),2))
 
 
 static func _visible_route(s: Dictionary, edge: int) -> Array:
@@ -382,3 +421,20 @@ static func _spacing(s: Dictionary) -> Dictionary:
 	if not s.has("__spacing_metrics"):
 		s["__spacing_metrics"] = Spacing.inspect(s)
 	return s["__spacing_metrics"]
+
+
+static func _path_bounds(f: Array) -> Rect2:
+	var box := Rect2(Vector2(f[0],f[1]),Vector2.ZERO)
+	for k in range(2,f.size(),2): box = box.expand(Vector2(f[k],f[k+1]))
+	return box
+
+
+static func _changed_bounds(before: Dictionary, after: Dictionary) -> Rect2:
+	var area := Rect2()
+	var first := true
+	for edge in before["traces"].size():
+		if before["traces"][edge] == after["traces"][edge]: continue
+		var box := _path_bounds(before["traces"][edge]).merge(_path_bounds(after["traces"][edge]))
+		area = box if first else area.merge(box)
+		first = false
+	return area

@@ -1,6 +1,8 @@
 class_name BoardSchematic
 extends RefCounted
 
+const Metrics = preload("res://core/map/board_metrics.gd")
+
 const Quality = preload("res://core/map/board_quality.gd")
 const RouteRepair = preload("res://core/map/board_route_repair.gd")
 const Spacing = preload("res://core/map/board_spacing.gd")
@@ -42,7 +44,7 @@ const RouteCleanup = preload("res://core/map/board_route_cleanup.gd")
 ## приближения (решение владельца, 2026-09-22): карта на четверых встаёт в
 ## зону доски 612x456 один в один. Шаг 60 (было 128, 64, 48 под экран
 ## 640x360), подписи и очки шрифтом 5x7 (3x5 на новом экране не читался),
-## места под войска 11 px с зазором 1 px, тупиковые кольца убраны из игры
+## места под войска 13 px с зазором 1 px, тупиковые кольца убраны из игры
 ## (MapGraph.prune_dead_ends), названия сокращены до пяти знаков (SHORT_NAMES):
 ## при шести рамки на тесных гексах налезали друг на друга.
 ## Замер: tools/measure_board.gd, наложения: tools/overlaps.gd.
@@ -67,12 +69,12 @@ const NODE_GAP := 4
 const IMAGE_MARGIN := 4
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
-const RING_R := 5
+const RING_R := Metrics.RADIUS
 const BOX_PAD := 1
-## 11px troops and tunnel spaces (owner's trial, 2026-11-20).
+## 13px troops and tunnel spaces (owner, 2026-11-23).
 ## Saved 9px emblems are centred on the larger token by SchematicPainter.
-const SLOT_R := 5
-const SLOT_PITCH := 12
+const SLOT_R := Metrics.RADIUS
+const SLOT_PITCH := Metrics.PITCH
 const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
@@ -222,11 +224,11 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ## (StateView.board_snapshot). The dedicated server prepares boards off the
 ## main thread (NetSession._start_room and BoardStock).
 static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS) -> Dictionary:
-	var result := _build_once(state, polish, budget_ms)
+	var result := _build_once(state, polish, budget_ms, Metrics.DIAMETER >= 13 and budget_ms < NO_BUDGET)
 	if result.is_empty():
 		return result
 	var quality := Quality.inspect(result, RING_R)
-	if not quality["bad_traces"].is_empty():
+	if not quality["bad_traces"].is_empty() or quality["overlaps"] > 0 or not quality.get("close_nodes",[]).is_empty():
 		result = RouteRepair.repair(result)
 		quality = Quality.inspect(result, RING_R)
 		result["quality_rerouted"] = true
@@ -236,13 +238,22 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 	# Keep the same deal and graph. If local polishing or a time-limited
 	# route left a bad drawing, try the clean tile arrangement and then
 	# allow routing to finish. Never silently treat grid=true as validation.
+	var variants := []
 	for attempt in [[not polish, budget_ms, false], [polish, NO_BUDGET, false],
 			[not polish, NO_BUDGET, false], [polish, NO_BUDGET, true], [not polish, NO_BUDGET, true]]:
 		var candidate := _build_once(state, attempt[0], attempt[1], attempt[2])
 		var candidate_quality := Quality.inspect(candidate, RING_R)
-		if not candidate_quality["bad_traces"].is_empty():
-			candidate = RouteRepair.repair(candidate)
-			candidate_quality = Quality.inspect(candidate, RING_R)
+		var score := _quality_score(candidate_quality)
+		if score == 0:
+			candidate["quality_rebuilt"] = true
+			return RouteCleanup.simplify(Spacing.optimise(candidate))
+		variants.append({"drawing":candidate,"score":score})
+	# Repair the least obstructed drawings first. An unpolished alternative
+	# can have many overlaps; exploring it first stalled otherwise usable deals.
+	variants.sort_custom(func(a,b): return a["score"] < b["score"])
+	for variant: Dictionary in variants:
+		var candidate: Dictionary = RouteRepair.repair(variant["drawing"])
+		var candidate_quality := Quality.inspect(candidate, RING_R)
 		var score := _quality_score(candidate_quality)
 		if score < best_score:
 			result = candidate
@@ -257,7 +268,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 
 
 static func _quality_score(quality: Dictionary) -> int:
-	return int(quality["crossings"]) * 10000 + int(quality["overlaps"]) * 1000 + int(quality["foreign_hits"])
+	return int(quality["crossings"]) * 10000 + int(quality["overlaps"]) * 1000 + int(quality["foreign_hits"]) + quality.get("close_nodes",[]).size()*100
 
 
 static func _build_once(state: GameState, polish: bool, budget_ms: int, repair_cross_hex := false) -> Dictionary:
@@ -1382,6 +1393,8 @@ func _snapshot_routes(inc: Array) -> Array:
 ## гексы вокруг центра отходят «чуть дальше», пока щель до центра не
 ## сравняется со щелью до внешних соседей. Центральный гекс стоит на месте.
 func _spread(zone: Vector2) -> void:
+	_route_started = Time.get_ticks_msec()
+	_route_work = 0
 	var ports := _spread_ports()
 	var off := _spread_offsets(ports, zone)
 	if off.is_empty():
@@ -2274,7 +2287,7 @@ func _grid_route(r: Rect2) -> bool:
 			if _rt_full.has(j):
 				parked[j] = _rt_full[j]
 				_rt_full.erase(j)
-	var started := Time.get_ticks_msec()
+	var started := _route_started if _route_started >= 0 else Time.get_ticks_msec()
 	while true:
 		var failed := _grid_route_once(started)
 		if failed == -1:
@@ -2536,6 +2549,7 @@ func _grid_route_once(started: int) -> int:
 		if Time.get_ticks_msec() - started > _budget_ms:
 			return -2
 		var failed := _rt_route_all(order, ends)
+		if failed == -2: return -2
 		_rt_round_failed.append(failed)
 		if failed < 0:
 			return -1
@@ -2552,11 +2566,14 @@ func _grid_route_once(started: int) -> int:
 
 const ROUTE_RETRIES := 6
 const CHAIN_RETRIES := 2
-const ROUTE_BUDGET_MS := 4000
-## Без лимита: выделенный сервер (владелец, 2026-10-12) — доска всегда в сетке и
-## от сида всегда одна и та же; игроки на это время видят DEALING THE CARDS.
+const ROUTE_BUDGET_MS := 2000 if Metrics.DIAMETER >= 13 else 4000
+## Server search uses a deterministic work budget instead of wall time.
+## Geometry repair validates the fallback if grid routing exhausts it.
 const NO_BUDGET := 1 << 30
 var _budget_ms := ROUTE_BUDGET_MS   # build(budget_ms): запас доски на сервере строит без спешки
+var _route_started := -1           # one budget for all packing/routing variants
+var _route_work := 0
+const ROUTE_WORK_LIMIT := 500000     # deterministic cap for server searches
 var _grid_ok := false   # трассы легли в сетку 5x3 (иначе доска по-старому)
 
 ## Прокладывает мостики по порядку; ответ — порт, что не лёг, или -1.
@@ -2565,7 +2582,9 @@ func _rt_route_all(order: Array, ends: Dictionary) -> int:
 	_rt_places = {}
 	_rt_bridge.fill(0)
 	for i: int in order:
+		if _route_timed_out(): return -2
 		var path := _rt_find_full(i) if _rt_full.has(i) else _rt_find(i)
+		if _route_timed_out(): return -2
 		if path.is_empty():
 			return i
 		if i >= _rt_chain_base():
@@ -2963,7 +2982,11 @@ func _rt_find(i: int) -> PackedVector2Array:
 			g[s1] = 0.0
 			_rt_push(heap_s, heap_f, s1, float(_seg_dist(ca, b_lo, b_hi)) * ROUTE_GREED)
 	var goal := -1
+	var scanned := 0
 	while not heap_s.is_empty():
+		scanned += 1
+		_route_work += 1
+		if scanned % 256 == 0 and _route_timed_out(): return PackedVector2Array()
 		var s := heap_s[0]
 		var f := heap_f[0]
 		_rt_pop(heap_s, heap_f)
@@ -3256,7 +3279,11 @@ func _rt_find_full(i: int) -> PackedVector2Array:
 	var goal := -1
 	var goal_exit: Array = []
 	var best := INF
+	var scanned := 0
 	while not heap_s.is_empty():
+		scanned += 1
+		_route_work += 1
+		if scanned % 256 == 0 and _route_timed_out(): return PackedVector2Array()
 		var s := heap_s[0]
 		var f := heap_f[0]
 		_rt_pop(heap_s, heap_f)
@@ -3386,6 +3413,7 @@ func _rt_reachable(starts: Array, goal_list: Array, lo: Vector2i, hi: Vector2i, 
 		queue.append(c)
 	var head := 0
 	while head < queue.size():
+		if head % 512 == 0 and _route_timed_out(): return false
 		var c := queue[head]
 		head += 1
 		for d in 4:
@@ -4256,3 +4284,8 @@ func _export(state: GameState) -> Dictionary:
 		"a2_legend": a2_legend,
 	}
 
+
+
+func _route_timed_out() -> bool:
+	if _budget_ms >= NO_BUDGET: return _route_work > ROUTE_WORK_LIMIT
+	return _route_started >= 0 and Time.get_ticks_msec()-_route_started > _budget_ms

@@ -1,11 +1,13 @@
 extends RefCounted
 
+const Metrics = preload("res://core/map/board_metrics.gd")
+
 const Quality = preload("res://core/map/board_quality.gd")
 const Repair = preload("res://core/map/board_route_repair.gd")
 ## Clearance targets in board pixels (the 1920x1080 view uses scale 2).
 const NODE_GAP := 6
 const TRACE_GAP := 4
-const MAX_ATTEMPTS := 32
+const MAX_ATTEMPTS := 24
 const MAX_PASSES := 8
 const SEARCH_LIMIT := 20000
 const SHIFTS := [Vector2(0,12),Vector2(12,0),Vector2(0,-12),Vector2(-12,0),
@@ -22,7 +24,7 @@ static func inspect(s: Dictionary) -> Dictionary:
 		nodes[id] = Rect2(r[0],r[1],r[2],r[3])
 	for id: String in s["rings"]:
 		var p: Array = s["rings"][id]
-		nodes[id] = Rect2(p[0]-5,p[1]-5,11,11)
+		nodes[id] = Rect2(p[0]-Metrics.RADIUS,p[1]-Metrics.RADIUS,Metrics.DIAMETER,Metrics.DIAMETER)
 	var score := 0
 	var crowded := {}
 	var tight := {}
@@ -155,7 +157,7 @@ static func optimise(s: Dictionary) -> Dictionary:
 
 static func _valid(s: Dictionary) -> bool:
 	var q := Quality.inspect(s)
-	return q["crossings"] == 0 and q["overlaps"] == 0 and q["foreign_hits"] == 0
+	return q["crossings"] == 0 and q["overlaps"] == 0 and q["foreign_hits"] == 0 and q.get("close_nodes",[]).is_empty()
 
 
 static func _fits(s: Dictionary, id: String, rect: Rect2) -> bool:
@@ -301,7 +303,7 @@ static func _add_nearby(s: Dictionary, rect: Rect2, group: Array) -> void:
 				break
 
 
-static func _reroute(s: Dictionary, group: Array, clean_entries := false) -> bool:
+static func _reroute(s: Dictionary, group: Array, clean_entries := false, work_budget: Dictionary = {}) -> bool:
 	s.erase("__spacing_metrics")
 	var remaining := group.duplicate()
 	var route_view := s.duplicate()
@@ -318,11 +320,11 @@ static func _reroute(s: Dictionary, group: Array, clean_entries := false) -> boo
 				var at := 0 if endpoint == 0 else flat.size()-2
 				flat[at] = r[0]+floori(r[2]/2.0)
 				flat[at+1] = r[1]+floori(r[3]/2.0)
-		var path := Repair._route(route_view,edge,remaining,NODE_GAP,TRACE_GAP,SEARCH_LIMIT,6 if clean_entries else 0)
+		var path := Repair._route(route_view,edge,remaining,NODE_GAP,TRACE_GAP,SEARCH_LIMIT,6 if clean_entries else 0,true,work_budget)
 		if path.is_empty():
 			# Open a crowded cluster incrementally: the next accepted move can
 			# then give its neighbour enough room for the full target clearance.
-			path = Repair._route(route_view,edge,remaining,2,2,SEARCH_LIMIT,6 if clean_entries else 0)
+			path = Repair._route(route_view,edge,remaining,2,2,SEARCH_LIMIT,6 if clean_entries else 0,true,work_budget)
 		if path.size() < 4:
 			return false
 		s["traces"][edge] = path
