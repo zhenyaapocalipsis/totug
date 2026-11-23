@@ -966,7 +966,6 @@ func _rebuild_schematic_texture() -> void:
 	var schematic: Dictionary = _without_removed(_board.get("schematic", {}))
 	if not schematic.is_empty():
 		var image := SchematicPainter.paint(schematic, art_layer, object_layer)
-		image.generate_mipmaps()
 		_schematic_texture = ImageTexture.create_from_image(image)
 
 
@@ -1240,15 +1239,11 @@ func _draw() -> void:
 		draw_set_transform(shake)
 
 	if _schematic_on():
-		# Пиксель-арт: пока пиксель схемы занимает целое число экранных,
-		# рисуем nearest — «жёсткими» квадратами. Мягкий фильтр остаётся
-		# только для запасного случая (окно меньше самой схемы).
+		# Pixel art stays sharp even if a small window or a decision strip
+		# forces fractional downscaling. Never blend neighbouring pixels.
 		var scale := window_scale()
-		var steps := _zoom * scale
-		var crisp: bool = absf(steps - roundf(steps)) < 0.01
-		var filter := TEXTURE_FILTER_NEAREST if crisp else TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		if texture_filter != filter:
-			texture_filter = filter
+		if texture_filter != TEXTURE_FILTER_NEAREST:
+			texture_filter = TEXTURE_FILTER_NEAREST
 		var origin := _to_screen(Vector2.ZERO)
 		origin = (origin * scale).round() / scale
 		draw_texture_rect(_schematic_texture, Rect2(origin, _schematic_texture.get_size() * _zoom), false)
@@ -1749,7 +1744,7 @@ func _draw_board_vp() -> void:
 			at = _to_screen(centre) + Vector2(troop_radius() * 2.2, -troop_radius() * 2.2)
 		draw_circle(at, r + 1.5, colour(String(tokens[site_id]), Color(0.7, 0.7, 0.7)))
 		draw_circle(at, r, Color(0.98, 0.80, 0.25))
-		draw_line(at + Vector2(0, -r * 0.55), at + Vector2(0, r * 0.55), Color(0.35, 0.22, 0.05), 2.0)
+		draw_line(at + Vector2(0, -r * 0.55), at + Vector2(0, r * 0.55), Color(0.35, 0.22, 0.05), _zoom if _schematic_on() else 1.0)
 
 
 func _draw_spies() -> void:
@@ -1771,7 +1766,7 @@ func _draw_spies() -> void:
 			var diamond := PackedVector2Array([
 				at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0)])
 			draw_colored_polygon(diamond, colour)
-			draw_polyline(diamond + PackedVector2Array([at + Vector2(0, -d)]), Color(0, 0, 0, 0.8), 1.5)
+			draw_polyline(diamond + PackedVector2Array([at + Vector2(0, -d)]), Color(0, 0, 0, 0.8), _zoom if _schematic_on() else 1.0)
 
 
 ## Центр i-го из count ромбиков шпионов у локации (координаты панели) или null.

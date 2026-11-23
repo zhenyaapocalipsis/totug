@@ -15,7 +15,8 @@ const BOX_DARK := Color("1c1830")
 const INK := Color("241c34")
 const MARKER_FILL := Color("f6e08a")
 const MARKER_EDGE := Color("e0a820")
-const TRACE_WIDTH := 2
+const TRACE_WIDTH := 1
+const SPACE_OUTLINE_WIDTH := 1
 ## Скругление прямого угла: угол срезается на столько пикселей вдоль каждой
 ## стороны, а срез заполняется диагональю. Больше 3 на пиксельной схеме уже не
 ## «скругление», а заметный скос.
@@ -73,7 +74,7 @@ static func paint(schematic: Dictionary, show_art := false, show_objects := fals
 		var at: Array = schematic["rings"][slot_id]
 		var c := Vector2i(roundi(at[0]), roundi(at[1]))
 		disc(img, c, BoardSchematic.RING_R, TRACE)
-		disc(img, c, BoardSchematic.RING_R - 2, BG)
+		disc(img, c, BoardSchematic.RING_R - SPACE_OUTLINE_WIDTH, BG)
 	for site_id: String in (schematic.get("sites", {}) as Dictionary).keys():
 		_site(img, schematic["sites"][site_id])
 	return img
@@ -159,11 +160,7 @@ static func _site(img: Image, site: Dictionary) -> void:
 	var fill := MARKER_FILL if marker else (BOX_DARK if dark else BOX_LIGHT)
 	var ink := BOX_LIGHT if dark and not marker else INK
 
-	# Город с маркером контроля (даёт Influence) — светло-золотая плашка в
-	# золотой рамке толщиной 2 (тёмная плашка читалась бы как стартовый город).
-	# Второй пиксель рамки снаружи, чтобы не налезть на название и места.
-	if marker:
-		img.fill_rect(rect.grow(1), MARKER_EDGE)
+	# All city frames, including gold control-marker cities, are one pixel.
 	img.fill_rect(rect, MARKER_EDGE if marker else (BOX_LIGHT if dark else INK))
 	img.fill_rect(rect.grow(-1), fill)
 	var box := BoardSchematic.site_box(String(site["name"]), (site["slots"] as Dictionary).size(), marker)
@@ -183,7 +180,7 @@ static func _site(img: Image, site: Dictionary) -> void:
 		var at: Array = site["slots"][slot_id]
 		var c := Vector2i(roundi(at[0]), roundi(at[1]))
 		disc(img, c, BoardSchematic.SLOT_R, ink)
-		disc(img, c, BoardSchematic.SLOT_R - 1, fill)
+		disc(img, c, BoardSchematic.SLOT_R - SPACE_OUTLINE_WIDTH, fill)
 
 
 # --- фон из арта гексов (Stage 0) ---------------------------------------------

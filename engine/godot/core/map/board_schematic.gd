@@ -37,7 +37,7 @@ extends RefCounted
 ## приближения (решение владельца, 2026-09-22): карта на четверых встаёт в
 ## зону доски 612x456 один в один. Шаг 60 (было 128, 64, 48 под экран
 ## 640x360), подписи и очки шрифтом 5x7 (3x5 на новом экране не читался),
-## места под войска 11 px вплотную, тупиковые кольца убраны из игры
+## места под войска 11 px с зазором 1 px, тупиковые кольца убраны из игры
 ## (MapGraph.prune_dead_ends), названия сокращены до пяти знаков (SHORT_NAMES):
 ## при шести рамки на тесных гексах налезали друг на друга.
 ## Замер: tools/measure_board.gd, наложения: tools/overlaps.gd.
@@ -67,7 +67,7 @@ const BOX_PAD := 1
 ## 11px troops and tunnel spaces (owner's trial, 2026-11-20).
 ## Saved 9px emblems are centred on the larger token by SchematicPainter.
 const SLOT_R := 5
-const SLOT_PITCH := 11
+const SLOT_PITCH := 12
 const SLOT_COLS := 3
 const VP_SCALE := 1
 const NAME_GAP := 2
@@ -222,7 +222,11 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 	schematic._apply_tiles(_load_tiles(), hex_by_slot, state.layout.get("rotations", {}))
 	if polish:
 		schematic._optimise(POLISH_PASSES)
+	# Grid placement separates whole hex groups later. Repairing their
+	# temporary overlap here can push two cities of one hex together.
+	schematic._repair_hex_only = SPREAD_PLAYERS.has(players)
 	schematic._repair()
+	schematic._repair_hex_only = false
 	if SPREAD_PLAYERS.has(players):
 		schematic._spread(ZONE - Vector2(0, PROMPT_STRIP + BOTTOM_STRIP))
 	return schematic._export(state)
@@ -370,24 +374,25 @@ static func site_box(site_name: String, slot_count: int, marker := false) -> Dic
 	var name_w := PixelFont.text_width(short_name(site_name))
 	var cols := mini(maxi(slot_count, 1), SLOT_COLS)
 	var rows := int(ceil(slot_count / float(SLOT_COLS)))
-	var slots_w := cols * SLOT_PITCH - 2
+	var slots_w := (cols - 1) * SLOT_PITCH + SLOT_R * 2 + 1
+	var slots_h := maxi(0, rows - 1) * SLOT_PITCH + SLOT_R * 2 + 1
 	var icons_w := MARKER_ICONS_W + 2 if marker else 0
 	# Ширина цифры очков со свободным пикселем справа: без него цифра упиралась
 	# в рамку, а входящая в этом же ряду трасса читалась как перечёркивание.
 	var vp_w := PixelFont.ADVANCE * VP_SCALE
 	var body_w := icons_w + slots_w + 4 + vp_w
 	var inner_w := maxi(name_w, body_w)
-	var body_h := maxi(rows * SLOT_PITCH - 2, PixelFont.HEIGHT * VP_SCALE)
+	var body_h := maxi(slots_h, PixelFont.HEIGHT * VP_SCALE)
 	if marker:
 		body_h = maxi(body_h, MARKER_ICONS_H)
 	var w := 2 + 2 * BOX_PAD + inner_w
 	var h := 2 + 2 * BOX_PAD + PixelFont.HEIGHT + NAME_GAP + body_h
 	var left := 1 + BOX_PAD + (inner_w - body_w) / 2
 	var body_top := 1 + BOX_PAD + PixelFont.HEIGHT + NAME_GAP
-	var top := body_top + (body_h - (rows * SLOT_PITCH - 2)) / 2
+	var top := body_top + (body_h - slots_h) / 2
 	# Нижний пиксель последнего ряда кругов, под ним зазор и рамка.
 	if slot_count > 0:
-		h = maxi(h, top + rows * SLOT_PITCH - 1 + SLOT_BOTTOM_GAP + 2)
+		h = maxi(h, top + slots_h + SLOT_BOTTOM_GAP + 1)
 	var slots: Array[Vector2] = []
 	for i in slot_count:
 		var row := i / SLOT_COLS
@@ -590,6 +595,9 @@ func _near_end(p: Vector2, n: int) -> bool:
 ## that lands the node on anything is taken back, and the other node of the
 ## pair gets its turn. A move can free one pair and touch another, so the
 ## pass runs a few times.
+var _repair_hex_only := false
+
+
 func _repair() -> void:
 	for _round in REPAIR_ROUNDS:
 		for kind in [Kind.RING, Kind.LEGEND, Kind.SITE]:
@@ -621,7 +629,7 @@ func _push_apart() -> void:
 			if _kind[n] == Kind.PORT:
 				continue
 			for m: int in _near[_hex[n]]:
-				if m <= n or _kind[m] == Kind.PORT:
+				if m <= n or _kind[m] == Kind.PORT or (_repair_hex_only and _hex[m] != _hex[n]):
 					continue
 				var over := _node_rect(n, PUSH_GAP * 0.5).intersection(_node_rect(m, PUSH_GAP * 0.5))
 				if over.size.x <= 0.0 or over.size.y <= 0.0:
@@ -675,7 +683,7 @@ func _free_at(n: int, at: Vector2) -> bool:
 	var rect := _node_rect(n, PUSH_GAP * 0.5)
 	var free := true
 	for m: int in _near[_hex[n]]:
-		if m == n or _kind[m] == Kind.PORT:
+		if m == n or _kind[m] == Kind.PORT or (_repair_hex_only and _hex[m] != _hex[n]):
 			continue
 		var over := rect.intersection(_node_rect(m, PUSH_GAP * 0.5))
 		if over.size.x > 0.0 and over.size.y > 0.0:
@@ -690,7 +698,7 @@ func _crowded(n: int) -> bool:
 	var grown := _node_rect(n, NODE_GAP)
 	var rect := _node_rect(n)
 	for m: int in _near[_hex[n]]:
-		if m == n:
+		if m == n or (_repair_hex_only and _hex[m] != _hex[n]):
 			continue
 		if _hex[m] != _hex[n] and grown.intersects(_node_rect(m)):
 			return true
@@ -1837,7 +1845,7 @@ func _sp_toward_line(hexes: Array, line: float) -> void:
 ## сетка, только часть клеток пустая: на двоих крайние колонки — по одному
 ## гексу (снизу слева, сверху справа), в средней — только центр; на троих
 ## крайние — по гексу сверху, в средней — центр и низ.
-const GRID_MIN_GAP := 12.0   # щель между рядами под трассы
+const GRID_MIN_GAP := 8.0   # щель между рядами под трассы
 ## Между колонками может быть и уже: трассы идут и сквозь гексы, где пусто.
 const GRID_MIN_GAP_X := 2.0
 ## Полоса вдоль верха и низа доски: стык трассы у края, смотрящий наружу,
@@ -1999,7 +2007,9 @@ func _grid_try(cell: Dictionary) -> bool:
 ## пути (Беллман-Форд); берётся середина между самой ранней и самой поздней
 ## расстановкой. Ответ hex -> координата его точки линии; не вышло — пусто.
 const GRID_SOFT_MAX := 16
-const GRID_SOFT_GAP := 6.0
+## _sp_box already includes obstacle margins. Leave a trace-width gap between
+## groups so larger cities do not overflow the fixed 655px board zone.
+const GRID_SOFT_GAP := 4.0
 
 func _grid_soft(slot: Dictionary, lo_ext: Dictionary, hi_ext: Dictionary, lo: float, hi: float,
 		gap: float, locked: Dictionary, diag: bool) -> Dictionary:
