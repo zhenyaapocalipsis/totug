@@ -23,6 +23,16 @@ func shot(name_value: String) -> void:
 	if not shots or DisplayServer.get_name() == "headless": return
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://../../Codex outputs/board_ui_13px_2026-11-24/"+name_value+".png")
+func check_glyph_widths(panel: PlayersPanel) -> void:
+	var labels: Array[Label] = []
+	for item in panel._list.get_child(0).get_children():
+		if item is Label: labels.append(item)
+	for row: Dictionary in panel._rows.values():
+		for value: Label in row.values.values(): labels.append(value)
+	for label: Label in labels:
+		var width := label.get_theme_font("font").get_string_size(label.text,HORIZONTAL_ALIGNMENT_LEFT,-1,label.get_theme_font_size("font_size")).x
+		check(width <= label.size.x,"complete bitmap glyphs fit: "+label.text)
+
 func _run() -> void:
 	if DisplayServer.get_name() != "headless": DisplayServer.window_set_size(Vector2i(1920,1080))
 	L10n.set_locale("en")
@@ -121,10 +131,12 @@ func _run() -> void:
 	for row: Dictionary in screen._players_panel._rows.values():
 		for digit: Control in row.digits.values(): check(digit is Label,"four two-digit trophies retain the normal font")
 		check(row.trophies.get_global_rect().end.x <= screen._players_panel.get_global_rect().end.x-1,"trophy counts remain inside player table")
+	check_glyph_widths(screen._players_panel)
 	await shot("players-table-crowded")
 	screen._players_panel.update_from_view(screen._view)
 	L10n.set_locale("ru")
 	for i in 8: await process_frame
+	check_glyph_widths(screen._players_panel)
 	await shot("board-russian")
 	seed(20261124)
 	screen._god_panel._generate_button.pressed.emit()
