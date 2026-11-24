@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48425": "farseerwo", "48426": "worldbreaker", "48429": "herenn", "48433": "vyranoth", "48500": "ragnaros_gf", "48501": "kiljaeden", "48513": "xavius", "48514": "umbra", "48535": "archimonde", "48538": "nythendra", "48539": "moldara", "48600": "inara", "48626": "mutanus", "48630": "yshaarj", "48631": "ravitz", "48632": "azshara_ocean", "48700": "kithix", "48701": "azalina", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "48715": "staff_endbringer", "48728": "tichondrius", "48732": "broxigar", "48738": "sylvanastheaccused", "49003": "gennworgenking", "49004": "sunsapperlynessa", "49015": "medivhthehallowed", "49017": "commanderbeatrix", "49019": "tyrande", "49022": "ursol", "49114": "thunderbringer", "49117": "blooddoctorthalena", "49120": "blightfang", "49211": "chronogor", "49213": "mathiasshaw", "49215": "norgannon", "49216": "daveberard", "49218": "omen", "49219": "mastermindyoggsaro", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49402": "ladydarkvein", "49407": "karovthebroken", "49412": "staffoftrickery", "49416": "drestagath", "49418": "nzothdreamsend", "49514": "amitutkeeperofamit", "49515": "archvillainrafaam", "49516": "ghuun", "49517": "wrathion", "49518": "moroes", "49521": "fyrakktheblazing", "49522": "captaincrowley", "49614": "bearonglashear", "49615": "hodirfatherofgiant", "49616": "rasfrostwhisper", "49618": "thaddiusmonstrosit", "49620": "thelichking", "49634": "irida", "49635": "zerontu", "49636": "neerufireblade", "49712": "titanographerosk", "49713": "arisenonyxia", "49715": "kaelthas", "49716": "velenleaderoftheex", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49800": "arannathrillseeker", "49806": "baronessvashj", "49822": "krogcraterking", "49906": "eternus", "49909": "nablyathewatcher", "50002": "theexodar", "50008": "the8handsfrombeyon", "50102": "timethiefrafaam", "50104": "maruutstonebinder", "50105": "theunknowableone", "50108": "shudderblock"}
+const RECIPES := {"49908": "ysera", "49302": "benedictus", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48425": "farseerwo", "48426": "worldbreaker", "48429": "herenn", "48433": "vyranoth", "48500": "ragnaros_gf", "48501": "kiljaeden", "48513": "xavius", "48514": "umbra", "48535": "archimonde", "48538": "nythendra", "48539": "moldara", "48600": "inara", "48626": "mutanus", "48630": "yshaarj", "48631": "ravitz", "48632": "azshara_ocean", "48700": "kithix", "48701": "azalina", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "48715": "staff_endbringer", "48721": "elizagoreblade", "48728": "tichondrius", "48732": "broxigar", "48733": "soulburnervaria", "48738": "sylvanastheaccused", "49003": "gennworgenking", "49004": "sunsapperlynessa", "49015": "medivhthehallowed", "49017": "commanderbeatrix", "49019": "tyrande", "49022": "ursol", "49113": "azurequeensindrago", "49114": "thunderbringer", "49117": "blooddoctorthalena", "49118": "siredenathrius", "49120": "blightfang", "49121": "thejailer", "49122": "chronolordepoch", "49211": "chronogor", "49212": "ayalotuskingpin", "49213": "mathiasshaw", "49215": "norgannon", "49216": "daveberard", "49218": "omen", "49219": "mastermindyoggsaro", "49220": "endtimemurozond", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49305": "bonelordfrostwhisp", "49402": "ladydarkvein", "49407": "karovthebroken", "49412": "staffoftrickery", "49413": "altruistheoutcast", "49416": "drestagath", "49417": "logoshbloodfighter", "49418": "nzothdreamsend", "49514": "amitutkeeperofamit", "49515": "archvillainrafaam", "49516": "ghuun", "49517": "wrathion", "49518": "moroes", "49520": "bloodqueenlanathel", "49521": "fyrakktheblazing", "49522": "captaincrowley", "49613": "overlorddrakuru", "49614": "bearonglashear", "49615": "hodirfatherofgiant", "49616": "rasfrostwhisper", "49617": "kelthuzad", "49618": "thaddiusmonstrosit", "49620": "thelichking", "49634": "irida", "49635": "zerontu", "49636": "neerufireblade", "49712": "titanographerosk", "49713": "arisenonyxia", "49714": "ultraxion", "49715": "kaelthas", "49716": "velenleaderoftheex", "49717": "theeternalhold", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49800": "arannathrillseeker", "49801": "chronikar", "49803": "mugzee", "49806": "baronessvashj", "49811": "anachronos", "49815": "overseerfrigidara", "49821": "archwitchwillow", "49822": "krogcraterking", "49900": "jacedarkweaver", "49903": "argustheemeraldsta", "49904": "princemalchezaar", "49906": "eternus", "49909": "nablyathewatcher", "50001": "sargerasthedestroy", "50002": "theexodar", "50003": "isorath", "50007": "nozdormubronzeaspe", "50008": "the8handsfrombeyon", "50100": "razidir", "50101": "beaststalkertavish", "50102": "timethiefrafaam", "50104": "maruutstonebinder", "50105": "theunknowableone", "50108": "shudderblock"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -51,6 +51,14 @@ const RECIPES := {"48315": "fizzlebang", "48316": "blackempire", "48325": "kara"
 ## прячутся только сетки жетона и интерфейса карты HS (hideMeshRx в рецепте), а шлейфы, разрезы,
 ## частицы внутри узла жетона и трещины в земле остаются; виньетки на весь экран спрятаны.
 const SCRIPTS := {
+	"ysera": {"frames": "ysera", "sounds": "ysera",
+		"suppress_baked_card": [97, 159, Vector4(456, 318, 524, 412)],
+		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		"cues": [[0.0, "YseraEmeraldAspect_CustomSummon_Sound", 1.0]]},
+	"benedictus": {"frames": "benedictus", "sounds": "benedictus",
+		"suppress_baked_card": [77, 139, Vector4(456, 318, 524, 412)],
+		"card": {"face": "mini", "reveal": 1.64, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		"cues": [[0.0, "DarkbishopBenedictus_CustomSummon_Sound", 0.8], [1.2, "DarkbishopBenedictus_CustomSummon_Impact_Sound", 0.8]], "shakers": [[0.017, 1.65, 0.03, [[0.0, 0.0], [0.03, 0.99], [0.16, 0.12], [0.5, 0.0], [1.0, 0.0]], 0.0708]]},
 	# Deathwing, Worldbreaker (CATA_190h): CATAFX_Deathwing_CustomSummon_Spell (тень
 	# дракона с огненным шлейфом проносится над доской, пике в центр доски (1.13 с),
 	# огненная волна, вспышка, дым, угли) и сразу за ударом CATAFX_Deathwing_Choice_Reveal
@@ -305,6 +313,7 @@ const SCRIPTS := {
 	# 2026-10-25) и копия для соперника спрятаны, весь эффект под картой.
 	# Выжигание пурпурное в цвет разлома.
 	"razidir": {"frames": "razidir", "sounds": "razidir",
+		"suppress_baked_card": [66, 128, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.45, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM 0.85
 		"cues": [[0.0, "Razidir_CustomSummon_Sound", 0.85]],
@@ -394,6 +403,7 @@ const SCRIPTS := {
 	# удар — пасть-цветок в светящейся сфере, щупальца тьмы кружат и гаснут к 2.5 с. Жетон HS
 	# и его свечение спрятаны, весь эффект под картой. Выжигание фиолетовое в цвет портала.
 	"isorath": {"frames": "isorath", "sounds": "isorath",
+		"suppress_baked_card": [47, 109, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline: AudioSource 0.8 с начала; тряски камеры в Timeline нет
 		"cues": [[0.0, "CATAFX_IsoRath_CustomSummon_Sound", 0.8]]},
@@ -507,6 +517,7 @@ const SCRIPTS := {
 	# Сетки жетона HS спрятаны, весь эффект под картой. Выжигание фиолетовое. Владелец выбрал
 	# в HsBrowser 2026-10-27.
 	"azurequeensindrago": {"frames": "azurequeensindrago", "sounds": "azurequeensindrago",
+		"suppress_baked_card": [64, 126, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "TIMEFX_AzureQueenSindragosa_CustomSummon_Cast_Sound", 0.8], [0.967, "TIMEFX_AzureQueenSindragosa_CustomSummon_Impact_Sound", 0.8]],
@@ -525,6 +536,7 @@ const SCRIPTS := {
 	# на 1.4 с вспышка, дым тает. Трещины в земле спрятаны, весь эффект под картой. Выжигание
 	# зелёное. Владелец выбрал в HsBrowser 2026-10-27.
 	"jacedarkweaver": {"frames": "jacedarkweaver", "sounds": "jacedarkweaver",
+		"suppress_baked_card": [91, 153, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.87, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[1.4, "JaceDarkweaver_CustomSummon_Impact_Sound", 0.5]]},
@@ -579,6 +591,7 @@ const SCRIPTS := {
 	# посадки, на 1.08 с алая вспышка, кровавый знак гаснет. Трещины от клинков спрятаны, весь
 	# эффект под картой. Выжигание алое. Владелец выбрал в HsBrowser 2026-10-27.
 	"elizagoreblade": {"frames": "elizagoreblade", "sounds": "elizagoreblade",
+		"suppress_baked_card": [72, 134, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.55, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [],
@@ -588,6 +601,7 @@ const SCRIPTS := {
 	# ледяной луч, на 1.63 с морозный взрыв, иней оседает. Жетон HS спрятан, весь эффект под
 	# картой. Выжигание голубое. Владелец выбрал в HsBrowser 2026-10-27.
 	"bonelordfrostwhisp": {"frames": "bonelordfrostwhisp", "sounds": "bonelordfrostwhisp",
+		"suppress_baked_card": [105, 167, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 2.10, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "BonelordFrostwhisper_CustomSummon_Sound", 0.8], [1.63, "BonelordFrostwhisper_CustomSummon_Impact_Sound", 0.6]],
@@ -598,6 +612,7 @@ const SCRIPTS := {
 	# Жетон HS спрятан, весь эффект под картой. Выжигание золотое. Владелец выбрал в HsBrowser
 	# 2026-10-27.
 	"anachronos": {"frames": "anachronos", "sounds": "anachronos",
+		"suppress_baked_card": [55, 117, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.27, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "Anachronos_CustomSummon_Sound", 0.7], [0.8, "Anachronos_CustomSummon_Impact_Sound", 0.4]],
@@ -662,6 +677,7 @@ const SCRIPTS := {
 	# зелёный удар клинка бьёт в точку посадки, на 1.5 с вспышка. Сетки жетона HS спрятаны,
 	# весь эффект под картой. Выжигание фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
 	"ayalotuskingpin": {"frames": "ayalotuskingpin", "sounds": "ayalotuskingpin",
+		"suppress_baked_card": [97, 159, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "AyaLotusKingpin_CustomSummon_Sound", 0.7], [1.5, "AyaLotusKingpin_CustomSummon_Impact_Sound", 0.7]],
@@ -671,6 +687,7 @@ const SCRIPTS := {
 	# молнии бьют во все стороны, на 1.25 с удар. Сетки жетона HS и виньетка-прожектор
 	# спрятаны, весь эффект под картой. Выжигание синее. Владелец выбрал в HsBrowser 2026-10-27.
 	"endtimemurozond": {"frames": "endtimemurozond", "sounds": "endtimemurozond",
+		"suppress_baked_card": [82, 144, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "ENDFX_EndtimeMurozond_CustomSummon_Sound", 0.7], [1.25, "ENDFX_EndtimeMurozond_CustomSummon_Impact_Sound", 0.9]],
@@ -680,6 +697,7 @@ const SCRIPTS := {
 	# сходятся к точке посадки, на 1.53 с белая вспышка. Сетки жетона HS спрятаны, весь
 	# эффект под картой. Выжигание бронзовое. Владелец выбрал в HsBrowser 2026-10-27.
 	"nozdormubronzeaspe": {"frames": "nozdormubronzeaspe", "sounds": "nozdormubronzeaspe",
+		"suppress_baked_card": [99, 161, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 2.00, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "NozdormuBronzeAspect_CustomSummon_Sound", 0.9]],
@@ -707,6 +725,7 @@ const SCRIPTS := {
 	# фиолетовая сфера с молниями. Жетон HS спрятан, весь эффект под картой. Выжигание
 	# фиолетовое. Владелец выбрал в HsBrowser 2026-10-27.
 	"ultraxion": {"frames": "ultraxion", "sounds": "ultraxion",
+		"suppress_baked_card": [84, 146, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "CATAFX_Ultraxion_CustomSummon_Sound", 0.7], [1.28, "CATAFX_Ultraxion_CustomSummon_Impact_Sound", 0.7]],
@@ -729,6 +748,7 @@ const SCRIPTS := {
 	# портрета (GlowQuad, клип legacy) спрятано. Выжигание голубое. Владелец выбрал в HsBrowser
 	# 2026-10-27.
 	"kelthuzad": {"frames": "kelthuzad", "sounds": "kelthuzad",
+		"suppress_baked_card": [97, 159, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM 1.0 с начала
 		"cues": [[0.0, "KelThuzad_CustomSummon_Sound_01", 1.0]],
@@ -739,6 +759,7 @@ const SCRIPTS := {
 	# миньона и осколки (mesh_ImpactShatter) спрятаны. Выжигание фиолетовое. Владелец выбрал в
 	# HsBrowser 2026-10-27.
 	"princemalchezaar": {"frames": "princemalchezaar", "sounds": "princemalchezaar",
+		"suppress_baked_card": [97, 159, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.97, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM: портал 0.9 с начала, удар 0.7 с 1.5 с
 		"cues": [[0.0, "MalchezaarReturns_CustomSummon_Emerge_Sound", 0.9], [1.5, "MalchezaarReturns_CustomSummon_Land_Sound", 0.7]]},
@@ -747,6 +768,7 @@ const SCRIPTS := {
 	# 0.95 с огненный выброс. Свечение миньона спрятано. Выжигание фиолетовое. Владелец
 	# выбрал в HsBrowser 2026-10-27.
 	"altruistheoutcast": {"frames": "altruistheoutcast", "sounds": "altruistheoutcast",
+		"suppress_baked_card": [64, 126, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlayClipAction FSM 0.7: с начала и удар с 0.95 с
 		"cues": [[0.0, "Altruis_CustomSummon_Sound", 0.7], [0.95, "Altruis_CustomSummon_Impact_Sound", 0.7]],
@@ -757,6 +779,7 @@ const SCRIPTS := {
 	# крылья сан'лейн, на 1.0 с багровый выброс дыма. Выжигание алое. Владелец выбрал в HsBrowser
 	# 2026-10-27.
 	"bloodqueenlanathel": {"frames": "bloodqueenlanathel", "sounds": "bloodqueenlanathel",
+		"suppress_baked_card": [67, 129, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# AudioPlaythroughAction FSM 0.7 x AudioSource 0.6; втягивание (AudioSource частиц) 0.5
 		"cues": [[0.0, "BloodQueenLanathel_CustomSummon_Sound", 0.45], [0.0, "Warlock_SiphonSoul_CasterImpact_1", 0.5]],
@@ -802,6 +825,7 @@ const SCRIPTS := {
 	# — Weretiger: огненный выстрел снизу, на 1.28 с удар — облако пыли. Портрет героя HS
 	# спрятан. Выжигание оранжевое. Владелец выбрал в HsBrowser 2026-10-27.
 	"beaststalkertavish": {"frames": "beaststalkertavish", "sounds": "beaststalkertavish",
+		"suppress_baked_card": [84, 146, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "BeaststalkerTavish_CustomSummon_Sound", 0.6], [0.85, "BeaststalkerTavish_CustomSummon_GunShot_Sound", 0.4], [1.28, "BeaststalkerTavish_CustomSummon_Impact_Sound", 0.4]],
@@ -838,6 +862,7 @@ const SCRIPTS := {
 	# звёздами (Vignette_Root, HsFx-81). Жетон HS спрятан, весь
 	# эффект под картой; выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"argustheemeraldsta": {"frames": "argustheemeraldsta", "sounds": "argustheemeraldsta",
+		"suppress_baked_card": [94, 156, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "TTNFX_ArgusTheEmeraldStar_CustomSummon_Start_Sound", 0.8], [1.45, "TTNFX_ArgusTheEmeraldStar_CustomSummon_Impact_Sound", 0.8]],
@@ -848,6 +873,7 @@ const SCRIPTS := {
 	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27. HsFx-91: свечение формы жетона HS
 	# (OnToken/Mesh_Token_Glow*, его включает анимация) убрано.
 	"thejailer": {"frames": "thejailer", "sounds": "thejailer",
+		"suppress_baked_card": [82, 144, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.72, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "TheJailer_CustomSummon_sound", 1], [1.25, "TheJailer_CustomSummon_Impact_sound", 1]],
@@ -866,6 +892,7 @@ const SCRIPTS := {
 	# вспышка. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"overseerfrigidara": {"frames": "overseerfrigidara", "sounds": "overseerfrigidara",
+		"suppress_baked_card": [71, 133, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.54, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "OverseerFrigidara_CustomSummon_Sound", 0.8], [1.07, "OverseerFrigidara_CustomSummon_Impact_Sound", 0.8]],
@@ -901,6 +928,7 @@ const SCRIPTS := {
 	# посадки. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет
 	# эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"logoshbloodfighter": {"frames": "logoshbloodfighter", "sounds": "logoshbloodfighter",
+		"suppress_baked_card": [36, 98, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 0.95, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "BloodFighter_CustomSummon_Cast_Sound", 0.8]],
@@ -969,6 +997,7 @@ const SCRIPTS := {
 	# жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
 	# Владелец выбрал в HsBrowser 2026-10-27.
 	"mugzee": {"frames": "mugzee", "sounds": "mugzee",
+		"suppress_baked_card": [53, 115, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.24, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "JAILFX_MugZee_CustomSummon_Sound", 0.5], [0.767, "JAILFX_MugZee_CustomSummon_Impact_Sound", 0.5]],
@@ -979,6 +1008,7 @@ const SCRIPTS := {
 	# в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	# HsFx-92: свечение формы жетона HS, которое включает анимация, спрятано hideRx.
 	"siredenathrius": {"frames": "siredenathrius", "sounds": "siredenathrius",
+		"suppress_baked_card": [62, 124, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.39, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "SireDenathrius_Infused_CustomSummon_sound", 1]],
@@ -1081,6 +1111,7 @@ const SCRIPTS := {
 	# фиолетовая вспышка. Сетки жетона HS и виньетки спрятаны, весь эффект под картой;
 	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"soulburnervaria": {"frames": "soulburnervaria", "sounds": "soulburnervaria",
+		"suppress_baked_card": [95, 157, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.94, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "SoulburnerVaria_CustomSummon_Cast_Sound", 0.8], [1.47, "SoulburnerVaria_CustomSummon_Impact_Sound", 0.8]],
@@ -1144,6 +1175,7 @@ const SCRIPTS := {
 	# Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в цвет эффекта.
 	# Владелец выбрал в HsBrowser 2026-10-27.
 	"theeternalhold": {"frames": "theeternalhold", "sounds": "theeternalhold",
+		"suppress_baked_card": [75, 137, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.60, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [],
@@ -1155,6 +1187,8 @@ const SCRIPTS := {
 	# спрятаны, весь эффект под картой; выжигание в цвет эффекта. Владелец выбрал в
 	# HsBrowser 2026-10-27.
 	"sargerasthedestroy": {"frames": "sargerasthedestroy", "sounds": "sargerasthedestroy",
+		# The previous miniature is baked into the lower track during these frames.
+		"suppress_baked_card": [94, 156, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "SargerasTheDestroyer_CustomSummon_Sound", 0.55], [1.48, "SargerasTheDestroyer_CustomSummon_Impact_Sound", 0.55]],
@@ -1164,6 +1198,7 @@ const SCRIPTS := {
 	# фиолетовое кольцо. Сетки жетона HS и виньетки спрятаны, весь эффект под картой;
 	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"overlorddrakuru": {"frames": "overlorddrakuru", "sounds": "overlorddrakuru",
+		"suppress_baked_card": [101, 163, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 2.04, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [],
@@ -1191,6 +1226,7 @@ const SCRIPTS := {
 	# удар — вспышка. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в
 	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"chronikar": {"frames": "chronikar", "sounds": "chronikar",
+		"suppress_baked_card": [78, 140, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.65, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "ENDFX_Chronikar_CustomSummon_Sound", 0.7], [1.18, "ENDFX_Chronikar_CustomSummon_Impact_Sound", 0.7]],
@@ -1200,6 +1236,7 @@ const SCRIPTS := {
 	# взрывается. Сетки жетона HS и виньетки спрятаны, весь эффект под картой; выжигание в
 	# цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"chronolordepoch": {"frames": "chronolordepoch", "sounds": "chronolordepoch",
+		"suppress_baked_card": [92, 154, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.89, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "TIMEFX_ChronoLordEpoch_CustomSummon_Sound", 0.7], [1.42, "TIMEFX_ChronoLordEpoch_CustomSummon_Impact_Sound", 0.7]],
@@ -1281,6 +1318,7 @@ const SCRIPTS := {
 	# кружат, на удар — вспышка. Жетон HS, трещины и виньетки спрятаны, весь эффект под картой;
 	# выжигание в цвет эффекта. Владелец выбрал в HsBrowser 2026-10-27.
 	"archwitchwillow": {"frames": "archwitchwillow", "sounds": "archwitchwillow",
+		"suppress_baked_card": [73, 135, Vector4(228, 159, 262, 206)],
 		"card": {"face": "mini", "reveal": 1.57, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": []},
@@ -1449,6 +1487,8 @@ func _next() -> void:
 	_main = _Clip.new(self, String(_script["frames"]), String(_script["sounds"]), bool(_item["quiet"]), true)
 	_main.cues = _script["cues"]
 	_main.set_shakers(_script.get("shakers", []))
+	if _script.has("suppress_baked_card"):
+		_main.suppress_baked_card = _script["suppress_baked_card"]
 	_released = false
 	var f: Array = _script.get("fog", [])
 	if not f.is_empty():
@@ -1545,13 +1585,14 @@ func _render_card() -> void:
 		return
 	var cs: Dictionary = _script["card"]
 	var t0 := float(cs["reveal"])
+	var backing := _main.baked_card_suppression()
 	if _main.t < t0:
-		_card.show_card(null, Rect2(), 0.0, 1.0)
+		_card.show_card(_item["face"], _card_rect(), 0.0, 0.0, backing)
 		return
 	var shown := clampf((_main.t - t0) / float(cs["sweep"]), 0.0, 1.0)
 	var out_at := t0 + float(cs["sweep"]) + float(cs["hold"])
 	var a := 1.0 if take_face.is_valid() else 1.0 - clampf((_main.t - out_at) / float(cs["out"]), 0.0, 1.0)
-	_card.show_card(_item["face"], _card_rect(), a, shown)
+	_card.show_card(_item["face"], _card_rect(), a, shown, backing)
 
 
 ## Лицо карты для розыгрыша cid: полноформатное или миниатюра — как в сценарии (под него
@@ -1694,6 +1735,7 @@ class _Clip:
 	var shake_points: Array = []
 	var over := _FrameLayer.new()
 	var under_layer := _FrameLayer.new()
+	var suppress_baked_card: Array = []
 	var _cue_t := -1.0
 	var _warm := WARM
 	var _warm_asked := 0
@@ -1753,8 +1795,17 @@ class _Clip:
 		_warm = 0
 		return delay <= 0.0
 
+	func baked_card_suppression() -> float:
+		if suppress_baked_card.is_empty():
+			return 0.0
+		var i := frames.index(t)
+		return smoothstep(float(suppress_baked_card[0]) - 4.0, float(suppress_baked_card[0]), i) \
+			* (1.0 - smoothstep(float(suppress_baked_card[1]) - 5.0, float(suppress_baked_card[1]), i))
+
 	func _show() -> void:
 		var i := frames.index(t)
+		if not suppress_baked_card.is_empty():
+			under_layer.set_suppressed_area(suppress_baked_card[2], baked_card_suppression())
 		var k := host.size / DESIGN
 		for l: _FrameLayer in [over, under_layer]:
 			l.position = (offset * k).round()
@@ -1942,11 +1993,18 @@ const PIXEL_BLOCK := 2.0
 const FRAME_SHADER := "shader_type canvas_item;\nrender_mode blend_premul_alpha;\n" \
 	+ "uniform float alpha = 1.0;\nuniform float levels = 7.0;\nuniform float alpha_levels = 4.0;\n" \
 	+ "uniform float block = 1.0;\n" \
+	+ "uniform vec4 suppressed_area = vec4(0.0);\n" \
+	+ "uniform float suppressed_strength = 0.0;\n" \
 	+ "float step_to(float v, float n, float d) { return clamp(floor(v * n + d) / n, 0.0, 1.0); }\n" \
 	+ "void fragment() {\n" \
 	+ "\tvec2 tsz = vec2(textureSize(TEXTURE, 0));\n\tfloat bk = block * tsz.x / 960.0;\n" \
 	+ "\tvec2 px = floor(UV * tsz / bk) * bk;\n" \
 	+ "\tvec4 c = texture(TEXTURE, (px + 0.5 * bk) / tsz);\n" \
+	+ "\tvec2 p = px + 0.5 * bk;\n" \
+	+ "\tif (suppressed_strength > 0.0) {\n" \
+	+ "\t\tvec2 outside = max(max(suppressed_area.xy - p, p - suppressed_area.zw), vec2(0.0));\n" \
+	+ "\t\tc *= mix(1.0, smoothstep(0.0, 9.0 * tsz.x / 480.0, length(outside)), suppressed_strength);\n" \
+	+ "\t}\n" \
 	+ "\tif (c.a <= 0.0) { COLOR = vec4(0.0); } else {\n" \
 	+ "\t\tfloat d = 0.5;\n" \
 	+ "\t\tfloat v = max(c.r, max(c.g, c.b));\n" \
@@ -1971,6 +2029,10 @@ class _FrameLayer extends Control:
 		_mat.set_shader_parameter("block", PIXEL_BLOCK)
 		material = _mat
 
+	func set_suppressed_area(area: Vector4, strength: float) -> void:
+		_mat.set_shader_parameter("suppressed_area", area)
+		_mat.set_shader_parameter("suppressed_strength", strength)
+
 	func show_frame(tex: Texture2D, alpha: float = 1.0) -> void:
 		_mat.set_shader_parameter("alpha", alpha)
 		if tex != _tex:
@@ -1988,19 +2050,25 @@ class _CardLayer extends Control:
 	var _rect := Rect2()
 	var _alpha := 0.0
 	var _shown := 1.0
+	var _backing := 0.0
 
 	func _init() -> void:
 		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
-	func show_card(face: Texture2D, r: Rect2, a: float, shown: float) -> void:
+	func show_card(face: Texture2D, r: Rect2, a: float, shown: float, backing: float = 0.0) -> void:
 		_face = face
 		_rect = r
 		_alpha = a
 		_shown = shown
+		_backing = backing
 		queue_redraw()
 
 	func _draw() -> void:
-		if _face == null or _alpha <= 0.0 or _shown <= 0.0:
+		if _face == null:
+			return
+		if _backing > 0.0 and _shown < 1.0:
+			draw_texture_rect(_face, _rect, false, Color(0.18, 0.18, 0.23, _backing))
+		if _alpha <= 0.0 or _shown <= 0.0:
 			return
 		var h := roundf(_rect.size.y * _shown)
 		var src := Rect2(0.0, float(_face.get_height()) * (1.0 - h / _rect.size.y), float(_face.get_width()),

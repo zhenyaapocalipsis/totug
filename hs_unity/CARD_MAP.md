@@ -77,11 +77,11 @@
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
-| Death Knight (48721) | The Lich King (ICC_314) | `LichKing_CustomSummon.prefab` | рыцарь смерти |
+| Death Knight (48721) | Eliza Goreblade (VAC_426) | `VAC_ElizaGoreBlade_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Mummy Lord (48725) | Dark Pharaoh Tekahn (ULD_168) | `DarkPharaohTekahn_CustomSummon.prefab` | владыка-мумия |
 | Vampire (48728) | Tichondrius (CORE_CATA_001) | `CORE_CATAFX_Tichondrius_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Lich (48732) | Broxigar (TIME_020) | `TIME_020_Broxigar_Fab_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
-| High Priest of Myrkul (48733) | Bwonsamdi, the Dead (TRL_260) | `Bwonsamdi_CustomSummon.prefab` | жрец бога смерти |
+| High Priest of Myrkul (48733) | Soulburner Varia (YOG_520) | `YOGFX_SoulburnerVaria_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Revenant (48738) | Sylvanas, the Accused (CORE_MAW_033) | `MAWFX_SylvanasTheAccused_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### celestial
@@ -103,23 +103,23 @@
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
-| Dracolich (49113) | — | — | Эффект ещё не выбран |
+| Dracolich (49113) | Azure Queen Sindragosa (TIME_852) | `TIMEFX_AzureQueenSindragosa_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Nightmare (49114) | Thunderbringer (WW_440) | `WWFX_Thunderbringer_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Ramya Vasavadan (49115) | — | — | Эффект ещё не выбран |
 | Saidra d'Honaire (49116) | — | — | Эффект ещё не выбран |
 | Ghast (49117) | Blood Doctor Thal'ena (JAIL_446) | `JAIL_446_BloodDoctorThal_ena_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Strahd von Zarovich (49118) | — | — | Эффект ещё не выбран |
+| Strahd von Zarovich (49118) | Sire Denathrius (REV_906t) | `REVFX_SireDenathrius_Infused_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Dullahan (49119) | — | — | Эффект ещё не выбран |
 | Drider (49120) | Blightfang (RLK_225) | `RLK_225_BlightFang_Spawn.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Azalin Rex (49121) | — | — | Эффект ещё не выбран |
-| Ankhtepot (49122) | — | — | NE-58: owner-approved new creature; no HS animation assigned. Previous creature and its binding moved to 49104. |
+| Azalin Rex (49121) | The Jailer (CORE_MAW_034) | `MAWFX_TheJailer_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
+| Ankhtepot (49122) | Chrono-Lord Epoch (TIME_714) | `TIMEFX_ChronoLordEpoch_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 
 ### piltover
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
 | Stone Golem (49211) | Chronogor (TIME_032) | `TIMEFX_Chronogor_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Koboldzilla (49212) | — | — | NE-58: owner-approved new creature; no HS animation assigned. |
+| Koboldzilla (49212) | Aya, Lotus Kingpin (JAIL_504) | `JAILFX_AyaLotusKingpin_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Iron Golem (49213) | Mathias Shaw (CAP_005) | `CAP_005_MathiasShaw_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Ivan Dilisnya (49214) | — | — | NE-58: owner-approved new creature; no HS animation assigned. |
 | Homunculus (49215) | Norgannon (TTN_075) | `TTNFX_Norgannon_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
@@ -127,7 +127,7 @@
 | Manshoon (49217) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Conjurer Archmage). |
 | Shield Guardian (49218) | Omen (EDR_421) | `EDRFX_Omen_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Behir (49219) | Mastermind Yogg-Saron (BE_009) | `BEFX_YoggSarontheMastermind_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Trobriand (49220) | — | — | NE-54: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Silverquill Apprentice). |
+| Trobriand (49220) | Endtime Murozond (END_037) | `ENDFX_EndtimeMurozond_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 
 ### siege
 
@@ -135,10 +135,10 @@
 |---|---|---|---|
 | Avatar of Lolth (49300) | Chillin' Vol'jin (VAC_957) | `VACFX_ChillinVoljin_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Converter (49301) | Morchie (END_036) | `ENDFX_Morchie_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Relentless Siege (49302) | Warmaster Blackhorn (CATA_720) | `CATA_720_WarmasterBlackhorn_CustomSummon.prefab` | осада, бомбардировка |
+| Relentless Siege (49302) | Darkbishop Benedictus (CORE_SW_448) | `SWFX_DarkBishopBenedictus_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): клип восстановлен из Git, показ актуальной миниатюры |
 | Beast Tamer (49303) | Beastmaster Leoroxx (BT_214) | `BeastmasterLeoroxx_CustomSummon.prefab` | укротитель зверей |
 | Warlord (49304) | Remornia, Living Blade (CORE_REV_316) | `REVFX_RemorniaLivingBlade_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Siege Beast (49305) | King Krush (EX1_543) | `KingKrush_CustomSummon.prefab` | огромный осадный зверь |
+| Siege Beast (49305) | Bonelord Frostwhisper (RLK_591) | `RLKFX_BonelordFrostwhisper_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 
 ### mercenaries
 
@@ -147,9 +147,9 @@
 | Artemis Entreri (49402) | Lady Darkvein (CORE_REV_373) | `REVFX_LadyDarkvein_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Nihiloor (49407) | Karov the Broken (JAIL_448) | `JAIL_448_KarovTheBroken_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Nar'l Xibrindas (49412) | Staff of Trickery (JAIL_875) | `JAILFX_StaffofTrickery_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Jarlaxle (49413) | Heistbaron Togwaggle (DAL_417) | `HeistbaronTogwaggle_CustomSummon.prefab` | авантюрист, крадёт карту |
+| Jarlaxle (49413) | Altruis the Outcast (TOY_401t2) | `Altruis_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Sylgar (49416) | Drest'agath (BE_703) | `BE_703_Drestagath_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
-| Ahmaergo (49417) | Brann Bronzebeard (LOE_077) | `Brann_CustomSummon.prefab` | дварф |
+| Ahmaergo (49417) | Lo'Gosh, Blood Fighter (TIME_850) | `TIME_LoGosh_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Xanathar Zushaxx (49418) | N'Zoth, Dream's End (BE_017) | `BE_017_NzothDreamsEnd_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### noxus
@@ -163,7 +163,7 @@
 | Barbed Devil (49517) | Wrathion (Story_06_Wrathion) | `Wrathion_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Ice Devil (49518) | Moroes (KAR_044) | `Moroes_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Sewer King (49519) | — | — | NE-58: owner-approved new creature; no HS animation assigned. Previous creature and its binding moved to 50108. |
-| Daemogoth Titan (49520) | — | — | Эффект ещё не выбран |
+| Daemogoth Titan (49520) | Blood-Queen Lana'thel (CORE_ICC_841) | `BloodQueenLanathel_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Erinyes (49521) | Fyrakk the Blazing (FIR_959) | `FIRFX_FyrakkTheBlazing_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Wyvern (49522) | Captain Crowley (CAP_106) | `CAPFX_CaptainCrowley_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
@@ -171,11 +171,11 @@
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
-| Doomwake Giant (49613) | — | — | NE-51: creature replaced; Kel'Thuzad animation is available, new assignment pending |
+| Doomwake Giant (49613) | Overlord Drakuru (RLK_913) | `RLKFX_Drakuru_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Hill Giant (49614) | Bearon Gla'shear (AV_257) | `AVFX_BearonGlashear_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Cloud Giant (49615) | Hodir, Father of Giants (TTN_752) | `TTNFX_HodirFatherGiants_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Remorhaz (49616) | Ras Frostwhisper (SCH_273) | `SCHFX_RasFrostwhisperer_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Mammoth (49617) | Icehowl (AT_125) | `IceHowl_CustomSpawn.prefab` | ледяной зверь |
+| Mammoth (49617) | Kel'Thuzad (FP1_013) | `Kelthuzad_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Storm Giant (49618) | Thaddius, Monstrosity (NX2_033) | `NX2FX_ThaddiusFleshTitan_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Frost Giant (49620) | The Lich King (CORE_ICC_314) | `LichKing_CustomSummon.prefab` | СДЕЛАНО (HsFx-78; владелец выбрал в HsBrowser 2026-10-27) |
 | Oni (49634) | Irida Sinseeker (JAIL_719) | `JAIL_719_IridaSinseeker_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
@@ -189,10 +189,10 @@
 | Marid (49711) | — | — | Эффект ещё не выбран |
 | Nafas (49712) | Titanographer Osk (TLC_452t35) | `TLCFX_Titangrapher_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Purple Worm (49713) | Arisen Onyxia (CATA_155) | `CATA_155_ArisenOnyxia_Fab_CustomSummon_FX.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Abveku (49714) | — | — | Эффект ещё не выбран |
+| Abveku (49714) | Ultraxion (CATA_497) | `CATAFX_Ultraxion_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Efreeti (49715) | Kael'thas Sunstrider (BT_255) | `KaelthasSunstrider_CustomSummon.prefab` | СДЕЛАНО (HsFx-76; владелец выбрал в HsBrowser 2026-10-27; готовый эффект другой карты перепечён с контуром этой) |
 | Djinni (49716) | Velen, Leader of the Exiled (GDB_131) | `GDBFX_VelenLeader_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Gorgon (49717) | Gorgonzormu (VAC_955) | `VACFX_Gorgonzormu_CustomSummon.prefab` | горгона (по имени; при желании — заменить) |
+| Gorgon (49717) | The Eternal Hold (TIME_446) | `TIME_EternalHold_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Ankheg (49718) | Gorm the Worldeater (GDB_842) | `GDBFX_GormtheWorldeater_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Dust Mephit (49719) | Time Adm'ral Hooktail (TIME_713) | `TIMEFX_Timecap_nHooktail_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
 | Dao (49720) | Dreamplanner Zephrys (WORK_027) | `WORKFX_ZephrysOverworked_CustomSummon.prefab` | земляной джинн |
@@ -202,28 +202,28 @@
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
 | Biha Babir (49800) | Aranna, Thrill Seeker (VAC_501) | `VACFX_ArannatheExtreme_CustomSummon.prefab` | СДЕЛАНО (HsFx-77; владелец выбрал в HsBrowser 2026-10-27) |
-| Ancient of War (49801) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Mug'Zee освобождено. |
-| Elemental Cataclysm (49803) | — | — | NE-62: restored artwork in slot 49803; animation unassigned. |
+| Ancient of War (49801) | Chronikar (END_006) | `ENDFX_Chronikar_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
+| Elemental Cataclysm (49803) | Mug'Zee (JAIL_800) | `JAILFX_MugZee_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Chwinga (49806) | Baroness Vashj (REV_788) | `REVFX_BaronessVashj_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Groff (49807) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Endtime Murozond освобождено. |
-| Zaratan (49811) | — | — | NE-53: новое существо; анимация пока не назначена. Прежнее назначение Treant освобождено |
-| Leviathan (49815) | — | — | NE-53: новое существо; анимация пока не назначена. Прежнее назначение Brackish Trudge освобождено |
+| Zaratan (49811) | Anachronos (CORE_RLK_919) | `RLKFX_Anachronos_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
+| Leviathan (49815) | Overseer Frigidara (LEG_RLK_224) | `RLKFX_Frigidara_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Spore of Moander (49820) | — | — | NE-60: новое существо; анимация пока не назначена. Прежнее назначение Elise, Badlands Savior освобождено. |
-| Ivana Boritsi (49821) | — | — | NE-60: новое существо; анимация пока не назначена. |
+| Ivana Boritsi (49821) | Archwitch Willow (CORE_SCH_181) | `SCHFX_ArchwitchWillow_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Galeb Duhr (49822) | Krog, Crater King (TLC_480) | `TLCFX_KrogCraterKing_Custom_Summon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### bandle
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
-| Mother Lorinda (49900) | — | — | Эффект ещё не выбран |
+| Mother Lorinda (49900) | Jace Darkweaver (SW_044) | `SWFX_JaceDarkweaver_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Yarnspinner (49901) | — | — | Эффект ещё не выбран |
 | Incarnation of Transience (49902) | — | — | Эффект ещё не выбран |
-| Trostani (49903) | — | — | Эффект ещё не выбран |
-| Swanmay (49904) | — | — | Эффект ещё не выбран |
+| Trostani (49903) | Argus, the Emerald Star (TTN_862) | `TTNFX_ArgusTheEmeraldStar_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
+| Swanmay (49904) | Prince Malchezaar (LT24_821H) | `Malchezaar_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Lampad (49905) | — | — | Эффект ещё не выбран |
 | Faerie Dragon Youth (49906) | Eternus (TIME_435) | `TIME_Eternus_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| The Gardener (49908) | — | — | Эффект ещё не выбран |
+| The Gardener (49908) | Ysera, Emerald Aspect (EDR_000) | `EDRFX_YseraEmeraldAspect_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): клип восстановлен из Git, показ актуальной миниатюры |
 | Witchkite (49909) | Nablya, the Watcher (TLC_624) | `TLCFX_NablyatheWatcher_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### void
@@ -231,21 +231,21 @@
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
 | Elder Thing (50000) | — | — | Эффект ещё не выбран |
-| Zargon the Returner (50001) | — | — | NE-57: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Greater Star Spawn Emissary). |
+| Zargon the Returner (50001) | Sargeras, the Destroyer (TTN_960) | `TTNFX_SargerasTheDestroyer_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Froghemoth Elder (50002) | The Exodar (GDB_120) | `GDBFX_TheExodar_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
-| Feyr (50003) | — | — | NE-56: owner-selected creature replacement; no HS animation assigned. Previous binding freed. |
+| Feyr (50003) | Iso'rath (CATA_481) | `CATAFX_Iso'rath_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Cthulhu (50004) | — | — | NE-56: owner-selected creature replacement; no HS animation assigned. Previous binding freed. |
 | Shoggoth (50005) | — | — | Эффект ещё не выбран |
 | Qunbraxel (50006) | — | — | NE-57: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Inquisitor of the Mind Fire). |
-| Hazlik (50007) | — | — | NE-57: owner-approved creature replacement; no HS animation assigned. Previous binding freed (Groundling Stalker). |
+| Hazlik (50007) | Nozdormu, Bronze Aspect (CATA_473) | `CATAFX_NozdormuBronzeAspect_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Eye Monger (50008) | The 8 Hands From Beyond (GDB_477) | `GDBFX_8HandsFromBeyond_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 
 ### ixtal
 
 | Карта (id) | Легендарка HS (id) | Префаб эффекта | Статус |
 |---|---|---|---|
-| Hythonia (50100) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Yuan-ti Infiltrator освобождено |
-| Displacer Beast (50101) | — | — | NE-58: owner-approved new creature; no HS animation assigned. |
+| Hythonia (50100) | Razidir (TLC_463) | `TLC463_Nazidir_CustomSummon.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
+| Displacer Beast (50101) | Beaststalker Tavish (AV_113) | `AVFX_TavishBeastStalker_CustomSummon_Super.prefab` | СДЕЛАНО (HsFx-101): сохранённый клип с актуальной миниатюрой |
 | Sarrukh Tyrant (50102) | Timethief Rafaam (TIME_005) | `TIMEFX_TimetheifRafaam_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
 | Ironscale Hydra (50103) | — | — | NE-52: новое существо; анимация пока не назначена. Прежнее назначение Lizardfolk Sovereign освобождено |
 | Tarrasque (50104) | Maruut Stonebinder (DEEP_037) | `DEEPFX_MaruutStonebinder_CustomSummon.prefab` | СДЕЛАНО (HsFx-79; владелец выбрал в HsBrowser 2026-10-27) |
