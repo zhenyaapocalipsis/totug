@@ -484,8 +484,6 @@ func _build_layout() -> void:
 	_decision_dialog.board = board_data  # чтобы подписывать цели названиями локаций
 	_decision_dialog.option_chosen.connect(_on_decision_answer)
 	_board_area.add_child(_decision_dialog)
-	_decision_dialog.item_rect_changed.connect(_fit_board_above_decision, CONNECT_DEFERRED)
-	_decision_dialog.visibility_changed.connect(_fit_board_above_decision, CONNECT_DEFERRED)
 
 	# 6. Маркет.
 	_market_panel = MarketPanel.new()
@@ -1239,14 +1237,6 @@ func _layout() -> void:
 	_place(_turn_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
 	_place(_turn_emblem, 4, floorf((TURN_BAR_H - TURN_EMBLEM_SIZE) * 0.5), TURN_EMBLEM_SIZE, TURN_EMBLEM_SIZE)
 	_place(_end_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
-
-
-## Верх нижней полосы меняется после раскладки текста и карт.
-func _fit_board_above_decision() -> void:
-	var edge := -1.0
-	if _decision_dialog.visible and _decision_dialog.at_top:
-		edge = maxf(1.0, _decision_dialog.position.y - GAP)
-	_board_panel.set_decision_edge(edge)
 
 
 
