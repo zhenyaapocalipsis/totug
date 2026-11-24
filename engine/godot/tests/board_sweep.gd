@@ -28,7 +28,7 @@ func _initialize() -> void:
 		result.merge({"seed":seed_value,"players":players,"grid":s["grid"],"ms":Time.get_ticks_msec()-started,"rebuilt":s.get("quality_rebuilt",false)})
 		rows.append(result)
 		if not s["grid"]: grid_fallback += 1
-		if result["overlaps"] > 0 or result["crossings"] > 0 or result["foreign_hits"] > 0 or result["ring_city_close"] > 0:
+		if not s.get("grid",false) or s.has("quality_issues") or result["overlaps"] > 0 or result["crossings"] > 0 or result["foreign_hits"] > 0 or result["ring_city_close"] > 0:
 			bad += 1
 			print("BAD ",result)
 			if bad <= 12:

@@ -164,8 +164,8 @@ const ZONE := Vector2(655, 456)
 const PROMPT_STRIP := 92.0
 const BOTTOM_STRIP := 26.0
 const SPREAD_PLAYERS := [2, 3, 4]
-## Запас по краю зоны: _repair после раздвигания может чуть сдвинуть трассу.
-const SPREAD_SLACK := 4.0
+## IMAGE_MARGIN и границы узлов уже включают запас; дополнительный отступ не нужен.
+const SPREAD_SLACK := 0.0
 ## Рамки городов разных гексов при раздвигании стремятся разойтись хотя бы на
 ## столько (по большей из осей) — группы гексов читаются отдельно.
 const BOX_ZONE_GAP := 32.0
@@ -224,15 +224,22 @@ var _fallback_routes := 0            # tunnels not found in the tile table
 ## (StateView.board_snapshot). The dedicated server prepares boards off the
 ## main thread (NetSession._start_room and BoardStock).
 static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS) -> Dictionary:
-	var result := _build_once(state, polish, budget_ms, Metrics.DIAMETER >= 13 and budget_ms < NO_BUDGET)
+	var result := _build_once(state, polish, budget_ms, false)
 	if result.is_empty():
 		return result
 	var quality := Quality.inspect(result, RING_R)
-	if not quality["bad_traces"].is_empty() or quality["overlaps"] > 0 or not quality.get("close_nodes",[]).is_empty():
+	# Prefer an already clean tile arrangement to repairing many crossings
+	# introduced by whole-board polishing. This preserves the same deal.
+	if polish and int(quality["crossings"]) > 2:
+		var clean := _build_once(state,false,budget_ms,false)
+		if _drawing_score(clean,Quality.inspect(clean,RING_R)) == 0:
+			clean["quality_rebuilt"] = true
+			return RouteCleanup.simplify(Spacing.optimise(clean))
+	if result.get("grid",false) and (not quality["bad_traces"].is_empty() or quality["overlaps"] > 0 or not quality.get("close_nodes",[]).is_empty()):
 		result = RouteRepair.repair(result)
 		quality = Quality.inspect(result, RING_R)
 		result["quality_rerouted"] = true
-	var best_score := _quality_score(quality)
+	var best_score := _drawing_score(result,quality)
 	if best_score == 0:
 		return RouteCleanup.simplify(Spacing.optimise(result))
 	# Keep the same deal and graph. If local polishing or a time-limited
@@ -242,8 +249,9 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 	for attempt in [[not polish, budget_ms, false], [polish, NO_BUDGET, false],
 			[not polish, NO_BUDGET, false], [polish, NO_BUDGET, true], [not polish, NO_BUDGET, true]]:
 		var candidate := _build_once(state, attempt[0], attempt[1], attempt[2])
+		if not candidate.get("grid",false): continue
 		var candidate_quality := Quality.inspect(candidate, RING_R)
-		var score := _quality_score(candidate_quality)
+		var score := _drawing_score(candidate,candidate_quality)
 		if score == 0:
 			candidate["quality_rebuilt"] = true
 			return RouteCleanup.simplify(Spacing.optimise(candidate))
@@ -254,7 +262,7 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 	for variant: Dictionary in variants:
 		var candidate: Dictionary = RouteRepair.repair(variant["drawing"])
 		var candidate_quality := Quality.inspect(candidate, RING_R)
-		var score := _quality_score(candidate_quality)
+		var score := _drawing_score(candidate,candidate_quality)
 		if score < best_score:
 			result = candidate
 			quality = candidate_quality
@@ -262,9 +270,14 @@ static func build(state: GameState, polish := true, budget_ms := ROUTE_BUDGET_MS
 		if best_score == 0:
 			result["quality_rebuilt"] = true
 			return RouteCleanup.simplify(Spacing.optimise(result))
+	if not result.get("grid",false): quality["layout_grid"] = false
 	result["quality_issues"] = quality
 	push_error("Board geometry failed validation: %s" % quality)
 	return result
+
+
+static func _drawing_score(drawing: Dictionary, quality: Dictionary) -> int:
+	return _quality_score(quality)+(0 if drawing.get("grid",false) else 1000000)
 
 
 static func _quality_score(quality: Dictionary) -> int:
@@ -643,6 +656,46 @@ func _apply_tiles(table: Dictionary, hex_by_slot: Dictionary, rotations: Diction
 		_visible[e] = _clip(e, points)
 		_bbox[e] = _bounds(_visible[e])
 
+	_fix_webs(hex_by_slot)
+
+
+## A3 is a rigid diagram: its seven cities never move independently.
+## Whole-hex packing may translate the block; logical directions stay names.
+func _fix_webs(hex_by_slot: Dictionary) -> void:
+	var offsets := {"A3_site6":Vector2.ZERO,"A3_site0":Vector2(-20,-34),"A3_site1":Vector2(20,-34),"A3_site4":Vector2(50,0),"A3_site5":Vector2(20,34),"A3_site3":Vector2(-20,34),"A3_site2":Vector2(-50,0)}
+	for hex: String in hex_by_slot:
+		if hex_by_slot[hex] != "A3": continue
+		var names := ["A3_site0","A3_site1","A3_site4","A3_site5","A3_site3","A3_site2"]
+		if not _index.has(hex+":A3_site6"): continue
+		var complete := true
+		for name: String in names:
+			if not _index.has(hex+":"+name): complete = false
+		if not complete: continue
+		var places := [Vector2(-20,-34),Vector2(20,-34),Vector2(50,0),Vector2(20,34),Vector2(-20,34),Vector2(-50,0)]
+		var best := INF
+		var best_shift := 0
+		var best_sign := 1
+		for sign_value in [1,-1]:
+			for shift in 6:
+				var cost := 0.0
+				for i in 6:
+					var n: int = _index[hex+":"+names[i]]
+					cost += (_home[n]-_centre[hex]).normalized().distance_squared_to((places[posmod(i*sign_value+shift,6)] as Vector2).normalized())
+				if cost < best:
+					best = cost
+					best_shift = shift
+					best_sign = sign_value
+		for i in 6: offsets[names[i]] = places[posmod(i*best_sign+best_shift,6)]
+		for name: String in offsets:
+			var key := hex+":"+name
+			if not _index.has(key): continue
+			var n: int = _index[key]
+			_pos[n] = _centre[hex]+offsets[name]
+			_home[n] = _pos[n]
+			_fixed_sites[n] = true
+	for e in _routes.size():
+		if _fixed_sites.has(_edge_a[e]) or _fixed_sites.has(_edge_b[e]): _choose_route(e,{})
+
 
 func _tile_name(n: int, hex: String) -> String:
 	if _kind[n] != Kind.PORT:
@@ -662,6 +715,7 @@ func _near_end(p: Vector2, n: int) -> bool:
 ## that lands the node on anything is taken back, and the other node of the
 ## pair gets its turn. A move can free one pair and touch another, so the
 ## pass runs a few times.
+var _fixed_sites := {}
 var _repair_hex_only := false
 
 
@@ -674,7 +728,7 @@ func _repair() -> void:
 	# A city can cover a mandatory edge-port exit without overlapping any
 	# node. Rerouting that exit cannot help: move the blocking city instead.
 	for n in _key.size():
-		if _kind[n] != Kind.SITE:
+		if _kind[n] != Kind.SITE or _fixed_sites.has(n):
 			continue
 		var rect := _node_rect(n, 2.0)
 		var blocked := false
@@ -713,7 +767,7 @@ func _push_apart() -> void:
 			if _kind[n] == Kind.PORT:
 				continue
 			for m: int in _near[_hex[n]]:
-				if m <= n or _kind[m] == Kind.PORT or (_repair_hex_only and _hex[m] != _hex[n]):
+				if (_fixed_sites.has(n) and _fixed_sites.has(m)) or m <= n or _kind[m] == Kind.PORT or (_repair_hex_only and _hex[m] != _hex[n]):
 					continue
 				var over := _node_rect(n, PUSH_GAP * 0.5).intersection(_node_rect(m, PUSH_GAP * 0.5))
 				if over.size.x <= 0.0 or over.size.y <= 0.0:
@@ -723,6 +777,7 @@ func _push_apart() -> void:
 				# возвращал бы узел на прежнее место.
 				# Уступает меньший: кольцу подвинуться проще, чем рамке локации.
 				var small := m if _node_rect(m).get_area() <= _node_rect(n).get_area() else n
+				if _fixed_sites.has(small): small = n if small == m else m
 				var other := n if small == m else m
 				# Сначала по короткой оси; если сдвиг кладёт узел на третьего
 				# соседа (узел зажат между двумя), пробуем второй узел пары и
@@ -735,6 +790,7 @@ func _push_apart() -> void:
 					var by: float = over.size.x if axis.x != 0.0 else over.size.y
 					var steps := ceilf((by + 1.0) / float(GRID)) * float(GRID)
 					for mover: int in [small, other]:
+						if _fixed_sites.has(mover): continue
 						var still := other if mover == small else small
 						var away: float = (_pos[mover] - _pos[still]).dot(axis)
 						var to := _snap(_pos[mover] + axis * steps * (1.0 if away >= 0.0 else -1.0))
@@ -1345,6 +1401,7 @@ func _optimise(passes: Array = PASSES) -> void:
 
 
 func _move_node(n: int, step: int, radius: int, allow_outside := false) -> void:
+	if _fixed_sites.has(n): return
 	var start := _pos[n]
 	var inc: Array = _incident[n]
 	var poly: PackedVector2Array = _poly_nodes[_hex[n]] if _kind[n] != Kind.PORT \
@@ -1637,10 +1694,10 @@ func _spread_offsets(ports: Array, zone: Vector2) -> Dictionary:
 		for i in pts.size() - 1:
 			(_sp_items[_hex[_edge_b[e]]] as Array).append([Rect2(pts[i], Vector2.ZERO).expand(pts[i + 1]).grow(1.0), e])
 	for hex: String in hexes:
-		var items: Array = _sp_items[hex]
-		var box: Rect2 = items[0][0] if not items.is_empty() else Rect2()
-		for item: Array in items:
-			box = box.merge(item[0])
+		var box := Rect2()
+		for n in _key.size():
+			if _hex[n] != hex or _kind[n] == Kind.PORT: continue
+			box = _node_rect(n,1.0) if box.size == Vector2.ZERO else box.merge(_node_rect(n,1.0))
 		_sp_box[hex] = box
 	# тем же счётом, что и в _sp_ok (по _sp_box)
 	var start := Rect2()
@@ -2065,18 +2122,25 @@ func _grid_try(cell: Dictionary) -> bool:
 		if py.is_empty():
 			return false
 
+	var placed := {}
 	for px: Dictionary in choices:
 		for key: Vector2i in slot:
 			var hex: String = slot[key]
 			var o := Vector2(float(px[hex]) - float(xkey[hex]), float(py[hex]) - float(ykey[hex]))
 			_sp_off[hex] = (o / 2.0).round() * 2.0   # чётный сдвиг: стыки трасс на сетке 2 px
 		_grid_nudge(slot)
+		if placed.is_empty(): placed = _sp_off.duplicate()
 		if _grid_route(r):
 			return true
 		for hex: String in cell:
 			_sp_off[hex] = Vector2.ZERO
 		_grid_paths = {}
 		_grid_full = {}
+	# Keep successful grid packing even when the first wire-routing pass fails.
+	# Exported-pixel repair can reroute wires without collapsing the placement.
+	if not placed.is_empty():
+		_sp_off = placed
+		return true
 	return false
 
 
@@ -2574,7 +2638,7 @@ var _budget_ms := ROUTE_BUDGET_MS   # build(budget_ms): запас доски н
 var _route_started := -1           # one budget for all packing/routing variants
 var _route_work := 0
 const ROUTE_WORK_LIMIT := 500000     # deterministic cap for server searches
-var _grid_ok := false   # трассы легли в сетку 5x3 (иначе доска по-старому)
+var _grid_ok := false   # tile groups packed into 5x3; wires are validated separately
 
 ## Прокладывает мостики по порядку; ответ — порт, что не лёг, или -1.
 func _rt_route_all(order: Array, ends: Dictionary) -> int:
@@ -4280,6 +4344,8 @@ func _export(state: GameState) -> Dictionary:
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres, "hexes": hexes,
 		"fallback_routes": _fallback_routes,
 		"grid": _grid_ok,
+		"grid_routed": not _grid_paths.is_empty(),
+		"fixed_sites": _fixed_sites.keys().map(func(n): return _key[n]),
 		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет
 		"a2_legend": a2_legend,
 	}

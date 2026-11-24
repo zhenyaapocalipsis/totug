@@ -175,6 +175,7 @@ static func _fits(s: Dictionary, id: String, rect: Rect2) -> bool:
 ## Move aligned ring/port chains together across their common axis.
 ## Along the axis, an individual ring may move to increase its spacing.
 static func _move(s: Dictionary, id: String, shift: Vector2) -> Array:
+	if s.get("fixed_sites",[]).has(id): return []
 	s.erase("__spacing_metrics")
 	var shifts := {id:shift}
 	var links := _straight_links(s)

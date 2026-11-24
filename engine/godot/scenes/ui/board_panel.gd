@@ -164,6 +164,7 @@ var art_layer := false
 ## гексов. См. SchematicPainter.OBJECT_TILES.
 var object_layer := false
 var _schematic_texture: ImageTexture = null
+var _schematic_error := ""
 var _tokens: Dictionary = {}     # colour html -> ImageTexture
 
 var _zoom := 0.0                 # 0 = ещё не подобран, подберётся под размер панели
@@ -963,7 +964,11 @@ func _load_textures() -> void:
 
 func _rebuild_schematic_texture() -> void:
 	_schematic_texture = null
+	_schematic_error = ""
 	var schematic: Dictionary = _without_removed(_board.get("schematic", {}))
+	if schematic.has("quality_issues") or (schematic.has("grid") and not schematic["grid"]):
+		_schematic_error = "Board generation failed. Seed: %s" % str(_board.get("seed","?"))
+		return
 	if not schematic.is_empty():
 		var image := SchematicPainter.paint(schematic, art_layer, object_layer)
 		_schematic_texture = ImageTexture.create_from_image(image)
@@ -1179,7 +1184,10 @@ func _ensure_view() -> void:
 		if _decision_edge > 0.0 and board_height > 0.0:
 			# Сохраняем обычный масштаб, пока доска помещается. Если
 			# не хватает нескольких пикселей, не уменьшаем схему вдвое.
-			_zoom = minf(_zoom, _decision_edge / board_height)
+			var scale := window_scale()
+			var fit := minf(_zoom,_decision_edge / board_height)
+			var pixels := floori(fit*scale+0.001)
+			_zoom = float(pixels)/scale if pixels >= 1 else fit
 		# Центр обзора — в целых мировых пикселях: тогда и войска, и рамки
 		# локаций ложатся на ту же сетку, что и сама картинка схемы.
 		_pan = _board_centre().round()
@@ -1227,6 +1235,9 @@ func local_of_world(world: Vector2) -> Vector2:
 # --- отрисовка ----------------------------------------------------------------
 
 func _draw() -> void:
+	if not _schematic_error.is_empty():
+		draw_string(ThemeDB.fallback_font,Vector2(16,32),_schematic_error)
+		return
 	_pulse_active = false
 	if _board.is_empty():
 		return
@@ -1877,6 +1888,7 @@ func _notification(what: int) -> void:
 ## Единственное действие мышью: выбрать войско или локацию. Масштаба и
 ## перетаскивания у зафиксированной доски нет.
 func _gui_input(event: InputEvent) -> void:
+	if not _schematic_error.is_empty(): return
 	var mb := event as InputEventMouseButton
 	if mb != null and mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
 		_click_at(mb.position)

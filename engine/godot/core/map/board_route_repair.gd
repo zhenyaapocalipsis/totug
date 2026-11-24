@@ -8,8 +8,8 @@ const STEPS := [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
 ## Last pass on the exported pixels: reroute edges and, when necessary, move
 ## drawing nodes. Their IDs, troop slots and game graph remain unchanged.
 static func repair(s: Dictionary, allow_flatten := true) -> Dictionary:
-	var result := _flatten_ports(s) if allow_flatten and _buried_port(s) else s.duplicate(true)
-	for _round in 8:
+	var result := _flatten_ports(s) if allow_flatten and (_buried_port(s) or (s.get("grid",false) and not s.get("grid_routed",true))) else s.duplicate(true)
+	for _round in 24:
 		var quality := Quality.inspect(result)
 		if quality["overlaps"] > 0 or not quality.get("close_nodes",[]).is_empty():
 			var contacts := quality.duplicate(true)
@@ -39,6 +39,7 @@ static func repair(s: Dictionary, allow_flatten := true) -> Dictionary:
 			for edge: int in quality["bad_traces"]:
 				for id: String in result["trace_ends"][edge]:
 					attached[id] = true
+			for id: String in _blocking_sites(result,quality): attached[id] = true
 			var group: Array = quality["bad_traces"].duplicate()
 			for edge in result["trace_ends"].size():
 				for id: String in result["trace_ends"][edge]:
@@ -82,7 +83,7 @@ static func repair(s: Dictionary, allow_flatten := true) -> Dictionary:
 ## A crossing can be trapped by valid but tightly packed endpoint positions.
 ## Open that corridor by moving an endpoint and its incident roads together.
 static func _open_crossing(s: Dictionary, quality: Dictionary) -> Dictionary:
-	if int(quality["crossings"]) == 0: return {}
+	if int(quality["crossings"]) == 0 and int(quality["foreign_hits"]) == 0: return {}
 	var probe := quality.duplicate(true)
 	probe["overlap_nodes"] = []
 	var seen := {}
@@ -91,7 +92,26 @@ static func _open_crossing(s: Dictionary, quality: Dictionary) -> Dictionary:
 			if (s["rings"].has(id) or s["sites"].has(id)) and not seen.has(id):
 				probe["overlap_nodes"].append([id])
 				seen[id] = true
+	# Include the city obstructing a road, with all its incident roads.
+	for id: String in _blocking_sites(s,quality):
+		if not seen.has(id): probe["overlap_nodes"].append([id])
 	return _separate_nodes(s,probe)
+
+
+static func _blocking_sites(s: Dictionary, quality: Dictionary) -> Array:
+	var blocked := {}
+	for edge: int in quality["bad_traces"]:
+		var path: Array = s["traces"][edge]
+		for id: String in s["sites"]:
+			if blocked.has(id) or s["trace_ends"][edge].has(id): continue
+			var margin := _node_rect(s,id).grow(1)
+			margin.position -= Vector2(0.5,0.5)
+			for k in range(0,path.size()-2,2):
+				var segment := Rect2(Vector2(path[k],path[k+1]),Vector2.ZERO).expand(Vector2(path[k+2],path[k+3])).grow(0.01)
+				if segment.intersects(margin):
+					blocked[id] = true
+					break
+	return blocked.keys()
 
 
 static func _buried_port(s: Dictionary) -> bool:
@@ -227,8 +247,10 @@ static func _separate_nodes(s: Dictionary, quality: Dictionary) -> Dictionary:
 	var all: Array = s["sites"].keys() + s["rings"].keys()
 	var best := {}
 	var best_score := _score(quality)
+	var blockers := _blocking_sites(s,quality)
 	for pair: Array in quality["overlap_nodes"]:
 		for id: String in pair:
+			if s.get("fixed_sites",[]).has(id): continue
 			var rect := _node_rect(s, id)
 			for distance in range(2, 66 if Metrics.DIAMETER >= 13 else 26, 2):
 				for direction in [Vector2.RIGHT, Vector2.LEFT, Vector2.DOWN, Vector2.UP, Vector2(1,1), Vector2(-1,1), Vector2(1,-1), Vector2(-1,-1)]:
@@ -261,6 +283,7 @@ static func _separate_nodes(s: Dictionary, quality: Dictionary) -> Dictionary:
 						candidate["slots"][id]["x"] += shift.x
 						candidate["slots"][id]["y"] += shift.y
 					var group := []
+					if blockers.has(id): group.append_array(quality["bad_traces"])
 					for edge in candidate["trace_ends"].size():
 						for endpoint in 2:
 							if candidate["trace_ends"][edge][endpoint] != id:

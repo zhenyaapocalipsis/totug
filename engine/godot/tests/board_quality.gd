@@ -33,14 +33,14 @@ func _init() -> void:
 	var index := board._add_node("odd",BoardSchematic.Kind.SITE,"a",Vector2(20,20),Vector2(22,12))
 	board._node_size[index] = Vector2(45,25)
 	verify(board._node_rect(index).size == Vector2(45,25),"full odd-sized pixel bounds")
-	for pair in [[4,23],[4,34],[4,61],[4,69],[4,83],[4,94],[4,130],[4,139],[4,156],[4,158],[4,226],[4,286],[4,1],[4,9],[4,108],[4,203],[4,205],[4,257],[4,96],[4,147],[4,300],[4,220],[2,30],[2,9],[2,13],[2,25],[3,25]]:
+	for pair in [[4,1795524757],[4,1795524668],[4,1795524744],[4,23],[4,34],[4,61],[4,69],[4,83],[4,94],[4,130],[4,139],[4,156],[4,158],[4,226],[4,286],[4,1],[4,9],[4,108],[4,203],[4,205],[4,257],[4,96],[4,147],[4,300],[4,220],[2,30],[2,9],[2,13],[2,25],[3,25]]:
 		var ids: Array[String] = []
 		ids.assign(["red","blue","green","purple"].slice(0,pair[0]))
 		print("REGRESSION ",pair)
 		var state := GameSetup.new_game(ids,pair[1])
 		var drawing := BoardSchematic.build(state)
 		var quality := Quality.inspect(drawing)
-		verify(BoardSchematic._quality_score(quality) == 0,"regression %s: %s" % [pair,quality])
+		verify(BoardSchematic._drawing_score(drawing,quality) == 0 and not drawing.has("quality_issues"),"regression %s: %s" % [pair,quality])
 		verify(_slots_match(drawing,state),"slot identities and coordinates %s" % [pair])
 		verify(_links_match(drawing,state),"drawing preserves every actual game link %s" % [pair])
 	print("board quality: passed=",passed,", failed=",failed)
