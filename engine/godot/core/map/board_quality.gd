@@ -2,6 +2,9 @@ extends RefCounted
 
 const Metrics = preload("res://core/map/board_metrics.gd")
 
+## Зазор чужих трасс от края кружочка (владелец, 2026-11-25).
+const RING_CLEAR := 4.0
+
 ## Geometry checks on the exported pixels, independent of the layout solver.
 static func inspect(s: Dictionary, ring_radius := Metrics.RADIUS) -> Dictionary:
 	var sites := {}
@@ -50,6 +53,20 @@ static func inspect(s: Dictionary, ring_radius := Metrics.RADIUS) -> Dictionary:
 				if segment.intersects(margin):
 					if _port_contact(s, t, id, segment.intersection(margin)):
 						continue
+					foreign_hits += 1
+					bad_traces[t] = true
+					break
+		# Чужая трасса не прижимается к кружочку: зазор от его края
+		# (владелец, 2026-11-25) — никаких касательных.
+		for id: String in s["rings"]:
+			if (s["trace_ends"][t] as Array).has(id):
+				continue
+			var clearance := (nodes[id] as Rect2).grow(RING_CLEAR)
+			for k in range(0, f.size() - 2, 2):
+				var a2 := Vector2(f[k], f[k + 1])
+				var b2 := Vector2(f[k + 2], f[k + 3])
+				var segment2 := Rect2(a2, Vector2.ZERO).expand(b2).grow(0.01)
+				if segment2.intersects(clearance):
 					foreign_hits += 1
 					bad_traces[t] = true
 					break
