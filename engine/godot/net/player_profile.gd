@@ -2,7 +2,7 @@ class_name PlayerProfile
 extends RefCounted
 
 ## Профиль игрока: имя и герб. Герб рисуется прямо на фишке войска — это
-## картинка 9x9 (как SchematicPainter.token), рисовать можно только внутри
+## картинка 13x13 (как SchematicPainter.token), рисовать можно только внутри
 ## кружка; ободок остаётся тёмным, а незакрашенные пиксели заливаются цветом
 ## места (red/blue/...), чтобы чужие войска всё равно отличались по цвету.
 ## Закрасить кружок целиком нельзя: не меньше MIN_SEAT_PIXELS пикселей
@@ -11,19 +11,22 @@ extends RefCounted
 ## Профиль хранится у игрока (user://profile.cfg), в сетевой игре уходит в
 ## комнату (NetSession._profile_up) и раздаётся всем вместе с лобби.
 ##
-## Герб передаётся строкой: 81 пиксель по 4 байта RGBA в шестнадцатеричном
-## виде (648 знаков), построчно сверху вниз. Прозрачный пиксель — 00000000.
+## Герб передаётся строкой: 169 пикселей по 4 байта RGBA в шестнадцатеричном
+## виде (1352 знака), построчно сверху вниз. Прозрачный пиксель — 00000000.
 ##
 ## Рубашка карт (back) — имя готового рисунка (CardBack.DESIGNS), открытого в
 ## коллекции (SkinCollection). "" — обычная рубашка CLASSIC.
 
-const SIZE := 9
-const RADIUS := 4
+const Metrics := preload("res://core/map/board_metrics.gd")
+const SIZE := Metrics.DIAMETER
+const RADIUS := Metrics.RADIUS
+const LEGACY_SIZE := 9
+const LEGACY_LENGTH := LEGACY_SIZE * LEGACY_SIZE * 8
 const NAME_MAX := 12
 const EMBLEM_LENGTH := SIZE * SIZE * 8
 const PATH := "user://profile.cfg"
-## Сколько пикселей кружка (из 37) должны остаться цветом места.
-const MIN_SEAT_PIXELS := 12
+## Keep at least the former proportion of seat colour (12 / 37).
+const MIN_SEAT_PIXELS := 32
 ## Русские буквы (владелец, 2026-09-29): для имён и фраз чата, в шрифте есть все.
 const CYRILLIC_LETTERS := "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 ## Имя рисуется пиксельным шрифтом: только знаки, которые в нём есть.
@@ -43,7 +46,7 @@ static func paintable(x: int, y: int) -> bool:
 	return dx * dx + dy * dy <= r * r + r
 
 
-## Сколько всего пикселей можно красить (37 при фишке 9x9).
+## Сколько всего пикселей можно красить (97 при фишке 13x13).
 static func paintable_count() -> int:
 	var n := 0
 	for i in SIZE * SIZE:
@@ -105,6 +108,8 @@ static func is_blank(emblem: String) -> bool:
 ## max_painted() — "", иначе пиксели вне кружка стёрты, прозрачность только
 ## 0 или 255.
 static func clean_emblem(emblem: String) -> String:
+	if emblem.length() == LEGACY_LENGTH:
+		return _upgrade_emblem(emblem)
 	if emblem.length() != EMBLEM_LENGTH:
 		return ""
 	for ch in emblem:
@@ -122,6 +127,25 @@ static func clean_emblem(emblem: String) -> String:
 	if painted > max_painted():
 		return ""
 	return bytes.hex_encode()
+
+
+## Centre saved 9x9 art without stretching it or overwriting the original file.
+static func _upgrade_emblem(emblem: String) -> String:
+	for ch in emblem:
+		if not "0123456789abcdefABCDEF".contains(ch): return ""
+	var bytes := emblem.hex_decode()
+	var pixels: Array[Color] = []
+	pixels.resize(SIZE*SIZE)
+	pixels.fill(Color(0,0,0,0))
+	var painted := 0
+	var offset := (SIZE-LEGACY_SIZE)/2
+	for i in LEGACY_SIZE*LEGACY_SIZE:
+		var x := i%LEGACY_SIZE
+		var y := i/LEGACY_SIZE
+		if bytes[i*4+3] == 0 or (x-4)*(x-4)+(y-4)*(y-4) > 12: continue
+		painted += 1
+		pixels[(y+offset)*SIZE+x+offset] = Color8(bytes[i*4],bytes[i*4+1],bytes[i*4+2])
+	return emblem_from_pixels(pixels) if painted <= 25 else ""
 
 
 ## Любимая карта (решение владельца, 2026-09-30): выбирается в коллекции,

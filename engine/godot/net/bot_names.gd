@@ -4,7 +4,7 @@ extends RefCounted
 ## Имена и гербы ботов по цвету места (решение владельца, 2026-10-12): за столом
 ## бот — не "Green", а демон со своим гербом на фишках войск.
 ##
-## Герб — рисунок 9x9 (PlayerProfile.SIZE) внутри кружка фишки, строка на ряд,
+## Original 9x9 bot art is centred on the current PlayerProfile canvas.
 ## знак на пиксель: "." и пробел — не закрашено (виден цвет игрока), остальные —
 ## цвета из INK. Закрашено не больше PlayerProfile.max_painted(), как у людей.
 
@@ -76,15 +76,16 @@ static func profile(seat: String) -> Dictionary:
 	return {"name": String(BOTS[seat]["name"]), "emblem": emblem(seat)}
 
 
-## Герб бота строкой PlayerProfile (hex RGBA, 9x9).
+## Centre the original 9x9 bot art on the current troop canvas.
 static func emblem(seat: String) -> String:
 	var pixels: Array[Color] = []
 	pixels.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
 	pixels.fill(Color(0, 0, 0, 0))
+	var offset := (PlayerProfile.SIZE-9)/2
 	var art: Array = BOTS[seat]["art"]
 	for y in mini(art.size(), PlayerProfile.SIZE):
 		var row := String(art[y])
 		for x in mini(row.length(), PlayerProfile.SIZE):
 			if INK.has(row[x]):
-				pixels[y * PlayerProfile.SIZE + x] = INK[row[x]]
+				pixels[(y+offset) * PlayerProfile.SIZE + x+offset] = INK[row[x]]
 	return PlayerProfile.emblem_from_pixels(pixels)

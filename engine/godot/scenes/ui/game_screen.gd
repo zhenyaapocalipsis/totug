@@ -17,6 +17,7 @@ extends Control
 
 ## Кнопка MAIN MENU в меню по Esc: вернуться к экрану выбора режима
 ## (его показывает обёртка game_scene.gd).
+signal board_generation_requested
 signal main_menu_requested
 
 ## Все цвета, за какие можно сесть, в порядке рассадки: партия на N человек
@@ -353,7 +354,7 @@ static func player_ids_for(count: int) -> Array[String]:
 ## teams — хотсит 2 на 2 (этап Team-2).
 func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String] = [],
 		mode: String = GameSetup.MODE_STANDARD, online: Dictionary = {},
-		bot_ids: Array[String] = [], teams: bool = false, god_mode: bool = false) -> void:
+		bot_ids: Array[String] = [], teams: bool = false, god_mode: bool = false, prepared: Dictionary = {}) -> void:
 	bots = bot_ids.duplicate()
 	god = god_mode and online.is_empty()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -403,7 +404,9 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		return
 	if ids.size() >= MIN_PLAYERS:
 		player_ids = ids.duplicate()
-	var state := GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode, teams)
+	var state: GameState = prepared.get("state")
+	if state == null:
+		state = GameSetup.new_game(player_ids, game_seed, half_decks, false, true, true, mode, teams)
 	_setup_evidence = BugReport.starting_evidence(state)
 	server = GameServer.new(state)
 	# В режиме бога партию по ходам не повторить — ни статистики, ни записи.
@@ -411,7 +414,7 @@ func _init(game_seed: int = 0, half_decks: Array[String] = [], ids: Array[String
 		_replay_seed = game_seed
 		_replay_ids = player_ids.duplicate()
 		_replay_mode = mode
-	board_data = StateView.board_snapshot(state)
+	board_data = prepared["board"] if prepared.has("board") else StateView.board_snapshot(state)
 	viewer_id = _local_viewer()
 	_build_layout()
 	refresh(StateView.for_player_with_pending(server.state, viewer_id, server.resolver.pending))
@@ -660,6 +663,7 @@ func _build_layout() -> void:
 		_god_panel = GodPanel.new(player_ids)
 		_god_panel.z_index = 930
 		_god_panel.action_requested.connect(send_god)
+		_god_panel.board_generation_requested.connect(func(): board_generation_requested.emit())
 		_god_panel.hs_play = _hs_play
 		# FX: анимация розыгрыша прямо на доске — только картинка, ход не меняется
 		# (раньше была в меню Esc; владелец, 2026-10-28 — перенести сюда).

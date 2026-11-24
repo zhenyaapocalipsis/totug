@@ -132,7 +132,7 @@ static func token(colour: Color, emblem: String = "") -> Image:
 	disc(img, Vector2i(r, r), r - 1, colour)
 	if emblem != "":
 		var pixels := PlayerProfile.emblem_pixels(emblem)
-		# Keep saved/network emblems at 9x9; centre them on the larger token.
+		# Saved 9x9 emblems are upgraded to the current canvas by PlayerProfile.
 		var offset := (img.get_width() - PlayerProfile.SIZE) / 2
 		for i in pixels.size():
 			if pixels[i].a > 0.0:
@@ -170,7 +170,7 @@ static func _site(img: Image, site: Dictionary) -> void:
 	name_at.x = floori((rect.size.x - PixelFont.text_width(caption)) * 0.5)
 	# Capital accents use the existing header gap, inside the frame.
 	if caption.contains("Й") or caption.contains("Ё"):
-		name_at.y += 2
+		name_at.y += 1
 	PixelFont.draw_text(img, rect.position.x + int(name_at.x), rect.position.y + int(name_at.y),
 		caption, ink)
 	var vp_at: Vector2 = box["vp_at"]

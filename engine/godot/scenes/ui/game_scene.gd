@@ -13,6 +13,10 @@ const PageText := preload("res://scenes/page_text.gd")
 
 ## Файлом, а не глобальным именем класса: так экран виден и без кэша редактора.
 const TutorialOfferScreen := preload("res://scenes/ui/tutorial_offer_screen.gd")
+const DealingOverlay := preload("res://scenes/ui/dealing_overlay.gd")
+var _board_thread: Thread
+var _building := false
+var _pending_game := {}
 
 
 func _ready() -> void:
@@ -206,6 +210,8 @@ func _start_replay(file: String) -> void:
 
 func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: bool = false,
 		teams: bool = false, god: bool = false) -> void:
+	if _building: return
+	_building = true
 	for child in get_children():
 		child.queue_free()
 	# За одним экраном профиль на компьютере один — он у первого цвета, и этот
@@ -221,11 +227,50 @@ func _start_game(player_ids: Array[String], game_seed: int, mode: String, bots: 
 		for pid: String in bot_ids:  # у ботов свои имена и гербы (BotNames)
 			if BotNames.BOTS.has(pid):
 				PlayerProfile.seats[pid] = BotNames.profile(pid)
-	var screen := GameScreen.new(game_seed, [], player_ids, mode, {}, bot_ids, teams, god)
+	var loading := DealingOverlay.new()
+	add_child(loading)
+	# Render the loading screen before preparing the state; route on a worker
+	# so its animated indicator and the window keep responding throughout.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var state := GameSetup.new_game(player_ids,game_seed,[],false,true,true,mode,teams)
+	BoardSchematic.warm_up(state)
+	_pending_game = {"state":state,"ids":player_ids,"seed":game_seed,"mode":mode,"bots":bots,"bot_ids":bot_ids,"teams":teams,"god":god}
+	_board_thread = Thread.new()
+	var error := _board_thread.start(func(): return BoardSchematic.build(state))
+	if error != OK:
+		_board_thread = null
+		_building = false
+		push_error("Board worker could not start: %d" % error)
+		_show_setup(game_seed)
+
+
+func _process(_delta: float) -> void:
+	if _board_thread == null or _board_thread.is_alive(): return
+	var schematic: Dictionary = _board_thread.wait_to_finish()
+	_board_thread = null
+	_building = false
+	var job := _pending_game
+	_pending_game = {}
+	var state: GameState = job["state"]
+	var prepared := {"state":state,"board":StateView.board_snapshot(state,schematic)}
+	_clear()
+	var screen := GameScreen.new(job["seed"],[],job["ids"],job["mode"],{},job["bot_ids"],job["teams"],job["god"],prepared)
+	if job["god"]:
+		screen.board_generation_requested.connect(func():
+			var next_seed := randi()
+			if next_seed == int(job["seed"]): next_seed += 1
+			_start_game.call_deferred(job["ids"],next_seed,job["mode"],job["bots"],job["teams"],true))
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.main_menu_requested.connect(func():
 		_show_setup.call_deferred(int(Time.get_unix_time_from_system())))
 	add_child(screen)
+
+
+func _exit_tree() -> void:
+	if _board_thread != null:
+		_board_thread.wait_to_finish()
+		_board_thread = null
 
 
 ## WATCH во вкладке FRIENDS — режим зрителя: просим сервер по связи меню,

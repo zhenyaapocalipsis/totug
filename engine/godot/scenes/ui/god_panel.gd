@@ -11,6 +11,7 @@ extends PanelContainer
 
 signal action_requested(action: Dictionary)
 signal fx_requested(card_id: String)
+signal board_generation_requested
 
 const L10n := preload("res://scenes/localization.gd")
 const Terms := preload("res://scenes/term_text.gd")
@@ -50,6 +51,7 @@ var _pause_button: Button
 var _frame_label: Label
 ## Анимации розыгрыша экрана: пауза и шаг по кадрам (задаёт GameScreen).
 var hs_play: HsPlay
+var _generate_button: Button
 var _hint: Label
 var _preview_card := ""
 var _preview_from: Control
@@ -100,6 +102,10 @@ func _init(player_ids: Array[String]) -> void:
 	]))
 
 	col.add_child(_heading("BOARD"))
+	_generate_button = _button("NEW BOARD",func(): board_generation_requested.emit())
+	L10n.bind(_generate_button,"god.new_board")
+	L10n.bind(_generate_button,"god.new_board_tip",{},"tooltip_text")
+	col.add_child(_generate_button)
 	var tools: Array[Control] = []
 	var group := ButtonGroup.new()
 	for t: Array in [["OFF", TOOL_OFF], ["TROOP", TOOL_TROOP], ["SPY", TOOL_SPY], ["ERASE", TOOL_ERASE]]:

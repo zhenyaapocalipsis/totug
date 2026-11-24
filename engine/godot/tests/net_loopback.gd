@@ -1134,7 +1134,9 @@ func _emblem_for(n: int) -> String:
 	var pixels: Array[Color] = []
 	pixels.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
 	pixels.fill(Color(0, 0, 0, 0))
-	pixels[40] = Color8(n * 20, 200, 10)
+	pixels[PlayerProfile.RADIUS * PlayerProfile.SIZE + PlayerProfile.RADIUS] = Color8(n * 20, 200, 10)
+	# This pixel could not be painted on the old 9x9 emblem.
+	pixels[PlayerProfile.RADIUS * PlayerProfile.SIZE + PlayerProfile.RADIUS+4] = Color8(n * 20, 200, 10)
 	return PlayerProfile.emblem_from_pixels(pixels)
 
 

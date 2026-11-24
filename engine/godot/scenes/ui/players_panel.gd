@@ -27,11 +27,13 @@ const COLUMNS: Array[Array] = [
 	["inner_circle", "IC", "Cards in Inner Circle"],
 	["vp_tokens", "VP", "Victory point tokens"],
 ]
-## Фишка войска с эмблемой (9 пикселей и 2 отступа); строка цифр начинается
-## от левого края панели. Числовой столбец — 2 знака.
-const TOKEN_W := 11.0
-const NUM_W := 12.0
-const COL_GAP := 3
+## Full-size emblem beside both text lines, never over the numeric row.
+const Metrics := preload("res://core/map/board_metrics.gd")
+const TOKEN_SIZE := float(Metrics.DIAMETER)
+const TOKEN_GAP := 2.0
+const TOKEN_W := TOKEN_SIZE+TOKEN_GAP
+const NUM_W := 11.0
+const COL_GAP := 1
 ## Лишний зазор перед залом трофеев: иначе последняя цифра VP читается как
 ## первая цифра зала.
 const HALL_GAP := 3.0
@@ -80,6 +82,9 @@ func _init() -> void:
 	# Шапка — над строкой чисел: те же отступ и ширины столбцов.
 	var head_row := _numbers_row()
 	_list.add_child(head_row)
+	var indent := Control.new()
+	indent.custom_minimum_size.x = TOKEN_W-COL_GAP
+	head_row.add_child(indent)
 	for column: Array in COLUMNS:
 		head_row.add_child(_head("game.head_" + String(column[0]), "game.tip_" + String(column[0]), NUM_W,
 			HORIZONTAL_ALIGNMENT_RIGHT))
@@ -122,24 +127,24 @@ func _add_row(pid: String) -> void:
 	block.add_theme_stylebox_override("panel", _plain_style)
 	block.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_list.add_child(block)
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation",int(TOKEN_GAP))
+	block.add_child(identity)
+	var token := TextureRect.new()
+	token.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	token.custom_minimum_size = Vector2(TOKEN_SIZE,TOKEN_SIZE)
+	token.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	token.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	identity.add_child(token)
 	var lines := VBoxContainer.new()
+	lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lines.add_theme_constant_override("separation", -LINE_OVERLAP)
-	block.add_child(lines)
+	identity.add_child(lines)
 	# Первая строка: фишка войска с эмблемой игрока (как на доске, решение
 	# владельца 2026-09-27) и ник.
 	var name_cell := HBoxContainer.new()
 	name_cell.add_theme_constant_override("separation", 0)
 	lines.add_child(name_cell)
-	var token := TextureRect.new()
-	token.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-	# Заглавные пиксельного шрифта сидят выше середины строки — фишку
-	# поднимаем: прямоугольник на 4 пикселя ниже фишки, по центру его она
-	# выступает вверх на 2. Так центр фишки на одной линии с серединой ника и
-	# чисел (владелец, 2026-09-28).
-	token.custom_minimum_size = Vector2(TOKEN_W, BoardSchematic.SLOT_R * 2 + 1 - 4)
-	token.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	token.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	name_cell.add_child(token)
 	var name_label := _cell("", 0.0, colour, HORIZONTAL_ALIGNMENT_LEFT)
 	name_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -294,7 +299,7 @@ func update_from_view(view: Dictionary) -> void:
 	# раскладки на момент обновления ещё может не быть.
 	var small := false
 	var room := size.x - 2.0 * TROPHY_RIGHT_PAD - (NUM_W + COL_GAP) * COLUMNS.size() \
-		- HALL_GAP
+		- HALL_GAP - TOKEN_W
 	for pid: String in _rows:
 		var box: HBoxContainer = _rows[pid]["trophies"]
 		if size.x > 0.0 and box.get_combined_minimum_size().x > room:

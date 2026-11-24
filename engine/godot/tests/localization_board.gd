@@ -65,7 +65,7 @@ func _run() -> void:
 			var header := false
 			for item: Dictionary in schematic.sites.values():
 				var r: Array = item.rect
-				if Rect2i(int(r[0])+2,int(r[1])+2,int(r[2])-4,PixelFont.HEIGHT + BoardSchematic.NAME_GAP).has_point(Vector2i(x,y)):
+				if Rect2i(int(r[0])+2,int(r[1])+1,int(r[2])-4,PixelFont.HEIGHT + BoardSchematic.NAME_GAP+1).has_point(Vector2i(x,y)):
 					header = true
 					break
 			if not header:

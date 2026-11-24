@@ -44,10 +44,11 @@ const SECTION_GAP := 4
 ## GameScreen задаёт ширину всей правой колонки.
 const WIDTH := SLOT.x * COLUMNS + CARD_GAP * (COLUMNS - 1) + PAD * 2
 ## Фишки на карте рынка (Blue Slaad, Performer Maestro): ромбик шпиона и
-## фишки войск размером как на схеме доски (фишка 9x9 + пиксель зазора).
+## фишки войск размером как на схеме доски (13x13 + пиксель зазора).
 const SPY_SIDE := 10.0
-const TOKEN_PITCH := 10
-const TOKENS_PER_ROW := 5
+const Metrics := preload("res://core/map/board_metrics.gd")
+const TOKEN_PITCH := Metrics.PITCH
+const TOKENS_PER_ROW := int((CardView.MINI_ART.w-1)/TOKEN_PITCH)
 
 ## Картинки фишек войск по цвету и эмблеме хозяина.
 var _half_decks: Array = []

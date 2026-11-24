@@ -750,5 +750,7 @@
   "keyword.EXPLORE": "EXPLORE: look at the top 2 cards of your deck. Put up to one that matches into your hand,\nthe rest on the top or bottom of your deck in any order.",
   "keyword.DISTINCT": "DISTINCT: count each card aspect only once,\nhowever many cards of it you played this turn.",
   "card.token": "TOKEN",
-  "card.transforms_into": "TRANSFORMS INTO"
+  "card.transforms_into": "TRANSFORMS INTO",
+  "god.new_board": "NEW BOARD",
+  "god.new_board_tip": "Start a fresh test game with a new board seed."
 }

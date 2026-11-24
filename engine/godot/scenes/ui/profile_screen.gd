@@ -4,7 +4,7 @@ extends Control
 const L10n := preload("res://scenes/localization.gd")
 
 ## Профиль игрока: имя и герб. Герб рисуется в маленьком пиксельном
-## редакторе, холст которого — сама фишка войска 9x9 (PlayerProfile): ободок
+## редакторе, холст которого — сама фишка войска 13x13 (PlayerProfile): ободок
 ## не красится, пустые пиксели на доске будут цветом места игрока. Целиком
 ## закрасить нельзя — хотя бы PlayerProfile.MIN_SEAT_PIXELS остаются пустыми.
 ##
@@ -34,7 +34,7 @@ const PALETTE := [
 	"306082", "5b6ee1", "639bff", "5fcde4", "cbdbfc", "ffffff", "9badb7", "847e87",
 	"696a6a", "595652", "76428a", "ac3232", "d95763", "d77bba", "8f974a", "8a6f30",
 ]
-const CELL := 18
+const CELL := 14
 const SWATCH := 14
 const PREVIEW_ZOOM := 3
 const RIM := Color(0.04, 0.03, 0.06)

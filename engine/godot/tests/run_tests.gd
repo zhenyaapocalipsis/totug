@@ -4442,31 +4442,31 @@ func test_update_signature() -> void:
 
 func test_player_profile() -> void:
 	section("профиль игрока: имя и герб на фишке")
-	check(PlayerProfile.SIZE <= BoardSchematic.SLOT_R * 2 + 1, "сохранённый герб помещается на фишке войска")
-	check(PlayerProfile.paintable(4, 4) and PlayerProfile.paintable(1, 4), "центр и край кружка красятся")
-	check(not PlayerProfile.paintable(0, 4) and not PlayerProfile.paintable(0, 0), "ободок и угол не красятся")
+	check(PlayerProfile.SIZE == BoardSchematic.SLOT_R * 2 + 1, "сохранённый герб помещается на фишке войска")
+	check(PlayerProfile.paintable(PlayerProfile.RADIUS, PlayerProfile.RADIUS) and PlayerProfile.paintable(1, PlayerProfile.RADIUS), "центр и край кружка красятся")
+	check(not PlayerProfile.paintable(0, PlayerProfile.RADIUS) and not PlayerProfile.paintable(0, 0), "ободок и угол не красятся")
 	check_eq(PlayerProfile.clean_name("  Dr0w Лорд <b>King of all  "), "Dr0w Лорд bK", "имя: только знаки шрифта, до 12")
 	check_eq(PlayerProfile.clean_emblem("zz"), "", "испорченный герб отбрасывается")
 
 	var pixels: Array[Color] = []
 	pixels.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
 	pixels.fill(Color(0, 0, 0, 0))
-	pixels[4 * 9 + 4] = Color("ac3232")
+	pixels[PlayerProfile.RADIUS * PlayerProfile.SIZE + PlayerProfile.RADIUS] = Color("ac3232")
 	pixels[0] = Color("ffffff")  # угол — вне кружка, должен стереться
 	var emblem := PlayerProfile.emblem_from_pixels(pixels)
-	check_eq(emblem.length(), PlayerProfile.EMBLEM_LENGTH, "герб — строка 648 знаков")
+	check_eq(emblem.length(), PlayerProfile.EMBLEM_LENGTH, "герб — строка 1352 знака")
 	var back := PlayerProfile.emblem_pixels(emblem)
-	check(back[40].to_html(false) == "ac3232" and back[0].a == 0.0, "герб переживает кодирование, угол стёрт")
+	check(back[PlayerProfile.RADIUS * PlayerProfile.SIZE + PlayerProfile.RADIUS].to_html(false) == "ac3232" and back[0].a == 0.0, "герб переживает кодирование, угол стёрт")
 	check(not PlayerProfile.is_blank(emblem) and PlayerProfile.is_blank(PlayerProfile.blank_emblem()), "пустой герб узнаётся")
 
 	var img := SchematicPainter.token(Color("d93838"), emblem)
 	var centre := BoardSchematic.SLOT_R
 	check_eq(img.get_width(), centre * 2 + 1, "размер картинки соответствует фишке")
-	check(img.get_pixel(centre, centre).to_html(false) == "ac3232", "старый герб по центру увеличенной фишки")
+	check(img.get_pixel(centre, centre).to_html(false) == "ac3232", "герб по центру фишки")
 	check(img.get_pixel(centre - 1, centre).is_equal_approx(Color("d93838")), "пустой пиксель герба — цвет места")
 	check(img.get_pixel(0, centre).a > 0.9 and img.get_pixel(0, centre).v < 0.1, "ободок фишки остаётся тёмным")
 
-	check_eq(PlayerProfile.paintable_count(), 37, "внутри кружка 37 пикселей")
+	check_eq(PlayerProfile.paintable_count(), 97, "внутри кружка 97 пикселей")
 	var full: Array[Color] = []
 	full.resize(PlayerProfile.SIZE * PlayerProfile.SIZE)
 	full.fill(Color("000000"))
