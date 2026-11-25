@@ -70,9 +70,6 @@ const IMAGE_MARGIN := 4
 
 # Site box metrics (see SchematicPainter). All in pixels at 1x.
 const RING_R := Metrics.RADIUS
-## Чужие трассы держатся от края кружочка (владелец, 2026-11-25): никаких
-## касательных — зазор от круга не меньше RING_CLEAR.
-const RING_CLEAR := 4.0
 const BOX_PAD := 1
 ## 13px troops and tunnel spaces (owner, 2026-11-23).
 ## Saved 9px emblems are centred on the larger token by SchematicPainter.
@@ -1081,54 +1078,26 @@ func _node_rect(n: int, grow: float = 0.0) -> Rect2:
 ## Segments of the route outside its two end boxes, as point pairs.
 func _clip(e: int, points: PackedVector2Array) -> PackedVector2Array:
 	var out := PackedVector2Array()
+	var start_rect := _node_rect(_edge_a[e])
+	var end_rect := _node_rect(_edge_b[e])
 	var inside_start := _kind[_edge_a[e]] != Kind.PORT
 	for i in points.size() - 1:
 		var p := points[i]
 		var q := points[i + 1]
 		if inside_start:
-			var exit: Variant = _exit_shape(p, q, _edge_a[e])
+			var exit: Variant = _exit_point(p, q, start_rect)
 			if exit == null:
 				continue
 			p = exit
 			inside_start = false
 		if _kind[_edge_b[e]] != Kind.PORT and i == points.size() - 2:
-			var entry: Variant = _exit_shape(q, p, _edge_b[e])
+			var entry: Variant = _exit_point(q, p, end_rect)
 			if entry == null:
 				continue
 			q = entry
 		out.append(p)
 		out.append(q)
 	return out
-
-
-## Where segment p->q leaves the visible shape of node n (p inside): the frame
-## of a site box or the circle of a ring — tunnels meet rings radially, exactly
-## at the circle line (owner, 2026-11-25).
-func _exit_shape(p: Vector2, q: Vector2, n: int) -> Variant:
-	if _kind[n] == Kind.RING:
-		return _exit_circle(p, q, _pos[n], float(RING_R))
-	return _exit_point(p, q, _node_rect(n))
-
-
-## Where segment p->q leaves the circle around centre (p inside), or null if it
-## never does.
-static func _exit_circle(p: Vector2, q: Vector2, centre: Vector2, r: float) -> Variant:
-	if (p - centre).length_squared() > r * r + 0.01:
-		return p
-	if (q - centre).length_squared() <= r * r + 0.01:
-		return null
-	var d := q - p
-	var f := p - centre
-	var a := d.length_squared()
-	if a < 0.0001:
-		return null
-	var b := 2.0 * f.dot(d)
-	var c := f.length_squared() - r * r
-	var disc := b * b - 4.0 * a * c
-	if disc <= 0.0:
-		return null
-	var t := (-b + sqrt(disc)) / (2.0 * a)
-	return p + d * clampf(t, 0.0, 1.0)
 
 
 ## Where segment p->q leaves rect (p inside), or null if it never does.
@@ -1160,13 +1129,13 @@ static func _segment_hits_rect(p: Vector2, q: Vector2, rect: Rect2) -> bool:
 
 
 ## Boxes and rings a tunnel of edge e must not run through (its own two ends
-## excluded), grown by 2 px (rings by RING_CLEAR, owner 2026-11-25). Depends
-## only on node positions, so _choose_route makes it once for all route variants.
+## excluded), grown by 2 px. Depends only on node positions, so _choose_route
+## makes it once for all route variants.
 func _obstacles(e: int) -> Array[Rect2]:
 	var out: Array[Rect2] = []
 	for n: int in _near[_hex[_edge_b[e]]]:
 		if n != _edge_a[e] and n != _edge_b[e]:
-			out.append(_node_rect(n, RING_CLEAR if _kind[n] == Kind.RING else 2.0))
+			out.append(_node_rect(n, 2.0))
 	return out
 
 
