@@ -35,7 +35,7 @@ const WARM := 8
 const PX_PER_UNIT := 44.1
 
 ## Карта -> сценарий.
-const RECIPES := {"49908": "ysera", "49302": "benedictus", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48425": "farseerwo", "48426": "worldbreaker", "48429": "herenn", "48433": "vyranoth", "48500": "ragnaros_gf", "48501": "kiljaeden", "48513": "xavius", "48514": "umbra", "48535": "archimonde", "48538": "nythendra", "48539": "moldara", "48600": "inara", "48626": "mutanus", "48630": "yshaarj", "48631": "ravitz", "48632": "azshara_ocean", "48700": "kithix", "48701": "azalina", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "48715": "staff_endbringer", "48721": "elizagoreblade", "48728": "tichondrius", "48732": "broxigar", "48733": "soulburnervaria", "48738": "sylvanastheaccused", "49003": "gennworgenking", "49004": "sunsapperlynessa", "49015": "medivhthehallowed", "49017": "commanderbeatrix", "49019": "tyrande", "49022": "ursol", "49113": "azurequeensindrago", "49114": "thunderbringer", "49117": "blooddoctorthalena", "49118": "siredenathrius", "49120": "blightfang", "49121": "thejailer", "49122": "chronolordepoch", "49211": "chronogor", "49212": "ayalotuskingpin", "49213": "mathiasshaw", "49215": "norgannon", "49216": "daveberard", "49218": "omen", "49219": "mastermindyoggsaro", "49220": "endtimemurozond", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49305": "bonelordfrostwhisp", "49402": "ladydarkvein", "49407": "karovthebroken", "49412": "staffoftrickery", "49413": "altruistheoutcast", "49416": "drestagath", "49417": "logoshbloodfighter", "49418": "nzothdreamsend", "49514": "amitutkeeperofamit", "49515": "archvillainrafaam", "49516": "ghuun", "49517": "wrathion", "49518": "moroes", "49520": "bloodqueenlanathel", "49521": "fyrakktheblazing", "49522": "captaincrowley", "49613": "overlorddrakuru", "49614": "bearonglashear", "49615": "hodirfatherofgiant", "49616": "rasfrostwhisper", "49617": "kelthuzad", "49618": "thaddiusmonstrosit", "49620": "thelichking", "49634": "irida", "49635": "zerontu", "49636": "neerufireblade", "49712": "titanographerosk", "49713": "arisenonyxia", "49714": "ultraxion", "49715": "kaelthas", "49716": "velenleaderoftheex", "49717": "theeternalhold", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49800": "arannathrillseeker", "49801": "chronikar", "49803": "mugzee", "49806": "baronessvashj", "49811": "anachronos", "49815": "overseerfrigidara", "49821": "archwitchwillow", "49822": "krogcraterking", "49900": "jacedarkweaver", "49903": "argustheemeraldsta", "49904": "princemalchezaar", "49906": "eternus", "49909": "nablyathewatcher", "50001": "sargerasthedestroy", "50002": "theexodar", "50003": "isorath", "50007": "nozdormubronzeaspe", "50008": "the8handsfrombeyon", "50100": "razidir", "50101": "beaststalkertavish", "50102": "timethiefrafaam", "50104": "maruutstonebinder", "50105": "theunknowableone", "50108": "shudderblock"}
+const RECIPES := {"49908": "ysera", "49302": "benedictus", "48315": "fizzlebang", "48316": "blackempire", "48325": "kara", "48328": "zayle", "48329": "renferal", "48339": "akama", "48400": "nefarius", "48403": "murozond", "48419": "yshaarj_lt", "48425": "farseerwo", "48426": "worldbreaker", "48429": "herenn", "48433": "vyranoth", "48500": "ragnaros_gf", "48501": "kiljaeden", "48513": "xavius", "48514": "umbra", "48535": "archimonde", "48538": "nythendra", "48539": "moldara", "48600": "inara", "48626": "mutanus", "48630": "yshaarj", "48631": "ravitz", "48632": "azshara_ocean", "48700": "kithix", "48701": "azalina", "48705": "blackblood", "48710": "magmaw", "48713": "scabbs", "48715": "staff_endbringer", "48721": "elizagoreblade", "48728": "tichondrius", "48732": "broxigar", "48733": "soulburnervaria", "48738": "sylvanastheaccused", "49003": "gennworgenking", "49004": "sunsapperlynessa", "49015": "medivhthehallowed", "49017": "commanderbeatrix", "49019": "tyrande", "49022": "ursol", "49113": "azurequeensindrago", "49114": "thunderbringer", "49117": "blooddoctorthalena", "49118": "siredenathrius", "49120": "blightfang", "49121": "thejailer", "49122": "chronolordepoch", "49211": "chronogor", "49212": "ayalotuskingpin", "49213": "mathiasshaw", "49215": "norgannon", "49216": "daveberard", "49218": "omen", "49219": "mastermindyoggsaro", "49220": "endtimemurozond", "49300": "chillinvoljin", "49301": "morchie", "49304": "remornialivingblad", "49305": "bonelordfrostwhisp", "49402": "ladydarkvein", "49407": "karovthebroken", "49412": "staffoftrickery", "49413": "altruistheoutcast", "49416": "drestagath", "49417": "logoshbloodfighter", "49418": "nzothdreamsend", "49514": "amitutkeeperofamit", "49515": "archvillainrafaam", "49516": "ghuun", "49517": "wrathion", "49518": "moroes", "49520": "bloodqueenlanathel", "49521": "fyrakktheblazing", "49522": "captaincrowley", "49613": "overlorddrakuru", "49614": "bearonglashear", "49615": "hodirfatherofgiant", "49616": "rasfrostwhisper", "49617": "kelthuzad", "49618": "thaddiusmonstrosit", "49620": "thelichking", "49634": "irida", "49635": "zerontu", "49636": "neerufireblade", "49712": "titanographerosk", "49713": "arisenonyxia", "49714": "ultraxion", "49715": "kaelthas", "49716": "velenleaderoftheex", "49717": "theeternalhold", "49718": "gormtheworldeater", "49719": "timeadmralhooktail", "49800": "arannathrillseeker", "49801": "chronikar", "49803": "mugzee", "49806": "baronessvashj", "49811": "anachronos", "49815": "overseerfrigidara", "49821": "archwitchwillow", "49822": "krogcraterking", "49900": "jacedarkweaver", "49903": "argustheemeraldsta", "49904": "princemalchezaar", "49906": "eternus", "49909": "nablyathewatcher", "50001": "sargerasthedestroy", "50002": "theexodar", "50003": "isorath", "50007": "nozdormubronzeaspe", "50008": "the8handsfrombeyon", "50100": "razidir", "50101": "beaststalkertavish", "50102": "timethiefrafaam", "50104": "maruutstonebinder", "50105": "theunknowableone", "50108": "shudderblock", "48629": "ignistheeternalflame", "48633": "grandmagisterrommath", "48639": "alakirthewindsoftime", "48725": "nexusprinceshaffar", "49018": "thorimstormlord", "49021": "ebyssian", "49020": "lumia", "49016": "kologarn", "49119": "vexallus", "49115": "tenwuoftheredsmoke", "49116": "godfreythebetrayer", "49214": "kazakusgolemshaper", "49217": "xortothbreakerofstar", "49303": "exarchmaladaar", "49513": "archmagekalec", "49519": "uluutheeverdrifter", "49720": "chronolorddeios", "49711": "ozumat", "49807": "ulfar", "49820": "thelivingplague", "49902": "morchok", "49905": "sathrovarr", "49901": "eldernadox", "50004": "malygosthespellweave", "50000": "chogallmastermind", "50006": "trastathsoulparasite", "50005": "galakrondazerothsend", "50103": "dirdrarebelcaptain", "50107": "golganneththethund", "50106": "kingsbane"}
 ## Сценарий: frames — папка кадров розыгрыша; sounds — папка звуков; card — появление
 ## карты в своём размере: face (full — полноформатная, mini — миниатюра; горящий контур
 ## в кадрах запечён под неё), reveal (секунда), sweep (проявляется снизу вверх), hold
@@ -51,6 +51,210 @@ const RECIPES := {"49908": "ysera", "49302": "benedictus", "48315": "fizzlebang"
 ## прячутся только сетки жетона и интерфейса карты HS (hideMeshRx в рецепте), а шлейфы, разрезы,
 ## частицы внутри узла жетона и трещины в земле остаются; виньетки на весь экран спрятаны.
 const SCRIPTS := {
+	# === HsFx-103+: 30 последних эффектов (2026-11-25) ===
+	# Ignis, the Eternal Flame (TTN_751) — выбрано в HsBrowser, запечено 2026-11-25.
+	"ignistheeternalflame": {"frames": "ignistheeternalflame", "sounds": "ignistheeternalflame",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Ignis_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[0, 1, 0.05, [[0, 0], [1, 1]], 0.075], [1, 3.05, 0.07, [[0, 0.26], [0.12, 0.96], [0.21, 0.22], [1, 0]], 0.075]]},
+	# Grand Magister Rommath (RLK_803) — выбрано в HsBrowser, запечено 2026-11-25.
+	"grandmagisterrommath": {"frames": "grandmagisterrommath", "sounds": "grandmagisterrommath",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "GrandMagisterRommath_CustomSummon_Sound", 1]]},
+	# Al'Akir, the Winds of Time (WON_092h, герой) — выбрано в HsBrowser, запечено 2026-11-25.
+	"alakirthewindsoftime": {"frames": "alakirthewindsoftime", "sounds": "alakirthewindsoftime",
+		"card": {"face": "mini", "reveal": 3.25, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "WONFX_AlAkir_Hero_CustomSummon_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[2.783, 5.133, 0.19, [[0, 1], [1, 0]], 0.075], [2.25, 2.7, 0.07, [[0, 0], [1, 1]], 0.075]]},
+	# Nexus-Prince Shaffar (GDB_143) — выбрано в HsBrowser, запечено 2026-11-25.
+	"nexusprinceshaffar": {"frames": "nexusprinceshaffar", "sounds": "nexusprinceshaffar",
+		"card": {"face": "mini", "reveal": 1.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "NexusPrinceShaffar_CustomSummon_Cast_Sound", 0.5], [1.5, "NexusPrinceShaffar_CustomSummon_Impact_Sound", 0.5]],
+		# CameraShaker2
+		"shakers": [[1.5, 1.833, 0.1, [[0, 1], [1, 0]], 0.075], [0.35, 1.117, 0.2, [[0, 0], [1, 1]], 0.075]]},
+	# Thorim, Stormlord (TTN_835) — выбрано в HsBrowser, запечено 2026-11-25.
+	"thorimstormlord": {"frames": "thorimstormlord", "sounds": "thorimstormlord",
+		"card": {"face": "mini", "reveal": 1.52, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ThorimStormlord_CustomSummon_Sound", 0.8], [1.05, "ThorimStormlord_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.083, 2.017, 0.2, [[0, 1], [1, 0]], 0.075]]},
+	# Ebyssian (CATA_553t) — выбрано в HsBrowser, запечено 2026-11-25.
+	"ebyssian": {"frames": "ebyssian", "sounds": "ebyssian",
+		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CATAFX_533t_Ebyssian_CustomSummon_Sound", 0.7], [1.38, "CATAFX_533t_Ebyssian_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[1.35, 3.15, 0.1, [[0, 1], [1, 0]], 0.075]]},
+	# Lumia (GDB_144) — выбрано в HsBrowser, запечено 2026-11-25.
+	"lumia": {"frames": "lumia", "sounds": "lumia",
+		"card": {"face": "mini", "reveal": 1.05, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "GDB_144_Lumia_CustomSummon_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0, 0.583, 0.07, [[0, 0.26], [0.12, 0.53], [0.45, 0.27], [0.68, 0.02], [1, 0]], 0.075], [0.583, 0.983, 0.1, [[0, 0.12], [0.21, 0.47], [0.54, 0.45], [0.86, 0.19], [1, 0]], 0.0911], [0.983, 1.783, 0.035, [[0, 0.26], [0.26, 0.4], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.129]]},
+	# Kologarn (TTN_330) — выбрано в HsBrowser, запечено 2026-11-25.
+	"kologarn": {"frames": "kologarn", "sounds": "kologarn",
+		"card": {"face": "mini", "reveal": 0.95, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Kologarn_CustomSummon_Cast_Sound", 0.8], [0.483, "Kologarn_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0.483, 2.117, 0.5, [[0, 0], [0.03, 0.99], [0.16, 0.12], [0.5, 0]], 0.0708]]},
+	# Vexallus (RLK_541) — выбрано в HsBrowser, запечено 2026-11-25.
+	"vexallus": {"frames": "vexallus", "sounds": "vexallus",
+		"card": {"face": "mini", "reveal": 1.02, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Vexallus_CustomSummon_sound", 1]],
+		# CameraShaker2
+		"shakers": [[0.15, 1.967, 0.07, [[0, 0], [0.36, 0.45], [0.41, 0.99], [0.6, 0.81], [0.99, 0]], 0.075]]},
+	# Tenwu of the Red Smoke (DMF_071) — выбрано в HsBrowser, запечено 2026-11-25.
+	"tenwuoftheredsmoke": {"frames": "tenwuoftheredsmoke", "sounds": "tenwuoftheredsmoke",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TenwuOfTheRedSmoke_CustomSummon_Sound", 0.8], [0.95, "TenwuOfTheRedSmoke_CustomSummon_Impact_Sound", 0.7]]},
+	# Godfrey, the Betrayer (JAIL_509) — выбрано в HsBrowser, запечено 2026-11-25.
+	"godfreythebetrayer": {"frames": "godfreythebetrayer", "sounds": "godfreythebetrayer",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "JAILFX_Godfrey_CustomSummon_Sound", 0.5], [1, "JAILFX_Godfrey_CustomSummon_Impact_Sound", 0.5]]},
+	# Kazakus, Golem Shaper (BAR_079) — выбрано в HsBrowser, запечено 2026-11-25.
+	"kazakusgolemshaper": {"frames": "kazakusgolemshaper", "sounds": "kazakusgolemshaper",
+		"card": {"face": "mini", "reveal": 1.37, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "KazakusGolemShaper_CustomSummon_sound", 0.8], [0.85, "ArchsporeMsshifn_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShakerAction (FSM)
+		"shakers": [[0.2, 0.9, 0.1, [[0, 0], [0.02, 1.01], [0.26, 0.2], [0.7, 0]], 0.075]]},
+	# Xor'toth, Breaker of Stars (GDB_118) — выбрано в HsBrowser, запечено 2026-11-25.
+	"xortothbreakerofstar": {"frames": "xortothbreakerofstar", "sounds": "xortothbreakerofstar",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Xortoth_CustomSummon_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.133, 2.983, 0.1, [[0, 0.09], [0.35, 0.2], [0.4, 0.58], [0.56, 0.18], [0.99, 0]], 0.075]]},
+	# Exarch Maladaar (GDB_470) — выбрано в HsBrowser, запечено 2026-11-25.
+	"exarchmaladaar": {"frames": "exarchmaladaar", "sounds": "exarchmaladaar",
+		"card": {"face": "mini", "reveal": 1.47, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ExarchMaladaar_CustomSummon", 0.9]],
+		# CameraShaker2
+		"shakers": [[0, 2.6, 0.04, [[0, 0], [0.21, 0.13], [0.34, 0.27], [0.57, 0.72], [0.66, 0.96], [0.72, 0.91], [0.79, 0.38], [0.83, 0.21], [1, 0]], 0.0485]]},
+	# Archmage Kalec (CATA_458) — выбрано в HsBrowser, запечено 2026-11-25.
+	"archmagekalec": {"frames": "archmagekalec", "sounds": "archmagekalec",
+		"card": {"face": "mini", "reveal": 1.35, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "ArchmageKalec_CustomSummon_sound", 1]],
+		# CameraShaker2
+		"shakers": [[0.883, 1.767, 0.04, [[0, 1], [1, 0]], 0.075]]},
+	# Uluu, the Everdrifter (GDB_854) — выбрано в HsBrowser, запечено 2026-11-25.
+	"uluutheeverdrifter": {"frames": "uluutheeverdrifter", "sounds": "uluutheeverdrifter",
+		"card": {"face": "mini", "reveal": 2.00, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[1.53, "UluuTheEverdrifter_CustomSummon_Impact_Sound", 1], [0, "UluuTheEverdrifter_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[1.5, 2.067, 0.3, [[0, 1], [1, 0]], 0.146], [0, 0.833, 0.2, [[0, 1], [1, 0]], 0.0805]]},
+	# Chrono-Lord Deios (TIME_064) — выбрано в HsBrowser, запечено 2026-11-25.
+	"chronolorddeios": {"frames": "chronolorddeios", "sounds": "chronolorddeios",
+		"card": {"face": "mini", "reveal": 1.54, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TIMEFX_ChronoLordDeios_CustomSummon_Sound", 0.8], [1.07, "TIMEFX_ChronoLordDeios_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[1.067, 1.933, 0.03, [[0, 1], [1, 0]], 0.075]]},
+	# Ozumat (TID_711) — выбрано в HsBrowser, запечено 2026-11-25.
+	"ozumat": {"frames": "ozumat", "sounds": "ozumat",
+		"card": {"face": "mini", "reveal": 1.30, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Ozumat_CustomSummon_sound", 1], [0.833, "Ozumat_CustomSummon_Impact_sound", 0.9]],
+		# CameraShaker2
+		"shakers": [[0, 2, 0.1, [[0, 0], [0.41, 0.02], [0.46, 0.23], [0.71, 0.29], [0.74, 0.99], [0.8, 0.97], [0.86, 0.19], [1, 0]], 0.0458]]},
+	# Ulfar (CORE_CATA_006) — выбрано в HsBrowser, запечено 2026-11-25.
+	"ulfar": {"frames": "ulfar", "sounds": "ulfar",
+		"card": {"face": "mini", "reveal": 1.42, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CATAFX_Ulfar_CustomSummon_Sound", 1], [0.95, "CATAFX_Ulfar_CustomSummon_ImpactSound", 1]],
+		# CameraShaker2
+		"shakers": [[0.95, 1.85, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# The Living Plague (JAIL_443) — выбрано в HsBrowser, запечено 2026-11-25.
+	"thelivingplague": {"frames": "thelivingplague", "sounds": "thelivingplague",
+		"card": {"face": "mini", "reveal": 1.79, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "TheLivingPlague_CustomSummon_Sound", 0.7], [1.52, "TheLivingPlague_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.533, 1.317, 0.07, [[0, 0.26], [0.25, 0.97], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.075], [1.317, 1.95, 0.07, [[0, 0.26], [0.25, 0.65], [0.4, 0.22], [0.68, 0.02], [1, 0]], 0.129]]},
+	# Morchok (CATA_570) — выбрано в HsBrowser, запечено 2026-11-25.
+	"morchok": {"frames": "morchok", "sounds": "morchok",
+		"card": {"face": "mini", "reveal": 1.14, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CATAFX_Morchok_CustomSummon_Sound", 0.7], [0.667, "CATAFX_Morchok_CustomSummon_Impact_Sound", 0.7]],
+		# CameraShaker2
+		"shakers": [[0.667, 1.267, 0.12, [[0, 1], [1, 0]], 0.075], [0, 0.317, 0.08, [[0, 1], [1, 0]], 0.075]]},
+	# Sathrovarr the Corruptor (DRG_402) — выбрано в HsBrowser, запечено 2026-11-25.
+	"sathrovarr": {"frames": "sathrovarr", "sounds": "sathrovarr",
+		"card": {"face": "mini", "reveal": 0.67, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0.2, "Sathrovarr_CustomSummon_Sound", 0.8]],
+		# CameraShakerAction (FSM)
+		"shakers": [[0.2, 0.9, 0.1, [[0, 0.15], [0.34, 0.73], [0.42, 2.03], [0.51, 0.26], [1, 0]], 0.075]]},
+	# Elder Nadox (RLK_658) — выбрано в HsBrowser, запечено 2026-11-25.
+	"eldernadox": {"frames": "eldernadox", "sounds": "eldernadox",
+		"card": {"face": "mini", "reveal": 1.45, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "RLKFX_ElderNadox_CustomSummon_Sound", 0.6]],
+		# CameraShaker2
+		"shakers": [[0.167, 0.467, 0.04, [[0, 0.01], [0.05, 0.62], [0.13, 0.99], [0.28, 0.75], [0.37, 0.46], [0.52, 0.23], [1, 0]], 0.195], [0.983, 1.2, 0.02, [[0, 0.01], [0.05, 0.62], [0.13, 0.99], [0.28, 0.75], [0.37, 0.46], [0.52, 0.23], [1, 0]], 0.195], [1.35, 1.65, 0.03, [[0, 0.01], [0.05, 0.62], [0.13, 0.99], [0.28, 0.75], [0.37, 0.46], [0.52, 0.23], [1, 0]], 0.195]]},
+	# Malygos, the Spellweaver (LEG_CS3_034) — выбрано в HsBrowser, запечено 2026-11-25.
+	"malygosthespellweave": {"frames": "malygosthespellweave", "sounds": "malygosthespellweave",
+		"card": {"face": "mini", "reveal": 1.75, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0.1, "Malygos_CustomSummon_Cast", 0.4], [1.43, "Malygos_CustomSummon_Impact", 0.5]],
+		# CameraShakerAction (FSM)
+		"shakers": [[1.43, 1.53, 0.1, [[0, 1], [1, 0]], 0.075]]},
+	# Cho'gall, Mastermind (CATA_726) — выбрано в HsBrowser, запечено 2026-11-25.
+	"chogallmastermind": {"frames": "chogallmastermind", "sounds": "chogallmastermind",
+		"card": {"face": "mini", "reveal": 1.19, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "CATAFX_ChogallMastermind_CustomSummon_Sound", 0.9]],
+		# CameraShaker2
+		"shakers": [[0.717, 1.317, 0.13, [[0, 1], [1, 0]], 0.075]]},
+	# Trastath, Soul Parasite (JAIL_721) — выбрано в HsBrowser, запечено 2026-11-25.
+	"trastathsoulparasite": {"frames": "trastathsoulparasite", "sounds": "trastathsoulparasite",
+		"card": {"face": "mini", "reveal": 1.92, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "JAILFX_Trastath_CustomSummon_Sound", 0.9], [1.45, "JAILFX_Trastath_CustomSummon_ImpactSound", 1]],
+		# CameraShaker2
+		"shakers": [[1.2, 2.25, 0.12, [[0, 1], [1, 0]], 0.075], [0, 0.717, 0.08, [[0, 0.66], [1, 0]], 0.075]]},
+	# Galakrond, Azeroth's End (DRG_660t3, герой) — выбрано в HsBrowser, запечено 2026-11-25.
+	"galakrondazerothsend": {"frames": "galakrondazerothsend", "sounds": "galakrondazerothsend",
+		"card": {"face": "mini", "reveal": 2.30, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Hero_Galakrond_Priest_CustomSummon_Launch_Sound", 1], [2.75, "Hero_Play_CustomSummon_Impact_Sound", 0.9]],
+		# CameraShakerAction (FSM)
+		"shakers": [[2.75, 4.25, 0.75, [[0, 0.6], [0.09, 0.17], [1, 0]], 0.075]]},
+	# Dirdra, Rebel Captain (GDB_117) — выбрано в HsBrowser, запечено 2026-11-25.
+	"dirdrarebelcaptain": {"frames": "dirdrarebelcaptain", "sounds": "dirdrarebelcaptain",
+		"card": {"face": "mini", "reveal": 1.45, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0.2, "GDBFX_Dirdra_CustomSummon_Start_Sound", 1], [0.983, "GDBFX_Dirdra_CustomSummon_Impact_Sound", 0.8]],
+		# CameraShaker2
+		"shakers": [[0.983, 1.65, 0.1, [[0, 0], [0.04, 0.75], [0.5, 0]], 0.0219]]},
+	# Golganneth, the Thunderer (TTN_800) — выбрано в HsBrowser, запечено 2026-11-25.
+	"golganneththethund": {"frames": "golganneththethund", "sounds": "golganneththethund",
+		"card": {"face": "mini", "reveal": 1.85, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Golganneth_CustomSummon_Sound", 1]],
+		# CameraShaker2
+		"shakers": [[0, 1.167, 0.04, [[0, 0], [0.45, 0.63], [0.66, 0.73], [0.73, 0.23], [0.84, 0]], 0.075], [1.383, 2.383, 0.1, [[0, 1], [0.15, 0.99], [0.45, 0.27], [0.58, 0.12], [1, 0]], 0.075]]},
+	# Kingsbane (LOOT_542) — выбрано в HsBrowser, запечено 2026-11-25.
+	"kingsbane": {"frames": "kingsbane", "sounds": "kingsbane",
+		"card": {"face": "mini", "reveal": 1.22, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		# Sound Timeline (громкость — AudioSource)
+		"cues": [[0, "Kingsbane_CustomSummon_Sound", 0.7]]},
+
 	"ysera": {"frames": "ysera", "sounds": "ysera",
 		"suppress_baked_card": [97, 159, Vector4(462, 322, 520, 354)],
 		"burn_hue": 0.206,
