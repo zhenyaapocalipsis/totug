@@ -16,7 +16,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "hideRx": "/OnToken/Mesh_Token_Glow", "under": [
+      "hideRx": "/OnToken/Mesh_Token_Glow",
+      "under": [
         "Root"
       ],
       "controls": [],
@@ -48,13 +49,14 @@
       "tintHue": 0.66,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
     {
       "name": "GenFX_AbilityCard_Echo_BW",
-      "file": "textures/echo_49122.png"
+      "file": "textures/echo_49121.png"
     }
   ]
 }

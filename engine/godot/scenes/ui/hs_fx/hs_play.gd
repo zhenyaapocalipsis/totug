@@ -108,7 +108,7 @@ const SCRIPTS := {
 		"shakers": [[0.483, 2.117, 0.5, [[0, 0], [0.03, 0.99], [0.16, 0.12], [0.5, 0]], 0.0708]]},
 	# Vexallus (RLK_541) — выбрано в HsBrowser, запечено 2026-11-25.
 	"vexallus": {"frames": "vexallus", "sounds": "vexallus",
-		"card": {"face": "mini", "reveal": 1.02, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
+		"card": {"face": "mini", "reveal": 1.9, "sweep": 0.6, "hold": 1.0, "out": 0.35, "center": Vector2(490, 365)},
 		# Sound Timeline (громкость — AudioSource)
 		"cues": [[0, "Vexallus_CustomSummon_sound", 1]],
 		# CameraShaker2

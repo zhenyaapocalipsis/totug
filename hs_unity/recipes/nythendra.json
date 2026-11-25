@@ -8,35 +8,71 @@
     {
       "prefab": "61367e4aa3579e44fb50c7692caef04f",
       "at": 0.0,
-      "pos": [-7.59, 0.0, -7.01],
+      "pos": [
+        -7.59,
+        0.0,
+        -7.01
+      ],
       "usePos": true,
       "clip": "timeline",
-      "hide": ["Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/TokenHider (Hidden)",
+      "hide": [
+        "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/TokenHider (Hidden)",
         "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Mesh_TokenGlow_Front",
         "Root/Token (Position)/Token (Rotation)/Token (Scale)/TokenRoot (DoNotTransform)/Mesh_TokenGlow_Back",
-        "Root/TokenPieces_Root"],
-      "under": ["Root"],
-      "controls": [
-        {"node": "Root/FX_Finish", "start": 1.32, "end": 5.32},
-        {"node": "Root/FX_Start", "start": 0.0, "end": 5.0}
+        "Root/TokenPieces_Root"
       ],
-      "measure": ["Root/Token (Position)", "Root/FX_Start", "Root/FX_Finish"]
+      "under": [
+        "Root"
+      ],
+      "controls": [
+        {
+          "node": "Root/FX_Finish",
+          "start": 1.32,
+          "end": 5.32
+        },
+        {
+          "node": "Root/FX_Start",
+          "start": 0.0,
+          "end": 5.0
+        }
+      ],
+      "measure": [
+        "Root/Token (Position)",
+        "Root/FX_Start",
+        "Root/FX_Finish"
+      ]
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.4,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81],
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
       "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "measure": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ],
       "tintHue": 0.14,
-      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+      "tintNodes": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48538.png"}
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_48538.png"
+    }
   ]
 }

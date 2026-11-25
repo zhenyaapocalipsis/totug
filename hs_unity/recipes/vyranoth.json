@@ -16,7 +16,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "hideRx": "/Vyanoth_TokenRoot/Mesh_GlowQuad_", "under": [
+      "hideRx": "/Vyanoth_TokenRoot/Mesh_GlowQuad_",
+      "under": [
         "AnimRoot"
       ],
       "controls": [],
@@ -48,7 +49,8 @@
       "tintHue": 0.56,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

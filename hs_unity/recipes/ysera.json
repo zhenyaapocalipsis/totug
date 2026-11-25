@@ -8,7 +8,11 @@
     {
       "prefab": "67d919de6b97deb48b27fa55b13ed9d6",
       "at": 0.0,
-      "pos": [-7.59, 0.0, -7.01],
+      "pos": [
+        -7.59,
+        0.0,
+        -7.01
+      ],
       "usePos": true,
       "clip": "EDRFX_YseraEmeraldAspect_CustomSummon",
       "hide": [
@@ -21,24 +25,45 @@
         "Root/Board_Root/Rainbows_Halo",
         "Root/AnimRoot/Token_Offset/Token_Root/Token_FX"
       ],
-      "under": ["Root/Board_Root", "Root/AnimRoot/Portal_Root"],
-      "measure": ["Root/AnimRoot/Token_Offset/Token_Root"]
+      "under": [
+        "Root/Board_Root",
+        "Root/AnimRoot/Portal_Root"
+      ],
+      "measure": [
+        "Root/AnimRoot/Token_Offset/Token_Root"
+      ]
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.52,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81],
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
       "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "measure": ["Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "measure": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot/Quad_CardGlow"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ],
       "tintHue": 0.206,
-      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+      "tintNodes": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48419.png"}
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_49908.png"
+    }
   ]
 }

@@ -16,7 +16,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "hideRx": "/Intro_SphereScale$", "under": [
+      "hideRx": "/Intro_SphereScale$",
+      "under": [
         "Root"
       ],
       "controls": [
@@ -59,7 +60,8 @@
       "tintHue": 0.74,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

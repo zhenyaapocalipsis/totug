@@ -27,7 +27,7 @@
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
-      "at": 0.57,
+      "at": 1.45,
       "only": "Root/Bursts_Root/Burst0_New",
       "place": [
         -7.616,
@@ -48,7 +48,8 @@
       "tintHue": 0.66,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

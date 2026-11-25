@@ -26,7 +26,8 @@
         "Root_Opponent/Crack_Glow",
         "Root_Opponent/Opponent_Flipper_2/AnimRoot/TokenRoot"
       ],
-      "hideRx": "/Mesh_Minion_Glow$", "under": [
+      "hideRx": "/Mesh_Minion_Glow$",
+      "under": [
         "Root"
       ],
       "controls": [],
@@ -58,13 +59,14 @@
       "tintHue": 0.62,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
     {
       "name": "GenFX_AbilityCard_Echo_BW",
-      "file": "textures/echo_49519.png"
+      "file": "textures/echo_50108.png"
     }
   ]
 }

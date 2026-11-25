@@ -8,27 +8,53 @@
     {
       "prefab": "e19693808627f3242a87ca611c0d6044",
       "at": 0.0,
-      "pos": [-7.59, 0.0, -7.01],
+      "pos": [
+        -7.59,
+        0.0,
+        -7.01
+      ],
       "usePos": true,
       "clip": "timeline",
-      "hide": ["Root/Token_Root", "Root/Token_Root_OP"],
-      "under": ["Root"],
-      "measure": ["Root/DetachRoot/ImpactFX", "Root/DetachRoot/Ribbon_Root"]
+      "hide": [
+        "Root/Token_Root",
+        "Root/Token_Root_OP"
+      ],
+      "under": [
+        "Root"
+      ],
+      "measure": [
+        "Root/DetachRoot/ImpactFX",
+        "Root/DetachRoot/Ribbon_Root"
+      ]
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.25,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81],
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
       "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ],
       "tintHue": 0.44,
-      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+      "tintNodes": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_48632.png"}
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_48632.png"
+    }
   ]
 }

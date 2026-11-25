@@ -59,13 +59,14 @@
       "tintHue": 0.82,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
     {
       "name": "GenFX_AbilityCard_Echo_BW",
-      "file": "textures/echo_49020.png"
+      "file": "textures/echo_49113.png"
     }
   ]
 }

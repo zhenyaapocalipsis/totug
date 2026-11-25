@@ -16,7 +16,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "hideRx": "/GroundCracks/mesh_Cracks", "under": [
+      "hideRx": "/GroundCracks/mesh_Cracks",
+      "under": [
         "AnimRoot"
       ],
       "controls": [],
@@ -48,7 +49,8 @@
       "tintHue": 0.5,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

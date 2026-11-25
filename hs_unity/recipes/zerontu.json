@@ -16,7 +16,8 @@
       "usePos": true,
       "clip": "timeline",
       "hide": [],
-      "hideRx": "/CracksRoot/Cracks_Token_", "under": [
+      "hideRx": "/CracksRoot/Cracks_Token_",
+      "under": [
         "Root"
       ],
       "controls": [],
@@ -48,7 +49,8 @@
       "tintHue": 0.58,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

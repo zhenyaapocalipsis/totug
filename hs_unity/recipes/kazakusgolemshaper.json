@@ -15,7 +15,10 @@
       ],
       "usePos": true,
       "clip": "timeline",
-      "hide": [],
+      "hide": [
+        "Root/Mesh_Legendary_Hazey",
+        "Root/Mesh_Legendary_Hazey_BuildUp"
+      ],
       "under": [
         "Root"
       ],
@@ -48,7 +51,8 @@
       "tintHue": 0.92,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

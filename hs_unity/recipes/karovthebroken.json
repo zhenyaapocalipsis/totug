@@ -20,7 +20,8 @@
         "Root/Detach_Root/Impact_FX/Token_Breaking_Opponent/Token_GlassCracking_Glow",
         "Root/Opponent_Token_Root"
       ],
-      "hideRx": "/Flare_Token_|/Token_GlassBroken$|/PullingTendies/|/GrabbingTendies/", "under": [
+      "hideRx": "/Flare_Token_|/Token_GlassBroken$|/PullingTendies/|/GrabbingTendies/",
+      "under": [
         "Root"
       ],
       "controls": [],
@@ -52,7 +53,8 @@
       "tintHue": 0.78,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
-      ]
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [

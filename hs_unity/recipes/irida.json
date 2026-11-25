@@ -8,32 +8,70 @@
     {
       "prefab": "6ed6b526b3f859b4d99c01229c2c4a3b",
       "at": 0.0,
-      "pos": [-7.59, 0.0, -7.01],
+      "pos": [
+        -7.59,
+        0.0,
+        -7.01
+      ],
       "usePos": true,
       "clip": "timeline",
-      "hide": ["Root/Token (Position)"],
-      "under": ["Root"],
+      "hide": [
+        "Root/Token (Position)"
+      ],
+      "under": [
+        "Root"
+      ],
       "controls": [
-        {"node": "Root/Card_Slash_FX", "start": 0, "end": 2},
-        {"node": "Root/Portal_Open_FX", "start": 0, "end": 3},
-        {"node": "Root/FX_Flash", "start": 0.917, "end": 2.417},
-        {"node": "Root/FX_Impact (1)", "start": 1.483, "end": 6.483}
+        {
+          "node": "Root/Card_Slash_FX",
+          "start": 0,
+          "end": 2
+        },
+        {
+          "node": "Root/Portal_Open_FX",
+          "start": 0,
+          "end": 3
+        },
+        {
+          "node": "Root/FX_Flash",
+          "start": 0.917,
+          "end": 2.417
+        },
+        {
+          "node": "Root/FX_Impact (1)",
+          "start": 1.483,
+          "end": 6.483
+        }
       ]
     },
     {
       "prefab": "b5e71dd8e88c71947ab2566113e0ec90",
       "at": 1.5,
       "only": "Root/Bursts_Root/Burst0_New",
-      "place": [-7.616, 3.802, -6.81],
+      "place": [
+        -7.616,
+        3.802,
+        -6.81
+      ],
       "usePlace": true,
       "scale": 0.3715,
-      "under": ["Root/Bursts_Root/Burst0_New/MeshRoot"],
-      "hidePS": ["Root/Bursts_Root/Burst0_New"],
+      "under": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "hidePS": [
+        "Root/Bursts_Root/Burst0_New"
+      ],
       "tintHue": 0.65,
-      "tintNodes": ["Root/Bursts_Root/Burst0_New/MeshRoot"]
+      "tintNodes": [
+        "Root/Bursts_Root/Burst0_New/MeshRoot"
+      ],
+      "hideRx": "Quad_CardGlow_Backer"
     }
   ],
   "textures": [
-    {"name": "GenFX_AbilityCard_Echo_BW", "file": "textures/echo_49801.png"}
+    {
+      "name": "GenFX_AbilityCard_Echo_BW",
+      "file": "textures/echo_49634.png"
+    }
   ]
 }

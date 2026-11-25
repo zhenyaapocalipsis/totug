@@ -402,7 +402,10 @@ celestial, shadow…). Перед пробами: §1 (все наборы HS, �
    берёт цвет эффекта — `res://tools/hs_hue.gd -- <кадр пробы>`).
 5. **Рецепт** `hs_unity/recipes/<имя>.json` по образцу `onyxia.json` / `malygos.json` /
    `ysera.json`: слой эффекта (`pos [-7.59, 0, -7.01]` — посадка в (490, 365)) + слой
-   Choice_Reveal (`at` = удар + ~0.02, тон `tintHue/Sat/Val`).
+   Choice_Reveal (`at` = удар + ~0.02, тон `tintHue/Sat/Val`). В слое Choice_Reveal
+   обязательно `"hideRx": "Quad_CardGlow_Backer"` — иначе в кадрах печётся тёмная
+   подложка карты HS (HsFx-135). echo_<cid> в `textures` сверять с RECIPES в hs_play.gd
+   (HsFx-135: у 44 старых рецептов был контур чужой карты).
 6. **Пробы:** `U -batchmode -quit -projectPath <R>/hs_unity -executeMethod HsRender.Run
    -hsr-win C:/Games/Hearthstone/Data/Win -hsr-recipe <R>/hs_unity/recipes/<имя>.json
    -hsr-out <R>/hs_unity/render/<проба> -hsr-frames 10,30,... -logFile ...` (пути

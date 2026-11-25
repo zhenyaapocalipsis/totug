@@ -15,7 +15,16 @@
       ],
       "usePos": true,
       "clip": "timeline",
-      "hide": [],
+      "hide": [
+        "AnimRoot/OnToken",
+        "AnimRoot/Impact_Root/PS_Reveal_Ring/FX_ScorchCenterDark"
+      ],
+      "grow": [
+        {
+          "node": "AnimRoot",
+          "by": 1.25
+        }
+      ],
       "under": [
         "AnimRoot"
       ],
@@ -61,6 +70,7 @@
       "hidePS": [
         "Root/Bursts_Root/Burst0_New"
       ],
+      "hideRx": "Quad_CardGlow_Backer|Quad_CardGlow_Backer",
       "tintHue": 0.04,
       "tintNodes": [
         "Root/Bursts_Root/Burst0_New/MeshRoot"
