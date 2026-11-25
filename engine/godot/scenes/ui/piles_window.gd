@@ -67,13 +67,14 @@ func _init() -> void:
 	_frame.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(_frame)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.y = GameScreen.DECISION_H
 	_frame.add_child(scroll)
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_theme_constant_override("separation", DecisionDialog.HEAD_GAP)
 	scroll.add_child(row)
+	row.minimum_size_changed.connect(func():
+		scroll.custom_minimum_size.y = minf(row.get_combined_minimum_size().y, GameScreen.DECISION_H), CONNECT_DEFERRED)
 	_asker = HBoxContainer.new()
 	_asker.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(_asker)

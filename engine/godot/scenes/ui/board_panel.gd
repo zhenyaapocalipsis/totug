@@ -500,9 +500,9 @@ func _draw_supplant(pos: Vector2, victim: String, killer: String, t: float) -> v
 ## Левый верхний угол картинки фишки с центром в pos — как её ставит _draw_troop.
 func _token_corner(pos: Vector2) -> Vector2:
 	var side := float(BoardSchematic.SLOT_R * 2 + 1)
-	# По целым экранным пикселям, как и картинка схемы (_draw), — иначе пиксели
-	# фишки не совпадают с пикселями круга под ней.
-	return _snap(pos - Vector2(side, side) * 0.5 * _zoom)
+	# Keep the same sampling grid as the board texture, also at fractional zoom.
+	# Rounding this corner independently shifts a troop relative to its circle.
+	return pos - Vector2(side, side) * 0.5 * _zoom
 
 
 ## Фишка owner, опущенная на sunk пикселей схемы: всё, что ниже её обычного
@@ -1139,30 +1139,15 @@ func window_scale() -> float:
 	return maxf(roundf(scale), 1.0)
 
 
-## Масштаб схемы: самый крупный из тех, при которых один пиксель схемы
-## занимает ЦЕЛОЕ число экранных пикселей и вся доска ещё влезает в зону.
-## При растяжении окна вдвое это шаги 1/2, но крупнее 1:1 схема не бывает:
-## каждый её пиксель ложится ровно в два экранных и остаётся чётким. Мельче
-## 1:1 — только если окно меньше самой схемы.
+## Pixel schematic uses native 1:1 pixels. UI layout reserves its full size.
 func _fit_zoom() -> float:
+	if _schematic_on():
+		return 1.0
 	var span := _board_rect().size
 	if span.x <= 0.0 or span.y <= 0.0:
-		return 0.2
+		return 1.0
 	var limits := _zoom_limits()
-	var fit := minf(size.x / span.x, size.y / span.y)
-	if not _schematic_on():
-		return clampf(fit, limits.x, limits.y)
-	var scale := window_scale()
-	# Не крупнее 1:1, даже если на полном экране схема влезла бы в 1.5 раза
-	# (решение владельца, 2026-09-27): один масштаб доски на любом экране.
-	var steps := mini(floori(fit * scale + 0.001), roundi(scale))
-	if steps >= 1:
-		var snapped := float(steps) / scale
-		# Avoid losing half the board size just to round down one physical pixel.
-		return clampf(minf(fit, 1.0) if snapped < fit * 0.9 else snapped, limits.x, limits.y)
-	# Окно меньше самой схемы (расчётный размер один к одному): показываем
-	# её целиком — пусть мягко, но без обрезанных краёв.
-	return clampf(fit, limits.x, limits.y)
+	return clampf(minf(size.x / span.x, size.y / span.y), limits.x, limits.y)
 
 
 func _board_centre() -> Vector2:
@@ -1179,7 +1164,8 @@ func _ensure_view() -> void:
 
 ## Centre of the fixed board rectangle.
 func _view_centre() -> Vector2:
-	var centre := size * 0.5
+	# Reserve six pixels above the schematic for spies; keep the lower edge fixed.
+	var centre := size * 0.5 + Vector2(0, 3.0)
 	# Центр кладём на сетку ЭКРАННЫХ пикселей: иначе схема съезжает на треть
 	# пикселя и nearest рисует соседние ряды разной толщины.
 	var scale := window_scale()
@@ -1188,12 +1174,17 @@ func _view_centre() -> Vector2:
 
 
 
+func _screen_origin() -> Vector2:
+	var origin := _view_centre() - _pan * _zoom
+	return _snap(origin) if _schematic_on() else origin
+
+
 func _to_screen(world: Vector2) -> Vector2:
-	return (world - _pan) * _zoom + _view_centre()
+	return _screen_origin() + world * _zoom
 
 
 func _to_world(screen: Vector2) -> Vector2:
-	return (screen - _view_centre()) / _zoom + _pan
+	return (screen - _screen_origin()) / _zoom
 
 
 ## Для пингов (Tab): точка доски в координатах схемы и обратно — так метка

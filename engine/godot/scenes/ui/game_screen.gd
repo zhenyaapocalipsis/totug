@@ -83,7 +83,7 @@ const KILL_HITSTOP := 0.08
 ## ширину — по две строки на игрока (трофеи второй строкой). Колонка шире
 ## рынка на HALL_EXTRA: четыре двузначных числа зала трофеев обычным шрифтом
 ## (владелец, 2026-10-11: «не уменьшать цифры»); рынок — по центру.
-const HALL_EXTRA := 40.0
+const HALL_EXTRA := 30.0
 const COL := float(MarketPanel.WIDTH) + HALL_EXTRA
 ## Дектрекер — полоса в мелкую карту и корешок шириной во всю высоту экрана между
 ## сводкой ходов и доской (владелец, 2026-09-28). Зона доски — 598 при самой
@@ -98,7 +98,7 @@ const TURN_EMBLEM_SIZE := float(PlayerProfile.SIZE)
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
 const BOTTOM_H := 80.0
 ## Permanent space for the source card, prompt and buttons, even between plays.
-const DECISION_H := 104.0
+const DECISION_H := 88.0
 const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
@@ -596,7 +596,7 @@ func _build_layout() -> void:
 	_res_zone.mouse_filter = Control.MOUSE_FILTER_STOP  # чтобы работала подсказка
 	_res_frame = PanelContainer.new()
 	var no_frame := StyleBoxEmpty.new()
-	no_frame.set_content_margin_all(1)
+	no_frame.set_content_margin_all(0)
 	_res_frame.add_theme_stylebox_override("panel", no_frame)
 	_res_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_res_frame.add_child(_res_zone)
@@ -615,12 +615,17 @@ func _build_layout() -> void:
 	_res_influence = CounterLabel.make_localized("game.influence", INFLUENCE_COLOR)
 	_res_zone.add_child(_res_influence)
 	# Крупно — вдвое, целым масштабом шрифта; обводка — чтобы читалось на доске.
+	# Remove empty font leading while keeping every glyph at the same 2x size.
+	var resource_font := FontVariation.new()
+	resource_font.base_font = PixelTheme.theme().default_font
+	resource_font.spacing_top = -2
+	resource_font.spacing_bottom = -2
 	for label: Label in [_res_title, _res_power, _res_ice, _res_influence]:
+		label.add_theme_font_override("font", resource_font)
 		label.add_theme_font_size_override("font_size", PixelTheme.SIZE_BIG)
 		label.add_theme_color_override("font_outline_color", PixelTheme.BG)
 		label.add_theme_constant_override("outline_size", 2)
-	# Deploy for 1 VP — прямо под счётчиком POWER (решение владельца,
-	# 2026-09-30): у кнопки End turn её не замечали и не получали VP.
+	# Deploy for VP remains beside the resource counters, away from End Turn.
 	_deploy_vp_button = Button.new()
 	L10n.bind(_deploy_vp_button, "game.deploy_vp")
 	L10n.bind(_deploy_vp_button, "game.deploy_tip", {}, "tooltip_text")
@@ -1209,15 +1214,15 @@ func _layout() -> void:
 	# высоту; доска — всё между ним и правой колонкой, от таймера до руки.
 	# Ширины сводки доске не жалко: масштаб схемы от неё не падает ни на
 	# двоих, ни на четверых.
-	var turn_bar_y := top_y + GAP
-	var board_y := turn_bar_y + TURN_BAR_H + GAP
+	var turn_bar_y := top_y
+	var board_y := turn_bar_y + TURN_BAR_H + GAP * 2.0
 	var board_h := bottom_y - GAP - board_y
 	_place(_feed, a_x, top_y, TurnFeed.WIDTH, h - MARGIN - top_y)
 	var tracker_x := a_x + TurnFeed.WIDTH + GAP
 	_place(_deck_tracker, tracker_x, top_y, TRACKER_W, piles_y - GAP - top_y)
 	_place(_piles_column, tracker_x, piles_y, TRACKER_W, PILES_H)
-	var board_x := tracker_x + TRACKER_W + GAP
-	_place(_board_area, board_x, board_y, d_x - GAP - board_x, board_h)
+	var board_x := tracker_x + TRACKER_W + 1.0
+	_place(_board_area, board_x, board_y, d_x - 1.0 - board_x, board_h)
 	if _god_panel != null:
 		_place(_god_panel, a_x, top_y, board_x - GAP - a_x, h - MARGIN - top_y)
 
@@ -1241,29 +1246,22 @@ func _layout() -> void:
 	_place(_end_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
 
 
-## Счётчики ходящего — по центру над рукой, поверх низа доски. Низ плашки —
-## на верхнем краю зоны руки: выше него поднятая карта уже не достаёт.
-## Когда есть Deploy for 1 VP, плашка поднимается на высоту кнопки, а кнопка
-## встаёт под словом POWER. Позицию счётчика считаем по минимальным размерам:
-## HBox раскладывает детей отложенно, и position может быть ещё старым.
+## Resources sit between the action strip and hand with equal gaps.
+## Deploy for VP sits beside the counters so it cannot move the board.
 func _place_res_frame() -> void:
 	var res_size := _res_frame.get_combined_minimum_size()
-	var x := _hand_panel.position.x + floorf((_hand_panel.size.x - res_size.x) * 0.5)
-	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
-	var y := _hand_panel.position.y - res_size.y - DEPLOY_H
+	var deploy_w := _deploy_vp_button.get_combined_minimum_size().x if _deploy_vp_button.visible else 0.0
+	var row_w := res_size.x + (GAP + deploy_w if _deploy_vp_button.visible else 0.0)
+	var x := _hand_panel.position.x + floorf((_hand_panel.size.x - row_w) * 0.5)
+	var cards_top := _hand_panel.position.y + _hand_panel.size.y - HandPanel.BOTTOM_MARGIN - HandPanel.CARD_SIZE.y
+	# Two equal gaps; hovering lifts a card only as far as the bottom gap.
+	var resource_gap := HandPanel.HOVER_LIFT
+	var y := cards_top - resource_gap - res_size.y
 	_place(_res_frame, x, y, res_size.x, res_size.y)
 	if _deploy_vp_button.visible:
-		var sep := float(_res_zone.get_theme_constant("separation"))
-		var power_x := x + 1.0 + _res_title.get_combined_minimum_size().x + sep
-		var width := maxf(_res_power.get_combined_minimum_size().x,
-				_deploy_vp_button.get_combined_minimum_size().x)
-		_place(_deploy_vp_button, power_x, y + res_size.y, width, deploy_h)
-	# Полоса вопроса — над счётчиком, под доской (владелец, 2026-10-24: доска
-	# сверху, вопросы снизу). От счётчика до низа полосы — столько же, сколько
-	# от счётчика до верха карт руки. Кнопка Deploy: 1 VP в зазор не входит.
-	var cards_top := _hand_panel.position.y + _hand_panel.size.y - HandPanel.BOTTOM_MARGIN - HandPanel.CARD_SIZE.y
-	var strip_y := y - (cards_top - _hand_panel.position.y)
-	# The board owns only the rectangle above the permanent action strip.
+		var width := _deploy_vp_button.get_combined_minimum_size().x
+		_place(_deploy_vp_button, x + res_size.x + GAP, y + floorf((res_size.y - DEPLOY_H) * 0.5), width, DEPLOY_H)
+	var strip_y := y - resource_gap
 	_place(_board_panel, 0, 0, _board_area.size.x,
 		maxf(120.0, strip_y - DECISION_H - GAP - _board_area.position.y))
 	_decision_dialog.set_strip_bottom(_board_area.position.y + _board_area.size.y - strip_y)

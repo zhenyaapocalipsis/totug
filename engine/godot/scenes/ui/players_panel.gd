@@ -34,7 +34,7 @@ const TOKEN_GAP := 2.0
 const TOKEN_W := TOKEN_SIZE+TOKEN_GAP
 ## Bitmap glyphs need their complete 6px advance. Each pair already ends
 ## with an empty pixel; clipping to 11px removes strokes or triggers trimming.
-const NUM_W := 14.0
+const NUM_W := 12.0
 const COL_GAP := 2
 ## Лишний зазор перед залом трофеев: иначе последняя цифра VP читается как
 ## первая цифра зала.

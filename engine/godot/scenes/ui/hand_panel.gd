@@ -34,8 +34,8 @@ const L10n := preload("res://scenes/localization.gd")
 const CARD_SIZE := CardView.MINI_SIZE   # = CardView.MINI_SIZE, пиксель в пиксель
 ## Подъём заметный: на шести пикселях движение видно ступеньками (положение
 ## округляется до целого пикселя), на двенадцати оно читается как рывок вверх.
-const HOVER_LIFT := 12.0
-const BOTTOM_MARGIN := 2.0  # отступ ряда от нижнего края зоны
+const HOVER_LIFT := 2.0
+const BOTTOM_MARGIN := 0.0  # отступ ряда от нижнего края зоны
 const GAP := 2.0
 ## Промежуток между рукой и картами Inner Circle в одном ряду (с чертой).
 const ZONE_GAP := 9.0

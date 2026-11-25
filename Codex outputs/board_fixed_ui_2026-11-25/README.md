@@ -1,5 +1,7 @@
 # Stage 1: fixed board and readable player table
 
+Superseded by [Stage 2: native pixels and restored choice window](../board_native_ui_2026-11-25/README.md).
+
 - Board seed: 122319638. The board has a permanent rectangle above a 104 px action strip. Showing a question, hiding it, or enabling Deploy for VP does not change that rectangle.
 - Long questions and Explore/Lamia scroll inside the action strip. Choose one uses labeled buttons below the board.
 - Played cards enter below the board and travel to the feed along the bottom, then up its column.
