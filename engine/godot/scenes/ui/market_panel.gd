@@ -39,7 +39,7 @@ const PAD := 1
 const DISPLAY_SLOTS := Market.DISPLAY_SIZE
 const COLUMNS := 2
 const CARD_GAP := 2
-const SECTION_GAP := 4
+const SECTION_GAP := 0
 ## Ширина панели: два слота, промежутки между ними и рамка. По ней же
 ## GameScreen задаёт ширину всей правой колонки.
 const WIDTH := SLOT.x * COLUMNS + CARD_GAP * (COLUMNS - 1) + PAD * 2
@@ -87,7 +87,7 @@ func _init() -> void:
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", CARD_GAP)
-	_grid.add_theme_constant_override("v_separation", CARD_GAP)
+	_grid.add_theme_constant_override("v_separation", 0)
 	market_row.add_child(_grid)
 
 	for i in range(DISPLAY_SLOTS):

@@ -143,8 +143,12 @@ func depart() -> void:
 		if not visible_target:
 			center = center.clamp(visible_area.position, visible_area.end)
 		size = start.size.lerp(target.size, t).round()
-		global_position = (start.get_center().lerp(center, t) - size * 0.5
-			- Vector2(0, 20.0 * sin(t * PI))).round()
+		# Travel below the board first, then up inside the feed column.
+		var corner := Vector2(center.x, start.get_center().y)
+		var point := start.get_center().lerp(corner, minf(t * 2.0, 1.0))
+		if t > 0.5:
+			point = corner.lerp(center, (t - 0.5) * 2.0)
+		global_position = (point - size * 0.5).round()
 		modulate.a = 1.0 if visible_target else 1.0 - t,
 		0.0, 1.0, EXIT_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_motion.tween_callback(func():

@@ -28,9 +28,8 @@ func _init() -> void:
 		check(s["slots"].size() == state.graph.slots.size(),"all troop slots remain present")
 	var panel := PixelPanel.new()
 	panel.size = Vector2(655,456)
-	panel._decision_edge = 310
 	panel._ensure_view()
-	check(is_equal_approx(panel._zoom*2,roundf(panel._zoom*2)),"decision prompt preserves whole physical pixels")
+	check(is_equal_approx(panel._zoom*2,roundf(panel._zoom*2)),"fixed board viewport preserves whole physical pixels")
 	panel._board = {"seed":123,"schematic":{"quality_issues":{"crossings":1}}}
 	panel._rebuild_schematic_texture()
 	check(panel._schematic_texture == null and panel._schematic_error.contains("123"),"invalid board is rejected before painting")

@@ -83,7 +83,7 @@ const KILL_HITSTOP := 0.08
 ## ширину — по две строки на игрока (трофеи второй строкой). Колонка шире
 ## рынка на HALL_EXTRA: четыре двузначных числа зала трофеев обычным шрифтом
 ## (владелец, 2026-10-11: «не уменьшать цифры»); рынок — по центру.
-const HALL_EXTRA := 20.0
+const HALL_EXTRA := 40.0
 const COL := float(MarketPanel.WIDTH) + HALL_EXTRA
 ## Дектрекер — полоса в мелкую карту и корешок шириной во всю высоту экрана между
 ## сводкой ходов и доской (владелец, 2026-09-28). Зона доски — 598 при самой
@@ -97,6 +97,8 @@ const TIMER_W := 44.0
 const TURN_EMBLEM_SIZE := float(PlayerProfile.SIZE)
 ## Высота нижнего ряда: мелкое лицо карты (76) плюс отступы подложки руки.
 const BOTTOM_H := 80.0
+## Permanent space for the source card, prompt and buttons, even between plays.
+const DECISION_H := 104.0
 const DEPLOY_H := 13.0
 ## Цвета ресурсов хода — те же, что и на картах.
 const POWER_COLOR := Color(0.95, 0.45, 0.35)
@@ -473,7 +475,7 @@ func _build_layout() -> void:
 	add_child(_board_area)
 
 	_board_panel = BoardPanel.new()
-	_board_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_board_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	_board_panel.slot_clicked.connect(_on_slot_clicked)
 	_board_panel.site_clicked.connect(_on_site_clicked)
 	_board_panel.spy_clicked.connect(_on_spy_clicked)
@@ -484,8 +486,6 @@ func _build_layout() -> void:
 	_decision_dialog.board = board_data  # чтобы подписывать цели названиями локаций
 	_decision_dialog.option_chosen.connect(_on_decision_answer)
 	_board_area.add_child(_decision_dialog)
-	_decision_dialog.item_rect_changed.connect(_fit_board_above_decision, CONNECT_DEFERRED)
-	_decision_dialog.visibility_changed.connect(_fit_board_above_decision, CONNECT_DEFERRED)
 
 	# 6. Маркет.
 	_market_panel = MarketPanel.new()
@@ -1241,15 +1241,6 @@ func _layout() -> void:
 	_place(_end_label, 0, caption_y, END_TURN_W, PixelTheme.LINE_H)
 
 
-## Верх нижней полосы меняется после раскладки текста и карт.
-func _fit_board_above_decision() -> void:
-	var edge := -1.0
-	if _decision_dialog.visible and _decision_dialog.at_top:
-		edge = maxf(1.0, _decision_dialog.position.y - GAP)
-	_board_panel.set_decision_edge(edge)
-
-
-
 ## Счётчики ходящего — по центру над рукой, поверх низа доски. Низ плашки —
 ## на верхнем краю зоны руки: выше него поднятая карта уже не достаёт.
 ## Когда есть Deploy for 1 VP, плашка поднимается на высоту кнопки, а кнопка
@@ -1259,7 +1250,7 @@ func _place_res_frame() -> void:
 	var res_size := _res_frame.get_combined_minimum_size()
 	var x := _hand_panel.position.x + floorf((_hand_panel.size.x - res_size.x) * 0.5)
 	var deploy_h := DEPLOY_H if _deploy_vp_button.visible else 0.0
-	var y := _hand_panel.position.y - res_size.y - deploy_h
+	var y := _hand_panel.position.y - res_size.y - DEPLOY_H
 	_place(_res_frame, x, y, res_size.x, res_size.y)
 	if _deploy_vp_button.visible:
 		var sep := float(_res_zone.get_theme_constant("separation"))
@@ -1272,6 +1263,9 @@ func _place_res_frame() -> void:
 	# от счётчика до верха карт руки. Кнопка Deploy: 1 VP в зазор не входит.
 	var cards_top := _hand_panel.position.y + _hand_panel.size.y - HandPanel.BOTTOM_MARGIN - HandPanel.CARD_SIZE.y
 	var strip_y := y - (cards_top - _hand_panel.position.y)
+	# The board owns only the rectangle above the permanent action strip.
+	_place(_board_panel, 0, 0, _board_area.size.x,
+		maxf(120.0, strip_y - DECISION_H - GAP - _board_area.position.y))
 	_decision_dialog.set_strip_bottom(_board_area.position.y + _board_area.size.y - strip_y)
 	_piles_window.set_strip_bottom(_board_area.position.y + _board_area.size.y - strip_y)
 	if replay_bar != null and replay_bar.is_inside_tree():
@@ -1455,14 +1449,12 @@ func _launch_play(cid: String, from: Rect2, face: Texture2D, revealed: bool) -> 
 		flight.global_position = from.position
 		flight.size = from.size
 	else:
-		if not from.has_area():
-			var badge := _turn_emblem.get_global_rect().get_center()
-			var launch_size := Vector2(9, 13)
-			from = Rect2(badge - launch_size * 0.5, launch_size)
 		var board := _board_area.get_global_rect()
 		var card_size := CardView.MINI_SIZE
 		var x := board.get_center().x - card_size.x * 0.5
 		var stage := Rect2(Vector2(x, board.end.y - _decision_dialog.strip_bottom - card_size.y), card_size)
+		if not from.has_area():
+			from = Rect2(stage.end - Vector2(9, 13), Vector2(9, 13))
 		stage.position -= global_position
 		flight.enter(from, stage)
 	_played_flight = flight

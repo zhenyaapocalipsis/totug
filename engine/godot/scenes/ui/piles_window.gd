@@ -60,13 +60,20 @@ func _init() -> void:
 	_frame = PanelContainer.new()
 	_frame.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_frame.mouse_filter = Control.MOUSE_FILTER_STOP
-	_frame.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_frame.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_frame.offset_left = 2
+	_frame.offset_right = -2
 	_frame.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_frame.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(_frame)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size.y = GameScreen.DECISION_H
+	_frame.add_child(scroll)
 	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_theme_constant_override("separation", DecisionDialog.HEAD_GAP)
-	_frame.add_child(row)
+	scroll.add_child(row)
 	_asker = HBoxContainer.new()
 	_asker.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(_asker)

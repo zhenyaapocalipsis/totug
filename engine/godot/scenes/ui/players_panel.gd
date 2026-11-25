@@ -34,14 +34,13 @@ const TOKEN_GAP := 2.0
 const TOKEN_W := TOKEN_SIZE+TOKEN_GAP
 ## Bitmap glyphs need their complete 6px advance. Each pair already ends
 ## with an empty pixel; clipping to 11px removes strokes or triggers trimming.
-const NUM_W := 12.0
-const COL_GAP := 0
+const NUM_W := 14.0
+const COL_GAP := 2
 ## Лишний зазор перед залом трофеев: иначе последняя цифра VP читается как
 ## первая цифра зала.
 const HALL_GAP := 3.0
-## Строка цифр наезжает на пустой низ строки ника: глиф 7 пикселей в
-## строке 11, так четыре блока с шапкой влезают над рынком.
-const LINE_OVERLAP := 3
+## Keep complete text lines: names and values must never overlap.
+const LINE_OVERLAP := 0
 ## Сколько пикселей от правого края панели до конца видимой части таблицы
 ## (рамка и отступ зоны).
 const TROPHY_RIGHT_PAD := 2.0
@@ -72,8 +71,8 @@ var _trophy_buttons: Array = []
 func _init() -> void:
 	L10n.events.changed.connect(_refresh_language)
 	var frame := GameScreen.zone_style(2)
-	frame.content_margin_top = 1
-	frame.content_margin_bottom = 1
+	frame.content_margin_top = 0
+	frame.content_margin_bottom = 0
 	add_theme_stylebox_override("panel", frame)
 	_current_style = PixelTheme.box(PixelTheme.PANEL_HI, PixelTheme.PANEL_HI, 0, 0, 0)
 	_plain_style = StyleBoxEmpty.new()

@@ -117,9 +117,16 @@ func _init() -> void:
 
 	# Полоса в один ряд: карта, которая спрашивает | вопрос и кнопки под ним |
 	# карты-варианты (пустые части скрыты).
+	# Scroll long prompts inside the reserved strip instead of growing over the board.
+	var strip_scroll := ScrollContainer.new()
+	strip_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	strip_scroll.custom_minimum_size.y = GameScreen.DECISION_H - _style.get_minimum_size().y
+	add_child(strip_scroll)
 	var head := HBoxContainer.new()
+	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	head.add_theme_constant_override("separation", HEAD_GAP)
-	add_child(head)
+	strip_scroll.add_child(head)
 	_asker_slot = HBoxContainer.new()
 	_asker_slot.visible = false
 	head.add_child(_asker_slot)
@@ -293,25 +300,6 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		_add_stairs(options, [], String((pd.get("data", {}) as Dictionary).get("acting_for", decider)))
 		if options.has(""):
 			_add_strip_buttons([["Skip", ""]])
-	elif _can_show_option_cards(pd):
-		var key := "%s|%s|%s" % [pd.get("source_card", ""), pd.get("prompt", ""), str(options)]
-		if key != _cards_key:
-			_cards_key = key
-			_cards_hidden = false
-		if _cards_hidden:
-			strip = true
-			_add_asker(pd, decider)
-			_add_strip_buttons([["Show", toggle_cards]])
-		else:
-			_add_asker(pd, decider)
-			_asker_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			_add_option_cards(pd)
-			var hide := Button.new()
-			DecisionText.bind(hide, "Hide")
-			hide.pressed.connect(toggle_cards)
-			make_plain(hide)
-			_options_box.add_child(hide)
-			cards_mode = true
 	else:
 		# Если сервер прислал подписи вариантов (карты вида "Choose one:"),
 		# берём их — только карта знает, что означает её вариант №2.
@@ -351,10 +339,10 @@ func update_from_view(view: Dictionary, viewer_id: String) -> void:
 		max_h = INF  # карты-варианты не прокручиваются: их всего два-три
 	_scroll.custom_minimum_size = Vector2(0, minf(_options_box.get_combined_minimum_size().y, max_h))
 	_scroll.visible = rows > 0
-	_place(on_board or strip or decider != viewer_id)
+	_place(true)
 	# Вопрос с переносом слов знает свою высоту только после раскладки по новой
 	# ширине: до неё окно карт-вариантов выходило вдвое выше содержимого.
-	_place.call_deferred(on_board or strip or decider != viewer_id)
+	_place.call_deferred(true)
 
 
 ## Полоса с картой слева или картами-вариантами справа: всё компактной
