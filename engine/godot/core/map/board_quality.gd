@@ -85,7 +85,7 @@ static func inspect(s: Dictionary, ring_radius := Metrics.RADIUS) -> Dictionary:
 				bad_traces[a[1]] = true
 				bad_traces[b[1]] = true
 	return {"overlaps": overlaps, "crossings": crossings, "foreign_hits": foreign_hits,
-		"bad_traces": bad_traces.keys(), "overlap_nodes": overlap_nodes,"close_nodes":close_nodes}
+		"layout_issues": layout_issues(s), "bad_traces": bad_traces.keys(), "overlap_nodes": overlap_nodes,"close_nodes":close_nodes}
 
 
 ## A city-to-city connection is split at a hex port. The second half may
@@ -102,3 +102,31 @@ static func _port_contact(s: Dictionary, edge: int, city: String, contact: Rect2
 			if other != edge and ends.has(port) and ends.has(city):
 				return true
 	return false
+
+
+## A3 layout is a contract: routing and spacing must preserve its axes.
+static func layout_issues(s: Dictionary) -> Array:
+	var axes: Array = s.get("column_axes",[])
+	if axes.is_empty(): return []
+	var issues := []
+	if axes.size() != 5: return ["column_count"]
+	var step := float(axes[1])-float(axes[0])
+	for i in 5:
+		if float(axes[i]) != roundf(float(axes[i])): issues.append("fractional_axis")
+		if not is_equal_approx(float(axes[i]),float(axes[0])+step*i): issues.append("unequal_step")
+	if s["sites"].has("a:A3_site6"):
+		var r: Array = s["sites"]["a:A3_site6"]["rect"]
+		if not is_equal_approx(float(r[0])+float(r[2])*0.5,float(s["size"][0])*0.5): issues.append("web_not_centred")
+	var frames := {}
+	for id: String in s["sites"]:
+		var hex := id.get_slice(":",0)
+		var r: Array = s["sites"][id]["rect"]
+		var rect := Rect2(r[0],r[1],r[2],r[3])
+		frames[hex] = (frames[hex] as Rect2).merge(rect) if frames.has(hex) else rect
+	for hex: String in frames:
+		var col := int(s.get("column_by_hex",{}).get(hex,-1))
+		if col < 0 or col >= 5:
+			issues.append("missing_column:"+hex)
+		elif absf(floorf((frames[hex] as Rect2).get_center().x)-float(axes[col])) > 1:
+			issues.append("column_drift:"+hex)
+	return issues

@@ -157,6 +157,8 @@ const REPAIR_ROUNDS := 2
 ## проверяет, что она совпадает с зоной доски на экране. С 2026-10-11 и на
 ## 2-3 игроков (сетка 5x3 с пустыми клетками, см. _grid_try).
 const ZONE := Vector2(655, 456)
+## Native width of the Web canvas, leaving the UI panels outside its bounds.
+const WEB_BODY_WIDTH := 646.0
 ## Низ зоны занимают счётчик Power/Influence над рукой и над ним вопрос
 ## «X decides — click a gold site on the board» в две строки (DecisionDialog;
 ## владелец, 2026-10-04: доска на них не заходит; 2026-10-24: вопрос под доской).
@@ -281,7 +283,7 @@ static func _drawing_score(drawing: Dictionary, quality: Dictionary) -> int:
 
 
 static func _quality_score(quality: Dictionary) -> int:
-	return int(quality["crossings"]) * 10000 + int(quality["overlaps"]) * 1000 + int(quality["foreign_hits"]) + quality.get("close_nodes",[]).size()*100
+	return quality.get("layout_issues",[]).size() * 100000 + int(quality["crossings"]) * 10000 + int(quality["overlaps"]) * 1000 + int(quality["foreign_hits"]) + quality.get("close_nodes",[]).size()*100
 
 
 static func _build_once(state: GameState, polish: bool, budget_ms: int, repair_cross_hex := false) -> Dictionary:
@@ -1995,7 +1997,133 @@ const GRID_MIN_GAP_X := 2.0
 ## выходит в неё и обходит свой гекс.
 const ROUTE_EDGE := 8.0
 
+var _column_axes: Array[float] = []
+var _column_by_hex := {}
+
+
+## The full 15-hex Web uses common column axes. Partial boards and other central tiles keep their existing packing.
 func _grid_try(cell: Dictionary) -> bool:
+	if _fixed_sites.is_empty() or cell.size() != 15: return _grid_try_legacy(cell)
+	_grid_paths = {}
+	_grid_full = {}
+	var slot := {}   # Vector2i(колонка, ряд) -> hex
+	for hex: String in cell:
+		var c: Vector2i = cell[hex]
+		var key := Vector2i(_sp_col(c), signi(c.y))
+		if slot.has(key):
+			return false
+		slot[key] = hex
+	if not slot.has(Vector2i(2, 0)):
+		return false
+	for col in 5:
+		if not (slot.has(Vector2i(col, -1)) or slot.has(Vector2i(col, 0)) or slot.has(Vector2i(col, 1))):
+			return false
+	var room := _sp_zone - Vector2(IMAGE_MARGIN, IMAGE_MARGIN) * 2 - Vector2(SPREAD_SLACK, SPREAD_SLACK)
+	var centre: Vector2 = (_sp_box[slot[Vector2i(2, 0)]] as Rect2).get_center()
+	var r := Rect2(((centre - room / 2.0) / 2.0).round() * 2.0, (room / 2.0).floor() * 2.0)
+
+	# One axis per column, with the central city on the middle axis.
+	var xkey := {}
+	var lw := {}
+	var rw := {}
+	var column_centre := _sp_edge(slot[Vector2i(2,0)],4)
+	r.position.x = column_centre-r.size.x*0.5
+	var first := 0.0
+	var last := 0.0
+	for key: Vector2i in slot:
+		var hex: String = slot[key]
+		xkey[hex] = _sp_edge(hex,4)
+		lw[hex] = float(xkey[hex])-(_sp_box[hex] as Rect2).position.x
+		rw[hex] = (_sp_box[hex] as Rect2).end.x-float(xkey[hex])
+		if key.x == 0: first = maxf(first,lw[hex])
+		if key.x == 4: last = maxf(last,rw[hex])
+	var step := floorf(minf((column_centre-r.position.x-first)*0.5,
+		(r.end.x-column_centre-last)*0.5)/2.0)*2.0
+	if step <= 0: return false
+	var strict := {}
+	_column_axes.clear()
+	_column_by_hex.clear()
+	for col in 5: _column_axes.append(column_centre+(col-2)*step)
+	for key: Vector2i in slot:
+		strict[slot[key]] = _column_axes[key.x]
+		_column_by_hex[slot[key]] = key.x
+	var choices: Array[Dictionary] = [strict]
+
+	# по y: верх и низ — к краям, средний ряд — где самая узкая щель шире всего
+	var ykey := {}
+	var top_line := -INF
+	var bottom_line := INF
+	for key: Vector2i in slot:
+		var hex: String = slot[key]
+		ykey[hex] = _sp_edge(hex, 2 if key.y < 0 else (3 if key.y > 0 else 5))
+		var box: Rect2 = _sp_box[hex]
+		if key.y < 0:
+			top_line = maxf(top_line, r.position.y + ROUTE_EDGE + float(ykey[hex]) - box.position.y)
+		elif key.y > 0:
+			bottom_line = minf(bottom_line, r.end.y - ROUTE_EDGE - (box.end.y - float(ykey[hex])))
+	var min_a := INF   # щель над средним рядом = M + a
+	var min_b := INF   # щель под ним = b - M
+	for c in 5:
+		if not slot.has(Vector2i(c, 0)):
+			continue
+		var mid: String = slot[Vector2i(c, 0)]
+		if slot.has(Vector2i(c, -1)):
+			var top: String = slot[Vector2i(c, -1)]
+			var top_bottom := top_line - float(ykey[top]) + (_sp_box[top] as Rect2).end.y
+			min_a = minf(min_a, (_sp_box[mid] as Rect2).position.y - float(ykey[mid]) - top_bottom)
+		if slot.has(Vector2i(c, 1)):
+			var bot: String = slot[Vector2i(c, 1)]
+			var bot_top := bottom_line - float(ykey[bot]) + (_sp_box[bot] as Rect2).position.y
+			min_b = minf(min_b, bot_top - ((_sp_box[mid] as Rect2).end.y - float(ykey[mid])))
+	if min_a == INF or min_b == INF:
+		return false
+	var py := {}   # hex -> y линии его ряда (у точки ykey)
+	if (min_a + min_b) / 2.0 >= GRID_MIN_GAP:
+		var mid_line := (min_b - min_a) / 2.0
+		for key: Vector2i in slot:
+			py[slot[key]] = top_line if key.y < 0 else (bottom_line if key.y > 0 else mid_line)
+	else:
+		# мягкие ряды: ось — ряд (key.y), линия — колонка; города верхнего и
+		# нижнего ряда (углы и середина) — строго на одной линии
+		var by_row := {}
+		var up := {}
+		var down := {}
+		var cities := {}
+		for key: Vector2i in slot:
+			var hex: String = slot[key]
+			by_row[Vector2i(key.y + 1, key.x)] = hex
+			up[hex] = float(ykey[hex]) - (_sp_box[hex] as Rect2).position.y
+			down[hex] = (_sp_box[hex] as Rect2).end.y - float(ykey[hex])
+			if key.y != 0 and key.x % 2 == 0:
+				cities[hex] = true
+		py = _grid_soft(by_row, up, down, r.position.y + ROUTE_EDGE, r.end.y - ROUTE_EDGE,
+				GRID_MIN_GAP, cities, false)
+		if py.is_empty():
+			return false
+
+	var placed := {}
+	for px: Dictionary in choices:
+		for key: Vector2i in slot:
+			var hex: String = slot[key]
+			var o := Vector2(float(px[hex]) - float(xkey[hex]), float(py[hex]) - float(ykey[hex]))
+			_sp_off[hex] = (o / 2.0).round() * 2.0
+		_grid_nudge(slot)
+		if placed.is_empty(): placed = _sp_off.duplicate()
+		if _grid_route(r):
+			return true
+		for hex: String in cell:
+			_sp_off[hex] = Vector2.ZERO
+		_grid_paths = {}
+		_grid_full = {}
+	# Keep successful grid packing even when the first wire-routing pass fails.
+	# Exported-pixel repair can reroute wires without collapsing the placement.
+	if not placed.is_empty():
+		_sp_off = placed
+		return true
+	return false
+
+
+func _grid_try_legacy(cell: Dictionary) -> bool:
 	_grid_paths = {}
 	_grid_full = {}
 	var slot := {}   # Vector2i(колонка, ряд) -> hex
@@ -2223,7 +2351,7 @@ func _grid_nudge(slot: Dictionary) -> void:
 	var base := _sp_off.duplicate()
 	var lock := {}   # hex -> Vector2(1 — ось x свободна, 1 — y)
 	for key: Vector2i in slot:
-		lock[slot[key]] = Vector2(0.0 if key.x == 0 or key.x == 4 else 1.0, 0.0 if key.y != 0 else 1.0)
+		lock[slot[key]] = Vector2(0.0 if not _column_axes.is_empty() or key.x == 0 or key.x == 4 else 1.0, 0.0 if key.y != 0 else 1.0)
 	for _round in 3:
 		var moved := false
 		for hex: String in _sp_off:
@@ -4272,6 +4400,9 @@ func _export(state: GameState) -> Dictionary:
 	var pad := float(IMAGE_MARGIN)
 	var shift := (-lo + Vector2(pad, pad)).round()
 	var size := (extent.size + Vector2(pad, pad) * 2).ceil()
+	if _grid_ok and not _column_axes.is_empty():
+		shift.x = pad+WEB_BODY_WIDTH*0.5-_column_axes[2]
+		size.x = WEB_BODY_WIDTH+pad*2.0
 
 	var starting := GameSetup.STARTING_SITE_NAMES
 	var marked := ControlMarkers.marked_sites(state)
@@ -4344,6 +4475,8 @@ func _export(state: GameState) -> Dictionary:
 		"trace_ends": trace_ends, "ports": ports, "hex_centres": centres, "hexes": hexes,
 		"fallback_routes": _fallback_routes,
 		"grid": _grid_ok,
+		"column_axes": _column_axes.map(func(x): return x+shift.x),
+		"column_by_hex": _column_by_hex,
 		"grid_routed": not _grid_paths.is_empty(),
 		"fixed_sites": _fixed_sites.keys().map(func(n): return _key[n]),
 		# табличка ярусов бонуса A2 [x, y, w, h]; пусто, если гекса A2 нет

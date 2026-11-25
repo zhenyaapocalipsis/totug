@@ -107,7 +107,7 @@ static func inspect(s: Dictionary) -> Dictionary:
 
 
 static func _acceptable(s: Dictionary, _clearance: int, before: Dictionary = {}) -> bool:
-	if not Spacing._valid(s) or (not before.is_empty() and not Spacing._keeps_straight_links(before,s)): return false
+	if not _keeps_port_entries(before,s) or not Spacing._valid(s) or (not before.is_empty() and not Spacing._keeps_straight_links(before,s)): return false
 	if before.is_empty(): return true
 	for edge in s["traces"].size():
 		if _bad_entries(s,edge) > _bad_entries(before,edge): return false
@@ -200,6 +200,16 @@ static func _place_ring(s: Dictionary, id: String, work_budget: Dictionary = {})
 	var ends_b: Array = s["trace_ends"][other]
 	var from: String = ends_a[1] if ends_a[0] == id else ends_a[0]
 	var to: String = ends_b[1] if ends_b[0] == id else ends_b[0]
+	# Try the two minimal orthogonal paths before asking the general router.
+	# A movable marker must not force a U-shaped trip away from a clear road.
+	var start := Vector2(a[-2],a[-1])
+	var finish := Vector2(b[-2],b[-1])
+	for corner: Vector2 in [Vector2(finish.x,start.y),Vector2(start.x,finish.y)]:
+		var points: Array = [start.x,start.y]
+		if corner != start and corner != finish: points.append_array([corner.x,corner.y])
+		points.append_array([finish.x,finish.y])
+		var direct := _split_ring_path(s,id,e,other,ends_a,ends_b,points,false)
+		if not direct.is_empty(): return direct
 	var view := s.duplicate(true)
 	view["rings"].erase(id)
 	view["trace_ends"][e] = [from,to]
@@ -216,6 +226,10 @@ static func _place_ring(s: Dictionary, id: String, work_budget: Dictionary = {})
 	elif not Spacing._reroute(view,[e],true,work_budget):
 		return {}
 	var path: Array = view["traces"][e]
+	return _split_ring_path(s,id,e,other,ends_a,ends_b,path)
+
+
+static func _split_ring_path(s: Dictionary, id: String, e: int, other: int, ends_a: Array, ends_b: Array, path: Array, reserve_marker := true) -> Dictionary:
 	var original: Array = s["rings"][id]
 	var baseline := inspect(s)
 	var positions := []
@@ -236,7 +250,10 @@ static func _place_ring(s: Dictionary, id: String, work_budget: Dictionary = {})
 	for option: Array in positions:
 		var p: Vector2 = option[0]
 		var rect := Rect2(p-Vector2.ONE*Metrics.RADIUS,Vector2.ONE*Metrics.DIAMETER)
-		if not Spacing._fits(s,id,rect) or not _clear_marker(view,e,rect): continue
+		var corridor := s.duplicate(true)
+		corridor["traces"][e] = path
+		corridor["traces"][other] = []
+		if not Spacing._fits(s,id,rect) or (reserve_marker and not _clear_marker(corridor,e,rect)): continue
 		valid_options += 1
 		if valid_options > 6: break
 		var k: int = option[1]
@@ -260,10 +277,55 @@ static func _place_ring(s: Dictionary, id: String, work_budget: Dictionary = {})
 		candidate["traces"][e] = left
 		candidate["traces"][other] = right
 		candidate.erase("__spacing_metrics")
+		_align_port_entries(candidate,s)
 		if not _improves(baseline,inspect(candidate)): continue
 		if _acceptable(candidate,_spacing(s)["score"],s):
 			return candidate
 	return {}
+
+
+static func _port_direction(s: Dictionary, edge: int, id: String) -> Vector2:
+	var path := _outward(s,edge,id)
+	return Vector2(path[2]-path[0],path[3]-path[1]).normalized()
+
+
+static func _keeps_port_entries(before: Dictionary, after: Dictionary) -> bool:
+	if before.is_empty(): return true
+	for id: String in before["ports"]:
+		var edges := _incident(before,id)
+		if edges.size() != 2 or not after["ports"].has(id): continue
+		if _port_direction(before,edges[0],id).is_equal_approx(-_port_direction(before,edges[1],id)) \
+			and not _port_direction(after,edges[0],id).is_equal_approx(-_port_direction(after,edges[1],id)):
+			return false
+	return true
+
+
+## A port is only a join on a road. Straightening one side may require
+## straightening the other side too, so the join keeps opposite entries.
+static func _align_port_entries(candidate: Dictionary, before: Dictionary) -> void:
+	for id: String in candidate["ports"]:
+		var edges := _incident(candidate,id)
+		if edges.size() != 2: continue
+		if _port_direction(candidate,edges[0],id).is_equal_approx(-_port_direction(candidate,edges[1],id)): continue
+		for side in 2:
+			var edge: int = edges[side]
+			var other: int = edges[1-side]
+			var desired := -_port_direction(candidate,other,id)
+			var old := _outward(candidate,edge,id)
+			var start := Vector2(old[0],old[1])
+			var finish := Vector2(old[-2],old[-1])
+			var corner := Vector2(finish.x,start.y) if desired.x != 0 else Vector2(start.x,finish.y)
+			var path: Array = [start.x,start.y]
+			if corner != start and corner != finish: path.append_array([corner.x,corner.y])
+			path.append_array([finish.x,finish.y])
+			if not Vector2(path[2]-path[0],path[3]-path[1]).normalized().is_equal_approx(desired): continue
+			if candidate["trace_ends"][edge][1] == id: path = _reverse(path)
+			var trial := candidate.duplicate(true)
+			trial["traces"][edge] = path
+			if _acceptable(trial,_spacing(before)["score"],before):
+				candidate["traces"][edge] = path
+				candidate.erase("__spacing_metrics")
+				break
 
 
 static func _clear_marker(s: Dictionary, own_edge: int, rect: Rect2) -> bool:

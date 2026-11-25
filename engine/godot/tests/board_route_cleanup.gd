@@ -34,6 +34,14 @@ func _init() -> void:
 	verify(Spacing.inspect(flat)["score"] <= Spacing.inspect(saved)["score"],"clearance does not get worse")
 	var touching := {"size":[30,30],"sites":{"city":{"rect":[5,5,20,20],"slots":{}}},"rings":{},"slots":{},"ports":{"a":[10,5],"b":[10,0]},"traces":[[10,5,10,15],[10,0,10,5]],"trace_ends":[["a","city"],["b","a"]]}
 	verify(Spacing._reroute(touching,[0],true) and touching["traces"][0].size() >= 4,"port on city boundary keeps a complete trace")
+	# Reported seed 3812116763: the port's one-pixel bend must not strand a marker below the road.
+	var hook := {"size":[654,322],"sites":{"ath":{"rect":[178,4,55,40],"slots":{}},"xith":{"rect":[266,5,66,26],"slots":{}}},
+		"rings":{"marker":[250,48]},"slots":{"marker":{"x":250,"y":48}},"ports":{"port":[240,24]},
+		"traces":[[205,24,205,23,240,23,240,24],[240,24,240,48,250,48],[250,48,250,18,299,18]],
+		"trace_ends":[["ath","port"],["port","marker"],["marker","xith"]]}
+	var unhooked := Cleanup.simplify(hook)
+	verify(Cleanup._excess(Cleanup._joined(unhooked,"marker",Cleanup._incident(unhooked,"marker"))) == 0,"reported Ath-Qua/Xith marker hook becomes a direct road")
+	verify(Spacing._valid(unhooked) and unhooked.trace_ends == hook.trace_ends,"removing the hook preserves legal geometry and every logical link")
 	var started := Time.get_ticks_msec()
 	var state := GameSetup.new_game(["red","blue","green","purple"],23)
 	var s := BoardSchematic.build(state)

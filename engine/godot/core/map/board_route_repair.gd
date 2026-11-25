@@ -232,7 +232,7 @@ static func _swap_ring_order(s: Dictionary, quality: Dictionary) -> Dictionary:
 
 
 static func _score(q: Dictionary) -> int:
-	return int(q["crossings"]) * 10000 + int(q["overlaps"]) * 1000 + int(q["foreign_hits"]) + q.get("close_nodes",[]).size()*100
+	return q.get("layout_issues",[]).size()*100000 + int(q["crossings"]) * 10000 + int(q["overlaps"]) * 1000 + int(q["foreign_hits"]) + q.get("close_nodes",[]).size()*100
 
 
 static func _node_rect(s: Dictionary, id: String) -> Rect2:
@@ -255,6 +255,7 @@ static func _separate_nodes(s: Dictionary, quality: Dictionary) -> Dictionary:
 			for distance in range(2, 66 if Metrics.DIAMETER >= 13 else 26, 2):
 				for direction in [Vector2.RIGHT, Vector2.LEFT, Vector2.DOWN, Vector2.UP, Vector2(1,1), Vector2(-1,1), Vector2(1,-1), Vector2(-1,-1)]:
 					var shift: Vector2 = direction * distance
+					if not s.get("column_axes",[]).is_empty() and s["sites"].has(id) and not is_zero_approx(shift.x): continue
 					var moved := Rect2(rect.position + shift, rect.size)
 					if not Rect2(0, 0, s["size"][0], s["size"][1]).encloses(moved):
 						continue

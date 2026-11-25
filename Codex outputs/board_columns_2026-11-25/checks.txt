@@ -1,0 +1,11 @@
+Stage 3 — seed 3812116763: centred Web columns and marker-hook cleanup
+
+The full 15-hex A3 board now has five equally spaced column axes. The centre of Great Web is the centre of the 646-pixel board canvas. A one-pixel tolerance on city-group centres accounts for odd bitmap widths and the existing two-pixel route grid. Horizontal nudges and node repairs cannot move cities off their column axes.
+
+The marker-hook cleanup tries the two shortest orthogonal paths before the general route search. It can also straighten the adjacent half of a port connection, preserving opposite entries, all troop slots, logical connections and clearances. Necessary obstacle detours remain.
+
+Partial boards and other central tiles retain their prior packing. All views retain native 1:1 scale. No UI layout or gameplay rules changed in this stage.
+
+Verified: column contract 23/0; reported-seed UI 750/0; route cleanup 24/0; rigid Web 27/0; spacing 14/0; geometry regressions (30 boards) 104/0; native bounds 0 failures; network 168/0. Final full core: 3209 passed, 1 failed. The sole failure is the pre-existing seed-42 six-second generation budget (22.0 seconds on this run).
+
+seed_3812116763.png is a synthetic regression view: troops and spies are placed to make the fixed geometry visible.

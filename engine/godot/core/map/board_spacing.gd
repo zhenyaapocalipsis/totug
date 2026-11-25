@@ -157,7 +157,7 @@ static func optimise(s: Dictionary) -> Dictionary:
 
 static func _valid(s: Dictionary) -> bool:
 	var q := Quality.inspect(s)
-	return q["crossings"] == 0 and q["overlaps"] == 0 and q["foreign_hits"] == 0 and q.get("close_nodes",[]).is_empty()
+	return q.get("layout_issues",[]).is_empty() and q["crossings"] == 0 and q["overlaps"] == 0 and q["foreign_hits"] == 0 and q.get("close_nodes",[]).is_empty()
 
 
 static func _fits(s: Dictionary, id: String, rect: Rect2) -> bool:
@@ -176,6 +176,7 @@ static func _fits(s: Dictionary, id: String, rect: Rect2) -> bool:
 ## Along the axis, an individual ring may move to increase its spacing.
 static func _move(s: Dictionary, id: String, shift: Vector2) -> Array:
 	if s.get("fixed_sites",[]).has(id): return []
+	if not s.get("column_axes",[]).is_empty() and s["sites"].has(id) and not is_zero_approx(shift.x): return []
 	s.erase("__spacing_metrics")
 	var shifts := {id:shift}
 	var links := _straight_links(s)

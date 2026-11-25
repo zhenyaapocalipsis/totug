@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CLEANUP seed23 { "before": { "bends": 24, "length": 3226.0, "detour": 24.0, "bad_entries": 9, "cost": 9992.26 }, "after": { "bends": 25, "length": 3218.0, "detour": 6.0, "bad_entries": 0, "cost": 842.18 }, "changed": 10, "work": 11378, "budget_exhausted": false } ms=4010
+board route cleanup: passed=24, failed=0
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
