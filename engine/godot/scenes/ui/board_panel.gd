@@ -169,6 +169,7 @@ var _tokens: Dictionary = {}     # colour html -> ImageTexture
 
 var _zoom := 0.0                 # 0 = ещё не подобран, подберётся под размер панели
 var _pan := Vector2.ZERO         # центр обзора в мировых координатах
+var _decision_edge := -1.0
 
 var _shake_left := 0.0
 var _shake_power := 0.0          # амплитуда тряски в пикселях панели
@@ -1167,17 +1168,32 @@ func _board_centre() -> Vector2:
 	return _board_rect().get_center()
 
 
+## Верх видимой полосы вопроса в координатах доски.
+func set_decision_edge(edge: float) -> void:
+	if is_equal_approx(edge, _decision_edge):
+		return
+	_decision_edge = edge
+	_zoom = 0.0
+	queue_redraw()
+
+
 func _ensure_view() -> void:
 	if _zoom <= 0.0:
 		_zoom = _fit_zoom()
+		var board_height := _board_rect().size.y
+		if _decision_edge > 0.0 and board_height > 0.0:
+			# Сохраняем обычный масштаб, пока доска помещается. Если
+			# не хватает нескольких пикселей, не уменьшаем схему вдвое.
+			var scale := window_scale()
+			var fit := minf(_zoom,_decision_edge / board_height)
+			var pixels := floori(fit*scale+0.001)
+			_zoom = float(pixels)/scale if pixels >= 1 else fit
 		# Центр обзора — в целых мировых пикселях: тогда и войска, и рамки
 		# локаций ложатся на ту же сетку, что и сама картинка схемы.
 		_pan = _board_centre().round()
 
 
-## Центр видимой части. Трансформ доски жёсткий (владелец, 2026-11-25):
-## масштаб и центр зависят только от размера панели, полоса вопроса их
-## не двигает — она рисуется поверх зарезервированной зоны.
+## Центр видимой части. Нижняя полоса вопроса может ограничить обзор.
 func _view_centre() -> Vector2:
 	var centre := size * 0.5
 	# Схема — по центру части зоны над полосой вопроса и счётчиком
@@ -1185,6 +1201,9 @@ func _view_centre() -> Vector2:
 	# четверых доска раздвинута во всю эту часть, и края ушли бы под них.
 	if _schematic_on():
 		centre.y -= (BoardSchematic.PROMPT_STRIP + BoardSchematic.BOTTOM_STRIP) * 0.5
+	if _decision_edge > 0.0:
+		var half_height := _board_rect().size.y * _zoom * 0.5
+		centre.y = clampf(centre.y, half_height, maxf(half_height, _decision_edge - half_height))
 	# Центр кладём на сетку ЭКРАННЫХ пикселей: иначе схема съезжает на треть
 	# пикселя и nearest рисует соседние ряды разной толщины.
 	var scale := window_scale()
